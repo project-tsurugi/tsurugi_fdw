@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * alt_planner.c
-* 		V0”Åƒvƒ‰ƒ“ƒiƒtƒbƒN(11.1)
+* 		V0ç‰ˆãƒ—ãƒ©ãƒ³ãƒŠãƒ•ãƒƒã‚¯(11.1)
  *
  *-------------------------------------------------------------------------
  */
@@ -17,22 +17,22 @@
 #include "catalog/pg_type.h"
 #include "nodes/primnodes.h"
 
-/* ‚¿‚Ü‚í‚µ‚µ‚½‚¢î•ñ‚ğˆêŠ‡ŠÇ—‚Å‚«‚é\‘¢‘Ì */
+/* æŒã¡ã¾ã‚ã—ã—ãŸã„æƒ…å ±ã‚’ä¸€æ‹¬ç®¡ç†ã§ãã‚‹æ§‹é€ ä½“ */
 
 typedef struct AltPlannerInfo
 {
 	Query	*parse;
 	
-	/* JOIN‚ª‚ ‚é‚© */
+	/* JOINãŒã‚ã‚‹ã‹ */
 	bool	hasjoin;
 
-	/* WÏŠÖ”‚ª‚ ‚é‚© */
+	/* é›†ç©é–¢æ•°ãŒã‚ã‚‹ã‹ */
 	bool	hasaggref;
 	
-	/* ŠO•”ƒT[ƒoƒIƒuƒWƒFƒNƒg‚ÌOID */
+	/* å¤–éƒ¨ã‚µãƒ¼ãƒã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®OID */
 	Oid		serverid;
 	
-	/* “ü—Í‚³‚ê‚½ƒNƒGƒŠ‚ÉŠÖŒW‚Ì‚ ‚éOID‚ÌƒŠƒXƒg */
+	/* å…¥åŠ›ã•ã‚ŒãŸã‚¯ã‚¨ãƒªã«é–¢ä¿‚ã®ã‚ã‚‹OIDã®ãƒªã‚¹ãƒˆ */
 	List	*oidlist;
 	
 } AltPlannerInfo;
@@ -47,9 +47,9 @@ extern PGDLLIMPORT planner_hook_type planner_hook;
 
 bool is_only_foreign_table( AltPlannerInfo *root, List *rtable );
 AltPlannerInfo *init_altplannerinfo( Query *parse );
-ForeignScan *create_foreign_scan( AltPlannerInfo *root ); /* ForeignScanƒvƒ‰ƒ“ƒm[ƒh‚Ì‰Šú‰» */
-ModifyTable *create_modify_table( AltPlannerInfo *root, ForeignScan *scan ); /* ModifyTableƒvƒ‰ƒ“ƒm[ƒh‚Ì‰Šú‰» */
-void is_valid_targetentry( ForeignScan *scan, AltPlannerInfo *root ); /* fdw_scan_tlsit‚Ætargetlist‚Ì“\‚è•t‚¯(JOIN, Aggref‚Ì‚İ) */
+ForeignScan *create_foreign_scan( AltPlannerInfo *root ); /* ForeignScanãƒ—ãƒ©ãƒ³ãƒãƒ¼ãƒ‰ã®åˆæœŸåŒ– */
+ModifyTable *create_modify_table( AltPlannerInfo *root, ForeignScan *scan ); /* ModifyTableãƒ—ãƒ©ãƒ³ãƒãƒ¼ãƒ‰ã®åˆæœŸåŒ– */
+void is_valid_targetentry( ForeignScan *scan, AltPlannerInfo *root ); /* fdw_scan_tlsitã¨targetlistã®è²¼ã‚Šä»˜ã‘(JOIN, Aggrefã®ã¿) */
 PlannedStmt *create_planned_stmt( AltPlannerInfo *root, Plan *plan );
 void preprocess_targetlist2( Query *parse, ForeignScan *scan );
 static List *expand_targetlist( List *tlist, int command_type, Index result_relation, Relation rel );
@@ -58,20 +58,20 @@ static List *expand_targetlist( List *tlist, int command_type, Index result_rela
 
 /************************************************************
  * alt_planner
- * ¡‰ñ’Ç‰Á‚·‚éƒvƒ‰ƒ“ƒi(V0)
+ * ä»Šå›è¿½åŠ ã™ã‚‹ãƒ—ãƒ©ãƒ³ãƒŠ(V0)
  * 
- * ¡input
- * Query *parse2             ... ƒŠƒ‰ƒCƒg‚Ü‚Å‚ğI‚¦‚½ƒp[ƒXƒcƒŠ[
+ * â– input
+ * Query *parse2             ... ãƒªãƒ©ã‚¤ãƒˆã¾ã§ã‚’çµ‚ãˆãŸãƒ‘ãƒ¼ã‚¹ãƒ„ãƒªãƒ¼
  * int cursorOptions         ... 
  * ParamListInfo boundParams ... 
  * 
- * ¡output
- * PlannedStmt stmt          ... ƒvƒ‰ƒ“ƒcƒŠ[‚ğŠÜ‚ŞPlannedStmt\‘¢‘Ì
+ * â– output
+ * PlannedStmt stmt          ... ãƒ—ãƒ©ãƒ³ãƒ„ãƒªãƒ¼ã‚’å«ã‚€PlannedStmtæ§‹é€ ä½“
  ************************************************************/
 struct PlannedStmt *
 alt_planner( Query *parse2, int cursorOptions, ParamListInfo boundParams )
 {
-	/* •Ï”éŒ¾ */
+	/* å¤‰æ•°å®£è¨€ */
 	Query *parse = copyObject(parse2);
 	
 	AltPlannerInfo *root = init_altplannerinfo(parse);
@@ -80,8 +80,8 @@ alt_planner( Query *parse2, int cursorOptions, ParamListInfo boundParams )
 
 	
 	/*
-	 * ‘€ì‘ÎÛ‚ÌSQLƒRƒ}ƒ“ƒh‚©‚Ç‚¤‚©‚É‰‚¶‚Äˆ—‚ğs‚¤
-	 * SQL•¶‚ÉŠÜ‚Ü‚ê‚éƒIƒuƒWƒFƒNƒg‚ª‚·‚×‚Ä“¯ˆêƒT[ƒoã‚ÌRangeTblEntry‚Å‚ ‚é‚±‚Æ‚ğŠm”F
+	 * æ“ä½œå¯¾è±¡ã®SQLã‚³ãƒãƒ³ãƒ‰ã‹ã©ã†ã‹ã«å¿œã˜ã¦å‡¦ç†ã‚’è¡Œã†
+	 * SQLæ–‡ã«å«ã¾ã‚Œã‚‹ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆãŒã™ã¹ã¦åŒä¸€ã‚µãƒ¼ãƒä¸Šã®RangeTblEntryã§ã‚ã‚‹ã“ã¨ã‚’ç¢ºèª
 	 */
 	if ( !is_only_foreign_table( root, root->parse->rtable ) )
 	{
@@ -90,7 +90,7 @@ alt_planner( Query *parse2, int cursorOptions, ParamListInfo boundParams )
 	
 	
 	/*
-	 * WÏŠÖ”‚Ìˆ—‚ª‘¶İ‚·‚é‚©‚ğŠm”F
+	 * é›†ç©é–¢æ•°ã®å‡¦ç†ãŒå­˜åœ¨ã™ã‚‹ã‹ã‚’ç¢ºèª
 	 */
 	if ( parse->hasAggs )
 	{
@@ -99,18 +99,18 @@ alt_planner( Query *parse2, int cursorOptions, ParamListInfo boundParams )
 	
 	
 	/*
-	 * ƒRƒ}ƒ“ƒh‚É‰‚¶‚½ˆ—‚ğÀ{
+	 * ã‚³ãƒãƒ³ãƒ‰ã«å¿œã˜ãŸå‡¦ç†ã‚’å®Ÿæ–½
 	 */
 	
 	switch ( parse->commandType )
 	{
 	case CMD_SELECT:
 
-		/* v0”Å‚Å‚ÍˆÃ–Ù‚ÌJOIN‚ÍƒTƒ|[ƒg‘ÎÛŠO‚Å‚·‚ªˆê‰*/
+		/* v0ç‰ˆã§ã¯æš—é»™ã®JOINã¯ã‚µãƒãƒ¼ãƒˆå¯¾è±¡å¤–ã§ã™ãŒä¸€å¿œ*/
 		if ( root->oidlist->length > 1 && !root->hasjoin )
 		{
 			root->hasjoin = true;
-			elog( NOTICE, "ˆÃ–Ù‚ÌJOIN‚Í‘ÎÛŠO‚Å‚·(¡‚Í’Ê‚µ‚Ü‚·‚ªB)" );
+			elog( NOTICE, "æš—é»™ã®JOINã¯å¯¾è±¡å¤–ã§ã™(ä»Šã¯é€šã—ã¾ã™ãŒã€‚)" );
 		}
 		
 		scan = create_foreign_scan( root );
@@ -123,11 +123,11 @@ alt_planner( Query *parse2, int cursorOptions, ParamListInfo boundParams )
 	case CMD_UPDATE:
 	case CMD_DELETE:
 
-		/* PostgreSQL“Æ©•¶–@‚Æ‚µ‚ÄAUPDATE•¶‚ÆDELETE•¶‚ÉFROM‹å‚ª•t‚­ê‡‚ª‚ ‚è‚Ü‚·B */
-		/* ‚±‚Ìê‡Aroot->oidlist‚É2ˆÈã‚Ì”’l‚ªŒvã‚³‚ê‚é‚±‚Æ‚É‚È‚é‚½‚ßA‚±‚Ì‚æ‚¤‚È•¶–@‚Í‘½•ª«—ˆ“I‚ÉƒGƒ‰[‚Æ‚µ‚Ü‚·B */
+		/* PostgreSQLç‹¬è‡ªæ–‡æ³•ã¨ã—ã¦ã€UPDATEæ–‡ã¨DELETEæ–‡ã«FROMå¥ãŒä»˜ãå ´åˆãŒã‚ã‚Šã¾ã™ã€‚ */
+		/* ã“ã®å ´åˆã€root->oidlistã«2ä»¥ä¸Šã®æ•°å€¤ãŒè¨ˆä¸Šã•ã‚Œã‚‹ã“ã¨ã«ãªã‚‹ãŸã‚ã€ã“ã®ã‚ˆã†ãªæ–‡æ³•ã¯å¤šåˆ†å°†æ¥çš„ã«ã‚¨ãƒ©ãƒ¼ã¨ã—ã¾ã™ã€‚ */
 		if(root->oidlist->length > 1 && (parse->commandType == CMD_DELETE || parse->commandType == CMD_UPDATE))
 		{
-			elog(NOTICE, "PostgreSQL“Æ©•¶–@‚Å‚·B(UPDATE‚à‚µ‚­‚ÍDELETE‚Å‚ÌFROM‹å‚Ìg—p)");
+			elog(NOTICE, "PostgreSQLç‹¬è‡ªæ–‡æ³•ã§ã™ã€‚(UPDATEã‚‚ã—ãã¯DELETEã§ã®FROMå¥ã®ä½¿ç”¨)");
 		}
 		
 		scan = create_foreign_scan( root );
@@ -141,11 +141,11 @@ alt_planner( Query *parse2, int cursorOptions, ParamListInfo boundParams )
 		return standard_planner( parse2, cursorOptions, boundParams );
 	}
 	
-	/* PlannedStmt‚Ì¶¬ */
+	/* PlannedStmtã®ç”Ÿæˆ */
 	
 	PlannedStmt *stmt = create_planned_stmt( root, plan );
 	
-	/* ÅI“I‚É¶¬‚µ‚½PlannedStmt‚ğ•Ô‹p‚·‚é */
+	/* æœ€çµ‚çš„ã«ç”Ÿæˆã—ãŸPlannedStmtã‚’è¿”å´ã™ã‚‹ */
 	return stmt;
 
 }
@@ -154,16 +154,16 @@ alt_planner( Query *parse2, int cursorOptions, ParamListInfo boundParams )
 
 /************************************************************
  * init_altplannerinfo
- * alt_planner‚ÌÀs’†‚É•Û‚µ‚Ä‚¨‚«‚½‚¢î•ñ‚ğ‰Šú‰»‚·‚é
+ * alt_plannerã®å®Ÿè¡Œä¸­ã«ä¿æŒã—ã¦ãŠããŸã„æƒ…å ±ã‚’åˆæœŸåŒ–ã™ã‚‹
  * 
- * ¡input
- * Query *parse         ... alt_planner‚Ì“ü—Í‚É‚ ‚½‚éƒp[ƒXƒcƒŠ[
- *                          –‘O‚ÉcopyObjectŠÖ”‚ÅƒRƒs[‚µ‚½‚à‚Ì‚ğˆø”‚Æ‚µ‚Äg—p‚·‚éB
+ * â– input
+ * Query *parse         ... alt_plannerã®å…¥åŠ›ã«ã‚ãŸã‚‹ãƒ‘ãƒ¼ã‚¹ãƒ„ãƒªãƒ¼
+ *                          äº‹å‰ã«copyObjecté–¢æ•°ã§ã‚³ãƒ”ãƒ¼ã—ãŸã‚‚ã®ã‚’å¼•æ•°ã¨ã—ã¦ä½¿ç”¨ã™ã‚‹ã€‚
  * 
- * ¡output
- * AltPlannerInfo *root ... ƒp[ƒXƒcƒŠ[(‚ÌƒRƒs[)‚âAŠO•”ƒT[ƒo‚ÌOID“™A
- *                          alt_plannerÀs’†‚Ég‚¢‚Ü‚í‚µ‚½‚¢î•ñ‚ğû‚ß‚½\‘¢‘Ì‚ğ
- *                          ‰Šú‰»‚µ‚½‚à‚ÌB
+ * â– output
+ * AltPlannerInfo *root ... ãƒ‘ãƒ¼ã‚¹ãƒ„ãƒªãƒ¼(ã®ã‚³ãƒ”ãƒ¼)ã‚„ã€å¤–éƒ¨ã‚µãƒ¼ãƒã®OIDç­‰ã€
+ *                          alt_plannerå®Ÿè¡Œä¸­ã«ä½¿ã„ã¾ã‚ã—ãŸã„æƒ…å ±ã‚’åã‚ãŸæ§‹é€ ä½“ã‚’
+ *                          åˆæœŸåŒ–ã—ãŸã‚‚ã®ã€‚
  ************************************************************/
 
 AltPlannerInfo 
@@ -183,22 +183,22 @@ AltPlannerInfo
 
 /************************************************************
  * is_only_foreign_table
- * “¯‚¶ŠO•”ƒT[ƒoã‚É‘¶İ‚·‚éƒŠƒŒ[ƒVƒ‡ƒ““¯m‚ÌƒNƒGƒŠ‚Å‚ ‚é‚©A
- * ‚Ü‚½AŒãXPlannedStmt->relationOids‚É’Ç‰Á‚·‚é‚½‚ßAoidlist‚ğ
- * ¶¬‚·‚éB
+ * åŒã˜å¤–éƒ¨ã‚µãƒ¼ãƒä¸Šã«å­˜åœ¨ã™ã‚‹ãƒªãƒ¬ãƒ¼ã‚·ãƒ§ãƒ³åŒå£«ã®ã‚¯ã‚¨ãƒªã§ã‚ã‚‹ã‹ã€
+ * ã¾ãŸã€å¾Œã€…PlannedStmt->relationOidsã«è¿½åŠ ã™ã‚‹ãŸã‚ã€oidlistã‚’
+ * ç”Ÿæˆã™ã‚‹ã€‚
  * 
- * ¡input
- * AltPlannerInfo *root ... alt_planner“à‚Åg‚¢‚Ü‚í‚µ‚½‚¢î•ñB
- *                          –{ŠÖ”“à‚ÅAroot->serverid(ŠO•”ƒT[ƒo‚ÌOID)‚Ìæ“¾‚Æ
- *                          root->oidlist(ŠO•”•\ƒIƒuƒWƒFƒNƒg‚ÌOID‚ÌƒŠƒXƒg)‚Ì¶¬‚ğs‚¤B
- * List *rtable         ... ƒ`ƒFƒbƒN‚·‚éRangeTblEntry‚ÌƒŠƒXƒg
- *                          root‚É‚àŠÜ‚Ü‚ê‚é—v‘f‚Å‚Í‚ ‚é‚ªAÄ‹AŒÄo‚µ‚ğ‚µ‚½‚¢‚½‚ßŒÂ•Ê‚Å
- *                          RangeTblEntry‚ÌƒŠƒXƒg‚à“ü—Í‚·‚éB
+ * â– input
+ * AltPlannerInfo *root ... alt_plannerå†…ã§ä½¿ã„ã¾ã‚ã—ãŸã„æƒ…å ±ã€‚
+ *                          æœ¬é–¢æ•°å†…ã§ã€root->serverid(å¤–éƒ¨ã‚µãƒ¼ãƒã®OID)ã®å–å¾—ã¨
+ *                          root->oidlist(å¤–éƒ¨è¡¨ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®OIDã®ãƒªã‚¹ãƒˆ)ã®ç”Ÿæˆã‚’è¡Œã†ã€‚
+ * List *rtable         ... ãƒã‚§ãƒƒã‚¯ã™ã‚‹RangeTblEntryã®ãƒªã‚¹ãƒˆ
+ *                          rootã«ã‚‚å«ã¾ã‚Œã‚‹è¦ç´ ã§ã¯ã‚ã‚‹ãŒã€å†å¸°å‘¼å‡ºã—ã‚’ã—ãŸã„ãŸã‚å€‹åˆ¥ã§
+ *                          RangeTblEntryã®ãƒªã‚¹ãƒˆã‚‚å…¥åŠ›ã™ã‚‹ã€‚
  *
- * ¡output
- * bool                 ... alt_planner‚Å‚Ìˆ—‘ÎÛ‚Å‚ ‚ê‚Îtrue‚ğA
- *                          ‘ÎÛŠO‚Å‚ ‚ê‚Îfalse‚ğ•Ô‹p‚·‚éB
- *                          Œ»“_‚Å‚ÍASQL‚ÉŠÜ‚Ü‚ê‚é•\‚ª‚·‚×‚ÄŠO•”•\‚Å‚ ‚ê‚Îtrue‚Æ‚È‚éB
+ * â– output
+ * bool                 ... alt_plannerã§ã®å‡¦ç†å¯¾è±¡ã§ã‚ã‚Œã°trueã‚’ã€
+ *                          å¯¾è±¡å¤–ã§ã‚ã‚Œã°falseã‚’è¿”å´ã™ã‚‹ã€‚
+ *                          ç¾æ™‚ç‚¹ã§ã¯ã€SQLã«å«ã¾ã‚Œã‚‹è¡¨ãŒã™ã¹ã¦å¤–éƒ¨è¡¨ã§ã‚ã‚Œã°trueã¨ãªã‚‹ã€‚
  ************************************************************/
 
 bool 
@@ -209,28 +209,28 @@ is_only_foreign_table( AltPlannerInfo *root, List *rtable )
 
 	foreach( rtable_list_cell, rtable )
 	{
-		/* æ‚èo‚µ—p‚ÉRangeTblEntry‚ğéŒ¾ */
+		/* å–ã‚Šå‡ºã—ç”¨ã«RangeTblEntryã‚’å®£è¨€ */
 		RangeTblEntry	*range_table_entry;
 		
-		/* RangeTblEntry‚ğæ‚èo‚µ */
+		/* RangeTblEntryã‚’å–ã‚Šå‡ºã— */
 		range_table_entry = lfirst_node( RangeTblEntry, rtable_list_cell );
 		
-		/* ƒ`ƒFƒbƒN */
+		/* ãƒã‚§ãƒƒã‚¯ */
 		
 		switch ( range_table_entry->rtekind )
 		{
 		case RTE_RELATION:
-			/* ŠO•”•\‚Ìê‡‚ÍAŠO•”ƒT[ƒo‚ÌOid‚ğæ“¾‚·‚éB‘S‚Ä‚ÌƒŠƒŒ[ƒVƒ‡ƒ“‚Å“¯ˆêŠO•”ƒT[ƒo‚ğƒAƒNƒZƒX‚µ‚Ä‚¢‚é‚©‚ğ”»’è‚·‚é */
+			/* å¤–éƒ¨è¡¨ã®å ´åˆã¯ã€å¤–éƒ¨ã‚µãƒ¼ãƒã®Oidã‚’å–å¾—ã™ã‚‹ã€‚å…¨ã¦ã®ãƒªãƒ¬ãƒ¼ã‚·ãƒ§ãƒ³ã§åŒä¸€å¤–éƒ¨ã‚µãƒ¼ãƒã‚’ã‚¢ã‚¯ã‚»ã‚¹ã—ã¦ã„ã‚‹ã‹ã‚’åˆ¤å®šã™ã‚‹ */
 			if ( range_table_entry->relkind == 'f' )
 			{
-				/* Œ»İƒ`ƒFƒbƒN‚µ‚Ä‚¢‚éRTE‚ÌŠO•”ƒT[ƒo‚ÌOID‚ğŠl“¾ */
+				/* ç¾åœ¨ãƒã‚§ãƒƒã‚¯ã—ã¦ã„ã‚‹RTEã®å¤–éƒ¨ã‚µãƒ¼ãƒã®OIDã‚’ç²å¾— */
 				currentserverid = GetForeignServerIdByRelId( range_table_entry->relid );
 				
-				/* OID‚ğoidlist‚É’Ç‰Á */
+				/* OIDã‚’oidlistã«è¿½åŠ  */
 				root->oidlist = lappend_oid( root->oidlist, range_table_entry->relid );
 				
 
-				/* ˆÙ‚È‚éƒT[ƒoã‚ÌƒIƒuƒWƒFƒNƒg‚ª¬İ‚µ‚Ä‚¢‚È‚¢‚©‚ğƒ`ƒFƒbƒN */
+				/* ç•°ãªã‚‹ã‚µãƒ¼ãƒä¸Šã®ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆãŒæ··åœ¨ã—ã¦ã„ãªã„ã‹ã‚’ãƒã‚§ãƒƒã‚¯ */
 				if ( root->serverid == 0 )
 				{
 					root->serverid = currentserverid;
@@ -238,12 +238,12 @@ is_only_foreign_table( AltPlannerInfo *root, List *rtable )
 				}
 				else if ( root->serverid != currentserverid )
 				{
-					elog( NOTICE, "ˆÙ‚È‚éí—Ş‚ÌƒT[ƒo‚ª¬İ‚µ‚Ä‚¢‚Ü‚·" );
+					elog( NOTICE, "ç•°ãªã‚‹ç¨®é¡ã®ã‚µãƒ¼ãƒãŒæ··åœ¨ã—ã¦ã„ã¾ã™" );
 					return false;
 				}
 			}
 			
-			/* ƒŠƒŒ[ƒVƒ‡ƒ“‚ªŠO•”•\ˆÈŠO‚Ìê‡‚Íˆ—‘ÎÛŠO‚Æ‚·‚é */
+			/* ãƒªãƒ¬ãƒ¼ã‚·ãƒ§ãƒ³ãŒå¤–éƒ¨è¡¨ä»¥å¤–ã®å ´åˆã¯å‡¦ç†å¯¾è±¡å¤–ã¨ã™ã‚‹ */
 			else
 			{
 				return false;
@@ -253,14 +253,14 @@ is_only_foreign_table( AltPlannerInfo *root, List *rtable )
 		
 		case RTE_SUBQUERY:
 		
-			/* ƒˆ‚ÈSUBQUERYˆÈŠOœŠO‚·‚é(VIEW‚È‚Ç‚ÍœŠO‚·‚é) */
+			/* ç´”ç²‹ãªSUBQUERYä»¥å¤–é™¤å¤–ã™ã‚‹(VIEWãªã©ã¯é™¤å¤–ã™ã‚‹) */
 			if ( range_table_entry->relkind != 0 || range_table_entry->subquery==0 )
 			{
 				return false;
 			}
 			else
 			{
-				/* ƒTƒuƒNƒGƒŠ“à‚ÌRTE‚ğis_only_foreign_table‚É‚©‚¯‚é(Ä‹A) */
+				/* ã‚µãƒ–ã‚¯ã‚¨ãƒªå†…ã®RTEã‚’is_only_foreign_tableã«ã‹ã‘ã‚‹(å†å¸°) */
 				Query	*subquery = range_table_entry->subquery;
 				
 				if ( is_only_foreign_table( root, subquery->rtable ) )
@@ -277,8 +277,8 @@ is_only_foreign_table( AltPlannerInfo *root, List *rtable )
 	
 		case RTE_JOIN:
 			
-			/* JOIN‹å‚ğ–¾¦“I‚Ég—p‚µ‚½ê‡AJOIN‚Å‚ ‚é‚±‚Æ‚ğ¦‚·RTE‚ªì‚ç‚ê‚éB
-			   ‚½‚¾‚µAÀ¿“I‚É‚Ù‚Ú‹ó‚ÈƒnƒY‚È‚Ì‚ÅA“Á‚É‚±‚ê‚ÆŒ¾‚Á‚½ˆ—‚Í‚µ‚È‚¢B
+			/* JOINå¥ã‚’æ˜ç¤ºçš„ã«ä½¿ç”¨ã—ãŸå ´åˆã€JOINã§ã‚ã‚‹ã“ã¨ã‚’ç¤ºã™RTEãŒä½œã‚‰ã‚Œã‚‹ã€‚
+			   ãŸã ã—ã€å®Ÿè³ªçš„ã«ã»ã¼ç©ºãªãƒã‚ºãªã®ã§ã€ç‰¹ã«ã“ã‚Œã¨è¨€ã£ãŸå‡¦ç†ã¯ã—ãªã„ã€‚
 			*/
 			
 			if( !root->hasjoin )
@@ -288,7 +288,7 @@ is_only_foreign_table( AltPlannerInfo *root, List *rtable )
 			
 			break;
 			
-		/* ˆÈ‰ºAˆ—‘ÎÛŠO‚Æ‚µ‚Ü‚·B */
+		/* ä»¥ä¸‹ã€å‡¦ç†å¯¾è±¡å¤–ã¨ã—ã¾ã™ã€‚ */
 		case RTE_CTE:
 		case RTE_FUNCTION:
 		case RTE_TABLEFUNC:
@@ -298,9 +298,9 @@ is_only_foreign_table( AltPlannerInfo *root, List *rtable )
 			break;
 		}
 		
-	} /* foreachI—¹ */
+	} /* foreachçµ‚äº† */
 	
-	/* ÅŒã‚Ü‚Å”²‚¯‚é‚±‚Æ‚ª‚Å‚«‚ê‚ÎOK */
+	/* æœ€å¾Œã¾ã§æŠœã‘ã‚‹ã“ã¨ãŒã§ãã‚Œã°OK */
 	return true;
 }
 
@@ -308,24 +308,24 @@ is_only_foreign_table( AltPlannerInfo *root, List *rtable )
 
 /************************************************************
  * create_foreign_scan
- * ForeignScan\‘¢‘Ì‚ğ¶¬‚·‚é
- * SQLƒRƒ}ƒ“ƒh‚É‚æ‚Á‚ÄˆÙ‚È‚étargetlist, fdw_scan_tlist‚É‚Â‚¢‚Ä‚ÍA
- * ‚±‚ÌŠÖ”‚©‚çŒÄ‚Ño‚³‚ê‚éis_valid_targetentryŠÖ”‚ğ’Ê‚µ‚Äİ’è‚·‚éB
+ * ForeignScanæ§‹é€ ä½“ã‚’ç”Ÿæˆã™ã‚‹
+ * SQLã‚³ãƒãƒ³ãƒ‰ã«ã‚ˆã£ã¦ç•°ãªã‚‹targetlist, fdw_scan_tlistã«ã¤ã„ã¦ã¯ã€
+ * ã“ã®é–¢æ•°ã‹ã‚‰å‘¼ã³å‡ºã•ã‚Œã‚‹is_valid_targetentryé–¢æ•°ã‚’é€šã—ã¦è¨­å®šã™ã‚‹ã€‚
  * 
- * ¡input
- * AltPlannerInfo *root ... alt_planner“à‚Åg‚¢‚Ü‚í‚µ‚½‚¢î•ñB
- *                          ‚±‚ÌŠÖ”‚Å‚ÍAroot->parse“à‚Ìî•ñ‚ÆAroot->serverid‚ğg—p‚·‚éB
+ * â– input
+ * AltPlannerInfo *root ... alt_plannerå†…ã§ä½¿ã„ã¾ã‚ã—ãŸã„æƒ…å ±ã€‚
+ *                          ã“ã®é–¢æ•°ã§ã¯ã€root->parseå†…ã®æƒ…å ±ã¨ã€root->serveridã‚’ä½¿ç”¨ã™ã‚‹ã€‚
  *
- * ¡output
- * ForeignScan *fnode   ... ì¬‚µ‚½ForeignScanƒvƒ‰ƒ“ƒm[ƒhB
- *                          ’Pƒ‚ÈSELECT•¶‚ğÀs‚µ‚½ê‡‚Æ“¯“™‚Ì“à—e‚Æ‚È‚é‚æ‚¤Še’l‚ğİ’è‚µ‚Ä‚¢‚éB
+ * â– output
+ * ForeignScan *fnode   ... ä½œæˆã—ãŸForeignScanãƒ—ãƒ©ãƒ³ãƒãƒ¼ãƒ‰ã€‚
+ *                          å˜ç´”ãªSELECTæ–‡ã‚’å®Ÿè¡Œã—ãŸå ´åˆã¨åŒç­‰ã®å†…å®¹ã¨ãªã‚‹ã‚ˆã†å„å€¤ã‚’è¨­å®šã—ã¦ã„ã‚‹ã€‚
  ************************************************************/
 
 ForeignScan *
 create_foreign_scan( AltPlannerInfo *root )
 {
 	
-	/* ‰Šú‰» */
+	/* åˆæœŸåŒ– */
 	ForeignScan *fnode;
 	fnode = makeNode( ForeignScan );
 	
@@ -343,17 +343,17 @@ create_foreign_scan( AltPlannerInfo *root )
 	fnode->fs_relids = NULL;
 	fnode->fsSystemCol = false;
 
-	/* fs_relids‚Ìİ’è */
-	/* ’Pˆê•\‚ÌSCAN‚ÆŒ©‚È‚·‚½‚ßAfs_relids‚Í1‚ª“ü‚Á‚Ä‚¢‚éBitmapset‚Æ‚µ‚Ü‚· */
+	/* fs_relidsã®è¨­å®š */
+	/* å˜ä¸€è¡¨ã®SCANã¨è¦‹ãªã™ãŸã‚ã€fs_relidsã¯1ãŒå…¥ã£ã¦ã„ã‚‹Bitmapsetã¨ã—ã¾ã™ */
 	Bitmapset  *fs_relids = NULL;
 	fs_relids = bms_add_member( fs_relids, 1 );
 	fnode->fs_relids = fs_relids;
 	
-	/* scan.plan.targetlist‚¨‚æ‚Ñfdw_scan_tlist‚Ìİ’è */
+	/* scan.plan.targetlistãŠã‚ˆã³fdw_scan_tlistã®è¨­å®š */
 	is_valid_targetentry( fnode, root );
 	
-	/* scanrelid‚Ìİ’è */
-	/* JOIN“™‚ª‘¶İ‚·‚éê‡‚Í0‚É•ÏX */
+	/* scanrelidã®è¨­å®š */
+	/* JOINç­‰ãŒå­˜åœ¨ã™ã‚‹å ´åˆã¯0ã«å¤‰æ›´ */
 	if(root->hasjoin || root->hasaggref)
 	{
 		fnode->scan.scanrelid = 0;
@@ -366,17 +366,17 @@ create_foreign_scan( AltPlannerInfo *root )
 
 /************************************************************
  * create_modify_table
- * ModifyTable\‘¢‘Ì‚ğ¶¬‚·‚é
+ * ModifyTableæ§‹é€ ä½“ã‚’ç”Ÿæˆã™ã‚‹
  * 
- * ¡input
- * AltPlannerInfo *root ... alt_planner“à‚Åg‚¢‚Ü‚í‚µ‚½‚¢î•ñB
- *                          root->parse“à‚Ìî•ñ‚ğg—p‚·‚éB
- * ForeignScan *scan    ... ModifyTable‚É•R‚Ã‚¯‚éForeignScanƒvƒ‰ƒ“ƒm[ƒhB
- *                          ‚±‚ÌŠÖ”‚É“ü‚é‘O‚Éì¬Ï‚İ‚Å‚ ‚é‘O’ñB
+ * â– input
+ * AltPlannerInfo *root ... alt_plannerå†…ã§ä½¿ã„ã¾ã‚ã—ãŸã„æƒ…å ±ã€‚
+ *                          root->parseå†…ã®æƒ…å ±ã‚’ä½¿ç”¨ã™ã‚‹ã€‚
+ * ForeignScan *scan    ... ModifyTableã«ç´ã¥ã‘ã‚‹ForeignScanãƒ—ãƒ©ãƒ³ãƒãƒ¼ãƒ‰ã€‚
+ *                          ã“ã®é–¢æ•°ã«å…¥ã‚‹å‰ã«ä½œæˆæ¸ˆã¿ã§ã‚ã‚‹å‰æã€‚
  * 
- * ¡output
- * ModifyTable *modify  ... INSERT, DELETE, UPDATE•¶‚Å•K—v‚Æ‚È‚éModifyTableƒvƒ‰ƒ“ƒm[ƒhB
- *                          Executor‚ÅDirectModify‚É“ü‚é‚æ‚¤‚ÉŠe€–Ú‚ğİ’è‚µ‚Ä‚¢‚éB
+ * â– output
+ * ModifyTable *modify  ... INSERT, DELETE, UPDATEæ–‡ã§å¿…è¦ã¨ãªã‚‹ModifyTableãƒ—ãƒ©ãƒ³ãƒãƒ¼ãƒ‰ã€‚
+ *                          Executorã§DirectModifyã«å…¥ã‚‹ã‚ˆã†ã«å„é …ç›®ã‚’è¨­å®šã—ã¦ã„ã‚‹ã€‚
  ************************************************************/
  
 ModifyTable *
@@ -384,13 +384,13 @@ create_modify_table( AltPlannerInfo *root, ForeignScan *scan )
 {
 	ModifyTable *modify = makeNode( ModifyTable );
 
-	/* ForeignScanƒvƒ‰ƒ“ƒm[ƒh‚ÌList‰» */
+	/* ForeignScanãƒ—ãƒ©ãƒ³ãƒãƒ¼ãƒ‰ã®ListåŒ– */
 	List *subplan = NIL;
 	
 	subplan = lappend( subplan, scan );
 	
 	
-	/* ‰Šú‰» */
+	/* åˆæœŸåŒ– */
 	modify->plan.lefttree = NULL;
 	modify->plan.righttree = NULL;
 	modify->plan.qual = NIL;
@@ -410,7 +410,7 @@ create_modify_table( AltPlannerInfo *root, ForeignScan *scan )
 	modify->fdwDirectModifyPlans = NULL; 
 	modify->rowMarks = NIL;
 	modify->epqParam = 0;
-	/* ON CONFLICT‹å‚Ìw’è‚ª‚ ‚éê‡‚Íl—¶‚ª•K—v‚È€–Ú(V0‚Å‚Ìl—¶‚Í–³‚µ) */
+	/* ON CONFLICTå¥ã®æŒ‡å®šãŒã‚ã‚‹å ´åˆã¯è€ƒæ…®ãŒå¿…è¦ãªé …ç›®(V0ã§ã®è€ƒæ…®ã¯ç„¡ã—) */
 	modify->onConflictAction = ONCONFLICT_NONE;
 	modify->onConflictSet = NIL;
 	modify->onConflictWhere = NULL;
@@ -420,14 +420,14 @@ create_modify_table( AltPlannerInfo *root, ForeignScan *scan )
 
 	
 	
-	/* modify->fdwPrivLists‚Ìw’èBÀ¿“à—e‚Ì‚È‚¢T_List */
+	/* modify->fdwPrivListsã®æŒ‡å®šã€‚å®Ÿè³ªå†…å®¹ã®ãªã„T_List */
 	List *fdwPrivLists = NIL;
 	fdwPrivLists = lappend( fdwPrivLists, 0 );
 	
 	modify->fdwPrivLists = fdwPrivLists;
 	
 	
-	/* modify->fdwDirectModifyPlans‚Ìw’èBBitmapset‚ğ’Ç‰ÁB */
+	/* modify->fdwDirectModifyPlansã®æŒ‡å®šã€‚Bitmapsetã‚’è¿½åŠ ã€‚ */
 	Bitmapset  *direct_modify_plans = NULL;
 	direct_modify_plans = bms_add_member( direct_modify_plans, 0 );
 	
@@ -441,15 +441,15 @@ create_modify_table( AltPlannerInfo *root, ForeignScan *scan )
 
 /************************************************************
  * is_valid_targetentry
- * SELECT, DELETE—p (¡‚Ì‚Æ‚±‚ë–â‘è‚ª‹N‚«‚È‚¢‚Ì‚ÍVar‚ÆAggref‚Ì‚İ)
- * INSERT, UPDATE—p (‘¼‚ÌŠÖ”‚Éˆ—‚ğˆÚ‚·)
+ * SELECT, DELETEç”¨ (ä»Šã®ã¨ã“ã‚å•é¡ŒãŒèµ·ããªã„ã®ã¯Varã¨Aggrefã®ã¿)
+ * INSERT, UPDATEç”¨ (ä»–ã®é–¢æ•°ã«å‡¦ç†ã‚’ç§»ã™)
  * 
- * ¡input
- * ForeignScan *scan    ... ‚±‚ÌŠÖ”‚Åì¬‚µ‚½TargetEntry‚ÌƒŠƒXƒg‚ğ
- *                          •R‚Ã‚¯‚éForeignScanƒvƒ‰ƒ“ƒm[ƒh
+ * â– input
+ * ForeignScan *scan    ... ã“ã®é–¢æ•°ã§ä½œæˆã—ãŸTargetEntryã®ãƒªã‚¹ãƒˆã‚’
+ *                          ç´ã¥ã‘ã‚‹ForeignScanãƒ—ãƒ©ãƒ³ãƒãƒ¼ãƒ‰
  * AltPlannerInfo *root ... 
  * 
- * ¡output
+ * â– output
  * --
  * 
  ************************************************************/
@@ -463,13 +463,13 @@ is_valid_targetentry( ForeignScan *scan, AltPlannerInfo *root )
 	Var *newvar;
 	Aggref *aggref;
 	
-	/* ForeignScan->targetlist—p */
+	/* ForeignScan->targetlistç”¨ */
 	TargetEntry *newte = NULL;
 	
-	/* fdw_scan_tlist—p */
+	/* fdw_scan_tlistç”¨ */
 	TargetEntry *newfste = NULL;
 	
-	/* “ü—Í‚³‚ê‚½TargetEntry‚ğƒ`ƒFƒbƒN */
+	/* å…¥åŠ›ã•ã‚ŒãŸTargetEntryã‚’ãƒã‚§ãƒƒã‚¯ */
 	
 	int attno = 1;
 	foreach( l, pte )
@@ -484,7 +484,7 @@ is_valid_targetentry( ForeignScan *scan, AltPlannerInfo *root )
 				
 				if ( root->hasjoin || root->hasaggref )
 				{
-					/* ForeignScan->fdw_scan_tlist—p */
+					/* ForeignScan->fdw_scan_tlistç”¨ */
 					newfste = makeTargetEntry( (Expr *) node,
 											   attno,
 											   NULL,
@@ -493,7 +493,7 @@ is_valid_targetentry( ForeignScan *scan, AltPlannerInfo *root )
 					scan->fdw_scan_tlist = lappend( scan->fdw_scan_tlist, newfste );
 					
 					
-					/* ForeignScan->targetlist—p */
+					/* ForeignScan->targetlistç”¨ */
 					newvar = makeVar( var->varno,
 									  attno,
 									  var->vartype,
@@ -516,7 +516,7 @@ is_valid_targetentry( ForeignScan *scan, AltPlannerInfo *root )
 					
 					scan->scan.plan.targetlist = lappend( scan->scan.plan.targetlist, newte );
 				}
-				else /* ’Pƒ‚É—ñ‚ğw’è‚µ‚½ê‡ */
+				else /* å˜ç´”ã«åˆ—ã‚’æŒ‡å®šã—ãŸå ´åˆ */
 				{
 					scan->scan.plan.targetlist = lappend( scan->scan.plan.targetlist, te );
 				}
@@ -526,7 +526,7 @@ is_valid_targetentry( ForeignScan *scan, AltPlannerInfo *root )
 				aggref = (Aggref *) node;
 				
 				
-				/* ForeignScan->targetlist—p */
+				/* ForeignScan->targetlistç”¨ */
 				newvar = makeVar( INDEX_VAR,
 								  attno,
 								  aggref->aggtype,
@@ -544,7 +544,7 @@ is_valid_targetentry( ForeignScan *scan, AltPlannerInfo *root )
 				scan->scan.plan.targetlist = lappend( scan->scan.plan.targetlist, newte );
 				
 				
-				/* ForeignScan->fdw_scan_tlist—p */
+				/* ForeignScan->fdw_scan_tlistç”¨ */
 				newfste = makeTargetEntry( (Expr *) node,
 										   attno,
 										   NULL,
@@ -554,7 +554,7 @@ is_valid_targetentry( ForeignScan *scan, AltPlannerInfo *root )
 			
 				break;
 				
-			/* ˆÈ‰ºAˆ—‚µ‚Ü‚¹‚ñ */
+			/* ä»¥ä¸‹ã€å‡¦ç†ã—ã¾ã›ã‚“ */
 			case T_Const:
 			case T_Param:
 			case T_ArrayRef:
@@ -570,14 +570,14 @@ is_valid_targetentry( ForeignScan *scan, AltPlannerInfo *root )
 			default:
 				if ( root->parse->commandType == CMD_SELECT )
 				{
-					elog( NOTICE, "ƒTƒ|[ƒg‘ÎÛŠO‚ÌTargetEntry‚ªŠÜ‚Ü‚ê‚Ä‚¢‚é‚æ‚¤‚Å‚·B" );
+					elog( NOTICE, "ã‚µãƒãƒ¼ãƒˆå¯¾è±¡å¤–ã®TargetEntryãŒå«ã¾ã‚Œã¦ã„ã‚‹ã‚ˆã†ã§ã™ã€‚" );
 				}
 				break;
 			}
 		attno++;
 	}
 	
-	/* INSERT‚ÆUPDATE‚Ìê‡ */
+	/* INSERTã¨UPDATEã®å ´åˆ */
 	if ( root->parse->commandType == CMD_INSERT || root->parse->commandType == CMD_UPDATE )
 	{
 		preprocess_targetlist2( root->parse, scan );
@@ -589,17 +589,17 @@ is_valid_targetentry( ForeignScan *scan, AltPlannerInfo *root )
 
 /************************************************************
  * create_planned_stmt
- * “ü—Í‚³‚ê‚½î•ñ‚©‚çPlannedStmt‚ğì¬‚·‚é
+ * å…¥åŠ›ã•ã‚ŒãŸæƒ…å ±ã‹ã‚‰PlannedStmtã‚’ä½œæˆã™ã‚‹
  *
- * ¡input
- * AltPlannerInfo *root ... alt_planner‚Åg‚¢‚Ü‚í‚µ‚½‚¢î•ñB
- *                          ‚±‚ê‚Ü‚Å‚Ìˆ—‚Åİ’è‚µ‚½’l‚È‚Ç‚ğ”½‰f‚·‚é‚½‚ß‚Ég—pB
- * Plan *plan           ... ForeignScanƒvƒ‰ƒ“ƒm[ƒh‚à‚µ‚­‚ÍModifyTableƒvƒ‰ƒ“ƒm[ƒh‚ğ
- *                          Plan‚ÉƒLƒƒƒXƒg‚µ‚½‚à‚ÌB
- *                          stmt->planTree‚Éİ’è‚·‚éB
+ * â– input
+ * AltPlannerInfo *root ... alt_plannerã§ä½¿ã„ã¾ã‚ã—ãŸã„æƒ…å ±ã€‚
+ *                          ã“ã‚Œã¾ã§ã®å‡¦ç†ã§è¨­å®šã—ãŸå€¤ãªã©ã‚’åæ˜ ã™ã‚‹ãŸã‚ã«ä½¿ç”¨ã€‚
+ * Plan *plan           ... ForeignScanãƒ—ãƒ©ãƒ³ãƒãƒ¼ãƒ‰ã‚‚ã—ãã¯ModifyTableãƒ—ãƒ©ãƒ³ãƒãƒ¼ãƒ‰ã‚’
+ *                          Planã«ã‚­ãƒ£ã‚¹ãƒˆã—ãŸã‚‚ã®ã€‚
+ *                          stmt->planTreeã«è¨­å®šã™ã‚‹ã€‚
  * 
- * ¡output
- * PlannedStmt *stmt    ... alt_planner‚©‚ç•Ô‹p‚·‚é\‘¢‘ÌB
+ * â– output
+ * PlannedStmt *stmt    ... alt_plannerã‹ã‚‰è¿”å´ã™ã‚‹æ§‹é€ ä½“ã€‚
  ************************************************************/
 
 PlannedStmt *
@@ -608,7 +608,7 @@ create_planned_stmt( AltPlannerInfo *root, Plan *plan )
 	PlannedStmt *stmt = makeNode( PlannedStmt );
 	Query *parse = root->parse;
 	
-	/* ‰Šú‰» */
+	/* åˆæœŸåŒ– */
 	stmt->commandType = parse->commandType;
 	stmt->queryId = parse->queryId;
 	stmt->hasReturning = false;
@@ -634,10 +634,10 @@ create_planned_stmt( AltPlannerInfo *root, Plan *plan )
 	stmt->stmt_len = parse->stmt_len;
 
 	
-	/* ModifyTable‚É“Á—L‚Ìˆ— */
+	/* ModifyTableã«ç‰¹æœ‰ã®å‡¦ç† */
 	if ( nodeTag( plan ) == T_ModifyTable )
 	{
-		/* resultRelations‚ğì¬ */
+		/* resultRelationsã‚’ä½œæˆ */
 		List *resultRelations = NIL;
 		
 		resultRelations = lappend_int( resultRelations, parse->resultRelation );
@@ -652,13 +652,13 @@ create_planned_stmt( AltPlannerInfo *root, Plan *plan )
 
 /************************************************************
  * preprocess_targetlist
- * INSERT‚ÆUPDATE‚Ì‚½‚ß‚Ìˆ—(preptlist.c‚Æ“¯–¼‚Ì•ÊŠÖ”)
+ * INSERTã¨UPDATEã®ãŸã‚ã®å‡¦ç†(preptlist.cã¨åŒåã®åˆ¥é–¢æ•°)
  * 
- * ¡input
- * Query *parse      ... ƒNƒGƒŠƒcƒŠ[B
- *                       ƒNƒGƒŠƒcƒŠ[“à•”‚ÌtargetList, resultRelation‚È‚Ç‚ğg—p‚·‚éB
- * ForeignScan *scan ... ‚±‚ÌŠÖ”‚ğÀs‚µ‚½Œ‹‰ÊA¶¬‚³‚ê‚éTargetEntry‚ÌƒŠƒXƒg‚ğ
- *                       •R‚Ã‚¯‚éŠÖ”B
+ * â– input
+ * Query *parse      ... ã‚¯ã‚¨ãƒªãƒ„ãƒªãƒ¼ã€‚
+ *                       ã‚¯ã‚¨ãƒªãƒ„ãƒªãƒ¼å†…éƒ¨ã®targetList, resultRelationãªã©ã‚’ä½¿ç”¨ã™ã‚‹ã€‚
+ * ForeignScan *scan ... ã“ã®é–¢æ•°ã‚’å®Ÿè¡Œã—ãŸçµæœã€ç”Ÿæˆã•ã‚Œã‚‹TargetEntryã®ãƒªã‚¹ãƒˆã‚’
+ *                       ç´ã¥ã‘ã‚‹é–¢æ•°ã€‚
  ************************************************************/
 void
 preprocess_targetlist2( Query *parse, ForeignScan *scan )
@@ -667,13 +667,13 @@ preprocess_targetlist2( Query *parse, ForeignScan *scan )
 	Relation		target_relation = NULL;
 	List			*tlist;
 	
-	/* RangeTblEntry‚ÌƒŠƒXƒg‚©‚çAUpdate‘ÎÛ‚ÌRangeTblEntry‚ğæ“¾ */
+	/* RangeTblEntryã®ãƒªã‚¹ãƒˆã‹ã‚‰ã€Updateå¯¾è±¡ã®RangeTblEntryã‚’å–å¾— */
 	target_rte = rt_fetch( parse->resultRelation, parse->rtable );
 	
-	/* XV‘ÎÛ‚ÌƒŠƒŒ[ƒVƒ‡ƒ“‚Ìƒq[ƒv‚ğŠJ‚­ */
+	/* æ›´æ–°å¯¾è±¡ã®ãƒªãƒ¬ãƒ¼ã‚·ãƒ§ãƒ³ã®ãƒ’ãƒ¼ãƒ—ã‚’é–‹ã */
 	target_relation = heap_open( target_rte->relid, NoLock );
 	
-	/* targetList‚ğ’Ç‰Á‚·‚éB */
+	/* targetListã‚’è¿½åŠ ã™ã‚‹ã€‚ */
 	tlist = parse->targetList;
 	tlist = expand_targetlist( tlist, parse->commandType, parse->resultRelation, target_relation );
 	
@@ -688,7 +688,7 @@ preprocess_targetlist2( Query *parse, ForeignScan *scan )
 
 /*****************************************************************************
  *
- *		TARGETLIST EXPANSION (preptlist.c‚©‚çˆÚA‚µ‚Ü‚µ‚½B)
+ *		TARGETLIST EXPANSION (preptlist.cã‹ã‚‰ç§»æ¤ã—ã¾ã—ãŸã€‚)
  *
  *****************************************************************************/
 
