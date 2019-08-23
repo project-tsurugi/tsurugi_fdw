@@ -1,10 +1,10 @@
 /*-------------------------------------------------------------------------
  *
- * tsurugi_fdw.h
+ * ogawayama_fdw.h
  *		  Foreign-data wrapper for nedo db
  *
  * IDENTIFICATION
- *		  contrib/frontend/tsurugi_fdw.h
+ *		  contrib/frontend/ogawayama_fdw.h
  *
  *-------------------------------------------------------------------------
  */
