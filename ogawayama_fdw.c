@@ -11,7 +11,6 @@
 #include "postgres.h"
 
 #include "ogawayama_fdw.h"
-#include <stdbool.h>
 
 #include "dispatcher.h"
 #include "commands/explain.h"
