@@ -15,7 +15,8 @@
 extern "C" {
 #endif
 
-bool dispatch_query( char* str );
+bool dispatch_query( char* query_str );
+bool dispatch_statement( char* statement_str );
 
 #ifdef __cplusplus
 }
