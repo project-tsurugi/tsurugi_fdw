@@ -1,5 +1,5 @@
 MODULES = alt_planner
-PGFILEDESC = "alt_planner (yanagisawa)"
+PGFILEDESC = "alt_planner (V0)"
 OBJS = alt_planner.o $(WIN32RES)
 
 ifdef USE_PGXS
