@@ -19,6 +19,31 @@
 
 PG_MODULE_MAGIC;
 
+
+/* 構造体定義 */
+typedef struct OgawayamaScamState
+{
+	/* Stubオブジェクト */
+	
+	
+	/* Connectionオブジェクト */
+	
+	
+	/* Transactionオブジェクト */
+	
+	
+	/* ResultSetオブジェクト */
+	
+	
+	/* ResultSetMetaDataオブジェクト */
+	
+	
+	/* SQL文そのもの */
+	char *query;
+	
+}
+
+
 /*
  * SQL functions
  */
@@ -45,6 +70,15 @@ static bool ogawayamaAnalyzeForeignTable( Relation relation,
 							BlockNumber *totalpages );
 static List *ogawayamaImportForeignSchema( ImportForeignSchemaStmt *stmt,
 							Oid serverOid );
+
+
+/*
+ * Helper function
+ *
+ */
+
+OgawayamaScamState *init_osstate();
+
 
 /*
  * Foreign-data wrapper handler function: return a struct with pointers
@@ -87,7 +121,48 @@ ogawayama_fdw_handler( PG_FUNCTION_ARGS )
 static void 
 ogawayamaBeginForeignScan( ForeignScanState *node, int eflags )
 {
+	/* 変数宣言 */
+	ForeignScan			*fsplan;
+	EState	   			*estate;
+	OgawayamaScamState	*osstate;
 	
+	int					len;
+	
+	
+	/* 変数の初期化処理 */
+	fsplan = (ForeignScan *) node->ss.ps.plan;
+	estate = node->ss.ps.state;
+	
+	/* FDW実行中にnode->fdw_stateに入れる構造体を初期化 */
+	
+	osstate = init_osstate(); /* ★初期化 */
+	
+	/* コネクションの確立(確認) */
+	
+	
+	/* コミット、ロールバック時のコールバック関数を登録 */
+	
+	
+	
+	/* トランザクションの開始(確認) */
+	
+	
+	/* 
+	 * estate->es_sourceTextに格納されているSQL文を取り出し、
+	 * OgawayamaScanState構造体に格納する
+	 */
+	
+	len=1;
+	for (p=estate->es_sourceText; *p != ';' ;p++)
+	{
+		len++;
+	}
+	
+	osstate->query = (char*)malloc(len);
+	memcpy(osstate->query, estate->es_sourceText, len-1);
+	osstate->query[len-1]='\0';
+	
+
 }
 
 /*
@@ -100,7 +175,6 @@ ogawayamaIterateForeignScan( ForeignScanState *node )
 {
 	TupleTableSlot *slot = NULL;
 
-	dispatch_query( "SELECT * FROM table_name;" );
 
 	return slot;
 }
@@ -113,7 +187,7 @@ ogawayamaIterateForeignScan( ForeignScanState *node )
 static void 
 ogawayamaReScanForeignScan( ForeignScanState *node )
 {
-
+	/* 一旦スキップ。 */
 }
 
 /*
@@ -124,6 +198,7 @@ ogawayamaReScanForeignScan( ForeignScanState *node )
 static void 
 ogawayamaEndForeignScan( ForeignScanState *node )
 {
+	/* 変数類の解放 */
 
 }
 
@@ -215,4 +290,31 @@ ogawayamaImportForeignSchema( ImportForeignSchemaStmt *stmt,
 	List	*commands = NIL;
 
 	return commands;
+}
+
+
+
+/*
+ * init_osstate
+ * OgawayamaScanState構造体の初期化を行い、そのポインタを返却する。
+ * ★検討中★
+ * Stubの各種オブジェクトを参照するための何らかの処理を行う。
+ * 
+ * 
+ * ■input
+ *   今のところはなし
+ *
+ * ■output
+ *   OgawayamaScanStateへのポインタ
+ *
+ */
+OgawayamaScamState 
+*init_osstate()
+{
+	OgawayamaScanState *osstate;
+	
+	osstate = makeNode( OgawayamaScanState );
+	
+	
+	return osstate;
 }
