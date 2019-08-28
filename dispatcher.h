@@ -78,7 +78,7 @@ int
 resultset_get_float64( int column_index, double* value );
 
 int
-resultset_get_text( int column_index, int* value );
+resultset_get_text( int column_index, char** value );
 
 /**
  * @brief   dispatch INSERT/UPDATE/DELETE command to ogawayama.
