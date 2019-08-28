@@ -22,15 +22,14 @@ extern "C" {
 
 /**
  * @biref   initialize and connect to ogawayama.
- * @param   (in) worker process ID.
+ * @param   [in] worker process ID.
  * @return  0 if success. see ErrorCode.h
  */
 int get_connection( size_t pg_procno );
 
 /**
  * @brief   dispatch SELECT command to ogawayama.
- * @param   (in) query string.
- * @param   (out) pointer to ResultSet object pointer.
+ * @param   [in] query text.
  * @return  0 if success.
  */
 int dispatch_query( char* query_string );
@@ -43,46 +42,78 @@ int resultset_next_row();
 
 /**
  * @brief   number of columns in current row.
- * @return  0 if success.
+ * @return  number of columns.
  */
-int
-resultset_get_column_count();
+size_t resultset_get_column_count();
 
 /**
  * @brief   get current data type.
+ * @param   [in] column index. (1 origin)
+ * @param   [out] data type. see Metadata.h
  * @return  0 if success.
  */
-int
-resultset_get_type( int column_index, int* type );
+int resultset_get_type( int column_index, int* type );
 
 /**
  * @brief   get current data length.
+ * @param   [in] column index. (1 origin)
+ * @param   [out] data length. (byte)
  * @return  0 if success.
  */
-int
-resultset_get_length( int column_index, size_t* length );
+int resultset_get_length( int column_index, size_t* length );
 
-int
-resultset_get_int16( int column_index, int16* value );
+/**
+ * @brief   get column value as int16.
+ * @param   [in] column index. (1 origin)
+ * @param   [out] column value.
+ * @return  0 if success.
+ */
+int resultset_get_int16( int column_index, int16* value );
 
-int
-resultset_get_int32( int column_index, int32* value );
+/**
+ * @brief   get column value as int32.
+ * @param   [in] column index. (1 origin)
+ * @param   [out] column value.
+ * @return  0 if success.
+ */
+int resultset_get_int32( int column_index, int32* value );
 
-int
-resultset_get_int64( int column_index, int64* value );
+/**
+ * @brief   get column value as int64.
+ * @param   [in] column index. (1 origin)
+ * @param   [out] column value.
+ * @return  0 if success.
+ */
+int resultset_get_int64( int column_index, int64* value );
 
-int
-resultset_get_float32( int column_index, float* value );
+/**
+ * @brief   get column value as float32.
+ * @param   [in] column index. (1 origin)
+ * @param   [out] column value.
+ * @return  0 if success.
+ */
+int resultset_get_float32( int column_index, float* value );
 
-int
-resultset_get_float64( int column_index, double* value );
+/**
+ * @brief   get column value as float64.
+ * @param   [in] column index. (1 origin)
+ * @param   [out] column value.
+ * @return  0 if success.
+ */
+int resultset_get_float64( int column_index, double* value );
 
-int
-resultset_get_text( int column_index, char** value );
+/**
+ * @brief   get column value as text.
+ * @param   [in] column index. (1 origin)
+ * @param   [out] column value.
+ * @param   [in] buffer size.
+ * @return  0 if success.
+ */
+int resultset_get_text( int column_index, char** value, size_t bufsize );
 
 /**
  * @brief   dispatch INSERT/UPDATE/DELETE command to ogawayama.
- * @param   (in) statement string.
+ * @param   [in] statement text.
  * @return  0 if success.
  */
 int dispatch_statement( char* statement_string );
