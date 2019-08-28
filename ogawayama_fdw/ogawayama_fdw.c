@@ -26,12 +26,9 @@ typedef struct OgawayamaScanState
 	/* Stubオブジェクト */
 	
 	
-	/* Connectionオブジェクト */
-	
-	
 	/* Transactionオブジェクト */
-	
-	
+
+
 	/* ResultSetオブジェクト */
 	
 	
@@ -41,6 +38,9 @@ typedef struct OgawayamaScanState
 	/* SQL文そのもの */
 	char *query;
 	
+    /* ワーカプロセスのPID */
+	int MyPid;
+
 } OgawayamaScanState;
 
 
@@ -52,6 +52,7 @@ PG_FUNCTION_INFO_V1( ogawayama_fdw_handler );
 /*
  * FDW callback routines
  */
+static void ogawayamaGetForeignRelSize( PlannerInfo *root, RelOptInfo *baserel, Oid foreigntableid );
 static void ogawayamaBeginForeignScan( ForeignScanState *node, int eflags );
 static TupleTableSlot *ogawayamaIterateForeignScan( ForeignScanState *node );
 static void ogawayamaReScanForeignScan( ForeignScanState *node );
@@ -78,7 +79,7 @@ static List *ogawayamaImportForeignSchema( ImportForeignSchemaStmt *stmt,
  */
 
 OgawayamaScanState *init_osstate();
-
+char *init_query(char *sourceText);
 
 /*
  * Foreign-data wrapper handler function: return a struct with pointers
@@ -88,6 +89,8 @@ Datum
 ogawayama_fdw_handler( PG_FUNCTION_ARGS )
 {
 	FdwRoutine *routine = makeNode( FdwRoutine );
+
+	routine->GetForeignRelSize = ogawayamaGetForeignRelSize;
 
 	/* Functions for scanning foreign tables */
 	routine->BeginForeignScan = ogawayamaBeginForeignScan;
@@ -113,6 +116,18 @@ ogawayama_fdw_handler( PG_FUNCTION_ARGS )
 	PG_RETURN_POINTER( routine );
 }
 
+
+/*
+ * ogawayamaGetForeignRelSize
+ *		
+ *
+ */
+
+void
+ogawayamaGetForeignRelSize( PlannerInfo *root, RelOptInfo *baserel, Oid foreigntableid )
+{
+	/* dummy */
+}
 /*
  * ogawayamaBeginForeignScan
  *		
@@ -125,10 +140,6 @@ ogawayamaBeginForeignScan( ForeignScanState *node, int eflags )
 	ForeignScan			*fsplan;
 	EState	   			*estate;
 	OgawayamaScanState	*osstate;
-	
-	int					len;
-    char                *p;
-	
 	
 	/* 変数の初期化処理 */
 	fsplan = (ForeignScan *) node->ss.ps.plan;
@@ -152,17 +163,9 @@ ogawayamaBeginForeignScan( ForeignScanState *node, int eflags )
 	 * estate->es_sourceTextに格納されているSQL文を取り出し、
 	 * OgawayamaScanState構造体に格納する
 	 */
-	
-	len=1;
-	for ( p = estate->es_sourceText ; *p != ';' ; p++ )
-	{
-		len++;
-	}
-	
-	osstate->query = ( char * )malloc( len );
-	memcpy( osstate->query, estate->es_sourceText, len-1 );
-	osstate->query[ len-1 ] = '\0';
-	
+
+     osstate->query = init_query(estate->es_sourceText);
+
 
 }
 
@@ -174,7 +177,34 @@ ogawayamaBeginForeignScan( ForeignScanState *node, int eflags )
 static TupleTableSlot *
 ogawayamaIterateForeignScan( ForeignScanState *node )
 {
-	TupleTableSlot *slot = NULL;
+	TupleTableSlot *slot;
+	slot = node->ss.ss_ScanTupleSlot;
+
+
+	/* 初回実行ではない場合 */
+	if ( true )
+	{
+		/* フェッチ */
+
+	}
+	else
+	{
+		/* 初回実行なので、カーソルをオープンする */
+
+	}
+
+
+	/* 結果セットをタプルに入れる */
+	if ( true ) /* ★結果セットが存在するようであれば */
+	{
+		/* 結果セットをTupleTableSlotに合うように整形 */
+
+		/* 仮想タプルの初期化 */
+		ExecClearTuple(slot);
+
+		/* 仮想タプルを格納 */
+		ExecStoreVirtualTuple(slot);
+	}
 
 
 	return slot;
@@ -316,6 +346,38 @@ OgawayamaScanState
 	
 	osstate = ( OgawayamaScanState *) palloc0( sizeof( OgawayamaScanState ) );
 	
+	osstate->MyPid = pg_backend_pid();
 	
 	return osstate;
+}
+
+
+/*
+ * init_query
+ * 入力されたSQL文を取り出し、終了文字を添付したうえで呼び出し元にポインタを返却する
+ * 
+ * ■input
+ *  char *sourceText
+ *       EState->es_sourceTextのポインタ
+ * ■output
+ *  cahr *
+ *  終了文字を添付したSQL文の先頭ポインタ 
+ */
+char *init_query(char *sourceText)
+{
+    int len;
+    char *p;
+    char *res;
+
+	len=1;
+	for ( p = sourceText ; *p != ';' ; p++ )
+	{
+		len++;
+	}
+	
+	res = ( char * )malloc( len );
+	memcpy( res, sourceText, len-1 );
+	res[ len-1 ] = '\0';
+
+    return res;
 }
