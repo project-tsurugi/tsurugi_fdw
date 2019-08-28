@@ -21,33 +21,68 @@ extern "C" {
 #endif
 
 /**
- * @brief   dispatch SELECT command to ogawayama.
- * @param   (in)query string of the command.
- * @param   (out)pointer to ResultSet object.
- * @return  0 if success.
+ * @biref   initialize and connect to ogawayama.
+ * @param   (in) worker process ID.
+ * @return  0 if success. see ErrorCode.h
  */
-int dispatch_query( char* query_string, void** result_set_ptr );
+int get_connection( size_t pg_procno );
 
 /**
- * @brief get value from the current row.
- * @param   (in)pointer to ResultSet object.
- * @param   (out)value of the column.
- * @param   (out)type of the value.
- * @param   (out)length of the value.
+ * @brief   dispatch SELECT command to ogawayama.
+ * @param   (in) query string.
+ * @param   (out) pointer to ResultSet object pointer.
  * @return  0 if success.
  */
-int result_set_next_column( void* result_set, void** value,  int* type, int* length );
+int dispatch_query( char* query_string );
 
 /**
  * @brief   move current to the next tuple.
- * @param   (in)pointer to ResultSet object.
  * @return  0 if the ResultSet object has next tupple.
  */
-int result_set_next_row( void* result_set );
+int resultset_next_row();
+
+/**
+ * @brief   number of columns in current row.
+ * @return  0 if success.
+ */
+int
+resultset_get_column_count();
+
+/**
+ * @brief   get current data type.
+ * @return  0 if success.
+ */
+int
+resultset_get_type( int column_index, int* type );
+
+/**
+ * @brief   get current data length.
+ * @return  0 if success.
+ */
+int
+resultset_get_length( int column_index, int* length );
+
+int
+resultset_get_int16( int column_index, int16* value );
+
+int
+resultset_get_int32( int column_index, int32* value );
+
+int
+resultset_get_int64( int column_index, int64* value );
+
+int
+resultset_get_float32( int column_index, float* value );
+
+int
+resultset_get_float64( int column_index, double* value );
+
+int
+resultset_get_text( int column_index, int* value );
 
 /**
  * @brief   dispatch INSERT/UPDATE/DELETE command to ogawayama.
- * @param   (in)the command string
+ * @param   (in) statement string.
  * @return  0 if success.
  */
 int dispatch_statement( char* statement_string );
