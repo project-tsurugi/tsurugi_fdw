@@ -25,23 +25,36 @@
 
 using namespace ogawayama::stub;
 
-const char* SHARED_MEMOERY_NAME = "PostgreSQL";
-
 static StubPtr stub;
 static ConnectionPtr connection;
 static ResultSetPtr resultset;
 static MetadataPtr metadata;
 
 /**
+ * @biref   initialize stub.
+ * @param   [in] shared memoery name.
+ * @return  0 if success. see ErrorCode.h
+ */
+int 
+init_stub( const char* name )
+{
+    ErrorCode error = ErrorCode::OK;
+
+    stub = make_stub( name );
+
+    return (int) error;
+}
+
+/**
  * @biref   initialize and connect to ogawayama.
  * @param   [in] worker process ID.
  * @return  0 if success. see ErrorCode.h
  */
-int get_connection( size_t pg_procno )
+int 
+get_connection( size_t pg_procno )
 {
     ErrorCode error = ErrorCode::OK;
 
-    stub = make_stub( SHARED_MEMOERY_NAME );
     error = stub->get_connection( pg_procno, connection );
 
     return (int) error;
@@ -53,7 +66,7 @@ int get_connection( size_t pg_procno )
  * @return  0 if success.
  */
 int 
-dispatch_query( char* query_string )
+dispatch_query( const char* query_string )
 {
     ErrorCode error = ErrorCode::OK;
     std::string query( query_string );
@@ -68,6 +81,10 @@ dispatch_query( char* query_string )
     if ( error != ErrorCode::OK )
         goto Exit;
 
+    error = transaction->commit();
+    if ( error != ErrorCode::OK )
+        goto Exit;
+
     error = resultset->get_metadata( metadata );
     if ( error != ErrorCode::OK )
         goto Exit;
@@ -78,7 +95,6 @@ Exit:
 
 /**
  * @brief   move current to the next tuple.
- * @param   (in)pointer to ResultSet object.
  * @return  0 if the ResultSet object has next tupple.
  */
 int 
@@ -300,10 +316,10 @@ resultset_get_text( int column_index, char** value, size_t bufsize )
 
 /**
  * @brief   dispatch INSERT/UPDATE/DELETE command to ogawayama.
- * @param   (in)statement string.
+ * @param   [in] statement text.
  * @return  0 if success.
  */
-int dispatch_statement( char* statement_string )
+int dispatch_statement( const char* statement_string )
 {
     ErrorCode error = ErrorCode::OK;
     std::string statement;

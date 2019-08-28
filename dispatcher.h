@@ -21,7 +21,14 @@ extern "C" {
 #endif
 
 /**
- * @biref   initialize and connect to ogawayama.
+ * @biref   initialize stub.
+ * @param   [in] shared memoery name.
+ * @return  0 if success. see ErrorCode.h
+ */
+int init_stub( const char* name );
+
+/**
+ * @biref   connect to ogawayama.
  * @param   [in] worker process ID.
  * @return  0 if success. see ErrorCode.h
  */
@@ -32,7 +39,7 @@ int get_connection( size_t pg_procno );
  * @param   [in] query text.
  * @return  0 if success.
  */
-int dispatch_query( char* query_string );
+int dispatch_query( const char* query_string );
 
 /**
  * @brief   move current to the next tuple.
@@ -116,7 +123,7 @@ int resultset_get_text( int column_index, char** value, size_t bufsize );
  * @param   [in] statement text.
  * @return  0 if success.
  */
-int dispatch_statement( char* statement_string );
+int dispatch_statement( const char* statement_string );
 
 #ifdef __cplusplus
 }
