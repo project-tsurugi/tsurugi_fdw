@@ -60,7 +60,7 @@ resultset_get_type( int column_index, int* type );
  * @return  0 if success.
  */
 int
-resultset_get_length( int column_index, int* length );
+resultset_get_length( int column_index, size_t* length );
 
 int
 resultset_get_int16( int column_index, int16* value );
