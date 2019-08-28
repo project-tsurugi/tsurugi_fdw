@@ -40,7 +40,12 @@ init_stub( const char* name )
 {
     ErrorCode error = ErrorCode::OK;
 
-    stub = make_stub( name );
+    try {
+        stub = make_stub( name );
+    }
+    catch (...) {
+
+    }
 
     return (int) error;
 }
@@ -55,7 +60,12 @@ get_connection( size_t pg_procno )
 {
     ErrorCode error = ErrorCode::OK;
 
-    error = stub->get_connection( pg_procno, connection );
+    try {
+        error = stub->get_connection( pg_procno, connection );
+    }
+    catch (...) {
+
+    }
 
     return (int) error;
 }
@@ -69,25 +79,31 @@ int
 dispatch_query( const char* query_string )
 {
     ErrorCode error = ErrorCode::OK;
-    std::string query( query_string );
-    std::unique_ptr<Transaction> transaction;
 
-    error = connection->begin( transaction );
-    if ( error != ErrorCode::OK )
-        goto Exit;
+    try {
+        std::string query( query_string );
+        std::unique_ptr<Transaction> transaction;
 
-    // SELECT command
-    error = transaction->execute_query( query, resultset );
-    if ( error != ErrorCode::OK )
-        goto Exit;
+        error = connection->begin( transaction );
+        if ( error != ErrorCode::OK )
+            goto Exit;
 
-    error = transaction->commit();
-    if ( error != ErrorCode::OK )
-        goto Exit;
+        // SELECT command
+        error = transaction->execute_query( query, resultset );
+        if ( error != ErrorCode::OK )
+            goto Exit;
 
-    error = resultset->get_metadata( metadata );
-    if ( error != ErrorCode::OK )
-        goto Exit;
+        error = transaction->commit();
+        if ( error != ErrorCode::OK )
+            goto Exit;
+
+        error = resultset->get_metadata( metadata );
+        if ( error != ErrorCode::OK )
+            goto Exit;
+    }
+    catch (...) {
+
+    }
 
 Exit:
     return (int) error;
@@ -100,7 +116,16 @@ Exit:
 int 
 resultset_next_row()
 {
-    return (int) resultset->next();
+    ErrorCode error = ErrorCode::OK;
+
+    try {
+        error = resultset->next();
+    }
+    catch (...) {
+
+    }
+
+    return (int) error;
 }
 
 /**
@@ -110,7 +135,16 @@ resultset_next_row()
 size_t
 resultset_get_column_count()
 {
-    return (size_t) (metadata->get_types()).size();
+    size_t count = 0;
+    
+    try {
+        count = (metadata->get_types()).size();
+    }
+    catch (...) {
+
+    }
+
+    return count;
 }
 
 /**
@@ -123,6 +157,7 @@ int
 resultset_get_type( int column_index, int* type )
 {
     ErrorCode error = ErrorCode::OK;
+
     try {
         Metadata::SetOfTypeData types = metadata->get_types();
         auto ite = types.begin();
@@ -147,6 +182,7 @@ int
 resultset_get_length( int column_index, int* length )
 {
     ErrorCode error = ErrorCode::OK;
+
     try {
         Metadata::SetOfTypeData types = metadata->get_types();
         auto ite = types.begin();
@@ -171,6 +207,7 @@ int
 resultset_get_int16( int column_index, int16* value )
 {
     ErrorCode error = ErrorCode::OK;
+
     try {
         Metadata::SetOfTypeData types = metadata->get_types();
         auto ite = types.begin();
@@ -197,6 +234,7 @@ int
 resultset_get_int32( int column_index, int32* value )
 {
     ErrorCode error = ErrorCode::OK;
+
     try {
         Metadata::SetOfTypeData types = metadata->get_types();
         auto ite = types.begin();
@@ -223,6 +261,7 @@ int
 resultset_get_int64( int column_index, int64* value )
 {
     ErrorCode error = ErrorCode::OK;
+
     try {
         Metadata::SetOfTypeData types = metadata->get_types();
         auto ite = types.begin();
@@ -248,6 +287,7 @@ int
 resultset_get_float32( int column_index, float* value )
 {
     ErrorCode error = ErrorCode::OK;
+
     try {
         Metadata::SetOfTypeData types = metadata->get_types();
         auto ite = types.begin();
@@ -273,6 +313,7 @@ int
 resultset_get_float64( int column_index, double* value )
 {
     ErrorCode error = ErrorCode::OK;
+
     try {
         Metadata::SetOfTypeData types = metadata->get_types();
         auto ite = types.begin();
@@ -296,16 +337,17 @@ resultset_get_float64( int column_index, double* value )
  * @return  0 if success.
  */
 int
-resultset_get_text( int column_index, char** value, size_t bufsize )
+resultset_get_text( int column_index, char* value, size_t bufsize )
 {
     ErrorCode error = ErrorCode::OK;
+
     try {
         Metadata::SetOfTypeData types = metadata->get_types();
         auto ite = types.begin();
         std::advance( ite, column_index );
         std::string_view v;
         resultset->next_column(v);
-        v.copy( *value, bufsize - 1 );
+        v.copy( value, bufsize - 1 );
     }
     catch (...) {
         
@@ -325,10 +367,15 @@ int dispatch_statement( const char* statement_string )
     std::string statement;
     std::unique_ptr<Transaction> transaction;
 
-     error = connection->begin( transaction );
+    try { 
+        error = connection->begin( transaction );
 
-    // UPDATE/INSERT/DELETE command
-    error = transaction->execute_statement( statement );
+        // UPDATE/INSERT/DELETE command
+        error = transaction->execute_statement( statement );
+    }
+    catch (...) {
+
+    }
 
     return (int) error;
 }
