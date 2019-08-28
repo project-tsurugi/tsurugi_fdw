@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DISPATCH_QUERY_H
-#define DISPATCH_QUERY_H
+#ifndef DISPATCHER_H
+#define DISPATCHER_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -129,4 +129,4 @@ int dispatch_statement( const char* statement_string );
 }
 #endif
 
-#endif // DISPATCH_QUERY_H
+#endif // DISPATCHER_H
