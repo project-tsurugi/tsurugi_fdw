@@ -41,7 +41,7 @@ int dispatch_query( char* query_string );
 int resultset_next_row();
 
 /**
- * @brief   number of columns in current row.
+ * @brief   number of columns in the current row.
  * @return  number of columns.
  */
 size_t resultset_get_column_count();
@@ -57,7 +57,7 @@ int resultset_get_type( int column_index, int* type );
 /**
  * @brief   get current data length.
  * @param   [in] column index. (1 origin)
- * @param   [out] data length. (byte)
+ * @param   [out] data length. (bytes)
  * @return  0 if success.
  */
 int resultset_get_length( int column_index, size_t* length );
