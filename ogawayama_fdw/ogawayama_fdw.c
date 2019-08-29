@@ -41,6 +41,12 @@ typedef struct OgawayamaScanState
     /* ワーカプロセスのPID */
 	int MyPid;
 
+	/* SELECT対象の列数 */
+	int NumCols;
+
+	/* SELECT予定の列のデータ型(Oid)用のポインタ */
+	Oid *pgtype; 
+
 } OgawayamaScanState;
 
 
@@ -79,7 +85,9 @@ static List *ogawayamaImportForeignSchema( ImportForeignSchemaStmt *stmt,
  */
 
 OgawayamaScanState *init_osstate();
-char *init_query(char *sourceText);
+char *init_query( char *sourceText );
+void store_pg_data_type( OgawayamaScanState *osstate, List *tlist );
+void convert_tuple( OgawayamaScanState *osstate, Datum *values, bool *nulls );
 
 /*
  * Foreign-data wrapper handler function: return a struct with pointers
@@ -149,6 +157,12 @@ ogawayamaBeginForeignScan( ForeignScanState *node, int eflags )
 	
 	osstate = init_osstate(); /* ★初期化 */
 	
+	/* SELECT対象の列数を設定 */
+	osstate->NumCols = fsplan->scan.plan.targetlist->length;
+
+	/* SELECT対象の列のデータ型を格納 */
+	store_pg_data_type(osstate, fsplan->scan.plan.targetlist);
+
 	/* コネクションの確立(確認) */
 	
 	
@@ -166,6 +180,9 @@ ogawayamaBeginForeignScan( ForeignScanState *node, int eflags )
 
      osstate->query = init_query(estate->es_sourceText);
 
+	 /* osstateをnode->fdw_stateに格納する */
+	 node->fdw_state = osstate;
+
 
 }
 
@@ -178,9 +195,12 @@ static TupleTableSlot *
 ogawayamaIterateForeignScan( ForeignScanState *node )
 {
 	TupleTableSlot *slot;
+	OgawayamaScanState *osstate;
+
+	osstate = (OgawayamaScanState *)node->fdw_state;
+	
 	slot = node->ss.ss_ScanTupleSlot;
-
-
+	
 	/* 初回実行ではない場合 */
 	if ( true )
 	{
@@ -197,11 +217,12 @@ ogawayamaIterateForeignScan( ForeignScanState *node )
 	/* 結果セットをタプルに入れる */
 	if ( true ) /* ★結果セットが存在するようであれば */
 	{
-		/* 結果セットをTupleTableSlotに合うように整形 */
-
 		/* 仮想タプルの初期化 */
 		ExecClearTuple(slot);
 
+		/* 結果セットをTupleTableSlotに合うように整形 */
+		convert_tuple( osstate, slot->tts_values, slot->tts_isnull );
+		
 		/* 仮想タプルを格納 */
 		ExecStoreVirtualTuple(slot);
 	}
@@ -347,7 +368,9 @@ OgawayamaScanState
 	osstate = ( OgawayamaScanState *) palloc0( sizeof( OgawayamaScanState ) );
 	
 	osstate->MyPid = pg_backend_pid();
-	
+	osstate->NumCols = 0;
+	osstate->pgtype = NULL;
+
 	return osstate;
 }
 
@@ -380,4 +403,74 @@ char *init_query(char *sourceText)
 	res[ len-1 ] = '\0';
 
     return res;
+}
+
+/*
+ * store_pg_data_type
+ * SELECT対象の列のデータ型を確認し、osstate->pgtypeに格納していく。
+ * osstate->NumColsに値を格納した後に呼び出す。
+ * 
+ * ★コメント★ 
+ * oracle_fdwのconvertTupleに影響を受け、PostgreSQLでのデータ型も把握した方が良いと
+ * 判断したため用意した関数。
+ * 本当は同様の処理はalt_plannerで実施してもいいのかもしれない。
+ * 
+ * ■input
+ *  OgawayamaScanState *osstate ... 設定するpgtypeがあるosstate
+ *  List *tlist ... ForeignScanのtargetlist。
+ *                  alt_plannerを通った結果、TargetEntry->Exprは全てVarとなっている
+ *                  前提。
+ */
+
+void 
+store_pg_data_type( OgawayamaScanState *osstate, List *tlist )
+{
+	ListCell *lc;
+	TargetEntry *te;
+	Var *var;
+	Oid *dataType;
+	Node *node;
+	int count;
+
+	/* メモリ領域の確保 */
+	dataType = (Oid *) palloc( osstate->NumCols * sizeof( Oid ) );
+
+	count = 0;
+	foreach( lc, tlist )
+	{
+		te = (TargetEntry *) lfirst( lc );
+		node = (Node *) te->expr;
+
+		if ( nodeTag( node ) == T_Var )
+		{
+			var = (Var *) node;
+			dataType[count] = var->vartype;
+		}
+		else
+		{
+			/* Var以外であるパターンは考えていないのでエラーにします */
+			elog( NOTICE, "Error : stpre_pg_data_type : Var以外" );
+		}
+		count ++;
+	}
+
+	osstate->pgtype = dataType;
+
+}
+
+/*
+ * convert_tuple
+ * 仮想タプルとして格納する前段階として、slot->tts_valuesとslot->tts_nullsを
+ * 手動で編集する。
+ * 処理内容については、oracle_fdwのconvaertTuple関数を参考にする。
+ *
+ * ■input
+ *  OgawayamaScanState *osstate ... 中のNumColsとpgtypeを使用する
+ *  Datum *values ... slot->valuesのポインタ
+ *  bool *nulls ... slot->nullsのポインタ
+ */
+void 
+convert_tuple( OgawayamaScanState *osstate, Datum *values, bool *nulls )
+{
+	/* これから記述します。 */
 }
