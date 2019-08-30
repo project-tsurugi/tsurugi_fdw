@@ -16,7 +16,6 @@
 #include "postgres.h"
 #include <memory>
 #include <string>
-#include <dlfcn.h>
 
 #include "dispatcher.h"
 
@@ -165,6 +164,74 @@ resultset_get_type( int column_index, int* type )
         std::advance( ite, column_index - 1 );
 
         *type = (int) ite->get_type();
+    }
+    catch (...) {
+        
+    }
+
+    return (int) error;
+}
+
+static PG_TYPE
+get_pgtype( Metadata::ColumnType::Type type )
+{
+    PG_TYPE pg_type;
+
+    switch ( type ) 
+    {
+        case Metadata::ColumnType::Type::INT16:
+            pg_type = PGTYPE_INT16;
+            break;
+
+        case Metadata::ColumnType::Type::INT32:
+            pg_type =PGTYPE_INT32;
+            break;
+
+        case Metadata::ColumnType::Type::INT64:
+            pg_type = PGTYPE_INT64;
+            break;
+
+        case Metadata::ColumnType::Type::FLOAT32:
+            pg_type = PGTYPE_FLOAT32;
+            break;
+
+        case Metadata::ColumnType::Type::FLOAT64:
+            pg_type = PGTYPE_FLOAT64;
+            break;
+
+        case Metadata::ColumnType::Type::TEXT:
+            pg_type = PGTYPE_TEXT;
+            break;
+
+        case Metadata::ColumnType::Type::NULL_VALUE:
+            break;
+
+        default:
+            break;
+    }
+
+    return pg_type;
+}
+
+/**
+ * @brief   get current data type.
+ * @param   [in] column index. (1 origin)
+ * @param   [out] pg data type. see datatype.h
+ * @return  0 if success.
+ */
+int
+resultset_get_pgtype( int column_index, PG_TYPE* pg_type )
+{
+    ErrorCode error = ErrorCode::OK;
+    Metadata::ColumnType::Type type;
+
+    try {
+        Metadata::SetOfTypeData types = metadata->get_types();
+        auto ite = types.begin();
+        std::advance( ite, column_index - 1 );
+
+        type = ite->get_type();
+        *pg_type = get_pgtype( type );
     }
     catch (...) {
         

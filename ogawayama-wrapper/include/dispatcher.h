@@ -20,6 +20,8 @@
 extern "C" {
 #endif
 
+#include "datatype.h"
+
 /**
  * @biref   initialize stub.
  * @param   [in] shared memoery name.
@@ -60,6 +62,15 @@ size_t resultset_get_column_count();
  * @return  0 if success.
  */
 int resultset_get_type( int column_index, int* type );
+
+/**
+ * @brief   get current data type.
+ * @param   [in] column index. (1 origin)
+ * @param   [out] pg data type. see datatype.h
+ * @return  0 if success.
+ */
+int
+resultset_get_pgtype( int column_index, PG_TYPE* pg_type );
 
 /**
  * @brief   get current data length.
