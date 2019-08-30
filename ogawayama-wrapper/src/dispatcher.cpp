@@ -16,6 +16,7 @@
 #include "postgres.h"
 #include <memory>
 #include <string>
+#include <dlfcn.h>
 
 #include "dispatcher.h"
 
