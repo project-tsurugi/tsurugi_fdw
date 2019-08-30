@@ -10,31 +10,32 @@
  */
 #include "postgres.h"
 
-/* #include "ogawayama_fdw.h" */
+#include "ogawayama_fdw.h"
 #include <stdbool.h>
 
-/* #include "dispatcher.h" */
+#include "dispatcher.h"
 #include "commands/explain.h"
 #include "foreign/fdwapi.h"
+#include "catalog/pg_type.h"
+#include <stddef.h>
 
 PG_MODULE_MAGIC;
 
+/* 取り扱いデータ型一覧 */
+#define NULL_VALUE 0 
+#define INT16 1
+#define INT32 2
+#define INT64 3
+#define FLOAT32 4
+#define FLOAT64 5
+#define TEXT 6
 
 /* 構造体定義 */
 typedef struct OgawayamaScanState
 {
-	/* Stubオブジェクト */
-	
-	
-	/* Transactionオブジェクト */
+	/* SQLのカーソルをOPENしているかどうか */
+	bool isCursorOpen;
 
-
-	/* ResultSetオブジェクト */
-	
-	
-	/* ResultSetMetaDataオブジェクト */
-	
-	
 	/* SQL文そのもの */
 	char *query;
 	
@@ -196,35 +197,52 @@ ogawayamaIterateForeignScan( ForeignScanState *node )
 {
 	TupleTableSlot *slot;
 	OgawayamaScanState *osstate;
-
+	
 	osstate = (OgawayamaScanState *)node->fdw_state;
 	
 	slot = node->ss.ss_ScanTupleSlot;
 	
 	/* 初回実行ではない場合 */
-	if ( true )
+	if ( osstate->isCursorOpen )
 	{
-		/* フェッチ */
 
+		if ( resultset_next_row() == 0 ) 
+		{
+			/* 次の結果セットがある場合…？ */
+			/* 仮想タプルの初期化 */
+			ExecClearTuple(slot);
+
+			/* 結果セットをTupleTableSlotに合うように整形しつつフェッチ */
+			convert_tuple( osstate, slot->tts_values, slot->tts_isnull );
+		
+			/* 仮想タプルを格納 */
+			ExecStoreVirtualTuple(slot);
+		}
+		else
+		{
+			/* 次の結果セットはないので、slotをnullにする */
+			slot = null;
+		}
 	}
 	else
 	{
 		/* 初回実行なので、カーソルをオープンする */
-
+		if ( dispatch_query( osstate->query ) == 0 )
+		{
+			osstate->isCursorOpen = true;
+		}
+		else
+		{
+			elog ( NOTICE, "dispatch_queryに失敗しました" );
+			osstate->isCursorOpen = false;
+		}		
 	}
 
 
 	/* 結果セットをタプルに入れる */
 	if ( true ) /* ★結果セットが存在するようであれば */
 	{
-		/* 仮想タプルの初期化 */
-		ExecClearTuple(slot);
 
-		/* 結果セットをTupleTableSlotに合うように整形 */
-		convert_tuple( osstate, slot->tts_values, slot->tts_isnull );
-		
-		/* 仮想タプルを格納 */
-		ExecStoreVirtualTuple(slot);
 	}
 
 
@@ -367,6 +385,7 @@ OgawayamaScanState
 	
 	osstate = ( OgawayamaScanState *) palloc0( sizeof( OgawayamaScanState ) );
 	
+	osstate->isCursorOpen = false;
 	osstate->MyPid = pg_backend_pid();
 	osstate->NumCols = 0;
 	osstate->pgtype = NULL;
@@ -472,5 +491,152 @@ store_pg_data_type( OgawayamaScanState *osstate, List *tlist )
 void 
 convert_tuple( OgawayamaScanState *osstate, Datum *values, bool *nulls )
 {
-	/* これから記述します。 */
+	/* 変数宣言 */
+	int i, dummy;
+	int otype; /* Stub側のデータ型を格納する */
+
+	for ( i = 0; i < osstate->NumCols; i++ )
+	{
+		/* Stub側のデータ型を取得する */
+		if ( resultset_get_type( i + 1, &otype) != 0 )
+		{
+			elog ( NOTICE, "結果セットのデータ型を取得できませんでした。" );
+		}
+		else
+		{
+			/* データ型毎に処理を変える(かもしれない) */
+			switch ( otype )
+			{
+				case NULL_VALUE:
+					/* NULL値が返ってきた場合 */
+					nulls[i] = true;
+					values[i] = PointerGetDatum( NULL );
+					break;
+
+				case INT16:
+					/* PostgreSQLでのsmallint */
+					if ( osstate->pgtype[i] != INT2OID )
+					{
+						elog ( NOTICE, "データ型不一致" );
+
+						break;
+					}
+					else
+					{
+						int16 int16_val;
+
+						dummy = resultset_get_int16( i + 1, &int16_val );
+						nulls[i] = false;
+						values[i] = Int16GetDatum( int16_val );
+
+						break;
+					}
+
+				case INT32:
+					/* PostgreSQLでのinteger */
+					if ( osstate->pgtype[i] != INT4OID )
+					{
+						elog (NOTICE, "データ型不一致");
+						
+						break;
+					}
+					else
+					{
+						int32 int32_val;
+
+						dummy = resultset_get_int32( i + 1, &int32_val );
+						nulls[i] = false;
+						values[i] = Int32GetDatum( int32_val );
+
+						break;
+					}
+
+				case INT64:
+					/* PostgreSQLでのbigint */
+					if ( osstate->pgtype[i] != INT8OID )
+					{
+						elog( NOTICE, "データ型不一致" );
+
+						break;
+					}
+					else
+					{
+						int64 int64_val;
+
+						dummy = resultset_get_int64( i + 1, &int64_val );
+						nulls[i] = false;
+						values[i] = Int64GetDatum( int64_val );
+						
+						break;
+					}
+				case FLOAT32:
+					/* PostgreSQLでのreal */
+					if ( osstate->pgtype[i] != FLOAT4OID )
+					{
+						elog( NOTICE, "データ型不一致" );
+
+						break;
+					}
+					else
+					{
+						float4 float4_val;
+
+						dummy = resultset_get_float32( i + 1, &float4_val );
+						nulls[i] = false;
+						values[i] = Float4GetDatum( float4_val );
+
+						break;
+					}
+
+				case FLOAT64:
+					/* PostgreSQLでのdouble precision */
+					if ( osstate->pgtype[i] != FLOAT8OID )
+					{
+						elog ( NOTICE, "データ型不一致" );
+
+						break;
+					}
+					else
+					{
+						float8 float8_val;
+
+						dummy = resultset_get_float64( i + 1, &float8_val );
+						nulls[i] = false;
+						values[i] = Float8GetDatum( float8_val );
+
+						break;
+					}
+				case TEXT:
+					/* PostgreSQLでのcharacter, character varying, text */
+					if ( osstate->pgtype[i] != BPCHAROID &&
+					     osstate->pgtype[i] != VARCHAROID &&
+						 osstate->pgtype[i] != TEXTOID )
+					{
+						 elog( NOTICE, "データ型不一致" );
+
+						 break;
+					}
+					else
+					{
+						char *char_val;
+						size_t char_len;
+
+						dummy = resultset_get_length( i + 1, &char_len );
+						char_val = (char *) palloc0( char_len );
+						dummy = resultset_get_text( i + 1, char_val, char_len );
+						nulls[i] = false;
+						values[i] = CStringGetDatum( char_val );
+
+						break;
+					}
+					
+				default:
+					/* サポート対象外の型の場合 */
+					elog( NOTICE, "サポート対象外の型が返されました。" );
+					break;
+			}
+			
+		}
+
+	}
 }
