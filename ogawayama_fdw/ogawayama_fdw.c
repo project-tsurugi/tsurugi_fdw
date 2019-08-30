@@ -165,12 +165,9 @@ ogawayamaBeginForeignScan( ForeignScanState *node, int eflags )
 	store_pg_data_type(osstate, fsplan->scan.plan.targetlist);
 
 	/* コネクションの確立(確認) */
-	
-	
+		
 	/* コミット、ロールバック時のコールバック関数を登録 */
-	
-	
-	
+		
 	/* トランザクションの開始(確認) */
 	
 	
@@ -183,7 +180,6 @@ ogawayamaBeginForeignScan( ForeignScanState *node, int eflags )
 
 	 /* osstateをnode->fdw_stateに格納する */
 	 node->fdw_state = osstate;
-
 
 }
 
@@ -237,14 +233,6 @@ ogawayamaIterateForeignScan( ForeignScanState *node )
 			osstate->isCursorOpen = false;
 		}		
 	}
-
-
-	/* 結果セットをタプルに入れる */
-	if ( true ) /* ★結果セットが存在するようであれば */
-	{
-
-	}
-
 
 	return slot;
 }
@@ -440,7 +428,6 @@ char *init_query(char *sourceText)
  *                  alt_plannerを通った結果、TargetEntry->Exprは全てVarとなっている
  *                  前提。
  */
-
 void 
 store_pg_data_type( OgawayamaScanState *osstate, List *tlist )
 {
