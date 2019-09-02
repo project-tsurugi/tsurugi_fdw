@@ -27,6 +27,7 @@ using namespace ogawayama::stub;
 
 static StubPtr stub;
 static ConnectionPtr connection;
+static TransactionPtr transaction;
 static ResultSetPtr resultset;
 static MetadataPtr metadata;
 
@@ -42,6 +43,9 @@ init_stub( const char* name )
 
     try {
         stub = make_stub( name );
+        connection = NULL;
+        resultset = NULL;
+        metadata = NULL;
     }
     catch (...) {
 
@@ -51,7 +55,7 @@ init_stub( const char* name )
 }
 
 /**
- * @biref   initialize and connect to ogawayama.
+ * @biref   connect to ogawayama.
  * @param   [in] worker process ID.
  * @return  0 if success. see ErrorCode.h
  */
@@ -61,6 +65,7 @@ get_connection( size_t pg_procno )
     ErrorCode error = ErrorCode::OK;
 
     try {
+        connection = NULL;
         error = stub->get_connection( pg_procno, connection );
     }
     catch (...) {
@@ -68,6 +73,19 @@ get_connection( size_t pg_procno )
     }
 
     return (int) error;
+}
+
+/**
+ * @brief   close connection to ogawayama.
+ */
+void close_connection()
+{
+    try {
+        connection = NULL;
+    }
+    catch (...) {
+
+    }
 }
 
 /**
@@ -82,7 +100,8 @@ dispatch_query( const char* query_string )
 
     try {
         std::string query( query_string );
-        std::unique_ptr<Transaction> transaction;
+        transaction = NULL;
+        resultset = NULL;       
 
         error = connection->begin( transaction );
         if ( error != ErrorCode::OK )

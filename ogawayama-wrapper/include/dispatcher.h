@@ -37,6 +37,11 @@ int init_stub( const char* name );
 int get_connection( size_t pg_procno );
 
 /**
+ * @brief   free result set memory.
+ */
+void close_connection();
+
+/**
  * @brief   dispatch SELECT command to ogawayama.
  * @param   [in] query text.
  * @return  0 if success.
