@@ -1,4 +1,4 @@
-# Copyright 2019-2019 tsurugi project.
+# Copyright 2019-2019 tsurugi fin project.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,28 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library( ogawayama-wrapper 
+add_library( ogawayama-stub 
     SHARED
-        dispatcher.cpp
+        connection.cpp
+        result_set.cpp
+        stub.cpp
+        transaction.cpp
 )
 
-target_include_directories( ogawayama-wrapper
-    PRIVATE ${PROJECT_SOURCE_DIR}/include
+target_include_directories( ogawayama-stub
     PRIVATE ${PROJECT_SOURCE_DIR}/../../ogawayama/stub/include
     PRIVATE ${PROJECT_SOURCE_DIR}/../../ogawayama/stub/include/ogawayama/stub
-    PRIVATE ${PROJECT_SOURCE_DIR}/../../postgresql-11.1/src/include
+    PRIVATE ${PROJECT_SOURCE_DIR}/test/stub/include
 )
 
-#find_library( DEPEND_LIBRALIES ogawayama-stub HINTS ${PROJECT_SOURCE_DIR}/libs )
-
-target_link_libraries( ogawayama-wrapper 
-#    PRIVATE ${DEPEND_LIBRALIES} 
-    PRIVATE ogawayama-stub
-)
-
-set_target_properties( ogawayama-wrapper
+set_target_properties( ogawayama-stub
     PROPERTIES
-        LIBRARY_OUTPUT_NAME "ogawayama-wrapper"
-        LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/build"
+        LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/libs"
         ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/build"
 )
