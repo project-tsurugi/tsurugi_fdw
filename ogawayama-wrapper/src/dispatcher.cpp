@@ -16,7 +16,6 @@
 #include "postgres.h"
 #include <memory>
 #include <string>
-#include <dlfcn.h>
 
 #include "dispatcher.h"
 
@@ -28,6 +27,7 @@ using namespace ogawayama::stub;
 
 static StubPtr stub;
 static ConnectionPtr connection;
+static TransactionPtr transaction;
 static ResultSetPtr resultset;
 static MetadataPtr metadata;
 
@@ -43,6 +43,9 @@ init_stub( const char* name )
 
     try {
         stub = make_stub( name );
+        connection = NULL;
+        resultset = NULL;
+        metadata = NULL;
     }
     catch (...) {
 
@@ -52,7 +55,7 @@ init_stub( const char* name )
 }
 
 /**
- * @biref   initialize and connect to ogawayama.
+ * @biref   connect to ogawayama.
  * @param   [in] worker process ID.
  * @return  0 if success. see ErrorCode.h
  */
@@ -62,6 +65,7 @@ get_connection( size_t pg_procno )
     ErrorCode error = ErrorCode::OK;
 
     try {
+        connection = NULL;
         error = stub->get_connection( pg_procno, connection );
     }
     catch (...) {
@@ -69,6 +73,19 @@ get_connection( size_t pg_procno )
     }
 
     return (int) error;
+}
+
+/**
+ * @brief   close connection to ogawayama.
+ */
+void close_connection()
+{
+    try {
+        connection = NULL;
+    }
+    catch (...) {
+
+    }
 }
 
 /**
@@ -83,7 +100,8 @@ dispatch_query( const char* query_string )
 
     try {
         std::string query( query_string );
-        std::unique_ptr<Transaction> transaction;
+        transaction = NULL;
+        resultset = NULL;       
 
         error = connection->begin( transaction );
         if ( error != ErrorCode::OK )
@@ -165,6 +183,74 @@ resultset_get_type( int column_index, int* type )
         std::advance( ite, column_index - 1 );
 
         *type = (int) ite->get_type();
+    }
+    catch (...) {
+        
+    }
+
+    return (int) error;
+}
+
+static PG_TYPE
+get_pgtype( Metadata::ColumnType::Type type )
+{
+    PG_TYPE pg_type;
+
+    switch ( type ) 
+    {
+        case Metadata::ColumnType::Type::INT16:
+            pg_type = PGTYPE_INT16;
+            break;
+
+        case Metadata::ColumnType::Type::INT32:
+            pg_type =PGTYPE_INT32;
+            break;
+
+        case Metadata::ColumnType::Type::INT64:
+            pg_type = PGTYPE_INT64;
+            break;
+
+        case Metadata::ColumnType::Type::FLOAT32:
+            pg_type = PGTYPE_FLOAT32;
+            break;
+
+        case Metadata::ColumnType::Type::FLOAT64:
+            pg_type = PGTYPE_FLOAT64;
+            break;
+
+        case Metadata::ColumnType::Type::TEXT:
+            pg_type = PGTYPE_TEXT;
+            break;
+
+        case Metadata::ColumnType::Type::NULL_VALUE:
+            break;
+
+        default:
+            break;
+    }
+
+    return pg_type;
+}
+
+/**
+ * @brief   get current data type.
+ * @param   [in] column index. (1 origin)
+ * @param   [out] pg data type. see datatype.h
+ * @return  0 if success.
+ */
+int
+resultset_get_pgtype( int column_index, PG_TYPE* pg_type )
+{
+    ErrorCode error = ErrorCode::OK;
+    Metadata::ColumnType::Type type;
+
+    try {
+        Metadata::SetOfTypeData types = metadata->get_types();
+        auto ite = types.begin();
+        std::advance( ite, column_index - 1 );
+
+        type = ite->get_type();
+        *pg_type = get_pgtype( type );
     }
     catch (...) {
         
