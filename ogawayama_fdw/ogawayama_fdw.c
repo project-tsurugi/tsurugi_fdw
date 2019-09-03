@@ -48,6 +48,12 @@ typedef struct OgawayamaScanState
 	/* SELECT予定の列のデータ型(Oid)用のポインタ */
 	Oid *pgtype; 
 
+	/* FDWが自認する現在のトランザクションレベル */
+	int xactlevel;
+
+	/* コネクション情報 */
+	int myconnection;
+
 } OgawayamaScanState;
 
 
@@ -89,6 +95,7 @@ OgawayamaScanState *init_osstate();
 char *init_query( char *sourceText );
 void store_pg_data_type( OgawayamaScanState *osstate, List *tlist );
 void convert_tuple( OgawayamaScanState *osstate, Datum *values, bool *nulls );
+bool is_get_connection ( OgawayamaScanState *osstate );
 
 /*
  * Foreign-data wrapper handler function: return a struct with pointers
@@ -162,21 +169,24 @@ ogawayamaBeginForeignScan( ForeignScanState *node, int eflags )
 	osstate->NumCols = fsplan->scan.plan.targetlist->length;
 
 	/* SELECT対象の列のデータ型を格納 */
-	store_pg_data_type(osstate, fsplan->scan.plan.targetlist);
+	store_pg_data_type( osstate, fsplan->scan.plan.targetlist );
 
 	/* コネクションの確立(確認) */
-		
+	if ( !is_get_connection( osstate ) )
+	{
+		elog( NOTICE, "コネクションの取得に失敗" );
+	}
+
 	/* コミット、ロールバック時のコールバック関数を登録 */
 		
 	/* トランザクションの開始(確認) */
-	
-	
+		
 	/* 
 	 * estate->es_sourceTextに格納されているSQL文を取り出し、
 	 * OgawayamaScanState構造体に格納する
 	 */
 
-     osstate->query = init_query(estate->es_sourceText);
+     osstate->query = init_query( estate->es_sourceText );
 
 	 /* osstateをnode->fdw_stateに格納する */
 	 node->fdw_state = osstate;
@@ -206,18 +216,18 @@ ogawayamaIterateForeignScan( ForeignScanState *node )
 		{
 			/* 次の結果セットがある場合…？ */
 			/* 仮想タプルの初期化 */
-			ExecClearTuple(slot);
+			ExecClearTuple( slot );
 
 			/* 結果セットをTupleTableSlotに合うように整形しつつフェッチ */
 			convert_tuple( osstate, slot->tts_values, slot->tts_isnull );
 		
 			/* 仮想タプルを格納 */
-			ExecStoreVirtualTuple(slot);
+			ExecStoreVirtualTuple( slot );
 		}
 		else
 		{
 			/* 次の結果セットはないので、slotをnullにする */
-			slot = null;
+			slot = NULL;
 		}
 	}
 	else
@@ -256,7 +266,11 @@ ogawayamaReScanForeignScan( ForeignScanState *node )
 static void 
 ogawayamaEndForeignScan( ForeignScanState *node )
 {
-	/* 変数類の解放 */
+	OgawayamaScanState *osstate;
+	osstate = (OgawayamaScanState *)node->fdw_state;
+
+	/* osstateを開放 */
+	pfree( osstate );
 
 }
 
@@ -268,7 +282,22 @@ ogawayamaEndForeignScan( ForeignScanState *node )
 static void 
 ogawayamaBeginDirectModify( ForeignScanState *node, int eflags )
 {
+	/* 変数宣言 */
+	ForeignScan			*fsplan;
+	EState	   			*estate;
+	OgawayamaScanState	*osstate;
 
+	osstate = init_osstate();
+
+	/* 
+	 * estate->es_sourceTextに格納されているSQL文を取り出し、
+	 * OgawayamaScanState構造体に格納する
+	 */
+
+	 osstate->query = init_query ( estate->es_sourceText );
+	 
+	 /* osstateをnode->fdw_stateに格納する */
+	 node->fdw_state = osstate;
 }
 
 /*
@@ -280,6 +309,12 @@ static TupleTableSlot *
 ogawayamaIterateDirectModify( ForeignScanState *node )
 {
 	TupleTableSlot *slot = NULL;
+	OgawayamaScanState *osstate;
+
+	osstate = (OgawayamaScanState *)node->fdw_state;
+
+	/* SQL文を送る */
+	dispatch_statement( osstate->query );
 
 	return slot;	
 }
@@ -292,7 +327,11 @@ ogawayamaIterateDirectModify( ForeignScanState *node )
 static void 
 ogawayamaEndDirectModify( ForeignScanState *node )
 {
+	OgawayamaScanState *osstate;
+	osstate = (OgawayamaScanState *)node->fdw_state;
 
+	/* osstateを開放 */
+	pfree( osstate );
 }
 
 /* 
@@ -371,12 +410,16 @@ OgawayamaScanState
 {
 	OgawayamaScanState *osstate;
 	
-	osstate = ( OgawayamaScanState *) palloc0( sizeof( OgawayamaScanState ) );
+	osstate = (OgawayamaScanState *) palloc0( sizeof( OgawayamaScanState ) );
 	
 	osstate->isCursorOpen = false;
 	osstate->MyPid = pg_backend_pid();
 	osstate->NumCols = 0;
 	osstate->pgtype = NULL;
+	osstate->xactlevel = 0;
+
+	/* 9/2現在は、一旦ここで初期化(-1とする)しておく */
+	osstate->myconnection = -1;
 
 	return osstate;
 }
@@ -625,5 +668,41 @@ convert_tuple( OgawayamaScanState *osstate, Datum *values, bool *nulls )
 			
 		}
 
+	}
+}
+
+/*
+ * is_get_connection
+ * dispacher.hのget_connection関数を呼び出すための関数。
+ * 近い将来は、ワーキングプロセスが存続している間はコネクションを保てるようにする
+ * 機能を入れたい。
+ * 
+ * ■input
+ *   OgawayamaScanState *osstate ... 事前に取得済みのMyPidを使用。
+ * 
+ * ■output
+ *   bool ... コネクションが存在するか、コネクションを取得できたらtrueを返却する。
+ */
+bool
+is_get_connection( OgawayamaScanState *osstate )
+{
+	/* 現在接続があるかどうかを確認する */
+	if ( osstate->myconnection == 0 )
+	{
+		return true;
+	}
+	else
+	{
+		/* 接続が無い場合は接続を試行する */
+		osstate->myconnection = get_connection( osstate->MyPid );
+		
+		if ( osstate->myconnection == 0 )
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 }
