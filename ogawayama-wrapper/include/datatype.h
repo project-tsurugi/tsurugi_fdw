@@ -16,9 +16,7 @@
 #ifndef DATATYPE_H
 #define DATATYPE_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+/* See metadata.h of ogawayama-stub for original data type definition. */
 
 typedef enum {
 
@@ -57,10 +55,6 @@ typedef enum {
      */
     PGTYPE_TEXT = 6,
 } PG_TYPE;
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // DATATYPE_H
 
