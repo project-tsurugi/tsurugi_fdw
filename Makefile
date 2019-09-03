@@ -1,14 +1,17 @@
-MODULES = alt_planner
-PGFILEDESC = "alt_planner (V0)"
-OBJS = alt_planner.o $(WIN32RES)
+MODULE_big = ogawayama_fdw
+OBJS = ogawayama_fdw.o
+EXTENSION = ogawayama_fdw
+DATA = ogawayama_fdw--0.0.sql
 
-ifdef USE_PGXS
-PG_CONFIG = pg_config
-PGXS := $(shell $(PG_CONFIG) --pgxs)
-include $(PGXS)
-else
-subdir = contrib/yanagisawa
+PG_CPPFLAGS = -I./ogawayama-wrapper/include
+
+ifdef NO_PGXS
+subdir = contrib/ogawayama_fdw
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
+else
+PG_CONFIG = pg_config
+PGXS := $(shell $(PG_CONFIG) --pgxs)
+include $(PGXS)
 endif
