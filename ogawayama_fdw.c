@@ -18,6 +18,7 @@
 #include "foreign/fdwapi.h"
 #include "catalog/pg_type.h"
 #include <stddef.h>
+#include "access/xact.h"
 
 PG_MODULE_MAGIC;
 
@@ -30,6 +31,15 @@ PG_MODULE_MAGIC;
 #define FLOAT64 5
 #define TEXT 6
 
+/* グローバル変数の宣言
+ * V0版では、フロントエンドとバックエンドは1:1の関係になるため、
+ * 接続やトランザクションのレベル管理などはグローバル変数で管理する。
+ */
+static char *shared_memory_name = "stub";
+static int myconnection = -1;
+static int xactlevel = 0;
+static int MyPid = 0;
+
 /* 構造体定義 */
 typedef struct OgawayamaScanState
 {
@@ -39,20 +49,11 @@ typedef struct OgawayamaScanState
 	/* SQL文そのもの */
 	char *query;
 	
-    /* ワーカプロセスのPID */
-	int MyPid;
-
 	/* SELECT対象の列数 */
 	int NumCols;
 
 	/* SELECT予定の列のデータ型(Oid)用のポインタ */
 	Oid *pgtype; 
-
-	/* FDWが自認する現在のトランザクションレベル */
-	int xactlevel;
-
-	/* コネクション情報 */
-	int myconnection;
 
 } OgawayamaScanState;
 
@@ -92,10 +93,13 @@ static List *ogawayamaImportForeignSchema( ImportForeignSchemaStmt *stmt,
  */
 
 OgawayamaScanState *init_osstate();
-char *init_query( char *sourceText );
+char *init_query( const char *sourceText );
 void store_pg_data_type( OgawayamaScanState *osstate, List *tlist );
 void convert_tuple( OgawayamaScanState *osstate, Datum *values, bool *nulls );
-bool is_get_connection ( OgawayamaScanState *osstate );
+bool is_get_connection ();
+void init_ogawayama_stub();
+void begin_backend_xact();
+void ogawayama_xact_callback ( XactEvent event, void *arg );
 
 /*
  * Foreign-data wrapper handler function: return a struct with pointers
@@ -156,7 +160,13 @@ ogawayamaBeginForeignScan( ForeignScanState *node, int eflags )
 	ForeignScan			*fsplan;
 	EState	   			*estate;
 	OgawayamaScanState	*osstate;
-	
+
+	/* グローバル変数類の初期化 */
+	init_ogawayama_stub();
+
+	/* トランザクションのチェック */
+	begin_backend_xact();
+
 	/* 変数の初期化処理 */
 	fsplan = (ForeignScan *) node->ss.ps.plan;
 	estate = node->ss.ps.state;
@@ -171,11 +181,6 @@ ogawayamaBeginForeignScan( ForeignScanState *node, int eflags )
 	/* SELECT対象の列のデータ型を格納 */
 	store_pg_data_type( osstate, fsplan->scan.plan.targetlist );
 
-	/* コネクションの確立(確認) */
-	if ( !is_get_connection( osstate ) )
-	{
-		elog( NOTICE, "コネクションの取得に失敗" );
-	}
 
 	/* コミット、ロールバック時のコールバック関数を登録 */
 		
@@ -283,12 +288,18 @@ static void
 ogawayamaBeginDirectModify( ForeignScanState *node, int eflags )
 {
 	/* 変数宣言 */
-	ForeignScan			*fsplan;
 	EState	   			*estate;
 	OgawayamaScanState	*osstate;
 
-	osstate = init_osstate();
+	/* グローバル変数類の初期化 */
+	init_ogawayama_stub();
 
+	/* トランザクションのチェック */
+	begin_backend_xact();
+
+	osstate = init_osstate();
+	estate = node->ss.ps.state;
+	
 	/* 
 	 * estate->es_sourceTextに格納されているSQL文を取り出し、
 	 * OgawayamaScanState構造体に格納する
@@ -413,13 +424,8 @@ OgawayamaScanState
 	osstate = (OgawayamaScanState *) palloc0( sizeof( OgawayamaScanState ) );
 	
 	osstate->isCursorOpen = false;
-	osstate->MyPid = pg_backend_pid();
 	osstate->NumCols = 0;
 	osstate->pgtype = NULL;
-	osstate->xactlevel = 0;
-
-	/* 9/2現在は、一旦ここで初期化(-1とする)しておく */
-	osstate->myconnection = -1;
 
 	return osstate;
 }
@@ -436,7 +442,7 @@ OgawayamaScanState
  *  cahr *
  *  終了文字を添付したSQL文の先頭ポインタ 
  */
-char *init_query(char *sourceText)
+char *init_query(const char *sourceText)
 {
     int len;
     char *p;
@@ -677,26 +683,23 @@ convert_tuple( OgawayamaScanState *osstate, Datum *values, bool *nulls )
  * 近い将来は、ワーキングプロセスが存続している間はコネクションを保てるようにする
  * 機能を入れたい。
  * 
- * ■input
- *   OgawayamaScanState *osstate ... 事前に取得済みのMyPidを使用。
- * 
  * ■output
  *   bool ... コネクションが存在するか、コネクションを取得できたらtrueを返却する。
  */
 bool 
-is_get_connection( OgawayamaScanState *osstate )
+is_get_connection()
 {
 	/* 現在接続があるかどうかを確認する */
-	if ( osstate->myconnection == 0 )
+	if ( myconnection == 0 )
 	{
 		return true;
 	}
 	else
 	{
 		/* 接続が無い場合は接続を試行する */
-		osstate->myconnection = get_connection( osstate->MyPid );
+		myconnection = get_connection( MyPid );
 		
-		if ( osstate->myconnection == 0 )
+		if ( myconnection == 0 )
 		{
 			return true;
 		}
@@ -706,3 +709,104 @@ is_get_connection( OgawayamaScanState *osstate )
 		}
 	}
 }
+
+/*
+ * init_ogawayama_stub()
+ *
+ * ワーキングプロセスでstubの初期化が未実施である場合は、
+ * stubの初期化とグローバル変数の初期化を行う。
+ * また、初期化時にはCOMMIT, ROLLBACK時の動作も登録する
+ * 
+ */
+void init_ogawayama_stub()
+{
+	/* この関数が呼ばれた時点で、Stubの初期化が行われたかどうかを確認
+	 * 接続が無い(myconnection = -1)場合は初期化する。 */
+	
+	if ( myconnection == -1 )
+	{
+		init_stub( shared_memory_name);
+		
+		/* PIDの取得 */
+		MyPid = pg_backend_pid();
+
+		/* 接続の確立 */
+		if ( !is_get_connection() )
+		{
+			elog( ERROR, "接続の確立に失敗" );
+		}
+
+		/* COMMIT, ROLLBACK時の動作を登録 */
+		RegisterXactCallback( ogawayama_xact_callback, NULL );
+
+	}
+}
+
+/*
+ * begin_backend_xact
+ * トランザクションレベルを確認し、バックエンドでトランザクションが開始
+ * されていない場合はトランザクションを開始する(と言う処理を将来的に盛り込む予定)。
+ * 
+ * V0版では、フロントエンド側のトランザクション(ローカルトランザクション)が
+ * ネストされている場合はエラーとする。
+ */
+void
+begin_backend_xact()
+{
+	/* ローカルトランザクションのネストレベルを取得する */
+	int local_xact_level;
+	local_xact_level = GetCurrentTransactionNestLevel();
+
+	/* 
+	 * ローカルトランザクションのレベルが1であり、かつxactlevel(FDWが自認するバックエンドのトランザクションレベル)
+	 * が0の場合はトランザクションを開始する(ように将来的にはする。)
+	 * ローカルトランザクションのネストレベルが2以上の場合はエラーとする
+	 */
+	 if ( local_xact_level == 1)
+	 {
+		 if ( xactlevel == 0 )
+		 {
+			 /* begin_transaction */
+			 xactlevel++;
+		 }
+	 }
+	 else if (local_xact_level >= 2)
+	 {
+		 elog( ERROR, "トランザクションのネストは未サポートです。" );
+	 }
+	 else
+	 {
+		 elog( ERROR, "エラー" );
+	 }
+}
+
+/*
+ * ogawayama_xact_callback
+ * トランザクション終了時の動作を指定するもの。
+ *
+ * ※ 形だけ用意しておいたもの
+ */
+void
+ogawayama_xact_callback ( XactEvent event, void *arg )
+{
+	/* 入力されるeventの内容は、xact.hに記載あり */
+	if ( xactlevel > 0 )
+	{
+		switch ( event )
+		{
+			case XACT_EVENT_COMMIT:
+			case XACT_EVENT_PARALLEL_COMMIT:
+			case XACT_EVENT_ABORT:
+			case XACT_EVENT_PARALLEL_ABORT:
+			case XACT_EVENT_PREPARE:
+			case XACT_EVENT_PRE_COMMIT:
+			case XACT_EVENT_PARALLEL_PRE_COMMIT:
+			case XACT_EVENT_PRE_PREPARE:
+			default:
+				break;
+		}
+
+		xactlevel = 0;
+	}
+}
+
