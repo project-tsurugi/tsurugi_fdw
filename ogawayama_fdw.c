@@ -19,6 +19,8 @@
 #include "catalog/pg_type.h"
 #include <stddef.h>
 #include "access/xact.h"
+#include "utils/fmgrprotos.h"
+#include <unistd.h>
 
 PG_MODULE_MAGIC;
 
@@ -92,13 +94,13 @@ static List *ogawayamaImportForeignSchema( ImportForeignSchemaStmt *stmt,
  *
  */
 
-OgawayamaScanState *init_osstate();
+OgawayamaScanState *init_osstate( void );
 char *init_query( const char *sourceText );
 void store_pg_data_type( OgawayamaScanState *osstate, List *tlist );
 void convert_tuple( OgawayamaScanState *osstate, Datum *values, bool *nulls );
-bool is_get_connection ();
-void init_ogawayama_stub();
-void begin_backend_xact();
+bool is_get_connection ( void );
+void init_ogawayama_stub( void );
+void begin_backend_xact( void );
 void ogawayama_xact_callback ( XactEvent event, void *arg );
 
 /*
@@ -299,7 +301,7 @@ ogawayamaBeginDirectModify( ForeignScanState *node, int eflags )
 
 	osstate = init_osstate();
 	estate = node->ss.ps.state;
-	
+
 	/* 
 	 * estate->es_sourceTextに格納されているSQL文を取り出し、
 	 * OgawayamaScanState構造体に格納する
@@ -417,7 +419,7 @@ ogawayamaImportForeignSchema( ImportForeignSchemaStmt *stmt,
  *
  */
 OgawayamaScanState 
-*init_osstate()
+*init_osstate( void )
 {
 	OgawayamaScanState *osstate;
 	
@@ -445,7 +447,7 @@ OgawayamaScanState
 char *init_query(const char *sourceText)
 {
     int len;
-    char *p;
+    const char *p;
     char *res;
 
 	len=1;
@@ -528,7 +530,7 @@ void
 convert_tuple( OgawayamaScanState *osstate, Datum *values, bool *nulls )
 {
 	/* 変数宣言 */
-	int i, dummy;
+	int i;
 	int otype; /* Stub側のデータ型を格納する */
 
 	for ( i = 0; i < osstate->NumCols; i++ )
@@ -561,7 +563,7 @@ convert_tuple( OgawayamaScanState *osstate, Datum *values, bool *nulls )
 					{
 						int16 int16_val;
 
-						dummy = resultset_get_int16( i + 1, &int16_val );
+						resultset_get_int16( i + 1, &int16_val );
 						nulls[i] = false;
 						values[i] = Int16GetDatum( int16_val );
 
@@ -580,7 +582,7 @@ convert_tuple( OgawayamaScanState *osstate, Datum *values, bool *nulls )
 					{
 						int32 int32_val;
 
-						dummy = resultset_get_int32( i + 1, &int32_val );
+						resultset_get_int32( i + 1, &int32_val );
 						nulls[i] = false;
 						values[i] = Int32GetDatum( int32_val );
 
@@ -599,7 +601,7 @@ convert_tuple( OgawayamaScanState *osstate, Datum *values, bool *nulls )
 					{
 						int64 int64_val;
 
-						dummy = resultset_get_int64( i + 1, &int64_val );
+						resultset_get_int64( i + 1, &int64_val );
 						nulls[i] = false;
 						values[i] = Int64GetDatum( int64_val );
 						
@@ -617,7 +619,7 @@ convert_tuple( OgawayamaScanState *osstate, Datum *values, bool *nulls )
 					{
 						float4 float4_val;
 
-						dummy = resultset_get_float32( i + 1, &float4_val );
+						resultset_get_float32( i + 1, &float4_val );
 						nulls[i] = false;
 						values[i] = Float4GetDatum( float4_val );
 
@@ -636,7 +638,7 @@ convert_tuple( OgawayamaScanState *osstate, Datum *values, bool *nulls )
 					{
 						float8 float8_val;
 
-						dummy = resultset_get_float64( i + 1, &float8_val );
+						resultset_get_float64( i + 1, &float8_val );
 						nulls[i] = false;
 						values[i] = Float8GetDatum( float8_val );
 
@@ -657,9 +659,9 @@ convert_tuple( OgawayamaScanState *osstate, Datum *values, bool *nulls )
 						char *char_val;
 						size_t char_len;
 
-						dummy = resultset_get_length( i + 1, &char_len );
+						resultset_get_length( i + 1, &char_len );
 						char_val = (char *) palloc0( char_len );
-						dummy = resultset_get_text( i + 1, char_val, char_len );
+						resultset_get_text( i + 1, char_val, char_len );
 						nulls[i] = false;
 						values[i] = CStringGetDatum( char_val );
 
@@ -687,7 +689,7 @@ convert_tuple( OgawayamaScanState *osstate, Datum *values, bool *nulls )
  *   bool ... コネクションが存在するか、コネクションを取得できたらtrueを返却する。
  */
 bool 
-is_get_connection()
+is_get_connection( void )
 {
 	/* 現在接続があるかどうかを確認する */
 	if ( myconnection == 0 )
@@ -718,7 +720,7 @@ is_get_connection()
  * また、初期化時にはCOMMIT, ROLLBACK時の動作も登録する
  * 
  */
-void init_ogawayama_stub()
+void init_ogawayama_stub( void )
 {
 	/* この関数が呼ばれた時点で、Stubの初期化が行われたかどうかを確認
 	 * 接続が無い(myconnection = -1)場合は初期化する。 */
@@ -728,7 +730,7 @@ void init_ogawayama_stub()
 		init_stub( shared_memory_name);
 		
 		/* PIDの取得 */
-		MyPid = pg_backend_pid();
+		MyPid = getpid();
 
 		/* 接続の確立 */
 		if ( !is_get_connection() )
@@ -751,7 +753,7 @@ void init_ogawayama_stub()
  * ネストされている場合はエラーとする。
  */
 void
-begin_backend_xact()
+begin_backend_xact( void )
 {
 	/* ローカルトランザクションのネストレベルを取得する */
 	int local_xact_level;
@@ -809,4 +811,3 @@ ogawayama_xact_callback ( XactEvent event, void *arg )
 		xactlevel = 0;
 	}
 }
-
