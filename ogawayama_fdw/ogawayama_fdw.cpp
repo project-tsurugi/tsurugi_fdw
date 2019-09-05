@@ -23,61 +23,76 @@ extern "C" {
 
 PG_MODULE_MAGIC;
 
+#ifdef __cplusplus
+}
+#endif
+
+#include <string>
+#include <memory>
+#include "ogawayama/stub/api.h"
+
+typedef struct OgawayamaFdwState
+{
+	bool isCursorOpen;			/* SQLのカーソルをOPENしているかどうか*/
+	bool connected;						
+	bool cursor_exists;			
+	const char* query_string;	/* SQL Query Text */
+	int pid;   					/* ワーカプロセスのPID */
+	int num_columns;			/* SELECT対象の列数 */
+	Oid* pgtype; 				/* SELECT予定の列のデータ型(Oid)用のポインタ */
+	int xact_level;				/* FDWが自認する現在のトランザクションレベル */
+} OgawayamaFdwState;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 /*
  * SQL functions
  */
 PG_FUNCTION_INFO_V1( ogawayama_fdw_handler );
 
-#include <cstddef>
+/*
+ * FDW callback routines
+ */
+static void ogawayamaGetForeignRelSize( 
+	PlannerInfo* root, RelOptInfo* baserel, Oid foreigntableid );
+static void ogawayamaBeginForeignScan( ForeignScanState* node, int eflags );
+static TupleTableSlot* ogawayamaIterateForeignScan( ForeignScanState* node );
+static void ogawayamaReScanForeignScan( ForeignScanState* node );
+static void ogawayamaEndForeignScan( ForeignScanState* node );
+
+static void ogawayamaBeginDirectModify( ForeignScanState* node, int eflags );
+static TupleTableSlot* ogawayamaIterateDirectModify( ForeignScanState* node );
+static void ogawayamaEndDirectModify( ForeignScanState* node );
+
+static void ogawayamaExplainForeignScan( ForeignScanState* node, ExplainState* es );
+static void ogawayamaExplainDirectModify( ForeignScanState* node, ExplainState* es );
+static bool ogawayamaAnalyzeForeignTable( 
+	Relation relation, AcquireSampleRowsFunc* func, BlockNumber* totalpages );
+static List* ogawayamaImportForeignSchema( ImportForeignSchemaStmt* stmt, Oid serverOid );
 
 #ifdef __cplusplus
 }
 #endif
 
-#include <memory.h>
-#include <cassert>
-#include <string>
-#include <memory>
-#include "ogawayama/stub/error_code.h"
-#include "ogawayama/stub/metadata.h"
-#include "ogawayama/stub/api.h"
-
-//#ifdef __cplusplus
-//extern "C" {
-//#endif
-
-typedef struct OgFdwScanState
-{
-	bool isCursorOpen;			/*SQLのカーソルをOPENしているかどうか*/
-	bool connected_stub;						
-	bool cursor_exists;			
-	const char *query_string;	/*SQL Query Text*/
-	int pid;   					/*ワーカプロセスのPID*/
-	int num_columns;			/*SELECT対象の列数*/
-	Oid *pgtype; 				/*SELECT予定の列のデータ型(Oid)用のポインタ*/
-	int xact_level;				/*FDWが自認する現在のトランザクションレベル*/
-	int myconnection;			/*コネクション情報*/
-} OgFdwScanState;
-
 /*
- * FDW callback routines
+ * Helper functions
  */
-static void ogawayamaGetForeignRelSize( 
-	PlannerInfo *root, RelOptInfo *baserel, Oid foreigntableid );
-static void ogawayamaBeginForeignScan( ForeignScanState *node, int eflags );
-static TupleTableSlot *ogawayamaIterateForeignScan( ForeignScanState *node );
-static void ogawayamaReScanForeignScan( ForeignScanState *node );
-static void ogawayamaEndForeignScan( ForeignScanState *node );
+OgawayamaFdwState* createOgawayamaFdwState();
+static void store_pg_data_type( OgawayamaFdwState* fdw_state, List* tlist );
+static void convert_tuple( OgawayamaFdwState* fdw_state, Datum* values, bool* nulls );
 
-static void ogawayamaBeginDirectModify( ForeignScanState *node, int eflags );
-static TupleTableSlot *ogawayamaIterateDirectModify( ForeignScanState *node );
-static void ogawayamaEndDirectModify( ForeignScanState *node );
+using namespace ogawayama::stub;
 
-static void ogawayamaExplainForeignScan( ForeignScanState *node, ExplainState *es );
-static void ogawayamaExplainDirectModify( ForeignScanState *node, ExplainState *es );
-static bool ogawayamaAnalyzeForeignTable( 
-	Relation relation, AcquireSampleRowsFunc *func, BlockNumber *totalpages );
-static List *ogawayamaImportForeignSchema( ImportForeignSchemaStmt *stmt, Oid serverOid );
+static StubPtr stub_;
+static ConnectionPtr connection_;
+static TransactionPtr transaction_;
+static ResultSetPtr resultset_;
+static MetadataPtr metadata_;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * Foreign-data wrapper handler function: return a struct with pointers
@@ -86,7 +101,7 @@ static List *ogawayamaImportForeignSchema( ImportForeignSchemaStmt *stmt, Oid se
 Datum
 ogawayama_fdw_handler( PG_FUNCTION_ARGS )
 {
-	FdwRoutine *routine = makeNode( FdwRoutine );
+	FdwRoutine* routine = makeNode( FdwRoutine );
 
 	routine->GetForeignRelSize = ogawayamaGetForeignRelSize;
 
@@ -111,50 +126,39 @@ ogawayama_fdw_handler( PG_FUNCTION_ARGS )
 	/*Support functions for IMPORT FOREIGN SCHEMA*/
 	routine->ImportForeignSchema = ogawayamaImportForeignSchema;
 
+	// connect to ogawayama-stub
+	stub_ = make_stub( "ogawayama" );
+	stub_->get_connection( 10 /*dummy*/, connection_ );
+
 	PG_RETURN_POINTER( routine );
 }
 
-/*
- * Helper function
- *
- */
-OgFdwScanState *createOgFdwScanState();
-//char *init_query( char *sourceText );
-static void store_pg_data_type( OgFdwScanState *osstate, List *tlist );
-static void convert_tuple( OgFdwScanState *osstate, Datum *values, bool *nulls );
-static bool is_get_connection ( OgFdwScanState *osstate );
+static void ogawayamaGetForeignRelSize( 
+	PlannerInfo* root, RelOptInfo* baserel, Oid foreigntableid )
+{
 
-using namespace ogawayama::stub;
-
-static StubPtr stub_;
-static ConnectionPtr connection_;
-static TransactionPtr transaction_;
-static ResultSetPtr resultset_;
-static MetadataPtr metadata_;
+}
 
 /*
- * ogawayamaBeginForeignScan
+ *ogawayamaBeginForeignScan
  *
  *
  */
 static void 
-ogawayamaBeginForeignScan( ForeignScanState *node, int eflags )
+ogawayamaBeginForeignScan( ForeignScanState* node, int eflags )
 {
-	ForeignScan *fsplan = (ForeignScan*) node->ss.ps.plan;
+	ForeignScan* fsplan = (ForeignScan*) node->ss.ps.plan;
 	EState*	estate = node->ss.ps.state;
-	OgFdwScanState *osstate = createOgFdwScanState();
 
-	stub_ = make_stub( "ogawayama" );
-	stub_->get_connection( 10 /*dummy*/, connection_ );
-	transaction_ = NULL;
-	resultset_ = NULL;
-	metadata_ = NULL;
+	elog( INFO, "ogawayamaBeginForeignScan() started." );
+
+	OgawayamaFdwState* fdw_state = createOgawayamaFdwState();
 
 	/*SELECT対象の列数を設定*/
-	osstate->num_columns = fsplan->scan.plan.targetlist->length;
+	fdw_state->num_columns = fsplan->scan.plan.targetlist->length;
 
 	/*SELECT対象の列のデータ型を格納*/
-	store_pg_data_type( osstate, fsplan->scan.plan.targetlist );
+	store_pg_data_type( fdw_state, fsplan->scan.plan.targetlist );
 
 	/*コミット、ロールバック時のコールバック関数を登録*/
 
@@ -162,12 +166,14 @@ ogawayamaBeginForeignScan( ForeignScanState *node, int eflags )
 		
 	/*
 	* estate->es_sourceTextに格納されているSQL文を取り出し、
-	* OgawayamaScanState構造体に格納する
+	* OgawayamaFdwState構造体に格納する
 	*/
-     osstate->query_string = estate->es_sourceText;
+     fdw_state->query_string = estate->es_sourceText;
 
-	 /*osstateをnode->fdw_stateに格納する*/
-	 node->fdw_state = osstate;
+	 /*fdw_stateをnode->fdw_stateに格納する*/
+	 node->fdw_state = fdw_state;
+
+	elog( INFO, "ogawayamaBeginForeignScan() done." );
 }
 
 /*
@@ -175,44 +181,45 @@ ogawayamaBeginForeignScan( ForeignScanState *node, int eflags )
  *		
  *
  */
-static TupleTableSlot *
-ogawayamaIterateForeignScan( ForeignScanState *node )
+static TupleTableSlot* 
+ogawayamaIterateForeignScan( ForeignScanState* node )
 {
-	TupleTableSlot *slot;
-	OgFdwScanState *osstate;
-	ErrorCode error = ErrorCode::OK;
+	TupleTableSlot* slot = node->ss.ss_ScanTupleSlot;
+	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
 	
-	osstate = (OgFdwScanState*) node->fdw_state;
-	
-	slot = node->ss.ss_ScanTupleSlot;
-	
-	if ( osstate->connected_stub )
+	elog( INFO, "ogawayamaIterateForeignScan() started." );
+
+	if ( fdw_state->connected )
 	{
 		if ( resultset_->next() == ErrorCode::OK ) 
 		{
+			// 1行分fetchする
 			ExecClearTuple( slot );
-
-			/*結果セットをTupleTableSlotに合うように整形しつつフェッチ*/
-			convert_tuple( osstate, slot->tts_values, slot->tts_isnull );
-		
+			convert_tuple( fdw_state, slot->tts_values, slot->tts_isnull );
 			ExecStoreVirtualTuple( slot );
 		}
 		else
 		{
-			/*次の結果セットはないので、slotをnullにする*/
-			slot = (TupleTableSlot *) NULL;
+			/* 次の結果セットはないので、slotをnullにする */
+			slot = (TupleTableSlot*) NULL;
 		}
 	}
 	else
 	{
 		// open cursor
-		error = connection_->begin( transaction_ );
+		ErrorCode error = connection_->begin( transaction_ );
+		if ( error != ErrorCode::OK ) {
+		}
 
-		std::string query( osstate->query_string );
+		std::string query( fdw_state->query_string );
 		error = transaction_->execute_query( query, resultset_ );
+		if ( error != ErrorCode::OK ) {
+		}
 
-		osstate->cursor_exists = true;
+		fdw_state->cursor_exists = true;
 	}
+
+	elog( INFO, "ogawayamaIterateForeignScan() done." );
 
 	return slot;
 }
@@ -223,9 +230,11 @@ ogawayamaIterateForeignScan( ForeignScanState *node )
  *
  */
 static void 
-ogawayamaReScanForeignScan( ForeignScanState *node )
+ogawayamaReScanForeignScan( ForeignScanState* node )
 {
+	elog( INFO, "ogawayamaReScanForeignScan() started." );
 	/*一旦スキップ。*/
+	elog( INFO, "ogawayamaReScanForeignScan() done." );
 }
 
 /*
@@ -234,11 +243,15 @@ ogawayamaReScanForeignScan( ForeignScanState *node )
  *
  */
 static void 
-ogawayamaEndForeignScan( ForeignScanState *node )
+ogawayamaEndForeignScan( ForeignScanState* node )
 {
-	OgFdwScanState *osstate = (OgFdwScanState*) node->fdw_state;
+	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
 
-	pfree( osstate );
+	elog( INFO, "ogawayamaEndForeignScan() started." );
+
+	pfree( fdw_state );
+
+	elog( INFO, "ogawayamaEndForeignScan() done." );
 }
 
 /*
@@ -247,23 +260,26 @@ ogawayamaEndForeignScan( ForeignScanState *node )
  *
  */
 static void 
-ogawayamaBeginDirectModify( ForeignScanState *node, int eflags )
+ogawayamaBeginDirectModify( ForeignScanState* node, int eflags )
 {
-	ForeignScan *fsplan;
-	EState *estate;
-	OgFdwScanState *osstate;
+//	ForeignScan* fsplan = (ForeignScan*) node->ss.ps.plan;
+	EState* estate = node->ss.ps.state;
 
-	osstate = createOgFdwScanState();
+	elog( INFO, "ogawayamaBeginDirectModify() started." );
+
+	OgawayamaFdwState* fdw_state = createOgawayamaFdwState();
 
 	/*
 	* estate->es_sourceTextに格納されているSQL文を取り出し、
-	* OgawayamaScanState構造体に格納する
+	* OgawayamaFdwState構造体に格納する
 	*/
 
-	 osstate->query_string = estate->es_sourceText;
+	 fdw_state->query_string = estate->es_sourceText;
 	 
-	 /*osstateをnode->fdw_stateに格納する*/
-	 node->fdw_state = osstate;
+	 /*fdw_stateをnode->fdw_stateに格納する*/
+	 node->fdw_state = fdw_state;
+
+ 	elog( INFO, "ogawayamaBeginDirectModify() done." );
 }
 
 /*
@@ -271,17 +287,26 @@ ogawayamaBeginDirectModify( ForeignScanState *node, int eflags )
  *		
  *
  */
-static TupleTableSlot *
-ogawayamaIterateDirectModify( ForeignScanState *node )
+static TupleTableSlot* 
+ogawayamaIterateDirectModify( ForeignScanState* node )
 {
-	TupleTableSlot *slot = NULL;
-	OgFdwScanState *osstate = (OgFdwScanState*) node->fdw_state;
-	ErrorCode error = ErrorCode::OK;
+	TupleTableSlot* slot = NULL;
+	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
 
-	error = connection_->begin( transaction_ );
+	elog( INFO, "ogawayamaIterateDirectModify() started." );
 
-	std::string query( osstate->query_string );
+	ErrorCode error = connection_->begin( transaction_ );
+	if ( error != ErrorCode::OK ) {
+
+	}
+
+	std::string query( fdw_state->query_string );
 	error = transaction_->execute_query( query, resultset_ );
+	if ( error != ErrorCode::OK ) {
+		
+	}
+
+	elog( INFO, "ogawayamaIterateDirectModify() done." );
 
 	return slot;	
 }
@@ -292,11 +317,15 @@ ogawayamaIterateDirectModify( ForeignScanState *node )
  *
  */
 static void 
-ogawayamaEndDirectModify( ForeignScanState *node )
+ogawayamaEndDirectModify( ForeignScanState* node )
 {
-	OgFdwScanState *osstate = (OgFdwScanState*) node->fdw_state;
+	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
 
-	pfree( osstate );
+	elog( INFO, "ogawayamaEndDirectModify() started." );
+
+	pfree( fdw_state );
+
+	elog( INFO, "ogawayamaEndDirectModify() done." );
 }
 
 /*
@@ -310,8 +339,8 @@ ogawayamaEndDirectModify( ForeignScanState *node )
  *
  */
 static void 
-ogawayamaExplainForeignScan( ForeignScanState *node,
-						   ExplainState *es )
+ogawayamaExplainForeignScan( ForeignScanState* node,
+						   ExplainState* es )
 {
 						   
 }
@@ -322,8 +351,8 @@ ogawayamaExplainForeignScan( ForeignScanState *node,
  *
  */
 static void 
-ogawayamaExplainDirectModify( ForeignScanState *node,
-							ExplainState *es )
+ogawayamaExplainDirectModify( ForeignScanState* node,
+							ExplainState* es )
 {
 
 }
@@ -334,8 +363,8 @@ ogawayamaExplainDirectModify( ForeignScanState *node,
  *
  */
 static bool ogawayamaAnalyzeForeignTable( Relation relation,
-							AcquireSampleRowsFunc *func,
-							BlockNumber *totalpages )
+							AcquireSampleRowsFunc* func,
+							BlockNumber* totalpages )
 {
 	return true;
 }
@@ -345,8 +374,8 @@ static bool ogawayamaAnalyzeForeignTable( Relation relation,
  *		
  *
  */
-static List *
-ogawayamaImportForeignSchema( ImportForeignSchemaStmt *stmt,
+static List* 
+ogawayamaImportForeignSchema( ImportForeignSchemaStmt* stmt,
 							Oid serverOid )
 {
 	List	*commands = NIL;
@@ -354,11 +383,13 @@ ogawayamaImportForeignSchema( ImportForeignSchemaStmt *stmt,
 	return commands;
 }
 
-
+#ifdef __cplusplus
+}
+#endif
 
 /*
- * createOgFdwScanState
- * OgawayamaScanState構造体の初期化を行い、そのポインタを返却する。
+ * createOgawayamaFdwState
+ * OgawayamaFdwState構造体の初期化を行い、そのポインタを返却する。
  * ★検討中★
  * Stubの各種オブジェクトを参照するための何らかの処理を行う。
  * 
@@ -367,64 +398,30 @@ ogawayamaImportForeignSchema( ImportForeignSchemaStmt *stmt,
  *   今のところはなし
  *
  * ■output
- *   OgawayamaScanStateへのポインタ
+ *   OgawayamaFdwStateへのポインタ
  *
  */
-OgFdwScanState *
-createOgFdwScanState()
+OgawayamaFdwState* 
+createOgawayamaFdwState()
 {
-	OgFdwScanState *osstate;
+	OgawayamaFdwState* fdw_state;
 	
-	osstate = (OgFdwScanState*) palloc0( sizeof( OgFdwScanState ) );
+	fdw_state = (OgawayamaFdwState*) palloc0( sizeof( OgawayamaFdwState ) );
 	
-	osstate->isCursorOpen = false;
-	osstate->cursor_exists = false;
-//	osstate->pid = pg_backend_pid();
-	osstate->num_columns = 0;
-	osstate->pgtype = NULL;
-	osstate->xact_level = 0;
+	fdw_state->isCursorOpen = false;
+	fdw_state->cursor_exists = false;
+//	fdw_state->pid = pg_backend_pid();
+	fdw_state->num_columns = 0;
+	fdw_state->pgtype = NULL;
+	fdw_state->xact_level = 0;
 
-	/*9/2現在は、一旦ここで初期化(-1とする)しておく*/
-	osstate->myconnection = -1;
-
-	return osstate;
-}
-
-
-/*
- * init_query
- * 入力されたSQL文を取り出し、終了文字を添付したうえで呼び出し元にポインタを返却する
- * 
- * ■input
- *  char *sourceText
- *       EState->es_sourceTextのポインタ
- * ■output
- *  cahr *
- *  終了文字を添付したSQL文の先頭ポインタ 
- */
-char *init_query(char *sourceText)
-{
-    int len;
-    char *p;
-    char *res;
-
-	len=1;
-	for ( p = sourceText ; *p != ';' ; p++ )
-	{
-		len++;
-	}
-	
-	res = ( char* )malloc( len );
-	memcpy( res, sourceText, len-1 );
-	res[ len-1 ] = '\0';
-
-    return res;
+	return fdw_state;
 }
 
 /*
  * store_pg_data_type
- * SELECT対象の列のデータ型を確認し、osstate->pgtypeに格納していく。
- * osstate->NumColsに値を格納した後に呼び出す。
+ * SELECT対象の列のデータ型を確認し、fdw_state->pgtypeに格納していく。
+ * fdw_state->NumColsに値を格納した後に呼び出す。
  * 
  * ★コメント★ 
  * oracle_fdwのconvertTupleに影響を受け、PostgreSQLでのデータ型も把握した方が良いと
@@ -432,22 +429,22 @@ char *init_query(char *sourceText)
  * 本当は同様の処理はalt_plannerで実施してもいいのかもしれない。
  * 
  * ■input
- *  OgFdwScanState *osstate ... 設定するpgtypeがあるosstate
- *  List *tlist ... ForeignScanのtargetlist。
+ *  OgawayamaFdwState* fdw_state ... 設定するpgtypeがあるfdw_state
+ *  List* tlist ... ForeignScanのtargetlist。
  *                  alt_plannerを通った結果、TargetEntry->Exprは全てVarとなっている
  *                  前提。
  */
 static void 
-store_pg_data_type( OgFdwScanState *osstate, List *tlist )
+store_pg_data_type( OgawayamaFdwState* fdw_state, List* tlist )
 {
-	ListCell *lc;
-	TargetEntry *te;
-	Var *var;
-	Oid *dataType;
-	Node *node;
+	ListCell* lc;
+	TargetEntry* te;
+	Var* var;
+	Oid* dataType;
+	Node* node;
 	int count;
 
-	dataType = (Oid*) palloc( osstate->num_columns* sizeof( Oid ) );
+	dataType = (Oid*) palloc( fdw_state->num_columns* sizeof( Oid ) );
 
 	count = 0;
 	foreach( lc, tlist )
@@ -468,7 +465,7 @@ store_pg_data_type( OgFdwScanState *osstate, List *tlist )
 		count ++;
 	}
 
-	osstate->pgtype = dataType;
+	fdw_state->pgtype = dataType;
 }
 
 /*
@@ -478,179 +475,123 @@ store_pg_data_type( OgFdwScanState *osstate, List *tlist )
  * 処理内容については、oracle_fdwのconvaertTuple関数を参考にする。
  *
  * ■input
- *  OgFdwScanState *osstate ... 中のNumColsとpgtypeを使用する
- *  Datum *values ... slot->valuesのポインタ
- *  bool *nulls ... slot->nullsのポインタ
+ *  OgawayamaFdwState* fdw_state ... 中のNumColsとpgtypeを使用する
+ *  Datum* values ... slot->valuesのポインタ
+ *  bool* nulls ... slot->nullsのポインタ
  */
 static void 
-convert_tuple( OgFdwScanState *osstate, Datum *values, bool *nulls )
+convert_tuple( OgawayamaFdwState* fdw_state, Datum* values, bool* nulls )
 {
-	int i, dummy;
-	int otype; /*Stub側のデータ型を格納する*/
-
+	int i = 0;
 	for ( auto t: metadata_->get_types() )
 	{
-			switch ( t.get_type() )
-			{
-				case Metadata::ColumnType::ColumnType::Type::NULL_VALUE:
-					nulls[i] = true;
-					values[i] = PointerGetDatum( NULL );
+		switch ( t.get_type() )
+		{
+			case Metadata::ColumnType::ColumnType::Type::NULL_VALUE:
+				nulls[i] = true;
+				values[i] = PointerGetDatum( NULL );
+				break;
+
+			case Metadata::ColumnType::Type::INT16:
+				/*PostgreSQLでのsmallint*/
+				if ( fdw_state->pgtype[i] != INT2OID )
+				{
+					elog ( NOTICE, "データ型不一致" );
 					break;
+				}
+				else
+				{							
+					std::int16_t int16_value;
+					resultset_->next_column( int16_value );
+					values[i] = Int16GetDatum( int16_value );
+					nulls[i] = false;
+				}
+				break;
 
-				case Metadata::ColumnType::Type::INT16:
-					/*PostgreSQLでのsmallint*/
-					if ( osstate->pgtype[i] != INT2OID )
-					{
-						elog ( NOTICE, "データ型不一致" );
+			case Metadata::ColumnType::Type::INT32:
+				/*PostgreSQLでのinteger*/
+				if ( fdw_state->pgtype[i] != INT4OID )
+				{
+					elog (NOTICE, "データ型不一致");
+				}
+				else
+				{			
+					std::int32_t int32_value;
+					resultset_->next_column( int32_value );
+					values[i] = Int32GetDatum( int32_value );
+					nulls[i] = false;
+				}
+				break;
 
-						break;
-					}
-					else
-					{
-						std::int16 value;
-						resultset_->next_column( value );
-						values[i] = Int16GetDatum( value );
-						nulls[i] = false;
+			case Metadata::ColumnType::Type::INT64:
+				/*PostgreSQLでのbigint*/
+				if ( fdw_state->pgtype[i] != INT8OID )
+				{
+					elog( NOTICE, "データ型不一致" );
+				}
+				else
+				{			
+					std::int64_t int64_value;
+					resultset_->next_column( int64_value );
+					values[i] = Int64GetDatum( int64_value );
+					nulls[i] = false;
+				}
+				break;
 
-						break;
-					}
+			case Metadata::ColumnType::Type::FLOAT32:
+				/*PostgreSQLでのreal*/
+				if ( fdw_state->pgtype[i] != FLOAT4OID )
+				{
+					elog( NOTICE, "データ型不一致" );
+				}
+				else
+				{		
+					float4 float4_value;
+					resultset_->next_column( float4_value );
+					values[i] = Float4GetDatum( float4_value );
+					nulls[i] = false;
+				}
+				break;
 
-				case Metadata::ColumnType::Type::INT32:
-					/*PostgreSQLでのinteger*/
-					if ( osstate->pgtype[i] != INT4OID )
-					{
-						elog (NOTICE, "データ型不一致");
-					}
-					else
-					{
-						std::int32 value;
-
-						dummy = resultset_->next_column( value );
-						values[i] = Int32GetDatum( value );
-						nulls[i] = false;
-					}
+			case Metadata::ColumnType::Type::FLOAT64:
+				/*PostgreSQLでのdouble precision*/
+				if ( fdw_state->pgtype[i] != FLOAT8OID )
+				{
+					elog ( NOTICE, "データ型不一致" );
 					break;
-
-				case Metadata::ColumnType::Type::INT64:
-					/*PostgreSQLでのbigint*/
-					if ( osstate->pgtype[i] != INT8OID )
-					{
-						elog( NOTICE, "データ型不一致" );
-					}
-					else
-					{
-						std::int64 value;
-
-						dummy = resultset_->next_column( value );
-						values[i] = Int64GetDatum( value );
-						nulls[i] = false;					
-					}
-					break;
-
-				case Metadata::ColumnType::Type::FLOAT32:
-					/*PostgreSQLでのreal*/
-					if ( osstate->pgtype[i] != FLOAT4OID )
-					{
-						elog( NOTICE, "データ型不一致" );
-					}
-					else
-					{
-						float4 value;
-
-						dummy = resultset_->next_column( value );
-						values[i] = Float4GetDatum( value );
-						nulls[i] = false;
-					}
-					break;
-
-				case Metadata::ColumnType::Type::FLOAT64:
-					/*PostgreSQLでのdouble precision*/
-					if ( osstate->pgtype[i] != FLOAT8OID )
-					{
-						elog ( NOTICE, "データ型不一致" );
-					}
-					else
-					{
-						float8 value;
-
-						dummy = resultset_->next_column( value );
-						values[i] = Float8GetDatum( value );
-						nulls[i] = false;
-					}
-					break;
-
-				case Metadata::ColumnType::Type::TEXT:
-					/*PostgreSQLでのcharacter, character varying, text*/
-					if ( osstate->pgtype[i] != BPCHAROID &&
-					     osstate->pgtype[i] != VARCHAROID &&
-						 osstate->pgtype[i] != TEXTOID )
-					{
-						 elog( NOTICE, "データ型不一致" );
-
-						 break;
-					}
-					else
-					{
-						char *char_val;
-						size_t char_len;
-
-						dummy = resultset_->get_length( i + 1, &char_len );
-						char_val = (char*) palloc0( char_len );
-						dummy = resultset_->get_text( i + 1, char_val, char_len );
-						nulls[i] = false;
-						values[i] = CStringGetDatum( char_val );
-
-						break;
-					}
-					break;
-					
-				default:
-					/*サポート対象外の型の場合*/
-					elog( NOTICE, "サポート対象外の型が返されました。" );
-					break;
-			}
+				}
+				else
+				{			
+					float8 float8_value;
+					resultset_->next_column( float8_value );
+					values[i] = Float8GetDatum( float8_value );
+					nulls[i] = false;
+				}
+				break;
 			
+			case Metadata::ColumnType::Type::TEXT:
+				/*PostgreSQLでのcharacter, character varying, text*/
+				if ( fdw_state->pgtype[i] != BPCHAROID &&
+					fdw_state->pgtype[i] != VARCHAROID &&
+					fdw_state->pgtype[i] != TEXTOID )
+				{
+						elog( NOTICE, "データ型不一致" );
+				}
+				else
+				{
+					std::string_view value;
+					resultset_->next_column( value );
+					values[i] = CStringGetDatum( value.data() );
+					nulls[i] = false;
+				}
+				break;
+				
+			default:
+				/*サポート対象外の型の場合*/
+				elog( NOTICE, "サポート対象外の型が返されました。" );
+				break;
 		}
-
-	
-}
-
-/*
- * is_get_connection
- * dispacher.hのget_connection関数を呼び出すための関数。
- * 近い将来は、ワーキングプロセスが存続している間はコネクションを保てるようにする
- * 機能を入れたい。
- * 
- * ■input
- *   OgFdwScanState *osstate ... 事前に取得済みのMyPidを使用。
- * 
- * ■output
- *   bool ... コネクションが存在するか、コネクションを取得できたらtrueを返却する。
- */
-static bool
-is_get_connection( OgFdwScanState *osstate )
-{
-	/*現在接続があるかどうかを確認する*/
-	if ( osstate->myconnection == 0 )
-	{
-		return true;
-	}
-	else
-	{
-		/*接続が無い場合は接続を試行する*/
-//		osstate->myconnection = get_connection( osstate->MyPid );
-		
-		if ( osstate->myconnection == 0 )
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+		i++;
 	}
 }
 
-//#ifdef __cplusplus
-//}
-//#endif
