@@ -37,13 +37,12 @@ add_library( ogawayama-stub
 )
 
 target_include_directories( ogawayama-stub
-    PRIVATE ${PROJECT_SOURCE_DIR}/../../ogawayama/stub/include
-    PRIVATE ${PROJECT_SOURCE_DIR}/../../ogawayama/common/include
-    PRIVATE ${PROJECT_SOURCE_DIR}/test/stub/include
+    PRIVATE ${PROJECT_SOURCE_DIR}/../../../../ogawayama/stub/include
+    PRIVATE ${PROJECT_SOURCE_DIR}/../../../../ogawayama/common/include
 )
 
 set_target_properties( ogawayama-stub
     PROPERTIES
-        LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/libs"
+        LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/build"
         ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/build"
 )
