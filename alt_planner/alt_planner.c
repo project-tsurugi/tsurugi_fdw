@@ -1,10 +1,11 @@
 /*-------------------------------------------------------------------------
  *
  * alt_planner.c
- * 		V0版プランナフック(for PostgreSQL 11.1)
+ * 		V0版プランナフック
  *
  *-------------------------------------------------------------------------
  */
+
 #include "postgres.h"
 #include "optimizer/planner.h"
 #include "foreign/fdwapi.h"
@@ -44,6 +45,7 @@ extern void _PG_init(void);
 extern PGDLLIMPORT planner_hook_type planner_hook;
 
 
+struct PlannedStmt *alt_planner( Query *parse2, int cursorOptions, ParamListInfo boundParams );
 bool is_only_foreign_table( AltPlannerInfo *root, List *rtable );
 AltPlannerInfo *init_altplannerinfo( Query *parse );
 ForeignScan *create_foreign_scan( AltPlannerInfo *root ); /* ForeignScanプランノードの初期化 */
@@ -75,8 +77,9 @@ alt_planner( Query *parse2, int cursorOptions, ParamListInfo boundParams )
 	
 	AltPlannerInfo *root = init_altplannerinfo(parse);
 	ForeignScan *scan = 0;
+	ModifyTable *modify;
 	Plan *plan = 0;
-
+	PlannedStmt *stmt;
 	
 	/*
 	 * 操作対象のSQLコマンドかどうかに応じて処理を行う
@@ -130,7 +133,7 @@ alt_planner( Query *parse2, int cursorOptions, ParamListInfo boundParams )
 		}
 		
 		scan = create_foreign_scan( root );
-		ModifyTable *modify = create_modify_table( root, scan );
+		modify = create_modify_table( root, scan );
 		
 		plan = (Plan *) modify;
 		
@@ -141,8 +144,7 @@ alt_planner( Query *parse2, int cursorOptions, ParamListInfo boundParams )
 	}
 	
 	/* PlannedStmtの生成 */
-	
-	PlannedStmt *stmt = create_planned_stmt( root, plan );
+	stmt = create_planned_stmt( root, plan );
 	
 	/* 最終的に生成したPlannedStmtを返却する */
 	return stmt;
@@ -326,8 +328,10 @@ create_foreign_scan( AltPlannerInfo *root )
 	
 	/* 初期化 */
 	ForeignScan *fnode;
+	Bitmapset  *fs_relids = NULL;
+
 	fnode = makeNode( ForeignScan );
-	
+
 	fnode->scan.plan.targetlist = 0;
 	fnode->scan.plan.qual = 0;
 	fnode->scan.plan.lefttree = NULL;
@@ -344,7 +348,6 @@ create_foreign_scan( AltPlannerInfo *root )
 
 	/* fs_relidsの設定 */
 	/* 単一表のSCANと見なすため、fs_relidsは1が入っているBitmapsetとします */
-	Bitmapset  *fs_relids = NULL;
 	fs_relids = bms_add_member( fs_relids, 1 );
 	fnode->fs_relids = fs_relids;
 	
@@ -382,6 +385,8 @@ ModifyTable *
 create_modify_table( AltPlannerInfo *root, ForeignScan *scan )
 {
 	ModifyTable *modify = makeNode( ModifyTable );
+	Bitmapset  *direct_modify_plans = NULL;
+	List *fdwPrivLists = NIL;
 
 	/* ForeignScanプランノードのList化 */
 	List *subplan = NIL;
@@ -420,14 +425,12 @@ create_modify_table( AltPlannerInfo *root, ForeignScan *scan )
 	
 	
 	/* modify->fdwPrivListsの指定。実質内容のないT_List */
-	List *fdwPrivLists = NIL;
 	fdwPrivLists = lappend( fdwPrivLists, 0 );
 	
 	modify->fdwPrivLists = fdwPrivLists;
 	
 	
 	/* modify->fdwDirectModifyPlansの指定。Bitmapsetを追加。 */
-	Bitmapset  *direct_modify_plans = NULL;
 	direct_modify_plans = bms_add_member( direct_modify_plans, 0 );
 	
 	modify->fdwDirectModifyPlans = direct_modify_plans;
