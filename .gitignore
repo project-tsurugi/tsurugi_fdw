@@ -1,13 +1,10 @@
 frontend.code-workspace
-<<<<<<< HEAD
 .vscode/c_cpp_properties.json
 .vscode/tasks.json
 ogawayama_fdw.o
 ogawayama_fdw.so
 libs/libogawayama-stub-stub.so
-=======
-.vscode/
-build/
-libs/
+alt_planner/alt_planner.so
+alt_planner/alt_planner.o
+test/ogawayama-wrapper/build/**
 
->>>>>>> origin/master
