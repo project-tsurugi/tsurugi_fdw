@@ -8,11 +8,11 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef TSURUGI_FDW_H
-#define TSURUGI_FDW_H
+#ifndef OGAWAYAMA_FDW_H
+#define OGAWAYAMA_FDW_H
 
 #include "foreign/foreign.h"
 
 
 
-#endif // TSURUGI_FDW_H
+#endif // OGAWAYAMA_FDW_H
