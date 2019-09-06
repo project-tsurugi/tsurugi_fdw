@@ -5,7 +5,7 @@ EXTENSION = ogawayama_fdw
 DATA = ogawayama_fdw--0.0.sql
 
 PG_CPPFLAGS = -I../ogawayama/stub/include -std=c++17
-SHLIB_LINK = libs/libogawayama-stub-mock.so
+SHLIB_LINK = libs/libogawayama-stub.so
 
 ifdef NO_PGXS
 	top_builddir = ../psotgresql-11.1
