@@ -282,10 +282,10 @@ ogawayamaBeginDirectModify( ForeignScanState* node, int eflags )
 {
 	elog( INFO, "ogawayamaBeginDirectModify() started." );
 
-//	ForeignScan* fsplan = (ForeignScan*) node->ss.ps.plan;
 	EState* estate = node->ss.ps.state;
 
 	OgawayamaFdwState* fdw_state = create_fdwstate();
+	begin_backend_xact();
 
  	fdw_state->query_string = estate->es_sourceText;
 	 
