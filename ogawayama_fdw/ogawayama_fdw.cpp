@@ -50,6 +50,7 @@ typedef struct ogawayama_fdw_info_
 {
 	bool		connected;		/* ogawayama-stubとのコネクション */
 	int 		xact_level;		/* FDWが自認する現在のトランザクションレベル */
+    int 		pid;
 } OgawayamaFdwInfo;
 
 #ifdef __cplusplus
@@ -90,7 +91,7 @@ static List* ogawayamaImportForeignSchema( ImportForeignSchemaStmt* stmt,
 /*
  * Helper functions
  */
-static void init_fdw_info();
+static void init_fdw_info( void );
 static bool get_connection( FunctionCallInfo fcinfo );
 static OgawayamaFdwState* create_fdwstate();
 static void free_fdwstate( OgawayamaFdwState* fdw_tate );
@@ -203,8 +204,9 @@ ogawayamaIterateForeignScan( ForeignScanState* node )
 
 	TupleTableSlot* slot = node->ss.ss_ScanTupleSlot;
 	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
+	ErrorCode error;
 	
-	if ( fdw_info_.connected )
+	if ( fdw_state->cursor_exists )
 	{
 		if ( resultset_->next() == ErrorCode::OK ) 
 		{
@@ -223,14 +225,10 @@ ogawayamaIterateForeignScan( ForeignScanState* node )
 	{
 		try {
 			// open cursor
-			ErrorCode error = connection_->begin( transaction_ );
-			if ( error != ErrorCode::OK ) {
-				elog( ERROR, "Connection::begin() failed. (%d)", (int) error );
-			}
-
 			std::string query( fdw_state->query_string );
 			error = transaction_->execute_query( query, resultset_ );
-			if ( error != ErrorCode::OK ) {
+			if ( error != ErrorCode::OK )
+            {
 				elog( ERROR, "Connection::execute_query() failed. (%d)", (int) error );
 			}
 		}
@@ -309,15 +307,12 @@ ogawayamaIterateDirectModify( ForeignScanState* node )
 
 	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
 	TupleTableSlot* slot = NULL;
+	ErrorCode error;
 
-	ErrorCode error = connection_->begin( transaction_ );
-	if ( error != ErrorCode::OK ) {
-		elog( ERROR, "Connection::begin() failed. (%d)", (int) error );
-	}
-
-	std::string query( fdw_state->query_string );
+    std::string query( fdw_state->query_string );
 	error = transaction_->execute_query( query, resultset_ );
-	if ( error != ErrorCode::OK ) {
+	if ( error != ErrorCode::OK ) 
+    {
 		elog( ERROR, "Connection::execute_query() failed. (%d)", (int) error );	
 	}
 
@@ -401,7 +396,7 @@ ogawayamaImportForeignSchema( ImportForeignSchemaStmt* stmt,
  *	@brief	initialize global variables.
  */
 static void
-init_fdw_info()
+init_fdw_info( void )
 {
 	fdw_info_.connected = false;
 	fdw_info_.xact_level = 0;
@@ -419,7 +414,7 @@ get_connection( FunctionCallInfo fcinfo )
 	try {
 		// connect to ogawayama-stub
 		stub_ = make_stub( "ogawayama" );
-		ErrorCode error = stub_->get_connection( pg_backend_pid( fcinfo ), connection_ );
+		ErrorCode error = stub_->get_connection( fdw_info_.pid, connection_ );
 		if ( error != ErrorCode::OK )
 		{
 			elog( ERROR, "Stub::get_connection() failed. (%d)", (int) error );
@@ -651,7 +646,8 @@ static void
 begin_backend_xact( void )
 {
 	/* ローカルトランザクションのネストレベルを取得する */
-	int local_xact_level;
+	ErrorCode error;
+    int local_xact_level;
 	local_xact_level = GetCurrentTransactionNestLevel();
 
 	/* 
@@ -663,7 +659,11 @@ begin_backend_xact( void )
 	 {
 		 if ( fdw_info_.xact_level == 0 )
 		 {
-			 /* begin_transaction */
+	        error = connection_->begin( transaction_ );
+	        if ( error != ErrorCode::OK ) 
+            {
+		        elog( ERROR, "Connection::begin() failed. (%d)", (int) error );
+	        }
 			 fdw_info_.xact_level++;
 		 }
 	 }
@@ -691,13 +691,16 @@ ogawayama_xact_callback ( XactEvent event, void *arg )
 		switch ( event )
 		{
 			case XACT_EVENT_COMMIT:
-			case XACT_EVENT_PARALLEL_COMMIT:
+                 transaction_->commit();
 			case XACT_EVENT_ABORT:
+                 transaction_->rollback();
+			case XACT_EVENT_PARALLEL_COMMIT:
 			case XACT_EVENT_PARALLEL_ABORT:
 			case XACT_EVENT_PREPARE:
 			case XACT_EVENT_PRE_COMMIT:
 			case XACT_EVENT_PARALLEL_PRE_COMMIT:
 			case XACT_EVENT_PRE_PREPARE:
+                 transaction_->rollback();
 			default:
 				break;
 		}
