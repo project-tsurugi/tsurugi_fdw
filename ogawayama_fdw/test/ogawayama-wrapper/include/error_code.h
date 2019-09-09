@@ -40,34 +40,34 @@ typedef enum {
     /**
      * @brief Success
      */
-    ERRORCODE_OK = 0,
+    ERRCODE_OK = 0,
 
     /**
      * @brief NULL has been observed as the column value (a result of successful prodessing).
      */
-    ERRORCODE_COLUMN_WAS_NULL,
+    ERRCODE_COLUMN_WAS_NULL,
 
     /**
      * @brief Current in the ResultSet stepped over the last row (a result of successful prodessing).
      */
-    ERRORCODE_END_OF_ROW,
+    ERRCODE_END_OF_ROW,
 
     /**
      * @brief Current Column in the Row stepped over the last column (a result of successful prodessing).
      */
-    ERRORCODE_END_OF_COLUMN,
+    ERRCODE_END_OF_COLUMN,
 
     /**
      * @brief the column value has been requested for a different type than the actual type.
      */
-    ERRORCODE_COLUMN_TYPE_MISMATCH,
+    ERRCODE_COLUMN_TYPE_MISMATCH,
 
     /**
      * @brief Encountered server failure.
      */
-    ERRORCODE_SERVER_FAILURE,
+    ERRCODE_SERVER_FAILURE,
 
-} ERROR_CODE;
+} ERR_CODE;
 
 #endif // ERROR_CODE_H
 

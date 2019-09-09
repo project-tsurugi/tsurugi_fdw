@@ -19,8 +19,7 @@
 
 #include "dispatcher.h"
 
-#include "api.h"
-#include "metadata.h"
+#include "ogawayama/stub/api.h"
 #include "error_code.h"
 
 using namespace ogawayama::stub;

@@ -12,28 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library( ogawayama-wrapper 
-    SHARED
-        dispatcher.cpp
-)
+add_executable( tester tester.c )
 
-target_include_directories( ogawayama-wrapper
+enable_language(C)
+set(CMAKE_C_STANDARD 99)
+
+target_include_directories( tester
     PRIVATE ${PROJECT_SOURCE_DIR}/include
-    PRIVATE ${PROJECT_SOURCE_DIR}/../../ogawayama/stub/include
-    PRIVATE ${PROJECT_SOURCE_DIR}/../../ogawayama/stub/include/ogawayama/stub
-    PRIVATE ${PROJECT_SOURCE_DIR}/../../postgresql-11.1/src/include
+    PRIVATE ${PROJECT_SOURCE_DIR}/../../../postgresql-11.1/src/include
 )
 
-#find_library( DEPEND_LIBRALIES ogawayama-stub HINTS ${PROJECT_SOURCE_DIR}/libs )
+add_dependencies( tester ogawayama-wrapper )
 
-target_link_libraries( ogawayama-wrapper 
-#    PRIVATE ${DEPEND_LIBRALIES} 
-    PRIVATE ogawayama-stub
+#find_library( OGAWAYAMA_WRAPPER ogawayama-wrapper HINTS ${PROJECT_SOURCE_DIR}/build )
+
+target_link_libraries( tester
+#    PRIVATE ${OGAWAYAMA_WRAPPER} 
+    PRIVATE "ogawayama-wrapper"
 )
 
-set_target_properties( ogawayama-wrapper
+set_target_properties( tester
     PROPERTIES
-        LIBRARY_OUTPUT_NAME "ogawayama-wrapper"
-        LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/build"
+        RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/build"
         ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/build"
 )

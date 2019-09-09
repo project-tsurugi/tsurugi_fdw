@@ -111,7 +111,7 @@ ResultSet::ResultSet( Transaction *transaction, std::size_t id )
  */
 ResultSet::~ResultSet() = default;
 
-ErrorCode ResultSet::next() { return impl_->next(); }
+ErrorCode ResultSet::next() { return ErrorCode::OK; }
 
 template<>
 ErrorCode ResultSet::next_column( std::int16_t &value ) { return impl_->next_column<std::int16_t>( value ); }
