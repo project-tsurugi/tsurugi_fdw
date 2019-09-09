@@ -51,7 +51,6 @@ typedef struct ogawayama_fdw_info_
 {
 	bool		connected;		/* ogawayama-stubとのコネクション */
 	int 		xact_level;		/* FDWが自認する現在のトランザクションレベル */
-    int 		pid;
 } OgawayamaFdwInfo;
 
 #ifdef __cplusplus
@@ -93,7 +92,7 @@ static List* ogawayamaImportForeignSchema( ImportForeignSchemaStmt* stmt,
  * Helper functions
  */
 static void init_fdw_info( void );
-static bool get_connection( void );
+static bool get_connection( FunctionCallInfo fcinfo );
 static OgawayamaFdwState* create_fdwstate();
 static void free_fdwstate( OgawayamaFdwState* fdw_tate );
 static void store_pg_data_type( OgawayamaFdwState* fdw_state, List* tlist );
@@ -146,7 +145,7 @@ ogawayama_fdw_handler( PG_FUNCTION_ARGS )
 
 	init_fdw_info();
 
-	if ( get_connection() ) 
+	if ( get_connection( fcinfo ) ) 
 		fdw_info_.connected = true;
 
 	elog( INFO, "ogawayama_fdw_handler() done." );
@@ -401,7 +400,6 @@ init_fdw_info( void )
 {
 	fdw_info_.connected = false;
 	fdw_info_.xact_level = 0;
-    fdw_info_.pid = getpid();
 }
 
 /*
@@ -409,14 +407,14 @@ init_fdw_info( void )
  *	@return	true if success.
  */
 static bool 
-get_connection( void )
+get_connection( FunctionCallInfo fcinfo )
 {
 	bool ret = true;
 
 	try {
 		// connect to ogawayama-stub
 		stub_ = make_stub( "ogawayama" );
-		ErrorCode error = stub_->get_connection( fdw_info_.pid, connection_ );
+		ErrorCode error = stub_->get_connection( pg_backend_pid( fcinfo ), connection_ );
 		if ( error != ErrorCode::OK )
 		{
 			elog( ERROR, "Stub::get_connection() failed. (%d)", (int) error );
@@ -468,12 +466,12 @@ free_fdwstate( OgawayamaFdwState* fdw_state )
  * SELECT対象の列のデータ型を確認し、fdw_state->pgtypeに格納していく。
  * fdw_state->NumColsに値を格納した後に呼び出す。
  * 
- * コメント 
+ * ★コメント★ 
  * oracle_fdwのconvertTupleに影響を受け、PostgreSQLでのデータ型も把握した方が良いと
  * 判断したため用意した関数。
  * 本当は同様の処理はalt_plannerで実施してもいいのかもしれない。
  * 
- * input
+ * ■input
  *  fdw_state	設定するpgtypeがあるfdw_state
  *  tlist 		ForeignScanのtargetlist。
  *              alt_plannerを通った結果、TargetEntry->Exprは全てVarとなっている前提。
@@ -512,7 +510,7 @@ store_pg_data_type( OgawayamaFdwState* fdw_state, List* tlist )
  * 手動で編集する。
  * 処理内容については、oracle_fdwのconvaertTuple関数を参考にする。
  *
- * input
+ * ■input
  *  fdw_state 	中のNumColsとpgtypeを使用する
  *  values 		slot->valuesのポインタ
  *  nulls 		slot->nullsのポインタ
@@ -682,7 +680,7 @@ begin_backend_xact( void )
 /*
  * トランザクション終了時の動作を指定するもの。
  *
- *  形だけ用意しておいたもの
+ * ※ 形だけ用意しておいたもの
  */
 static void
 ogawayama_xact_callback ( XactEvent event, void *arg )
@@ -710,4 +708,3 @@ ogawayama_xact_callback ( XactEvent event, void *arg )
 		fdw_info_.xact_level = 0;
 	}
 }
-
