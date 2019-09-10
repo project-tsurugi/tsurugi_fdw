@@ -231,8 +231,9 @@ ogawayamaIterateForeignScan( ForeignScanState* node )
 		// open cursor
 		try {
 			elog( INFO, "query string: \"%s\"", fdw_state->query_string );
-			std::string_view query( fdw_state->query_string );
-			query.remove_suffix(1);	// セミコロンを取り除く
+
+			std::string query( fdw_state->query_string );
+			query.pop_back();	// セミコロンを取り除く
 			error = transaction_->execute_query( query, resultset_ );
 			if ( error != ErrorCode::OK )
             {
@@ -298,6 +299,7 @@ ogawayamaEndForeignScan( ForeignScanState* node )
 {
 	elog( INFO, "ogawayamaEndForeignScan() started." );
 
+	resultset_ = NULL;
 	transaction_->commit();
 	elog( INFO, "Transaction::commit() done." );
 
@@ -560,7 +562,7 @@ store_pg_data_type( OgawayamaFdwState* fdw_state, List* tlist )
 {
 	ListCell* lc;
 
-	Oid* dataType = (Oid*) palloc( sizeof( Oid ) * fdw_state->num_columns );
+	Oid* data_types = (Oid*) palloc( sizeof( Oid ) * tlist->length );
 
 	int count = 0;
 	foreach( lc, tlist )
@@ -571,7 +573,7 @@ store_pg_data_type( OgawayamaFdwState* fdw_state, List* tlist )
 		if ( nodeTag( node ) == T_Var )
 		{
 			Var* var = (Var*) node;
-			dataType[count] = var->vartype;
+			data_types[count] = var->vartype;
 		}
 		else
 		{
@@ -581,9 +583,7 @@ store_pg_data_type( OgawayamaFdwState* fdw_state, List* tlist )
 		count++;
 	}
 
-	elog( INFO, "Foreign Table num_colums: %d, count: %d", fdw_state->num_columns, count );
-
-	fdw_state->pgtype = dataType;
+	fdw_state->pgtype = data_types;
 }
 
 /*
@@ -727,15 +727,27 @@ convert_tuple( OgawayamaFdwState* fdw_state, Datum* values, bool* nulls )
 				{
 					elog( INFO, "(column: %d) TEXT(PG:text) data", i );
 					try {
+						values[i] = PointerGetDatum( NULL );
+
 						std::string_view value;
 						resultset_->next_column( value );
+
 						elog( INFO, "test value(string_view): \"%s\"", value.data() );
 						values[i] = CStringGetDatum( static_cast<const char*>( value.data() ) );
+						elog( INFO, "string_view selected." );
 
-						std::string str( value );
-						elog( INFO, "test value(string): \"%s\"", str.c_str() );
-//						std::string value_string( value );
-//						values[i] = CStringGetDatum( value_string.c_str() );
+						//std::string str( value );
+						//elog( INFO, "test value(string): \t\"%s\"", str.c_str() );
+						//std::string value_string( value );
+						// values[i] = CStringGetDatum( value_string.c_str() );
+						// elog( INFO, "std::string selected." );
+
+						//char p[100];
+						//strcpy( p, value.data() );
+						//elog( INFO, "char string []: \t\t\"%s\"", p );
+						//values[i] = CStringGetDatum( p );
+						//elog( INFO, "char[] selected." );
+
 						nulls[i] = false;
 					}
 					catch (...) {
