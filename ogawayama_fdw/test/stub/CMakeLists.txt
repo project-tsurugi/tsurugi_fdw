@@ -14,9 +14,9 @@
 
 cmake_minimum_required(VERSION 3.0.0)
 
-project(ogawayama-wrapper
+project(ogawayama-stub
     VERSION 0.0.1
-    DESCRIPTION "PostgreSQL FDW interface wrapper"
+    DESCRIPTION "PostgreSQL FDW interface stub"
     LANGUAGES CXX)
 
 set(CMAKE_CXX_COMPILER /usr/bin/g++)

@@ -201,7 +201,7 @@ ogawayamaBeginForeignScan( ForeignScanState* node, int eflags )
 	/* SELECT対象の列数を設定 */
 	fdw_state->num_columns = fsplan->scan.plan.targetlist->length;
 
-	/* ELECT対象の列のデータ型を格納 */
+	/* SELECT対象の列のデータ型を格納 */
 	store_pg_data_type( fdw_state, fsplan->scan.plan.targetlist );
 	
     fdw_state->query_string = estate->es_sourceText;
@@ -231,9 +231,10 @@ ogawayamaIterateForeignScan( ForeignScanState* node )
 		// open cursor
 		try {
 			std::string query( fdw_state->query_string );
-			query.pop_back();
-			elog( INFO, "query string: %s", (const char*) query.c_str() );
-			error = transaction_->execute_query( query, resultset_ );
+			query.pop_back();	// セミコロンを取り除く
+			elog( INFO, "query string: \"%s\"", query.c_str() );
+			error = transaction_->execute_query( 
+				static_cast<std::string_view>( query ), resultset_ );
 			if ( error != ErrorCode::OK )
             {
 				elog( ERROR, "Connection::execute_query() failed. (%d)", (int) error );
@@ -263,7 +264,7 @@ ogawayamaIterateForeignScan( ForeignScanState* node )
 	else if ( error == ErrorCode::END_OF_ROW )
 	{
 		// 読み込み完了
-		transaction_->commit();
+		elog( INFO, "End of row." );
 	}
 	else 
 	{
@@ -298,8 +299,11 @@ ogawayamaEndForeignScan( ForeignScanState* node )
 {
 	elog( INFO, "ogawayamaEndForeignScan() started." );
 
+	transaction_->commit();
+	elog( INFO, "Transaction::commit() done." );
+
 	free_fdwstate( (OgawayamaFdwState*) node->fdw_state );
-	
+		
 	elog( INFO, "ogawayamaEndForeignScan() done." );
 }
 
@@ -482,7 +486,8 @@ get_connection( int pid )
 
 	try {
 		// connect to ogawayama-stub
-		std::string name = std::to_string( pid );	// 暫定処置
+		std::string name = "ogawayama_" + std::to_string( pid );	// 暫定処置
+		elog( INFO, "stub name: (%s)", name.c_str() );
 		stub_ = make_stub( name );
 		ErrorCode error = stub_->get_connection( pid , connection_ );
 		if ( error != ErrorCode::OK )
@@ -727,7 +732,7 @@ convert_tuple( OgawayamaFdwState* fdw_state, Datum* values, bool* nulls )
 				}
 				else
 				{
-						elog( ERROR, "データ型不一致" );
+					elog( ERROR, "データ型不一致" );
 				}
 				break;
 				
@@ -754,8 +759,9 @@ begin_backend_xact( void )
 {
 	/* ローカルトランザクションのネストレベルを取得する */
 	ErrorCode error;
-    int local_xact_level;
-	local_xact_level = GetCurrentTransactionNestLevel();
+    int local_xact_level = GetCurrentTransactionNestLevel();
+
+	elog( INFO, "Cuurent transaction level: (%d)", local_xact_level );
 
 	/* 
 	 * ローカルトランザクションのレベルが1であり、かつxactlevel(FDWが自認するバックエンドのトランザクションレベル)
@@ -771,7 +777,8 @@ begin_backend_xact( void )
             {
 		        elog( ERROR, "Connection::begin() failed. (%d)", (int) error );
 	        }
-			 fdw_info_.xact_level++;
+			fdw_info_.xact_level++;
+			elog( INFO, "Connection::begin() done." );
 		 }
 	 }
 	 else if (local_xact_level >= 2)
@@ -798,17 +805,25 @@ ogawayama_xact_callback ( XactEvent event, void *arg )
 		switch ( event )
 		{
 			case XACT_EVENT_COMMIT:
-                 transaction_->commit();
+				elog( INFO, "XACT_EVENT_COMMIT" );
+                transaction_->commit();
+				break;
 			case XACT_EVENT_ABORT:
-                 transaction_->rollback();
+				elog( INFO, "XACT_EVENT_ABORT" );
+                transaction_->rollback();
+				break;
+			case XACT_EVENT_PREPARE:
+				elog( INFO, "XACT_EVENT_PREPARE" );
+				break;
 			case XACT_EVENT_PARALLEL_COMMIT:
 			case XACT_EVENT_PARALLEL_ABORT:
-			case XACT_EVENT_PREPARE:
 			case XACT_EVENT_PRE_COMMIT:
 			case XACT_EVENT_PARALLEL_PRE_COMMIT:
 			case XACT_EVENT_PRE_PREPARE:
-                 transaction_->rollback();
+				elog( INFO, "Unexpedted XACT event occurred. (%d)", event );
+				break;
 			default:
+				elog( INFO, "Unexpedted XACT event occurred. (Unknown event)" );
 				break;
 		}
 

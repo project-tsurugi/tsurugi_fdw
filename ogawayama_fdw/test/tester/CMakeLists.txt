@@ -12,23 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+cmake_minimum_required(VERSION 3.0.0)
+
+project( tester
+    VERSION 0.0.1
+    DESCRIPTION "test driver for ogawayama-wrapper"
+    LANGUAGES C)
+
 add_executable( tester tester.c )
 
 enable_language(C)
 set(CMAKE_C_STANDARD 99)
 
 target_include_directories( tester
-    PRIVATE ${PROJECT_SOURCE_DIR}/include
-    PRIVATE ${PROJECT_SOURCE_DIR}/../../../postgresql-11.1/src/include
+    PRIVATE ${PROJECT_SOURCE_DIR}/../ogawayama-wrapper/include
+    PRIVATE ${PROJECT_SOURCE_DIR}/../../../../../postgresql-11.1/src/include
 )
 
-add_dependencies( tester ogawayama-wrapper )
+#add_dependencies( tester ogawayama-wrapper )
 
-#find_library( OGAWAYAMA_WRAPPER ogawayama-wrapper HINTS ${PROJECT_SOURCE_DIR}/build )
+find_library( OGAWAYAMA_WRAPPER ogawayama-wrapper 
+    HINTS ${PROJECT_SOURCE_DIR}/../ogawayama-wrapper/build )
 
 target_link_libraries( tester
-#    PRIVATE ${OGAWAYAMA_WRAPPER} 
-    PRIVATE "ogawayama-wrapper"
+    PRIVATE ${OGAWAYAMA_WRAPPER} 
 )
 
 set_target_properties( tester
