@@ -51,6 +51,7 @@ typedef struct ogawayama_fdw_info_
 {
 	bool		connected;		/* ogawayama-stubとのコネクション */
 	int 		xact_level;		/* FDWが自認する現在のトランザクションレベル */
+	int			pid;			/* process ID */
 } OgawayamaFdwInfo;
 
 #ifdef __cplusplus
@@ -91,8 +92,8 @@ static List* ogawayamaImportForeignSchema( ImportForeignSchemaStmt* stmt,
 /*
  * Helper functions
  */
-static void init_fdw_info( void );
-static bool get_connection( FunctionCallInfo fcinfo );
+static void init_fdw_info( FunctionCallInfo fcinfo  );
+static bool get_connection( int pid );
 static OgawayamaFdwState* create_fdwstate();
 static void free_fdwstate( OgawayamaFdwState* fdw_tate );
 static void store_pg_data_type( OgawayamaFdwState* fdw_state, List* tlist );
@@ -143,9 +144,9 @@ ogawayama_fdw_handler( PG_FUNCTION_ARGS )
 	/*Support functions for IMPORT FOREIGN SCHEMA*/
 	routine->ImportForeignSchema = ogawayamaImportForeignSchema;
 
-	init_fdw_info();
+	init_fdw_info( fcinfo );
 
-	if ( get_connection( fcinfo ) ) 
+	if ( get_connection( fdw_info_.pid ) ) 
 		fdw_info_.connected = true;
 
 	elog( INFO, "ogawayama_fdw_handler() done." );
@@ -206,37 +207,48 @@ ogawayamaIterateForeignScan( ForeignScanState* node )
 	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
 	ErrorCode error;
 	
-	if ( fdw_state->cursor_exists )
+	if ( !fdw_state->cursor_exists )
 	{
-		if ( resultset_->next() == ErrorCode::OK ) 
-		{
-			// 1行分fetchする
-			ExecClearTuple( slot );
-			convert_tuple( fdw_state, slot->tts_values, slot->tts_isnull );
-			ExecStoreVirtualTuple( slot );
-		}
-		else
-		{
-			/* 次の結果セットはないので、slotをnullにする */
-			slot = (TupleTableSlot*) NULL;
-		}
-	}
-	else
-	{
+		// open cursor
 		try {
-			// open cursor
 			std::string query( fdw_state->query_string );
+			query.pop_back();
+			elog( INFO, "query string: %s", (const char*) query.c_str() );
 			error = transaction_->execute_query( query, resultset_ );
 			if ( error != ErrorCode::OK )
             {
 				elog( ERROR, "Connection::execute_query() failed. (%d)", (int) error );
 			}
+			error = resultset_->get_metadata( metadata_ );
+			if ( error != ErrorCode::OK )
+            {
+				elog( ERROR, "Connection::get_metadata() failed. (%d)", (int) error );
+			}
 		}
 		catch(...) {
 			elog( ERROR, "Unknown Error occurred." );
 		}
-
 		fdw_state->cursor_exists = true;
+	}
+
+	//* initialize virtual tuple */
+	ExecClearTuple( slot );
+
+	error = resultset_->next();
+	if ( error == ErrorCode::OK ) 
+	{
+		// 1行分fetchする
+		convert_tuple( fdw_state, slot->tts_values, slot->tts_isnull );
+		ExecStoreVirtualTuple( slot );
+	}
+	else if ( error == ErrorCode::END_OF_ROW )
+	{
+		// 読み込み完了
+		transaction_->commit();
+	}
+	else 
+	{
+		elog( ERROR, "ResultSet::next() failed. (%d)", (int) error );
 	}
 
 	elog( INFO, "ogawayamaIterateForeignScan() done." );
@@ -396,10 +408,12 @@ ogawayamaImportForeignSchema( ImportForeignSchemaStmt* stmt,
  *	@brief	initialize global variables.
  */
 static void
-init_fdw_info( void )
+init_fdw_info( FunctionCallInfo fcinfo )
 {
 	fdw_info_.connected = false;
 	fdw_info_.xact_level = 0;
+	fdw_info_.pid = pg_backend_pid( fcinfo );
+	elog( INFO, "PostgreSQL Worker Process ID: (%d)", fdw_info_.pid );
 }
 
 /*
@@ -407,14 +421,14 @@ init_fdw_info( void )
  *	@return	true if success.
  */
 static bool 
-get_connection( FunctionCallInfo fcinfo )
+get_connection( int pid )
 {
 	bool ret = true;
 
 	try {
 		// connect to ogawayama-stub
-		stub_ = make_stub( "ogawayama" );
-		ErrorCode error = stub_->get_connection( pg_backend_pid( fcinfo ), connection_ );
+		stub_ = make_stub();
+		ErrorCode error = stub_->get_connection( pid , connection_ );
 		if ( error != ErrorCode::OK )
 		{
 			elog( ERROR, "Stub::get_connection() failed. (%d)", (int) error );
@@ -518,12 +532,15 @@ store_pg_data_type( OgawayamaFdwState* fdw_state, List* tlist )
 static void 
 convert_tuple( OgawayamaFdwState* fdw_state, Datum* values, bool* nulls )
 {
+	elog( INFO, "convert_tuple started." );
+
+	// 1行分のデータを読み込む
 	int i = 0;
-	for ( auto t: metadata_->get_types() )
+	for ( auto types: metadata_->get_types() )
 	{
-		switch ( t.get_type() )
+		switch ( static_cast<Metadata::ColumnType::Type> (types.get_type()) )
 		{
-			case Metadata::ColumnType::ColumnType::Type::NULL_VALUE:
+			case Metadata::ColumnType::Type::NULL_VALUE:
 				nulls[i] = true;
 				values[i] = PointerGetDatum( NULL );
 				break;
@@ -536,6 +553,7 @@ convert_tuple( OgawayamaFdwState* fdw_state, Datum* values, bool* nulls )
 					break;
 				}
 				try {							
+					elog( INFO, "(%d) INT16(PG:INT2) data", i );
 					std::int16_t value;
 					if ( resultset_->next_column( value ) == ErrorCode::OK )
 					{
@@ -555,7 +573,8 @@ convert_tuple( OgawayamaFdwState* fdw_state, Datum* values, bool* nulls )
 					elog (NOTICE, "データ型不一致");
 				}
 				else
-				{			
+				{
+					elog( INFO, "(%d) INT32(PG:INT4) data", i );
 					std::int32_t value;
 					resultset_->next_column( value );
 					values[i] = Int32GetDatum( value );
@@ -571,6 +590,7 @@ convert_tuple( OgawayamaFdwState* fdw_state, Datum* values, bool* nulls )
 				}
 				else
 				{			
+					elog( INFO, "(%d) INT64(PG:INT8) data", i );
 					std::int64_t value;
 					resultset_->next_column( value );
 					values[i] = Int64GetDatum( value );
@@ -586,6 +606,7 @@ convert_tuple( OgawayamaFdwState* fdw_state, Datum* values, bool* nulls )
 				}
 				else
 				{		
+					elog( INFO, "(%d) FLOAT32(PG:FLOAT4) data", i );
 					float4 value;
 					resultset_->next_column( value );
 					values[i] = Float4GetDatum( value );
@@ -601,7 +622,8 @@ convert_tuple( OgawayamaFdwState* fdw_state, Datum* values, bool* nulls )
 					break;
 				}
 				else
-				{			
+				{
+					elog( INFO, "(%d) FLOAT64(PG:FLOAT8) data", i );
 					float8 value;
 					resultset_->next_column( value );
 					values[i] = Float8GetDatum( value );
@@ -619,9 +641,10 @@ convert_tuple( OgawayamaFdwState* fdw_state, Datum* values, bool* nulls )
 				}
 				else
 				{
+					elog( INFO, "(%d) TEXT(PG:string) data", i );
 					std::string_view value;
 					resultset_->next_column( value );
-					values[i] = CStringGetDatum( value.data() );
+					values[i] = CStringGetDatum( (const char*) value.data() );
 					nulls[i] = false;
 				}
 				break;
@@ -633,6 +656,8 @@ convert_tuple( OgawayamaFdwState* fdw_state, Datum* values, bool* nulls )
 		}
 		i++;
 	}
+
+	elog( INFO, "convert_tuple done." );
 }
 
 /*
