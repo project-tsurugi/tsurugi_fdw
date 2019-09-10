@@ -226,7 +226,7 @@ ogawayamaIterateForeignScan( ForeignScanState* node )
 			}
 		}
 		catch(...) {
-			elog( ERROR, "Unknown Error occurred." );
+			elog( ERROR, "Unknown exception caught." );
 		}
 		fdw_state->cursor_exists = true;
 	}
@@ -413,7 +413,7 @@ init_fdw_info( FunctionCallInfo fcinfo )
 	fdw_info_.connected = false;
 	fdw_info_.xact_level = 0;
 	fdw_info_.pid = pg_backend_pid( fcinfo );
-	elog( INFO, "PostgreSQL Worker Process ID: (%d)", fdw_info_.pid );
+//	elog( INFO, "PostgreSQL Worker Process ID: (%d)", fdw_info_.pid );
 }
 
 /*
@@ -427,7 +427,8 @@ get_connection( int pid )
 
 	try {
 		// connect to ogawayama-stub
-		stub_ = make_stub();
+		std::string name = std::to_string( pid );	// 暫定処置
+		stub_ = make_stub( name );
 		ErrorCode error = stub_->get_connection( pid , connection_ );
 		if ( error != ErrorCode::OK )
 		{
@@ -436,7 +437,7 @@ get_connection( int pid )
 		}
 	}
 	catch (...) {
-		elog( ERROR, "Unknown error occurred. " );
+		elog( ERROR, "Unknown exception caught." );
 	}
 
 	/* COMMIT, ROLLBACK時の動作を登録 */
@@ -538,7 +539,7 @@ convert_tuple( OgawayamaFdwState* fdw_state, Datum* values, bool* nulls )
 	int i = 0;
 	for ( auto types: metadata_->get_types() )
 	{
-		switch ( static_cast<Metadata::ColumnType::Type> (types.get_type()) )
+		switch ( static_cast<Metadata::ColumnType::Type> ( types.get_type() ) )
 		{
 			case Metadata::ColumnType::Type::NULL_VALUE:
 				nulls[i] = true;
@@ -547,111 +548,137 @@ convert_tuple( OgawayamaFdwState* fdw_state, Datum* values, bool* nulls )
 
 			case Metadata::ColumnType::Type::INT16:
 				/*PostgreSQLでのsmallint*/
-				if ( fdw_state->pgtype[i] != INT2OID )
+				if ( fdw_state->pgtype[i] == INT2OID )
 				{
-					elog ( NOTICE, "データ型不一致" );
-					break;
-				}
-				try {							
-					elog( INFO, "(%d) INT16(PG:INT2) data", i );
-					std::int16_t value;
-					if ( resultset_->next_column( value ) == ErrorCode::OK )
-					{
-						values[i] = Int16GetDatum( value );
-						nulls[i] = false;
+					elog( INFO, "(column: %d) INT16(PG:INT2) data", i );
+					try {							
+						std::int16_t value;
+						if ( resultset_->next_column( value ) == ErrorCode::OK )
+						{
+							values[i] = Int16GetDatum( value );
+							nulls[i] = false;
+						}
+					}
+					catch (...) {
+						elog( ERROR, "Unknown exception caught." );
 					}
 				}
-				catch (...) {
-					elog( ERROR, "Unknown Error occurred." );
+				else
+				{
+					elog ( ERROR, "データ型不一致" );
 				}
 				break;
 
 			case Metadata::ColumnType::Type::INT32:
 				/*PostgreSQLでのinteger*/
-				if ( fdw_state->pgtype[i] != INT4OID )
+				if ( fdw_state->pgtype[i] == INT4OID )
 				{
-					elog (NOTICE, "データ型不一致");
+					elog( INFO, "(column: %d) INT32(PG:INT4) data", i );
+					try {
+						std::int32_t value;
+						resultset_->next_column( value );
+						values[i] = Int32GetDatum( value );
+						nulls[i] = false;
+					} 
+					catch (...) {
+						elog( ERROR, "Unknown exception caught." );
+					}
 				}
 				else
 				{
-					elog( INFO, "(%d) INT32(PG:INT4) data", i );
-					std::int32_t value;
-					resultset_->next_column( value );
-					values[i] = Int32GetDatum( value );
-					nulls[i] = false;
+					elog ( ERROR, "データ型不一致");
 				}
 				break;
 
 			case Metadata::ColumnType::Type::INT64:
 				/*PostgreSQLでのbigint*/
-				if ( fdw_state->pgtype[i] != INT8OID )
+				if ( fdw_state->pgtype[i] == INT8OID )
 				{
-					elog( NOTICE, "データ型不一致" );
+					elog( INFO, "(column: %d) INT64(PG:INT8) data", i );
+					try {
+						std::int64_t value;
+						resultset_->next_column( value );
+						values[i] = Int64GetDatum( value );
+						nulls[i] = false;
+					} 
+					catch (...) {
+						elog( ERROR, "Unknown exception caught." );
+					}
 				}
 				else
 				{			
-					elog( INFO, "(%d) INT64(PG:INT8) data", i );
-					std::int64_t value;
-					resultset_->next_column( value );
-					values[i] = Int64GetDatum( value );
-					nulls[i] = false;
+					elog( ERROR, "データ型不一致" );
 				}
 				break;
 
 			case Metadata::ColumnType::Type::FLOAT32:
 				/*PostgreSQLでのreal*/
-				if ( fdw_state->pgtype[i] != FLOAT4OID )
-				{
-					elog( NOTICE, "データ型不一致" );
+				if ( fdw_state->pgtype[i] == FLOAT4OID )
+				{		
+					elog( INFO, "(column: %d) FLOAT32(PG:FLOAT4) data", i );
+					try {
+						float4 value;
+						resultset_->next_column( value );
+						values[i] = Float4GetDatum( value );
+						nulls[i] = false;
+					}
+					catch (...) {
+						elog( ERROR, "Unknown exception caught." );
+					}
 				}
 				else
-				{		
-					elog( INFO, "(%d) FLOAT32(PG:FLOAT4) data", i );
-					float4 value;
-					resultset_->next_column( value );
-					values[i] = Float4GetDatum( value );
-					nulls[i] = false;
+				{
+					elog( ERROR, "データ型不一致" );
 				}
 				break;
 
 			case Metadata::ColumnType::Type::FLOAT64:
 				/*PostgreSQLでのdouble precision*/
-				if ( fdw_state->pgtype[i] != FLOAT8OID )
+				if ( fdw_state->pgtype[i] == FLOAT8OID )
 				{
-					elog ( NOTICE, "データ型不一致" );
-					break;
+					elog( INFO, "(column: %d) FLOAT64(PG:FLOAT8) data", i );
+					try {
+						float8 value;
+						resultset_->next_column( value );
+						values[i] = Float8GetDatum( value );
+						nulls[i] = false;
+					}
+					catch (...) {
+						elog( ERROR, "Unknown exception caught." );
+					}
 				}
 				else
 				{
-					elog( INFO, "(%d) FLOAT64(PG:FLOAT8) data", i );
-					float8 value;
-					resultset_->next_column( value );
-					values[i] = Float8GetDatum( value );
-					nulls[i] = false;
+					elog ( ERROR, "データ型不一致" );
 				}
 				break;
 			
 			case Metadata::ColumnType::Type::TEXT:
 				/*PostgreSQLでのcharacter, character varying, text*/
-				if ( fdw_state->pgtype[i] != BPCHAROID &&
-					fdw_state->pgtype[i] != VARCHAROID &&
-					fdw_state->pgtype[i] != TEXTOID )
+				if ( fdw_state->pgtype[i] == BPCHAROID ||
+					fdw_state->pgtype[i] == VARCHAROID ||
+					fdw_state->pgtype[i] == TEXTOID )
 				{
-						elog( NOTICE, "データ型不一致" );
+					elog( INFO, "(column: %d) TEXT(PG:text) data", i );
+					try {
+						std::string_view value;
+						resultset_->next_column( value );
+						values[i] = CStringGetDatum( static_cast<const char*>( value.data() ) );
+						nulls[i] = false;
+					}
+					catch (...) {
+						elog( ERROR, "Unknown exception caught." );
+					}
 				}
 				else
 				{
-					elog( INFO, "(%d) TEXT(PG:string) data", i );
-					std::string_view value;
-					resultset_->next_column( value );
-					values[i] = CStringGetDatum( (const char*) value.data() );
-					nulls[i] = false;
+						elog( ERROR, "データ型不一致" );
 				}
 				break;
 				
 			default:
 				/*サポート対象外の型の場合*/
-				elog( NOTICE, "サポート対象外の型が返されました。" );
+				elog( ERROR, "サポート対象外の型が返されました。" );
 				break;
 		}
 		i++;
