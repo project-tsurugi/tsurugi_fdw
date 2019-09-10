@@ -85,6 +85,20 @@ static bool ogawayamaAnalyzeForeignTable(
 	Relation relation, AcquireSampleRowsFunc* func, BlockNumber* totalpages );
 static List* ogawayamaImportForeignSchema( ImportForeignSchemaStmt* stmt, 
 							Oid serverOid );
+
+static TupleTableSlot* ogawayamaExecForeignInsert( EState *estate,
+                  ResultRelInfo *rinfo,
+                  TupleTableSlot *slot,
+                  TupleTableSlot *planSlot );
+static TupleTableSlot* ogawayamaExecForeignUpdate( EState *estate,
+                  ResultRelInfo *rinfo,
+                  TupleTableSlot *slot,
+                  TupleTableSlot *planSlot );
+static TupleTableSlot* ogawayamaExecForeignDelete( EState *estate,
+                  ResultRelInfo *rinfo,
+                  TupleTableSlot *slot,
+                  TupleTableSlot *planSlot );
+
 #ifdef __cplusplus
 }
 #endif
@@ -144,10 +158,15 @@ ogawayama_fdw_handler( PG_FUNCTION_ARGS )
 	/*Support functions for IMPORT FOREIGN SCHEMA*/
 	routine->ImportForeignSchema = ogawayamaImportForeignSchema;
 
+    /*Functions for foreign modify*/
+	routine->ExecForeignInsert = ogawayamaExecForeignInsert;
+	routine->ExecForeignUpdate = ogawayamaExecForeignUpdate;
+	routine->ExecForeignDelete = ogawayamaExecForeignDelete;
+
 	init_fdw_info( fcinfo );
 
-	if ( get_connection( fdw_info_.pid ) ) 
-		fdw_info_.connected = true;
+if ( get_connection( fdw_info_.pid ) ) 
+	fdw_info_.connected = true;
 
 	elog( INFO, "ogawayama_fdw_handler() done." );
 
@@ -403,6 +422,42 @@ ogawayamaImportForeignSchema( ImportForeignSchemaStmt* stmt,
 	return commands;
 }
 
+/*
+ * ogawayamaExecForeignInsert
+ *
+ *
+ */
+static TupleTableSlot*
+ogawayamaExecForeignInsert( EState *estate, ResultRelInfo *rinfo, TupleTableSlot *slot, TupleTableSlot *planSlot )
+{
+	slot = NULL;
+	return slot;
+}
+
+/*
+ * ogawayamaExecForeignUpdate
+ *
+ *
+ */
+static TupleTableSlot*
+ogawayamaExecForeignUpdate( EState *estate, ResultRelInfo *rinfo, TupleTableSlot *slot, TupleTableSlot *planSlot )
+{
+	slot = NULL;
+	return slot;
+}
+
+/*
+ * ogawayamaExecForeignDelete
+ *
+ *
+ */
+static TupleTableSlot*
+ogawayamaExecForeignDelete( EState *estate, ResultRelInfo *rinfo, TupleTableSlot *slot, TupleTableSlot *planSlot )
+{
+	slot = NULL;
+	return slot;
+}
+
 
 /*
  *	@brief	initialize global variables.
@@ -443,7 +498,7 @@ get_connection( int pid )
 	/* COMMIT, ROLLBACK時の動作を登録 */
 	RegisterXactCallback( ogawayama_xact_callback, NULL );
 
-	return ret;
+	return ret; 
 }
 
 /*
