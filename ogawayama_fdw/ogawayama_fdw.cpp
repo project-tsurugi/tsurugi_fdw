@@ -433,7 +433,8 @@ ogawayamaImportForeignSchema( ImportForeignSchemaStmt* stmt,
  *
  */
 static TupleTableSlot*
-ogawayamaExecForeignInsert( EState *estate, ResultRelInfo *rinfo, TupleTableSlot *slot, TupleTableSlot *planSlot )
+ogawayamaExecForeignInsert( 
+	EState *estate, ResultRelInfo *rinfo, TupleTableSlot *slot, TupleTableSlot *planSlot )
 {
 	slot = NULL;
 	return slot;
@@ -445,7 +446,8 @@ ogawayamaExecForeignInsert( EState *estate, ResultRelInfo *rinfo, TupleTableSlot
  *
  */
 static TupleTableSlot*
-ogawayamaExecForeignUpdate( EState *estate, ResultRelInfo *rinfo, TupleTableSlot *slot, TupleTableSlot *planSlot )
+ogawayamaExecForeignUpdate( 
+	EState *estate, ResultRelInfo *rinfo, TupleTableSlot *slot, TupleTableSlot *planSlot )
 {
 	slot = NULL;
 	return slot;
@@ -457,7 +459,8 @@ ogawayamaExecForeignUpdate( EState *estate, ResultRelInfo *rinfo, TupleTableSlot
  *
  */
 static TupleTableSlot*
-ogawayamaExecForeignDelete( EState *estate, ResultRelInfo *rinfo, TupleTableSlot *slot, TupleTableSlot *planSlot )
+ogawayamaExecForeignDelete( 
+	EState *estate, ResultRelInfo *rinfo, TupleTableSlot *slot, TupleTableSlot *planSlot )
 {
 	slot = NULL;
 	return slot;
@@ -473,7 +476,7 @@ init_fdw_info( FunctionCallInfo fcinfo )
 	fdw_info_.connected = false;
 	fdw_info_.xact_level = 0;
 	fdw_info_.pid = pg_backend_pid( fcinfo );
-//	elog( INFO, "PostgreSQL Worker Process ID: (%d)", fdw_info_.pid );
+	elog( INFO, "PostgreSQL Worker Process ID: (%d)", fdw_info_.pid );
 }
 
 /*
@@ -562,8 +565,8 @@ store_pg_data_type( OgawayamaFdwState* fdw_state, List* tlist )
 	int count = 0;
 	foreach( lc, tlist )
 	{
-		TargetEntry* te = (TargetEntry*) lfirst( lc );
-		Node* node = (Node*) te->expr;
+		TargetEntry* entry = (TargetEntry*) lfirst( lc );
+		Node* node = (Node*) entry->expr;
 
 		if ( nodeTag( node ) == T_Var )
 		{
@@ -575,8 +578,10 @@ store_pg_data_type( OgawayamaFdwState* fdw_state, List* tlist )
 			/* Var以外であるパターンは考えていないのでエラーにします */
 			elog( NOTICE, "Error : stpre_pg_data_type : Var以外" );
 		}
-		count ++;
+		count++;
 	}
+
+	elog( INFO, "Foreign Table num_colums: %d, count: %d", fdw_state->num_columns, count );
 
 	fdw_state->pgtype = dataType;
 }
@@ -724,7 +729,13 @@ convert_tuple( OgawayamaFdwState* fdw_state, Datum* values, bool* nulls )
 					try {
 						std::string_view value;
 						resultset_->next_column( value );
+						elog( INFO, "test value(string_view): \"%s\"", value.data() );
 						values[i] = CStringGetDatum( static_cast<const char*>( value.data() ) );
+
+						std::string str( value );
+						elog( INFO, "test value(string): \"%s\"", str.c_str() );
+//						std::string value_string( value );
+//						values[i] = CStringGetDatum( value_string.c_str() );
 						nulls[i] = false;
 					}
 					catch (...) {
@@ -821,10 +832,10 @@ ogawayama_xact_callback ( XactEvent event, void *arg )
 			case XACT_EVENT_PRE_COMMIT:
 			case XACT_EVENT_PARALLEL_PRE_COMMIT:
 			case XACT_EVENT_PRE_PREPARE:
-				elog( INFO, "Unexpedted XACT event occurred. (%d)", event );
+				elog( INFO, "Unexpected XACT event occurred. (%d)", event );
 				break;
 			default:
-				elog( INFO, "Unexpedted XACT event occurred. (Unknown event)" );
+				elog( INFO, "Unexpected XACT event occurred. (Unknown event)" );
 				break;
 		}
 
