@@ -341,10 +341,11 @@ ogawayamaIterateDirectModify( ForeignScanState* node )
 	ErrorCode error;
 
     std::string query( fdw_state->query_string );
-	error = transaction_->execute_query( query, resultset_ );
+	query.pop_back();
+	error = transaction_->execute_statement( query );
 	if ( error != ErrorCode::OK ) 
     {
-		elog( ERROR, "Connection::execute_query() failed. (%d)", (int) error );	
+		elog( ERROR, "Connection::execute_statement() failed. (%d)", (int) error );	
 	}
 
 	elog( INFO, "ogawayamaIterateDirectModify() done." );
