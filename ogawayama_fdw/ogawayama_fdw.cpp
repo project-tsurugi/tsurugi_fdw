@@ -230,11 +230,10 @@ ogawayamaIterateForeignScan( ForeignScanState* node )
 	{
 		// open cursor
 		try {
-			std::string query( fdw_state->query_string );
-			query.pop_back();	// セミコロンを取り除く
-			elog( INFO, "query string: \"%s\"", query.c_str() );
-			error = transaction_->execute_query( 
-				static_cast<std::string_view>( query ), resultset_ );
+			elog( INFO, "query string: \"%s\"", fdw_state->query_string );
+			std::string_view query( fdw_state->query_string );
+			query.remove_suffix(1);	// セミコロンを取り除く
+			error = transaction_->execute_query( query, resultset_ );
 			if ( error != ErrorCode::OK )
             {
 				elog( ERROR, "Connection::execute_query() failed. (%d)", (int) error );
@@ -344,8 +343,9 @@ ogawayamaIterateDirectModify( ForeignScanState* node )
 	TupleTableSlot* slot = NULL;
 	ErrorCode error;
 
-    std::string query( fdw_state->query_string );
-	query.pop_back();
+	elog( INFO, "query string: \"%s\"", fdw_state->query_string );
+    std::string_view query( fdw_state->query_string );
+	query.remove_suffix(1);
 	error = transaction_->execute_statement( query );
 	if ( error != ErrorCode::OK ) 
     {
