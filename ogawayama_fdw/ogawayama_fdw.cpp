@@ -16,12 +16,37 @@ extern "C" {
 
 #include "ogawayama_fdw.h"
 
-#include "commands/explain.h"
 #include "foreign/fdwapi.h"
 #include "catalog/pg_type.h"
 #include "utils/fmgrprotos.h"
 #include "access/xact.h"
-#include <unistd.h>
+
+#include "access/htup.h"
+#include "access/reloptions.h"
+#include "access/sysattr.h"
+#include "access/xact.h"
+#include "catalog/indexing.h"
+#include "catalog/pg_attribute.h"
+#include "catalog/pg_cast.h"
+#include "catalog/pg_collation.h"
+#include "catalog/pg_foreign_data_wrapper.h"
+#include "catalog/pg_foreign_server.h"
+#include "catalog/pg_foreign_table.h"
+#include "catalog/pg_namespace.h"
+#include "catalog/pg_operator.h"
+#include "catalog/pg_proc.h"
+#include "catalog/pg_user_mapping.h"
+#include "catalog/pg_type.h"
+#include "commands/defrem.h"
+#include "commands/explain.h"
+#include "commands/vacuum.h"
+#include "foreign/fdwapi.h"
+#include "foreign/foreign.h"
+#include "utils/tqual.h"
+#include "utils/snapmgr.h"
+#include "utils/syscache.h"
+#include "utils/timestamp.h"
+#include "access/htup_details.h"
 
 PG_MODULE_MAGIC;
 
@@ -299,10 +324,13 @@ ogawayamaEndForeignScan( ForeignScanState* node )
 {
 	elog( INFO, "ogawayamaEndForeignScan() started." );
 
-	resultset_ = NULL;
-	transaction_->commit();
-	elog( INFO, "Transaction::commit() done." );
+	if ( fdw_info_.xact_level > 0 ) {
+		transaction_->commit();
+		fdw_info_.xact_level--;
+		elog( INFO, "Transaction::commit() done." );
+	}
 
+	resultset_ = NULL;
 	free_fdwstate( (OgawayamaFdwState*) node->fdw_state );
 		
 	elog( INFO, "ogawayamaEndForeignScan() done." );
@@ -369,6 +397,13 @@ ogawayamaEndDirectModify( ForeignScanState* node )
 {
 	elog( INFO, "ogawayamaEndDirectModify() started." );
 
+	if ( fdw_info_.xact_level > 0 ) {
+		transaction_->commit();
+		fdw_info_.xact_level--;
+		elog( INFO, "Transaction::commit() done. (xact_level: %d)", 
+			fdw_info_.xact_level );
+	}
+
 	free_fdwstate( (OgawayamaFdwState*) node->fdw_state );
 
 	elog( INFO, "ogawayamaEndDirectModify() done." );
@@ -386,7 +421,7 @@ ogawayamaEndDirectModify( ForeignScanState* node )
  */
 static void 
 ogawayamaExplainForeignScan( ForeignScanState* node,
-						   ExplainState* es )
+						   	ExplainState* es )
 {
 						   
 }
@@ -436,7 +471,10 @@ ogawayamaImportForeignSchema( ImportForeignSchemaStmt* stmt,
  */
 static TupleTableSlot*
 ogawayamaExecForeignInsert( 
-	EState *estate, ResultRelInfo *rinfo, TupleTableSlot *slot, TupleTableSlot *planSlot )
+	EState *estate, 
+	ResultRelInfo *rinfo, 
+	TupleTableSlot *slot, 
+	TupleTableSlot *planSlot )
 {
 	slot = NULL;
 	return slot;
@@ -449,7 +487,10 @@ ogawayamaExecForeignInsert(
  */
 static TupleTableSlot*
 ogawayamaExecForeignUpdate( 
-	EState *estate, ResultRelInfo *rinfo, TupleTableSlot *slot, TupleTableSlot *planSlot )
+	EState *estate, 
+	ResultRelInfo *rinfo, 
+	TupleTableSlot *slot, 
+	TupleTableSlot *planSlot )
 {
 	slot = NULL;
 	return slot;
@@ -462,7 +503,10 @@ ogawayamaExecForeignUpdate(
  */
 static TupleTableSlot*
 ogawayamaExecForeignDelete( 
-	EState *estate, ResultRelInfo *rinfo, TupleTableSlot *slot, TupleTableSlot *planSlot )
+	EState *estate, 
+	ResultRelInfo *rinfo, 
+	TupleTableSlot *slot, 
+	TupleTableSlot *planSlot )
 {
 	slot = NULL;
 	return slot;
@@ -731,23 +775,17 @@ convert_tuple( OgawayamaFdwState* fdw_state, Datum* values, bool* nulls )
 
 						std::string_view value;
 						resultset_->next_column( value );
-
 						elog( INFO, "test value(string_view): \"%s\"", value.data() );
-						values[i] = CStringGetDatum( static_cast<const char*>( value.data() ) );
-						elog( INFO, "string_view selected." );
 
-						//std::string str( value );
-						//elog( INFO, "test value(string): \t\"%s\"", str.c_str() );
-						//std::string value_string( value );
-						// values[i] = CStringGetDatum( value_string.c_str() );
-						// elog( INFO, "std::string selected." );
-
-						//char p[100];
-						//strcpy( p, value.data() );
-						//elog( INFO, "char string []: \t\t\"%s\"", p );
-						//values[i] = CStringGetDatum( p );
-						//elog( INFO, "char[] selected." );
-
+						HeapTuple tuple = SearchSysCache1( TYPEOID, ObjectIdGetDatum( fdw_state->pgtype[i] ) );
+						if ( !HeapTupleIsValid( tuple ) )
+						{
+							elog( ERROR, "cache lookup failed for type %u", fdw_state->pgtype[i] );
+						}
+						regproc typinput = ((Form_pg_type) GETSTRUCT( tuple ))->typinput;
+						ReleaseSysCache( tuple );
+						Datum dat = CStringGetDatum( value.data() );
+						values[i] = OidFunctionCall1( typinput, dat );
 						nulls[i] = false;
 					}
 					catch (...) {
@@ -788,11 +826,11 @@ begin_backend_xact( void )
 	elog( INFO, "Cuurent transaction level: (%d)", local_xact_level );
 
 	/* 
-	 * ローカルトランザクションのレベルが1であり、かつxactlevel(FDWが自認するバックエンドのトランザクションレベル)
-	 * が0の場合はトランザクションを開始する(ように将来的にはする。)
+	 * ローカルトランザクションのレベルが1であり、かつxactlevel(FDWが自認するバックエンドの
+	 * トランザクションレベル)が0の場合はトランザクションを開始する(ように将来的にはする。)
 	 * ローカルトランザクションのネストレベルが2以上の場合はエラーとする
 	 */
-	 if ( local_xact_level == 1)
+	 if ( local_xact_level == 1 )
 	 {
 		 if ( fdw_info_.xact_level == 0 )
 		 {
@@ -802,10 +840,11 @@ begin_backend_xact( void )
 		        elog( ERROR, "Connection::begin() failed. (%d)", (int) error );
 	        }
 			fdw_info_.xact_level++;
-			elog( INFO, "Connection::begin() done." );
+			elog( INFO, "Connection::begin() done. (xact_level: %d)", 
+				fdw_info_.xact_level );
 		 }
 	 }
-	 else if (local_xact_level >= 2)
+	 else if ( local_xact_level >= 2 )
 	 {
 		 elog( ERROR, "トランザクションのネストは未サポートです。" );
 	 }
@@ -828,6 +867,9 @@ ogawayama_xact_callback ( XactEvent event, void *arg )
 	{
 		switch ( event )
 		{
+			case XACT_EVENT_PRE_COMMIT:
+				elog( INFO, "XACT_EVENT_PRE_COMMIT" );
+				break;
 			case XACT_EVENT_COMMIT:
 				elog( INFO, "XACT_EVENT_COMMIT" );
                 transaction_->commit();
@@ -836,14 +878,15 @@ ogawayama_xact_callback ( XactEvent event, void *arg )
 				elog( INFO, "XACT_EVENT_ABORT" );
                 transaction_->rollback();
 				break;
+			case XACT_EVENT_PRE_PREPARE:
+				elog( INFO, "XACT_EVENT_PRE_PREPARE" );
+				break;
 			case XACT_EVENT_PREPARE:
 				elog( INFO, "XACT_EVENT_PREPARE" );
 				break;
 			case XACT_EVENT_PARALLEL_COMMIT:
 			case XACT_EVENT_PARALLEL_ABORT:
-			case XACT_EVENT_PRE_COMMIT:
 			case XACT_EVENT_PARALLEL_PRE_COMMIT:
-			case XACT_EVENT_PRE_PREPARE:
 				elog( INFO, "Unexpected XACT event occurred. (%d)", event );
 				break;
 			default:
