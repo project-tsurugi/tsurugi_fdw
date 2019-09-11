@@ -1,11 +1,10 @@
 /*-------------------------------------------------------------------------
  *
  * alt_planner.c
- * 		V0版プランナフック
+ * 		V0版プランナフック(for PostgreSQL 11.1)
  *
  *-------------------------------------------------------------------------
  */
-
 #include "postgres.h"
 #include "optimizer/planner.h"
 #include "foreign/fdwapi.h"
@@ -44,8 +43,7 @@ extern void _PG_init(void);
 
 extern PGDLLIMPORT planner_hook_type planner_hook;
 
-
-struct PlannedStmt *alt_planner( Query *parse2, int cursorOptions, ParamListInfo boundParams );
+PlannedStmt *alt_planner( Query *parse2, int cursorOptions, ParamListInfo boundParams );
 bool is_only_foreign_table( AltPlannerInfo *root, List *rtable );
 AltPlannerInfo *init_altplannerinfo( Query *parse );
 ForeignScan *create_foreign_scan( AltPlannerInfo *root ); /* ForeignScanプランノードの初期化 */
@@ -77,9 +75,10 @@ alt_planner( Query *parse2, int cursorOptions, ParamListInfo boundParams )
 	
 	AltPlannerInfo *root = init_altplannerinfo(parse);
 	ForeignScan *scan = 0;
-	ModifyTable *modify;
 	Plan *plan = 0;
 	PlannedStmt *stmt;
+	ModifyTable *modify;
+
 	
 	/*
 	 * 操作対象のSQLコマンドかどうかに応じて処理を行う
@@ -144,6 +143,7 @@ alt_planner( Query *parse2, int cursorOptions, ParamListInfo boundParams )
 	}
 	
 	/* PlannedStmtの生成 */
+	
 	stmt = create_planned_stmt( root, plan );
 	
 	/* 最終的に生成したPlannedStmtを返却する */
@@ -325,13 +325,12 @@ is_only_foreign_table( AltPlannerInfo *root, List *rtable )
 ForeignScan *
 create_foreign_scan( AltPlannerInfo *root )
 {
-	
-	/* 初期化 */
-	ForeignScan *fnode;
 	Bitmapset  *fs_relids = NULL;
 
+	/* 初期化 */
+	ForeignScan *fnode;
 	fnode = makeNode( ForeignScan );
-
+	
 	fnode->scan.plan.targetlist = 0;
 	fnode->scan.plan.qual = 0;
 	fnode->scan.plan.lefttree = NULL;
@@ -348,6 +347,7 @@ create_foreign_scan( AltPlannerInfo *root )
 
 	/* fs_relidsの設定 */
 	/* 単一表のSCANと見なすため、fs_relidsは1が入っているBitmapsetとします */
+
 	fs_relids = bms_add_member( fs_relids, 1 );
 	fnode->fs_relids = fs_relids;
 	
@@ -385,8 +385,9 @@ ModifyTable *
 create_modify_table( AltPlannerInfo *root, ForeignScan *scan )
 {
 	ModifyTable *modify = makeNode( ModifyTable );
-	Bitmapset  *direct_modify_plans = NULL;
 	List *fdwPrivLists = NIL;
+	Bitmapset  *direct_modify_plans = NULL;
+
 
 	/* ForeignScanプランノードのList化 */
 	List *subplan = NIL;
@@ -615,7 +616,7 @@ create_planned_stmt( AltPlannerInfo *root, Plan *plan )
 	stmt->queryId = parse->queryId;
 	stmt->hasReturning = false;
 	stmt->hasModifyingCTE = false;
-	stmt->canSetTag = false;
+	stmt->canSetTag = true;
 	stmt->transientPlan = false;
 	stmt->dependsOnRole = false;
 	stmt->parallelModeNeeded = false;
