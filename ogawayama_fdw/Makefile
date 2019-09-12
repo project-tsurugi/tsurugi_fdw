@@ -3,8 +3,7 @@ EXTENSION = ogawayama_fdw
 OBJS = ogawayama_fdw.o
 DATA = ogawayama_fdw--0.1.sql
 
-PG_CPPFLAGS = -I../../ogawayama/stub/include -std=c++17 -std=c++17 
-SHLIB_LINK = -Llib/ -logawayama-stub
+PG_CPPFLAGS = -I../../ogawayama/stub/include -std=c++17
 
 ifdef NO_PGXS
 	subdir = ../git/frontend
