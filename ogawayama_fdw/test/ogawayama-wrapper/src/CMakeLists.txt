@@ -19,16 +19,16 @@ add_library( ogawayama-wrapper
 
 target_include_directories( ogawayama-wrapper
     PRIVATE ${PROJECT_SOURCE_DIR}/include
-    PRIVATE ${PROJECT_SOURCE_DIR}/../../ogawayama/stub/include
-    PRIVATE ${PROJECT_SOURCE_DIR}/../../ogawayama/stub/include/ogawayama/stub
-    PRIVATE ${PROJECT_SOURCE_DIR}/../../../postgresql-11.1/src/include
+    PRIVATE ${PROJECT_SOURCE_DIR}/../../../../ogawayama/stub/include
+    PRIVATE ${PROJECT_SOURCE_DIR}/../../../../ogawayama/stub/include/ogawayama/stub
+    PRIVATE ${PROJECT_SOURCE_DIR}/../../../../../postgresql-11.1/src/include
 )
 
-#find_library( DEPEND_LIBRALIES ogawayama-stub HINTS ${PROJECT_SOURCE_DIR}/libs )
+find_library( DEPEND_LIBRALIES ogawayama-stub 
+    HINTS ${PROJECT_SOURCE_DIR}../stub/build )
 
-target_link_libraries( ogawayama-wrapper 
-#    PRIVATE ${DEPEND_LIBRALIES} 
-    PRIVATE ogawayama-stub
+    target_link_libraries( ogawayama-wrapper 
+    PRIVATE ${DEPEND_LIBRALIES} 
 )
 
 set_target_properties( ogawayama-wrapper
