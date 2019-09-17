@@ -268,12 +268,12 @@ ogawayamaIterateForeignScan( ForeignScanState* node )
 			error = transaction_->execute_query( query, resultset_ );
 			if ( error != ErrorCode::OK )
             {
-				elog( ERROR, "Connection::execute_query() failed. (%d)", (int) error );
+				elog( ERROR, "Transaction::execute_query() failed. (%d)", (int) error );
 			}
 			error = resultset_->get_metadata( metadata_ );
 			if ( error != ErrorCode::OK )
             {
-				elog( ERROR, "Connection::get_metadata() failed. (%d)", (int) error );
+				elog( ERROR, "ResultSet::get_metadata() failed. (%d)", (int) error );
 			}
 			if ( !confirm_columns( metadata_, fdw_state ) )
 			{
