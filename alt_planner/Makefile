@@ -7,8 +7,8 @@ ifdef USE_PGXS
 	PGXS := $(shell $(PG_CONFIG) --pgxs)
 	include $(PGXS)
 else
-	subdir = ../frontend/alt_planner
-	top_builddir = ../../../postgresql-11.1
+	subdir = contrib/frontend/alt_planner
+	top_builddir = ../../..
 	include $(top_builddir)/src/Makefile.global
 	include $(top_srcdir)/contrib/contrib-global.mk
 endif
