@@ -36,12 +36,20 @@ static MetadataPtr metadata;
  * @return  0 if success. see ErrorCode.h
  */
 int 
-init_stub( const char* name )
+init_stub( const char* name = NULL )
 {
     ErrorCode error = ErrorCode::OK;
 
     try {
-        stub = make_stub( name );
+        if ( name != NULL ) 
+        {
+            stub = make_stub( name );
+        }
+        else
+        {
+            stub = make_stub();
+        }
+        
         connection = NULL;
         resultset = NULL;
         metadata = NULL;

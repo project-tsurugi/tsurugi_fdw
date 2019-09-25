@@ -12,34 +12,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 3.0.0)
+set(CMAKE_CXX_COMPILER /usr/bin/g++)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-project( tester
-    VERSION 0.0.1
-    DESCRIPTION "test driver for ogawayama-wrapper"
-    LANGUAGES C)
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -fno-omit-frame-pointer")
 
-add_executable( tester tester.c )
+set( CMAKE_CPP_FLAGS "-pthread" )
 
-enable_language(C)
-set(CMAKE_C_STANDARD 99)
+add_executable( tester tester.cpp )
 
 target_include_directories( tester
-    PRIVATE ${PROJECT_SOURCE_DIR}/../ogawayama-wrapper/include
-    PRIVATE ${PROJECT_SOURCE_DIR}/../../../../../postgresql-11.1/src/include
+    PRIVATE ${PROJECT_SOURCE_DIR}/../../../../src/include
+    PRIVATE ${PROJECT_SOURCE_DIR}/../third_party/ogawayama/stub/include
 )
 
-#add_dependencies( tester ogawayama-wrapper )
-
-find_library( OGAWAYAMA_WRAPPER ogawayama-wrapper 
-    HINTS ${PROJECT_SOURCE_DIR}/../ogawayama-wrapper/build )
+find_library( DEPEND_LIBRALIES ogawayama-stub
+    HINTS /home/k-okada/local/lib
+)
 
 target_link_libraries( tester
-    PRIVATE ${OGAWAYAMA_WRAPPER} 
+        ${DEPEND_LIBRALIES}
+        pthread
+        rt
 )
 
 set_target_properties( tester
     PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/build"
+        RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/build/output"
         ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/build"
 )

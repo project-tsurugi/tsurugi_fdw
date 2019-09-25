@@ -574,9 +574,7 @@ get_connection( int pid )
 
 	try {
 		// connect to ogawayama-stub
-		std::string name = "ogawayama_" + std::to_string( pid );	// 暫定処置
-		elog( DEBUG1, "stub name: (%s)", name.c_str() );
-		stub_ = make_stub( name );
+		stub_ = make_stub();
 		ErrorCode error = stub_->get_connection( pid , connection_ );
 		if ( error != ErrorCode::OK )
 		{
