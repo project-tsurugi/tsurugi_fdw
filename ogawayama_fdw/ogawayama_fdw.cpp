@@ -269,6 +269,9 @@ ogawayamaIterateForeignScan( ForeignScanState* node )
 			if ( error != ErrorCode::OK )
             {
 				elog( ERROR, "Transaction::execute_query() failed. (%d)", (int) error );
+				resultset_ = NULL;
+				transaction_->rollback();
+				fdw_info_.xact_level--;
 			}
 			error = resultset_->get_metadata( metadata_ );
 			if ( error != ErrorCode::OK )
