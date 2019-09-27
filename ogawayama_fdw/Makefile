@@ -5,7 +5,7 @@ OBJS = ogawayama_fdw.o $(WIN32RES)
 PGFILEDESC = "ogawayama_fdw - foregin data wrapper for Ogawayama"
 
 PG_CPPFLAGS = -Ithird_party/ogawayama/stub/include -std=c++17 -pthread
-SHLIB_LINK = -Lthird_party/ogawayama/build/stub/src -logawayama-stub -lrt -lpthread
+SHLIB_LINK = -Lthird_party/ogawayama/build/stub/src -L../../../../../lib -logawayama-stub -lrt -lpthread
 
 EXTENSION = ogawayama_fdw
 DATA = ogawayama_fdw--0.1.sql
