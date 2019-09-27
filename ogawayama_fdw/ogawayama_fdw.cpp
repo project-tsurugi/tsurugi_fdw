@@ -129,11 +129,11 @@ static void ogawayama_xact_callback ( XactEvent event, void *arg );
 
 using namespace ogawayama::stub;
 
-static StubPtr stub_;
-static ConnectionPtr connection_;
-static TransactionPtr transaction_;
-static ResultSetPtr resultset_;
-static MetadataPtr metadata_;
+static StubPtr stub_ = NULL;
+static ConnectionPtr connection_ = NULL;
+static TransactionPtr transaction_ = NULL;
+static ResultSetPtr resultset_ = NULL;
+static MetadataPtr metadata_ = NULL;
 static OgawayamaFdwInfo fdw_info_;
 
 /*
@@ -175,12 +175,18 @@ ogawayama_fdw_handler( PG_FUNCTION_ARGS )
 	routine->ExecForeignUpdate = ogawayamaExecForeignUpdate;
 	routine->ExecForeignDelete = ogawayamaExecForeignDelete;
 
-	init_fdw_info( fcinfo );
-
-	fdw_info_.connected = get_connection( fdw_info_.pid );
-	if ( !fdw_info_.connected ) 
+	if ( stub_ == NULL ) 
 	{
-		elog( ERROR, "Connecting to Ogawayama failed." );
+		init_fdw_info( fcinfo );
+	}
+	
+	if ( fdw_info_.connected == false )
+	{
+		fdw_info_.connected = get_connection( fdw_info_.pid );
+		if ( !fdw_info_.connected ) 
+		{
+			elog( ERROR, "Connecting to Ogawayama failed." );
+		}
 	}
 
 	elog( DEBUG3, "ogawayama_fdw_handler() done." );
@@ -265,10 +271,14 @@ ogawayamaIterateForeignScan( ForeignScanState* node )
 
 			std::string query( fdw_state->query_string );
 			query.pop_back();	// セミコロンを取り除く
+			resultset_ = NULL;
 			error = transaction_->execute_query( query, resultset_ );
 			if ( error != ErrorCode::OK )
             {
 				elog( ERROR, "Transaction::execute_query() failed. (%d)", (int) error );
+				resultset_ = NULL;
+				transaction_->rollback();
+				fdw_info_.xact_level--;
 			}
 			error = resultset_->get_metadata( metadata_ );
 			if ( error != ErrorCode::OK )
