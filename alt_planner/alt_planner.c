@@ -527,7 +527,14 @@ is_valid_targetentry( ForeignScan *scan, AltPlannerInfo *root )
 				
 			case T_Aggref:
 				aggref = (Aggref *) node;
-				
+	                       
+			       	/* もしaggref->aggtypeがbigint, smallintである場合、integerに変更(V0) */
+	                        if ( aggref->aggtype == INT2OID || aggref->aggtype == INT8OID)
+			        {
+					aggref->aggtype = INT4OID;
+
+				}
+
 				
 				/* ForeignScan->targetlist用 */
 				newvar = makeVar( INDEX_VAR,
@@ -552,7 +559,8 @@ is_valid_targetentry( ForeignScan *scan, AltPlannerInfo *root )
 										   attno,
 										   NULL,
 										   false );
-			
+
+
 				scan->fdw_scan_tlist = lappend( scan->fdw_scan_tlist, newfste );
 			
 				break;
