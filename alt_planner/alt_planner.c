@@ -335,7 +335,7 @@ create_foreign_scan( AltPlannerInfo *root )
 	fnode->scan.plan.qual = 0;
 	fnode->scan.plan.lefttree = NULL;
 	fnode->scan.plan.righttree = NULL;
-	fnode->scan.scanrelid = 1;
+	fnode->scan.scanrelid = 0; /* fdw_scan_tlistを使用するため、0に設定 */
 	fnode->operation = root->parse->commandType;
 	fnode->fs_server = root->serverid;
 	fnode->fdw_exprs = 0;
@@ -353,13 +353,6 @@ create_foreign_scan( AltPlannerInfo *root )
 	
 	/* scan.plan.targetlistおよびfdw_scan_tlistの設定 */
 	is_valid_targetentry( fnode, root );
-	
-	/* scanrelidの設定 */
-	/* JOIN等が存在する場合は0に変更 */
-	if(root->hasjoin || root->hasaggref)
-	{
-		fnode->scan.scanrelid = 0;
-	}
 	
 	return fnode;
 }
@@ -485,44 +478,37 @@ is_valid_targetentry( ForeignScan *scan, AltPlannerInfo *root )
 			case T_Var:
 				var = (Var *) node;
 				
-				if ( root->hasjoin || root->hasaggref )
-				{
-					/* ForeignScan->fdw_scan_tlist用 */
-					newfste = makeTargetEntry( (Expr *) node,
-											   attno,
-											   NULL,
-											   te->resjunk );
+				/* ForeignScan->fdw_scan_tlist用 */
+				newfste = makeTargetEntry( (Expr *) node,
+								    attno,
+								    NULL,
+								    te->resjunk );
 					
-					scan->fdw_scan_tlist = lappend( scan->fdw_scan_tlist, newfste );
+				scan->fdw_scan_tlist = lappend( scan->fdw_scan_tlist, newfste );
 					
 					
-					/* ForeignScan->targetlist用 */
-					newvar = makeVar( var->varno,
-									  attno,
-									  var->vartype,
-									  var->vartypmod,
-									  var->varcollid,
-									  0 );
+				/* ForeignScan->targetlist用 */
+				newvar = makeVar( var->varno,
+						       attno,
+						       var->vartype,
+						       var->vartypmod,
+						       var->varcollid,
+						       0 );
 					
-					newvar->varno = INDEX_VAR;
-					newvar->varoattno = var->varoattno;
-					newvar->location = var->location;
+				newvar->varno = INDEX_VAR;
+				newvar->varoattno = var->varoattno;
+				newvar->location = var->location;
 					
-					newte = makeTargetEntry( (Expr *) newvar,
-											 attno,
-											 te->resname,
-											 te->resjunk );
+				newte = makeTargetEntry( (Expr *) newvar,
+				 				  attno,
+								  te->resname,
+								  te->resjunk );
+				
+				newte->resorigtbl = te->resorigtbl;
+				newte->resorigcol = te->resorigcol;
+				newte->ressortgroupref = 0;
 					
-					newte->resorigtbl = te->resorigtbl;
-					newte->resorigcol = te->resorigcol;
-					newte->ressortgroupref = 0;
-					
-					scan->scan.plan.targetlist = lappend( scan->scan.plan.targetlist, newte );
-				}
-				else /* 単純に列を指定した場合 */
-				{
-					scan->scan.plan.targetlist = lappend( scan->scan.plan.targetlist, te );
-				}
+				scan->scan.plan.targetlist = lappend( scan->scan.plan.targetlist, newte );
 				break;
 				
 			case T_Aggref:
