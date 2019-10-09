@@ -1,3 +1,3 @@
 [submodule "ogawayama_fdw/third_party/ogawayama"]
 	path = ogawayama_fdw/third_party/ogawayama
-	url = https://github.com/project-tsurugi/ogawayama.git
+	url = git@github.com:project-tsurugi/ogawayama.git
