@@ -84,11 +84,10 @@ alt_planner( Query *parse2, int cursorOptions, ParamListInfo boundParams )
 	 * 操作対象のSQLコマンドかどうかに応じて処理を行う
 	 * SQL文に含まれるオブジェクトがすべて同一サーバ上のRangeTblEntryであることを確認
 	 */
-	if ( !is_only_foreign_table( root, root->parse->rtable ) )
+	if ( root->parse->rtable == NULL || !is_only_foreign_table( root, root->parse->rtable ) )
 	{
 		return standard_planner( parse2, cursorOptions, boundParams );
 	}
-	
 	
 	/*
 	 * 集積関数の処理が存在するかを確認
