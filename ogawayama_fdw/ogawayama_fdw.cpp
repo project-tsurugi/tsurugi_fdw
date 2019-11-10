@@ -535,7 +535,11 @@ init_fdw_info( FunctionCallInfo fcinfo )
 	fdw_info_.xact_level = 0;
 	fdw_info_.pid = pg_backend_pid( fcinfo );
 	elog( DEBUG1, "PostgreSQL worker process ID: (%d)", fdw_info_.pid );
-	stub_ = make_stub();
+	ErrorCode error = make_stub( stub_ );
+	if ( error != ERROR_CODE::OK )
+	{
+		elog( ERROR, "make_stub() failed. (%d)", (int) error );
+	}
 }
 
 /*
