@@ -75,4 +75,9 @@ pipeline {
             }
         }
     }
+    post {
+        always {
+            notifySlack('frontend')
+        }
+    }
 }
