@@ -143,7 +143,7 @@ static OgawayamaFdwInfo fdw_info_;
 Datum
 ogawayama_fdw_handler( PG_FUNCTION_ARGS )
 {
-	elog( DEBUG3, "ogawayama_fdw_handler() started." );
+	elog( INFO, "ogawayama_fdw_handler() started." );
 
 	FdwRoutine* routine = makeNode( FdwRoutine );
 
@@ -189,7 +189,7 @@ ogawayama_fdw_handler( PG_FUNCTION_ARGS )
 		}
 	}
 
-	elog( DEBUG3, "ogawayama_fdw_handler() done." );
+	elog( INFO, "ogawayama_fdw_handler() done." );
 
 	PG_RETURN_POINTER( routine );
 }
@@ -200,9 +200,9 @@ ogawayama_fdw_handler( PG_FUNCTION_ARGS )
 static void ogawayamaGetForeignRelSize( 
 	PlannerInfo* root, RelOptInfo* baserel, Oid foreigntableid )
 {
-	elog( DEBUG3, "ogawayamaGetForeignRelSize() started." );
+	elog( INFO, "ogawayamaGetForeignRelSize() started." );
 
-	elog( DEBUG3, "ogawayamaGetForeignRelSize() done." );
+	elog( INFO, "ogawayamaGetForeignRelSize() done." );
 }
 
 /*
@@ -213,7 +213,7 @@ static void ogawayamaGetForeignRelSize(
 static void 
 ogawayamaBeginForeignScan( ForeignScanState* node, int eflags )
 {
-	elog( DEBUG3, "ogawayamaBeginForeignScan() started." );
+	elog( INFO, "ogawayamaBeginForeignScan() started." );
 
 	ForeignScan* fsplan = (ForeignScan*) node->ss.ps.plan;
 	EState*	estate = node->ss.ps.state;
@@ -243,7 +243,7 @@ ogawayamaBeginForeignScan( ForeignScanState* node, int eflags )
 	 /* fdw_stateをnode->fdw_stateに格納する */
 	 node->fdw_state = fdw_state;
 
-	elog( DEBUG3, "ogawayamaBeginForeignScan() done." );
+	elog( INFO, "ogawayamaBeginForeignScan() done." );
 }
 
 /*
@@ -254,7 +254,7 @@ ogawayamaBeginForeignScan( ForeignScanState* node, int eflags )
 static TupleTableSlot* 
 ogawayamaIterateForeignScan( ForeignScanState* node )
 {
-	elog( DEBUG3, "ogawayamaIterateForeignScan() started." );
+	elog( INFO, "ogawayamaIterateForeignScan() started." );
 
 	TupleTableSlot* slot = node->ss.ss_ScanTupleSlot;
 	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
@@ -267,12 +267,15 @@ ogawayamaIterateForeignScan( ForeignScanState* node )
 	{
 		/* open cursor */
 		try {
-			elog( DEBUG3, "query string: \"%s\"", fdw_state->query_string );
+			elog( INFO, "query string: \"%s\"", fdw_state->query_string );
 
 			std::string query( fdw_state->query_string );
 			query.pop_back();	// trim the trailing colon.
 			resultset_ = NULL;
+
+			elog( INFO, "transaction::execute_query() started." );
 			error = transaction_->execute_query( query, resultset_ );
+			elog( INFO, "transaction::execute_query() done." );
 			if ( error != ErrorCode::OK )
             {
 				elog( ERROR, "Transaction::execute_query() failed. (%d)", (int) error );
@@ -306,14 +309,14 @@ ogawayamaIterateForeignScan( ForeignScanState* node )
 	else if ( error == ErrorCode::END_OF_ROW )
 	{
 		/* 読み込み完了 */
-		elog( DEBUG3, "End of row." );
+		elog( INFO, "End of row." );
 	}
 	else 
 	{
 		elog( ERROR, "ResultSet::next() failed. (%d)", (int) error );
 	}
 
-	elog( DEBUG3, "ogawayamaIterateForeignScan() done." );
+	elog( INFO, "ogawayamaIterateForeignScan() done." );
 
 	return slot;
 }
@@ -324,8 +327,8 @@ ogawayamaIterateForeignScan( ForeignScanState* node )
 static void 
 ogawayamaReScanForeignScan( ForeignScanState* node )
 {
-	elog( DEBUG3, "ogawayamaReScanForeignScan() started." );
-	elog( DEBUG3, "ogawayamaReScanForeignScan() done." );
+	elog( INFO, "ogawayamaReScanForeignScan() started." );
+	elog( INFO, "ogawayamaReScanForeignScan() done." );
 }
 
 /*
@@ -335,12 +338,12 @@ ogawayamaReScanForeignScan( ForeignScanState* node )
 static void 
 ogawayamaEndForeignScan( ForeignScanState* node )
 {
-	elog( DEBUG3, "ogawayamaEndForeignScan() started." );
+	elog( INFO, "ogawayamaEndForeignScan() started." );
 
 	resultset_ = NULL;
 	free_fdwstate( (OgawayamaFdwState*) node->fdw_state );
 		
-	elog( DEBUG3, "ogawayamaEndForeignScan() done." );
+	elog( INFO, "ogawayamaEndForeignScan() done." );
 }
 
 /*
@@ -351,7 +354,7 @@ ogawayamaEndForeignScan( ForeignScanState* node )
 static void 
 ogawayamaBeginDirectModify( ForeignScanState* node, int eflags )
 {
-	elog( DEBUG3, "ogawayamaBeginDirectModify() started." );
+	elog( INFO, "ogawayamaBeginDirectModify() started." );
 
 	EState* estate = node->ss.ps.state;
 
@@ -374,7 +377,7 @@ ogawayamaBeginDirectModify( ForeignScanState* node, int eflags )
 	 /*fdw_stateをnode->fdw_stateに格納する*/
 	 node->fdw_state = fdw_state;
 
- 	elog( DEBUG3, "ogawayamaBeginDirectModify() done." );
+ 	elog( INFO, "ogawayamaBeginDirectModify() done." );
 }
 
 /*
@@ -385,22 +388,24 @@ ogawayamaBeginDirectModify( ForeignScanState* node, int eflags )
 static TupleTableSlot* 
 ogawayamaIterateDirectModify( ForeignScanState* node )
 {
-	elog( DEBUG3, "ogawayamaIterateDirectModify() started." );
+	elog( INFO, "ogawayamaIterateDirectModify() started." );
 
 	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
 	TupleTableSlot* slot = NULL;
 	ErrorCode error;
 
-	elog( DEBUG3, "query string: \"%s\"", fdw_state->query_string );
+	elog( INFO, "query string: \"%s\"", fdw_state->query_string );
     std::string_view query( fdw_state->query_string );
 	query.remove_suffix(1);
+	elog( INFO, "transaction::execute_statement() started." );
 	error = transaction_->execute_statement( query );
+	elog( INFO, "transaction::execute_statement() done." );
 	if ( error != ErrorCode::OK ) 
     {
 		elog( ERROR, "Connection::execute_statement() failed. (%d)", (int) error );	
 	}
 
-	elog( DEBUG3, "ogawayamaIterateDirectModify() done." );
+	elog( INFO, "ogawayamaIterateDirectModify() done." );
 
 	return slot;	
 }
@@ -415,9 +420,9 @@ ogawayamaExecForeignInsert(
 	TupleTableSlot *slot, 
 	TupleTableSlot *planSlot )
 {
-	elog( DEBUG3, "ogawayamaExecForeignInsert() started." );
+	elog( INFO, "ogawayamaExecForeignInsert() started." );
 	slot = NULL;
-	elog( DEBUG3, "ogawayamaExecForeignInsert() started." );
+	elog( INFO, "ogawayamaExecForeignInsert() started." );
 
 	return slot;
 }
@@ -432,9 +437,9 @@ ogawayamaExecForeignUpdate(
 	TupleTableSlot *slot, 
 	TupleTableSlot *planSlot )
 {
-	elog( DEBUG3, "ogawayamaExecForeignUpdate() started." );
+	elog( INFO, "ogawayamaExecForeignUpdate() started." );
 	slot = NULL;
-	elog( DEBUG3, "ogawayamaExecForeignUpdate() started." );
+	elog( INFO, "ogawayamaExecForeignUpdate() started." );
 
 	return slot;
 }
@@ -449,9 +454,9 @@ ogawayamaExecForeignDelete(
 	TupleTableSlot *slot, 
 	TupleTableSlot *planSlot )
 {
-	elog( DEBUG3, "ogawayamaExecForeignDelete() started." );
+	elog( INFO, "ogawayamaExecForeignDelete() started." );
 	slot = NULL;
-	elog( DEBUG3, "ogawayamaExecForeignDelete() started." );
+	elog( INFO, "ogawayamaExecForeignDelete() started." );
 
 	return slot;
 }
@@ -463,11 +468,11 @@ ogawayamaExecForeignDelete(
 static void 
 ogawayamaEndDirectModify( ForeignScanState* node )
 {
-	elog( DEBUG3, "ogawayamaEndDirectModify() started." );
+	elog( INFO, "ogawayamaEndDirectModify() started." );
 
 	free_fdwstate( (OgawayamaFdwState*) node->fdw_state );
 
-	elog( DEBUG3, "ogawayamaEndDirectModify() done." );
+	elog( INFO, "ogawayamaEndDirectModify() done." );
 }
 
 /*
@@ -482,8 +487,8 @@ static void
 ogawayamaExplainForeignScan( ForeignScanState* node,
 						   	ExplainState* es )
 {
-	elog( DEBUG3, "ogawayamaExplainForeignScan() started." );
-	elog( DEBUG3, "ogawayamaExplainForeignScan() started." );
+	elog( INFO, "ogawayamaExplainForeignScan() started." );
+	elog( INFO, "ogawayamaExplainForeignScan() started." );
 }
 
 /*
@@ -493,8 +498,8 @@ static void
 ogawayamaExplainDirectModify( ForeignScanState* node,
 							ExplainState* es )
 {
-	elog( DEBUG3, "ogawayamaExplainDirectModify() started." );
-	elog( DEBUG3, "ogawayamaExplainDirectModify() started." );
+	elog( INFO, "ogawayamaExplainDirectModify() started." );
+	elog( INFO, "ogawayamaExplainDirectModify() started." );
 }
 
 /*
@@ -504,8 +509,8 @@ static bool ogawayamaAnalyzeForeignTable( Relation relation,
 							AcquireSampleRowsFunc* func,
 							BlockNumber* totalpages )
 {
-	elog( DEBUG3, "ogawayamaAnalyzeForeignTable() started." );
-	elog( DEBUG3, "ogawayamaAnalyzeForeignTable() started." );
+	elog( INFO, "ogawayamaAnalyzeForeignTable() started." );
+	elog( INFO, "ogawayamaAnalyzeForeignTable() started." );
 
 	return true;
 }
@@ -517,9 +522,9 @@ static List*
 ogawayamaImportForeignSchema( ImportForeignSchemaStmt* stmt,
 							Oid serverOid )
 {
-	elog( DEBUG3, "ogawayamaImportForeignSchema() started." );
+	elog( INFO, "ogawayamaImportForeignSchema() started." );
 	List	*commands = NIL;
-	elog( DEBUG3, "ogawayamaImportForeignSchema() started." );
+	elog( INFO, "ogawayamaImportForeignSchema() started." );
 
 	return commands;
 }
@@ -655,7 +660,7 @@ store_pg_data_type( OgawayamaFdwState* fdw_state, List* tlist )
 static bool
 confirm_columns( MetadataPtr metadata, OgawayamaFdwState* fdw_state )
 {
-	elog( DEBUG3, "confirm_columns() started." );
+	elog( INFO, "confirm_columns() started." );
 
 	bool ret = true;
 
@@ -727,7 +732,7 @@ confirm_columns( MetadataPtr metadata, OgawayamaFdwState* fdw_state )
 				break;
 
 			case Metadata::ColumnType::Type::NULL_VALUE:
-				elog( DEBUG3, "NULL_VALUE found. (column: %lu)", i );
+				elog( INFO, "NULL_VALUE found. (column: %lu)", i );
 				ret = false;
 				break;
 
@@ -740,7 +745,7 @@ confirm_columns( MetadataPtr metadata, OgawayamaFdwState* fdw_state )
 		i++;
 	}
 
-	elog( DEBUG3, "confirm_columns() done." );
+	elog( INFO, "confirm_columns() done." );
 
 	return ret;
 }
@@ -756,7 +761,7 @@ static void
 convert_tuple( 
 	OgawayamaFdwState* fdw_state, ResultSetPtr resultset, Datum* values, bool* nulls )
 {
-	elog( DEBUG3, "convert_tuple() started." );
+	elog( INFO, "convert_tuple() started." );
 
 	for ( size_t i = 0; i < fdw_state->number_of_columns; i++ )
 	{
@@ -844,7 +849,7 @@ convert_tuple(
 					ErrorCode error = resultset->next_column( value );
 					if ( error != ErrorCode::OK )
 					{
-						elog( DEBUG3, "ResultSet::next_column() is NOT OK. (%d)", 
+						elog( INFO, "ResultSet::next_column() is NOT OK. (%d)", 
 							(int) error );
 						break;
 					}
@@ -874,7 +879,7 @@ convert_tuple(
 		}
 	}
 
-	elog( DEBUG3, "convert_tuple() done." );
+	elog( INFO, "convert_tuple() done." );
 }
 
 /*
@@ -889,7 +894,7 @@ begin_backend_xact( void )
 	/* ローカルトランザクションのネストレベルを取得する */
 	ErrorCode error;
     int local_xact_level = GetCurrentTransactionNestLevel();
-	elog( DEBUG3, "Local transaction level: (%d)", local_xact_level );
+	elog( INFO, "Local transaction level: (%d)", local_xact_level );
 
 	if ( local_xact_level <= 0 )
 	{
@@ -922,10 +927,10 @@ begin_backend_xact( void )
 static void
 ogawayama_xact_callback ( XactEvent event, void *arg )
 {
-	elog( DEBUG3, "ogawayama_xact_callback() started. " );
+	elog( INFO, "ogawayama_xact_callback() started. " );
 
     int local_xact_level = GetCurrentTransactionNestLevel();
-	elog( DEBUG3, "Local transaction level: (%d)", local_xact_level );
+	elog( INFO, "Local transaction level: (%d)", local_xact_level );
 
 	if ( fdw_info_.xact_level > 0 )
 	{
@@ -972,5 +977,5 @@ ogawayama_xact_callback ( XactEvent event, void *arg )
 		}
 	}
 
-	elog( DEBUG3, "ogawayama_xact_callback() done." );
+	elog( INFO, "ogawayama_xact_callback() done." );
 }
