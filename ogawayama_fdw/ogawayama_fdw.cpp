@@ -602,6 +602,7 @@ free_fdwstate( OgawayamaFdwState* fdw_state )
 		TupleData* tuple = *ite;
 		pfree( tuple->tts_values );
 		pfree( tuple->tts_isnull );
+		pfree( tuple );
 	}
 
  	pfree( fdw_state );
