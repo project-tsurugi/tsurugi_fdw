@@ -774,48 +774,58 @@ convert_tuple(
 		switch ( fdw_state->pgtypes[i] )
 		{
 			case INT2OID:
+				{
 					std::int16_t value;
 					if ( resultset->next_column( value ) == ErrorCode::OK )
 					{
 						values[i] = Int16GetDatum( value );
 						nulls[i] = false;
 					}
+				}
 				break;
 
 			case INT4OID:
+				{
 					std::int32_t value;
 					if ( resultset->next_column( value ) == ErrorCode::OK )
 					{
 						values[i] = Int32GetDatum( value );
 						nulls[i] = false;
 					}
+				}
 				break;
 
 			case INT8OID:
+				{
 					std::int64_t value;
 					if ( resultset->next_column( value ) == ErrorCode::OK ) 
 					{
 						values[i] = Int64GetDatum( value );
 						nulls[i] = false;
 					}
+				}
 				break;
 
 			case FLOAT4OID:
+				{
 					float4 value;
 					if ( resultset->next_column( value ) == ErrorCode::OK )
 					{
 						values[i] = Float4GetDatum( value );
 						nulls[i] = false;
 					}
+				}
 				break;
 
 			case FLOAT8OID:
-				float8 value;
+				{
+					float8 value;
 					if ( resultset->next_column( value ) == ErrorCode::OK )
 					{
 						values[i] = Float8GetDatum( value );
 						nulls[i] = false;
 					}
+				}
 				break;
 			
 			case BPCHAROID:
