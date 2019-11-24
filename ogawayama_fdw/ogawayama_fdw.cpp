@@ -254,7 +254,7 @@ ogawayamaBeginForeignScan( ForeignScanState* node, int eflags )
 static TupleTableSlot* 
 ogawayamaIterateForeignScan( ForeignScanState* node )
 {
-	elog( INFO, "ogawayamaIterateForeignScan() started." );
+//	elog( INFO, "ogawayamaIterateForeignScan() started." );
 
 	TupleTableSlot* slot = node->ss.ss_ScanTupleSlot;
 	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
@@ -270,7 +270,10 @@ ogawayamaIterateForeignScan( ForeignScanState* node )
 			elog( INFO, "query string: \"%s\"", fdw_state->query_string );
 
 			std::string query( fdw_state->query_string );
-			query.pop_back();	// trim the trailing colon.
+			if ( query.back() == ';' ) 
+			{
+				query.pop_back();	// trim the trailing colon.
+			}
 			resultset_ = NULL;
 
 			elog( INFO, "transaction::execute_query() started." );
@@ -316,7 +319,7 @@ ogawayamaIterateForeignScan( ForeignScanState* node )
 		elog( ERROR, "ResultSet::next() failed. (%d)", (int) error );
 	}
 
-	elog( INFO, "ogawayamaIterateForeignScan() done." );
+//	elog( INFO, "ogawayamaIterateForeignScan() done." );
 
 	return slot;
 }
@@ -761,7 +764,7 @@ static void
 convert_tuple( 
 	OgawayamaFdwState* fdw_state, ResultSetPtr resultset, Datum* values, bool* nulls )
 {
-	elog( INFO, "convert_tuple() started." );
+//	elog( INFO, "convert_tuple() started." );
 
 	for ( size_t i = 0; i < fdw_state->number_of_columns; i++ )
 	{
@@ -771,80 +774,55 @@ convert_tuple(
 		switch ( fdw_state->pgtypes[i] )
 		{
 			case INT2OID:
-				try {							
 					std::int16_t value;
 					if ( resultset->next_column( value ) == ErrorCode::OK )
 					{
 						values[i] = Int16GetDatum( value );
 						nulls[i] = false;
 					}
-				}
-				catch (...) {
-					elog( ERROR, "Unexpected exception caught." );
-				}
 				break;
 
 			case INT4OID:
-				try {
 					std::int32_t value;
 					if ( resultset->next_column( value ) == ErrorCode::OK )
 					{
 						values[i] = Int32GetDatum( value );
 						nulls[i] = false;
 					}
-				} 
-				catch (...) {
-					elog( ERROR, "Unexpected exception caught." );
-				}
 				break;
 
 			case INT8OID:
-				try {
 					std::int64_t value;
 					if ( resultset->next_column( value ) == ErrorCode::OK ) 
 					{
 						values[i] = Int64GetDatum( value );
 						nulls[i] = false;
 					}
-				} 
-				catch (...) {
-					elog( ERROR, "Unexpected exception caught." );
-				}
 				break;
 
 			case FLOAT4OID:
-				try {
 					float4 value;
 					if ( resultset->next_column( value ) == ErrorCode::OK )
 					{
 						values[i] = Float4GetDatum( value );
 						nulls[i] = false;
 					}
-				}
-				catch (...) {
-					elog( ERROR, "Unexpected exception caught." );
-				}
 				break;
 
 			case FLOAT8OID:
 				float8 value;
-				try {
 					if ( resultset->next_column( value ) == ErrorCode::OK )
 					{
 						values[i] = Float8GetDatum( value );
 						nulls[i] = false;
 					}
-				}
-				catch (...) {
-					elog( ERROR, "Unexpected exception caught." );
-				}
 				break;
 			
 			case BPCHAROID:
 			case VARCHAROID:
 			case TEXTOID:
 				Datum dat;
-				try {
+				{
 					std::string_view value;
 					ErrorCode error = resultset->next_column( value );
 					if ( error != ErrorCode::OK )
@@ -854,11 +832,7 @@ convert_tuple(
 						break;
 					}
 					dat = CStringGetDatum( value.data() );				
-				}
-				catch (...) {
-					elog( ERROR, "Unexpected exception caught." );
-				}
-				{
+
 					HeapTuple tuple = SearchSysCache1( 
 						TYPEOID, ObjectIdGetDatum( fdw_state->pgtypes[i] ) );
 					if ( !HeapTupleIsValid( tuple ) )
@@ -879,7 +853,7 @@ convert_tuple(
 		}
 	}
 
-	elog( INFO, "convert_tuple() done." );
+//	elog( INFO, "convert_tuple() done." );
 }
 
 /*
