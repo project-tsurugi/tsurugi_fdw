@@ -597,6 +597,13 @@ free_fdwstate( OgawayamaFdwState* fdw_state )
 		fdw_state->column_types = NULL;
 	}
 
+	for ( auto ite = fdw_state->tuple_list.begin(); ite == fdw_state->tuple_list.end(); ite++ )
+	{
+		TupleData* tuple = *ite;
+		pfree( tuple->tts_values );
+		pfree( tuple->tts_isnull );
+	}
+
  	pfree( fdw_state );
 }
 
