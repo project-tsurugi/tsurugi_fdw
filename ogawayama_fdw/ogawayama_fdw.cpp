@@ -269,8 +269,11 @@ ogawayamaIterateForeignScan( ForeignScanState* node )
 		try {
 			elog( DEBUG3, "query string: \"%s\"", fdw_state->query_string );
 
-			std::string query( fdw_state->query_string );
-			query.pop_back();	// セミコロンを取り除く
+			std::string_view query( fdw_state->query_string );
+			if ( query.back() == ';' )
+			{
+				query.remove_suffix(1);
+			}
 			resultset_ = NULL;
 			error = transaction_->execute_query( query, resultset_ );
 			if ( error != ErrorCode::OK )
@@ -393,7 +396,10 @@ ogawayamaIterateDirectModify( ForeignScanState* node )
 
 	elog( DEBUG3, "query string: \"%s\"", fdw_state->query_string );
     std::string_view query( fdw_state->query_string );
-	query.remove_suffix(1);
+	if ( query.back() == ';' )
+	{
+		query.remove_suffix(1);
+	}
 	error = transaction_->execute_statement( query );
 	if ( error != ErrorCode::OK ) 
     {
