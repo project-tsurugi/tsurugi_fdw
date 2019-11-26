@@ -49,9 +49,9 @@ PG_MODULE_MAGIC;
 typedef struct ogawayama_fdw_state_
 {
 	bool 		cursor_exists;			
-	const char* query_string;	/* SQL Query Text */
-	size_t 		num_columns;	/* SELECT対象の列数 */
-	Oid* 		pgtype; 		/* SELECT予定の列のデータ型(Oid)用のポインタ */
+	const char* query_string;		/* SQL Query Text */
+	size_t 		number_of_columns;	/* SELECT対象の列数 */
+	Oid* 		pgtypes; 			/* SELECT予定の列のデータ型(Oid)用のポインタ */
 } OgawayamaFdwState;
 
 /*
@@ -59,7 +59,7 @@ typedef struct ogawayama_fdw_state_
  */
 typedef struct ogawayama_fdw_info_
 {
-	bool		connected;		/* ogawayama-stubとのコネクション */
+	bool		connected;		/* ogawayama-stubとのコネクション接続状況 */
 	int 		xact_level;		/* FDWが自認する現在のトランザクションレベル */
 	int			pid;			/* process ID */
 } OgawayamaFdwInfo;
@@ -233,7 +233,7 @@ ogawayamaBeginForeignScan( ForeignScanState* node, int eflags )
 	begin_backend_xact();
 
 	/* SELECT対象の列数を設定 */
-	fdw_state->num_columns = fsplan->scan.plan.targetlist->length;
+	fdw_state->number_of_columns = fsplan->scan.plan.targetlist->length;
 
 	/* SELECT対象の列のデータ型を格納 */
 	store_pg_data_type( fdw_state, fsplan->scan.plan.targetlist );
@@ -541,6 +541,11 @@ init_fdw_info( FunctionCallInfo fcinfo )
 	fdw_info_.xact_level = 0;
 	fdw_info_.pid = pg_backend_pid( fcinfo );
 	elog( DEBUG1, "PostgreSQL worker process ID: (%d)", fdw_info_.pid );
+	ErrorCode error = make_stub( stub_ );
+	if ( error != ERROR_CODE::OK )
+	{
+		elog( ERROR, "make_stub() failed. (%d)", (int) error );
+	}
 }
 
 /*
@@ -553,8 +558,8 @@ create_fdwstate()
 		(OgawayamaFdwState*) palloc0( sizeof( OgawayamaFdwState ) );
 	
 	fdw_state->cursor_exists = false;
-	fdw_state->num_columns = 0;
-	fdw_state->pgtype = NULL;
+	fdw_state->number_of_columns = 0;
+	fdw_state->pgtypes = NULL;
 
 	return fdw_state;
 }
@@ -566,10 +571,10 @@ create_fdwstate()
 static void 
 free_fdwstate( OgawayamaFdwState* fdw_state )
 {
-	if ( fdw_state->pgtype != NULL ) 
+	if ( fdw_state->pgtypes != NULL ) 
 	{
-		pfree( fdw_state->pgtype );
-		fdw_state->pgtype = NULL;
+		pfree( fdw_state->pgtypes );
+		fdw_state->pgtypes = NULL;
 	}
 
  	pfree( fdw_state );
@@ -590,7 +595,6 @@ get_connection( int pid )
 
 	try {
 		// connect to ogawayama-stub
-		stub_ = make_stub();
 		ErrorCode error = stub_->get_connection( pid , connection_ );
 		if ( error != ErrorCode::OK )
 		{
@@ -644,7 +648,7 @@ store_pg_data_type( OgawayamaFdwState* fdw_state, List* tlist )
 		i++;
 	}
 
-	fdw_state->pgtype = data_types;
+	fdw_state->pgtypes = data_types;
 }
 
 /*
@@ -661,10 +665,10 @@ confirm_columns( MetadataPtr metadata, OgawayamaFdwState* fdw_state )
 
 	bool ret = true;
 
-	if ( metadata->get_types().size() != fdw_state->num_columns )
+	if ( metadata->get_types().size() != fdw_state->number_of_columns )
 	{
 		elog( ERROR, "Number of columns do NOT match. (og: %d), (pg: %lu)",
-			(int) metadata->get_types().size(), fdw_state->num_columns );
+			(int) metadata->get_types().size(), fdw_state->number_of_columns );
 	}
 
 	size_t i = 0;
@@ -673,57 +677,57 @@ confirm_columns( MetadataPtr metadata, OgawayamaFdwState* fdw_state )
 		switch ( static_cast<Metadata::ColumnType::Type>( types.get_type() ) )
 		{
 			case Metadata::ColumnType::Type::INT16:
-				if ( fdw_state->pgtype[i] != INT2OID )
+				if ( fdw_state->pgtypes[i] != INT2OID )
 				{
 					elog( ERROR, 
 						"Don't match data type of the column. " 
 						"(column: %lu) (og: %d) (pg: %u)", 
-						i, (int) types.get_type(), fdw_state->pgtype[i]  );
+						i, (int) types.get_type(), fdw_state->pgtypes[i]  );
 					ret = false;
 				}
 				break;
 
 			case Metadata::ColumnType::Type::INT32:
-				if ( fdw_state->pgtype[i] != INT4OID )
+				if ( fdw_state->pgtypes[i] != INT4OID )
 				{
 					elog( ERROR, 
 						"Don't match data type of the column. " 
 						"(column: %lu) (og: %d) (pg: %u)", 
-						i, (int) types.get_type(), fdw_state->pgtype[i]  );
+						i, (int) types.get_type(), fdw_state->pgtypes[i]  );
 					ret = false;
 				}
 				break;
 
 			case Metadata::ColumnType::Type::FLOAT32:
-				if ( fdw_state->pgtype[i] != FLOAT4OID )
+				if ( fdw_state->pgtypes[i] != FLOAT4OID )
 				{
 					elog( ERROR, 
 						"Don't match data type of the column. " 
 						"(column: %lu) (og: %d) (pg: %u)", 
-						i, (int) types.get_type(), fdw_state->pgtype[i]  );
+						i, (int) types.get_type(), fdw_state->pgtypes[i]  );
 					ret = false;
 				}
 				break;
 
 			case Metadata::ColumnType::Type::FLOAT64:
-				if ( fdw_state->pgtype[i] != FLOAT8OID )
+				if ( fdw_state->pgtypes[i] != FLOAT8OID )
 				{
 					elog( ERROR, 
 						"Don't match data type of the column. " 
 						"(column: %lu) (og: %d) (pg: %u)", 
-						i, (int) types.get_type(), fdw_state->pgtype[i]  );
+						i, (int) types.get_type(), fdw_state->pgtypes[i]  );
 				}
 				break;
 
 			case Metadata::ColumnType::Type::TEXT:
-				if ( fdw_state->pgtype[i] != BPCHAROID &&
-					fdw_state->pgtype[i] != VARCHAROID &&
-					fdw_state->pgtype[i] != TEXTOID )
+				if ( fdw_state->pgtypes[i] != BPCHAROID &&
+					fdw_state->pgtypes[i] != VARCHAROID &&
+					fdw_state->pgtypes[i] != TEXTOID )
 				{
 					elog( ERROR, 
 						"Don't match data type of the column. " 
 						"(column: %lu) (og: %d) (pg: %u)", 
-						i, (int) types.get_type(), fdw_state->pgtype[i]  );
+						i, (int) types.get_type(), fdw_state->pgtypes[i]  );
 					ret = false;
 				}
 				break;
@@ -760,12 +764,12 @@ convert_tuple(
 {
 	elog( DEBUG3, "convert_tuple() started." );
 
-	for ( size_t i = 0; i < fdw_state->num_columns; i++ )
+	for ( size_t i = 0; i < fdw_state->number_of_columns; i++ )
 	{
 		values[i] = PointerGetDatum( NULL );
 		nulls[i] = true;
 
-		switch ( fdw_state->pgtype[i] )
+		switch ( fdw_state->pgtypes[i] )
 		{
 			case INT2OID:
 				try {							
@@ -857,11 +861,11 @@ convert_tuple(
 				}
 				{
 					HeapTuple tuple = SearchSysCache1( 
-						TYPEOID, ObjectIdGetDatum( fdw_state->pgtype[i] ) );
+						TYPEOID, ObjectIdGetDatum( fdw_state->pgtypes[i] ) );
 					if ( !HeapTupleIsValid( tuple ) )
 					{
 						elog( ERROR, "cache lookup failed for type %u", 
-							fdw_state->pgtype[i] );
+							fdw_state->pgtypes[i] );
 					}
 					regproc typinput = ((Form_pg_type) GETSTRUCT( tuple ))->typinput;
 					ReleaseSysCache( tuple );
