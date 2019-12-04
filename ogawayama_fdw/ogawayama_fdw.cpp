@@ -43,12 +43,6 @@ PG_MODULE_MAGIC;
 #include <memory>
 #include "ogawayama/stub/api.h"
 
-typedef struct tuple_data_
-{
-	Datum* tts_values;
-	bool* tts_isnull;
-} TupleData;
-
 typedef struct row_data_
 {
 	size_t 		number_of_columns;		/* SELECT対象の列数 */
@@ -64,7 +58,7 @@ typedef struct ogawayama_fdw_state_
 	size_t 		number_of_columns;	/* SELECT対象の列数 */
 	Oid* 		column_types; 		/* SELECT予定の列のデータ型(Oid)用のポインタ */
 	RowData		row;
-	std::vector<TupleData*> tuple_list;
+	std::vector<TupleTableSlot*> tuple_list;
 	decltype( tuple_list )::iterator tuple_ite;
 } OgawayamaFdwState;
 
@@ -138,7 +132,7 @@ static void store_pg_data_type( OgawayamaFdwState* fdw_state, List* tlist );
 static bool confirm_columns( MetadataPtr metadata, OgawayamaFdwState* fdw_state );
 static void convert_to_tuple( 
 	OgawayamaFdwState* fdw_state, ResultSetPtr result_set, Datum* values, bool* isnull );
-static TupleData* get_tuple_from_result_set( 
+static TupleTableSlot* get_tuple_from_result_set( 
 	ResultSetPtr result_set_, OgawayamaFdwState* fdw_state );
 static void begin_backend_xact( void );
 static void ogawayama_xact_callback ( XactEvent event, void *arg );
@@ -311,7 +305,7 @@ ogawayamaIterateForeignScan( ForeignScanState* node )
 		error = result_set_->next();
 		while ( error == ErrorCode::OK )
 		{
-			TupleData* tuple = get_tuple_from_result_set( result_set_, fdw_state );
+			TupleTableSlot* tuple = get_tuple_from_result_set( result_set_, fdw_state );
 			fdw_state->tuple_list.push_back( tuple );
 			error = result_set_->next();
 		}
@@ -323,16 +317,20 @@ ogawayamaIterateForeignScan( ForeignScanState* node )
 		{
 			elog( ERROR, "result_set::next() failed. (%d)", (int) error );
 		}		
-
+		elog( INFO, "count: %d", (int) fdw_state->tuple_list.size() );
 		fdw_state->tuple_ite = fdw_state->tuple_list.begin();
 		fdw_state->cursor_exists = true;
 	}
 
 	if ( fdw_state->tuple_ite != fdw_state->tuple_list.end() )
 	{
-		TupleData* tuple = *fdw_state->tuple_ite;
-		slot->tts_values = tuple->tts_values;
-		slot->tts_isnull = tuple->tts_isnull;
+		TupleTableSlot* tuple = *fdw_state->tuple_ite;
+		elog( INFO, "%d", (int) tuple->tts_values[0] );
+		for ( size_t i = 0; i < fdw_state->number_of_columns; i++ )
+		{
+			slot->tts_values[i] = tuple->tts_values[i];
+			slot->tts_isnull[i] = tuple->tts_isnull[i];
+		}
 		ExecStoreVirtualTuple( slot );
 		fdw_state->tuple_ite++;
 	}
@@ -599,10 +597,10 @@ free_fdwstate( OgawayamaFdwState* fdw_state )
 
 	for ( auto ite = fdw_state->tuple_list.begin(); ite == fdw_state->tuple_list.end(); ite++ )
 	{
-		TupleData* tuple = *ite;
-		pfree( tuple->tts_values );
-		pfree( tuple->tts_isnull );
-		pfree( tuple );
+		TupleTableSlot* tuple = *ite;
+		free( tuple->tts_values );
+		free( tuple->tts_isnull );
+		free( tuple );
 	}
 
  	pfree( fdw_state );
@@ -890,14 +888,14 @@ convert_to_tuple( OgawayamaFdwState* fdw_state, ResultSetPtr result_set, Datum* 
  *	@param	[in] result set of query.
  *	@param	[in] 
  */
-static TupleData* get_tuple_from_result_set( 
+static TupleTableSlot* get_tuple_from_result_set( 
 	ResultSetPtr result_set, OgawayamaFdwState* fdw_state )
 {
 	elog( DEBUG3, "get_tuple_from_result_set() started." );
 
-	TupleData* tuple = (TupleData*) palloc( sizeof( TupleData ) );
-	tuple->tts_values = (Datum*) palloc( fdw_state->number_of_columns * sizeof( Datum ) );
-	tuple->tts_isnull = (bool*) palloc( fdw_state->number_of_columns * sizeof( bool ) );
+	TupleTableSlot* tuple = (TupleTableSlot*) malloc( sizeof( TupleTableSlot ) );
+	tuple->tts_values = (Datum *) malloc( fdw_state->number_of_columns * sizeof( Datum ) );
+	tuple->tts_isnull = (bool *) malloc( fdw_state->number_of_columns * sizeof( bool ) );
 
 	for ( size_t i = 0; i < fdw_state->number_of_columns; i++ )
 	{
