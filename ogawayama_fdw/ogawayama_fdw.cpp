@@ -317,7 +317,7 @@ ogawayamaIterateForeignScan( ForeignScanState* node )
 		{
 			elog( ERROR, "result_set::next() failed. (%d)", (int) error );
 		}		
-		elog( INFO, "count: %d", (int) fdw_state->tuple_list.size() );
+		elog( DEBUG1, "count: %d", (int) fdw_state->tuple_list.size() );
 		fdw_state->tuple_ite = fdw_state->tuple_list.begin();
 		fdw_state->cursor_exists = true;
 	}
@@ -325,7 +325,6 @@ ogawayamaIterateForeignScan( ForeignScanState* node )
 	if ( fdw_state->tuple_ite != fdw_state->tuple_list.end() )
 	{
 		TupleTableSlot* tuple = *fdw_state->tuple_ite;
-		elog( INFO, "%d", (int) tuple->tts_values[0] );
 		for ( size_t i = 0; i < fdw_state->number_of_columns; i++ )
 		{
 			slot->tts_values[i] = tuple->tts_values[i];
