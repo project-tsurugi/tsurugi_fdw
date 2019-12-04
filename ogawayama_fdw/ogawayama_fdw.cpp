@@ -577,6 +577,7 @@ create_fdwstate()
 	fdw_state->cursor_exists = false;
 	fdw_state->number_of_columns = 0;
 	fdw_state->column_types = NULL;
+	fdw_state->tuple_list.clear();
 
 	return fdw_state;
 }
@@ -594,12 +595,15 @@ free_fdwstate( OgawayamaFdwState* fdw_state )
 		fdw_state->column_types = NULL;
 	}
 
-	for ( auto ite = fdw_state->tuple_list.begin(); ite == fdw_state->tuple_list.end(); ite++ )
+	if ( !fdw_state->tuple_list.empty() )
 	{
-		TupleTableSlot* tuple = *ite;
-		free( tuple->tts_values );
-		free( tuple->tts_isnull );
-		free( tuple );
+		for ( auto ite = fdw_state->tuple_list.begin(); ite == fdw_state->tuple_list.end(); ite++ )
+		{
+			TupleTableSlot* tuple = *ite;
+			free( tuple->tts_values );
+			free( tuple->tts_isnull );
+			free( tuple );
+		}
 	}
 
  	pfree( fdw_state );
