@@ -61,7 +61,6 @@ typedef struct ogawayama_fdw_state_
 	MemoryContext 	batch_cxt;			
 	std::vector<TupleTableSlot*> tuples;
 	decltype( tuples )::iterator tuple_ite;
-
 	size_t			fetch_size;
 	size_t			num_tuples;
 	size_t			next_tuple;
@@ -135,11 +134,10 @@ static OgawayamaFdwState* create_fdwstate();
 static void free_fdwstate( OgawayamaFdwState* fdw_state );
 static bool get_connection( int pid );
 static void store_pg_data_type( OgawayamaFdwState* fdw_state, List* tlist );
-static bool confirm_columns( MetadataPtr metadata, OgawayamaFdwState* fdw_state );
+static bool confirm_columns( MetadataPtr metadata, ForeignScanState* node );
 static void create_cursor( ForeignScanState* node );
 static void fetch_more_data( ForeignScanState* node );
-static void convert_to_tuple( 
-	OgawayamaFdwState* fdw_state, ResultSetPtr result_set, Datum* values, bool* isnull );
+static void make_virtual_tuple( TupleTableSlot* slot, ForeignScanState* node );
 static TupleTableSlot* make_tuple_from_result_set( 
 	ResultSetPtr result_set_, OgawayamaFdwState* fdw_state );
 static void begin_backend_xact( void );
@@ -282,12 +280,10 @@ ogawayamaIterateForeignScan( ForeignScanState* node )
 
 	TupleTableSlot* slot = node->ss.ss_ScanTupleSlot;
 	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
-	TupleTableSlot* tuple = NULL;
 
 	if ( !fdw_state->cursor_exists )
 		create_cursor( node );
 
-//	if ( fdw_state->tuple_ite != fdw_state->tuples.end() )
 	if ( fdw_state->next_tuple >= fdw_state->num_tuples )
 	{
 		/* No point in another fetch if we already detected EOF, though. */
@@ -301,18 +297,12 @@ ogawayamaIterateForeignScan( ForeignScanState* node )
 			goto EXIT;
 		}
 	}
+	make_virtual_tuple( slot, node );
+	ExecStoreVirtualTuple( slot );
 
-	tuple = *fdw_state->tuple_ite;
-	for ( size_t i = 0; i < fdw_state->number_of_columns; i++ )
-	{
-		slot->tts_values[i] = tuple->tts_values[i];
-		slot->tts_isnull[i] = tuple->tts_isnull[i];
-	}
 	fdw_state->tuple_ite++;
 	fdw_state->next_tuple = std::distance( 
 		fdw_state->tuples.begin(), fdw_state->tuple_ite );
-
-	ExecStoreVirtualTuple( slot );
 
 EXIT:
 	elog( DEBUG2, "ogawayamaIterateForeignScan() done." );
@@ -339,9 +329,16 @@ ogawayamaEndForeignScan( ForeignScanState* node )
 {
 	elog( DEBUG2, "ogawayamaEndForeignScan() started." );
 
+	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
+
+	/* close cursor */
 	result_set_ = NULL;
-	free_fdwstate( (OgawayamaFdwState*) node->fdw_state );
-		
+
+	if ( fdw_state != NULL )
+		free_fdwstate( fdw_state );
+	
+	/* MemoryContexts will be deleted automatically. */
+
 	elog( DEBUG2, "ogawayamaEndForeignScan() done." );
 }
 
@@ -655,6 +652,52 @@ store_pg_data_type( OgawayamaFdwState* fdw_state, List* tlist )
 }
 
 /*
+ *	@brief	dispatch the query to ogawayama stub.
+ */
+static void 
+create_cursor( ForeignScanState* node )
+{
+	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
+
+	elog( DEBUG1, "query string: \"%s\"", fdw_state->query_string );
+
+	std::string query( fdw_state->query_string );
+	if ( query.back() == ';' ) 
+	{
+		query.pop_back();	// trim the trailing colon.
+	}
+	result_set_ = NULL;
+
+	/* dispatch query */
+	elog( DEBUG1, "transaction::execute_query() started." );
+	ErrorCode error = transaction_->execute_query( query, result_set_ );
+	elog( DEBUG1, "transaction::execute_query() done." );
+	if ( error != ErrorCode::OK )
+	{
+		elog( ERROR, "Transaction::execute_query() failed. (%d)", (int) error );
+		result_set_ = NULL;
+		transaction_->rollback();
+		fdw_info_.xact_level--;
+	}
+	
+	error = result_set_->get_metadata( metadata_ );
+	if ( error != ErrorCode::OK )
+	{
+		elog( ERROR, "result_set::get_metadata() failed. (%d)", (int) error );
+	}
+	if ( !confirm_columns( metadata_, node ) )
+	{
+		elog( ERROR, "NOT matched columns between PostgreSQL and Ogawayama." );
+	}
+
+	fdw_state->cursor_exists = true;
+	fdw_state->tuples.clear();
+	fdw_state->num_tuples = 0;
+	fdw_state->next_tuple = 0;
+	fdw_state->eof_reached = false;
+}
+
+/*
  * 	@brief	Confirm column information between PostgreSQL and Ogawayama.
  * 	@param	[in] Ogawayama column information.
  * 	@param	[in] PostgreSQL column information.
@@ -662,10 +705,11 @@ store_pg_data_type( OgawayamaFdwState* fdw_state, List* tlist )
  * 	@note	This function may be eliminated for performance improvement in the future.
  */
 static bool
-confirm_columns( MetadataPtr metadata, OgawayamaFdwState* fdw_state )
+confirm_columns( MetadataPtr metadata, ForeignScanState* node )
 {
 	elog( DEBUG4, "confirm_columns() started." );
 
+	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
 	bool ret = true;
 
 	if ( metadata->get_types().size() != fdw_state->number_of_columns )
@@ -755,45 +799,19 @@ confirm_columns( MetadataPtr metadata, OgawayamaFdwState* fdw_state )
 }
 
 /*
- *	@brief	dispatch the query to ogawayama stub.
+ *	@breif	make virtual tuple from result set.
  */
-static void 
-create_cursor( ForeignScanState* node )
+static void
+make_virtual_tuple( TupleTableSlot* slot, ForeignScanState* node )
 {
 	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
 
-	elog( DEBUG1, "query string: \"%s\"", fdw_state->query_string );
-
-	std::string query( fdw_state->query_string );
-	if ( query.back() == ';' ) 
+	TupleTableSlot* tuple = *fdw_state->tuple_ite;
+	for ( size_t i = 0; i < fdw_state->number_of_columns; i++ )
 	{
-		query.pop_back();	// trim the trailing colon.
+		slot->tts_values[i] = tuple->tts_values[i];
+		slot->tts_isnull[i] = tuple->tts_isnull[i];
 	}
-	result_set_ = NULL;
-
-	/* dispatch query */
-	elog( DEBUG1, "transaction::execute_query() started." );
-	ErrorCode error = transaction_->execute_query( query, result_set_ );
-	elog( DEBUG1, "transaction::execute_query() done." );
-	if ( error != ErrorCode::OK )
-	{
-		elog( ERROR, "Transaction::execute_query() failed. (%d)", (int) error );
-		result_set_ = NULL;
-		transaction_->rollback();
-		fdw_info_.xact_level--;
-	}
-	
-	error = result_set_->get_metadata( metadata_ );
-	if ( error != ErrorCode::OK )
-	{
-		elog( ERROR, "result_set::get_metadata() failed. (%d)", (int) error );
-	}
-
-	fdw_state->cursor_exists = true;
-	fdw_state->tuples.clear();
-	fdw_state->num_tuples = 0;
-	fdw_state->next_tuple = 0;
-	fdw_state->eof_reached = false;
 }
 
 /*
@@ -843,128 +861,16 @@ fetch_more_data( ForeignScanState* node )
 }
 
 /*
- *	@brief	Convert tuple data from Ogawayama to PostgreSQL.
- *	@param	[in] Ogawayama fdw information.
- *	@param	[in] Ogawayama tuple data.
- *	@param	[out] Store PostgreSQL tuple data.
- *	@param	[out] true if PostgreSQL tuple is NULL.
- */
-static void 
-convert_to_tuple( OgawayamaFdwState* fdw_state, ResultSetPtr result_set, Datum* values, bool* isnull )
-{
-	elog( DEBUG4, "convert_to_tuple() started." );
-
-	for ( size_t i = 0; i < fdw_state->number_of_columns; i++ )
-	{
-		values[i] = PointerGetDatum( NULL );
-		isnull[i] = true;
-
-		switch ( fdw_state->column_types[i] )
-		{
-			case INT2OID:
-				{
-					std::int16_t value;
-					if ( result_set->next_column( value ) == ErrorCode::OK )
-					{
-						values[i] = Int16GetDatum( value );
-						isnull[i] = false;
-					}
-				}
-				break;
-
-			case INT4OID:
-				{
-					std::int32_t value;
-					if ( result_set->next_column( value ) == ErrorCode::OK )
-					{
-						values[i] = Int32GetDatum( value );
-						isnull[i] = false;
-					}
-				}
-				break;
-
-			case INT8OID:
-				{
-					std::int64_t value;
-					if ( result_set->next_column( value ) == ErrorCode::OK ) 
-					{
-						values[i] = Int64GetDatum( value );
-						isnull[i] = false;
-					}
-				}
-				break;
-
-			case FLOAT4OID:
-				{
-					float4 value;
-					if ( result_set->next_column( value ) == ErrorCode::OK )
-					{
-						values[i] = Float4GetDatum( value );
-						isnull[i] = false;
-					}
-				}
-				break;
-
-			case FLOAT8OID:
-				{
-					float8 value;
-					if ( result_set->next_column( value ) == ErrorCode::OK )
-					{
-						values[i] = Float8GetDatum( value );
-						isnull[i] = false;
-					}
-				}
-				break;
-			
-			case BPCHAROID:
-			case VARCHAROID:
-			case TEXTOID:
-				Datum dat;
-				{
-					std::string_view value;
-					ErrorCode error = result_set->next_column( value );
-					if ( error != ErrorCode::OK )
-					{
-						elog( ERROR, "result_set::next_column() is NOT OK. (%d)", 
-							(int) error );
-						break;
-					}
-					dat = CStringGetDatum( value.data() );				
-
-					HeapTuple tuple = SearchSysCache1( 
-						TYPEOID, ObjectIdGetDatum( fdw_state->column_types[i] ) );
-					if ( !HeapTupleIsValid( tuple ) )
-					{
-						elog( ERROR, "cache lookup failed for type %u", 
-							fdw_state->column_types[i] );
-					}
-					regproc typinput = ((Form_pg_type) GETSTRUCT( tuple ))->typinput;
-					ReleaseSysCache( tuple );
-					values[i] = OidFunctionCall1( typinput, dat );
-					isnull[i] = false;
-				}
-				break;
-				
-			default:
-				elog( ERROR, "Invalid data type of column." );
-				break;
-		}
-	}
-
-	elog( DEBUG4, "convert_to_tuple() done." );
-}
-
-/*
- *	@breif	
+ *	@breif	obtain tuple data from Ogawayama and convert data type.
  *	@param	[in] result set of query.
- *	@param	[in] 
+ *	@param	[in] FDW state.
  */
-static TupleTableSlot* make_tuple_from_result_set( 
-	ResultSetPtr result_set, OgawayamaFdwState* fdw_state )
+static TupleTableSlot* 
+make_tuple_from_result_set( ResultSetPtr result_set, OgawayamaFdwState* fdw_state )
 {
 	elog( DEBUG4, "make_tuple_from_result_set() started." );
 
-	TupleTableSlot* tuple = (TupleTableSlot*) palloc0( sizeof( TupleTableSlot ) );
+	TupleTableSlot* tuple = (TupleTableSlot*) palloc( sizeof( TupleTableSlot ) );
 	tuple->tts_values = (Datum *) palloc0( fdw_state->number_of_columns * sizeof( Datum ) );
 	tuple->tts_isnull = (bool *) palloc0( fdw_state->number_of_columns * sizeof( bool ) );
 
