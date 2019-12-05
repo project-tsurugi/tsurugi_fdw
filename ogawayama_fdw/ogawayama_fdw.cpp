@@ -27,8 +27,8 @@ extern "C" {
 #include "foreign/fdwapi.h"
 #include "catalog/pg_type.h"
 #include "utils/fmgrprotos.h"
+#include "utils/memutils.h"
 #include "access/xact.h"
-
 #include "access/htup.h"
 #include "access/htup_details.h"
 #include "utils/syscache.h"
@@ -53,13 +53,19 @@ typedef struct row_data_
  */
 typedef struct ogawayama_fdw_state_
 {
-	bool 		cursor_exists;			
-	const char* query_string;		/* SQL Query Text */
-	size_t 		number_of_columns;	/* SELECT対象の列数 */
-	Oid* 		column_types; 		/* SELECT予定の列のデータ型(Oid)用のポインタ */
-	RowData		row;
-	std::vector<TupleTableSlot*> tuple_list;
-	decltype( tuple_list )::iterator tuple_ite;
+	bool 			cursor_exists;			
+	const char* 	query_string;		/* SQL Query Text */
+	size_t 			number_of_columns;	/* SELECT対象の列数 */
+	Oid* 			column_types; 		/* SELECT予定の列のデータ型(Oid)用のポインタ */
+	RowData			row;
+	MemoryContext 	batch_cxt;			
+	std::vector<TupleTableSlot*> tuples;
+	decltype( tuples )::iterator tuple_ite;
+
+	size_t			fetch_size;
+	size_t			num_tuples;
+	size_t			next_tuple;
+	bool			eof_reached;
 } OgawayamaFdwState;
 
 /*
@@ -130,9 +136,11 @@ static void free_fdwstate( OgawayamaFdwState* fdw_state );
 static bool get_connection( int pid );
 static void store_pg_data_type( OgawayamaFdwState* fdw_state, List* tlist );
 static bool confirm_columns( MetadataPtr metadata, OgawayamaFdwState* fdw_state );
+static void create_cursor( ForeignScanState* node );
+static void fetch_more_data( ForeignScanState* node );
 static void convert_to_tuple( 
 	OgawayamaFdwState* fdw_state, ResultSetPtr result_set, Datum* values, bool* isnull );
-static TupleTableSlot* get_tuple_from_result_set( 
+static TupleTableSlot* make_tuple_from_result_set( 
 	ResultSetPtr result_set_, OgawayamaFdwState* fdw_state );
 static void begin_backend_xact( void );
 static void ogawayama_xact_callback ( XactEvent event, void *arg );
@@ -153,7 +161,7 @@ static OgawayamaFdwInfo fdw_info_;
 Datum
 ogawayama_fdw_handler( PG_FUNCTION_ARGS )
 {
-	elog( DEBUG3, "ogawayama_fdw_handler() started." );
+	elog( DEBUG2, "ogawayama_fdw_handler() started." );
 
 	FdwRoutine* routine = makeNode( FdwRoutine );
 
@@ -199,7 +207,7 @@ ogawayama_fdw_handler( PG_FUNCTION_ARGS )
 		}
 	}
 
-	elog( DEBUG3, "ogawayama_fdw_handler() done." );
+	elog( DEBUG2, "ogawayama_fdw_handler() done." );
 
 	PG_RETURN_POINTER( routine );
 }
@@ -210,9 +218,9 @@ ogawayama_fdw_handler( PG_FUNCTION_ARGS )
 static void ogawayamaGetForeignRelSize( 
 	PlannerInfo* root, RelOptInfo* baserel, Oid foreigntableid )
 {
-	elog( DEBUG3, "ogawayamaGetForeignRelSize() started." );
+	elog( DEBUG2, "ogawayamaGetForeignRelSize() started." );
 
-	elog( DEBUG3, "ogawayamaGetForeignRelSize() done." );
+	elog( DEBUG2, "ogawayamaGetForeignRelSize() done." );
 }
 
 /*
@@ -223,11 +231,17 @@ static void ogawayamaGetForeignRelSize(
 static void 
 ogawayamaBeginForeignScan( ForeignScanState* node, int eflags )
 {
-	elog( DEBUG3, "ogawayamaBeginForeignScan() started." );
+	elog( DEBUG2, "ogawayamaBeginForeignScan() started." );
 
 	ForeignScan* fsplan = (ForeignScan*) node->ss.ps.plan;
 	EState*	estate = node->ss.ps.state;
 	OgawayamaFdwState* fdw_state = create_fdwstate();
+
+	fdw_state->fetch_size = 10000;
+
+	/* Create MemoryContext for tuple data */
+	fdw_state->batch_cxt = AllocSetContextCreate( 
+		estate->es_query_cxt, "ogawayama_fdw tuple data", ALLOCSET_DEFAULT_SIZES );
 
 	/* コネクション接続確認 */
 	if ( !fdw_info_.connected ) 
@@ -253,7 +267,7 @@ ogawayamaBeginForeignScan( ForeignScanState* node, int eflags )
 	 /* fdw_stateをnode->fdw_stateに格納する */
 	 node->fdw_state = fdw_state;
 
-	elog( DEBUG3, "ogawayamaBeginForeignScan() done." );
+	elog( DEBUG2, "ogawayamaBeginForeignScan() done." );
 }
 
 /*
@@ -264,77 +278,44 @@ ogawayamaBeginForeignScan( ForeignScanState* node, int eflags )
 static TupleTableSlot* 
 ogawayamaIterateForeignScan( ForeignScanState* node )
 {
-	elog( DEBUG3, "ogawayamaIterateForeignScan() started." );
+	elog( DEBUG2, "ogawayamaIterateForeignScan() started." );
 
 	TupleTableSlot* slot = node->ss.ss_ScanTupleSlot;
 	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
-	ErrorCode error = ErrorCode::OK;
-
-	//* initialize virtual tuple */
-	ExecClearTuple( slot );
+	TupleTableSlot* tuple = NULL;
 
 	if ( !fdw_state->cursor_exists )
+		create_cursor( node );
+
+//	if ( fdw_state->tuple_ite != fdw_state->tuples.end() )
+	if ( fdw_state->next_tuple >= fdw_state->num_tuples )
 	{
-		/* open cursor */
-		elog( DEBUG1, "query string: \"%s\"", fdw_state->query_string );
+		/* No point in another fetch if we already detected EOF, though. */
+		if ( !fdw_state->eof_reached )
+			fetch_more_data( node );
 
-		std::string query( fdw_state->query_string );
-		if ( query.back() == ';' ) 
+		/* If we didn't get any tuples, must be end of data */		
+		if ( fdw_state->next_tuple >= fdw_state->num_tuples )
 		{
-			query.pop_back();	// trim the trailing colon.
+			ExecClearTuple( slot );
+			goto EXIT;
 		}
-		result_set_ = NULL;
-
-		elog( DEBUG1, "transaction::execute_query() started." );
-		error = transaction_->execute_query( query, result_set_ );
-		elog( DEBUG1, "transaction::execute_query() done." );
-		if ( error != ErrorCode::OK )
-		{
-			elog( ERROR, "Transaction::execute_query() failed. (%d)", (int) error );
-			result_set_ = NULL;
-			transaction_->rollback();
-			fdw_info_.xact_level--;
-		}
-		
-		error = result_set_->get_metadata( metadata_ );
-		if ( error != ErrorCode::OK )
-		{
-			elog( ERROR, "result_set::get_metadata() failed. (%d)", (int) error );
-		}
-
-		error = result_set_->next();
-		while ( error == ErrorCode::OK )
-		{
-			TupleTableSlot* tuple = get_tuple_from_result_set( result_set_, fdw_state );
-			fdw_state->tuple_list.push_back( tuple );
-			error = result_set_->next();
-		}
-		if ( error == ErrorCode::END_OF_ROW ) 
-		{
-			elog( DEBUG3, "End of row." );
-		}
-		else
-		{
-			elog( ERROR, "result_set::next() failed. (%d)", (int) error );
-		}		
-		elog( DEBUG1, "count: %d", (int) fdw_state->tuple_list.size() );
-		fdw_state->tuple_ite = fdw_state->tuple_list.begin();
-		fdw_state->cursor_exists = true;
 	}
 
-	if ( fdw_state->tuple_ite != fdw_state->tuple_list.end() )
+	tuple = *fdw_state->tuple_ite;
+	for ( size_t i = 0; i < fdw_state->number_of_columns; i++ )
 	{
-		TupleTableSlot* tuple = *fdw_state->tuple_ite;
-		for ( size_t i = 0; i < fdw_state->number_of_columns; i++ )
-		{
-			slot->tts_values[i] = tuple->tts_values[i];
-			slot->tts_isnull[i] = tuple->tts_isnull[i];
-		}
-		ExecStoreVirtualTuple( slot );
-		fdw_state->tuple_ite++;
+		slot->tts_values[i] = tuple->tts_values[i];
+		slot->tts_isnull[i] = tuple->tts_isnull[i];
 	}
+	fdw_state->tuple_ite++;
+	fdw_state->next_tuple = std::distance( 
+		fdw_state->tuples.begin(), fdw_state->tuple_ite );
 
-	elog( DEBUG3, "ogawayamaIterateForeignScan() done." );
+	ExecStoreVirtualTuple( slot );
+
+EXIT:
+	elog( DEBUG2, "ogawayamaIterateForeignScan() done." );
 
 	return slot;
 }
@@ -345,8 +326,8 @@ ogawayamaIterateForeignScan( ForeignScanState* node )
 static void 
 ogawayamaReScanForeignScan( ForeignScanState* node )
 {
-	elog( DEBUG3, "ogawayamaReScanForeignScan() started." );
-	elog( DEBUG3, "ogawayamaReScanForeignScan() done." );
+	elog( DEBUG2, "ogawayamaReScanForeignScan() started." );
+	elog( DEBUG2, "ogawayamaReScanForeignScan() done." );
 }
 
 /*
@@ -356,12 +337,12 @@ ogawayamaReScanForeignScan( ForeignScanState* node )
 static void 
 ogawayamaEndForeignScan( ForeignScanState* node )
 {
-	elog( DEBUG3, "ogawayamaEndForeignScan() started." );
+	elog( DEBUG2, "ogawayamaEndForeignScan() started." );
 
 	result_set_ = NULL;
 	free_fdwstate( (OgawayamaFdwState*) node->fdw_state );
 		
-	elog( DEBUG3, "ogawayamaEndForeignScan() done." );
+	elog( DEBUG2, "ogawayamaEndForeignScan() done." );
 }
 
 /*
@@ -372,7 +353,7 @@ ogawayamaEndForeignScan( ForeignScanState* node )
 static void 
 ogawayamaBeginDirectModify( ForeignScanState* node, int eflags )
 {
-	elog( DEBUG3, "ogawayamaBeginDirectModify() started." );
+	elog( DEBUG2, "ogawayamaBeginDirectModify() started." );
 
 	EState* estate = node->ss.ps.state;
 
@@ -395,7 +376,7 @@ ogawayamaBeginDirectModify( ForeignScanState* node, int eflags )
 	 /*fdw_stateをnode->fdw_stateに格納する*/
 	 node->fdw_state = fdw_state;
 
- 	elog( DEBUG3, "ogawayamaBeginDirectModify() done." );
+ 	elog( DEBUG2, "ogawayamaBeginDirectModify() done." );
 }
 
 /*
@@ -406,7 +387,7 @@ ogawayamaBeginDirectModify( ForeignScanState* node, int eflags )
 static TupleTableSlot* 
 ogawayamaIterateDirectModify( ForeignScanState* node )
 {
-	elog( DEBUG3, "ogawayamaIterateDirectModify() started." );
+	elog( DEBUG2, "ogawayamaIterateDirectModify() started." );
 
 	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
 	TupleTableSlot* slot = NULL;
@@ -415,15 +396,15 @@ ogawayamaIterateDirectModify( ForeignScanState* node )
 	elog( DEBUG1, "query string: \"%s\"", fdw_state->query_string );
     std::string_view query( fdw_state->query_string );
 	query.remove_suffix(1);
-	elog( DEBUG3, "transaction::execute_statement() started." );
+	elog( DEBUG2, "transaction::execute_statement() started." );
 	error = transaction_->execute_statement( query );
-	elog( DEBUG3, "transaction::execute_statement() done." );
+	elog( DEBUG2, "transaction::execute_statement() done." );
 	if ( error != ErrorCode::OK ) 
     {
 		elog( ERROR, "Connection::execute_statement() failed. (%d)", (int) error );	
 	}
 
-	elog( DEBUG3, "ogawayamaIterateDirectModify() done." );
+	elog( DEBUG2, "ogawayamaIterateDirectModify() done." );
 
 	return slot;	
 }
@@ -438,9 +419,9 @@ ogawayamaExecForeignInsert(
 	TupleTableSlot *slot, 
 	TupleTableSlot *planSlot )
 {
-	elog( DEBUG3, "ogawayamaExecForeignInsert() started." );
+	elog( DEBUG2, "ogawayamaExecForeignInsert() started." );
 	slot = NULL;
-	elog( DEBUG3, "ogawayamaExecForeignInsert() started." );
+	elog( DEBUG2, "ogawayamaExecForeignInsert() started." );
 
 	return slot;
 }
@@ -455,9 +436,9 @@ ogawayamaExecForeignUpdate(
 	TupleTableSlot *slot, 
 	TupleTableSlot *planSlot )
 {
-	elog( DEBUG3, "ogawayamaExecForeignUpdate() started." );
+	elog( DEBUG2, "ogawayamaExecForeignUpdate() started." );
 	slot = NULL;
-	elog( DEBUG3, "ogawayamaExecForeignUpdate() started." );
+	elog( DEBUG2, "ogawayamaExecForeignUpdate() started." );
 
 	return slot;
 }
@@ -472,9 +453,9 @@ ogawayamaExecForeignDelete(
 	TupleTableSlot *slot, 
 	TupleTableSlot *planSlot )
 {
-	elog( DEBUG3, "ogawayamaExecForeignDelete() started." );
+	elog( DEBUG2, "ogawayamaExecForeignDelete() started." );
 	slot = NULL;
-	elog( DEBUG3, "ogawayamaExecForeignDelete() started." );
+	elog( DEBUG2, "ogawayamaExecForeignDelete() started." );
 
 	return slot;
 }
@@ -486,11 +467,11 @@ ogawayamaExecForeignDelete(
 static void 
 ogawayamaEndDirectModify( ForeignScanState* node )
 {
-	elog( DEBUG3, "ogawayamaEndDirectModify() started." );
+	elog( DEBUG2, "ogawayamaEndDirectModify() started." );
 
 	free_fdwstate( (OgawayamaFdwState*) node->fdw_state );
 
-	elog( DEBUG3, "ogawayamaEndDirectModify() done." );
+	elog( DEBUG2, "ogawayamaEndDirectModify() done." );
 }
 
 /*
@@ -505,8 +486,8 @@ static void
 ogawayamaExplainForeignScan( ForeignScanState* node,
 						   	ExplainState* es )
 {
-	elog( DEBUG3, "ogawayamaExplainForeignScan() started." );
-	elog( DEBUG3, "ogawayamaExplainForeignScan() started." );
+	elog( DEBUG2, "ogawayamaExplainForeignScan() started." );
+	elog( DEBUG2, "ogawayamaExplainForeignScan() started." );
 }
 
 /*
@@ -516,8 +497,8 @@ static void
 ogawayamaExplainDirectModify( ForeignScanState* node,
 							ExplainState* es )
 {
-	elog( DEBUG3, "ogawayamaExplainDirectModify() started." );
-	elog( DEBUG3, "ogawayamaExplainDirectModify() started." );
+	elog( DEBUG2, "ogawayamaExplainDirectModify() started." );
+	elog( DEBUG2, "ogawayamaExplainDirectModify() started." );
 }
 
 /*
@@ -527,8 +508,8 @@ static bool ogawayamaAnalyzeForeignTable( Relation relation,
 							AcquireSampleRowsFunc* func,
 							BlockNumber* totalpages )
 {
-	elog( DEBUG3, "ogawayamaAnalyzeForeignTable() started." );
-	elog( DEBUG3, "ogawayamaAnalyzeForeignTable() started." );
+	elog( DEBUG2, "ogawayamaAnalyzeForeignTable() started." );
+	elog( DEBUG2, "ogawayamaAnalyzeForeignTable() started." );
 
 	return true;
 }
@@ -540,9 +521,9 @@ static List*
 ogawayamaImportForeignSchema( ImportForeignSchemaStmt* stmt,
 							Oid serverOid )
 {
-	elog( DEBUG3, "ogawayamaImportForeignSchema() started." );
+	elog( DEBUG2, "ogawayamaImportForeignSchema() started." );
 	List	*commands = NIL;
-	elog( DEBUG3, "ogawayamaImportForeignSchema() started." );
+	elog( DEBUG2, "ogawayamaImportForeignSchema() started." );
 
 	return commands;
 }
@@ -577,7 +558,6 @@ create_fdwstate()
 	fdw_state->cursor_exists = false;
 	fdw_state->number_of_columns = 0;
 	fdw_state->column_types = NULL;
-	fdw_state->tuple_list.clear();
 
 	return fdw_state;
 }
@@ -595,9 +575,9 @@ free_fdwstate( OgawayamaFdwState* fdw_state )
 		fdw_state->column_types = NULL;
 	}
 
-	if ( !fdw_state->tuple_list.empty() )
+	if ( !fdw_state->tuples.empty() )
 	{
-		for ( auto ite = fdw_state->tuple_list.begin(); ite == fdw_state->tuple_list.end(); ite++ )
+		for ( auto ite = fdw_state->tuples.begin(); ite == fdw_state->tuples.end(); ite++ )
 		{
 			TupleTableSlot* tuple = *ite;
 			free( tuple->tts_values );
@@ -684,7 +664,7 @@ store_pg_data_type( OgawayamaFdwState* fdw_state, List* tlist )
 static bool
 confirm_columns( MetadataPtr metadata, OgawayamaFdwState* fdw_state )
 {
-	elog( DEBUG3, "confirm_columns() started." );
+	elog( DEBUG4, "confirm_columns() started." );
 
 	bool ret = true;
 
@@ -769,9 +749,97 @@ confirm_columns( MetadataPtr metadata, OgawayamaFdwState* fdw_state )
 		i++;
 	}
 
-	elog( DEBUG3, "confirm_columns() done." );
+	elog( DEBUG4, "confirm_columns() done." );
 
 	return ret;
+}
+
+/*
+ *	@brief	dispatch the query to ogawayama stub.
+ */
+static void 
+create_cursor( ForeignScanState* node )
+{
+	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
+
+	elog( DEBUG1, "query string: \"%s\"", fdw_state->query_string );
+
+	std::string query( fdw_state->query_string );
+	if ( query.back() == ';' ) 
+	{
+		query.pop_back();	// trim the trailing colon.
+	}
+	result_set_ = NULL;
+
+	/* dispatch query */
+	elog( DEBUG1, "transaction::execute_query() started." );
+	ErrorCode error = transaction_->execute_query( query, result_set_ );
+	elog( DEBUG1, "transaction::execute_query() done." );
+	if ( error != ErrorCode::OK )
+	{
+		elog( ERROR, "Transaction::execute_query() failed. (%d)", (int) error );
+		result_set_ = NULL;
+		transaction_->rollback();
+		fdw_info_.xact_level--;
+	}
+	
+	error = result_set_->get_metadata( metadata_ );
+	if ( error != ErrorCode::OK )
+	{
+		elog( ERROR, "result_set::get_metadata() failed. (%d)", (int) error );
+	}
+
+	fdw_state->cursor_exists = true;
+	fdw_state->tuples.clear();
+	fdw_state->num_tuples = 0;
+	fdw_state->next_tuple = 0;
+	fdw_state->eof_reached = false;
+}
+
+/*
+ *	@brief	fetch result set from ogawayama stub.
+ */
+static void
+fetch_more_data( ForeignScanState* node )
+{
+	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
+	MemoryContext oldcontext = NULL;
+
+	fdw_state->tuples.clear();
+	MemoryContextReset( fdw_state->batch_cxt );
+	oldcontext = MemoryContextSwitchTo( fdw_state->batch_cxt );
+
+	PG_TRY();
+	{
+		/* fetch result set */
+		ErrorCode error = result_set_->next();
+		while ( error == ErrorCode::OK )
+		{
+			TupleTableSlot* tuple = make_tuple_from_result_set( result_set_, fdw_state );
+			fdw_state->tuples.push_back( tuple );
+			error = result_set_->next();
+		}
+		if ( error == ErrorCode::END_OF_ROW ) 
+		{
+			elog( DEBUG2, "End of row." );
+		}
+		else
+		{
+			elog( ERROR, "result_set::next() failed. (%d)", (int) error );
+		}
+		fdw_state->tuple_ite = fdw_state->tuples.begin();
+		fdw_state->num_tuples = fdw_state->tuples.size();
+		fdw_state->eof_reached = ( fdw_state->num_tuples < fdw_state->fetch_size );
+
+		elog( DEBUG1, "result set count: %d", (int) fdw_state->num_tuples );
+	}
+	PG_CATCH();
+	{
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	MemoryContextSwitchTo( oldcontext );
 }
 
 /*
@@ -784,7 +852,7 @@ confirm_columns( MetadataPtr metadata, OgawayamaFdwState* fdw_state )
 static void 
 convert_to_tuple( OgawayamaFdwState* fdw_state, ResultSetPtr result_set, Datum* values, bool* isnull )
 {
-	elog( DEBUG3, "convert_to_tuple() started." );
+	elog( DEBUG4, "convert_to_tuple() started." );
 
 	for ( size_t i = 0; i < fdw_state->number_of_columns; i++ )
 	{
@@ -883,7 +951,7 @@ convert_to_tuple( OgawayamaFdwState* fdw_state, ResultSetPtr result_set, Datum* 
 		}
 	}
 
-	elog( DEBUG3, "convert_to_tuple() done." );
+	elog( DEBUG4, "convert_to_tuple() done." );
 }
 
 /*
@@ -891,14 +959,14 @@ convert_to_tuple( OgawayamaFdwState* fdw_state, ResultSetPtr result_set, Datum* 
  *	@param	[in] result set of query.
  *	@param	[in] 
  */
-static TupleTableSlot* get_tuple_from_result_set( 
+static TupleTableSlot* make_tuple_from_result_set( 
 	ResultSetPtr result_set, OgawayamaFdwState* fdw_state )
 {
-	elog( DEBUG3, "get_tuple_from_result_set() started." );
+	elog( DEBUG4, "make_tuple_from_result_set() started." );
 
-	TupleTableSlot* tuple = (TupleTableSlot*) malloc( sizeof( TupleTableSlot ) );
-	tuple->tts_values = (Datum *) malloc( fdw_state->number_of_columns * sizeof( Datum ) );
-	tuple->tts_isnull = (bool *) malloc( fdw_state->number_of_columns * sizeof( bool ) );
+	TupleTableSlot* tuple = (TupleTableSlot*) palloc0( sizeof( TupleTableSlot ) );
+	tuple->tts_values = (Datum *) palloc0( fdw_state->number_of_columns * sizeof( Datum ) );
+	tuple->tts_isnull = (bool *) palloc0( fdw_state->number_of_columns * sizeof( bool ) );
 
 	for ( size_t i = 0; i < fdw_state->number_of_columns; i++ )
 	{
@@ -997,7 +1065,7 @@ static TupleTableSlot* get_tuple_from_result_set(
 		}
 	}
 
-	elog( DEBUG3, "get_tuple_from_result_set() done." );
+	elog( DEBUG4, "make_tuple_from_result_set() done." );
 
 	return tuple;
 }
@@ -1047,7 +1115,7 @@ begin_backend_xact( void )
 static void
 ogawayama_xact_callback ( XactEvent event, void *arg )
 {
-	elog( DEBUG3, "ogawayama_xact_callback() started. " );
+	elog( DEBUG4, "ogawayama_xact_callback() started. " );
 
     int local_xact_level = GetCurrentTransactionNestLevel();
 	elog( DEBUG1, "Local transaction level: (%d)", local_xact_level );
@@ -1097,5 +1165,5 @@ ogawayama_xact_callback ( XactEvent event, void *arg )
 		}
 	}
 
-	elog( DEBUG3, "ogawayama_xact_callback() done." );
+	elog( DEBUG4, "ogawayama_xact_callback() done." );
 }
