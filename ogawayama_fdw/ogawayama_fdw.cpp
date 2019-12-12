@@ -233,7 +233,7 @@ ogawayamaBeginForeignScan( ForeignScanState* node, int eflags )
 	begin_backend_xact();
 
 	/* SELECT対象の列数を設定 */
-	fdw_state->number_of_columns = fsplan->scan.plan.targetlist->length;
+	/* fdw_state->number_of_columns = fsplan->scan.plan.targetlist->length; */
 
 	/* SELECT対象の列のデータ型を格納 */
 	store_pg_data_type( fdw_state, fsplan->scan.plan.targetlist );
@@ -630,10 +630,15 @@ store_pg_data_type( OgawayamaFdwState* fdw_state, List* tlist )
 	Oid* data_types = (Oid*) palloc( sizeof( Oid ) * tlist->length );
 
 	int i = 0;
+	int count = 0;
 	foreach( lc, tlist )
 	{
 		TargetEntry* entry = (TargetEntry*) lfirst( lc );
 		Node* node = (Node*) entry->expr;
+		if ( entry->resjunk == false )
+		{
+			count++;
+		}
 
 		if ( nodeTag( node ) == T_Var )
 		{
@@ -649,6 +654,7 @@ store_pg_data_type( OgawayamaFdwState* fdw_state, List* tlist )
 	}
 
 	fdw_state->pgtypes = data_types;
+	fdw_state->number_of_columns = count;
 }
 
 /*
