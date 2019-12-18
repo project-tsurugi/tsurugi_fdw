@@ -41,6 +41,9 @@ PG_MODULE_MAGIC;
 
 #include <string>
 #include <memory>
+#include <boost/algorithm/string/trim.hpp>
+#include <boost/algorithm/string/replace.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include "ogawayama/stub/api.h"
 
 typedef struct row_data_
@@ -142,6 +145,7 @@ static TupleTableSlot* make_tuple_from_result_set(
 	ResultSetPtr result_set_, OgawayamaFdwState* fdw_state );
 static void begin_backend_xact( void );
 static void ogawayama_xact_callback ( XactEvent event, void *arg );
+static void trim_query( std::string query );
 
 using namespace ogawayama::stub;
 
@@ -392,7 +396,11 @@ ogawayamaIterateDirectModify( ForeignScanState* node )
 
 	elog( DEBUG1, "query string: \"%s\"", fdw_state->query_string );
     std::string_view query( fdw_state->query_string );
-	query.remove_suffix(1);
+	if ( query.back() == ';' ) 
+	{
+		query.remove_suffix(1);
+	}
+	result_set_ = NULL;
 	elog( DEBUG2, "transaction::execute_statement() started." );
 	error = transaction_->execute_statement( query );
 	elog( DEBUG2, "transaction::execute_statement() done." );
@@ -943,12 +951,6 @@ make_tuple_from_result_set( ResultSetPtr result_set, OgawayamaFdwState* fdw_stat
 					Datum dat;
 					std::string_view value;
 					ErrorCode error = result_set->next_column( value );
-					if ( error != ErrorCode::OK )
-					{
-						elog( ERROR, "result_set::next_column() is NOT OK. (%d)", 
-							(int) error );
-						break;
-					}
 					dat = CStringGetDatum( value.data() );				
 
 					HeapTuple heap_tuple = SearchSysCache1( 
