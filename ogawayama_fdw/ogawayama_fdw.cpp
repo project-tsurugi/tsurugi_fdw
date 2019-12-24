@@ -41,9 +41,6 @@ PG_MODULE_MAGIC;
 
 #include <string>
 #include <memory>
-#include <boost/algorithm/string/trim.hpp>
-#include <boost/algorithm/string/replace.hpp>
-#include <boost/algorithm/string/split.hpp>
 #include "ogawayama/stub/api.h"
 
 typedef struct row_data_
@@ -145,7 +142,6 @@ static TupleTableSlot* make_tuple_from_result_set(
 	ResultSetPtr result_set_, OgawayamaFdwState* fdw_state );
 static void begin_backend_xact( void );
 static void ogawayama_xact_callback ( XactEvent event, void *arg );
-static void trim_query( std::string query );
 
 using namespace ogawayama::stub;
 
@@ -257,9 +253,6 @@ ogawayamaBeginForeignScan( ForeignScanState* node, int eflags )
 
 	/* トランザクションの開始(確認) */
 	begin_backend_xact();
-
-	/* SELECT対象の列数を設定 */
-	fdw_state->number_of_columns = fsplan->scan.plan.targetlist->length;
 
 	/* SELECT対象の列のデータ型を格納 */
 	store_pg_data_type( fdw_state, fsplan->scan.plan.targetlist );
@@ -638,10 +631,15 @@ store_pg_data_type( OgawayamaFdwState* fdw_state, List* tlist )
 	Oid* data_types = (Oid*) palloc( sizeof( Oid ) * tlist->length );
 
 	int i = 0;
+	int count = 0;
 	foreach( lc, tlist )
 	{
 		TargetEntry* entry = (TargetEntry*) lfirst( lc );
 		Node* node = (Node*) entry->expr;
+		if ( entry->resjunk == false )
+		{
+			count++;
+		}
 
 		if ( nodeTag( node ) == T_Var )
 		{
@@ -657,6 +655,7 @@ store_pg_data_type( OgawayamaFdwState* fdw_state, List* tlist )
 	}
 
 	fdw_state->column_types = data_types;
+	fdw_state->number_of_columns = count;
 }
 
 /*
@@ -952,18 +951,25 @@ make_tuple_from_result_set( ResultSetPtr result_set, OgawayamaFdwState* fdw_stat
 					std::string_view value;
 					ErrorCode error = result_set->next_column( value );
 					dat = CStringGetDatum( value.data() );				
-
-					HeapTuple heap_tuple = SearchSysCache1( 
-						TYPEOID, ObjectIdGetDatum( fdw_state->column_types[i] ) );
-					if ( !HeapTupleIsValid( heap_tuple ) )
+					if ( dat == NULL )
 					{
-						elog( ERROR, "cache lookup failed for type %u", 
-							fdw_state->column_types[i] );
+						tuple->tts_isnull[i] = true;
+						break;
 					}
-					regproc typinput = ((Form_pg_type) GETSTRUCT( heap_tuple ))->typinput;
-					ReleaseSysCache( heap_tuple );
-					tuple->tts_values[i] = OidFunctionCall1( typinput, dat );
-					tuple->tts_isnull[i] = false;
+					else
+					{
+						HeapTuple heap_tuple = SearchSysCache1( 
+							TYPEOID, ObjectIdGetDatum( fdw_state->column_types[i] ) );
+						if ( !HeapTupleIsValid( heap_tuple ) )
+						{
+							elog( ERROR, "cache lookup failed for type %u", 
+								fdw_state->column_types[i] );
+						}
+						regproc typinput = ((Form_pg_type) GETSTRUCT( heap_tuple ))->typinput;
+						ReleaseSysCache( heap_tuple );
+						tuple->tts_values[i] = OidFunctionCall1( typinput, dat );
+						tuple->tts_isnull[i] = false;
+					}
 				}
 				break;
 				
