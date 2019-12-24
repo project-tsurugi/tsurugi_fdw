@@ -953,7 +953,6 @@ make_tuple_from_result_set( ResultSetPtr result_set, OgawayamaFdwState* fdw_stat
 					dat = CStringGetDatum( value.data() );				
 					if ( dat == NULL )
 					{
-						tuple->tts_isnull[i] = true;
 						break;
 					}
 					else
