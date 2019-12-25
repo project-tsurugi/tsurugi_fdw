@@ -388,13 +388,11 @@ ogawayamaIterateDirectModify( ForeignScanState* node )
 	ErrorCode error;
 
 	elog( DEBUG1, "query string: \"%s\"", fdw_state->query_string );
-    std::string_view query( fdw_state->query_string );
-	if ( query.back() == ';' ) 
+  std::string_view query( fdw_state->query_string );
+	if ( query.back() == ';' )
 	{
 		query.remove_suffix(1);
 	}
-	result_set_ = NULL;
-	elog( DEBUG2, "transaction::execute_statement() started." );
 	error = transaction_->execute_statement( query );
 	elog( DEBUG2, "transaction::execute_statement() done." );
 	if ( error != ErrorCode::OK ) 
