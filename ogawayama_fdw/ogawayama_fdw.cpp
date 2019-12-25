@@ -21,6 +21,7 @@ extern "C" {
 #endif
 
 #include "postgres.h"
+#include "storage/proc.h"
 
 #include "ogawayama_fdw.h"
 
@@ -533,7 +534,7 @@ init_fdw_info( FunctionCallInfo fcinfo )
 {
 	fdw_info_.connected = false;
 	fdw_info_.xact_level = 0;
-	fdw_info_.pid = pg_backend_pid( fcinfo );
+	fdw_info_.pid = MyProc->pgprocno;
 	elog( DEBUG1, "PostgreSQL worker process ID: (%d)", fdw_info_.pid );
 	ErrorCode error = make_stub( stub_ );
 	if ( error != ERROR_CODE::OK )
