@@ -129,7 +129,7 @@ static TupleTableSlot* ogawayamaExecForeignDelete( EState *estate,
 /*
  * Helper functions
  */
-static void init_fdw_info( FunctionCallInfo fcinfo  );
+static void init_fdw_info( void );
 static OgawayamaFdwState* create_fdwstate();
 static void free_fdwstate( OgawayamaFdwState* fdw_state );
 static bool get_connection( int pid );
@@ -145,6 +145,7 @@ static void ogawayama_xact_callback ( XactEvent event, void *arg );
 
 using namespace ogawayama::stub;
 
+extern PGDLLIMPORT PGPROC *MyProc;
 static StubPtr stub_ = NULL;
 static ConnectionPtr connection_ = NULL;
 static TransactionPtr transaction_ = NULL;
@@ -193,7 +194,7 @@ ogawayama_fdw_handler( PG_FUNCTION_ARGS )
 
 	if ( stub_ == NULL ) 
 	{
-		init_fdw_info( fcinfo );
+		init_fdw_info();
 	}
 	
 	if ( fdw_info_.connected == false )
@@ -529,11 +530,11 @@ ogawayamaImportForeignSchema( ImportForeignSchemaStmt* stmt,
  * 	@param	[in] Argument of fdw handler function.
  */
 static void
-init_fdw_info( FunctionCallInfo fcinfo )
+init_fdw_info( void )
 {
 	fdw_info_.connected = false;
 	fdw_info_.xact_level = 0;
-	fdw_info_.pid = pg_backend_pid( fcinfo );
+	fdw_info_.pid = MyProc->pgprocno;
 	elog( DEBUG1, "PostgreSQL worker process ID: (%d)", fdw_info_.pid );
 	ErrorCode error = make_stub( stub_ );
 	if ( error != ERROR_CODE::OK )
