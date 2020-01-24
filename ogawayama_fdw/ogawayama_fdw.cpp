@@ -21,6 +21,7 @@ extern "C" {
 #endif
 
 #include "postgres.h"
+#include "storage/proc.h"
 
 #include "ogawayama_fdw.h"
 
