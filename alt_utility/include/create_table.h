@@ -1,4 +1,3 @@
 #pragma once
 
-int create_table(const char* query_string);
-
+bool create_table(const char* query_string);

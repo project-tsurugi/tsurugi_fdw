@@ -1,23 +1,21 @@
-add_library(create_table SHARED create_table.cpp)
+add_library(alt_utility SHARED create_table.cpp)
 
-target_include_directories(create_table
-    PRIVATE ${PROJECT_SOURCE_DIR}/../include/
-    PRIVATE ${PROJECT_SOURCE_DIR}/../../../../src/include/
-    PRIVATE ${PROJECT_SOURCE_DIR}/../../third_party/ogawayama/stub/include/
+#find_package(ogawayama REQUIRED)
+#find_package(manager REQUIRED)
+
+find_library(manager_lib metadata HINTS ${MANAGER_LIBRARY_PATH})
+message(${manager_lib})
+find_library(ogawayama-stub_lib ogawayama-stub HINTS ${OGAWAYAMA_LIBRARY_PATH})
+message(${ogawayama-stub_lib})
+
+target_include_directories(alt_utility
+    PRIVATE ${PROJECT_SOURCE_DIR}/../include # aly_utility
+    PRIVATE ${PROJECT_SOURCE_DIR}/../../../../src/include # PostgreSQL
+    PRIVATE ${OGAWAYAMA_INCLUDE_PATH} #ogawayama
+    PRIVATE ${MANAGER_INCLUDE_PATH} # manager
 )
 
-find_library(DEPEND_LIBRALIES ogawayama-stub
-    HINTS /home/k-okada/local/lib
-)
-
-target_link_libraries(create_table
-        ${DEPEND_LIBRALIES}
-        pthread
-        rt
-)
-
-set_target_properties(create_table
-    PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/output"
-    ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/"
+target_link_libraries(alt_utility
+    ${manager_lib}
+    ${ogawayama-stub_lib}
 )
