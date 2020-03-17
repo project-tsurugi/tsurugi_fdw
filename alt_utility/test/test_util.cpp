@@ -10,7 +10,7 @@
 int main(void)
 {
     std::vector<std::string> queries= {
-        "CREATE TABLE sample1 (INTEGER_COLUMN INTEGER NOT NULL PRIMARY KEY) TABLESPACE Tsurugi",
+        "CREATE TABLE sample1 (INTEGER_COLUMN INTEGER) TABLESPACE Tsurugi",
         "CREATE TABLE sample2 (COLUMN_INTEGER INTEGER NOT NULL PRIMARY KEY) TABLESPACE Tsurugi",
         "CREATE TABLE sample3 (column1 INTEGER, column2 INTEGER NOT NULL PRIMARY KEY) TABLESPACE Tsurugi",
         "CREATE TABLE sample4 (column1 integer, column2 Integer NOT NULL PRIMARY KEY) TABLESPACE Tsurugi",

@@ -23,6 +23,8 @@ set(MANAGER_DIR ${THIRD_PARTY_DIR}/manager)
 set(MANAGER_INCLUDE_PATH ${MANAGER_DIR}/metadata-manager/include)
 set(MANAGER_LIBRARY_PATH ${MANAGER_DIR}/metadata-manager/build/output)
 
+set(ALT_UTILITY_DIR ${PROJECT_SOURCE_DIR}/..)
+
 #set(CMAKE_MODULE_PATH ${manager_DIR})
 set(CMAKE_PREFIX_PATH 
     ${OGAWAYAMA_DIR}/build
@@ -40,11 +42,11 @@ link_directories(
 )
 message(${MANAGER_LIBRARY_PATH})
 
-add_subdirectory(../src ${PROJECT_BINARY_DIR}/alt_utility)
+add_subdirectory(.. ${PROJECT_BINARY_DIR}/alt_utility)
 
 add_executable(test_util test_util.cpp)
 target_include_directories(test_util
-    PRIVATE ${PROJECT_SOURCE_DIR}/../include # aly_utility
+    PRIVATE ${ALT_UTILITY_DIR} # aly_utility
 )
 target_link_libraries(test_util PUBLIC alt_utility)
 

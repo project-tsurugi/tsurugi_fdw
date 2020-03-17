@@ -12,7 +12,10 @@
 #include "catalog/objectaddress.h"
 #include "catalog/pg_class_d.h"
 #include "access/reloptions.h"
+
 #include "commands/tablecmds.h"
+
+#include "create_table.h"
 
 PG_MODULE_MAGIC;
 
@@ -48,6 +51,9 @@ static void tsurugi_ProcessUtilitySlow(ParseState *pstate,
 				                       DestReceiver *dest,
 				                       char *completionTag);
 
+/*
+ *  @birief: hook_function.
+ */
 void
 _PG_init(void)
 {
@@ -74,7 +80,7 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 	/* This can recurse, so check for excessive recursion */
 	check_stack_depth();
 
-	check_xact_readonly(parsetree);
+//	check_xact_readonly(parsetree);
 
 	if (completionTag)
 		completionTag[0] = '\0';
@@ -119,19 +125,22 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
             {
                 Node    *stmt = (Node *) lfirst(l);
 
-                if (IsA( stmt, CreateStmt))
+                if (IsA( stmt, CreateStmt) && !strcmp(((CreateStmt *)stmt)->tablespacename, "tsurugi"))
                 {
                     /* Create the table itself */
-                    
+                    create_table(queryString);
                 }
                 else
                 {
                     /* e.g. foreign table */
+                    standard_ProcessUtility(pstmt, queryString,
+                                            context, params, queryEnv,
+                                            dest, completionTag);
                 }
                 
                 /* Need CCI between commands */
-                if (lnext(l) != NULL)
-                    CommandCounterIncrement();
+//                if (lnext(l) != NULL)
+//                    CommandCounterIncrement();
             }
 
             /*

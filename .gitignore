@@ -1,3 +1,5 @@
+.gitignore
+.gitmodules
 frontend.code-workspace
 .vscode/**
 ogawayama_fdw/lib/**
@@ -8,3 +10,9 @@ alt_planner/alt_planner.so
 alt_planner/alt_planner.o
 ogawayama_fdw/ogawayama_fdw.so
 ogawayama_fdw/ogawayama_fdw.o
+alt_utility/alt_utility.o
+alt_utility/alt_utility.so
+alt_utility/test/build/**
+third_party/manager/**
+
+third_party/manager
