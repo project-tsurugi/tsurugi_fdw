@@ -23,6 +23,7 @@
 #include "manager/metadata/metadata.h"
 #include "manager/metadata/datatype_metadata.h"
 #include "ogawayama/stub/api.h"
+#include "stub_connector.h"
 
 #include "create_table.h"
 
@@ -34,29 +35,17 @@ using namespace ogawayama;
 extern "C" {
 #endif
 
+static std::string rewrite_query(std::string_view query_string);
 static bool execute_create_table(std::string_view query_string);
 
 #ifdef __cplusplus
 }
 #endif
 
-struct stub_connection {
-    bool exist_stub = false;
-    bool connected = false;
-    std::size_t pid = 0;
-};
-
-static stub_connection conn_;
-
-StubPtr stub_ = NULL;
-ConnectionPtr connection_ = NULL;
-TransactionPtr transaction_ = NULL;
-// extern PGDLLIMPORT PGPROC *MyProc;
-
 /*
  *  @brief: 
  */
-std::string rewrite_query(std::string_view query_string)
+static std::string rewrite_query(std::string_view query_string)
 {
     std::string rewrited_query{query_string};
 
@@ -67,7 +56,7 @@ std::string rewrite_query(std::string_view query_string)
         std::cout << "DataTypes::load() error." << std::endl;
     }
 
-    // omit semi-column.
+    // omit terminal semi-column.
     if (rewrited_query.back() == ';' ) {
         rewrited_query.pop_back();
     }
@@ -79,13 +68,15 @@ std::string rewrite_query(std::string_view query_string)
             datatype.get_optional<std::string>(metadata::DataTypes::PG_DATA_TYPE_NAME);
         boost::optional<std::string> og_type_name = 
             datatype.get_optional<std::string>(metadata::DataTypes::NAME);
-        try {
-            rewrited_query = std::regex_replace(
-                rewrited_query, 
-                std::regex("(\\s)(" + pg_type_name.get() + ")([\\s,)])", std::regex_constants::icase), 
-                "$1" + og_type_name.get() + "$3");
-        } catch (std::regex_error e) {
-            std::cout << "regex_replace() error. " << e.what() << std::endl;
+        if (!pg_type_name.get().empty() && !og_type_name.get().empty()) {
+            try {
+                rewrited_query = std::regex_replace(
+                    rewrited_query, 
+                    std::regex("(\\s)(" + pg_type_name.get() + ")([\\s,)])", std::regex_constants::icase), 
+                    "$1" + og_type_name.get() + "$3");
+            } catch (std::regex_error e) {
+                std::cout << "regex_replace() error. " << e.what() << std::endl;
+            }
         }
     }
 
@@ -114,49 +105,38 @@ bool create_table(const char* query_string)
     return success;
 }
 
+/*
+ *  @brief: 
+ */
 bool execute_create_table(std::string_view query_string)
 {
-    bool success = false;
+    bool ret_value = false;
     
-    //std::size_t pid = MyProc->pgprocno;
-    conn_.pid = getpid();
-
     const std::string rewrited_query = rewrite_query(query_string);
-    std::cout << "rewrited query string : \"" << rewrited_query << "\"" << std::endl;
 
     // dispatch create_table query.
-    stub::ErrorCode error = stub::ErrorCode::UNKNOWN;
-    if (!stub_) {
-        error = make_stub(stub_);
-        if (error != stub::ErrorCode::OK) {
-            std::cout << "make_stub() failed." << std::endl;
-            stub_ = NULL;
-            return success;
-        }
-    }
-    if (!connection_) {
-        error = stub_->get_connection(conn_.pid, connection_);
-        if (error != stub::ErrorCode::OK) {
-            std::cout << "get_connection() failed." << std::endl;
-            connection_ = NULL;
-            return success;
-        }
-    }
-    if (!transaction_) {
-        error = connection_->begin(transaction_);
-        if (error != stub::ErrorCode::OK) {
-            std::cout << "begin() failed." << std::endl;
-            transaction_ = NULL;
-            return success;
-        }
-    }
-    error = transaction_->execute_create_table(rewrited_query);
-    if (error != stub::ErrorCode::OK) {
-        std::cout << "execute_create_table() failed." << std::endl;        
-        return success;
+    stub::Connection* connection;
+    ERROR_CODE error = StubConnector::get_connection(&connection);
+    if (error != ERROR_CODE::OK) {
+        std::cerr << "StubConnector::get_connection() failed." << std::endl;
+        return ret_value;
     }
 
-    success = true;
+    TransactionPtr transaction;
+    error = connection->begin(transaction);
+    if (error != ERROR_CODE::OK) {
+        std::cerr << "begin() failed." << std::endl;
+        return ret_value;
+    }
 
-    return success;
+    std::cerr << "rewrited query string : \"" << rewrited_query << "\"" << std::endl;
+    error = transaction->execute_create_table(rewrited_query);
+    if (error != ERROR_CODE::OK) {
+        std::cerr << "execute_create_table() failed." << std::endl;        
+        return ret_value;
+    }
+
+    ret_value = true;
+
+    return ret_value;
 }
