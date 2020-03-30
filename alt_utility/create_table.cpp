@@ -35,6 +35,8 @@ using namespace ogawayama;
 extern "C" {
 #endif
 
+#include <postgres.h>
+
 static std::string rewrite_query(std::string_view query_string);
 static bool execute_create_table(std::string_view query_string);
 
@@ -56,7 +58,7 @@ static std::string rewrite_query(std::string_view query_string)
         std::cout << "DataTypes::load() error." << std::endl;
     }
 
-    // omit terminal semi-column.
+    // trim terminal semi-column.
     if (rewrited_query.back() == ';' ) {
         rewrited_query.pop_back();
     }
@@ -111,31 +113,53 @@ bool create_table(const char* query_string)
 bool execute_create_table(std::string_view query_string)
 {
     bool ret_value = false;
+    ERROR_CODE error = ERROR_CODE::UNKNOWN;
     
     const std::string rewrited_query = rewrite_query(query_string);
 
     // dispatch create_table query.
-    stub::Connection* connection;
-    ERROR_CODE error = StubConnector::get_connection(&connection);
-    if (error != ERROR_CODE::OK) {
-        std::cerr << "StubConnector::get_connection() failed." << std::endl;
+#if 0
+    stub::Stub* stub = nullptr;
+    error = StubConnector::get_stub(&stub);
+    if (error != ERROR_CODE::OK) 
+    {
+        std::cerr << "StubConnector::get_stub() failed. " << (int) error << std::endl;
         return ret_value;
     }
 
-    TransactionPtr transaction;
-    error = connection->begin(transaction);
-    if (error != ERROR_CODE::OK) {
+    std::cout << "create table pid : " << getpid() << std::endl;
+    ConnectionPtr connection;
+    error = stub->get_connection(getpid(), connection);
+    if (error != ERROR_CODE::OK) 
+    {
+        std::cerr << "StubConnector::get_connection() failed." << (int) error << std::endl;
+        return ret_value;
+    }
+#endif
+    stub::Transaction* transaction;
+    error = StubConnector::begin(&transaction);
+    if (error != ERROR_CODE::OK) 
+    {
         std::cerr << "begin() failed." << std::endl;
         return ret_value;
     }
 
     std::cerr << "rewrited query string : \"" << rewrited_query << "\"" << std::endl;
+    elog(INFO, "create table pid : (%d)", (int) getpid());
     error = transaction->execute_create_table(rewrited_query);
-    if (error != ERROR_CODE::OK) {
-        std::cerr << "execute_create_table() failed." << std::endl;        
+    if (error != ERROR_CODE::OK) 
+    {
+        std::cerr << "transaction::execute_create_table() failed." << (int) error << std::endl;        
         return ret_value;
     }
 
+    error = transaction->commit();
+    if (error != ERROR_CODE::OK) 
+    {
+        std::cerr << "transaction::commit() failed." << (int) error << std::endl;
+    }
+    transaction = nullptr;
+    
     ret_value = true;
 
     return ret_value;
