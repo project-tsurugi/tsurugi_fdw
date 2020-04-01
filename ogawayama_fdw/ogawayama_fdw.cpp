@@ -43,10 +43,11 @@ PG_MODULE_MAGIC;
 #include <memory>
 #include "ogawayama/stub/error_code.h"
 #include "ogawayama/stub/api.h"
-#include "stub_connector.h"
+#include "stub_manager.h"
 
 using namespace ogawayama;
 
+#define DEFAULT_FETCH_SIZE (10000)
 typedef struct row_data_
 {
 	size_t 		number_of_columns;		/* SELECT対象の列数 */
@@ -76,9 +77,6 @@ typedef struct ogawayama_fdw_state_
  */
 typedef struct
 {
-//	stub::Stub*			stub = nullptr;
-// 	ConnectionPtr 		connection = nullptr;
-// 	TransactionPtr 		transaction = nullptr;
 	stub::Transaction*	transaction = nullptr;
  	ResultSetPtr 		result_set = nullptr;
 	MetadataPtr 		metadata = nullptr;
@@ -192,10 +190,10 @@ ogawayama_fdw_handler(PG_FUNCTION_ARGS)
 	routine->ExecForeignUpdate = ogawayamaExecForeignUpdate;
 	routine->ExecForeignDelete = ogawayamaExecForeignDelete;
 
-	ERROR_CODE error = StubConnector::init();
+	ERROR_CODE error = StubManager::init();
 	if (error != ERROR_CODE::OK) 
 	{
-		elog(ERROR, "StubConnector::init() failed. (%d)", (int) error);
+		elog(ERROR, "StubManager::init() failed. (%d)", (int) error);
 	}
 
 	elog(DEBUG2, "ogawayama_fdw_handler() done.");
@@ -224,11 +222,13 @@ ogawayamaBeginForeignScan(ForeignScanState* node, int eflags)
 {
 	elog(DEBUG2, "ogawayamaBeginForeignScan() started.");
 
+	Assert(node != nullptr);
+
 	ForeignScan* fsplan = (ForeignScan*) node->ss.ps.plan;
 	EState*	estate = node->ss.ps.state;
 	OgawayamaFdwState* fdw_state = create_fdwstate();
 
-	fdw_state->fetch_size = 10000;
+	fdw_state->fetch_size = DEFAULT_FETCH_SIZE;
 
 	/* Create MemoryContext for tuple data */
 	fdw_state->batch_cxt = AllocSetContextCreate(
@@ -258,7 +258,8 @@ ogawayamaIterateForeignScan(ForeignScanState* node)
 {
 	elog(DEBUG2, "ogawayamaIterateForeignScan() started.");
 
-	assert(fdw_info_.transaction != nullptr);
+	Assert(node != nullptr);
+	Assert(fdw_info_.transaction != nullptr);
 
 	TupleTableSlot* slot = node->ss.ss_ScanTupleSlot;
 	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
@@ -316,6 +317,11 @@ ogawayamaEndForeignScan(ForeignScanState* node)
 	/* close cursor */
 	fdw_info_.result_set = nullptr;
 
+	StubManager::end();
+	fdw_info_.transaction = nullptr;
+	fdw_info_.xact_level--;
+	elog(DEBUG2, "xact_level: (%d)", fdw_info_.xact_level);
+
 	if (fdw_state != nullptr)
 		free_fdwstate(fdw_state);
 	
@@ -334,12 +340,15 @@ ogawayamaBeginDirectModify(ForeignScanState* node, int eflags)
 {
 	elog(DEBUG2, "ogawayamaBeginDirectModify() started.");
 
-	assert(node != nullptr);
-	assert(fdw_info_.transaction != nullptr);
+	Assert(node != nullptr);
 
 	EState* estate = node->ss.ps.state;
 
 	OgawayamaFdwState* fdw_state = create_fdwstate();
+	if (fdw_state == nullptr)
+	{
+		elog(ERROR, "create_fdw_state() failed.");
+	}
 
 	begin_backend_xact();
 
@@ -360,25 +369,28 @@ ogawayamaIterateDirectModify(ForeignScanState* node)
 {
 	elog(DEBUG2, "ogawayamaIterateDirectModify() started.");
 
-	assert(node != nullptr);
-	assert(fdw_info_.transaction != nullptr);
+	Assert(node != nullptr);
+	Assert(fdw_info_.transaction != nullptr);
 
 	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
 	TupleTableSlot* slot = nullptr;
 	ERROR_CODE error;
 
-	elog(DEBUG1, "query string: \"%s\"", fdw_state->query_string);
+	elog(DEBUG1, "statement string: \"%s\"", fdw_state->query_string);
+
   	std::string query(fdw_state->query_string);
 	// trim terminal semi-column.
 	if (query.back() == ';')
 	{
 		query.pop_back();
 	}
+	elog(DEBUG1, "statement string: \"%s\"", query.c_str());
+	elog(DEBUG2, "transaction::execute_statement() start.");
 	error = fdw_info_.transaction->execute_statement(query);
 	elog(DEBUG2, "transaction::execute_statement() done.");
 	if (error != ERROR_CODE::OK) 
     {
-		elog(ERROR, "Connection::execute_statement() failed. (%d)", (int) error);	
+		elog(ERROR, "transaction::execute_statement() failed. (%d)", (int) error);	
 	}
 	
 	elog(DEBUG2, "ogawayamaIterateDirectModify() done.");
@@ -395,9 +407,13 @@ ogawayamaEndDirectModify(ForeignScanState* node)
 {
 	elog(DEBUG2, "ogawayamaEndDirectModify() started.");
 
-	assert(node != nullptr);
+	StubManager::end();
+	fdw_info_.transaction = nullptr;
+	fdw_info_.xact_level--;
+	elog(DEBUG2, "xact_level: (%d)", fdw_info_.xact_level);
 
-	free_fdwstate((OgawayamaFdwState*) node->fdw_state);
+	if (node->fdw_state != nullptr)
+		free_fdwstate((OgawayamaFdwState*) node->fdw_state);
 
 	elog(DEBUG2, "ogawayamaEndDirectModify() done.");
 }
@@ -414,7 +430,7 @@ ogawayamaExecForeignInsert(
 {
 	elog(DEBUG2, "ogawayamaExecForeignInsert() started.");
 	slot = nullptr;
-	elog(DEBUG2, "ogawayamaExecForeignInsert() started.");
+	elog(DEBUG2, "ogawayamaExecForeignInsert() done.");
 
 	return slot;
 }
@@ -431,7 +447,7 @@ ogawayamaExecForeignUpdate(
 {
 	elog(DEBUG2, "ogawayamaExecForeignUpdate() started.");
 	slot = nullptr;
-	elog(DEBUG2, "ogawayamaExecForeignUpdate() started.");
+	elog(DEBUG2, "ogawayamaExecForeignUpdate() done.");
 
 	return slot;
 }
@@ -448,7 +464,7 @@ ogawayamaExecForeignDelete(
 {
 	elog(DEBUG2, "ogawayamaExecForeignDelete() started.");
 	slot = nullptr;
-	elog(DEBUG2, "ogawayamaExecForeignDelete() started.");
+	elog(DEBUG2, "ogawayamaExecForeignDelete() done.");
 
 	return slot;
 }
@@ -466,7 +482,7 @@ ogawayamaExplainForeignScan(ForeignScanState* node,
 						   	ExplainState* es)
 {
 	elog(DEBUG2, "ogawayamaExplainForeignScan() started.");
-	elog(DEBUG2, "ogawayamaExplainForeignScan() started.");
+	elog(DEBUG2, "ogawayamaExplainForeignScan() done.");
 }
 
 /*
@@ -477,7 +493,7 @@ ogawayamaExplainDirectModify(ForeignScanState* node,
 							ExplainState* es)
 {
 	elog(DEBUG2, "ogawayamaExplainDirectModify() started.");
-	elog(DEBUG2, "ogawayamaExplainDirectModify() started.");
+	elog(DEBUG2, "ogawayamaExplainDirectModify() done.");
 }
 
 /*
@@ -488,7 +504,7 @@ static bool ogawayamaAnalyzeForeignTable(Relation relation,
 							BlockNumber* totalpages)
 {
 	elog(DEBUG2, "ogawayamaAnalyzeForeignTable() started.");
-	elog(DEBUG2, "ogawayamaAnalyzeForeignTable() started.");
+	elog(DEBUG2, "ogawayamaAnalyzeForeignTable() done.");
 
 	return true;
 }
@@ -502,7 +518,7 @@ ogawayamaImportForeignSchema(ImportForeignSchemaStmt* stmt,
 {
 	elog(DEBUG2, "ogawayamaImportForeignSchema() started.");
 	List	*commands = NIL;
-	elog(DEBUG2, "ogawayamaImportForeignSchema() started.");
+	elog(DEBUG2, "ogawayamaImportForeignSchema() done.");
 
 	return commands;
 }
@@ -525,7 +541,7 @@ create_fdwstate()
 
 /*
  *	@brief:	free allocated memories.
- *	@param:	[in] Ogawayama fdw state.
+ *	@param:	[in] Ogawayama-fdw state.
  */
 static void 
 free_fdwstate(OgawayamaFdwState* fdw_state)
@@ -600,7 +616,7 @@ store_pg_data_type(OgawayamaFdwState* fdw_state, List* tlist)
 static void 
 create_cursor(ForeignScanState* node)
 {
-	assert(node!= nullptr);
+	Assert(node!= nullptr);
 
 	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
 
@@ -615,9 +631,10 @@ create_cursor(ForeignScanState* node)
 	fdw_info_.result_set = nullptr;
 
 	/* dispatch query */
-	elog(DEBUG1, "transaction::execute_query() started.");
+	elog(DEBUG1, "query string: \"%s\"", query.c_str());
+	elog(DEBUG2, "transaction::execute_query() start.");
 	ERROR_CODE error = fdw_info_.transaction->execute_query(query, fdw_info_.result_set);
-	elog(DEBUG1, "transaction::execute_query() done.");
+	elog(DEBUG2, "transaction::execute_query() done.");
 	if (error != ERROR_CODE::OK)
 	{
 		elog(ERROR, "Transaction::execute_query() failed. (%d)", (int) error);
@@ -664,7 +681,7 @@ confirm_columns(MetadataPtr metadata, ForeignScanState* node)
 			(int) metadata->get_types().size(), fdw_state->number_of_columns);
 	}
 
-	size_t i = 0;
+	Size i = 0;
 	for (auto types: metadata->get_types())
 	{
 		switch (static_cast<stub::Metadata::ColumnType::Type>(types.get_type()))
@@ -682,6 +699,17 @@ confirm_columns(MetadataPtr metadata, ForeignScanState* node)
 
 			case stub::Metadata::ColumnType::Type::INT32:
 				if (fdw_state->column_types[i] != INT4OID)
+				{
+					elog(ERROR, 
+						"Don't match data type of the column. " 
+						"(column: %lu) (og: %d) (pg: %u)", 
+						i, (int) types.get_type(), fdw_state->column_types[i] );
+					ret = false;
+				}
+				break;
+
+			case stub::Metadata::ColumnType::Type::INT64:
+				if (fdw_state->column_types[i] != INT8OID)
 				{
 					elog(ERROR, 
 						"Don't match data type of the column. " 
@@ -945,7 +973,7 @@ begin_backend_xact(void)
 		{	
 			if (fdw_info_.transaction == nullptr)
 			{
-				ERROR_CODE error = StubConnector::begin(&fdw_info_.transaction);
+				ERROR_CODE error = StubManager::begin(&fdw_info_.transaction);
 				if (error != ERROR_CODE::OK) 
 				{
 					elog(ERROR, "Connection::begin() failed. (%d)", (int) error);
@@ -956,7 +984,7 @@ begin_backend_xact(void)
 				elog(ERROR, "transaction alreayd started.");
 			}
 			fdw_info_.xact_level++;
-			elog(DEBUG1, "Connection::begin() done. (xact_level: %d)", 
+			elog(DEBUG1, "StubManager::begin() done. (xact_level: %d)", 
 			fdw_info_.xact_level);
 		}
 	}
@@ -991,7 +1019,7 @@ ogawayama_xact_callback (XactEvent event, void *arg)
 				elog(DEBUG1, "XACT_EVENT_COMMIT");
 				fdw_info_.transaction->commit();
 				fdw_info_.transaction = nullptr;
-				StubConnector::end();
+				StubManager::end();
 				fdw_info_.xact_level--;
 				elog(DEBUG1, "Transaction::commit() done. (xact_level: %d)", 
 					fdw_info_.xact_level);
@@ -1001,7 +1029,7 @@ ogawayama_xact_callback (XactEvent event, void *arg)
 				elog(DEBUG1, "XACT_EVENT_ABORT (xact_level: %d)", fdw_info_.xact_level);
 				fdw_info_.transaction->rollback();
 				fdw_info_.transaction = nullptr;
-				StubConnector::end();
+				StubManager::end();
 				fdw_info_.xact_level--;
 				elog(DEBUG1, "Transaction::rollback() done. (xact_level: %d)", 
 					fdw_info_.xact_level);

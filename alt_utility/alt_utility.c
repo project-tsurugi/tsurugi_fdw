@@ -6,14 +6,13 @@
  *
  *-------------------------------------------------------------------------
  */
-#include "postgres.h"
 
+#include "postgres.h"
 #include "tcop/utility.h"
 #include "catalog/objectaddress.h"
 #include "catalog/pg_class_d.h"
 #include "access/reloptions.h"
 #include "commands/event_trigger.h"
-
 #include "commands/tablecmds.h"
 
 #include "create_table.h"
@@ -22,9 +21,13 @@
 PG_MODULE_MAGIC;
 #endif
 
-extern PGDLLIMPORT ProcessUtility_hook_type ProcessUtility_hook;
+/* ProcessUtility_hook function */
+void tsurugi_ProcessUtility(PlannedStmt *pstmt, 
+                            const char *query_string, ProcessUtilityContext context, 
+                            ParamListInfo params, 
+                            QueryEnvironment *queryEnv, 
+                            DestReceiver *dest, char *completionTag);
 
-extern void _PG_init(void);
 extern bool IsTransactionBlock(void);
 extern void check_stack_depth(void);
 extern void check_xact_readonly(Node *parsetree);
@@ -39,12 +42,6 @@ extern void standard_ProcessUtility(PlannedStmt *pstmt,
 						            DestReceiver *dest,
 						            char *completionTag);
 
-void tsurugi_ProcessUtility(PlannedStmt *pstmt, 
-                            const char *query_string, ProcessUtilityContext context, 
-                            ParamListInfo params, 
-                            QueryEnvironment *queryEnv, 
-                            DestReceiver *dest, char *completionTag);
-
 static void tsurugi_ProcessUtilitySlow(ParseState *pstate,
 			        	               PlannedStmt *pstmt,
 				                       const char *queryString,
@@ -53,15 +50,6 @@ static void tsurugi_ProcessUtilitySlow(ParseState *pstate,
 				                       QueryEnvironment *queryEnv,
 				                       DestReceiver *dest,
 				                       char *completionTag);
-
-/*
- *  @birief: hook_function.
- */
-void
-_PG_init(void)
-{
-  ProcessUtility_hook = tsurugi_ProcessUtility;
-}
 
 /*
  *  @brief: 

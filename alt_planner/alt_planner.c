@@ -37,13 +37,13 @@ typedef struct AltPlannerInfo
 } AltPlannerInfo;
 
 
+#ifndef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
+#endif
 
-extern void _PG_init(void);
+/* planner_hook function */
+PlannedStmt *alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams);
 
-extern PGDLLIMPORT planner_hook_type planner_hook;
-
-PlannedStmt *alt_planner( Query *parse2, int cursorOptions, ParamListInfo boundParams );
 bool is_only_foreign_table( AltPlannerInfo *root, List *rtable );
 AltPlannerInfo *init_altplannerinfo( Query *parse );
 ForeignScan *create_foreign_scan( AltPlannerInfo *root ); /* ForeignScanプランノードの初期化 */
@@ -855,16 +855,4 @@ expand_targetlist(List *tlist, int command_type,
 	}
 
 	return new_tlist;
-}
-
-
-
-/************************************************************
- * Module initialization function
- ************************************************************/
-
-void
-_PG_init(void)
-{
-  planner_hook = alt_planner;
 }

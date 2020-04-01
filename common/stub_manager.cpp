@@ -21,7 +21,7 @@ PG_MODULE_MAGIC;
 #include "ogawayama/stub/error_code.h"
 #include "ogawayama/stub/api.h"
 
-#include "stub_connector.h"
+#include "stub_manager.h"
 
 using namespace ogawayama;
 
@@ -29,14 +29,14 @@ using namespace ogawayama;
 extern PGDLLIMPORT PGPROC *MyProc;
 #endif
 
-StubPtr StubConnector::stub_ = nullptr;
-ConnectionPtr StubConnector::connection_ = nullptr;
-TransactionPtr StubConnector::transaction_ = nullptr;
+StubPtr StubManager::stub_ = nullptr;
+ConnectionPtr StubManager::connection_ = nullptr;
+TransactionPtr StubManager::transaction_ = nullptr;
 
 /*
  * 	@brief: 
  */
-ERROR_CODE StubConnector::init()
+ERROR_CODE StubManager::init()
 {
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
 
@@ -45,11 +45,12 @@ ERROR_CODE StubConnector::init()
 		error = make_stub(stub_);
 		if (error != ERROR_CODE::OK)
 		{
-			std::cerr << "stub::make_stub() failed. " << (int) error << std::endl;
+			elog(ERROR, "stub::make_stub() failed. (%d)", (int) error);
 			return error;
 		}
 		elog(DEBUG1, "make_stub() succeeded.");
 	}
+	
 	error = ERROR_CODE::OK;
 
 	return error;
@@ -58,7 +59,7 @@ ERROR_CODE StubConnector::init()
 /*
  *	@brief:
  */
-ERROR_CODE StubConnector::get_stub(stub::Stub** stub)
+ERROR_CODE StubManager::get_stub(stub::Stub** stub)
 {
 	ERROR_CODE error = ERROR_CODE::OK;
 
@@ -80,7 +81,7 @@ ERROR_CODE StubConnector::get_stub(stub::Stub** stub)
 /*
  * 	@brief: 
  */
-ERROR_CODE StubConnector::get_connection(stub::Connection** connection)
+ERROR_CODE StubManager::get_connection(stub::Connection** connection)
 {
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
 
@@ -110,7 +111,7 @@ ERROR_CODE StubConnector::get_connection(stub::Connection** connection)
 /*
  *	@brief:	
  */
-ERROR_CODE StubConnector::begin(stub::Transaction** transaction)
+ERROR_CODE StubManager::begin(stub::Transaction** transaction)
 {
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
 
@@ -141,12 +142,16 @@ ERROR_CODE StubConnector::begin(stub::Transaction** transaction)
 	}
 	*transaction = transaction_.get();
 
+	elog(DEBUG1, "Transaction started.");
 	error = ERROR_CODE::OK;
 
 	return error;
 }
 
-void StubConnector::end()
+/*
+ * 	@brief: 
+ */
+void StubManager::end()
 {
 	transaction_ = nullptr;
 }
