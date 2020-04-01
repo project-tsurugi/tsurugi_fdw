@@ -35,5 +35,15 @@ make
 make install
 ```
 
-## How to build alt_planner
-See "frontend/alt_planner/alt_plannerの使用方法".
+## How to set up for frontend
+
+1. Update **shared_preload_libraries** parameter in postgresql.conf as below.
+	```
+    shared_preload_libraries = 'ogawayama_fdw'
+	```
+   * postgresql.conf exists in "<*PostgreSQL install directory*>/data/".
+
+1. Restart PostgreSQL.
+	```
+     pg_ctl restart
+	```
