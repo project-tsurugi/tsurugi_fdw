@@ -56,6 +56,18 @@ pipeline {
                 '''
             }
         }
+        stage ('build metadata-manager') {
+            steps {
+                sh '''
+                    cd postgresql-11.1/contrib/frontend/third_party/manager/metadata-manager
+                    git clean -dfx
+                    mkdir build
+                    cd build
+                    cmake ..
+                    make -j${BUILD_PARALLEL_NUM}
+                '''
+            }
+        }        
         stage ('build frontend') {
             steps {
                 sh '''
