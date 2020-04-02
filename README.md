@@ -24,11 +24,18 @@ cd frontend
 git submodule update --init
 
 # build ogawayama
-cd ogawayama_fdw/third_party/ogawayama
+cd third_party/ogawayama
 mkdir build
 cd build
 cmake -G Ninja -DBUILD_STUB_ONLY=ON -DBUILD_TESTS=OFF ..
 ninja
+
+# build metadata-manager
+cd third_party/manager/metadata-manager
+mkdir build
+cd build
+cmake -G 'Unix Makefiles' ..
+make
 
 cd ../../..
 make

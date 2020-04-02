@@ -1,4 +1,4 @@
-# PostgreSQLからのテーブル定義方法
+# PostgreSQLからのテーブル定義
 2020.04.01 NEC
 
 ## 概要
@@ -18,8 +18,8 @@ psqlから以下の手順でFDWを利用可能にする。。
 	* メタコマンド(\dew)で確認する
 		```
 		postgres=# \dew
-        		        List of foreign-data wrappers
-     		 Name      |  Owner   |        Handler        | Validator
+                        List of foreign-data wrappers
+             Name      |  Owner   |        Handler        | Validator
 		---------------+----------+-----------------------+-----------
  		 ogawayama_fdw | postgres | ogawayama_fdw_handler | -
 		```
@@ -32,13 +32,13 @@ psqlから以下の手順でFDWを利用可能にする。。
 	* メタコマンド(\des)で確認する
 		```sql
 		postgres=# \des
-        		    List of foreign servers
+                    List of foreign servers
    		   Name    |  Owner   | Foreign-data wrapper
 		-----------+----------+----------------------
  		 ogawayama | postgres | ogawayama_fdw
 		```
 
-## 手順
+## テーブル定義手順
 
 1. テーブルの定義
 	* CREATE TABLE文を実行する
