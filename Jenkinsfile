@@ -56,19 +56,10 @@ pipeline {
                 '''
             }
         }
-        stage ('build ogawayama_fdw') {
+        stage ('build frontend') {
             steps {
                 sh '''
-                    cd postgresql-11.1/contrib/frontend/ogawayama_fdw
-                    make -j${BUILD_PARALLEL_NUM}
-                    make install
-                '''
-            }
-        }
-        stage ('build alt_planner') {
-            steps {
-                sh '''
-                    cd postgresql-11.1/contrib/frontend/alt_planner
+                    cd postgresql-11.1/contrib/frontend
                     make -j${BUILD_PARALLEL_NUM}
                     make install
                 '''
