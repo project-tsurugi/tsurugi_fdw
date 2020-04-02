@@ -47,7 +47,7 @@ pipeline {
         stage ('build ogawayama') {
             steps {
                 sh '''
-                   cd postgresql-11.1/contrib/frontend/ogawayama_fdw/third_party/ogawayama
+                   cd postgresql-11.1/contrib/frontend/third_party/ogawayama
                    git clean -dfx
                    mkdir build
                    cd build
@@ -56,19 +56,22 @@ pipeline {
                 '''
             }
         }
-        stage ('build ogawayama_fdw') {
+        stage ('build metadata-manager') {
             steps {
                 sh '''
-                    cd postgresql-11.1/contrib/frontend/ogawayama_fdw
+                    cd postgresql-11.1/contrib/frontend/third_party/manager/metadata-manager
+                    git clean -dfx
+                    mkdir build
+                    cd build
+                    cmake ..
                     make -j${BUILD_PARALLEL_NUM}
-                    make install
                 '''
             }
         }
-        stage ('build alt_planner') {
+        stage ('build frontend') {
             steps {
                 sh '''
-                    cd postgresql-11.1/contrib/frontend/alt_planner
+                    cd postgresql-11.1/contrib/frontend
                     make -j${BUILD_PARALLEL_NUM}
                     make install
                 '''
