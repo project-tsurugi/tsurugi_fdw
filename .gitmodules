@@ -4,3 +4,6 @@
 [submodule "third_party/manager"]
 	path = third_party/manager
 	url = git@github.com:project-tsurugi/manager.git
+[submodule "ogawayama_fdw/third_party/ogawayama_fdw/third_party/ogawayama"]
+	path = ogawayama_fdw/third_party/ogawayama
+	url = git@github.com:project-tsurugi/ogawayama.git
