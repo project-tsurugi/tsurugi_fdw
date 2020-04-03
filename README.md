@@ -4,7 +4,7 @@
 * C++ Compiler `>= C++17`
 * Source code of PostgreSQL `>=11.1`
 
-## How to build ogawayama_fdw
+## How to build frontend
 Clone fronend to "contrib" directory in PostgreSQL.
 ```sh
 apt -y install libreadline-dev zlib1g-dev # for PostgreSQL
