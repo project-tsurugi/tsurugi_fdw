@@ -51,6 +51,8 @@ pipeline {
                    git clean -dfx
                    mkdir build
                    cd build
+                   pwd
+                   ls ..
                    cmake -DBUILD_STUB_ONLY=ON -DBUILD_TESTS=OFF ..
                    make -j${BUILD_PARALLEL_NUM}
                 '''
