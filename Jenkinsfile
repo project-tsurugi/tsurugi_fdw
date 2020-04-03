@@ -47,13 +47,10 @@ pipeline {
         stage ('build ogawayama') {
             steps {
                 sh '''
-                   cd postgresql-11.1/contrib/frontend/ogawayama_fdw/third_party/ogawayama
+                   cd postgresql-11.1/contrib/frontend/third_party/ogawayama
                    git clean -dfx
                    mkdir build
                    cd build
-                   pwd
-                   ls
-                   ls ./..
                    cmake -DBUILD_STUB_ONLY=ON -DBUILD_TESTS=OFF ..
                    make -j${BUILD_PARALLEL_NUM}
                 '''

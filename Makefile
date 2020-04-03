@@ -11,7 +11,6 @@ PGFILEDESC = "ogawayama_fdw - foregin data wrapper for ogawayama-server"
 
 PG_CPPFLAGS = -Iinclude \
               -Ithird_party/ogawayama/stub/include \
-              -Iogawayama_fdw/third_party/ogawayama/stub/include \
               -Ithird_party/manager/metadata-manager/include \
 	      -std=c++17 -fPIC -Dregister= -O0
 
