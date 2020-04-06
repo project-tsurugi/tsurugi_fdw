@@ -44,12 +44,41 @@ make install
 
 ## How to set up for frontend
 
+1. Install frontend extension
+	* Execute **CREATE EXTENSION** command
+		```sql
+		CREATE EXTENSION ogawayama_fdw;
+		```
+	* Check with the meta-command(\dew)
+		```
+		postgres=# \dew
+                        List of foreign-data wrappers
+             Name      |  Owner   |        Handler        | Validator
+		---------------+----------+-----------------------+-----------
+ 		 ogawayama_fdw | postgres | ogawayama_fdw_handler | -
+		```
+
+1. Define external-server
+	* Execute **CREATE SERVER** command
+		```sql
+		CREATE SERVER ogawayama FOREIGN DATA WRAPPER ogawayama_fdw;
+		```
+	* Check with the meta-command(\des)
+		```sql
+		postgres=# \des
+                    List of foreign servers
+   		   Name    |  Owner   | Foreign-data wrapper
+		-----------+----------+----------------------
+ 		 ogawayama | postgres | ogawayama_fdw
+		```
+
 1. Update **shared_preload_libraries** parameter in postgresql.conf as below.
 	```
     shared_preload_libraries = 'ogawayama_fdw'
 	```
    * postgresql.conf exists in "<*PostgreSQL install directory*>/data/".
 
+		
 1. Restart PostgreSQL.
 	```
      pg_ctl restart
