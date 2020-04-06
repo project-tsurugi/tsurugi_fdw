@@ -31,10 +31,56 @@ BINARY_DIR=build
 
 mkdir -p $TSURUGI_HOME
 cd $TSURUGI_HOME
+git clone git@github.com:project-tsurugi/manager.git
+git clone git@github.com:project-tsurugi/masstree-beta.git
+git clone git@github.com:project-tsurugi/kvs_charkey.git
 git clone git@github.com:project-tsurugi/shakujo.git
 git clone git@github.com:project-tsurugi/sharksfin.git
 git clone git@github.com:project-tsurugi/umikongo.git
 git clone git@github.com:project-tsurugi/ogawayama.git
+
+# manager
+
+cd $TSURUGI_HOME/manager/metadata-manager
+
+rm -rf $BINARY_DIR
+mkdir $BINARY_DIR
+cd $BINARY_DIR
+
+cmake -G 'Unix Makefiles' \
+    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
+    -DFORCE_INSTALL_RPATH=ON \
+    ..
+make
+make install
+
+# mastree
+
+cd $TSURUGI_HOME/masstree-beta
+git submodule update --init
+
+#./bootstrap.sh
+#./configure
+#make
+#make install
+
+# kvs_charkey
+
+cd $TSURUGI_HOME/kvs_charkey
+git submodule update --init
+
+rm -rf $BINARY_DIR
+mkdir $BINARY_DIR
+cd $BINARY_DIR
+
+#cmake -G Ninja \
+#    -DFORCE_INSTALL_RPATH=ON \
+#    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
+#    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+#    ..
+#ninja
+#ninja install
 
 # shakujo
 
@@ -48,6 +94,7 @@ cmake -G Ninja \
     -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
     -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
     -DFORCE_INSTALL_RPATH=ON \
+    -DBUILD_TESTS=OFF \
     ..
 ninja
 ninja install
@@ -64,6 +111,8 @@ cmake -G Ninja \
     -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
     -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
     -DFORCE_INSTALL_RPATH=ON \
+    -DBUILD_TESTS=OFF \
+    -DBUILD_KVS=OFF \
     ..
 ninja
 ninja install
@@ -81,6 +130,7 @@ cmake -G Ninja \
     -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
     -DFORCE_INSTALL_RPATH=ON \
     -DFIXED_PAYLOAD_SIZE=ON \
+    -DBUILD_TESTS=OFF \
     -DSHARKSFIN_IMPLEMENTATION=memory \
     ..
 ninja
@@ -98,6 +148,7 @@ cmake -G Ninja \
     -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
     -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
     -DFORCE_INSTALL_RPATH=ON \
+    -DBUILD_TESTS=OFF \
     ..
 ninja
 ninja install
