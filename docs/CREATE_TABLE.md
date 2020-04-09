@@ -42,7 +42,7 @@ psqlから以下の手順でFDWを利用可能にする。。
 	* TABLESPACE用のディレクトリを作成する
 		```
 		$ mkdir -p (PostgreSQLインストール先)/data/tsurugi
-		```	
+		```
 	* CREATE TABLESPACE文を実行する
 		```sql
 		CREATE TABLESPACE tsurugi LOCATION '(PostgreSQLインストール先)/data/tsurugi';
@@ -76,7 +76,7 @@ psqlから以下の手順でFDWを利用可能にする。。
 		* **ただし、主キーは指定しない**
 		* 先に定義した外部サーバを指定する
 			```sql
-			CREATE FOREIGN TABLE table1 (column1 NOT NULL) SERVER ogawayama;
+			CREATE FOREIGN TABLE table1 (column1 INTEGER NOT NULL) SERVER ogawayama;
 			```
 	* 外部テーブルは指定したテーブル名で定義される
 		* e.g. "table1"
