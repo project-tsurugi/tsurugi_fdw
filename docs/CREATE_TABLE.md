@@ -30,12 +30,32 @@ psqlから以下の手順でFDWを利用可能にする。。
 		CREATE SERVER ogawayama FOREIGN DATA WRAPPER ogawayama_fdw;
 		```
 	* メタコマンド(\des)で確認する
-		```sql
+		```
 		postgres=# \des
                     List of foreign servers
    		   Name    |  Owner   | Foreign-data wrapper
 		-----------+----------+----------------------
  		 ogawayama | postgres | ogawayama_fdw
+		```
+
+1. TABLESPACEの定義
+	* TABLESPACE用のディレクトリを作成する
+		```
+		$ mkdir -p (PostgreSQLインストール先)/data/tsurugi
+		```	
+	* CREATE TABLESPACE文を実行する
+		```sql
+		CREATE TABLESPACE tsurugi LOCATION '(PostgreSQLインストール先)/data/tsurugi';
+		```
+	* メタコマンド(\db)で確認する
+		```
+		k-postgres=# \db
+                   List of tablespaces
+			Name    |  Owner   |             Location
+		------------+----------+-----------------------------------
+		 pg_default | postgres |
+		 pg_global  | postgres |
+		 tsurugi    | postgres | /home/postgres/local/pgsql/data/tsurugi
 		```
 
 ## テーブル定義手順
