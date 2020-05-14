@@ -27,7 +27,8 @@ BINARY_DIR=build
 #    ninja-build \
 #    openjdk-8-jdk \
 #    pkg-config \
-#    uuid-dev
+#    uuid-dev \
+#    libboost-thread-dev
 
 mkdir -p $TSURUGI_HOME
 cd $TSURUGI_HOME
