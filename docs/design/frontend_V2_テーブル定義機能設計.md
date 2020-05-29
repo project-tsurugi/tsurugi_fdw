@@ -152,7 +152,7 @@ TABLESPACE tsurugi
 ### シーケンス概要
 
 #### シーケンス図
-![](img\out\CREATE_TABLE_overview\テーブル定義シーケンス概要.png)
+![](img/out/CREATE_TABLE_overview/テーブル定義シーケンス概要.png)
 
 #### 図中のMessage(コマンドの種類, テーブルのスキーマ名, テーブル名, その他パラメーター)
 * ogawayamaへのパラメーターの渡し方（関数名・型・パラメーター・デザインパターンなど）については、すべてノーチラス・テクノロジーズ様に決定していただきたい。★ノーチラス・テクノロジーズ様に確認
@@ -278,11 +278,11 @@ TABLESPACE tsurugi
 
 #### CreateStmt、IndexStmtクエリツリーのクラス図　
 frontendがPostgreSQLから受け取るクエリツリー
-![](img\query_tree.svg)
+![](img/query_tree.svg)
 
 ### シーケンス詳細
 #### シーケンス図
-![](img\out\CREATE_TABLE_detail\テーブル定義シーケンス詳細.png)
+![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細.png)
 
 ## エラー処理
 ### 基本方針
