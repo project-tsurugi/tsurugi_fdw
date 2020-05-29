@@ -1,0 +1,734 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="2052px" preserveAspectRatio="none" style="width:3693px;height:2052px;" version="1.1" viewBox="0 0 3693 2052" width="3693px" zoomAndPan="magnify"><defs><filter height="300%" id="ffcks7yff9e2j" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><!--MD5=[98fd4e02239d2d19a59bcd1ccc5925be]
+class CreateStmt--><rect fill="#FEFECE" filter="url(#ffcks7yff9e2j)" height="214.0313" id="CreateStmt" style="stroke: #A80036; stroke-width: 1.5;" width="354" x="1434.5" y="77"/><ellipse cx="1576.75" cy="93" fill="#ADD1B2" rx="11" ry="11" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M1580.4375,93.7031 Q1580.1875,97.1875 1579.0469,98.3438 Q1578.0156,99.3594 1576.6094,99.3594 Q1575.2031,99.3594 1574.1719,98.3438 Q1572.4219,96.5781 1572.4219,92.9063 Q1572.4219,88.6563 1574.2969,86.75 Q1575.3438,85.7344 1576.6719,85.7344 Q1578.0781,85.7344 1578.9219,86.5469 Q1580.4063,88.0625 1580.3281,90.9375 L1578.2031,90.9375 Q1578.125,88.6094 1577.4844,87.9688 Q1577.2031,87.6719 1576.6719,87.6719 Q1576.2188,87.6719 1575.8594,88.0469 Q1574.625,89.2656 1574.625,92.7813 Q1574.625,95.8281 1575.6719,96.8438 Q1576.0938,97.2813 1576.6094,97.2813 Q1577.0625,97.2813 1577.5,96.8438 Q1578.0625,96.2969 1578.1406,93.7031 L1580.4375,93.7031 Z "/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="61" x="1597.25" y="97.9102">CreateStmt</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="1435.5" x2="1787.5" y1="109" y2="109"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="45" x="1440.5" y="124.4189">NodeTag</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="24" x="1512.5" y="124.4189">type;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="100" x="1440.5" y="138.2549">RangeVar   *relation;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="101" x="1584.5" y="138.2549">/* relation to create */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="17" x="1440.5" y="152.0908">List</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="48" x="1473.5" y="152.0908">*tableElts;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="199" x="1560.5" y="152.0908">/* column definitions (list of ColumnDef) */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="17" x="1440.5" y="165.9268">List</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="66" x="1473.5" y="165.9268">*inhRelations;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="222" x="1560.5" y="165.9268">/* relations to inherit from (list of inhRelation) */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="154" x="1440.5" y="179.7627">PartitionBoundSpec *partbound;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="124" x="1608.5" y="179.7627">/* FOR VALUES clause */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="117" x="1440.5" y="193.5986">PartitionSpec *partspec;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="131" x="1560.5" y="193.5986">/* PARTITION BY clause */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="131" x="1440.5" y="207.4346">TypeName   *ofTypename;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="87" x="1608.5" y="207.4346">/* OF typename */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="17" x="1440.5" y="221.2705">List</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="61" x="1473.5" y="221.2705">*constraints;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="196" x="1536.5" y="221.2705">/* constraints (list of Constraint nodes) */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="17" x="1440.5" y="235.1064">List</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="42" x="1473.5" y="235.1064">*options;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="146" x="1560.5" y="235.1064">/* options from WITH clause */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="135" x="1440.5" y="248.9424">OnCommitAction oncommit;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="156" x="1584.5" y="248.9424">/* what do we do at COMMIT? */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="22" x="1440.5" y="262.7783">char</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="246" x="1473.5" y="262.7783">*tablespacename; /* table space to use, or NULL */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="20" x="1440.5" y="276.6143">bool</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="64" x="1488.5" y="276.6143">if_not_exists;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="183" x="1560.5" y="276.6143">/* just do nothing if it already exists? */</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="1435.5" x2="1787.5" y1="283.0313" y2="283.0313"/><!--MD5=[82cb3ce8cfd7aefbcd710d7481d70f65]
+class RangeVar--><rect fill="#FEFECE" filter="url(#ffcks7yff9e2j)" height="158.6875" id="RangeVar" style="stroke: #A80036; stroke-width: 1.5;" width="417" x="908" y="507"/><ellipse cx="1084.25" cy="523" fill="#ADD1B2" rx="11" ry="11" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M1087.9375,523.7031 Q1087.6875,527.1875 1086.5469,528.3438 Q1085.5156,529.3594 1084.1094,529.3594 Q1082.7031,529.3594 1081.6719,528.3438 Q1079.9219,526.5781 1079.9219,522.9063 Q1079.9219,518.6563 1081.7969,516.75 Q1082.8438,515.7344 1084.1719,515.7344 Q1085.5781,515.7344 1086.4219,516.5469 Q1087.9063,518.0625 1087.8281,520.9375 L1085.7031,520.9375 Q1085.625,518.6094 1084.9844,517.9688 Q1084.7031,517.6719 1084.1719,517.6719 Q1083.7188,517.6719 1083.3594,518.0469 Q1082.125,519.2656 1082.125,522.7813 Q1082.125,525.8281 1083.1719,526.8438 Q1083.5938,527.2813 1084.1094,527.2813 Q1084.5625,527.2813 1085,526.8438 Q1085.5625,526.2969 1085.6406,523.7031 L1087.9375,523.7031 Z "/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="56" x="1104.75" y="527.9102">RangeVar</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="909" x2="1324" y1="539" y2="539"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="45" x="914" y="554.4189">NodeTag</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="24" x="986" y="554.4189">type;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="22" x="914" y="568.2549">char</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="69" x="947" y="568.2549">*catalogname;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="206" x="1034" y="568.2549">/* the catalog (database) name, or NULL */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="22" x="914" y="582.0908">char</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="73" x="947" y="582.0908">*schemaname;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="154" x="1058" y="582.0908">/* the schema name, or NULL */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="22" x="914" y="595.9268">char</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="0" x="941" y="595.9268"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="46" x="962" y="595.9268">*relname;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="20" x="914" y="609.7627">bool</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="17" x="962" y="609.7627">inh;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="285" x="1034" y="609.7627">/* expand rel by inheritance? recursively act on children? */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="22" x="914" y="623.5986">char</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="290" x="962" y="623.5986">relpersistence; /* see RELPERSISTENCE_* in pg_class.h */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="23" x="914" y="637.4346">Alias</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="29" x="947" y="637.4346">*alias;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="193" x="1034" y="637.4346">/* table alias &amp; optional column aliases */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="11" x="914" y="651.2705">int</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="40" x="986" y="651.2705">location;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="171" x="1058" y="651.2705">/* token location, or -1 if unknown */</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="909" x2="1324" y1="657.6875" y2="657.6875"/><!--MD5=[acadb2c80bb0cabcd1409a5f9c5141f6]
+class ColumnDef--><rect fill="#FEFECE" filter="url(#ffcks7yff9e2j)" height="297.0469" id="ColumnDef" style="stroke: #A80036; stroke-width: 1.5;" width="535" x="1713" y="438"/><ellipse cx="1945.25" cy="454" fill="#ADD1B2" rx="11" ry="11" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M1948.9375,454.7031 Q1948.6875,458.1875 1947.5469,459.3438 Q1946.5156,460.3594 1945.1094,460.3594 Q1943.7031,460.3594 1942.6719,459.3438 Q1940.9219,457.5781 1940.9219,453.9063 Q1940.9219,449.6563 1942.7969,447.75 Q1943.8438,446.7344 1945.1719,446.7344 Q1946.5781,446.7344 1947.4219,447.5469 Q1948.9063,449.0625 1948.8281,451.9375 L1946.7031,451.9375 Q1946.625,449.6094 1945.9844,448.9688 Q1945.7031,448.6719 1945.1719,448.6719 Q1944.7188,448.6719 1944.3594,449.0469 Q1943.125,450.2656 1943.125,453.7813 Q1943.125,456.8281 1944.1719,457.8438 Q1944.5938,458.2813 1945.1094,458.2813 Q1945.5625,458.2813 1946,457.8438 Q1946.5625,457.2969 1946.6406,454.7031 L1948.9375,454.7031 Z "/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="62" x="1965.75" y="458.9102">ColumnDef</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="1714" x2="2247" y1="470" y2="470"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="45" x="1719" y="485.4189">NodeTag</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="24" x="1791" y="485.4189">type;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="22" x="1719" y="499.2549">char</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="48" x="1755" y="499.2549">*colname;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="120" x="1719" y="513.0908">TypeName   *typeName;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="91" x="1887" y="513.0908">/* type of column */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="11" x="1719" y="526.9268">int</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="44" x="1791" y="526.9268">inhcount;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="191" x="1863" y="526.9268">/* number of times column is inherited */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="20" x="1719" y="540.7627">bool</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="39" x="1767" y="540.7627">is_local;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="201" x="1839" y="540.7627">/* column has local (non-inherited) def'n */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="20" x="1719" y="554.5986">bool</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="54" x="1767" y="554.5986">is_not_null;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="178" x="1839" y="554.5986">/* NOT NULL constraint specified? */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="20" x="1719" y="568.4346">bool</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="66" x="1767" y="568.4346">is_from_type;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="205" x="1839" y="568.4346">/* column definition came from table type */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="20" x="1719" y="582.2705">bool</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="159" x="1767" y="582.2705">is_from_parent; /* XXX unused */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="22" x="1719" y="596.1064">char</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="40" x="1767" y="596.1064">storage;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="180" x="1839" y="596.1064">/* attstorage setting, or 0 for default */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="26" x="1719" y="609.9424">Node</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="63" x="1776" y="609.9424">*raw_default;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="213" x="1863" y="609.9424">/* default value (untransformed parse tree)*/</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="26" x="1719" y="623.7783">Node</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="279" x="1776" y="623.7783">*cooked_default; /* default value (transformed expr tree)*/</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="22" x="1719" y="637.6143">char</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="37" x="1767" y="637.6143">identity;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="101" x="1839" y="637.6143">/* attidentity setting */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="148" x="1719" y="651.4502">RangeVar   *identitySequence;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="355" x="1887" y="651.4502">/* to store identity sequence name for ALTER TABLE ... ADD COLUMN */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="127" x="1719" y="665.2861">CollateClause *collClause;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="203" x="1863" y="665.2861">/* untransformed COLLATE spec, if any */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="17" x="1719" y="679.1221">Oid</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="36" x="1791" y="679.1221">collOid;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="185" x="1863" y="679.1221">/* collation OID (InvalidOid if not set) */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="17" x="1719" y="692.958">List</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="61" x="1752" y="692.958">*constraints;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="155" x="1815" y="692.958">/* other constraints on column */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="17" x="1719" y="706.7939">List</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="59" x="1752" y="706.7939">*fdwoptions;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="141" x="1839" y="706.7939">/* per-column FDW options */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="11" x="1719" y="720.6299">int</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="40" x="1791" y="720.6299">location;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="199" x="1863" y="720.6299">/* parse location, or -1 if none/unknown */</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="1714" x2="2247" y1="727.0469" y2="727.0469"/><!--MD5=[00838b619def410760bf1f1c0a716011]
+class TypeName--><rect fill="#FEFECE" filter="url(#ffcks7yff9e2j)" height="172.5234" id="TypeName" style="stroke: #A80036; stroke-width: 1.5;" width="308" x="2708.5" y="1083"/><ellipse cx="2828.25" cy="1099" fill="#ADD1B2" rx="11" ry="11" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M2831.9375,1099.7031 Q2831.6875,1103.1875 2830.5469,1104.3438 Q2829.5156,1105.3594 2828.1094,1105.3594 Q2826.7031,1105.3594 2825.6719,1104.3438 Q2823.9219,1102.5781 2823.9219,1098.9063 Q2823.9219,1094.6563 2825.7969,1092.75 Q2826.8438,1091.7344 2828.1719,1091.7344 Q2829.5781,1091.7344 2830.4219,1092.5469 Q2831.9063,1094.0625 2831.8281,1096.9375 L2829.7031,1096.9375 Q2829.625,1094.6094 2828.9844,1093.9688 Q2828.7031,1093.6719 2828.1719,1093.6719 Q2827.7188,1093.6719 2827.3594,1094.0469 Q2826.125,1095.2656 2826.125,1098.7813 Q2826.125,1101.8281 2827.1719,1102.8438 Q2827.5938,1103.2813 2828.1094,1103.2813 Q2828.5625,1103.2813 2829,1102.8438 Q2829.5625,1102.2969 2829.6406,1099.7031 L2831.9375,1099.7031 Z "/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="60" x="2848.75" y="1103.9102">TypeName</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="2709.5" x2="3015.5" y1="1115" y2="1115"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="84" x="2714.5" y="1130.4189">NodeTag     type;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="296" x="2714.5" y="1144.2549">List       *names;          /* qualified name (list of Value strings)*/</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="233" x="2714.5" y="1158.0908">Oid         typeOid;        /* type identified by OID */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="162" x="2714.5" y="1171.9268">bool        setof;          /* is a set? */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="220" x="2714.5" y="1185.7627">bool        pct_type;       /* %TYPE specified? */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="261" x="2714.5" y="1199.5986">List       *typmods;        /* type modifier expression(s)*/</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="257" x="2714.5" y="1213.4346">int32       typemod;        /* prespecified type modifier */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="108" x="2714.5" y="1227.2705">List       *arrayBounds;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="270" x="2714.5" y="1241.1064">int         location;       /* token location, or -1 if unknown */</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="2709.5" x2="3015.5" y1="1247.5234" y2="1247.5234"/><!--MD5=[3d4177ac58b4411586d067f34e84928f]
+class List--><rect fill="#FEFECE" filter="url(#ffcks7yff9e2j)" height="103.3438" id="List" style="stroke: #A80036; stroke-width: 1.5;" width="251" x="3431" y="132.5"/><ellipse cx="3542.75" cy="148.5" fill="#ADD1B2" rx="11" ry="11" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M3546.4375,149.2031 Q3546.1875,152.6875 3545.0469,153.8438 Q3544.0156,154.8594 3542.6094,154.8594 Q3541.2031,154.8594 3540.1719,153.8438 Q3538.4219,152.0781 3538.4219,148.4063 Q3538.4219,144.1563 3540.2969,142.25 Q3541.3438,141.2344 3542.6719,141.2344 Q3544.0781,141.2344 3544.9219,142.0469 Q3546.4063,143.5625 3546.3281,146.4375 L3544.2031,146.4375 Q3544.125,144.1094 3543.4844,143.4688 Q3543.2031,143.1719 3542.6719,143.1719 Q3542.2188,143.1719 3541.8594,143.5469 Q3540.625,144.7656 3540.625,148.2813 Q3540.625,151.3281 3541.6719,152.3438 Q3542.0938,152.7813 3542.6094,152.7813 Q3543.0625,152.7813 3543.5,152.3438 Q3544.0625,151.7969 3544.1406,149.2031 L3546.4375,149.2031 Z "/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="19" x="3563.25" y="153.4102">List</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="3432" x2="3681" y1="164.5" y2="164.5"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="239" x="3437" y="179.9189">NodeTag type; /* T_List, T_IntList, or T_OidList */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="46" x="3437" y="193.7549">int length;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="69" x="3437" y="207.5908">ListCell *head;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="58" x="3437" y="221.4268">ListCell *tail;</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="3432" x2="3681" y1="227.8438" y2="227.8438"/><!--MD5=[47b9e9a26c33b5c25140a1f2bacf689d]
+class ListCell--><rect fill="#FEFECE" filter="url(#ffcks7yff9e2j)" height="75.6719" id="ListCell" style="stroke: #A80036; stroke-width: 1.5;" width="75" x="3519" y="548.5"/><ellipse cx="3534.9" cy="564.5" fill="#ADD1B2" rx="11" ry="11" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M3538.5875,565.2031 Q3538.3375,568.6875 3537.1969,569.8438 Q3536.1656,570.8594 3534.7594,570.8594 Q3533.3531,570.8594 3532.3219,569.8438 Q3530.5719,568.0781 3530.5719,564.4063 Q3530.5719,560.1563 3532.4469,558.25 Q3533.4938,557.2344 3534.8219,557.2344 Q3536.2281,557.2344 3537.0719,558.0469 Q3538.5563,559.5625 3538.4781,562.4375 L3536.3531,562.4375 Q3536.275,560.1094 3535.6344,559.4688 Q3535.3531,559.1719 3534.8219,559.1719 Q3534.3688,559.1719 3534.0094,559.5469 Q3532.775,560.7656 3532.775,564.2813 Q3532.775,567.3281 3533.8219,568.3438 Q3534.2438,568.7813 3534.7594,568.7813 Q3535.2125,568.7813 3535.65,568.3438 Q3536.2125,567.7969 3536.2906,565.2031 L3538.5875,565.2031 Z "/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="41" x="3549.1" y="569.4102">ListCell</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="3520" x2="3593" y1="580.5" y2="580.5"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="50" x="3525" y="595.9189">union data</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="63" x="3525" y="609.7549">ListCell *next</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="3520" x2="3593" y1="616.1719" y2="616.1719"/><!--MD5=[afa75eca2a21a07ca487d6e3bc63645a]
+class ListCell.data--><rect fill="#FEFECE" filter="url(#ffcks7yff9e2j)" height="89.5078" id="ListCell.data" style="stroke: #A80036; stroke-width: 1.5;" width="84" x="3514.5" y="1124.5"/><ellipse cx="3542.1" cy="1140.5" fill="#ADD1B2" rx="11" ry="11" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M3545.7875,1141.2031 Q3545.5375,1144.6875 3544.3969,1145.8438 Q3543.3656,1146.8594 3541.9594,1146.8594 Q3540.5531,1146.8594 3539.5219,1145.8438 Q3537.7719,1144.0781 3537.7719,1140.4063 Q3537.7719,1136.1563 3539.6469,1134.25 Q3540.6938,1133.2344 3542.0219,1133.2344 Q3543.4281,1133.2344 3544.2719,1134.0469 Q3545.7563,1135.5625 3545.6781,1138.4375 L3543.5531,1138.4375 Q3543.475,1136.1094 3542.8344,1135.4688 Q3542.5531,1135.1719 3542.0219,1135.1719 Q3541.5688,1135.1719 3541.2094,1135.5469 Q3539.975,1136.7656 3539.975,1140.2813 Q3539.975,1143.3281 3541.0219,1144.3438 Q3541.4438,1144.7813 3541.9594,1144.7813 Q3542.4125,1144.7813 3542.85,1144.3438 Q3543.4125,1143.7969 3543.4906,1141.2031 L3545.7875,1141.2031 Z "/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="24" x="3558.9" y="1145.4102">data</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="3515.5" x2="3597.5" y1="1156.5" y2="1156.5"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="72" x="3520.5" y="1171.9189">void *ptr_value</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="57" x="3520.5" y="1185.7549">int int_value</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="66" x="3520.5" y="1199.5908">Oid oid_value</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="3515.5" x2="3597.5" y1="1206.0078" y2="1206.0078"/><!--MD5=[c83a84b29e204b072a513ed837d3e2d3]
+class Constraint--><rect fill="#FEFECE" filter="url(#ffcks7yff9e2j)" height="656.7813" id="Constraint" style="stroke: #A80036; stroke-width: 1.5;" width="398" x="1433.5" y="841"/><ellipse cx="1600.25" cy="857" fill="#ADD1B2" rx="11" ry="11" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M1603.9375,857.7031 Q1603.6875,861.1875 1602.5469,862.3438 Q1601.5156,863.3594 1600.1094,863.3594 Q1598.7031,863.3594 1597.6719,862.3438 Q1595.9219,860.5781 1595.9219,856.9063 Q1595.9219,852.6563 1597.7969,850.75 Q1598.8438,849.7344 1600.1719,849.7344 Q1601.5781,849.7344 1602.4219,850.5469 Q1603.9063,852.0625 1603.8281,854.9375 L1601.7031,854.9375 Q1601.625,852.6094 1600.9844,851.9688 Q1600.7031,851.6719 1600.1719,851.6719 Q1599.7188,851.6719 1599.3594,852.0469 Q1598.125,853.2656 1598.125,856.7813 Q1598.125,859.8281 1599.1719,860.8438 Q1599.5938,861.2813 1600.1094,861.2813 Q1600.5625,861.2813 1601,860.8438 Q1601.5625,860.2969 1601.6406,857.7031 L1603.9375,857.7031 Z "/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="56" x="1620.75" y="861.9102">Constraint</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="1434.5" x2="1830.5" y1="873" y2="873"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="45" x="1439.5" y="888.4189">NodeTag</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="24" x="1511.5" y="888.4189">type;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="58" x="1439.5" y="902.2549">ConstrType</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="42" x="1511.5" y="902.2549">contype;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="0" x="1442.5" y="916.0908"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="216" x="1439.5" y="929.9268">/* Fields used for most/all constraint types: */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="22" x="1439.5" y="943.7627">char</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="52" x="1472.5" y="943.7627">*conname;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="203" x="1559.5" y="943.7627">/* Constraint name, or NULL if unnamed */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="20" x="1439.5" y="957.5986">bool</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="52" x="1487.5" y="957.5986">deferrable;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="98" x="1583.5" y="957.5986">/* DEFERRABLE? */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="20" x="1439.5" y="971.4346">bool</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="57" x="1487.5" y="971.4346">initdeferred;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="139" x="1559.5" y="971.4346">/* INITIALLY DEFERRED? */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="11" x="1439.5" y="985.2705">int</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="40" x="1511.5" y="985.2705">location;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="171" x="1583.5" y="985.2705">/* token location, or -1 if unknown */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="0" x="1442.5" y="999.1064"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="360" x="1439.5" y="1012.9424">/* Fields used for constraints with expressions (CHECK and DEFAULT): */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="20" x="1439.5" y="1026.7783">bool</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="64" x="1487.5" y="1026.7783">is_no_inherit;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="159" x="1559.5" y="1026.7783">/* is constraint non-inheritable? */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="26" x="1439.5" y="1040.6143">Node</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="53" x="1496.5" y="1040.6143">*raw_expr;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="187" x="1583.5" y="1040.6143">/* expr, as untransformed parse tree */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="22" x="1439.5" y="1054.4502">char</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="71" x="1472.5" y="1054.4502">*cooked_expr;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="201" x="1559.5" y="1054.4502">/* expr, as nodeToString representation */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="22" x="1439.5" y="1068.2861">char</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="84" x="1487.5" y="1068.2861">generated_when;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="0" x="1442.5" y="1082.1221"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="338" x="1439.5" y="1095.958">/* Fields used for unique constraints (UNIQUE and PRIMARY KEY): */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="17" x="1439.5" y="1109.7939">List</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="31" x="1472.5" y="1109.7939">*keys;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="248" x="1559.5" y="1109.7939">/* String nodes naming referenced key column(s) */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="17" x="1439.5" y="1123.6299">List</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="49" x="1472.5" y="1123.6299">*including;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="266" x="1559.5" y="1123.6299">/* String nodes naming referenced nonkey column(s) */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="0" x="1442.5" y="1137.4658"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="218" x="1439.5" y="1151.3018">/* Fields used for EXCLUSION constraints: */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="17" x="1439.5" y="1165.1377">List</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="59" x="1472.5" y="1165.1377">*exclusions;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="211" x="1559.5" y="1165.1377">/* list of (IndexElem, operator name) pairs */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="0" x="1442.5" y="1178.9736"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="383" x="1439.5" y="1192.8096">/* Fields used for index constraints (UNIQUE, PRIMARY KEY, EXCLUSION): */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="17" x="1439.5" y="1206.6455">List</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="42" x="1472.5" y="1206.6455">*options;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="146" x="1559.5" y="1206.6455">/* options from WITH clause */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="22" x="1439.5" y="1220.4814">char</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="60" x="1472.5" y="1220.4814">*indexname;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="203" x="1559.5" y="1220.4814">/* existing index to use; otherwise NULL */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="22" x="1439.5" y="1234.3174">char</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="63" x="1472.5" y="1234.3174">*indexspace;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="187" x="1583.5" y="1234.3174">/* index tablespace; NULL for default */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="0" x="1442.5" y="1248.1533"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="325" x="1439.5" y="1261.9893">/* These could be, but currently are not, used for UNIQUE/PKEY: */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="22" x="1439.5" y="1275.8252">char</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="85" x="1472.5" y="1275.8252">*access_method;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="209" x="1559.5" y="1275.8252">/* index access method; NULL for default */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="26" x="1439.5" y="1289.6611">Node</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="75" x="1496.5" y="1289.6611">*where_clause;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="126" x="1583.5" y="1289.6611">/* partial index predicate */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="0" x="1442.5" y="1303.4971"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="230" x="1439.5" y="1317.333">/* Fields used for FOREIGN KEY constraints: */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="100" x="1439.5" y="1331.1689">RangeVar   *pktable;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="105" x="1583.5" y="1331.1689">/* Primary key table */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="17" x="1439.5" y="1345.0049">List</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="44" x="1472.5" y="1345.0049">*fk_attrs;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="135" x="1559.5" y="1345.0049">/* Attributes of foreign key */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="17" x="1439.5" y="1358.8408">List</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="47" x="1472.5" y="1358.8408">*pk_attrs;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="171" x="1559.5" y="1358.8408">/* Corresponding attrs in PK table */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="22" x="1439.5" y="1372.6768">char</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="69" x="1487.5" y="1372.6768">fk_matchtype;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="143" x="1559.5" y="1372.6768">/* FULL, PARTIAL, SIMPLE */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="22" x="1439.5" y="1386.5127">char</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="71" x="1487.5" y="1386.5127">fk_upd_action;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="116" x="1559.5" y="1386.5127">/* ON UPDATE action */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="22" x="1439.5" y="1400.3486">char</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="67" x="1487.5" y="1400.3486">fk_del_action;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="114" x="1559.5" y="1400.3486">/* ON DELETE action */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="17" x="1439.5" y="1414.1846">List</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="78" x="1472.5" y="1414.1846">*old_conpfeqop;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="225" x="1559.5" y="1414.1846">/* pg_constraint.conpfeqop of my former self */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="17" x="1439.5" y="1428.0205">Oid</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="78" x="1511.5" y="1428.0205">old_pktable_oid;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="215" x="1607.5" y="1428.0205">/* pg_constraint.confrelid of my former self */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="0" x="1442.5" y="1441.8564"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="330" x="1439.5" y="1455.6924">/* Fields used for constraints that allow a NOT VALID specification */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="20" x="1439.5" y="1469.5283">bool</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="74" x="1487.5" y="1469.5283">skip_validation;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="173" x="1583.5" y="1469.5283">/* skip validation of existing rows? */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="20" x="1439.5" y="1483.3643">bool</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="62" x="1487.5" y="1483.3643">initially_valid;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="183" x="1559.5" y="1483.3643">/* mark the new constraint as valid? */</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="1434.5" x2="1830.5" y1="1489.7813" y2="1489.7813"/><!--MD5=[ff3d20c1112759d46dde2fcead238479]
+class Value--><rect fill="#FEFECE" filter="url(#ffcks7yff9e2j)" height="75.6719" id="Value" style="stroke: #A80036; stroke-width: 1.5;" width="105" x="1986" y="1812"/><ellipse cx="2019.45" cy="1828" fill="#ADD1B2" rx="11" ry="11" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M2023.1375,1828.7031 Q2022.8875,1832.1875 2021.7469,1833.3438 Q2020.7156,1834.3594 2019.3094,1834.3594 Q2017.9031,1834.3594 2016.8719,1833.3438 Q2015.1219,1831.5781 2015.1219,1827.9063 Q2015.1219,1823.6563 2016.9969,1821.75 Q2018.0438,1820.7344 2019.3719,1820.7344 Q2020.7781,1820.7344 2021.6219,1821.5469 Q2023.1063,1823.0625 2023.0281,1825.9375 L2020.9031,1825.9375 Q2020.825,1823.6094 2020.1844,1822.9688 Q2019.9031,1822.6719 2019.3719,1822.6719 Q2018.9188,1822.6719 2018.5594,1823.0469 Q2017.325,1824.2656 2017.325,1827.7813 Q2017.325,1830.8281 2018.3719,1831.8438 Q2018.7938,1832.2813 2019.3094,1832.2813 Q2019.7625,1832.2813 2020.2,1831.8438 Q2020.7625,1831.2969 2020.8406,1828.7031 L2023.1375,1828.7031 Z "/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="32" x="2037.55" y="1832.9102">Value</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="1987" x2="2090" y1="1844" y2="1844"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="45" x="1992" y="1859.4189">NodeTag</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="21" x="2064" y="1859.4189">type</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="26" x="1992" y="1873.2549">union</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="14" x="2040" y="1873.2549">val</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="1987" x2="2090" y1="1879.6719" y2="1879.6719"/><!--MD5=[08b94f3425ab1626c2ff2c44b3252502]
+class A_Const--><rect fill="#FEFECE" filter="url(#ffcks7yff9e2j)" height="89.5078" id="A_Const" style="stroke: #A80036; stroke-width: 1.5;" width="359" x="1859" y="1604"/><ellipse cx="2010.75" cy="1620" fill="#ADD1B2" rx="11" ry="11" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M2014.4375,1620.7031 Q2014.1875,1624.1875 2013.0469,1625.3438 Q2012.0156,1626.3594 2010.6094,1626.3594 Q2009.2031,1626.3594 2008.1719,1625.3438 Q2006.4219,1623.5781 2006.4219,1619.9063 Q2006.4219,1615.6563 2008.2969,1613.75 Q2009.3438,1612.7344 2010.6719,1612.7344 Q2012.0781,1612.7344 2012.9219,1613.5469 Q2014.4063,1615.0625 2014.3281,1617.9375 L2012.2031,1617.9375 Q2012.125,1615.6094 2011.4844,1614.9688 Q2011.2031,1614.6719 2010.6719,1614.6719 Q2010.2188,1614.6719 2009.8594,1615.0469 Q2008.625,1616.2656 2008.625,1619.7813 Q2008.625,1622.8281 2009.6719,1623.8438 Q2010.0938,1624.2813 2010.6094,1624.2813 Q2011.0625,1624.2813 2011.5,1623.8438 Q2012.0625,1623.2969 2012.1406,1620.7031 L2014.4375,1620.7031 Z "/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="47" x="2031.25" y="1624.9102">A_Const</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="1860" x2="2217" y1="1636" y2="1636"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="45" x="1865" y="1651.4189">NodeTag</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="24" x="1937" y="1651.4189">type;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="27" x="1865" y="1665.2549">Value</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="17" x="1937" y="1665.2549">val;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="203" x="2009" y="1665.2549">/* value (includes type info, see value.h) */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="11" x="1865" y="1679.0908">int</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="40" x="1937" y="1679.0908">location;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="171" x="2009" y="1679.0908">/* token location, or -1 if unknown */</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="1860" x2="2217" y1="1685.5078" y2="1685.5078"/><!--MD5=[2ae3d0d839308205eb4a3976239628b6]
+class IndexStmt--><rect fill="#FEFECE" filter="url(#ffcks7yff9e2j)" height="352.3906" id="IndexStmt" style="stroke: #A80036; stroke-width: 1.5;" width="424" x="504.5" y="8"/><ellipse cx="685.25" cy="24" fill="#ADD1B2" rx="11" ry="11" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M688.9375,24.7031 Q688.6875,28.1875 687.5469,29.3438 Q686.5156,30.3594 685.1094,30.3594 Q683.7031,30.3594 682.6719,29.3438 Q680.9219,27.5781 680.9219,23.9063 Q680.9219,19.6563 682.7969,17.75 Q683.8438,16.7344 685.1719,16.7344 Q686.5781,16.7344 687.4219,17.5469 Q688.9063,19.0625 688.8281,21.9375 L686.7031,21.9375 Q686.625,19.6094 685.9844,18.9688 Q685.7031,18.6719 685.1719,18.6719 Q684.7188,18.6719 684.3594,19.0469 Q683.125,20.2656 683.125,23.7813 Q683.125,26.8281 684.1719,27.8438 Q684.5938,28.2813 685.1094,28.2813 Q685.5625,28.2813 686,27.8438 Q686.5625,27.2969 686.6406,24.7031 L688.9375,24.7031 Z "/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="54" x="705.75" y="28.9102">IndexStmt</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="505.5" x2="927.5" y1="40" y2="40"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="45" x="510.5" y="55.4189">NodeTag</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="24" x="582.5" y="55.4189">type;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="22" x="510.5" y="69.2549">char</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="48" x="543.5" y="69.2549">*idxname;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="209" x="630.5" y="69.2549">/* name of new index, or NULL for default */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="100" x="510.5" y="83.0908">RangeVar   *relation;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="136" x="654.5" y="83.0908">/* relation to build index on */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="17" x="510.5" y="96.9268">Oid</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="47" x="582.5" y="96.9268">relationId;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="171" x="654.5" y="96.9268">/* OID of relation to build index on */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="22" x="510.5" y="110.7627">char</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="79" x="543.5" y="110.7627">*accessMethod;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="191" x="630.5" y="110.7627">/* name of access method (eg. btree) */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="22" x="510.5" y="124.5986">char</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="61" x="543.5" y="124.5986">*tableSpace;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="171" x="630.5" y="124.5986">/* tablespace, or NULL for default */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="17" x="510.5" y="138.4346">List</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="71" x="543.5" y="138.4346">*indexParams;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="196" x="630.5" y="138.4346">/* columns to index: a list of IndexElem */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="17" x="510.5" y="152.2705">List</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="114" x="543.5" y="152.2705">*indexIncludingParams;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="244" x="678.5" y="152.2705">/* additional columns to index: a list of IndexElem */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="17" x="510.5" y="166.1064">List</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="42" x="543.5" y="166.1064">*options;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="205" x="630.5" y="166.1064">/* WITH clause options: a list of DefElem */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="26" x="510.5" y="179.9424">Node</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="71" x="567.5" y="179.9424">*whereClause;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="194" x="654.5" y="179.9424">/* qualification (partial-index predicate) */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="17" x="510.5" y="193.7783">List</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="315" x="543.5" y="193.7783">*excludeOpNames; /* exclusion operator names, or NIL if none */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="22" x="510.5" y="207.6143">char</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="66" x="543.5" y="207.6143">*idxcomment;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="194" x="654.5" y="207.6143">/* comment to apply to index, or NULL */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="17" x="510.5" y="221.4502">Oid</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="46" x="582.5" y="221.4502">indexOid;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="168" x="654.5" y="221.4502">/* OID of an existing index, if any */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="17" x="510.5" y="235.2861">Oid</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="43" x="582.5" y="235.2861">oldNode;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="193" x="654.5" y="235.2861">/* relfilenode of existing storage, if any */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="20" x="510.5" y="249.1221">bool</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="35" x="558.5" y="249.1221">unique;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="98" x="654.5" y="249.1221">/* is index unique? */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="20" x="510.5" y="262.958">bool</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="40" x="558.5" y="262.958">primary;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="133" x="630.5" y="262.958">/* is index a primary key? */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="20" x="510.5" y="276.7939">bool</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="59" x="558.5" y="276.7939">isconstraint;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="180" x="630.5" y="276.7939">/* is it for a pkey/unique constraint? */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="20" x="510.5" y="290.6299">bool</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="52" x="558.5" y="290.6299">deferrable;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="178" x="654.5" y="290.6299">/* is the constraint DEFERRABLE? */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="20" x="510.5" y="304.4658">bool</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="57" x="558.5" y="304.4658">initdeferred;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="219" x="630.5" y="304.4658">/* is the constraint INITIALLY DEFERRED? */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="20" x="510.5" y="318.3018">bool</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="62" x="558.5" y="318.3018">transformed;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="218" x="630.5" y="318.3018">/* true when transformIndexStmt is finished */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="20" x="510.5" y="332.1377">bool</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="56" x="558.5" y="332.1377">concurrent;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="212" x="654.5" y="332.1377">/* should this be a concurrent index build? */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="20" x="510.5" y="345.9736">bool</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="64" x="558.5" y="345.9736">if_not_exists;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="204" x="630.5" y="345.9736">/* just do nothing if index already exists? */</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="505.5" x2="927.5" y1="352.3906" y2="352.3906"/><!--MD5=[784bb1faea1007494ac0e4942626093b]
+class IndexElem--><rect fill="#FEFECE" filter="url(#ffcks7yff9e2j)" height="158.6875" id="IndexElem" style="stroke: #A80036; stroke-width: 1.5;" width="340" x="532.5" y="507"/><ellipse cx="669.25" cy="523" fill="#ADD1B2" rx="11" ry="11" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M672.9375,523.7031 Q672.6875,527.1875 671.5469,528.3438 Q670.5156,529.3594 669.1094,529.3594 Q667.7031,529.3594 666.6719,528.3438 Q664.9219,526.5781 664.9219,522.9063 Q664.9219,518.6563 666.7969,516.75 Q667.8438,515.7344 669.1719,515.7344 Q670.5781,515.7344 671.4219,516.5469 Q672.9063,518.0625 672.8281,520.9375 L670.7031,520.9375 Q670.625,518.6094 669.9844,517.9688 Q669.7031,517.6719 669.1719,517.6719 Q668.7188,517.6719 668.3594,518.0469 Q667.125,519.2656 667.125,522.7813 Q667.125,525.8281 668.1719,526.8438 Q668.5938,527.2813 669.1094,527.2813 Q669.5625,527.2813 670,526.8438 Q670.5625,526.2969 670.6406,523.7031 L672.9375,523.7031 Z "/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="58" x="689.75" y="527.9102">IndexElem</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="533.5" x2="871.5" y1="539" y2="539"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="45" x="538.5" y="554.4189">NodeTag</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="24" x="610.5" y="554.4189">type;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="22" x="538.5" y="568.2549">char</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="34" x="571.5" y="568.2549">*name;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="189" x="658.5" y="568.2549">/* name of attribute to index, or NULL */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="26" x="538.5" y="582.0908">Node</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="29" x="595.5" y="582.0908">*expr;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="162" x="682.5" y="582.0908">/* expression to index, or NULL */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="22" x="538.5" y="595.9268">char</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="74" x="571.5" y="595.9268">*indexcolname;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="208" x="658.5" y="595.9268">/* name for index column; NULL = default */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="17" x="538.5" y="609.7627">List</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="46" x="571.5" y="609.7627">*collation;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="168" x="658.5" y="609.7627">/* name of collation; NIL = default */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="17" x="538.5" y="623.5986">List</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="45" x="571.5" y="623.5986">*opclass;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="206" x="658.5" y="623.5986">/* name of desired opclass; NIL = default */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="47" x="538.5" y="637.4346">SortByDir</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="43" x="586.5" y="637.4346">ordering;</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="110" x="658.5" y="637.4346">/* ASC/DESC/default */</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="251" x="538.5" y="651.2705">SortByNulls nulls_ordering; /* FIRST/LAST/default */</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="533.5" x2="871.5" y1="657.6875" y2="657.6875"/><!--MD5=[c6bf9556df55937c4b47a6f82bf25eb6]
+class Value.val--><rect fill="#FEFECE" filter="url(#ffcks7yff9e2j)" height="75.6719" id="Value.val" style="stroke: #A80036; stroke-width: 1.5;" width="73" x="2002" y="1966"/><ellipse cx="2028.25" cy="1982" fill="#ADD1B2" rx="11" ry="11" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M2031.9375,1982.7031 Q2031.6875,1986.1875 2030.5469,1987.3438 Q2029.5156,1988.3594 2028.1094,1988.3594 Q2026.7031,1988.3594 2025.6719,1987.3438 Q2023.9219,1985.5781 2023.9219,1981.9063 Q2023.9219,1977.6563 2025.7969,1975.75 Q2026.8438,1974.7344 2028.1719,1974.7344 Q2029.5781,1974.7344 2030.4219,1975.5469 Q2031.9063,1977.0625 2031.8281,1979.9375 L2029.7031,1979.9375 Q2029.625,1977.6094 2028.9844,1976.9688 Q2028.7031,1976.6719 2028.1719,1976.6719 Q2027.7188,1976.6719 2027.3594,1977.0469 Q2026.125,1978.2656 2026.125,1981.7813 Q2026.125,1984.8281 2027.1719,1985.8438 Q2027.5938,1986.2813 2028.1094,1986.2813 Q2028.5625,1986.2813 2029,1985.8438 Q2029.5625,1985.2969 2029.6406,1982.7031 L2031.9375,1982.7031 Z "/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="16" x="2044.75" y="1986.9102">val</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="2003" x2="2074" y1="1998" y2="1998"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="11" x="2008" y="2013.4189">int</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="16" x="2032" y="2013.4189">ival</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="26" x="2008" y="2027.2549">char*</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="13" x="2056" y="2027.2549">str</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="2003" x2="2074" y1="2033.6719" y2="2033.6719"/><path d="M6,97 L6,270.5156 A0,0 0 0 0 6,270.5156 L469,270.5156 A0,0 0 0 0 469,270.5156 L469,188 L504.329,184 L469,180 L469,107 L459,97 L6,97 A0,0 0 0 0 6,97 " fill="#FBFB77" filter="url(#ffcks7yff9e2j)" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M459,97 L459,107 L469,107 L459,97 " fill="#FBFB77" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="398" x="12" y="115.4951">This represents creation of an index and/or an associated constraint.</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="386" x="12" y="131.8467">If isconstraint is true, we should create a pg_constraint entry along</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="403" x="12" y="148.1982">with the index.  But if indexOid isn't InvalidOid, we are not creating an</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="442" x="12" y="164.5498">index, just a UNIQUE/PKEY constraint using an existing index.  isconstraint</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="394" x="12" y="180.9014">must always be true in this case, and the fields describing the index</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="123" x="12" y="197.2529">properties are empty.</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="0" x="16" y="213.6045"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="394" x="12" y="229.9561">The relation to build the index on can be represented either by name</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="434" x="12" y="246.3076">(in which case the RangeVar indicates whether to recurse or not) or by OID</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="289" x="12" y="262.6592">(in which case the command is always recursive).</text><path d="M13.5,516 L13.5,656.8125 A0,0 0 0 0 13.5,656.8125 L497.5,656.8125 A0,0 0 0 0 497.5,656.8125 L497.5,590.5 L532.159,586.5 L497.5,582.5 L497.5,526 L487.5,516 L13.5,516 A0,0 0 0 0 13.5,516 " fill="#FBFB77" filter="url(#ffcks7yff9e2j)" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M487.5,516 L487.5,526 L497.5,526 L487.5,516 " fill="#FBFB77" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="463" x="19.5" y="534.4951">IndexElem - index parameters (used in CREATE INDEX, and in ON CONFLICT)</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="0" x="23.5" y="550.8467"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="393" x="19.5" y="567.1982">For a plain index attribute, 'name' is the name of the table column to</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="413" x="19.5" y="583.5498">index, and 'expr' is NULL.  For an index expression, 'name' is NULL and</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="0" x="23.5" y="599.9014"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="65" x="19.5" y="616.2529">ソートの例</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="182" x="19.5" y="632.6045">ordering = SORTBY_DEFAULT</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="264" x="19.5" y="648.9561">nulls_ordering = SORTBY_NULLS_DEFAULT</text><path d="M968,138 L968,229.7578 A0,0 0 0 0 968,229.7578 L1399,229.7578 A0,0 0 0 0 1399,229.7578 L1399,188 L1434.42,184 L1399,180 L1399,148 L1389,138 L968,138 A0,0 0 0 0 968,138 " fill="#FBFB77" filter="url(#ffcks7yff9e2j)" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M1389,138 L1389,148 L1399,148 L1389,138 " fill="#FBFB77" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="405" x="974" y="156.4951">NOTE: in the raw gram.y output, ColumnDef and Constraint nodes are</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="392" x="974" y="172.8467">intermixed in tableElts, and constraints is NIL. After parse analysis,</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="379" x="974" y="189.1982">tableElts contains just ColumnDefs, and constraints contains just</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="410" x="974" y="205.5498">Constraint nodes (in fact, only CONSTR_CHECK nodes, in the present</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="96" x="974" y="221.9014">implementation).</text><path d="M1360,568.5 L1360,577.6758 L1008,591.4258 L1360,585.6758 L1360,594.8516 A0,0 0 0 0 1360,594.8516 L1541,594.8516 A0,0 0 0 0 1541,594.8516 L1541,578.5 L1531,568.5 L1360,568.5 A0,0 0 0 0 1360,568.5 " fill="#FBFB77" filter="url(#ffcks7yff9e2j)" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M1531,568.5 L1531,578.5 L1541,578.5 L1531,568.5 " fill="#FBFB77" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="160" x="1366" y="586.9951">the relation/sequence name</text><path d="M2283,568.5 L2283,577.6758 L1803,494.7539 L2283,585.6758 L2283,594.8516 A0,0 0 0 0 2283,594.8516 L2356,594.8516 A0,0 0 0 0 2356,594.8516 L2356,578.5 L2346,568.5 L2283,568.5 A0,0 0 0 0 2283,568.5 " fill="#FBFB77" filter="url(#ffcks7yff9e2j)" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M2346,568.5 L2346,578.5 L2356,578.5 L2346,568.5 " fill="#FBFB77" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="52" x="2289" y="586.9951">カラム名</text><path d="M3051.5,1074.5 L3051.5,1165.5 L3016.77,1169.5 L3051.5,1173.5 L3051.5,1264.3672 A0,0 0 0 0 3051.5,1264.3672 L3479.5,1264.3672 A0,0 0 0 0 3479.5,1264.3672 L3479.5,1084.5 L3469.5,1074.5 L3051.5,1074.5 A0,0 0 0 0 3051.5,1074.5 " fill="#FBFB77" filter="url(#ffcks7yff9e2j)" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M3469.5,1074.5 L3469.5,1084.5 L3479.5,1084.5 L3469.5,1074.5 " fill="#FBFB77" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="244" x="3057.5" y="1092.9951">TypeName - specifies a type in definitions</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="0" x="3061.5" y="1109.3467"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="381" x="3057.5" y="1125.6982">For TypeName structures generated internally, it is often easier to</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="383" x="3057.5" y="1142.0498">specify the type by OID than by name.  If "names" is NIL then the</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="383" x="3057.5" y="1158.4014">actual type OID is given by typeOid, otherwise typeOid is unused.</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="390" x="3057.5" y="1174.7529">Similarly, if "typmods" is NIL then the actual typmod is expected to</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="337" x="3057.5" y="1191.1045">be prespecified in typemod, otherwise typemod is unused.</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="0" x="3061.5" y="1207.4561"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="407" x="3057.5" y="1223.8076">If pct_type is true, then names is actually a field name and we look up</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="392" x="3057.5" y="1240.1592">the type of that field.  Otherwise (the normal case), names is a type</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="335" x="3057.5" y="1256.5107">name possibly qualified with schema and database name.</text><path d="M2004.5,1140 L2004.5,1199.0547 L2232.5,1199.0547 L2232.5,1150 L2222.5,1140 L2004.5,1140 " fill="#FBFB77" filter="url(#ffcks7yff9e2j)" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M2222.5,1140 L2222.5,1150 L2232.5,1150 L2222.5,1140 " fill="#FBFB77" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="207" x="2010.5" y="1158.4951">次の型の長さnは、typemodsに格納</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="187" x="2010.5" y="1174.8467">・charcter varying(n), varchar(n)</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="123" x="2010.5" y="1191.1982">・charcter(n), char(n)</text><path d="M2267.5,1135 L2267.5,1194.0547 A0,0 0 0 0 2267.5,1194.0547 L2673.5,1194.0547 A0,0 0 0 0 2673.5,1194.0547 L2673.5,1168.5273 L2712.5,1222.7695 L2673.5,1160.5273 L2673.5,1145 L2663.5,1135 L2267.5,1135 A0,0 0 0 0 2267.5,1135 " fill="#FBFB77" filter="url(#ffcks7yff9e2j)" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M2663.5,1135 L2663.5,1145 L2673.5,1145 L2663.5,1135 " fill="#FBFB77" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="75" x="2273.5" y="1153.4951">array bounds</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="195" x="2273.5" y="1169.8467">配列型が指定されたときに利用。</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="385" x="2273.5" y="1186.1982">配列数分のListCellが格納される。ListCell内の値の意味は未調査。</text><path d="M2253,1636 L2253,1645 L2218.11,1649 L2253,1653 L2253,1662.3516 A0,0 0 0 0 2253,1662.3516 L2432,1662.3516 A0,0 0 0 0 2432,1662.3516 L2432,1646 L2422,1636 L2253,1636 A0,0 0 0 0 2253,1636 " fill="#FBFB77" filter="url(#ffcks7yff9e2j)" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M2422,1636 L2422,1646 L2432,1646 L2422,1636 " fill="#FBFB77" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="158" x="2259" y="1654.4951">A_Const - a literal constant</text><path d="M906.5,813 L906.5,1526.1172 A0,0 0 0 0 906.5,1526.1172 L1398.5,1526.1172 A0,0 0 0 0 1398.5,1526.1172 L1398.5,1173.5 L1433.31,1169.5 L1398.5,1165.5 L1398.5,823 L1388.5,813 L906.5,813 A0,0 0 0 0 906.5,813 " fill="#FBFB77" filter="url(#ffcks7yff9e2j)" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M1388.5,813 L1388.5,823 L1398.5,823 L1388.5,813 " fill="#FBFB77" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="9" x="912.5" y="831.4951">/*</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" text-decoration="line-through" textLength="4" x="925.5" y="831.4951">-</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" text-decoration="line-through" textLength="4" x="929.5" y="831.4951">-</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="241" x="916.5" y="847.8467">* Definitions for constraints in CreateStmt</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="5" x="916.5" y="864.1982">*</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="362" x="916.5" y="880.5498">* Note that column defaults are treated as a type of constraint,</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="250" x="916.5" y="896.9014">* even though that's a bit odd semantically.</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="5" x="916.5" y="913.2529">*</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="467" x="916.5" y="929.6045">* For constraints that use expressions (CONSTR_CHECK, CONSTR_DEFAULT)</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="398" x="916.5" y="945.9561">* we may have the expression in either "raw" form (an untransformed</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="380" x="916.5" y="962.3076">* parse tree) or "cooked" form (the nodeToString representation of</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="387" x="916.5" y="978.6592">* an executable expression tree), depending on how this Constraint</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="380" x="916.5" y="995.0107">* node was created (by parsing, or by inheritance from an existing</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="333" x="916.5" y="1011.3623">* relation).  We should never have both in the same node!</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="5" x="916.5" y="1027.7139">*</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="450" x="916.5" y="1044.0654">* FKCONSTR_ACTION_xxx values are stored into pg_constraint.confupdtype</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="460" x="916.5" y="1060.417">* and pg_constraint.confdeltype columns; FKCONSTR_MATCH_xxx values are</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="433" x="916.5" y="1076.7686">* stored into pg_constraint.confmatchtype.  Changing the code values may</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="105" x="916.5" y="1093.1201">* require an initdb!</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="5" x="916.5" y="1109.4717">*</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="408" x="916.5" y="1125.8232">* If skip_validation is true then we skip checking that the existing rows</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="402" x="916.5" y="1142.1748">* in the table satisfy the constraint, and just install the catalog entries</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="362" x="916.5" y="1158.5264">* for the constraint.  A new FK constraint is marked as valid iff</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="375" x="916.5" y="1174.8779">* initially_valid is true.  (Usually skip_validation and initially_valid</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="396" x="916.5" y="1191.2295">* are inverses, but we can set both true if the table is known empty.)</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="5" x="916.5" y="1207.5811">*</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="403" x="916.5" y="1223.9326">* Constraint attributes (DEFERRABLE etc) are initially represented as</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="447" x="916.5" y="1240.2842">* separate Constraint nodes for simplicity of parsing.  parse_utilcmd.c makes</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="419" x="916.5" y="1256.6357">* a pass through the constraints list to insert the info into the appropriate</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="104" x="916.5" y="1272.9873">* Constraint node.</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="5" x="916.5" y="1289.3389">*</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" text-decoration="line-through" textLength="4" x="925.5" y="1289.3389">-</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" text-decoration="line-through" textLength="4" x="929.5" y="1289.3389">-</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="9" x="916.5" y="1305.6904">*/</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="0" x="916.5" y="1322.042"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="172" x="912.5" y="1338.3936">/* Foreign key action codes */</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="11" x="912.5" y="1354.7451">1.</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="241" x="927.5" y="1354.7451">define FKCONSTR_ACTION_NOACTION</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="11" x="1183.5" y="1354.7451">'a'</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="11" x="912.5" y="1371.0967">2.</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="238" x="927.5" y="1371.0967">define FKCONSTR_ACTION_RESTRICT</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="8" x="1183.5" y="1371.0967">'r'</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="11" x="912.5" y="1387.4482">3.</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="236" x="927.5" y="1387.4482">define FKCONSTR_ACTION_CASCADE</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="11" x="1215.5" y="1387.4482">'c'</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="11" x="912.5" y="1403.7998">4.</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="231" x="927.5" y="1403.7998">define FKCONSTR_ACTION_SETNULL</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="11" x="1215.5" y="1403.7998">'n'</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="11" x="912.5" y="1420.1514">5.</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="258" x="927.5" y="1420.1514">define FKCONSTR_ACTION_SETDEFAULT</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="11" x="1215.5" y="1420.1514">'d'</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="0" x="916.5" y="1436.5029"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="198" x="912.5" y="1452.8545">/* Foreign key matchtype codes */</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="11" x="912.5" y="1469.2061">6.</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="201" x="927.5" y="1469.2061">define FKCONSTR_MATCH_FULL</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="8" x="1215.5" y="1469.2061">'f'</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="11" x="912.5" y="1485.5576">7.</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="225" x="927.5" y="1485.5576">define FKCONSTR_MATCH_PARTIAL</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="11" x="1215.5" y="1485.5576">'p'</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="11" x="912.5" y="1501.9092">8.</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="219" x="927.5" y="1501.9092">define FKCONSTR_MATCH_SIMPLE</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="11" x="1183.5" y="1501.9092">'s'</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="0" x="916.5" y="1518.2607"/><path d="M332,1053 L332,1275.5703 A0,0 0 0 0 332,1275.5703 L871,1275.5703 A0,0 0 0 0 871,1275.5703 L871,1168.2852 L1437.5,897.7539 L871,1160.2852 L871,1063 L861,1053 L332,1053 A0,0 0 0 0 332,1053 " fill="#FBFB77" filter="url(#ffcks7yff9e2j)" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M861,1053 L861,1063 L871,1063 L861,1053 " fill="#FBFB77" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="97" x="338" y="1071.4951">CONSTR_NULL,</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="294" x="562" y="1071.4951">/* not standard SQL, but a lot of people expect it */</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="124" x="338" y="1087.8467">CONSTR_NOTNULL,</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="516" x="338" y="1104.1982">CONSTR_DEFAULT,           /* DEFAULT句が指定されたとき、Constraintに指定される*/</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="125" x="338" y="1120.5498">CONSTR_IDENTITY,</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="110" x="338" y="1136.9014">CONSTR_CHECK,</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="125" x="338" y="1153.2529">CONSTR_PRIMARY,</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="115" x="338" y="1169.6045">CONSTR_UNIQUE,</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="140" x="338" y="1185.9561">CONSTR_EXCLUSION,</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="124" x="338" y="1202.3076">CONSTR_FOREIGN,</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="193" x="338" y="1218.6592">CONSTR_ATTR_DEFERRABLE,</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="245" x="594" y="1218.6592">/* attributes for previous constraint node */</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="227" x="338" y="1235.0107">CONSTR_ATTR_NOT_DEFERRABLE,</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="177" x="338" y="1251.3623">CONSTR_ATTR_DEFERRED,</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="176" x="338" y="1267.7139">CONSTR_ATTR_IMMEDIATE</text><!--MD5=[8eaf32f48355f21a48954adaedfff7f9]
+link CreateStmt to RangeVar--><path d="M1496.69,291.02 C1470.69,314.19 1442.94,338.26 1416.5,360 C1356.28,409.49 1286.84,461.97 1229.93,503.84 " fill="none" id="CreateStmt-&gt;RangeVar" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="1225.86,506.84,1235.4821,504.7389,1229.8907,503.8813,1230.7482,498.2899,1225.86,506.84" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="42" x="1378.5" y="404.4951">relation</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="7" x="1481.3713" y="312.6137">1</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="7" x="1228.9498" y="496.0117">1</text><!--MD5=[2c7962550411875d5f61a2bae6aa01ca]
+link CreateStmt to ColumnDef--><path d="M1709.17,291.01 C1749.55,334.83 1797.1,386.44 1841.03,434.12 " fill="none" id="CreateStmt-&gt;ColumnDef" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="1844.45,437.84,1841.2892,428.5121,1841.0604,434.1643,1835.4082,433.9355,1844.45,437.84" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="51" x="1808.5" y="404.4951">tableElts</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="7" x="1708.7913" y="312.603">1</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="5" x="1832.306" y="427.2652">*</text><!--MD5=[60bb5b9c6bd7a9e7b11fdbc63a3f2a76]
+link ColumnDef to TypeName--><path d="M2248.03,728.76 C2253.87,730.93 2259.7,733.02 2265.5,735 C2447.64,797.25 2538.48,696.24 2691.5,813 C2776.52,877.87 2821.44,995.85 2843.55,1078.032 " fill="none" id="ColumnDef-&gt;TypeName" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="2844.84,1082.9,2846.3922,1073.1742,2843.5548,1078.068,2838.661,1075.2306,2844.84,1082.9" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="59" x="2639.5" y="779.4951">typeName</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="7" x="2256.0762" y="730.2455">1</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="5" x="2838.0445" y="1072.0067">*</text><!--MD5=[2a05aa9d0fec7c8f04c4db4e3f23f287]
+link List to ListCell--><path d="M3556.5,235.72 C3556.5,315.48 3556.5,468.75 3556.5,543.05 " fill="none" id="List-&gt;ListCell" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="3556.5,548.26,3560.5,539.26,3556.5,543.26,3552.5,539.26,3556.5,548.26" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="53" x="3557.5" y="404.4951">head, tail</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="7" x="3549.0297" y="257.2405">1</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="5" x="3551.0547" y="537.5792">*</text><!--MD5=[b6b94af97cf732b1ca058ce1ec4814f4]
+link ListCell to ListCell.data--><path d="M3556.5,624.73 C3556.5,725.69 3556.5,1004.73 3556.5,1118.868 " fill="none" id="ListCell-&gt;ListCell.data" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="3556.5,1124.177,3560.5,1115.177,3556.5,1119.177,3552.5,1115.177,3556.5,1124.177" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="25" x="3557.5" y="779.4951">data</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="7" x="3548.9422" y="645.6472">1</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="7" x="3548.9641" y="1113.5716">1</text><!--MD5=[0d1d518b1fbca0dd4f80f9be7bc98ed1]
+link CreateStmt to Constraint--><path d="M1613.77,291.19 C1616.53,420.73 1621.34,645.95 1625.4,835.75 " fill="none" id="CreateStmt-&gt;Constraint" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="1625.5,840.79,1629.3192,831.7118,1625.4,835.791,1621.3208,831.8718,1625.5,840.79" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="64" x="1624.5" y="591.9951">constraints</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="7" x="1606.6874" y="312.4352">1</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="5" x="1620.2773" y="830.4002">*</text><!--MD5=[05dde6f11ea566e9afa7bf986fdea894]
+link Constraint to Value--><path d="M1587.67,1498.085 C1592.86,1567.659 1610.57,1637.173 1650.5,1694 C1726.86,1802.669 1892.48,1835.182 1980.61,1844.887 " fill="none" id="Constraint-&gt;Value" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="1985.78,1845.441,1977.2533,1840.5119,1980.808,1844.9124,1976.4075,1848.467,1985.78,1845.441" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="28" x="1732" y="1634.4951">keys</text><path d="M1655.5,1643.3516 L1655.5,1669.3516 L1832.5,1669.3516 L1832.5,1653.3516 L1822.5,1643.3516 L1655.5,1643.3516 " fill="#FBFB77" filter="url(#ffcks7yff9e2j)" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M1822.5,1643.3516 L1822.5,1653.3516 L1832.5,1653.3516 L1822.5,1643.3516 " fill="#FBFB77" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="156" x="1661.5" y="1661.8467">制約が設定されたカラム名</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="7" x="1579.5373" y="1519.4755">1</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="5" x="1973.0147" y="1841.2178">*</text><!--MD5=[b1b1d7d2bd1543da8233a6324a7a3ab6]
+link Constraint to A_Const--><path d="M1756.18,1498.058 C1775.2,1525.978 1796.87,1551.93 1821.5,1574 C1833.39,1584.653 1846.87,1593.784 1861.17,1601.609 " fill="none" id="Constraint-&gt;A_Const" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="1865.63,1603.996,1859.5793,1596.225,1861.2207,1601.6385,1855.8072,1603.2799,1865.63,1603.996" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="52" x="1822.5" y="1570.4951">raw_expr</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="7" x="1751.9967" y="1519.4479">1</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="26" x="1824.8185" y="1597.301">0...1</text><!--MD5=[3651b143e84fe3aad2d7f3818c4d8ee2]
+link IndexStmt to RangeVar--><path d="M891.364,360.08 C940.953,409.73 992.638,461.48 1033.96,502.86 " fill="none" id="IndexStmt-&gt;RangeVar" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="1037.93,506.83,1034.3945,497.6376,1034.3945,503.2945,1028.7376,503.2945,1037.93,506.83" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="42" x="929.5" y="404.4951">relation</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="7" x="892.1289" y="381.9154">1</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="7" x="1023.3642" y="496.2736">1</text><!--MD5=[ea86a64208b6df5786f13cca309ef392]
+link IndexStmt to IndexElem--><path d="M710.38,360.08 C708.662,409.23 706.872,460.44 705.433,501.6 " fill="none" id="IndexStmt-&gt;IndexElem" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="705.25,506.83,709.5562,497.9724,705.4214,501.8329,701.5609,497.6982,705.25,506.83" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="76" x="710.5" y="404.4951">indexParams</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="7" x="702.9441" y="381.9154">1</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="5" x="700.273" y="496.2736">*</text><!--MD5=[0d0a0927c0d1379b51b36affce727ff5]
+link ColumnDef to A_Const--><path d="M1932.31,735.33 C1878.7,925.8 1812.72,1263.607 1919.5,1526 C1931.15,1554.627 1953.1,1580.204 1975.02,1600.455 " fill="none" id="ColumnDef-&gt;A_Const" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="1978.82,1603.915,1974.8651,1594.8951,1975.1255,1600.546,1969.4746,1600.8063,1978.82,1603.915" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="66" x="1920.5" y="1174.9951">raw_default</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="7" x="1922.8063" y="756.4289">1</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="26" x="1941.2366" y="1593.0169">0...1</text><!--MD5=[75cc7511eaeca85e5f77b55bf94fe0d1]
+link ColumnDef to Constraint--><path d="M1831.26,735.14 C1823.55,744.97 1816.23,754.96 1809.5,765 C1794.42,787.51 1780.13,811.52 1766.69,836.18 " fill="none" id="ColumnDef-&gt;Constraint" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="1764.19,840.79,1771.9962,834.7848,1766.5733,836.3945,1764.9635,830.9716,1764.19,840.79" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="64" x="1810.5" y="779.4951">constraints</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="7" x="1816.3843" y="756.7197">1</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="5" x="1762.2179" y="830.4002">*</text><!--MD5=[64f70ee09496f6ba2aca4042b5ddf181]
+link TypeName to Value--><path d="M2831.65,1256.147 C2802.23,1331.346 2753.3,1441.593 2691.5,1526 C2610.3,1636.9 2464.29,1724.874 2332.5,1782 C2254.36,1815.87 2156.81,1833.749 2096.07,1842.283 " fill="none" id="TypeName-&gt;Value" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="2091.04,1842.981,2100.5035,1845.7089,2095.9928,1842.2953,2099.4064,1837.7845,2091.04,1842.981" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="39" x="2674" y="1634.4951">names</text><path d="M2622.5,1643.3516 L2622.5,1669.3516 L2760.5,1669.3516 L2760.5,1653.3516 L2750.5,1643.3516 L2622.5,1643.3516 " fill="#FBFB77" filter="url(#ffcks7yff9e2j)" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M2750.5,1643.3516 L2750.5,1653.3516 L2760.5,1653.3516 L2750.5,1643.3516 " fill="#FBFB77" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="117" x="2628.5" y="1661.8467">型の修飾名のリスト</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="7" x="2822.0201" y="1276.9202">1</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="5" x="2099.124" y="1838.3201">*</text><!--MD5=[d8456b0d81030a82f47b4eca98f0a94b]
+link TypeName to A_Const--><path d="M2845.01,1256.318 C2823.5,1338.808 2778.59,1460.348 2691.5,1526 C2650.45,1556.941 2285.93,1594.061 2235.5,1604 C2231.51,1604.786 2227.48,1605.591 2223.42,1606.412 " fill="none" id="TypeName-&gt;A_Const" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="2218.25,1607.46,2227.8621,1609.6065,2223.1518,1606.4739,2226.2844,1601.7636,2218.25,1607.46" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="57" x="2574.5" y="1570.4951">typemods</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="7" x="2836.403" y="1277.1043">1</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="5" x="2225.9387" y="1602.8829">*</text><!--MD5=[f1c0a86254f41565800fe86e00aa18b0]
+link A_Const to Value--><path d="M2038.5,1694.165 C2038.5,1727.75 2038.5,1773.669 2038.5,1806.769 " fill="none" id="A_Const-&gt;Value" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="2038.5,1811.967,2042.5,1802.967,2038.5,1806.967,2034.5,1802.967,2038.5,1811.967" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="17" x="2173" y="1738.4951">val</text><path d="M2043.5,1747.3516 L2043.5,1773.3516 L2315.5,1773.3516 L2315.5,1757.3516 L2305.5,1747.3516 L2043.5,1747.3516 " fill="#FBFB77" filter="url(#ffcks7yff9e2j)" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M2305.5,1747.3516 L2305.5,1757.3516 L2315.5,1757.3516 L2305.5,1747.3516 " fill="#FBFB77" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="251" x="2049.5" y="1765.8467">文字列型の長さnは、val.val.ivalでアクセス</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="7" x="2031.0297" y="1714.8609">1</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="7" x="2030.8547" y="1801.0374">1</text><!--MD5=[a7e72bce238be624bce18a690a7b5ffb]
+link Value to Value.val--><path d="M2038.5,1888.183 C2038.5,1910.163 2038.5,1938.064 2038.5,1960.8581 " fill="none" id="Value-&gt;Value.val" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="2038.5,1965.9374,2042.5,1956.9374,2038.5,1960.9374,2034.5,1956.9374,2038.5,1965.9374" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="17" x="2039.5" y="1932.4951">val</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="7" x="2030.9422" y="1909.0927">1</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="7" x="2030.8547" y="1955.0024">1</text><!--MD5=[9c388bccb6eb16cef1c97f819b843aa4]
+link RangeVar to RangeVar$$$RIGHT--><!--MD5=[5b9ace2c437a18e6f7cc27a12861e292]
+link ColumnDef to ColumnDef$$$RIGHT--><!--MD5=[18fd85e81be59a9e4f46c14413ed8bdd]
+link GMN47 to TypeName--><path d="M2118.84,1139.817 C2121.56,1062.694 2140.91,856.27 2268,774 C2343.74,724.97 2597.7,725.84 2674,774 C2780.94,841.49 2828.48,988.12 2848.67,1082.639 " fill="none" id="GMN47-TypeName" style="stroke: #A80036; stroke-width: 1.0; stroke-dasharray: 7.0,7.0;"/><!--MD5=[c9b08d8457e1461f9a46e85badce0476]
+link TypeName$$$LEFT to TypeName--><!--MD5=[55dc5845a1e2d68280676dfc8b4a36b2]
+link Constraint$$$LEFT to Constraint--><!--MD5=[6b8a44e0cf1ecd90638e8360003a4fcd]
+@startuml
+
+CreateStmt "1" - -> "1" RangeVar : relation
+CreateStmt "1" - -> "*" ColumnDef : tableElts
+ColumnDef "1" - -> "*" TypeName : typeName
+List "1" - -> "*" ListCell : head, tail
+ListCell "1" - -> "1" ListCell.data : data
+CreateStmt "1" - -> "*" Constraint : constraints
+Constraint "1" - -> "*" Value : keys
+note on link : 制約が設定されたカラム名
+
+Constraint "1" - -> "0...1" A_Const : raw_expr
+
+IndexStmt "1" - -> "1" RangeVar : relation
+IndexStmt "1" - -> "*" IndexElem : indexParams
+
+ColumnDef "1" - -> "0...1" A_Const : raw_default
+ColumnDef "1" - -> "*" Constraint : constraints
+
+TypeName "1" - -> "*" Value : names
+note on link : 型の修飾名のリスト
+
+TypeName "1" - -> "*" A_Const : typemods
+A_Const "1" - -> "1" Value : val
+note on link : 文字列型の長さnは、val.val.ivalでアクセス
+
+Value "1" - -> "1" Value.val : val
+
+class List{
+	{field} NodeTag type; /* T_List, T_IntList, or T_OidList */
+	{field} int length;
+	{field} ListCell *head;
+	{field} ListCell *tail;
+}
+
+class ListCell{
+	{field} union data
+	{field} ListCell *next
+}
+
+class ListCell.data {
+	{field} void *ptr_value
+	{field} int int_value
+	{field} Oid oid_value
+}
+
+class IndexStmt{
+	{field} NodeTag		type;
+	{field} char	   *idxname;		/* name of new index, or NULL for default */
+	{field} RangeVar   *relation;		/* relation to build index on */
+	{field} Oid			relationId;		/* OID of relation to build index on */
+	{field} char	   *accessMethod;	/* name of access method (eg. btree) */
+	{field} char	   *tableSpace;		/* tablespace, or NULL for default */
+	{field} List	   *indexParams;	/* columns to index: a list of IndexElem */
+	{field} List	   *indexIncludingParams;	/* additional columns to index: a list of IndexElem */
+	{field} List	   *options;		/* WITH clause options: a list of DefElem */
+	{field} Node	   *whereClause;	/* qualification (partial-index predicate) */
+	{field} List	   *excludeOpNames; /* exclusion operator names, or NIL if none */
+	{field} char	   *idxcomment;		/* comment to apply to index, or NULL */
+	{field} Oid			indexOid;		/* OID of an existing index, if any */
+	{field} Oid			oldNode;		/* relfilenode of existing storage, if any */
+	{field} bool		unique;			/* is index unique? */
+	{field} bool		primary;		/* is index a primary key? */
+	{field} bool		isconstraint;	/* is it for a pkey/unique constraint? */
+	{field} bool		deferrable;		/* is the constraint DEFERRABLE? */
+	{field} bool		initdeferred;	/* is the constraint INITIALLY DEFERRED? */
+	{field} bool		transformed;	/* true when transformIndexStmt is finished */
+	{field} bool		concurrent;		/* should this be a concurrent index build? */
+	{field} bool		if_not_exists;	/* just do nothing if index already exists? */
+}
+note left of IndexStmt
+This represents creation of an index and/or an associated constraint.
+If isconstraint is true, we should create a pg_constraint entry along
+with the index.  But if indexOid isn't InvalidOid, we are not creating an
+index, just a UNIQUE/PKEY constraint using an existing index.  isconstraint
+must always be true in this case, and the fields describing the index
+properties are empty.
+
+The relation to build the index on can be represented either by name
+(in which case the RangeVar indicates whether to recurse or not) or by OID
+(in which case the command is always recursive).
+endnote
+
+
+class IndexElem
+{
+	{field} NodeTag		type;
+	{field} char	   *name;			/* name of attribute to index, or NULL */
+	{field} Node	   *expr;			/* expression to index, or NULL */
+	{field} char	   *indexcolname;	/* name for index column; NULL = default */
+	{field} List	   *collation;		/* name of collation; NIL = default */
+	{field} List	   *opclass;		/* name of desired opclass; NIL = default */
+	{field} SortByDir	ordering;		/* ASC/DESC/default */
+	{field} SortByNulls nulls_ordering; /* FIRST/LAST/default */
+}
+
+note left of IndexElem
+IndexElem - index parameters (used in CREATE INDEX, and in ON CONFLICT)
+
+For a plain index attribute, 'name' is the name of the table column to
+index, and 'expr' is NULL.  For an index expression, 'name' is NULL and
+'expr' is the expression tree.
+
+ソートの例
+ordering = SORTBY_DEFAULT
+nulls_ordering = SORTBY_NULLS_DEFAULT
+end note
+
+
+
+class CreateStmt {
+	{field} NodeTag		type;
+	{field} RangeVar   *relation;		/* relation to create */
+	{field} List	   *tableElts;		/* column definitions (list of ColumnDef) */
+	{field} List	   *inhRelations;	/* relations to inherit from (list of inhRelation) */
+	{field} PartitionBoundSpec *partbound;	/* FOR VALUES clause */
+	{field} PartitionSpec *partspec;	/* PARTITION BY clause */
+	{field} TypeName   *ofTypename;		/* OF typename */
+	{field} List	   *constraints;	/* constraints (list of Constraint nodes) */
+	{field} List	   *options;		/* options from WITH clause */
+	{field} OnCommitAction oncommit;	/* what do we do at COMMIT? */
+	{field} char	   *tablespacename; /* table space to use, or NULL */
+	{field} bool		if_not_exists;	/* just do nothing if it already exists? */
+}
+note left of CreateStmt
+NOTE: in the raw gram.y output, ColumnDef and Constraint nodes are
+intermixed in tableElts, and constraints is NIL. After parse analysis,
+tableElts contains just ColumnDefs, and constraints contains just
+Constraint nodes (in fact, only CONSTR_CHECK nodes, in the present
+implementation).
+endnote
+
+class RangeVar {
+	{field} NodeTag		type;
+	{field} char	   *catalogname;	/* the catalog (database) name, or NULL */
+	{field} char	   *schemaname;		/* the schema name, or NULL */
+	{field} char	 	*relname;
+	{field} bool		inh;			/* expand rel by inheritance? recursively act on children? */
+	{field} char		relpersistence; /* see RELPERSISTENCE_* in pg_class.h */
+	{field} Alias	   *alias;			/* table alias & optional column aliases */
+	{field} int			location;		/* token location, or -1 if unknown */
+}
+note right of RangeVar::relname;
+the relation/sequence name
+endnote
+
+class ColumnDef {
+	{field} NodeTag		type;
+	{field} char	    *colname;
+	{field} TypeName   *typeName;		/* type of column */
+	{field} int			inhcount;		/* number of times column is inherited */
+	{field} bool		is_local;		/* column has local (non-inherited) def'n */
+	{field} bool		is_not_null;	/* NOT NULL constraint specified? */
+	{field} bool		is_from_type;	/* column definition came from table type */
+	{field} bool		is_from_parent; /* XXX unused */
+	{field} char		storage;		/* attstorage setting, or 0 for default */
+	{field} Node	   *raw_default;	/* default value (untransformed parse tree)*/
+	{field} Node	   *cooked_default; /* default value (transformed expr tree)*/
+	{field} char		identity;		/* attidentity setting */
+	{field} RangeVar   *identitySequence;	/* to store identity sequence name for ALTER TABLE ... ADD COLUMN */
+	{field} CollateClause *collClause;	/* untransformed COLLATE spec, if any */
+	{field} Oid			collOid;		/* collation OID (InvalidOid if not set) */
+	{field} List	   *constraints;	/* other constraints on column */
+	{field} List	   *fdwoptions;		/* per-column FDW options */
+	{field} int			location;		/* parse location, or -1 if none/unknown */
+}
+note right of ColumnDef::*colname;
+  カラム名
+endnote
+
+class TypeName
+{
+    {field} NodeTag     type;
+    {field} List       *names;          /* qualified name (list of Value strings)*/
+    {field} Oid         typeOid;        /* type identified by OID */
+    {field} bool        setof;          /* is a set? */
+    {field} bool        pct_type;       /* %TYPE specified? */
+    {field} List       *typmods;        /* type modifier expression(s)*/
+    {field} int32       typemod;        /* prespecified type modifier */
+    {field} List       *arrayBounds;
+    {field} int         location;       /* token location, or -1 if unknown */
+}
+
+note right of TypeName
+TypeName - specifies a type in definitions
+
+For TypeName structures generated internally, it is often easier to
+specify the type by OID than by name.  If "names" is NIL then the
+actual type OID is given by typeOid, otherwise typeOid is unused.
+Similarly, if "typmods" is NIL then the actual typmod is expected to
+be prespecified in typemod, otherwise typemod is unused.
+
+If pct_type is true, then names is actually a field name and we look up
+the type of that field.  Otherwise (the normal case), names is a type
+name possibly qualified with schema and database name.
+endnote
+
+note left of TypeName
+次の型の長さnは、typemodsに格納
+・charcter varying(n), varchar(n)
+・charcter(n), char(n)
+endnote
+
+note left of TypeName::arrayBounds
+array bounds
+配列型が指定されたときに利用。
+配列数分のListCellが格納される。ListCell内の値の意味は未調査。
+endnote
+
+class A_Const
+{
+	{field} NodeTag		type;
+	{field} Value		val;			/* value (includes type info, see value.h) */
+	{field} int			location;		/* token location, or -1 if unknown */
+}
+
+note right of A_Const
+A_Const - a literal constant
+endnote
+
+class Value
+{
+	{field} NodeTag 	type
+	{field} union 	val
+}
+
+class Value.val
+{
+	{field} int 	ival
+	{field} char* 	str
+}
+
+class Constraint
+{
+	{field} NodeTag		type;
+	{field} ConstrType	contype;
+
+	{field} /* Fields used for most/all constraint types: */
+	{field} char	   *conname;		/* Constraint name, or NULL if unnamed */
+	{field} bool		deferrable;		/* DEFERRABLE? */
+	{field} bool		initdeferred;	/* INITIALLY DEFERRED? */
+	{field} int			location;		/* token location, or -1 if unknown */
+
+	{field} /* Fields used for constraints with expressions (CHECK and DEFAULT): */
+	{field} bool		is_no_inherit;	/* is constraint non-inheritable? */
+	{field} Node	   *raw_expr;		/* expr, as untransformed parse tree */
+	{field} char	   *cooked_expr;	/* expr, as nodeToString representation */
+	{field} char		generated_when;
+
+	{field} /* Fields used for unique constraints (UNIQUE and PRIMARY KEY): */
+	{field} List	   *keys;			/* String nodes naming referenced key column(s) */
+	{field} List	   *including;		/* String nodes naming referenced nonkey column(s) */
+
+	{field} /* Fields used for EXCLUSION constraints: */
+	{field} List	   *exclusions;		/* list of (IndexElem, operator name) pairs */
+
+	{field} /* Fields used for index constraints (UNIQUE, PRIMARY KEY, EXCLUSION): */
+	{field} List	   *options;		/* options from WITH clause */
+	{field} char	   *indexname;		/* existing index to use; otherwise NULL */
+	{field} char	   *indexspace;		/* index tablespace; NULL for default */
+
+	{field} /* These could be, but currently are not, used for UNIQUE/PKEY: */
+	{field} char	   *access_method;	/* index access method; NULL for default */
+	{field} Node	   *where_clause;	/* partial index predicate */
+
+	{field} /* Fields used for FOREIGN KEY constraints: */
+	{field} RangeVar   *pktable;		/* Primary key table */
+	{field} List	   *fk_attrs;		/* Attributes of foreign key */
+	{field} List	   *pk_attrs;		/* Corresponding attrs in PK table */
+	{field} char		fk_matchtype;	/* FULL, PARTIAL, SIMPLE */
+	{field} char		fk_upd_action;	/* ON UPDATE action */
+	{field} char		fk_del_action;	/* ON DELETE action */
+	{field} List	   *old_conpfeqop;	/* pg_constraint.conpfeqop of my former self */
+	{field} Oid			old_pktable_oid;	/* pg_constraint.confrelid of my former self */
+
+	{field} /* Fields used for constraints that allow a NOT VALID specification */
+	{field} bool		skip_validation;	/* skip validation of existing rows? */
+	{field} bool		initially_valid;	/* mark the new constraint as valid? */
+}
+
+note left of Constraint
+/* - - - - - - - - - -
+ * Definitions for constraints in CreateStmt
+ *
+ * Note that column defaults are treated as a type of constraint,
+ * even though that's a bit odd semantically.
+ *
+ * For constraints that use expressions (CONSTR_CHECK, CONSTR_DEFAULT)
+ * we may have the expression in either "raw" form (an untransformed
+ * parse tree) or "cooked" form (the nodeToString representation of
+ * an executable expression tree), depending on how this Constraint
+ * node was created (by parsing, or by inheritance from an existing
+ * relation).  We should never have both in the same node!
+ *
+ * FKCONSTR_ACTION_xxx values are stored into pg_constraint.confupdtype
+ * and pg_constraint.confdeltype columns; FKCONSTR_MATCH_xxx values are
+ * stored into pg_constraint.confmatchtype.  Changing the code values may
+ * require an initdb!
+ *
+ * If skip_validation is true then we skip checking that the existing rows
+ * in the table satisfy the constraint, and just install the catalog entries
+ * for the constraint.  A new FK constraint is marked as valid iff
+ * initially_valid is true.  (Usually skip_validation and initially_valid
+ * are inverses, but we can set both true if the table is known empty.)
+ *
+ * Constraint attributes (DEFERRABLE etc) are initially represented as
+ * separate Constraint nodes for simplicity of parsing.  parse_utilcmd.c makes
+ * a pass through the constraints list to insert the info into the appropriate
+ * Constraint node.
+ * - - - - - - - - - -
+ */
+
+/* Foreign key action codes */
+#define FKCONSTR_ACTION_NOACTION	'a'
+#define FKCONSTR_ACTION_RESTRICT	'r'
+#define FKCONSTR_ACTION_CASCADE		'c'
+#define FKCONSTR_ACTION_SETNULL		'n'
+#define FKCONSTR_ACTION_SETDEFAULT	'd'
+
+/* Foreign key matchtype codes */
+#define FKCONSTR_MATCH_FULL			'f'
+#define FKCONSTR_MATCH_PARTIAL		'p'
+#define FKCONSTR_MATCH_SIMPLE		's'
+
+endnote
+
+note left of Constraint::contype;
+	CONSTR_NULL,				/* not standard SQL, but a lot of people expect it */
+	CONSTR_NOTNULL,
+	CONSTR_DEFAULT,           /* DEFAULT句が指定されたとき、Constraintに指定される*/
+	CONSTR_IDENTITY,
+	CONSTR_CHECK,
+	CONSTR_PRIMARY,
+	CONSTR_UNIQUE,
+	CONSTR_EXCLUSION,
+	CONSTR_FOREIGN,
+	CONSTR_ATTR_DEFERRABLE,		/* attributes for previous constraint node */
+	CONSTR_ATTR_NOT_DEFERRABLE,
+	CONSTR_ATTR_DEFERRED,
+	CONSTR_ATTR_IMMEDIATE
+endnote
+
+
+@enduml
+
+@startuml
+
+CreateStmt "1" - -> "1" RangeVar : relation
+CreateStmt "1" - -> "*" ColumnDef : tableElts
+ColumnDef "1" - -> "*" TypeName : typeName
+List "1" - -> "*" ListCell : head, tail
+ListCell "1" - -> "1" ListCell.data : data
+CreateStmt "1" - -> "*" Constraint : constraints
+Constraint "1" - -> "*" Value : keys
+note on link : 制約が設定されたカラム名
+
+Constraint "1" - -> "0...1" A_Const : raw_expr
+
+IndexStmt "1" - -> "1" RangeVar : relation
+IndexStmt "1" - -> "*" IndexElem : indexParams
+
+ColumnDef "1" - -> "0...1" A_Const : raw_default
+ColumnDef "1" - -> "*" Constraint : constraints
+
+TypeName "1" - -> "*" Value : names
+note on link : 型の修飾名のリスト
+
+TypeName "1" - -> "*" A_Const : typemods
+A_Const "1" - -> "1" Value : val
+note on link : 文字列型の長さnは、val.val.ivalでアクセス
+
+Value "1" - -> "1" Value.val : val
+
+class List{
+	{field} NodeTag type; /* T_List, T_IntList, or T_OidList */
+	{field} int length;
+	{field} ListCell *head;
+	{field} ListCell *tail;
+}
+
+class ListCell{
+	{field} union data
+	{field} ListCell *next
+}
+
+class ListCell.data {
+	{field} void *ptr_value
+	{field} int int_value
+	{field} Oid oid_value
+}
+
+class IndexStmt{
+	{field} NodeTag		type;
+	{field} char	   *idxname;		/* name of new index, or NULL for default */
+	{field} RangeVar   *relation;		/* relation to build index on */
+	{field} Oid			relationId;		/* OID of relation to build index on */
+	{field} char	   *accessMethod;	/* name of access method (eg. btree) */
+	{field} char	   *tableSpace;		/* tablespace, or NULL for default */
+	{field} List	   *indexParams;	/* columns to index: a list of IndexElem */
+	{field} List	   *indexIncludingParams;	/* additional columns to index: a list of IndexElem */
+	{field} List	   *options;		/* WITH clause options: a list of DefElem */
+	{field} Node	   *whereClause;	/* qualification (partial-index predicate) */
+	{field} List	   *excludeOpNames; /* exclusion operator names, or NIL if none */
+	{field} char	   *idxcomment;		/* comment to apply to index, or NULL */
+	{field} Oid			indexOid;		/* OID of an existing index, if any */
+	{field} Oid			oldNode;		/* relfilenode of existing storage, if any */
+	{field} bool		unique;			/* is index unique? */
+	{field} bool		primary;		/* is index a primary key? */
+	{field} bool		isconstraint;	/* is it for a pkey/unique constraint? */
+	{field} bool		deferrable;		/* is the constraint DEFERRABLE? */
+	{field} bool		initdeferred;	/* is the constraint INITIALLY DEFERRED? */
+	{field} bool		transformed;	/* true when transformIndexStmt is finished */
+	{field} bool		concurrent;		/* should this be a concurrent index build? */
+	{field} bool		if_not_exists;	/* just do nothing if index already exists? */
+}
+note left of IndexStmt
+This represents creation of an index and/or an associated constraint.
+If isconstraint is true, we should create a pg_constraint entry along
+with the index.  But if indexOid isn't InvalidOid, we are not creating an
+index, just a UNIQUE/PKEY constraint using an existing index.  isconstraint
+must always be true in this case, and the fields describing the index
+properties are empty.
+
+The relation to build the index on can be represented either by name
+(in which case the RangeVar indicates whether to recurse or not) or by OID
+(in which case the command is always recursive).
+endnote
+
+
+class IndexElem
+{
+	{field} NodeTag		type;
+	{field} char	   *name;			/* name of attribute to index, or NULL */
+	{field} Node	   *expr;			/* expression to index, or NULL */
+	{field} char	   *indexcolname;	/* name for index column; NULL = default */
+	{field} List	   *collation;		/* name of collation; NIL = default */
+	{field} List	   *opclass;		/* name of desired opclass; NIL = default */
+	{field} SortByDir	ordering;		/* ASC/DESC/default */
+	{field} SortByNulls nulls_ordering; /* FIRST/LAST/default */
+}
+
+note left of IndexElem
+IndexElem - index parameters (used in CREATE INDEX, and in ON CONFLICT)
+
+For a plain index attribute, 'name' is the name of the table column to
+index, and 'expr' is NULL.  For an index expression, 'name' is NULL and
+
+ソートの例
+ordering = SORTBY_DEFAULT
+nulls_ordering = SORTBY_NULLS_DEFAULT
+end note
+
+
+
+class CreateStmt {
+	{field} NodeTag		type;
+	{field} RangeVar   *relation;		/* relation to create */
+	{field} List	   *tableElts;		/* column definitions (list of ColumnDef) */
+	{field} List	   *inhRelations;	/* relations to inherit from (list of inhRelation) */
+	{field} PartitionBoundSpec *partbound;	/* FOR VALUES clause */
+	{field} PartitionSpec *partspec;	/* PARTITION BY clause */
+	{field} TypeName   *ofTypename;		/* OF typename */
+	{field} List	   *constraints;	/* constraints (list of Constraint nodes) */
+	{field} List	   *options;		/* options from WITH clause */
+	{field} OnCommitAction oncommit;	/* what do we do at COMMIT? */
+	{field} char	   *tablespacename; /* table space to use, or NULL */
+	{field} bool		if_not_exists;	/* just do nothing if it already exists? */
+}
+note left of CreateStmt
+NOTE: in the raw gram.y output, ColumnDef and Constraint nodes are
+intermixed in tableElts, and constraints is NIL. After parse analysis,
+tableElts contains just ColumnDefs, and constraints contains just
+Constraint nodes (in fact, only CONSTR_CHECK nodes, in the present
+implementation).
+endnote
+
+class RangeVar {
+	{field} NodeTag		type;
+	{field} char	   *catalogname;	/* the catalog (database) name, or NULL */
+	{field} char	   *schemaname;		/* the schema name, or NULL */
+	{field} char	 	*relname;
+	{field} bool		inh;			/* expand rel by inheritance? recursively act on children? */
+	{field} char		relpersistence; /* see RELPERSISTENCE_* in pg_class.h */
+	{field} Alias	   *alias;			/* table alias & optional column aliases */
+	{field} int			location;		/* token location, or -1 if unknown */
+}
+note right of RangeVar::relname;
+the relation/sequence name
+endnote
+
+class ColumnDef {
+	{field} NodeTag		type;
+	{field} char	    *colname;
+	{field} TypeName   *typeName;		/* type of column */
+	{field} int			inhcount;		/* number of times column is inherited */
+	{field} bool		is_local;		/* column has local (non-inherited) def'n */
+	{field} bool		is_not_null;	/* NOT NULL constraint specified? */
+	{field} bool		is_from_type;	/* column definition came from table type */
+	{field} bool		is_from_parent; /* XXX unused */
+	{field} char		storage;		/* attstorage setting, or 0 for default */
+	{field} Node	   *raw_default;	/* default value (untransformed parse tree)*/
+	{field} Node	   *cooked_default; /* default value (transformed expr tree)*/
+	{field} char		identity;		/* attidentity setting */
+	{field} RangeVar   *identitySequence;	/* to store identity sequence name for ALTER TABLE ... ADD COLUMN */
+	{field} CollateClause *collClause;	/* untransformed COLLATE spec, if any */
+	{field} Oid			collOid;		/* collation OID (InvalidOid if not set) */
+	{field} List	   *constraints;	/* other constraints on column */
+	{field} List	   *fdwoptions;		/* per-column FDW options */
+	{field} int			location;		/* parse location, or -1 if none/unknown */
+}
+note right of ColumnDef::*colname;
+  カラム名
+endnote
+
+class TypeName
+{
+    {field} NodeTag     type;
+    {field} List       *names;          /* qualified name (list of Value strings)*/
+    {field} Oid         typeOid;        /* type identified by OID */
+    {field} bool        setof;          /* is a set? */
+    {field} bool        pct_type;       /* %TYPE specified? */
+    {field} List       *typmods;        /* type modifier expression(s)*/
+    {field} int32       typemod;        /* prespecified type modifier */
+    {field} List       *arrayBounds;
+    {field} int         location;       /* token location, or -1 if unknown */
+}
+
+note right of TypeName
+TypeName - specifies a type in definitions
+
+For TypeName structures generated internally, it is often easier to
+specify the type by OID than by name.  If "names" is NIL then the
+actual type OID is given by typeOid, otherwise typeOid is unused.
+Similarly, if "typmods" is NIL then the actual typmod is expected to
+be prespecified in typemod, otherwise typemod is unused.
+
+If pct_type is true, then names is actually a field name and we look up
+the type of that field.  Otherwise (the normal case), names is a type
+name possibly qualified with schema and database name.
+endnote
+
+note left of TypeName
+次の型の長さnは、typemodsに格納
+・charcter varying(n), varchar(n)
+・charcter(n), char(n)
+endnote
+
+note left of TypeName::arrayBounds
+array bounds
+配列型が指定されたときに利用。
+配列数分のListCellが格納される。ListCell内の値の意味は未調査。
+endnote
+
+class A_Const
+{
+	{field} NodeTag		type;
+	{field} Value		val;			/* value (includes type info, see value.h) */
+	{field} int			location;		/* token location, or -1 if unknown */
+}
+
+note right of A_Const
+A_Const - a literal constant
+endnote
+
+class Value
+{
+	{field} NodeTag 	type
+	{field} union 	val
+}
+
+class Value.val
+{
+	{field} int 	ival
+	{field} char* 	str
+}
+
+class Constraint
+{
+	{field} NodeTag		type;
+	{field} ConstrType	contype;
+
+	{field} /* Fields used for most/all constraint types: */
+	{field} char	   *conname;		/* Constraint name, or NULL if unnamed */
+	{field} bool		deferrable;		/* DEFERRABLE? */
+	{field} bool		initdeferred;	/* INITIALLY DEFERRED? */
+	{field} int			location;		/* token location, or -1 if unknown */
+
+	{field} /* Fields used for constraints with expressions (CHECK and DEFAULT): */
+	{field} bool		is_no_inherit;	/* is constraint non-inheritable? */
+	{field} Node	   *raw_expr;		/* expr, as untransformed parse tree */
+	{field} char	   *cooked_expr;	/* expr, as nodeToString representation */
+	{field} char		generated_when;
+
+	{field} /* Fields used for unique constraints (UNIQUE and PRIMARY KEY): */
+	{field} List	   *keys;			/* String nodes naming referenced key column(s) */
+	{field} List	   *including;		/* String nodes naming referenced nonkey column(s) */
+
+	{field} /* Fields used for EXCLUSION constraints: */
+	{field} List	   *exclusions;		/* list of (IndexElem, operator name) pairs */
+
+	{field} /* Fields used for index constraints (UNIQUE, PRIMARY KEY, EXCLUSION): */
+	{field} List	   *options;		/* options from WITH clause */
+	{field} char	   *indexname;		/* existing index to use; otherwise NULL */
+	{field} char	   *indexspace;		/* index tablespace; NULL for default */
+
+	{field} /* These could be, but currently are not, used for UNIQUE/PKEY: */
+	{field} char	   *access_method;	/* index access method; NULL for default */
+	{field} Node	   *where_clause;	/* partial index predicate */
+
+	{field} /* Fields used for FOREIGN KEY constraints: */
+	{field} RangeVar   *pktable;		/* Primary key table */
+	{field} List	   *fk_attrs;		/* Attributes of foreign key */
+	{field} List	   *pk_attrs;		/* Corresponding attrs in PK table */
+	{field} char		fk_matchtype;	/* FULL, PARTIAL, SIMPLE */
+	{field} char		fk_upd_action;	/* ON UPDATE action */
+	{field} char		fk_del_action;	/* ON DELETE action */
+	{field} List	   *old_conpfeqop;	/* pg_constraint.conpfeqop of my former self */
+	{field} Oid			old_pktable_oid;	/* pg_constraint.confrelid of my former self */
+
+	{field} /* Fields used for constraints that allow a NOT VALID specification */
+	{field} bool		skip_validation;	/* skip validation of existing rows? */
+	{field} bool		initially_valid;	/* mark the new constraint as valid? */
+}
+
+note left of Constraint
+/* - - - - - - - - - -
+ * Definitions for constraints in CreateStmt
+ *
+ * Note that column defaults are treated as a type of constraint,
+ * even though that's a bit odd semantically.
+ *
+ * For constraints that use expressions (CONSTR_CHECK, CONSTR_DEFAULT)
+ * we may have the expression in either "raw" form (an untransformed
+ * parse tree) or "cooked" form (the nodeToString representation of
+ * an executable expression tree), depending on how this Constraint
+ * node was created (by parsing, or by inheritance from an existing
+ * relation).  We should never have both in the same node!
+ *
+ * FKCONSTR_ACTION_xxx values are stored into pg_constraint.confupdtype
+ * and pg_constraint.confdeltype columns; FKCONSTR_MATCH_xxx values are
+ * stored into pg_constraint.confmatchtype.  Changing the code values may
+ * require an initdb!
+ *
+ * If skip_validation is true then we skip checking that the existing rows
+ * in the table satisfy the constraint, and just install the catalog entries
+ * for the constraint.  A new FK constraint is marked as valid iff
+ * initially_valid is true.  (Usually skip_validation and initially_valid
+ * are inverses, but we can set both true if the table is known empty.)
+ *
+ * Constraint attributes (DEFERRABLE etc) are initially represented as
+ * separate Constraint nodes for simplicity of parsing.  parse_utilcmd.c makes
+ * a pass through the constraints list to insert the info into the appropriate
+ * Constraint node.
+ * - - - - - - - - - -
+ */
+
+/* Foreign key action codes */
+#define FKCONSTR_ACTION_NOACTION	'a'
+#define FKCONSTR_ACTION_RESTRICT	'r'
+#define FKCONSTR_ACTION_CASCADE		'c'
+#define FKCONSTR_ACTION_SETNULL		'n'
+#define FKCONSTR_ACTION_SETDEFAULT	'd'
+
+/* Foreign key matchtype codes */
+#define FKCONSTR_MATCH_FULL			'f'
+#define FKCONSTR_MATCH_PARTIAL		'p'
+#define FKCONSTR_MATCH_SIMPLE		's'
+
+endnote
+
+note left of Constraint::contype;
+	CONSTR_NULL,				/* not standard SQL, but a lot of people expect it */
+	CONSTR_NOTNULL,
+	CONSTR_DEFAULT,           /* DEFAULT句が指定されたとき、Constraintに指定される*/
+	CONSTR_IDENTITY,
+	CONSTR_CHECK,
+	CONSTR_PRIMARY,
+	CONSTR_UNIQUE,
+	CONSTR_EXCLUSION,
+	CONSTR_FOREIGN,
+	CONSTR_ATTR_DEFERRABLE,		/* attributes for previous constraint node */
+	CONSTR_ATTR_NOT_DEFERRABLE,
+	CONSTR_ATTR_DEFERRED,
+	CONSTR_ATTR_IMMEDIATE
+endnote
+
+
+@enduml
+
+PlantUML version 1.2020.10(Sun May 17 18:35:57 JST 2020)
+(GPL source distribution)
+Java Runtime: Java(TM) SE Runtime Environment
+JVM: Java HotSpot(TM) 64-Bit Server VM
+Java Version: 11.0.2+9-LTS
+Operating System: Windows 10
+Default Encoding: MS932
+Language: ja
+Country: JP
+--></g></svg>
