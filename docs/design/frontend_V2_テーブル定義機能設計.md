@@ -29,7 +29,7 @@
       - [DataTypeメタデータ(root)](#datatypeメタデータroot)
         - [DataTypeメタデータオブジェクト](#datatypeメタデータオブジェクト)
         - [DataTypeメタデータオブジェクトのvalueに格納する値](#datatypeメタデータオブジェクトのvalueに格納する値)
-    - [CreateStmt、IndexStmtクエリツリーのクラス図](#createstmt-indexstmtクエリツリーのクラス図)
+    - [CreateStmt・IndexStmtクエリツリーのクラス図](#createstmtindexstmtクエリツリーのクラス図)
   - [シーケンス詳細](#シーケンス詳細)
     - [シーケンス図](#シーケンス図-1)
 - [エラー処理](#エラー処理)
@@ -71,9 +71,9 @@
 
 |将来verで検討する機能項目|V2での実装方針|将来verでの方針|優先度|
 |----|----|----|----|
-|[サポートする型](#サポートする型)以外の型|エラーメッセージを出力<br>テーブル定義されない。<br>date、配列がお客様に利用されるため、拡張性ある実装とする。|date、配列の利用あり|高|
-|NOT NULL、PRIMARY KEY制約以外の制約|エラーメッセージを出力<br>テーブル定義されない|外部キー制約など性能測定に必要であるため優先？|中|
-|スキーマ名|frontendは、PostgreSQLでスキーマ名が入力されても、構文エラーとしないが、スキーマ名はmetadata-managerに格納されない。つまり、スキーマ名の入力は無視して処理する。|性能測定が優先であるため、ユーザー管理機能で検討？|中|
+|[サポートする型](#サポートする型)以外の型|エラーメッセージを出力。<br>テーブル定義されない。<br>date、配列がお客様に利用されるため、拡張性ある実装とする。|date、配列の利用あり|高|
+|NOT NULL、PRIMARY KEY制約以外の制約|エラーメッセージを出力。<br>テーブル定義されない。|外部キー制約など性能測定に必要であるため優先？|中|
+|スキーマ名|frontendは、PostgreSQLでスキーマ名が入力されても、構文エラーとしないが、<br>スキーマ名はmetadata-managerに格納されない。<br>つまり、スキーマ名の入力は無視して処理する。|性能測定が優先であるため、ユーザー管理機能で検討？|中|
 |インデックスの方向(DEFAULT,ASC,DSC)|V1と同様に全カラムに対して常に **"0"** を格納 <br> ★ノーチラス・テクノロジーズ様に確認||中|
 |DEFAULT制約の式の格納|V1と同様に全カラムに対して常に **"(undefined)"** を格納 <br> ※V1.0ではDEFAULT制約を指定しない場合、常に"(undefined)"で格納されている <br> ★ノーチラス・テクノロジーズ様に確認||低|
 |[サポートするロケール](#サポートするロケール)以外のロケール|エラーハンドリングしない<br>注意事項として提示||低|
@@ -190,7 +190,7 @@ TABLESPACE tsurugi
 '-'　:　metadata-managerが値を付与する項目
 ```
 
-|key|valueの型|valueの説明|valueに格納する値|[CreateStmtクエリツリー](#createstmt-indexstmtクエリツリーのクラス図)から取得する属性(クラス名.属性)|
+|key|valueの型|valueの説明|valueに格納する値|[CreateStmt・IndexStmtクエリツリーのクラス図](#createstmtindexstmtクエリツリーのクラス図)から取得する属性(クラス名.属性)|
 |----|----|----|----|----|
 |"formatVersion" | number [-]        | データ形式フォーマットバージョン ※V1は"1"固定 | "1"固定 | - |
 |"generation"    | number [-]        | メタデータの世代 ※V1は"1"固定                | "1"固定 | - |
@@ -198,7 +198,7 @@ TABLESPACE tsurugi
 
 ##### Tableメタデータオブジェクト
 
-|key|valueの型|valueの説明|valueに格納する値|[CreateStmtクエリツリー](#createstmt-indexstmtクエリツリーのクラス図)から取得する属性(クラス名.属性)|
+|key|valueの型|valueの説明|valueに格納する値|[CreateStmt・IndexStmtクエリツリーのクラス図](#createstmtindexstmtクエリツリーのクラス図)から取得する属性(クラス名.属性)|
 |----|----|----|----|----|
 | "id"         | number [-]        | テーブルID                           | V1と同じ  | -                   |
 | "name"       | string [*]        | テーブル名                           | V1と同じ                     | RangeVar.relname    |
@@ -208,7 +208,7 @@ TABLESPACE tsurugi
 
 ##### Columnメタデータオブジェクト
 
-|key|valueの型|valueの説明|valueに格納する値|[CreateStmtクエリツリー](#createstmt-indexstmtクエリツリーのクラス図)から取得する属性(クラス名.属性)|
+|key|valueの型|valueの説明|valueに格納する値|[CreateStmt・IndexStmtクエリツリーのクラス図](#createstmtindexstmtクエリツリーのクラス図)から取得する属性(クラス名.属性)|
 |----|----|----|----|----|
 | "id"                | number        [-] | カラムID                                              | V1と同じ | - |
 | "tableId"           | number        [-] | カラムが属するテーブルのID                             | V1と同じ | - |
@@ -216,10 +216,10 @@ TABLESPACE tsurugi
 | "ordinalPosition"   | number        [*] | カラム番号(1 origin)                                  | V1と同じ | CreateStmt.tableEltsリストの並び順 |
 | "dataTypeId"        | number        [*] | カラムのデータ型のID | V1と同じID。[PostgreSQLとカラムのデータ型のID対応表](#postgresqlとカラムのデータ型のid対応表)を参照 | TypeName.names **xor** TypeName.typeOid |
 | "dataLength"        | array[number] [+] | データ長(配列長) varchar(20)など ※NUMERIC(precision,scale)を考慮してarray[number] にしている。               | **V1と同様に文字列長を格納** | TypeName.typmods **xor** TypeName.typmod |
-| "varying"         | bool        [+] | 文字列長が可変か否か | PostgreSQLの型で、varcharの場合、true。charの場合false。それ以外の場合、keyを作成しない。 <br> ★ノーチラス・テクノロジーズ様に確認 | |
+| "varying"         | bool        [+] | **文字列長が可変か否か** | **PostgreSQLの型で、varcharの場合、true。charの場合false。それ以外の場合、keyを作成しない。** <br> ★ノーチラス・テクノロジーズ様に確認 | TypeName.names **xor** TypeName.typeOid |
 | "nullable"          | bool          [*] | NOT NULL制約の有無                                    | V1と同じ | ColumnDef.constraints |
-| "default"           | string        [+] | デフォルト式 | V1と同様に全カラムに対して常に **"(undefined)"** を格納 <br> ※V1.0ではDEFAULT制約を指定しない場合、常に"(undefined)"で格納されている <br> ★ノーチラス・テクノロジーズ様に確認 | 取得しない |
-| "direction"         | number        [+] | 方向（0: DEFAULT, 1: ASCENDANT, 2: DESCENDANT）| V1と同様に全カラムに対して常に **"0"** を格納 <br> ★ノーチラス・テクノロジーズ様に確認 | |
+| "default"           | string        [+] | デフォルト式 | **V1と同様に全カラムに対して常に "(undefined)" を格納** <br> ※V1.0ではDEFAULT制約を指定しない場合、常に"(undefined)"で格納されている <br> ★ノーチラス・テクノロジーズ様に確認 | 取得しない |
+| "direction"         | number        [+] | 方向（0: DEFAULT, 1: ASCENDANT, 2: DESCENDANT）| **V1と同様に全カラムに対して常に"0"を格納** <br> ★ノーチラス・テクノロジーズ様に確認 |取得しない |
 
 ###### PostgreSQLとカラムのデータ型のID対応表
 * カラムのデータ型のIDは、[DataTypeメタデータオブジェクトのvalueに格納する値](#datatypeメタデータオブジェクトのvalueに格納する値)を参照
@@ -276,7 +276,7 @@ TABLESPACE tsurugi
 |14| VARCHAR  | 0	                | varchar             | varchar
 
 
-#### CreateStmt、IndexStmtクエリツリーのクラス図　
+#### CreateStmt・IndexStmtクエリツリーのクラス図　
 frontendがPostgreSQLから受け取るクエリツリー
 ![](img/query_tree.svg)
 
