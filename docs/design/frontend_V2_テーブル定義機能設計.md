@@ -167,7 +167,7 @@ TABLESPACE tsurugi
         * パラーメーターの渡し方例
 
     ~~~C
-        CreateTableCommand command{id,name,table_name} //今回追加するCommandクラスの具象クラス
+        CreateTableCommand command{id,name,table_id} //今回追加するCommandクラスの具象クラス
 
         stub::Transaction* transaction;
         error = StubManager::begin(&transaction);
