@@ -1,0 +1,21 @@
+@startuml
+
+Command <|-- CreateTableCommand
+
+abstract class Command{
+	{field} private int id; //コマンドの種類を特定するID ex)0
+	{field} private string name; //コマンドの種類の名前 ex)"CREATE TABLE"
+	{field} private string table_name; // テーブル名 ex)CREATE TABLE test1(column int)の場合、"test1"
+
+	{abstract} public explicit Command(int id, string name, string table_name) //コンストラクタ
+	{abstract} public virtual ~Command() //デストラクタ
+    {abstract} private virtual int execute(); //実行エンジンで利用する。frontendでは利用しない。
+}
+
+class CreateTableCommand{
+	public CreateTableCommand(int id, string name, string table_name)
+	public ~CreateTableCommand()
+    private int execute();
+}
+
+@enduml

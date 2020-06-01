@@ -52,14 +52,10 @@ deactivate "metadata-manager"
 "alt_utility/tablecmds.cpp" --> "alt_utility/create_table.cpp"
 deactivate "alt_utility/tablecmds.cpp"
 
-"alt_utility/create_table.cpp" -> ogawayama : Message(コマンドの種類, テーブル名, その他パラメーター)
+"alt_utility/create_table.cpp" -> ogawayama : message(Command command)
 activate ogawayama
 note right
 テーブル定義要求
-
-ogawayamaへのパラメーターの渡し方
-（関数名・型・パラメーター・デザインパターンなど）
-については、すべてノーチラス・テクノロジーズ様に決定していただきたいです。
 end note
 
 ogawayama -> "metadata-manager" : テーブル情報取得

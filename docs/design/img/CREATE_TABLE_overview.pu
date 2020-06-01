@@ -23,14 +23,10 @@ activate "metadata-manager"
 "metadata-manager" --> "utility_hook"
 deactivate "metadata-manager"
 
-"utility_hook" -> ogawayama : Message(コマンドの種類, テーブル名, その他パラメーター)
+"utility_hook" -> ogawayama : message(Command command)
 activate ogawayama
 note right
 テーブル定義要求
-
-ogawayamaへのパラメーターの渡し方
-（関数名・型・パラメーター・デザインパターンなど）
-については、すべてノーチラス・テクノロジーズ様に決定していただきたいです。
 end note
 
 ogawayama -> "metadata-manager" : テーブル情報取得
