@@ -18,6 +18,7 @@
 - [テーブル定義機能シーケンス](#テーブル定義機能シーケンス)
   - [シーケンス概要](#シーケンス概要)
     - [シーケンス図](#シーケンス図)
+    - [Commandクラス](#commandクラス)
     - [図中のmessage(Command command)](#図中のmessagecommand-command)
     - [metadata-managerに格納する値一覧](#metadata-managerに格納する値一覧)
       - [データベース名](#データベース名)
@@ -154,11 +155,10 @@ TABLESPACE tsurugi
 #### シーケンス図
 ![](img/out/CREATE_TABLE_overview/テーブル定義シーケンス概要.png)
 
+#### Commandクラス
+![](img/out/Command/Command.png)
+
 #### 図中のmessage(Command command)
-
-* Commandクラス
-    ![](img/out/Command/Command.png)
-
 * デザインパターンについて
     * V1では、Builderパターンを使用されていると認識している。
         * Builderパターン  
@@ -364,7 +364,7 @@ ERROR:  Tsurugi does not support type %s.
 #### 1. データ型に関するメタデータの変更
 * datatypes.jsonに新たなキー"pg_dataTypeQualifiedName"を追加して、値にCreateStmtクエリツリーから取得できる型名を追加する。
 * メタデータのバグ修正および、不要なkeyの削除
-    * 詳細は、[DataTypeメタデータオブジェクトのvalueに格納する値](#datatypeメタデータオブジェクトのvalueに格納する値)を参照。
+    * [データ型ID一覧](#データ型id一覧)を参照。
 
 #### 2. エラー処理の追加
 * metadata-managerは、テーブル定義要求を受け取った時、同一テーブル名が既に登録されていた場合、エラーとする。
