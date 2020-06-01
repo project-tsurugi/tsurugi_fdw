@@ -21,44 +21,73 @@
 
 ## 質問事項
 
-1. V2でサポートする型に、smallint、textを増やしても良いか。
-2. 
+1. V2でサポートする型に、smallint、textを増やしてもよいか。
+2. ogawayamaへのパラメーターの渡し方について
 
-## テーブル定義機能シーケンス
+* 次のテーブル定義機能シーケンス図をご覧ください。
 
-### シーケンス概要
-
-#### シーケンス図
+テーブル定義機能シーケンス
 ![](img/out/CREATE_TABLE_overview/テーブル定義シーケンス概要.png)
 
-#### 図中のMessage(コマンドの種類, テーブルのスキーマ名, テーブル名, その他パラメーター)
-* ogawayamaへのパラメーターの渡し方（関数名・型・パラメーター・デザインパターンなど）については、すべてノーチラス・テクノロジーズ様に決定していただきたい。
+* ogawayamaへのパラメーターの渡し方は、次のように、コマンドの種類とテーブル名を通知してもよいか。
+    * パラーメーターの渡し方例
+~~~C
+    stub::Transaction* transaction;
+    error = StubManager::begin(&transaction);
+    if (error != ERROR_CODE::OK) 
+    {
+        std::cerr << "begin() failed." << std::endl;
+        return ret_value;
+    }
+
+    error = transaction->message(CMD_CREATE_TABLE, table_name); //今回追加するmessage関数 message(int,string)
+
+    if (error != ERROR_CODE::OK) 
+    {
+        elog(ERROR, "transaction::message(CMD_CREATE_TABLE, table_name) failed. (%d)", (int) error);
+        return ret_value;
+    }
+
+    error = transaction->commit();
+    if (error != ERROR_CODE::OK) 
+    {
+        elog(ERROR, "transaction::commit() failed. (%d)", (int) error);
+        return ret_value;
+    }
+    StubManager::end();
+    
+    ret_value = true;
+
+    return ret_value;
+}
+~~~
+
 * コマンドの種類とは、CREATE TABLEを意味している。
     * ALTER TABLEや、CREATE INDEXなど、他のコマンドに対応するために、コマンドの種類と記載している。
-* デザインパターンについて
-    * V1では、Builderパターンを使用されていると認識している。例えば、Builderパターンの中で、テーブル名とコマンドの種類などを渡せるようにしてもらってもよいと思っているが、どのデザインパターンを採用するかはノーチラス・テクノロジーズ様に検討していただきたい。
-        * Builderパターン  
-        https://www.techscore.com/tech/DesignPattern/Builder.html/    
+  
+* 岡田(耕)さんのコメント
+    * Win32のSendMessage関数のような実装を想定しているが、Tsurugiに最適なのかは確信はない。   
+    https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-sendmessage
+    * この方法のいいところは、複数のコンポーネントに向けて同じメッセージをブロードキャストしやすいところだと思っている。
+    * 例えば、メタデータの更新を全体に知らせたり、システム停止の開始を要求する、など。
+    * ちなみにWindowsでは同期型がSendMessageで非同期型はPostMessageと言う。
 
-    * 岡田(耕)さんのコメント
-        * Win32のSendMessage関数のような実装を想定しているが、Tsurugiに最適なのかは確信はない。   
-        https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-sendmessage
-        * この方法のいいところは、複数のコンポーネントに向けて同じメッセージをブロードキャストしやすいところだと思っている。
-        * 例えば、メタデータの更新を全体に知らせたり、システム停止の開始を要求する、など。
-        * ちなみにWindowsでは同期型がSendMessageで非同期型はPostMessageと言う。
+3. metadata-managerに格納する値について
 
-#### metadata-managerに格納する値一覧
+* メタデータのフォーマットは次を参照
+https://github.com/project-tsurugi/manager/blob/df3b3a7a0a7e7e7c3643a9bc00baef50a02e6f27/metadata-manager/docs/table_metadata.md#%E3%83%A1%E3%82%BF%E3%83%87%E3%83%BC%E3%82%BF%E3%83%95%E3%82%A9%E3%83%BC%E3%83%9E%E3%83%83%E3%83%88
 
-##### Columnメタデータオブジェクト
+### Columnメタデータオブジェクト
+    * Columnメタデータオブジェクトのvalueに格納する値は次の通りでよいか。
 
 |key|valueの型|valueの説明|valueに格納する値|
 |----|----|----|----|----|
-| "dataTypeId"        | number        [*] | カラムのデータ型のID | V1と同じID。[PostgreSQLとカラムのデータ型のID対応表](#postgresqlとカラムのデータ型のid対応表)を参照 | 
+| "dataTypeId"        | number        [*] | カラムのデータ型のID | smallint以外、V1と同じID。[PostgreSQLとカラムのデータ型のID対応表](#postgresqlとカラムのデータ型のid対応表)を参照 | 
 | "varying"         | bool        [+] | **文字列長が可変か否か** | **PostgreSQLの型で、varcharの場合、true。charの場合false。それ以外の場合、keyを作成しない。** |
 | "default"           | string        [+] | デフォルト式 | **V1と同様に全カラムに対して常に "(undefined)" を格納** <br> ※V1.0ではDEFAULT制約を指定しない場合、常に"(undefined)"で格納されている |
 | "direction"         | number        [+] | 方向（0: DEFAULT, 1: ASCENDANT, 2: DESCENDANT）| **V1と同様に全カラムに対して常に"0"を格納** |
 
-###### PostgreSQLとカラムのデータ型のID対応表
+### PostgreSQLとカラムのデータ型のID対応表
 * カラムのデータ型のIDは、[DataTypeメタデータオブジェクトのvalueに格納する値](#datatypeメタデータオブジェクトのvalueに格納する値)を参照
 
 |大分類|PostgreSQLの型(名)|PostgreSQLの型(別名)|カラムのデータ型のID|
@@ -72,7 +101,7 @@
 |文字列|character [ (n) ]|char [ (n) ]|11|
 |文字列|character varying [ (n) ]|varchar [ (n) ]|11|
 
-###### DataTypeメタデータオブジェクトのvalueに格納する値
+### DataTypeメタデータオブジェクトのvalueに格納する値
 
 * 太字は変更
 * id番号に削除と書いてあるものは、key自体を削除。id番号は変更しない。
