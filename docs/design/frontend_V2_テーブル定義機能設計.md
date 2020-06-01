@@ -214,7 +214,7 @@ TABLESPACE tsurugi
 | "tableId"           | number        [-] | カラムが属するテーブルのID                             | V1と同じ | - |
 | "name"              | string        [*] | カラム名                                              | V1と同じ | ColumnDef.colname |
 | "ordinalPosition"   | number        [*] | カラム番号(1 origin)                                  | V1と同じ | CreateStmt.tableEltsリストの並び順 |
-| "dataTypeId"        | number        [*] | カラムのデータ型のID | V1と同じID。[PostgreSQLとカラムのデータ型のID対応表](#postgresqlとカラムのデータ型のid対応表)を参照 | TypeName.names **xor** TypeName.typeOid |
+| "dataTypeId"        | number        [*] | カラムのデータ型のID | smallint以外の型は、V1と同じID。[PostgreSQLとカラムのデータ型のID対応表](#postgresqlとカラムのデータ型のid対応表)を参照 | TypeName.names **xor** TypeName.typeOid |
 | "dataLength"        | array[number] [+] | データ長(配列長) varchar(20)など ※NUMERIC(precision,scale)を考慮してarray[number] にしている。               | **V1と同様に文字列長を格納** | TypeName.typmods **xor** TypeName.typmod |
 | "varying"         | bool        [+] | **文字列長が可変か否か** | **PostgreSQLの型で、varcharの場合、true。charの場合false。それ以外の場合、keyを作成しない。** <br> ★ノーチラス・テクノロジーズ様に確認 | TypeName.names **xor** TypeName.typeOid |
 | "nullable"          | bool          [*] | NOT NULL制約の有無                                    | V1と同じ | ColumnDef.constraints |
