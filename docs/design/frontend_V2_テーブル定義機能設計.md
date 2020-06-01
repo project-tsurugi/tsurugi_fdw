@@ -18,7 +18,7 @@
 - [テーブル定義機能シーケンス](#テーブル定義機能シーケンス)
   - [シーケンス概要](#シーケンス概要)
     - [シーケンス図](#シーケンス図)
-    - [図中のMessage(Command command)](#図中のmessagecommand-command)
+    - [図中のmessage(Command command)](#図中のmessagecommand-command)
     - [metadata-managerに格納する値一覧](#metadata-managerに格納する値一覧)
       - [データベース名](#データベース名)
       - [スキーマ名](#スキーマ名)
@@ -154,7 +154,7 @@ TABLESPACE tsurugi
 #### シーケンス図
 ![](img/out/CREATE_TABLE_overview/テーブル定義シーケンス概要.png)
 
-#### 図中のMessage(Command command)
+#### 図中のmessage(Command command)
 
 * Commandクラス
     ![](img/out/Command/Command.png)
