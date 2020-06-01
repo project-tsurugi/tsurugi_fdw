@@ -314,7 +314,7 @@ TABLESPACE tsurugi
 
 #### CreateStmt・IndexStmtクエリツリーのクラス図　
 frontendがPostgreSQLから受け取るクエリツリー
-![](img/query_tree/query_tree.svg)
+![](img/out/query_tree/query_tree.svg)
 
 ### シーケンス詳細
 #### シーケンス図
