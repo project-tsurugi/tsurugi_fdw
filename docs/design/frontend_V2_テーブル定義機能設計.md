@@ -18,7 +18,7 @@
 - [テーブル定義機能シーケンス](#テーブル定義機能シーケンス)
   - [シーケンス概要](#シーケンス概要)
     - [シーケンス図](#シーケンス図)
-    - [図中のMessage(コマンドの種類, テーブルのスキーマ名, テーブル名, その他パラメーター)](#図中のmessageコマンドの種類-テーブルのスキーマ名-テーブル名-その他パラメーター)
+    - [図中のMessage(Command command)](#図中のmessagecommand-command)
     - [metadata-managerに格納する値一覧](#metadata-managerに格納する値一覧)
       - [データベース名](#データベース名)
       - [スキーマ名](#スキーマ名)
@@ -28,7 +28,7 @@
         - [PostgreSQLとカラムのデータ型のID対応表](#postgresqlとカラムのデータ型のid対応表)
       - [DataTypeメタデータ(root)](#datatypeメタデータroot)
         - [DataTypeメタデータオブジェクト](#datatypeメタデータオブジェクト)
-        - [DataTypeメタデータオブジェクトのvalueに格納する値](#datatypeメタデータオブジェクトのvalueに格納する値)
+        - [データ型ID一覧](#データ型id一覧)
     - [CreateStmt・IndexStmtクエリツリーのクラス図](#createstmtindexstmtクエリツリーのクラス図)
   - [シーケンス詳細](#シーケンス詳細)
     - [シーケンス図](#シーケンス図-1)
@@ -154,14 +154,51 @@ TABLESPACE tsurugi
 #### シーケンス図
 ![](img/out/CREATE_TABLE_overview/テーブル定義シーケンス概要.png)
 
-#### 図中のMessage(コマンドの種類, テーブルのスキーマ名, テーブル名, その他パラメーター)
-* ogawayamaへのパラメーターの渡し方（関数名・型・パラメーター・デザインパターンなど）については、すべてノーチラス・テクノロジーズ様に決定していただきたい。★ノーチラス・テクノロジーズ様に確認
-* コマンドの種類とは、CREATE TABLEを意味している。
-    * ALTER TABLEや、CREATE INDEXなど、他のコマンドに対応するために、コマンドの種類と記載している。
+#### 図中のMessage(Command command)
+
+* Commandクラス
+    ![](img/out/Command/Command.png)
+
 * デザインパターンについて
-    * V1では、Builderパターンを使用されていると認識している。例えば、Builderパターンの中で、テーブル名とコマンドの種類などを渡せるようにしてもらってもよいと思っているが、どのデザインパターンを採用するかはノーチラス・テクノロジーズ様に検討していただきたい。
+    * V1では、Builderパターンを使用されていると認識している。
         * Builderパターン  
         https://www.techscore.com/tech/DesignPattern/Builder.html/    
+    * V2では、ogawayamaへのパラメーターの渡し方は、次のように、Builderパターンの中で、Commandクラスを渡してもよいか。★ノーチラス・テクノロジーズ様に確認
+        * こうすることで、ogawayamaと通信するコード量が減るため。
+        * パラーメーターの渡し方例
+
+    ~~~C
+        CreateTableCommand command{id,name,table_name} //今回追加するCommandクラスの具象クラス
+
+        stub::Transaction* transaction;
+        error = StubManager::begin(&transaction);
+        if (error != ERROR_CODE::OK) 
+        {
+            std::cerr << "begin() failed." << std::endl;
+            return ret_value;
+        }
+
+        error = transaction->message(command); //今回追加するmessage(Command command)関数。引数はCommandクラス
+
+        if (error != ERROR_CODE::OK) 
+        {
+            elog(ERROR, "transaction::message(%s) failed. (%d)", command.name, (int) error); //エラーメッセージの変更
+            return ret_value;
+        }
+
+        error = transaction->commit();
+        if (error != ERROR_CODE::OK) 
+        {
+            elog(ERROR, "transaction::commit() failed. (%d)", (int) error);
+            return ret_value;
+        }
+        StubManager::end();
+
+        ret_value = true;
+
+        return ret_value;
+    }
+    ~~~
 
     * 岡田(耕)さんのコメント
         * Win32のSendMessage関数のような実装を想定しているが、Tsurugiに最適なのかは確信はない。   
@@ -222,9 +259,8 @@ TABLESPACE tsurugi
 | "direction"         | number        [+] | 方向（0: DEFAULT, 1: ASCENDANT, 2: DESCENDANT）| **V1と同様に全カラムに対して常に"0"を格納** <br> ★ノーチラス・テクノロジーズ様に確認 |取得しない |
 
 ###### PostgreSQLとカラムのデータ型のID対応表
-* カラムのデータ型のIDは、[DataTypeメタデータオブジェクトのvalueに格納する値](#datatypeメタデータオブジェクトのvalueに格納する値)を参照
 
-|大分類|PostgreSQLの型(名)|PostgreSQLの型(別名)|カラムのデータ型のID|
+|大分類|PostgreSQLの型(名)|PostgreSQLの型(別名)|カラムのデータ型のID <br>※[データ型ID一覧](#データ型id一覧)を参照|
 |-:|:-|:-|:-|
 |整数|smallint|int2|2|
 |整数|integer|int, int4|4|
@@ -245,13 +281,13 @@ TABLESPACE tsurugi
 ###### DataTypeメタデータオブジェクト
 |key|valueの型|valueの説明|valueに格納する値|
 |----|----|----|----|
-| "id"            | number   | データ型ID | [DataTypeメタデータオブジェクトのvalueに格納する値](#datatypeメタデータオブジェクトのvalueに格納する値) |
+| "id"            | number   | データ型ID | [データ型ID一覧](#データ型id一覧) |
 | "name"          | string   | データ型名 |同上|
 | "pg_dataType"   | number    | 対応するPostgreSQLのデータ型のOID |同上|
 | "pg_dataTypeName"      | string    | ユーザーが入力するPostgreSQLの型名 |同上|
 | "pg_dataTypeQualifiedName"      | string    | PostgreSQL内部の修飾型名 |同上|
 
-###### DataTypeメタデータオブジェクトのvalueに格納する値
+###### データ型ID一覧
 
 ★ノーチラス・テクノロジーズ様に確認
 
@@ -278,7 +314,7 @@ TABLESPACE tsurugi
 
 #### CreateStmt・IndexStmtクエリツリーのクラス図　
 frontendがPostgreSQLから受け取るクエリツリー
-![](img/query_tree.svg)
+![](img/query_tree/query_tree.svg)
 
 ### シーケンス詳細
 #### シーケンス図
