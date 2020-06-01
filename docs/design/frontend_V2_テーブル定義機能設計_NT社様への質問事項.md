@@ -9,7 +9,15 @@
 
 ## 質問事項
 
-1. V2でサポートする型に、smallint、textを増やしてもよいか。
+1. V2でサポートする型に、次の型を増やしてもよいか。
+
+|大分類|PostgreSQLの型(名)|PostgreSQLの型(別名)|ogawayamaの型（名）|
+|-:|:-|:-|:-|
+|整数|smallint|int2|INT16|
+|文字列|text||TEXT|
+|文字列|character [ (n) ]|char [ (n) ]|TEXT|
+|文字列|character varying [ (n) ]|varchar [ (n) ]|TEXT|
+
 2. ogawayamaへのパラメーターの渡し方について
 
 * 次のテーブル定義機能シーケンス図をご覧ください。
