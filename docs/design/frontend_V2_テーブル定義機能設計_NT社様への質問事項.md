@@ -7,18 +7,6 @@
     * 今後ALTERコマンド等に対応をしていくことを考えると、もう少しシステマチックで拡張性のある方式を検討したい。
         * V1ではデータ型名を正規表現で置換する方法でクエリーを書き換えている。
 
-## 将来verで検討する機能項目一覧
-
-|将来verで検討する機能項目|V2での実装方針|将来verでの方針|優先度|
-|----|----|----|----|
-|[サポートする型](#サポートする型)以外の型|エラーメッセージを出力。<br>テーブル定義されない。<br>date、配列がお客様に利用されるため、拡張性ある実装とする。|date、配列の利用あり|高|
-|NOT NULL、PRIMARY KEY制約以外の制約|エラーメッセージを出力。<br>テーブル定義されない。|外部キー制約など性能測定に必要であるため優先？|中|
-|スキーマ名|frontendは、PostgreSQLでスキーマ名が入力されても、構文エラーとしないが、<br>スキーマ名はmetadata-managerに格納されない。<br>つまり、スキーマ名の入力は無視して処理する。|性能測定が優先であるため、ユーザー管理機能で検討？|中|
-|インデックスの方向(DEFAULT,ASC,DSC)|V1と同様に全カラムに対して常に **"0"** を格納||中|
-|DEFAULT制約の式の格納|V1と同様に全カラムに対して常に **"(undefined)"** を格納 <br> ※V1.0ではDEFAULT制約を指定しない場合、常に"(undefined)"で格納されている||低|
-|[サポートするロケール](#サポートするロケール)以外のロケール|エラーハンドリングしない<br>注意事項として提示||低|
-
-
 ## 質問事項
 
 1. V2でサポートする型に、smallint、textを増やしてもよいか。
@@ -122,3 +110,55 @@ https://github.com/project-tsurugi/manager/blob/df3b3a7a0a7e7e7c3643a9bc00baef50
 |~~12~~ 不要なため削除| STRING   | 0	                | text          | 
 |13| CHAR	   | 0	                | char             | bpchar
 |14| VARCHAR  | 0	                | varchar             | varchar
+
+## 将来verで検討する機能項目一覧
+
+|将来verで検討する機能項目|V2での実装方針|将来verでの方針|優先度|
+|----|----|----|----|
+|[サポートする型](#サポートする型)以外の型|エラーメッセージを出力。<br>テーブル定義されない。<br>date、配列がお客様に利用されるため、拡張性ある実装とする。|date、配列の利用あり|高|
+|列制約のNOT NULLおよびPRIMARY KEY制約、表制約のPRIMARY KEY制約（複合主キー含む）以外の制約|エラーメッセージを出力。<br>テーブル定義されない。|外部キー制約など性能測定に必要であるため優先？|中|
+|スキーマ名|frontendは、PostgreSQLでスキーマ名が入力されても、構文エラーとしないが、<br>スキーマ名はmetadata-managerに格納されない。<br>つまり、スキーマ名の入力は無視して処理する。|性能測定が優先であるため、ユーザー管理機能で検討？|中|
+|インデックスの方向(DEFAULT,ASC,DSC)|V1と同様に全カラムに対して常に **"0"** を格納||中|
+|DEFAULT制約の式の格納|V1と同様に全カラムに対して常に **"(undefined)"** を格納 <br> ※V1.0ではDEFAULT制約を指定しない場合、常に"(undefined)"で格納されている||低|
+|[サポートするロケール](#サポートするロケール)以外のロケール|エラーハンドリングしない<br>注意事項として提示||低|
+
+### サポートするCREATE TABLE構文
+
+CREATE TABLE *table_name* ( [  
+&nbsp;&nbsp;{ *column_name* *data_type* [ *column_constraint* [ ... ] ]  
+&nbsp;&nbsp;&nbsp;&nbsp;| *table_constraint* }  
+&nbsp;&nbsp;&nbsp;&nbsp;[, ... ]
+] )  
+TABLESPACE tsurugi
+
+*column_constraint*には、次の構文が入る。  
+
+[ CONSTRAINT *constraint_name* ]  
+{ NOT NULL |   
+&nbsp;&nbsp;PRIMARY KEY }  
+
+また、*table_constraint*には、次の構文が入る。 
+
+[ CONSTRAINT *constraint_name* ]  
+{ PRIMARY KEY ( *column_name* [, ... ] ) }  
+
+### サポートする型
+
+|大分類|PostgreSQLの型(名)|PostgreSQLの型(別名)|ogawayamaの型（名）|
+|-:|:-|:-|:-|
+|整数|smallint|int2|INT16|
+|整数|integer|int, int4|INT32|
+|整数|bigint|int8|INT64|
+|浮動小数点|real|float4|FLOAT32|
+|浮動小数点|double precision|float8|FLOAT64|
+|文字列|text||TEXT|
+|文字列|character [ (n) ]|char [ (n) ]|TEXT|
+|文字列|character varying [ (n) ]|varchar [ (n) ]|TEXT|
+
+### サポートするロケール
+
+|項目|値|
+|----|----|
+|照合順序(LC_COLLATE) |C|
+|文字の種類(LC_CTYPE)|C|
+|エンコーディング(ENCODING)|UTF8|
