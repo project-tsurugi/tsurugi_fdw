@@ -1,4 +1,26 @@
-# frontend V2 テーブル定義機能設計 質問
+# frontend V2 テーブル定義機能設計 質問事項 {ignore=True}
+
+## 目次 {ignore=True}
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+- [開発の目的](#開発の目的)
+- [質問事項](#質問事項)
+  - [1. V2でサポートする型に、次の型を増やしてもよいか。](#1-v2でサポートする型に-次の型を増やしてもよいか)
+  - [2. ogawayamaへのパラメーターの渡し方について](#2-ogawayamaへのパラメーターの渡し方について)
+    - [シーケンス概要](#シーケンス概要)
+      - [シーケンス図](#シーケンス図)
+      - [Commandクラス](#commandクラス)
+      - [図中のmessage(Command command)](#図中のmessagecommand-command)
+  - [3. metadata-managerに格納する値について](#3-metadata-managerに格納する値について)
+      - [Tableメタデータオブジェクト](#tableメタデータオブジェクト)
+    - [Columnメタデータオブジェクト](#columnメタデータオブジェクト)
+    - [PostgreSQLとカラムのデータ型のID対応表](#postgresqlとカラムのデータ型のid対応表)
+    - [データ型ID一覧](#データ型id一覧)
+  - [4. 実行エンジンがサポートするロケールは何か](#4-実行エンジンがサポートするロケールは何か)
+
+<!-- /code_chunk_output -->
 
 ## 開発の目的
 
@@ -9,7 +31,7 @@
 
 ## 質問事項
 
-1. V2でサポートする型に、次の型を増やしてもよいか。
+### 1. V2でサポートする型に、次の型を増やしてもよいか。
 
 |大分類|PostgreSQLの型(名)|PostgreSQLの型(別名)|ogawayamaの型（名）|
 |-:|:-|:-|:-|
@@ -18,62 +40,80 @@
 |文字列|character [ (n) ]|char [ (n) ]|TEXT|
 |文字列|character varying [ (n) ]|varchar [ (n) ]|TEXT|
 
-2. ogawayamaへのパラメーターの渡し方について
+### 2. ogawayamaへのパラメーターの渡し方について
+#### シーケンス概要
 
-* 次のテーブル定義機能シーケンス図をご覧ください。
-
-テーブル定義機能シーケンス
+##### シーケンス図
 ![](img/out/CREATE_TABLE_overview/テーブル定義シーケンス概要.png)
 
-* ogawayamaへのパラメーターの渡し方は、次のように、コマンドの種類とテーブル名を通知してもよいか。
-    * パラーメーターの渡し方例
-~~~C
-    stub::Transaction* transaction;
-    error = StubManager::begin(&transaction);
-    if (error != ERROR_CODE::OK) 
-    {
-        std::cerr << "begin() failed." << std::endl;
+##### Commandクラス
+![](img/out/Command/Command.png)
+
+##### 図中のmessage(Command command)
+* デザインパターンについて
+    * V1では、Builderパターンを使用されていると認識している。
+        * Builderパターン  
+        https://www.techscore.com/tech/DesignPattern/Builder.html/    
+    * 【質問】V2では、ogawayamaへのパラメーターの渡し方は、次のように、Builderパターンの中で、Commandクラスを渡してもよいか。
+        * こうすることで、ogawayamaと通信するコード量が減るため。
+        * パラーメーターの渡し方例
+
+    ~~~C
+        CreateTableCommand command{id,name,table_id} //今回追加するCommandクラスの具象クラス
+
+        stub::Transaction* transaction;
+        error = StubManager::begin(&transaction);
+        if (error != ERROR_CODE::OK) 
+        {
+            std::cerr << "begin() failed." << std::endl;
+            return ret_value;
+        }
+
+        error = transaction->message(command); //今回追加するmessage(Command command)関数。引数はCommandクラス
+
+        if (error != ERROR_CODE::OK) 
+        {
+            elog(ERROR, "transaction::message(%s) failed. (%d)", command.name, (int) error); //エラーメッセージの変更
+            return ret_value;
+        }
+
+        error = transaction->commit();
+        if (error != ERROR_CODE::OK) 
+        {
+            elog(ERROR, "transaction::commit() failed. (%d)", (int) error);
+            return ret_value;
+        }
+        StubManager::end();
+
+        ret_value = true;
+
         return ret_value;
     }
+    ~~~
 
-    error = transaction->message(CMD_CREATE_TABLE, table_name); //今回追加するmessage関数 message(int,string)
+    * 岡田(耕)さんのコメント
+        * Win32のSendMessage関数のような実装を想定しているが、Tsurugiに最適なのかは確信はない。   
+        https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-sendmessage
+        * この方法のいいところは、複数のコンポーネントに向けて同じメッセージをブロードキャストしやすいところだと思っている。
+        * 例えば、メタデータの更新を全体に知らせたり、システム停止の開始を要求する、など。
+        * ちなみにWindowsでは同期型がSendMessageで非同期型はPostMessageと言う。
 
-    if (error != ERROR_CODE::OK) 
-    {
-        elog(ERROR, "transaction::message(CMD_CREATE_TABLE, table_name) failed. (%d)", (int) error);
-        return ret_value;
-    }
-
-    error = transaction->commit();
-    if (error != ERROR_CODE::OK) 
-    {
-        elog(ERROR, "transaction::commit() failed. (%d)", (int) error);
-        return ret_value;
-    }
-    StubManager::end();
-    
-    ret_value = true;
-
-    return ret_value;
-}
-~~~
-
-* コマンドの種類とは、CREATE TABLEを意味している。
-    * ALTER TABLEや、CREATE INDEXなど、他のコマンドに対応するために、コマンドの種類と記載している。
-  
-* 岡田(耕)さんのコメント
-    * Win32のSendMessage関数のような実装を想定しているが、Tsurugiに最適なのかは確信はない。   
-    https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-sendmessage
-    * この方法のいいところは、複数のコンポーネントに向けて同じメッセージをブロードキャストしやすいところだと思っている。
-    * 例えば、メタデータの更新を全体に知らせたり、システム停止の開始を要求する、など。
-    * ちなみにWindowsでは同期型がSendMessageで非同期型はPostMessageと言う。
-
-3. metadata-managerに格納する値について
+### 3. metadata-managerに格納する値について
 
 * メタデータのフォーマットは次を参照
 https://github.com/project-tsurugi/manager/blob/df3b3a7a0a7e7e7c3643a9bc00baef50a02e6f27/metadata-manager/docs/table_metadata.md#%E3%83%A1%E3%82%BF%E3%83%87%E3%83%BC%E3%82%BF%E3%83%95%E3%82%A9%E3%83%BC%E3%83%9E%E3%83%83%E3%83%88
 
-### Columnメタデータオブジェクト
+##### Tableメタデータオブジェクト
+* スキーマ名について
+    * V1と同様に、keyを作成しない？★ノーチラス・テクノロジーズ様に確認
+        * V1では、SELECT/INSERT/UPDATE/DELETE構文で、Tsurugiにスキーマ名を指定するとエラーになるがどうするか？
+        * ユーザー管理機能で対応でもよさそう？よく分からない。
+
+|key|valueの型|valueの説明|valueに格納する値|
+|----|----|----|----|----|
+| "namespace"  | string [+]        | スキーマ名    | **keyを作成しない。**  |
+
+#### Columnメタデータオブジェクト
 * Columnメタデータオブジェクトのvalueに格納する値は次の通りでよいか。
 
 |key|valueの型|valueの説明|valueに格納する値|
@@ -83,9 +123,9 @@ https://github.com/project-tsurugi/manager/blob/df3b3a7a0a7e7e7c3643a9bc00baef50
 | "default"           | string        [+] | デフォルト式 | **V1と同様に全カラムに対して常に "(undefined)" を格納** <br> ※V1.0ではDEFAULT制約を指定しない場合、常に"(undefined)"で格納されている |
 | "direction"         | number        [+] | 方向（0: DEFAULT, 1: ASCENDANT, 2: DESCENDANT）| **V1と同様に全カラムに対して常に"0"を格納** |
 
-### PostgreSQLとカラムのデータ型のID対応表
+#### PostgreSQLとカラムのデータ型のID対応表
 
-|大分類|PostgreSQLの型(名)|PostgreSQLの型(別名)|カラムのデータ型のID <br>※[カラムのデータ型のID一覧](#カラムのデータ型のID一覧)を参照|
+|大分類|PostgreSQLの型(名)|PostgreSQLの型(別名)|カラムのデータ型のID <br>※[データ型ID一覧](#データ型id一覧)を参照|
 |-:|:-|:-|:-|
 |整数|smallint|int2|2|
 |整数|integer|int, int4|4|
@@ -96,7 +136,7 @@ https://github.com/project-tsurugi/manager/blob/df3b3a7a0a7e7e7c3643a9bc00baef50
 |文字列|character [ (n) ]|char [ (n) ]|11|
 |文字列|character varying [ (n) ]|varchar [ (n) ]|11|
 
-### カラムのデータ型のID一覧
+#### データ型ID一覧
 
 * 太字は変更
 * id番号に削除と書いてあるものは、key自体を削除。id番号は変更しない。
@@ -118,54 +158,10 @@ https://github.com/project-tsurugi/manager/blob/df3b3a7a0a7e7e7c3643a9bc00baef50
 |13| CHAR	   | 0	                | char             | bpchar
 |14| VARCHAR  | 0	                | varchar             | varchar
 
-## 将来verで検討する機能項目一覧
-
-|将来verで検討する機能項目|V2での実装方針|将来verでの方針|優先度|
-|----|----|----|----|
-|[サポートする型](#サポートする型)以外の型|エラーメッセージを出力。<br>テーブル定義されない。<br>date、配列がお客様に利用されるため、拡張性ある実装とする。|date、配列の利用あり|高|
-|列制約のNOT NULL・PRIMARY KEY制約、および表制約のPRIMARY KEY制約（複合主キー含む）以外の制約|エラーメッセージを出力。<br>テーブル定義されない。|外部キー制約など性能測定に必要であるため優先？|中|
-|スキーマ名|frontendは、PostgreSQLでスキーマ名が入力されても、構文エラーとしないが、<br>スキーマ名はmetadata-managerに格納されない。<br>つまり、スキーマ名の入力は無視して処理する。|性能測定が優先であるため、ユーザー管理機能で検討？|中|
-|インデックスの方向(DEFAULT,ASC,DSC)|V1と同様に全カラムに対して常に **"0"** を格納||中|
-|DEFAULT制約の式の格納|V1と同様に全カラムに対して常に **"(undefined)"** を格納 <br> ※V1.0ではDEFAULT制約を指定しない場合、常に"(undefined)"で格納されている||低|
-|[サポートするロケール](#サポートするロケール)以外のロケール|エラーハンドリングしない<br>注意事項として提示||低|
-
-### サポートするCREATE TABLE構文
-
-CREATE TABLE *table_name* ( [  
-&nbsp;&nbsp;{ *column_name* *data_type* [ *column_constraint* [ ... ] ]  
-&nbsp;&nbsp;&nbsp;&nbsp;| *table_constraint* }  
-&nbsp;&nbsp;&nbsp;&nbsp;[, ... ]
-] )  
-TABLESPACE tsurugi
-
-*column_constraint*には、次の構文が入る。  
-
-[ CONSTRAINT *constraint_name* ]  
-{ NOT NULL |   
-&nbsp;&nbsp;PRIMARY KEY }  
-
-また、*table_constraint*には、次の構文が入る。 
-
-[ CONSTRAINT *constraint_name* ]  
-{ PRIMARY KEY ( *column_name* [, ... ] ) }  
-
-### サポートする型
-
-|大分類|PostgreSQLの型(名)|PostgreSQLの型(別名)|ogawayamaの型（名）|
-|-:|:-|:-|:-|
-|整数|smallint|int2|INT16|
-|整数|integer|int, int4|INT32|
-|整数|bigint|int8|INT64|
-|浮動小数点|real|float4|FLOAT32|
-|浮動小数点|double precision|float8|FLOAT64|
-|文字列|text||TEXT|
-|文字列|character [ (n) ]|char [ (n) ]|TEXT|
-|文字列|character varying [ (n) ]|varchar [ (n) ]|TEXT|
-
-### サポートするロケール
+### 4. 実行エンジンがサポートするロケールは何か
 
 |項目|値|
 |----|----|
-|照合順序(LC_COLLATE) |C|
-|文字の種類(LC_CTYPE)|C|
-|エンコーディング(ENCODING)|UTF8|
+|照合順序(LC_COLLATE) ||
+|文字の種類(LC_CTYPE)||
+|エンコーディング(ENCODING)||
