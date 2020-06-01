@@ -84,9 +84,8 @@ https://github.com/project-tsurugi/manager/blob/df3b3a7a0a7e7e7c3643a9bc00baef50
 | "direction"         | number        [+] | 方向（0: DEFAULT, 1: ASCENDANT, 2: DESCENDANT）| **V1と同様に全カラムに対して常に"0"を格納** |
 
 ### PostgreSQLとカラムのデータ型のID対応表
-* カラムのデータ型のIDは、[DataTypeメタデータオブジェクトのvalueに格納する値](#datatypeメタデータオブジェクトのvalueに格納する値)を参照
 
-|大分類|PostgreSQLの型(名)|PostgreSQLの型(別名)|カラムのデータ型のID|
+|大分類|PostgreSQLの型(名)|PostgreSQLの型(別名)|カラムのデータ型のID <br>※[カラムのデータ型のID一覧](#カラムのデータ型のID一覧)を参照|
 |-:|:-|:-|:-|
 |整数|smallint|int2|2|
 |整数|integer|int, int4|4|
@@ -97,7 +96,7 @@ https://github.com/project-tsurugi/manager/blob/df3b3a7a0a7e7e7c3643a9bc00baef50
 |文字列|character [ (n) ]|char [ (n) ]|11|
 |文字列|character varying [ (n) ]|varchar [ (n) ]|11|
 
-### DataTypeメタデータオブジェクトのvalueに格納する値
+### カラムのデータ型のID一覧
 
 * 太字は変更
 * id番号に削除と書いてあるものは、key自体を削除。id番号は変更しない。
