@@ -78,7 +78,7 @@
 https://github.com/project-tsurugi/manager/blob/df3b3a7a0a7e7e7c3643a9bc00baef50a02e6f27/metadata-manager/docs/table_metadata.md#%E3%83%A1%E3%82%BF%E3%83%87%E3%83%BC%E3%82%BF%E3%83%95%E3%82%A9%E3%83%BC%E3%83%9E%E3%83%83%E3%83%88
 
 ### Columnメタデータオブジェクト
-    * Columnメタデータオブジェクトのvalueに格納する値は次の通りでよいか。
+* Columnメタデータオブジェクトのvalueに格納する値は次の通りでよいか。
 
 |key|valueの型|valueの説明|valueに格納する値|
 |----|----|----|----|----|
