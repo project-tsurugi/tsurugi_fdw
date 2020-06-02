@@ -110,14 +110,14 @@ https://github.com/project-tsurugi/manager/blob/df3b3a7a0a7e7e7c3643a9bc00baef50
         * ユーザー管理機能で対応でもよさそう？よく分からない。
 
 |key|valueの型|valueの説明|valueに格納する値|
-|----|----|----|----|----|
+|----|----|----|----|
 | "namespace"  | string [+]        | スキーマ名    | **keyを作成しない。**  |
 
 #### Columnメタデータオブジェクト
 * Columnメタデータオブジェクトのvalueに格納する値は次の通りでよいか。
 
 |key|valueの型|valueの説明|valueに格納する値|
-|----|----|----|----|----|
+|----|----|----|----|
 | "dataTypeId"        | number        [*] | カラムのデータ型のID | smallint以外、V1と同じID。[PostgreSQLとカラムのデータ型のID対応表](#postgresqlとカラムのデータ型のid対応表)を参照 | 
 | "varying"         | bool        [+] | **文字列長が可変か否か** | **PostgreSQLの型で、varcharの場合、true。charの場合false。それ以外の場合、keyを作成しない。** |
 | "default"           | string        [+] | デフォルト式 | **V1と同様に全カラムに対して常に "(undefined)" を格納** <br> ※V1.0ではDEFAULT制約を指定しない場合、常に"(undefined)"で格納されている |
