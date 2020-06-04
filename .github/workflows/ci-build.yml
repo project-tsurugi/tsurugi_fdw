@@ -1,0 +1,59 @@
+name: Frontend-CI
+
+on: [push, pull_request]
+
+jobs:
+  Build:
+    runs-on: [self-hosted, oltp]
+
+    steps:
+      - id: Begin
+        name: Begin
+        run: |
+          echo "Begin ${GITHUB_WORKFLOW}/${GITHUB_JOB} hostname:$(hostname)"
+
+      - id: Setup_PostgreSQL
+        name: Setup_PostgreSQL
+        run: |
+          if [ ! -e ./postgresql-11.1 ]; then
+            curl -sL https://ftp.postgresql.org/pub/source/v11.1/postgresql-11.1.tar.bz2 | tar -xj
+          fi
+          cd postgresql-11.1
+          ./configure --prefix=${GITHUB_WORKSPACE}/pgsql
+          make -j8
+          make install
+
+      - id: Checkout
+        name: Checkout
+        uses: actions/checkout@v2
+        with:
+          path: postgresql-11.1/contrib/frontend
+          submodules: recursive
+          ssh-key: ${{ secrets.SSH_KEY }}
+
+      - id: CMake_Build_ogawayama
+        name: CMake_Build_ogawayama
+        run: |
+          cd postgresql-11.1/contrib/frontend/third_party/ogawayama
+          git clean -dfx
+          mkdir build
+          cd build
+          cmake -DBUILD_STUB_ONLY=ON -DBUILD_TESTS=OFF ..
+          cmake --build . --target all --clean-first -- -j8
+
+      - id: CMake_Build_metadata_manager
+        name: CMake_Build_metadata_manager
+        run: |
+          cd postgresql-11.1/contrib/frontend/third_party/manager/metadata-manager
+          git clean -dfx
+          mkdir build
+          cd build
+          cmake ..
+          cmake --build . --target all --clean-first -- -j8
+
+      - id: Make_Install
+        name: Make_Build
+        run: |
+          cd postgresql-11.1/contrib/frontend
+          make -j8
+          make install
