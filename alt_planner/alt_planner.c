@@ -8,7 +8,9 @@
 
 #include "postgres.h"
 
+#if PG_VERSION_NUM >= 120000
 #include "access/table.h"
+#endif
 #include "catalog/pg_type.h"
 #include "foreign/fdwapi.h"
 #include "nodes/makefuncs.h"
@@ -40,6 +42,11 @@ typedef struct AltPlannerInfo
 
 } AltPlannerInfo;
 
+/* "table_open" was "heap_open" before v12 */
+#if PG_VERSION_NUM < 120000
+#define table_open(x, y) heap_open(x, y)
+#define table_close(x, y) heap_close(x, y)
+#endif /* PG_VERSION_NUM */
 
 #ifndef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
@@ -399,7 +406,11 @@ create_modify_table( AltPlannerInfo *root, ForeignScan *scan )
 	modify->operation = root->parse->commandType;
 	modify->canSetTag = root->parse->canSetTag;
 	modify->nominalRelation = 1;
+#if PG_VERSION_NUM < 120000
+	modify->partitioned_rels = 0;
+#else
 	modify->rootRelation = 0;
+#endif
 	modify->partColsUpdated = false;
 	modify->resultRelations = 0;
 	modify->resultRelIndex = 0;
@@ -557,7 +568,11 @@ is_valid_targetentry( ForeignScan *scan, AltPlannerInfo *root )
 			/* 以下、処理しません */
 			case T_Const:
 			case T_Param:
+#if PG_VERSION_NUM < 120000
+			case T_ArrayRef:
+#else
 			case T_SubscriptingRef:
+#endif
 			case T_FuncExpr:
 			case T_OpExpr:
 			case T_DistinctExpr:
@@ -621,6 +636,9 @@ create_planned_stmt( AltPlannerInfo *root, Plan *plan )
 	stmt->planTree = plan;
 	stmt->rtable = parse->rtable;
 	stmt->resultRelations = NIL;
+#if PG_VERSION_NUM < 120000
+	stmt->nonleafResultRelations = NIL;
+#endif
 	stmt->rootResultRelations = NIL;
 	stmt->subplans = NIL;
 	stmt->rewindPlanIDs = NULL;
