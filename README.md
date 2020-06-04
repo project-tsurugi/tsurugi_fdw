@@ -12,8 +12,8 @@ apt -y install make gcc g++
 # and packages to build ogawayama
 
 # build PostgreSQL
-curl -sL https://ftp.postgresql.org/pub/source/v11.1/postgresql-11.1.tar.bz2 | tar -xj
-cd postgresql-11.1
+curl -sL https://ftp.postgresql.org/pub/source/v12.3/postgresql-12.3.tar.bz2 | tar -xj
+cd postgresql-12.3
 ./configure --prefix=$HOME/pgsql
 make
 make install
