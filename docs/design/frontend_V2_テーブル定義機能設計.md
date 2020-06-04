@@ -253,7 +253,7 @@ TABLESPACE tsurugi
 | "dataTypeId"        | number        [*] | カラムのデータ型のID | smallint以外の型は、V1と同じID。[PostgreSQLとカラムのデータ型のID対応表](#postgresqlとカラムのデータ型のid対応表)を参照 | TypeName.names **xor** TypeName.typeOid |
 | "dataLength"        | array[number] [+] | データ長(配列長) varchar(20)など ※NUMERIC(precision,scale)を考慮してarray[number] にしている。               | **V1と同様に文字列長を格納** | TypeName.typmods **xor** TypeName.typmod |
 | "varying"         | bool        [+] | **文字列長が可変か否か** | **PostgreSQLの型で、varcharの場合、true。charの場合false。それ以外の場合、keyを作成しない。** <br> ★ノーチラス・テクノロジーズ様に確認 | TypeName.names **xor** TypeName.typeOid |
-| "nullable"          | bool          [*] | NOT NULL制約の有無                                    | V1と同じ | ColumnDef.constraints |
+| "nullable"          | bool          [*] | NOT NULL制約の有無                                    | V1と同じ(NOT NULL制約あり：false、NOT NULL制約なし：true) | ColumnDef.constraints |
 | "default"           | string        [+] | デフォルト式 | **V1と同様に全カラムに対して常に "(undefined)" を格納** <br> ※V1.0ではDEFAULT制約を指定しない場合、常に"(undefined)"で格納されている <br> ★ノーチラス・テクノロジーズ様に確認 | 取得しない |
 | "direction"         | number        [+] | 方向（0: DEFAULT, 1: ASCENDANT, 2: DESCENDANT）| **V1と同様に、PRIMARY KEY制約のカラムに対して"1"を格納、その他のカラムに対して常に"0"を格納** <br> ★ノーチラス・テクノロジーズ様に確認 |CreateStmt.constraints **xor** ColumnDef.constraints |
 
