@@ -17,7 +17,7 @@
 |12 error|2| 1| 1|
 
 ### SQL
-* CREATE_TABLE_tsurugi.sql
+* test_create_table_v2.sql
 
 ## 正常系
 ### SQL
