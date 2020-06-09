@@ -137,3 +137,34 @@ CREATE TABLE warehouse (
   w_zip char(9) NOT NULL,
   PRIMARY KEY (w_id)
 );
+
+-- Add table for ch-benchmark
+
+DROP TABLE IF EXISTS nation;
+CREATE TABLE nation (
+    n_nationkey integer NOT NULL,
+    n_name character(25) NOT NULL,
+    n_regionkey integer NOT NULL,
+    n_comment character(152) NOT NULL,
+    PRIMARY KEY (n_nationkey)
+);
+
+DROP TABLE IF EXISTS supplier;
+CREATE TABLE supplier (
+    su_suppkey integer NOT NULL,
+    su_name character(25) NOT NULL,
+    su_address character(40) NOT NULL,
+    su_nationkey integer NOT NULL,
+    su_phone character(15) NOT NULL,
+    su_acctbal double precision NOT NULL, -- numeric(12,2) NOT NULL
+    su_comment character(101) NOT NULL,
+    PRIMARY KEY (su_suppkey)
+);
+
+DROP TABLE IF EXISTS region;
+CREATE TABLE region (
+    r_regionkey integer NOT NULL,
+    r_name character(55) NOT NULL,
+    r_comment character(152) NOT NULL,
+    PRIMARY KEY (r_regionkey)
+);

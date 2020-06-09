@@ -21,7 +21,8 @@
 
 ## 正常系
 ### SQL
-* tpcc-postgres-ddl.sql
+* https://github.com/citusdata/ch-benchmark.git
+	* 本ディレクトリ直下のch-benchmark-ddl.sqlに置き換え
 
 ## 異常系
 * サポートしない構文エラー
