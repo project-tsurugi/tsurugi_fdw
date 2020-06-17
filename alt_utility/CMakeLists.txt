@@ -1,6 +1,6 @@
 # This file for testing.
 
-add_library(alt_utility SHARED create_table.cpp)
+add_library(alt_utility SHARED create_table.cpp tablecmds.cpp)
 
 find_library(manager_lib metadata HINTS ${MANAGER_LIBRARY_PATH})
 message(${manager_lib})

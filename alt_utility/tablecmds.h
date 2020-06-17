@@ -1,11 +1,11 @@
-#ifndef CREATE_TABLE_
-#define CREATE_TABLE_
+#ifndef TABLECMDS_
+#define TABLECMDS_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-bool create_table(CreateStmt *stmt);
+bool define_relation(CreateStmt *stmt);
 
 #ifdef __cplusplus
 }
