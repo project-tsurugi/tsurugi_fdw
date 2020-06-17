@@ -3,6 +3,7 @@
 
 #ifdef __cplusplus
 extern "C" {
+
 #endif
 
 bool create_table(CreateStmt *stmt);

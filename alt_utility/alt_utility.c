@@ -2,7 +2,7 @@
  *
  * alt_utility.c
  *	  Contains functions which control the execution of the POSTGRES utility
- *	  commands.  
+ *	  commands.
  *
  *-------------------------------------------------------------------------
  */
@@ -22,10 +22,10 @@ PG_MODULE_MAGIC;
 #endif
 
 /* ProcessUtility_hook function */
-void tsurugi_ProcessUtility(PlannedStmt *pstmt, 
-                            const char *query_string, ProcessUtilityContext context, 
-                            ParamListInfo params, 
-                            QueryEnvironment *queryEnv, 
+void tsurugi_ProcessUtility(PlannedStmt *pstmt,
+                            const char *query_string, ProcessUtilityContext context,
+                            ParamListInfo params,
+                            QueryEnvironment *queryEnv,
                             DestReceiver *dest, char *completionTag);
 
 extern bool IsTransactionBlock(void);
@@ -52,19 +52,19 @@ static void tsurugi_ProcessUtilitySlow(ParseState *pstate,
 				                       char *completionTag);
 
 /*
- *  @brief: 
+ *  @brief:
  */
-void 
-tsurugi_ProcessUtility(PlannedStmt *pstmt, 
-                       const char *queryString, ProcessUtilityContext context, 
-                       ParamListInfo params, 
-                       QueryEnvironment *queryEnv, 
+void
+tsurugi_ProcessUtility(PlannedStmt *pstmt,
+                       const char *queryString, ProcessUtilityContext context,
+                       ParamListInfo params,
+                       QueryEnvironment *queryEnv,
                        DestReceiver *dest, char *completionTag)
 {
 	Node	   *parsetree = pstmt->utilityStmt;
 //	bool		isTopLevel = (context == PROCESS_UTILITY_TOPLEVEL);
-	bool		isAtomicContext = 
-                    (!(context == PROCESS_UTILITY_TOPLEVEL || context == PROCESS_UTILITY_QUERY_NONATOMIC) 
+	bool		isAtomicContext =
+                    (!(context == PROCESS_UTILITY_TOPLEVEL || context == PROCESS_UTILITY_QUERY_NONATOMIC)
                     || IsTransactionBlock());
 	ParseState *pstate;
 
@@ -97,7 +97,7 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 	free_parsestate(pstate);
 }
 
-static void 
+static void
 tsurugi_ProcessUtilitySlow(ParseState *pstate,
 				           PlannedStmt *pstmt,
 				           const char *queryString,
@@ -123,7 +123,7 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
 	PG_TRY();
     {
 		if (isCompleteQuery)
-			EventTriggerDDLCommandStart(parsetree);        
+			EventTriggerDDLCommandStart(parsetree);
 
 		switch (nodeTag(parsetree))
 		{
@@ -146,15 +146,15 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
 							Datum		toast_options;
 							static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 
-
-                            if (((CreateStmt *)stmt)->tablespacename != NULL 
-                                && !strcmp(((CreateStmt *)stmt)->tablespacename, "tsurugi")) {
-                                success = create_table(queryString);
+							CreateStmt *create_stmt = ((CreateStmt *)stmt);
+                            if (create_stmt->tablespacename != NULL
+                                && !strcmp(create_stmt->tablespacename, "tsurugi")) {
+                                success = create_table(create_stmt);
                                 if (!success) {
                                     elog(ERROR, "create_table() failed.");
                                 }
-                                                                                                                           
-                                strcat(((CreateStmt *)stmt)->relation->relname, "_dummy");
+
+                                strcat(create_stmt->relation->relname, "_dummy");
                             }
                             /* Create the table itself */
                             address = DefineRelation((CreateStmt *) stmt,
@@ -238,7 +238,7 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
 					commandCollected = true;
 				}
 				break;
-           
+
             default:
 				elog(ERROR, "unrecognized node type: %d",
 					 (int) nodeTag(parsetree));

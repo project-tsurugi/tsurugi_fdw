@@ -25,8 +25,6 @@
 #include "ogawayama/stub/api.h"
 #include "stub_manager.h"
 
-#include "create_table.h"
-
 using namespace boost::property_tree;
 using namespace manager;
 using namespace ogawayama;
@@ -47,6 +45,22 @@ static bool execute_create_table(std::string_view query_string);
 
 #include "create_table.h"
 #include "tablecmds.h"
+
+/*
+ *  @brief:
+ */
+bool create_table(CreateStmt *stmt)
+{
+    Assert(stmt != nullptr);
+
+    bool success = define_relation(stmt);
+    if (!success)
+    {
+        elog(ERROR, "execute_create_table() failed.");
+    }
+
+    return success;
+}
 
 /*
  *  @brief:
