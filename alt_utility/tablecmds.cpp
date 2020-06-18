@@ -114,9 +114,6 @@ bool store_metadata(CreateStmt *stmt){
         return ret_value;
     }
 
-    // default constraint expression
-    const std::string default_constraint_expr{"(undefined)"};
-
     // root
     ptree root;
 
@@ -257,9 +254,6 @@ bool store_metadata(CreateStmt *stmt){
             }
 
         }
-
-        // default constraint expression
-        column.put(Tables::Column::DEFAULT, default_constraint_expr);
 
         columns.push_back(std::make_pair("", column));
         ordinal_position++;
