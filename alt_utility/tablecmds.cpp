@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2020 tsurugi project.
+ * Copyright 2019-2020 tsurugi project.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,36 +17,35 @@
  *	@brief
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include <postgres.h>
-
-#include "nodes/nodes.h"
-#include "nodes/parsenodes.h"
-#include "utils/palloc.h"
-
-#ifdef __cplusplus
-}
-#endif
-
 #include <iostream>
 #include <string>
 
 #include "manager/metadata/datatypes.h"
 #include "manager/metadata/metadata.h"
-#include "tablecmds.h"
+#include "manager/metadata/tables.h"
 
 using namespace manager::metadata;
 using namespace boost::property_tree;
 
-std::unique_ptr<Metadata> datatypes{new DataTypes("Tsurugi")};
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "postgres.h"
+#include "nodes/parsenodes.h"
+#include "nodes/value.h"
+#ifdef __cplusplus
+}
+#endif
+
+#include "tablecmds.h"
+
+const std::string dbname{"Tsurugi"};
+std::unique_ptr<Metadata> datatypes{new DataTypes(dbname)};
 
 const int TSURUGI_TYPE_CHAR_ID = 13;
 const int TSURUGI_TYPE_VARCHAR_ID = 14;
 
-const int TSURUGI_DIRECTION_DEFAULT = 0
+const int TSURUGI_DIRECTION_DEFAULT = 0;
 const int TSURUGI_DIRECTION_ASC = 1;
 const int TSURUGI_DIRECTION_DESC = 2;
 
@@ -57,49 +56,43 @@ bool define_relation(CreateStmt *stmt)
 {
     Assert(stmt != nullptr);
 
-    char *create_stmt_cstr;
-    bool ret_val{false};
-
-    create_stmt_cstr = nodeToString(stmt);
-
-    std::cout << "nodeToString: " << create_stmt_cstr << "\n" << std::endl;
-    pfree(create_stmt_cstr);
+    bool ret_value{false};
 
     if (datatypes->load() != ErrorCode::OK) {
         std::cout << "DataTypes::load() error." << std::endl;
-        return ret_val;
+        return ret_value;
     }
 
     // check syntax supported or not by Tsurugi
-    if(ret_val = check_syntax_supported(stmt)){
+    if(!is_syntax_supported(stmt)){
         elog(ERROR, "define_relation() failed.");
-        return ret_val;
+        return ret_value;
     }
 
     // check type supported or not by Tsurugi
-    if(ret_val = check_type_supported(stmt)){
+    if(!is_type_supported(stmt)){
         elog(ERROR, "define_relation() failed.");
-        return ret_val;
+        return ret_value;
     }
 
     // send metadata to metadata manager
-    if(ret_val = store_metadata(stmt)){
+    if(!store_metadata(stmt)){
         elog(ERROR, "define_relation() failed.");
-        return ret_val;
+        return ret_value;
     }
 
-    ret_val = true;
-    return ret_val;
+    ret_value = true;
+    return ret_value;
 }
 
-bool check_type_supported(CreateStmt *stmt){
+bool is_type_supported(CreateStmt *stmt){
     bool supported{false};
 
     supported = true;
     return supported;
 }
 
-bool check_syntax_supported(CreateStmt *stmt){
+bool is_syntax_supported(CreateStmt *stmt){
     bool supported{false};
     supported = true;
     return supported;
@@ -107,65 +100,65 @@ bool check_syntax_supported(CreateStmt *stmt){
 
 bool store_metadata(CreateStmt *stmt){
 
-    bool ret_val{false};
+    bool ret_value{false};
 
     // default constraint expression
-    const std::string default_constraint_expr{"(undefined)"}
+    const std::string default_constraint_expr{"(undefined)"};
 
     // root
-    boost::property_tree::ptree root;
+    ptree root;
 
     // table
-    boost::property_tree::ptree new_table;
+    ptree new_table;
 
     // tbale name
-    if (stmt.relation != NIL){
-        RangeVar *relation = (RangeVar *)stmt.relation)
-        char *relname = relation.relname;
-        if (relation.relname != NULL){
+    RangeVar *relation = (RangeVar *)stmt->relation;
+    if (relation != NULL){
+        char *relname = relation->relname;
+        if (relation->relname != NULL){
             new_table.put(Tables::NAME, relname);
         }
     }else{
-        return ret_val;
+        return ret_value;
     }
 
     List *table_elts = stmt->tableElts;
     ListCell *table_elt;
 
     // primaryKey
-    boost::property_tree::ptree primary_keys;
+    ptree primary_keys;
 
     // columns
-    boost::property_tree::ptree columns;
+    ptree columns;
     uint64_t ordinal_position = 1;
 
     foreach (table_elt, table_elts)
     {
+        ColumnDef *colDef = (ColumnDef *)lfirst(table_elt);
 
         // column
-        boost::property_tree::ptree column;
+        ptree column;
 
         // ordinalPosition
         column.put<uint64_t>(Tables::Column::ORDINAL_POSITION, ordinal_position);
 
         // column name
-        column.put(Tables::Column::NAME, colDef.colname);
+        column.put(Tables::Column::NAME, colDef->colname);
 
-        ColumnDef *colDef = (ColumnDef *)lfirst(table_elt);
-        List *colDef_constraints = colDef.constrains;
-
+        List *colDef_constraints = colDef->constraints;
         bool nullable = true;
         bool pkey = false;
 
-        if(colDef_constraints != NIL){
+        if(colDef_constraints != NULL){
 
+            ListCell   *l;
             foreach (l, colDef_constraints){
                 Constraint *constraint = (Constraint *)lfirst(l);
 
-                if(constraint.contype == CONSTR_NOTNULL){
+                if(constraint->contype == CONSTR_NOTNULL){
                     // nullable
                     nullable = false;
-                }else if(constraint.contype == CONSTR_PRIMARY){
+                }else if(constraint->contype == CONSTR_PRIMARY){
                     // primary key
                     pkey = true;
                 }
@@ -177,32 +170,35 @@ bool store_metadata(CreateStmt *stmt){
 
         // primary key and direction
         if (pkey){
-            boost::property_tree::ptree primary_key;
+            ptree primary_key;
             primary_key.put<uint64_t>("", ordinal_position);
             primary_keys.push_back(std::make_pair("", primary_key));
 
             column.put<uint64_t>(Tables::Column::DIRECTION,TSURUGI_DIRECTION_ASC);
         }else{
-            column.put<uint64_t>(Tables::Column::DIRECTION,TSURUGI_DEFAULT);
+            column.put<uint64_t>(Tables::Column::DIRECTION,TSURUGI_DIRECTION_DEFAULT);
         }
 
         // get dataTypeId
         ErrorCode err;
-        boost::property_tree::ptree datatype;
+        ptree datatype;
 
-        TypeName *colDef_type_name = colDef.typeName;
+        TypeName *colDef_type_name = colDef->typeName;
 
-        if(colDef_type_name != NIL){
-            List type_names = colDef_type_name.names;
-            ObjectIdType data_type_id = NULL;
+        if(colDef_type_name != NULL){
+            List *type_names = colDef_type_name->names;
+            ObjectIdType data_type_id;
 
+            ListCell   *l;
             foreach (l, type_names){
                 Value *type_name_value = (Value *)lfirst(l);
-                err = datatypes_->get(DataTypes::PG_DATA_TYPE_QUALIFIED_NAME, type_name_value, datatype);
+                std::string type_name{std::string(type_name_value->val.str)};
+                ptree datatype;
+                err = datatypes->get(DataTypes::PG_DATA_TYPE_QUALIFIED_NAME, type_name, datatype);
                 if (err != ErrorCode::OK) {
                     data_type_id = datatype.get<ObjectIdType>(DataTypes::ID);
                     if (!data_type_id) {
-                        return ret_val;
+                        return ret_value;
                     }else{
                         // put dataTypeId
                         column.put<ObjectIdType>(Tables::Column::DATA_TYPE_ID, data_type_id);
@@ -211,11 +207,15 @@ bool store_metadata(CreateStmt *stmt){
                 }
             }
 
-            List typmods = colDef_type_name.typmods;
-            int32 typmod = colDef_type_name.typmod;
+            List *typmods = colDef_type_name->typmods;
+            int32 typemod = colDef_type_name->typemod;
 
-            if (type_mods != NIL){
+            if (typmods != NIL){
+
+                ListCell *l;
                 foreach (l, typmods){
+                    Node *tm = (Node *) lfirst(l);
+
                     if (IsA(tm, A_Const))
 		            {
 			            A_Const    *ac = (A_Const *) tm;
@@ -224,16 +224,17 @@ bool store_metadata(CreateStmt *stmt){
 		                {
                             column.put<uint64_t>(Tables::Column::DATA_LENGTH, ac->val.val.ival);
 		                }else{
-                            return ret_val;
+                            return ret_value;
                         }
                     }else{
-                        return ret_val;
+                        return ret_value;
                     }
                 }
-            else if (typmod != 0 ){
-                column.put<uint64_t>(Tables::Column::DATA_LENGTH, typmod);
+            }else if (typemod != 0 ){
+                column.put<uint64_t>(Tables::Column::DATA_LENGTH, typemod);
             }
-            if (data_type_id != NULL){
+
+            if (!data_type_id){
                 if(data_type_id == TSURUGI_TYPE_VARCHAR_ID){
                     // varying
                     column.put<bool>(Tables::Column::VARYING, true);
@@ -260,9 +261,9 @@ bool store_metadata(CreateStmt *stmt){
 
     if (Tables::save(dbname, root) != ErrorCode::OK) {
         elog(ERROR, "define_relation() failed.");
-        return ret_val;
+        return ret_value;
     }
 
-    ret_val = true;
-    return ret_val;
+    ret_value = true;
+    return ret_value;
 }

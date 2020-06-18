@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2019 tsurugi project.
+ * Copyright 2019-2020 tsurugi project.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,11 @@
 #include <string>
 #include <string_view>
 #include <regex>
-#include "manager/metadata/metadata.h"
-#include "manager/metadata/datatypes.h"
+
 #include "ogawayama/stub/api.h"
 #include "stub_manager.h"
+#include "manager/metadata/metadata.h"
+#include "manager/metadata/datatypes.h"
 
 using namespace boost::property_tree;
 using namespace manager;
@@ -32,19 +33,17 @@ using namespace ogawayama;
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <postgres.h>
+#include "postgres.h"
 #include "nodes/parsenodes.h"
-
 #ifdef __cplusplus
 }
 #endif
 
+#include "tablecmds.h"
+#include "create_table.h"
+
 static std::string rewrite_query(std::string_view query_string);
 static bool execute_create_table(std::string_view query_string);
-
-#include "create_table.h"
-#include "tablecmds.h"
 
 /*
  *  @brief:
