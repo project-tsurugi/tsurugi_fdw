@@ -31,6 +31,7 @@ using namespace boost::property_tree;
 extern "C" {
 #endif
 #include "postgres.h"
+#include "nodes/nodes.h"
 #include "nodes/parsenodes.h"
 #include "nodes/value.h"
 #ifdef __cplusplus
@@ -40,7 +41,6 @@ extern "C" {
 #include "tablecmds.h"
 
 const std::string dbname{"Tsurugi"};
-std::unique_ptr<Metadata> datatypes{new DataTypes(dbname)};
 
 const int TSURUGI_TYPE_CHAR_ID = 13;
 const int TSURUGI_TYPE_VARCHAR_ID = 14;
@@ -48,6 +48,8 @@ const int TSURUGI_TYPE_VARCHAR_ID = 14;
 const int TSURUGI_DIRECTION_DEFAULT = 0;
 const int TSURUGI_DIRECTION_ASC = 1;
 const int TSURUGI_DIRECTION_DESC = 2;
+
+const int TYPEMOD_NULL_VALUE = -1;
 
 /*
  *  @brief:
@@ -58,10 +60,7 @@ bool define_relation(CreateStmt *stmt)
 
     bool ret_value{false};
 
-    if (datatypes->load() != ErrorCode::OK) {
-        std::cout << "DataTypes::load() error." << std::endl;
-        return ret_value;
-    }
+    std::cout << nodeToString(stmt) << std::endl;
 
     // check syntax supported or not by Tsurugi
     if(!is_syntax_supported(stmt)){
@@ -101,6 +100,19 @@ bool is_syntax_supported(CreateStmt *stmt){
 bool store_metadata(CreateStmt *stmt){
 
     bool ret_value{false};
+    std::unique_ptr<Metadata> datatypes{new DataTypes(dbname)};
+
+    if (datatypes->load() != ErrorCode::OK) {
+        std::cout << "DataTypes::load() error." << std::endl;
+        return ret_value;
+    }
+
+    std::unique_ptr<Metadata> tables{new Tables(dbname)};
+
+    if (tables->load() != ErrorCode::OK) {
+        std::cout << "Tables::load() error." << std::endl;
+        return ret_value;
+    }
 
     // default constraint expression
     const std::string default_constraint_expr{"(undefined)"};
@@ -179,10 +191,6 @@ bool store_metadata(CreateStmt *stmt){
             column.put<uint64_t>(Tables::Column::DIRECTION,TSURUGI_DIRECTION_DEFAULT);
         }
 
-        // get dataTypeId
-        ErrorCode err;
-        ptree datatype;
-
         TypeName *colDef_type_name = colDef->typeName;
 
         if(colDef_type_name != NULL){
@@ -193,9 +201,11 @@ bool store_metadata(CreateStmt *stmt){
             foreach (l, type_names){
                 Value *type_name_value = (Value *)lfirst(l);
                 std::string type_name{std::string(type_name_value->val.str)};
+                // get dataTypeId
+                ErrorCode err;
                 ptree datatype;
                 err = datatypes->get(DataTypes::PG_DATA_TYPE_QUALIFIED_NAME, type_name, datatype);
-                if (err != ErrorCode::OK) {
+                if (err == ErrorCode::OK) {
                     data_type_id = datatype.get<ObjectIdType>(DataTypes::ID);
                     if (!data_type_id) {
                         return ret_value;
@@ -211,6 +221,7 @@ bool store_metadata(CreateStmt *stmt){
             int32 typemod = colDef_type_name->typemod;
 
             if (typmods != NIL){
+                ptree datalengths;
 
                 ListCell *l;
                 foreach (l, typmods){
@@ -222,7 +233,7 @@ bool store_metadata(CreateStmt *stmt){
 
 		                if (IsA(&ac->val, Integer))
 		                {
-                            column.put<uint64_t>(Tables::Column::DATA_LENGTH, ac->val.val.ival);
+                            datalengths.put<uint64_t>("", ac->val.val.ival);
 		                }else{
                             return ret_value;
                         }
@@ -230,7 +241,8 @@ bool store_metadata(CreateStmt *stmt){
                         return ret_value;
                     }
                 }
-            }else if (typemod != 0 ){
+                column.add_child(Tables::Column::DATA_LENGTH, datalengths);
+            }else if (typemod != TYPEMOD_NULL_VALUE ){
                 column.put<uint64_t>(Tables::Column::DATA_LENGTH, typemod);
             }
 
