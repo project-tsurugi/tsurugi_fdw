@@ -52,7 +52,8 @@ bool create_table(CreateStmt *stmt)
 {
     Assert(stmt != nullptr);
 
-    bool success = define_relation(stmt);
+    TableCommands table_commands;
+    bool success = table_commands.define_relation(stmt);
     if (!success)
     {
         elog(ERROR, "execute_create_table() failed.");

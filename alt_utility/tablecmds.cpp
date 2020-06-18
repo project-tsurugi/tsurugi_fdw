@@ -40,27 +40,22 @@ extern "C" {
 
 #include "tablecmds.h"
 
-const std::string dbname{"Tsurugi"};
-
-const int TSURUGI_TYPE_CHAR_ID = 13;
-const int TSURUGI_TYPE_VARCHAR_ID = 14;
-
-const int TSURUGI_DIRECTION_DEFAULT = 0;
-const int TSURUGI_DIRECTION_ASC = 1;
-const int TSURUGI_DIRECTION_DESC = 2;
-
-const int TYPEMOD_NULL_VALUE = -1;
-
 /*
  *  @brief:
  */
-bool define_relation(CreateStmt *stmt)
+bool TableCommands::define_relation(CreateStmt *stmt)
 {
     Assert(stmt != nullptr);
 
     bool ret_value{false};
 
     std::cout << nodeToString(stmt) << std::endl;
+
+    // initilization
+    if(!init()){
+        elog(ERROR, "define_relation() failed.");
+        return ret_value;
+    }
 
     // check syntax supported or not by Tsurugi
     if(!is_syntax_supported(stmt)){
@@ -84,35 +79,43 @@ bool define_relation(CreateStmt *stmt)
     return ret_value;
 }
 
-bool is_type_supported(CreateStmt *stmt){
-    bool supported{false};
-
-    supported = true;
-    return supported;
-}
-
-bool is_syntax_supported(CreateStmt *stmt){
-    bool supported{false};
-    supported = true;
-    return supported;
-}
-
-bool store_metadata(CreateStmt *stmt){
-
+bool TableCommands::init(){
     bool ret_value{false};
-    std::unique_ptr<Metadata> datatypes{new DataTypes(dbname)};
+
+    datatypes = std::make_unique<DataTypes>(dbname);
 
     if (datatypes->load() != ErrorCode::OK) {
         std::cout << "DataTypes::load() error." << std::endl;
         return ret_value;
     }
 
-    std::unique_ptr<Metadata> tables{new Tables(dbname)};
+    tables = std::make_unique<Tables>(dbname);
 
     if (tables->load() != ErrorCode::OK) {
         std::cout << "Tables::load() error." << std::endl;
         return ret_value;
     }
+
+    ret_value = true;
+    return ret_value;
+}
+
+bool TableCommands::is_type_supported(CreateStmt *stmt){
+    bool supported{false};
+
+    supported = true;
+    return supported;
+}
+
+bool TableCommands::is_syntax_supported(CreateStmt *stmt){
+    bool supported{false};
+    supported = true;
+    return supported;
+}
+
+bool TableCommands::store_metadata(CreateStmt *stmt){
+
+    bool ret_value{false};
 
     // table
     ptree new_table;
