@@ -13,7 +13,7 @@
 - [構文・型](#構文型)
   - [サポートするCREATE TABLE構文](#サポートするcreate-table構文)
   - [サポートする型](#サポートする型)
-  - [サポートするロケール](#サポートするロケール)
+  - [サポートするロケール・文字エンコーディング](#サポートするロケール文字エンコーディング)
   - [構文例](#構文例)
 - [テーブル定義機能シーケンス](#テーブル定義機能シーケンス)
   - [シーケンス概要](#シーケンス概要)
@@ -76,7 +76,7 @@
 |列制約のNOT NULL・PRIMARY KEY制約、および表制約のPRIMARY KEY制約（複合主キー含む）以外の制約|エラーメッセージを出力。<br>テーブル定義されない。|外部キー制約など性能測定に必要であるため優先？|中|
 |スキーマ名|frontendは、PostgreSQLでスキーマ名が入力されても、構文エラーとしないが、<br>スキーマ名はmetadata-managerに格納されない。<br>つまり、スキーマ名の入力は無視して処理する。|性能測定が優先であるため、ユーザー管理機能で検討？|中|
 |インデックスの方向(DEFAULT,ASC,DSC)|**V1と同様に、PRIMARY KEY制約のカラムに対して"1"を格納、その他のカラムに対して常に"0"を格納** <br> ★ノーチラス・テクノロジーズ様に確認||中|
-|DEFAULT制約の式の格納|V1と同様に全カラムに対して常に **"(undefined)"** を格納 <br> ※V1.0ではDEFAULT制約を指定しない場合、常に"(undefined)"で格納されている <br> ★ノーチラス・テクノロジーズ様に確認||低|
+|DEFAULT制約の式の格納|**keyを作成しない。** <br> ※V1.0ではDEFAULT制約を指定しない場合、常に"(undefined)"で格納されている <br> ★ノーチラス・テクノロジーズ様に確認||低|
 |[サポートするロケール](#サポートするロケール)以外のロケール|エラーハンドリングしない<br>注意事項として提示||低|
 |データ形式フォーマットバージョン、メタデータの世代|"1"固定||低|
 
@@ -106,24 +106,24 @@ TABLESPACE tsurugi
 
 |大分類|PostgreSQLの型(名)|PostgreSQLの型(別名)|ogawayamaの型（名）|
 |-:|:-|:-|:-|
-|整数|smallint|int2|INT16|
 |整数|integer|int, int4|INT32|
 |整数|bigint|int8|INT64|
 |浮動小数点|real|float4|FLOAT32|
 |浮動小数点|double precision|float8|FLOAT64|
-|文字列|text||TEXT|
 |文字列|character [ (n) ]|char [ (n) ]|TEXT|
 |文字列|character varying [ (n) ]|varchar [ (n) ]|TEXT|
 
-### サポートするロケール
+### サポートするロケール・文字エンコーディング
 
-* 現時点ではPostgreSQLに準拠する方向で検討。★ノーチラス・テクノロジーズ様に実行エンジンの仕様を確認
+* 現時点ではPostgreSQLに準拠する方向で検討。
+
+* 実行エンジンかサポートするロケール・文字エンコーディング
 
 |項目|値|
 |----|----|
 |照合順序(LC_COLLATE) |C|
-|文字の種類(LC_CTYPE)|C|
-|エンコーディング(ENCODING)|UTF8|
+|文字の種類(LC_CTYPE)|en_US|
+|エンコーディング(ENCODING)|UTF-8|
 
 ### 構文例
 
@@ -254,19 +254,17 @@ TABLESPACE tsurugi
 | "dataLength"        | array[number] [+] | データ長(配列長) varchar(20)など ※NUMERIC(precision,scale)を考慮してarray[number] にしている。               | **V1と同様に文字列長を格納** | TypeName.typmods **xor** TypeName.typmod |
 | "varying"         | bool        [+] | **文字列長が可変か否か** | **PostgreSQLの型で、varcharの場合、true。charの場合false。それ以外の場合、keyを作成しない。** <br> ★ノーチラス・テクノロジーズ様に確認 | TypeName.names **xor** TypeName.typeOid |
 | "nullable"          | bool          [*] | NOT NULL制約の有無                                    | V1と同じ(NOT NULL制約あり：false、NOT NULL制約なし：true) | ColumnDef.constraints |
-| "default"           | string        [+] | デフォルト式 | **V1と同様に全カラムに対して常に "(undefined)" を格納** <br> ※V1.0ではDEFAULT制約を指定しない場合、常に"(undefined)"で格納されている <br> ★ノーチラス・テクノロジーズ様に確認 | 取得しない |
+| "default"           | string        [+] | デフォルト式 |**keyを作成しない。** <br> ※V1.0ではDEFAULT制約を指定しない場合、常に"(undefined)"で格納されている <br> ★ノーチラス・テクノロジーズ様に確認 | 取得しない |
 | "direction"         | number        [+] | 方向（0: DEFAULT, 1: ASCENDANT, 2: DESCENDANT）| **V1と同様に、PRIMARY KEY制約のカラムに対して"1"を格納、その他のカラムに対して常に"0"を格納** <br> ★ノーチラス・テクノロジーズ様に確認 |CreateStmt.constraints **xor** ColumnDef.constraints |
 
 ###### PostgreSQLとカラムのデータ型のID対応表
 
 |大分類|PostgreSQLの型(名)|PostgreSQLの型(別名)|カラムのデータ型のID <br>※[データ型ID一覧](#データ型id一覧)を参照|
 |-:|:-|:-|:-|
-|整数|smallint|int2|2|
 |整数|integer|int, int4|4|
 |整数|bigint|int8|6|
 |浮動小数点|real|float4|8|
 |浮動小数点|double precision|float8|9|
-|文字列|text||11|
 |文字列|character [ (n) ]|char [ (n) ]|**13**|
 |文字列|character varying [ (n) ]|varchar [ (n) ]|**14**|
 

@@ -35,8 +35,6 @@
 
 |大分類|PostgreSQLの型(名)|PostgreSQLの型(別名)|ogawayamaの型（名）|
 |-:|:-|:-|:-|
-|整数|smallint|int2|INT16|
-|文字列|text||TEXT|
 |文字列|character [ (n) ]|char [ (n) ]|TEXT|
 |文字列|character varying [ (n) ]|varchar [ (n) ]|TEXT|
 
@@ -120,19 +118,17 @@ https://github.com/project-tsurugi/manager/blob/df3b3a7a0a7e7e7c3643a9bc00baef50
 |----|----|----|----|
 | "dataTypeId"        | number        [*] | カラムのデータ型のID | smallint以外、V1と同じID。[PostgreSQLとカラムのデータ型のID対応表](#postgresqlとカラムのデータ型のid対応表)を参照 | 
 | "varying"         | bool        [+] | **文字列長が可変か否か** | **PostgreSQLの型で、varcharの場合、true。charの場合false。それ以外の場合、keyを作成しない。** |
-| "default"           | string        [+] | デフォルト式 | **V1と同様に全カラムに対して常に "(undefined)" を格納** <br> ※V1.0ではDEFAULT制約を指定しない場合、常に"(undefined)"で格納されている |
+| "default"           | string        [+] | デフォルト式 | **keyを作成しない** <br> ※V1.0ではDEFAULT制約を指定しない場合、常に"(undefined)"で格納されている |
 | "direction"         | number        [+] | 方向（0: DEFAULT, 1: ASCENDANT, 2: DESCENDANT）| **V1と同様に、PRIMARY KEY制約のカラムに対して"1"を格納、その他のカラムに対して常に"0"を格納** <br> |
 
 #### PostgreSQLとカラムのデータ型のID対応表
 
 |大分類|PostgreSQLの型(名)|PostgreSQLの型(別名)|カラムのデータ型のID <br>※[データ型ID一覧](#データ型id一覧)を参照|
 |-:|:-|:-|:-|
-|整数|smallint|int2|2|
 |整数|integer|int, int4|4|
 |整数|bigint|int8|6|
 |浮動小数点|real|float4|8|
 |浮動小数点|double precision|float8|9|
-|文字列|text||11|
 |文字列|character [ (n) ]|char [ (n) ]|**13**|
 |文字列|character varying [ (n) ]|varchar [ (n) ]|**14**|
 
@@ -162,6 +158,6 @@ https://github.com/project-tsurugi/manager/blob/df3b3a7a0a7e7e7c3643a9bc00baef50
 
 |項目|値|
 |----|----|
-|照合順序(LC_COLLATE) ||
-|文字の種類(LC_CTYPE)||
-|エンコーディング(ENCODING)||
+|照合順序(LC_COLLATE) |C|
+|文字の種類(LC_CTYPE)|en_US|
+|エンコーディング(ENCODING)|UTF-8|
