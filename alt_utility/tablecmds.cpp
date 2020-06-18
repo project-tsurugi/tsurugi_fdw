@@ -114,9 +114,6 @@ bool store_metadata(CreateStmt *stmt){
         return ret_value;
     }
 
-    // root
-    ptree root;
-
     // table
     ptree new_table;
 
@@ -263,9 +260,7 @@ bool store_metadata(CreateStmt *stmt){
 
     new_table.add_child(Tables::COLUMNS_NODE, columns);
 
-    root.add_child(Tables::TABLES_NODE, new_table);
-
-    if (Tables::save(dbname, root) != ErrorCode::OK) {
+    if (tables->add(new_table) != ErrorCode::OK) {
         elog(ERROR, "define_relation() failed.");
         return ret_value;
     }
