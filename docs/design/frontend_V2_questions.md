@@ -133,8 +133,8 @@ https://github.com/project-tsurugi/manager/blob/df3b3a7a0a7e7e7c3643a9bc00baef50
 |浮動小数点|real|float4|8|
 |浮動小数点|double precision|float8|9|
 |文字列|text||11|
-|文字列|character [ (n) ]|char [ (n) ]|11|
-|文字列|character varying [ (n) ]|varchar [ (n) ]|11|
+|文字列|character [ (n) ]|char [ (n) ]|**13**|
+|文字列|character varying [ (n) ]|varchar [ (n) ]|**14**|
 
 #### データ型ID一覧
 

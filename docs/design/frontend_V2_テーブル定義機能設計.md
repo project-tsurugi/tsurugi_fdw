@@ -267,8 +267,8 @@ TABLESPACE tsurugi
 |浮動小数点|real|float4|8|
 |浮動小数点|double precision|float8|9|
 |文字列|text||11|
-|文字列|character [ (n) ]|char [ (n) ]|11|
-|文字列|character varying [ (n) ]|varchar [ (n) ]|11|
+|文字列|character [ (n) ]|char [ (n) ]|**13**|
+|文字列|character varying [ (n) ]|varchar [ (n) ]|**14**|
 
 ##### DataTypeメタデータ(root)
 |key|valueの型|valueの説明|valueに格納する値|
