@@ -139,18 +139,65 @@ CreateTable::load_metadata()
 bool
 CreateTable::is_type_supported()
 {
-    bool supported{false};
+    bool ret_value{true};
 
-    supported = true;
-    return supported;
+    List *table_elts = create_stmt->tableElts;
+    ListCell *l;
+
+    List *type_names_not_supported = NIL;
+
+    foreach(l, table_elts)
+    {
+        ColumnDef *colDef = (ColumnDef *)lfirst(l);
+        TypeName *colDef_type_name = colDef->typeName;
+
+        if (colDef_type_name != nullptr)
+        {
+            List *type_names = colDef_type_name->names;
+
+            bool is_supported{false};
+
+            ListCell   *l;
+            foreach(l, type_names)
+            {
+                Value *type_name_value = (Value *)lfirst(l);
+                std::string type_name{std::string(strVal(type_name_value))};
+                ErrorCode err;
+                ptree datatype;
+                err = datatypes->get(DataTypes::PG_DATA_TYPE_QUALIFIED_NAME, type_name, datatype);
+                if (err == ErrorCode::OK)
+                {
+                    is_supported = true;
+                }
+            }
+
+            if (!is_supported)
+            {
+                type_names_not_supported = lappend(type_names_not_supported,type_names);
+                ret_value = false;
+            }
+        }
+        else
+        {
+            show_syntax_error_msg();
+            ret_value = false;
+            return ret_value;
+        }
+    }
+
+    if (!ret_value)
+    {
+        show_type_error_msg(type_names_not_supported);
+    }
+
+    return ret_value;
 }
 
 bool
 CreateTable::is_syntax_supported()
 {
-    bool supported{false};
-    supported = true;
-    return supported;
+    bool ret_value{true};
+    return ret_value;
 }
 
 bool
@@ -429,6 +476,12 @@ CreateTable::get_ordinal_positions_of_primary_keys()
     }
 
     return op_pkeys;
+}
+
+void
+CreateTable::show_type_error_msg(List *type_names)
+{
+    elog(ERROR, "Tsurugi does not support type \"%s\".", nodeToString(type_names));
 }
 
 void

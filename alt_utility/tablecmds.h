@@ -34,6 +34,7 @@ class CreateTable {
         bool is_syntax_supported();
         bool store_metadata();
         std::unordered_set<uint64_t> get_ordinal_positions_of_primary_keys();
+        void show_type_error_msg(List *type_names);
         void show_syntax_error_msg();
 };
 
