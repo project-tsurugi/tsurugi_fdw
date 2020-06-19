@@ -17,6 +17,7 @@
  *	@brief
  */
 
+#include <boost/optional.hpp>
 #include <iostream>
 #include <string>
 
@@ -290,7 +291,7 @@ CreateTable::store_metadata()
         if (colDef_type_name != nullptr)
         {
             List *type_names = colDef_type_name->names;
-            ObjectIdType data_type_id;
+            boost::optional<ObjectIdType> data_type_id;
 
             ListCell   *l;
             foreach(l, type_names)
@@ -303,7 +304,7 @@ CreateTable::store_metadata()
                 err = datatypes->get(DataTypes::PG_DATA_TYPE_QUALIFIED_NAME, type_name, datatype);
                 if (err == ErrorCode::OK)
                 {
-                    data_type_id = datatype.get<ObjectIdType>(DataTypes::ID);
+                    data_type_id = datatype.get_optional<ObjectIdType>(DataTypes::ID);
                     if (!data_type_id)
                     {
                         return ret_value;
@@ -311,7 +312,19 @@ CreateTable::store_metadata()
                     else
                     {
                         // put dataTypeId
-                        column.put<ObjectIdType>(Tables::Column::DATA_TYPE_ID, data_type_id);
+                        ObjectIdType id = data_type_id.get();
+                        column.put<ObjectIdType>(Tables::Column::DATA_TYPE_ID, id);
+
+                        if (id == TSURUGI_TYPE_VARCHAR_ID)
+                        {
+                            // varying
+                            column.put<bool>(Tables::Column::VARYING, true);
+                        }
+                        else if (id == TSURUGI_TYPE_CHAR_ID)
+                        {
+                            // varying
+                            column.put<bool>(Tables::Column::VARYING, false);
+                        }
                     }
                     break;
                 }
@@ -358,20 +371,6 @@ CreateTable::store_metadata()
             else if (typemod != TYPEMOD_NULL_VALUE )
             {
                 column.put<uint64_t>(Tables::Column::DATA_LENGTH, typemod);
-            }
-
-            if (!data_type_id)
-            {
-                if (data_type_id == TSURUGI_TYPE_VARCHAR_ID)
-                {
-                    // varying
-                    column.put<bool>(Tables::Column::VARYING, true);
-                }
-                else if (data_type_id == TSURUGI_TYPE_CHAR_ID)
-                {
-                    // varying
-                    column.put<bool>(Tables::Column::VARYING, false);
-                }
             }
 
         }
