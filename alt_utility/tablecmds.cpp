@@ -484,7 +484,7 @@ CreateTable::get_ordinal_positions_of_primary_keys()
 void
 CreateTable::show_type_error_msg(List *type_names)
 {
-    elog(ERROR, "Tsurugi does not support type \"%s\".", nodeToString(type_names));
+    elog(ERROR, "Tsurugi does not support type %s.", nodeToString(type_names));
 }
 
 void
