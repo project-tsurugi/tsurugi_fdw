@@ -350,7 +350,7 @@ CreateTable::store_metadata()
                     }
                 }
 
-                if (!datalengths.empty())
+                if (!datalengths.data().empty())
                 {
                     column.add_child(Tables::Column::DATA_LENGTH, datalengths);
                 }
@@ -385,20 +385,9 @@ CreateTable::store_metadata()
     }
 
     // primary key
-    if (!primary_keys.empty())
-    {
-        new_table.add_child(Tables::PRIMARY_KEY_NODE, primary_keys);
-    }
+    new_table.add_child(Tables::PRIMARY_KEY_NODE, primary_keys);
 
-    if (!columns.empty())
-    {
-        new_table.add_child(Tables::COLUMNS_NODE, columns);
-    }
-    else
-    {
-        show_syntax_error_msg();
-        return ret_value;
-    }
+    new_table.add_child(Tables::COLUMNS_NODE, columns);
 
     if (tables->add(new_table) != ErrorCode::OK)
     {
