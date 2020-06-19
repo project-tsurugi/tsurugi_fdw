@@ -180,10 +180,6 @@ CreateTable::store_metadata()
     ptree primary_keys;
     std::unordered_set<uint64_t> op_pkeys = get_ordinal_positions_of_primary_keys();
 
-    for (const auto& elem: op_pkeys) {
-        std::cout << elem << std::endl;
-    }
-
     // columns
     ptree columns;
     uint64_t ordinal_position = ORDINAL_POSITION_BASE_INDEX;
@@ -391,7 +387,7 @@ CreateTable::get_ordinal_positions_of_primary_keys()
 
                 char *index_elem_name = index_elem->name;
                 char *coldef_colname = colDef->colname;
-                if (strcmp(index_elem_name,coldef_colname))
+                if (strcmp(index_elem_name,coldef_colname) == 0)
                 {
                     op_pkeys.insert(ordinal_position);
                 }
