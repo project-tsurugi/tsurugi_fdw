@@ -265,9 +265,6 @@ CreateTable::store_metadata()
             }
         }
 
-        // nullable
-        column.put<bool>(Tables::Column::NULLABLE, nullable);
-
         // primary key and direction
         if (op_pkeys.find(ordinal_position) == op_pkeys.end())
         {
@@ -275,12 +272,18 @@ CreateTable::store_metadata()
         }
         else
         {
+            // primary key makes the column NOT NULL
+            nullable = false;
+
             ptree primary_key;
             primary_key.put<uint64_t>("", ordinal_position);
             primary_keys.push_back(std::make_pair("", primary_key));
 
             column.put<uint64_t>(Tables::Column::DIRECTION,TSURUGI_DIRECTION_ASC);
         }
+
+        // nullable
+        column.put<bool>(Tables::Column::NULLABLE, nullable);
 
         TypeName *colDef_type_name = colDef->typeName;
 
