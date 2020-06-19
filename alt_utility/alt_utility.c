@@ -152,7 +152,7 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
 
                             if (create_stmt->tablespacename != NULL
                                 && !strcmp(create_stmt->tablespacename, TSURUGI_TABLESPACE_NAME)) {
-								success = create_table(create_stmt);
+								success = create_table(stmts);
                                 if (!success) {
                                     elog(ERROR, "create_table() failed.");
                                 }

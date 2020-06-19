@@ -19,7 +19,6 @@
 
 #include <iostream>
 #include <string>
-#include <unordered_set>
 
 #include "manager/metadata/datatypes.h"
 #include "manager/metadata/metadata.h"
@@ -41,43 +40,68 @@ extern "C" {
 
 #include "tablecmds.h"
 
-std::unordered_set<uint64_t> get_ordinal_positions_of_primary_keys(CreateStmt *stmt);
+/*
+ * @brief C'tors
+ */
+
+CreateTable::CreateTable(List *stmts)
+{
+    create_stmt = nullptr;
+    index_stmt = nullptr;
+
+    ListCell *l;
+
+    foreach(l, stmts)
+    {
+        Node *stmt = (Node *) lfirst(l);
+
+        if (IsA(stmt, CreateStmt))
+        {
+            create_stmt = (CreateStmt *)stmt;
+        }
+        else if (IsA(stmt, IndexStmt))
+        {
+            index_stmt = (IndexStmt *)stmt;
+        }
+    }
+}
 
 /*
  *  @brief:
  */
 bool
-TableCommands::define_relation(CreateStmt *stmt)
+CreateTable::define_relation()
 {
-    Assert(stmt != nullptr);
+    Assert(create_stmt != nullptr);
 
     bool ret_value{false};
 
-    std::cout << nodeToString(stmt) << std::endl;
+    std::cout << nodeToString(create_stmt) << std::endl;
+    std::cout << nodeToString(index_stmt) << std::endl;
 
-    // initilization
-    if (!init())
+    // load metadata
+    if (!load_metadata())
     {
         elog(ERROR, "define_relation() failed.");
         return ret_value;
     }
 
     // check syntax supported or not by Tsurugi
-    if (!is_syntax_supported(stmt))
+    if (!is_syntax_supported())
     {
         elog(ERROR, "define_relation() failed.");
         return ret_value;
     }
 
     // check type supported or not by Tsurugi
-    if (!is_type_supported(stmt))
+    if (!is_type_supported())
     {
         elog(ERROR, "define_relation() failed.");
         return ret_value;
     }
 
     // send metadata to metadata manager
-    if (!store_metadata(stmt))
+    if (!store_metadata())
     {
         elog(ERROR, "define_relation() failed.");
         return ret_value;
@@ -88,7 +112,7 @@ TableCommands::define_relation(CreateStmt *stmt)
 }
 
 bool
-TableCommands::init()
+CreateTable::load_metadata()
 {
     bool ret_value{false};
 
@@ -113,7 +137,7 @@ TableCommands::init()
 }
 
 bool
-TableCommands::is_type_supported(CreateStmt *stmt)
+CreateTable::is_type_supported()
 {
     bool supported{false};
 
@@ -122,7 +146,7 @@ TableCommands::is_type_supported(CreateStmt *stmt)
 }
 
 bool
-TableCommands::is_syntax_supported(CreateStmt *stmt)
+CreateTable::is_syntax_supported()
 {
     bool supported{false};
     supported = true;
@@ -130,7 +154,7 @@ TableCommands::is_syntax_supported(CreateStmt *stmt)
 }
 
 bool
-TableCommands::store_metadata(CreateStmt *stmt)
+CreateTable::store_metadata()
 {
 
     bool ret_value{false};
@@ -139,30 +163,32 @@ TableCommands::store_metadata(CreateStmt *stmt)
     ptree new_table;
 
     // tbale name
-    RangeVar *relation = (RangeVar *)stmt->relation;
+    RangeVar *relation = (RangeVar *)create_stmt->relation;
 
-    if (relation != NULL)
+    if (relation != nullptr && relation->relname != nullptr)
     {
         char *relname = relation->relname;
-        if (relation->relname != NULL)
-        {
-            new_table.put(Tables::NAME, relname);
-        }
+        new_table.put(Tables::NAME, relname);
     }
     else
     {
+        show_syntax_error_msg();
         return ret_value;
     }
 
     // primaryKey
     ptree primary_keys;
-    std::unordered_set<uint64_t> opos_okeys = get_ordinal_positions_of_primary_keys(stmt);
+    std::unordered_set<uint64_t> op_pkeys = get_ordinal_positions_of_primary_keys();
+
+    for (const auto& elem: op_pkeys) {
+        std::cout << elem << std::endl;
+    }
 
     // columns
     ptree columns;
-    uint64_t ordinal_position = ORDINAL_POSIOTION_BASE_INDEX;
+    uint64_t ordinal_position = ORDINAL_POSITION_BASE_INDEX;
 
-    List *table_elts = stmt->tableElts;
+    List *table_elts = create_stmt->tableElts;
     ListCell *l;
 
     foreach(l, table_elts)
@@ -181,7 +207,7 @@ TableCommands::store_metadata(CreateStmt *stmt)
         List *colDef_constraints = colDef->constraints;
         bool nullable = true;
 
-        if (colDef_constraints != NULL)
+        if (colDef_constraints != nullptr)
         {
             ListCell   *l;
             foreach(l, colDef_constraints)
@@ -200,7 +226,7 @@ TableCommands::store_metadata(CreateStmt *stmt)
         column.put<bool>(Tables::Column::NULLABLE, nullable);
 
         // primary key and direction
-        if (opos_okeys.find(ordinal_position) == opos_okeys.end())
+        if (op_pkeys.find(ordinal_position) == op_pkeys.end())
         {
             column.put<uint64_t>(Tables::Column::DIRECTION,TSURUGI_DIRECTION_DEFAULT);
         }
@@ -215,7 +241,7 @@ TableCommands::store_metadata(CreateStmt *stmt)
 
         TypeName *colDef_type_name = colDef->typeName;
 
-        if (colDef_type_name != NULL)
+        if (colDef_type_name != nullptr)
         {
             List *type_names = colDef_type_name->names;
             ObjectIdType data_type_id;
@@ -267,15 +293,21 @@ TableCommands::store_metadata(CreateStmt *stmt)
                         }
                         else
                         {
+                            show_syntax_error_msg();
                             return ret_value;
                         }
                     }
                     else
                     {
+                        show_syntax_error_msg();
                         return ret_value;
                     }
                 }
-                column.add_child(Tables::Column::DATA_LENGTH, datalengths);
+
+                if (!datalengths.empty())
+                {
+                    column.add_child(Tables::Column::DATA_LENGTH, datalengths);
+                }
             }
             else if (typemod != TYPEMOD_NULL_VALUE )
             {
@@ -297,15 +329,30 @@ TableCommands::store_metadata(CreateStmt *stmt)
             }
 
         }
+        else
+        {
+            show_syntax_error_msg();
+        }
 
         columns.push_back(std::make_pair("", column));
         ordinal_position++;
     }
 
     // primary key
-    new_table.add_child(Tables::PRIMARY_KEY_NODE, primary_keys);
+    if (!primary_keys.empty())
+    {
+        new_table.add_child(Tables::PRIMARY_KEY_NODE, primary_keys);
+    }
 
-    new_table.add_child(Tables::COLUMNS_NODE, columns);
+    if (!columns.empty())
+    {
+        new_table.add_child(Tables::COLUMNS_NODE, columns);
+    }
+    else
+    {
+        show_syntax_error_msg();
+        return ret_value;
+    }
 
     if (tables->add(new_table) != ErrorCode::OK)
     {
@@ -318,51 +365,46 @@ TableCommands::store_metadata(CreateStmt *stmt)
 }
 
 std::unordered_set<uint64_t>
-get_ordinal_positions_of_primary_keys(CreateStmt *stmt)
+CreateTable::get_ordinal_positions_of_primary_keys()
 {
-    std::unordered_set<uint64_t> opos_pkeys;
-
-    List *constraints = stmt->constraints;
-    ListCell *constraint;
-
+    std::unordered_set<uint64_t> op_pkeys;
     bool has_table_pkey = false;
 
-    foreach(constraint, constraints)
+    if (index_stmt != nullptr && index_stmt->primary)
     {
-        Constraint *constr = (Constraint *)lfirst(constraint);
+        has_table_pkey = true;
 
-        if (constr->contype == CONSTR_PRIMARY)
+        uint64_t ordinal_position = ORDINAL_POSITION_BASE_INDEX;
+
+        List *table_elts = create_stmt->tableElts;
+        ListCell *lte;
+
+        List *index_params = index_stmt->indexParams;
+        ListCell *lip;
+
+        foreach(lte, table_elts)
         {
-            has_table_pkey = true;
-            uint64_t ordinal_position = ORDINAL_POSIOTION_BASE_INDEX;
-
-            List *table_elts = stmt->tableElts;
-            ListCell *l;
-
-            List *keys = constr->keys;
-            ListCell *key;
-
-            foreach(l, table_elts)
+            foreach(lip, index_params)
             {
-                foreach(key, keys)
+                IndexElem *index_elem = (IndexElem *)lfirst(lip);
+                ColumnDef *colDef = (ColumnDef *)lfirst(lte);
+
+                char *index_elem_name = index_elem->name;
+                char *coldef_colname = colDef->colname;
+                if (strcmp(index_elem_name,coldef_colname))
                 {
-                    char *colname = strVal(key);
-                    ColumnDef *colDef = (ColumnDef *)lfirst(l);
-                    if (colname == colDef->colname)
-                    {
-                        opos_pkeys.insert(ordinal_position);
-                    }
+                    op_pkeys.insert(ordinal_position);
                 }
-                ordinal_position++;
             }
+            ordinal_position++;
         }
     }
 
     if (!has_table_pkey)
     {
-        uint64_t ordinal_position = ORDINAL_POSIOTION_BASE_INDEX;
+        uint64_t ordinal_position = ORDINAL_POSITION_BASE_INDEX;
 
-        List *table_elts = stmt->tableElts;
+        List *table_elts = create_stmt->tableElts;
         ListCell *l;
 
         foreach(l, table_elts)
@@ -371,7 +413,7 @@ get_ordinal_positions_of_primary_keys(CreateStmt *stmt)
 
             List *colDef_constraints = colDef->constraints;
 
-            if (colDef_constraints != NULL)
+            if (colDef_constraints != nullptr)
             {
                 ListCell   *l;
                 foreach(l, colDef_constraints)
@@ -380,7 +422,7 @@ get_ordinal_positions_of_primary_keys(CreateStmt *stmt)
 
                     if (constr->contype == CONSTR_PRIMARY)
                     {
-                        opos_pkeys.insert(ordinal_position);
+                        op_pkeys.insert(ordinal_position);
                     }
                 }
             }
@@ -390,5 +432,11 @@ get_ordinal_positions_of_primary_keys(CreateStmt *stmt)
 
     }
 
-    return opos_pkeys;
+    return op_pkeys;
+}
+
+void
+CreateTable::show_syntax_error_msg()
+{
+    elog(ERROR, "Tsurugi does not support this syntax.");
 }

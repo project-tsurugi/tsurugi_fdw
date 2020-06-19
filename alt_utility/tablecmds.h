@@ -12,21 +12,29 @@ const int TSURUGI_DIRECTION_DESC = 2;
 
 const int TYPEMOD_NULL_VALUE = -1;
 
-const uint64_t ORDINAL_POSIOTION_BASE_INDEX = 1;
+const std::string DBNAME = "Tsurugi";
 
-class TableCommands {
+const uint64_t ORDINAL_POSITION_BASE_INDEX = 1;
+
+class CreateTable {
     public:
-        bool define_relation(CreateStmt *stmt);
+        CreateTable(List *stmts);
+        bool define_relation();
 
     private:
-        const std::string dbname{"Tsurugi"};
+        const std::string dbname{DBNAME};
+        CreateStmt *create_stmt;
+        IndexStmt *index_stmt;
+
         std::unique_ptr<manager::metadata::Metadata> datatypes;
         std::unique_ptr<manager::metadata::Metadata> tables;
 
-        bool init();
-        bool is_type_supported(CreateStmt *stmt);
-        bool is_syntax_supported(CreateStmt *stmt);
-        bool store_metadata(CreateStmt *stmt);
+        bool load_metadata();
+        bool is_type_supported();
+        bool is_syntax_supported();
+        bool store_metadata();
+        std::unordered_set<uint64_t> get_ordinal_positions_of_primary_keys();
+        void show_syntax_error_msg();
 };
 
 #endif // TABLECMDS_

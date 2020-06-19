@@ -6,7 +6,7 @@ extern "C" {
 
 #endif
 
-bool create_table(CreateStmt *stmt);
+bool create_table(List *stmts);
 
 #ifdef __cplusplus
 }

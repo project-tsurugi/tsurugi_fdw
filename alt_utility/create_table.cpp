@@ -48,12 +48,12 @@ static bool execute_create_table(std::string_view query_string);
 /*
  *  @brief:
  */
-bool create_table(CreateStmt *stmt)
+bool create_table(List *stmts)
 {
     Assert(stmt != nullptr);
 
-    TableCommands table_commands;
-    bool success = table_commands.define_relation(stmt);
+    CreateTable cmds{stmts};
+    bool success = cmds.define_relation();
     if (!success)
     {
         elog(ERROR, "execute_create_table() failed.");
