@@ -51,6 +51,8 @@ static void tsurugi_ProcessUtilitySlow(ParseState *pstate,
 				                       DestReceiver *dest,
 				                       char *completionTag);
 
+const char *TSURUGI_TABLESPACE_NAME = "tsurugi";
+
 /*
  *  @brief:
  */
@@ -147,13 +149,13 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
 							static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 
 							CreateStmt *create_stmt = ((CreateStmt *)stmt);
+
                             if (create_stmt->tablespacename != NULL
-                                && !strcmp(create_stmt->tablespacename, "tsurugi")) {
-                                success = create_table(create_stmt);
+                                && !strcmp(create_stmt->tablespacename, TSURUGI_TABLESPACE_NAME)) {
+								success = create_table(create_stmt);
                                 if (!success) {
                                     elog(ERROR, "create_table() failed.");
                                 }
-
                                 strcat(create_stmt->relation->relname, "_dummy");
                             }
                             /* Create the table itself */
@@ -164,7 +166,6 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
                             EventTriggerCollectSimpleCommand(address,
                                                                 secondaryObject,
                                                                 stmt);
-
 							/*
 							 * Let NewRelationCreateToastTable decide if this
 							 * one needs a secondary relation too.

@@ -19,6 +19,7 @@
 
 #include <iostream>
 #include <string>
+#include <unordered_set>
 
 #include "manager/metadata/datatypes.h"
 #include "manager/metadata/metadata.h"
@@ -40,10 +41,13 @@ extern "C" {
 
 #include "tablecmds.h"
 
+std::unordered_set<uint64_t> get_ordinal_positions_of_primary_keys(CreateStmt *stmt);
+
 /*
  *  @brief:
  */
-bool TableCommands::define_relation(CreateStmt *stmt)
+bool
+TableCommands::define_relation(CreateStmt *stmt)
 {
     Assert(stmt != nullptr);
 
@@ -52,25 +56,29 @@ bool TableCommands::define_relation(CreateStmt *stmt)
     std::cout << nodeToString(stmt) << std::endl;
 
     // initilization
-    if(!init()){
+    if (!init())
+    {
         elog(ERROR, "define_relation() failed.");
         return ret_value;
     }
 
     // check syntax supported or not by Tsurugi
-    if(!is_syntax_supported(stmt)){
+    if (!is_syntax_supported(stmt))
+    {
         elog(ERROR, "define_relation() failed.");
         return ret_value;
     }
 
     // check type supported or not by Tsurugi
-    if(!is_type_supported(stmt)){
+    if (!is_type_supported(stmt))
+    {
         elog(ERROR, "define_relation() failed.");
         return ret_value;
     }
 
     // send metadata to metadata manager
-    if(!store_metadata(stmt)){
+    if (!store_metadata(stmt))
+    {
         elog(ERROR, "define_relation() failed.");
         return ret_value;
     }
@@ -79,19 +87,23 @@ bool TableCommands::define_relation(CreateStmt *stmt)
     return ret_value;
 }
 
-bool TableCommands::init(){
+bool
+TableCommands::init()
+{
     bool ret_value{false};
 
     datatypes = std::make_unique<DataTypes>(dbname);
 
-    if (datatypes->load() != ErrorCode::OK) {
+    if (datatypes->load() != ErrorCode::OK)
+    {
         std::cout << "DataTypes::load() error." << std::endl;
         return ret_value;
     }
 
     tables = std::make_unique<Tables>(dbname);
 
-    if (tables->load() != ErrorCode::OK) {
+    if (tables->load() != ErrorCode::OK)
+    {
         std::cout << "Tables::load() error." << std::endl;
         return ret_value;
     }
@@ -100,20 +112,26 @@ bool TableCommands::init(){
     return ret_value;
 }
 
-bool TableCommands::is_type_supported(CreateStmt *stmt){
+bool
+TableCommands::is_type_supported(CreateStmt *stmt)
+{
     bool supported{false};
 
     supported = true;
     return supported;
 }
 
-bool TableCommands::is_syntax_supported(CreateStmt *stmt){
+bool
+TableCommands::is_syntax_supported(CreateStmt *stmt)
+{
     bool supported{false};
     supported = true;
     return supported;
 }
 
-bool TableCommands::store_metadata(CreateStmt *stmt){
+bool
+TableCommands::store_metadata(CreateStmt *stmt)
+{
 
     bool ret_value{false};
 
@@ -122,28 +140,34 @@ bool TableCommands::store_metadata(CreateStmt *stmt){
 
     // tbale name
     RangeVar *relation = (RangeVar *)stmt->relation;
-    if (relation != NULL){
+
+    if (relation != NULL)
+    {
         char *relname = relation->relname;
-        if (relation->relname != NULL){
+        if (relation->relname != NULL)
+        {
             new_table.put(Tables::NAME, relname);
         }
-    }else{
+    }
+    else
+    {
         return ret_value;
     }
 
-    List *table_elts = stmt->tableElts;
-    ListCell *table_elt;
-
     // primaryKey
     ptree primary_keys;
+    std::unordered_set<uint64_t> opos_okeys = get_ordinal_positions_of_primary_keys(stmt);
 
     // columns
     ptree columns;
-    uint64_t ordinal_position = 1;
+    uint64_t ordinal_position = ORDINAL_POSIOTION_BASE_INDEX;
 
-    foreach (table_elt, table_elts)
+    List *table_elts = stmt->tableElts;
+    ListCell *l;
+
+    foreach(l, table_elts)
     {
-        ColumnDef *colDef = (ColumnDef *)lfirst(table_elt);
+        ColumnDef *colDef = (ColumnDef *)lfirst(l);
 
         // column
         ptree column;
@@ -156,20 +180,18 @@ bool TableCommands::store_metadata(CreateStmt *stmt){
 
         List *colDef_constraints = colDef->constraints;
         bool nullable = true;
-        bool pkey = false;
 
-        if(colDef_constraints != NULL){
-
+        if (colDef_constraints != NULL)
+        {
             ListCell   *l;
-            foreach (l, colDef_constraints){
-                Constraint *constraint = (Constraint *)lfirst(l);
+            foreach(l, colDef_constraints)
+            {
+                Constraint *constr = (Constraint *)lfirst(l);
 
-                if(constraint->contype == CONSTR_NOTNULL){
+                if (constr->contype == CONSTR_NOTNULL)
+                {
                     // nullable
                     nullable = false;
-                }else if(constraint->contype == CONSTR_PRIMARY){
-                    // primary key
-                    pkey = true;
                 }
             }
         }
@@ -178,35 +200,44 @@ bool TableCommands::store_metadata(CreateStmt *stmt){
         column.put<bool>(Tables::Column::NULLABLE, nullable);
 
         // primary key and direction
-        if (pkey){
+        if (opos_okeys.find(ordinal_position) == opos_okeys.end())
+        {
+            column.put<uint64_t>(Tables::Column::DIRECTION,TSURUGI_DIRECTION_DEFAULT);
+        }
+        else
+        {
             ptree primary_key;
             primary_key.put<uint64_t>("", ordinal_position);
             primary_keys.push_back(std::make_pair("", primary_key));
 
             column.put<uint64_t>(Tables::Column::DIRECTION,TSURUGI_DIRECTION_ASC);
-        }else{
-            column.put<uint64_t>(Tables::Column::DIRECTION,TSURUGI_DIRECTION_DEFAULT);
         }
 
         TypeName *colDef_type_name = colDef->typeName;
 
-        if(colDef_type_name != NULL){
+        if (colDef_type_name != NULL)
+        {
             List *type_names = colDef_type_name->names;
             ObjectIdType data_type_id;
 
             ListCell   *l;
-            foreach (l, type_names){
+            foreach(l, type_names)
+            {
                 Value *type_name_value = (Value *)lfirst(l);
-                std::string type_name{std::string(type_name_value->val.str)};
+                std::string type_name{std::string(strVal(type_name_value))};
                 // get dataTypeId
                 ErrorCode err;
                 ptree datatype;
                 err = datatypes->get(DataTypes::PG_DATA_TYPE_QUALIFIED_NAME, type_name, datatype);
-                if (err == ErrorCode::OK) {
+                if (err == ErrorCode::OK)
+                {
                     data_type_id = datatype.get<ObjectIdType>(DataTypes::ID);
-                    if (!data_type_id) {
+                    if (!data_type_id)
+                    {
                         return ret_value;
-                    }else{
+                    }
+                    else
+                    {
                         // put dataTypeId
                         column.put<ObjectIdType>(Tables::Column::DATA_TYPE_ID, data_type_id);
                     }
@@ -217,37 +248,49 @@ bool TableCommands::store_metadata(CreateStmt *stmt){
             List *typmods = colDef_type_name->typmods;
             int32 typemod = colDef_type_name->typemod;
 
-            if (typmods != NIL){
+            if (typmods != NIL)
+            {
                 ptree datalengths;
 
                 ListCell *l;
-                foreach (l, typmods){
+                foreach(l, typmods)
+                {
                     Node *tm = (Node *) lfirst(l);
 
                     if (IsA(tm, A_Const))
-		            {
-			            A_Const    *ac = (A_Const *) tm;
+                    {
+                        A_Const    *ac = (A_Const *) tm;
 
-		                if (IsA(&ac->val, Integer))
-		                {
+                        if (IsA(&ac->val, Integer))
+                        {
                             datalengths.put<uint64_t>("", ac->val.val.ival);
-		                }else{
+                        }
+                        else
+                        {
                             return ret_value;
                         }
-                    }else{
+                    }
+                    else
+                    {
                         return ret_value;
                     }
                 }
                 column.add_child(Tables::Column::DATA_LENGTH, datalengths);
-            }else if (typemod != TYPEMOD_NULL_VALUE ){
+            }
+            else if (typemod != TYPEMOD_NULL_VALUE )
+            {
                 column.put<uint64_t>(Tables::Column::DATA_LENGTH, typemod);
             }
 
-            if (!data_type_id){
-                if(data_type_id == TSURUGI_TYPE_VARCHAR_ID){
+            if (!data_type_id)
+            {
+                if (data_type_id == TSURUGI_TYPE_VARCHAR_ID)
+                {
                     // varying
                     column.put<bool>(Tables::Column::VARYING, true);
-                }else if(data_type_id == TSURUGI_TYPE_CHAR_ID){
+                }
+                else if (data_type_id == TSURUGI_TYPE_CHAR_ID)
+                {
                     // varying
                     column.put<bool>(Tables::Column::VARYING, false);
                 }
@@ -259,15 +302,93 @@ bool TableCommands::store_metadata(CreateStmt *stmt){
         ordinal_position++;
     }
 
+    // primary key
     new_table.add_child(Tables::PRIMARY_KEY_NODE, primary_keys);
 
     new_table.add_child(Tables::COLUMNS_NODE, columns);
 
-    if (tables->add(new_table) != ErrorCode::OK) {
+    if (tables->add(new_table) != ErrorCode::OK)
+    {
         elog(ERROR, "define_relation() failed.");
         return ret_value;
     }
 
     ret_value = true;
     return ret_value;
+}
+
+std::unordered_set<uint64_t>
+get_ordinal_positions_of_primary_keys(CreateStmt *stmt)
+{
+    std::unordered_set<uint64_t> opos_pkeys;
+
+    List *constraints = stmt->constraints;
+    ListCell *constraint;
+
+    bool has_table_pkey = false;
+
+    foreach(constraint, constraints)
+    {
+        Constraint *constr = (Constraint *)lfirst(constraint);
+
+        if (constr->contype == CONSTR_PRIMARY)
+        {
+            has_table_pkey = true;
+            uint64_t ordinal_position = ORDINAL_POSIOTION_BASE_INDEX;
+
+            List *table_elts = stmt->tableElts;
+            ListCell *l;
+
+            List *keys = constr->keys;
+            ListCell *key;
+
+            foreach(l, table_elts)
+            {
+                foreach(key, keys)
+                {
+                    char *colname = strVal(key);
+                    ColumnDef *colDef = (ColumnDef *)lfirst(l);
+                    if (colname == colDef->colname)
+                    {
+                        opos_pkeys.insert(ordinal_position);
+                    }
+                }
+                ordinal_position++;
+            }
+        }
+    }
+
+    if (!has_table_pkey)
+    {
+        uint64_t ordinal_position = ORDINAL_POSIOTION_BASE_INDEX;
+
+        List *table_elts = stmt->tableElts;
+        ListCell *l;
+
+        foreach(l, table_elts)
+        {
+            ColumnDef *colDef = (ColumnDef *)lfirst(l);
+
+            List *colDef_constraints = colDef->constraints;
+
+            if (colDef_constraints != NULL)
+            {
+                ListCell   *l;
+                foreach(l, colDef_constraints)
+                {
+                    Constraint *constr = (Constraint *)lfirst(l);
+
+                    if (constr->contype == CONSTR_PRIMARY)
+                    {
+                        opos_pkeys.insert(ordinal_position);
+                    }
+                }
+            }
+
+            ordinal_position++;
+        }
+
+    }
+
+    return opos_pkeys;
 }
