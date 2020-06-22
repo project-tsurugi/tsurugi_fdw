@@ -83,28 +83,28 @@ CreateTable::define_relation()
     // load metadata
     if (!load_metadata())
     {
-        elog(ERROR, "define_relation() failed.");
+        elog(ERROR, "Tsurugi could not load metadata");
         return ret_value;
     }
 
     // check syntax supported or not by Tsurugi
     if (!is_syntax_supported())
     {
-        elog(ERROR, "define_relation() failed.");
+        elog(ERROR, "Tsurugi does not support this syntax");
         return ret_value;
     }
 
     // check type supported or not by Tsurugi
     if (!is_type_supported())
     {
-        elog(ERROR, "define_relation() failed.");
+        elog(ERROR, "Tsurugi does not support these data type");
         return ret_value;
     }
 
     // send metadata to metadata manager
     if (!store_metadata())
     {
-        elog(ERROR, "define_relation() failed.");
+        elog(ERROR, "Tsurugi could not store metadata");
         return ret_value;
     }
 
@@ -121,7 +121,7 @@ CreateTable::load_metadata()
 
     if (datatypes->load() != ErrorCode::OK)
     {
-        std::cout << "DataTypes::load() error." << std::endl;
+        elog(ERROR, "Tsurugi could not data type metadata");
         return ret_value;
     }
 
@@ -129,7 +129,6 @@ CreateTable::load_metadata()
 
     if (tables->load() != ErrorCode::OK)
     {
-        std::cout << "Tables::load() error." << std::endl;
         return ret_value;
     }
 
@@ -212,6 +211,8 @@ CreateTable::store_metadata()
 
     // tbale name
     RangeVar *relation = (RangeVar *)create_stmt->relation;
+
+    char *relname = nullptr;
 
     if (relation != nullptr && relation->relname != nullptr)
     {
@@ -296,37 +297,45 @@ CreateTable::store_metadata()
             ListCell   *l;
             foreach(l, type_names)
             {
-                Value *type_name_value = (Value *)lfirst(l);
-                std::string type_name{std::string(strVal(type_name_value))};
-                // get dataTypeId
-                ErrorCode err;
-                ptree datatype;
-                err = datatypes->get(DataTypes::PG_DATA_TYPE_QUALIFIED_NAME, type_name, datatype);
-                if (err == ErrorCode::OK)
+                if (IsA(l, Value))
                 {
-                    data_type_id = datatype.get_optional<ObjectIdType>(DataTypes::ID);
-                    if (!data_type_id)
+                    Value *type_name_value = (Value *)lfirst(l);
+                    std::string type_name{std::string(strVal(type_name_value))};
+                    // get dataTypeId
+                    ErrorCode err;
+                    ptree datatype;
+                    err = datatypes->get(DataTypes::PG_DATA_TYPE_QUALIFIED_NAME, type_name, datatype);
+                    if (err == ErrorCode::OK)
                     {
-                        return ret_value;
-                    }
-                    else
-                    {
-                        // put dataTypeId
-                        ObjectIdType id = data_type_id.get();
-                        column.put<ObjectIdType>(Tables::Column::DATA_TYPE_ID, id);
+                        data_type_id = datatype.get_optional<ObjectIdType>(DataTypes::ID);
+                        if (!data_type_id)
+                        {
+                            elog(ERROR, "Tsurugi could not data type ids");
+                            return ret_value;
+                        }
+                        else
+                        {
+                            // put dataTypeId
+                            ObjectIdType id = data_type_id.get();
+                            column.put<ObjectIdType>(Tables::Column::DATA_TYPE_ID, id);
 
-                        if (id == TSURUGI_TYPE_VARCHAR_ID)
-                        {
-                            // varying
-                            column.put<bool>(Tables::Column::VARYING, true);
+                            if (id == TSURUGI_TYPE_VARCHAR_ID)
+                            {
+                                // varying
+                                column.put<bool>(Tables::Column::VARYING, true);
+                            }
+                            else if (id == TSURUGI_TYPE_CHAR_ID)
+                            {
+                                // varying
+                                column.put<bool>(Tables::Column::VARYING, false);
+                            }
                         }
-                        else if (id == TSURUGI_TYPE_CHAR_ID)
-                        {
-                            // varying
-                            column.put<bool>(Tables::Column::VARYING, false);
-                        }
+                        break;
                     }
-                    break;
+                }
+                else
+                {
+                    show_syntax_error_msg();
                 }
             }
 
@@ -377,6 +386,7 @@ CreateTable::store_metadata()
         else
         {
             show_syntax_error_msg();
+            return ret_value;
         }
 
         columns.push_back(std::make_pair("", column));
@@ -388,14 +398,24 @@ CreateTable::store_metadata()
 
     new_table.add_child(Tables::COLUMNS_NODE, columns);
 
-    if (tables->add(new_table) != ErrorCode::OK)
+    ErrorCode error = ErrorCode::UNKNOWN;
+    error = tables->add(new_table);
+
+    switch (error)
     {
-        elog(ERROR, "define_relation() failed.");
-        return ret_value;
+        case ErrorCode::OK:
+            ret_value = true;
+            return ret_value;
+            break;
+        case ErrorCode::TABLE_NAME_ALREADY_EXISTS:
+            elog(ERROR, "table name \"%s\" already exsists", relname);
+            return ret_value;
+            break;
+        default:
+            elog(ERROR, "Tsurugi could not table metadata");
+            return ret_value;
     }
 
-    ret_value = true;
-    return ret_value;
 }
 
 std::unordered_set<uint64_t>
@@ -472,11 +492,11 @@ CreateTable::get_ordinal_positions_of_primary_keys()
 void
 CreateTable::show_type_error_msg(List *type_names)
 {
-    elog(ERROR, "Tsurugi does not support type %s.", nodeToString(type_names));
+    elog(ERROR, "Tsurugi does not support type %s", nodeToString(type_names));
 }
 
 void
 CreateTable::show_syntax_error_msg()
 {
-    elog(ERROR, "Tsurugi does not support this syntax.");
+    elog(ERROR, "Tsurugi does not support this syntax");
 }
