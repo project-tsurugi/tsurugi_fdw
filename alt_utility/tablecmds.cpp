@@ -84,28 +84,24 @@ CreateTable::define_relation()
     // load metadata
     if (!load_metadata())
     {
-        elog(ERROR, "Tsurugi could not load metadata");
         return ret_value;
     }
 
     // check syntax supported or not by Tsurugi
     if (!is_syntax_supported())
     {
-        elog(ERROR, "Tsurugi does not support this syntax");
         return ret_value;
     }
 
     // check type supported or not by Tsurugi
     if (!is_type_supported())
     {
-        elog(ERROR, "Tsurugi does not support these data type");
         return ret_value;
     }
 
     // send metadata to metadata manager
     if (!store_metadata())
     {
-        elog(ERROR, "Tsurugi could not store metadata");
         return ret_value;
     }
 
@@ -122,7 +118,7 @@ CreateTable::load_metadata()
 
     if (datatypes->load() != ErrorCode::OK)
     {
-        elog(ERROR, "Tsurugi could not data type metadata");
+        elog(ERROR, "Tsurugi could not load data type metadata");
         return ret_value;
     }
 
@@ -130,6 +126,7 @@ CreateTable::load_metadata()
 
     if (tables->load() != ErrorCode::OK)
     {
+        elog(ERROR, "Tsurugi could not load table metadata");
         return ret_value;
     }
 
@@ -216,7 +213,7 @@ CreateTable::is_syntax_supported()
 
                 if (constr->contype != CONSTR_NOTNULL && constr->contype != CONSTR_PRIMARY)
                 {
-                    elog(ERROR, "Tsurugi supports column constraint NOT nullptr and PRIMARY KEY");
+                    elog(ERROR, "Tsurugi supports only NOT NULL and PRIMARY KEY column constraint");
                     return ret_value;
                 }
             }
@@ -231,7 +228,7 @@ CreateTable::is_syntax_supported()
 
         if (constr->contype != CONSTR_PRIMARY)
         {
-            elog(ERROR, "Tsurugi supports only table constraint PRIMARY KEY");
+            elog(ERROR, "Tsurugi supports only PRIMARY KEY table constraint");
             return ret_value;
         }
     }
@@ -240,25 +237,25 @@ CreateTable::is_syntax_supported()
     {
         if (index_stmt->unique && !(index_stmt->primary))
         {
-            show_table_constraint_syntax_error_msg("Tsurugi does not support table constraint UNIQUE");
+            show_table_constraint_syntax_error_msg("Tsurugi does not support UNIQUE table constraint");
             return ret_value;
         }
 
         if (index_stmt->excludeOpNames != nullptr)
         {
-            show_table_constraint_syntax_error_msg("Tsurugi does not support table constraint EXCLUDE");
+            show_table_constraint_syntax_error_msg("Tsurugi does not support EXCLUDE table constraint");
             return ret_value;
         }
 
         if (index_stmt->deferrable)
         {
-            show_table_constraint_syntax_error_msg("Tsurugi does not support table constraint DEFERRABLE");
+            show_table_constraint_syntax_error_msg("Tsurugi does not support DEFERRABLE table constraint");
             return ret_value;
         }
 
         if (index_stmt->initdeferred)
         {
-            show_table_constraint_syntax_error_msg("Tsurugi does not support table constraint DEFERRABLE");
+            show_table_constraint_syntax_error_msg("Tsurugi does not support INITIALLY DEFERRED table constraint");
             return ret_value;
         }
     }
@@ -315,8 +312,8 @@ CreateTable::is_syntax_supported()
         {
             ereport(ERROR,
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                 errmsg("Tsurugi supports only table constraint PRIMARY KEY"),
-                 errhint("Tsurugi does not support table constraint FOREIGN KEY")));
+                 errmsg("Tsurugi supports only PRIMARY KEY table constraint"),
+                 errhint("Tsurugi does not support FOREIGN KEY table constraint")));
             return ret_value;
         }
     }
@@ -433,7 +430,7 @@ CreateTable::store_metadata()
                     data_type_id = datatype.get_optional<ObjectIdType>(DataTypes::ID);
                     if (!data_type_id)
                     {
-                        elog(ERROR, "Tsurugi could not data type ids");
+                        elog(ERROR, "Tsurugi could not get data type ids");
                         return ret_value;
                     }
                     else
@@ -533,7 +530,7 @@ CreateTable::store_metadata()
             return ret_value;
             break;
         default:
-            elog(ERROR, "Tsurugi could not table metadata");
+            elog(ERROR, "Tsurugi could not store table metadata");
             return ret_value;
     }
 
@@ -628,5 +625,5 @@ CreateTable::show_table_constraint_syntax_error_msg(const char *error_message)
     ereport(ERROR,
         (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
          errmsg("%s",error_message),
-         errhint("Tsurugi supports only table constraint PRIMARY KEY")));
+         errhint("Tsurugi supports only PRIMARY KEY table constraint")));
 }
