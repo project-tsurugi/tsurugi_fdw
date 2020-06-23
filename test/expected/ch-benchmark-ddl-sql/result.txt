@@ -1,0 +1,63 @@
+CREATE DATABASE
+You are now connected to database "test" as user "vagrant".
+CREATE SCHEMA
+NOTICE:  table "order_line" does not exist, skipping
+DROP TABLE
+CREATE TABLE
+NOTICE:  table "new_order" does not exist, skipping
+DROP TABLE
+CREATE TABLE
+NOTICE:  table "stock" does not exist, skipping
+DROP TABLE
+CREATE TABLE
+NOTICE:  table "orders" does not exist, skipping
+DROP TABLE
+CREATE TABLE
+NOTICE:  table "orders_secondary" does not exist, skipping
+DROP TABLE
+CREATE TABLE
+NOTICE:  table "history" does not exist, skipping
+DROP TABLE
+CREATE TABLE
+NOTICE:  table "customer" does not exist, skipping
+DROP TABLE
+CREATE TABLE
+NOTICE:  table "customer_secondary" does not exist, skipping
+DROP TABLE
+CREATE TABLE
+NOTICE:  table "district" does not exist, skipping
+DROP TABLE
+CREATE TABLE
+NOTICE:  table "item" does not exist, skipping
+DROP TABLE
+CREATE TABLE
+NOTICE:  table "warehouse" does not exist, skipping
+DROP TABLE
+CREATE TABLE
+NOTICE:  table "nation" does not exist, skipping
+DROP TABLE
+CREATE TABLE
+NOTICE:  table "supplier" does not exist, skipping
+DROP TABLE
+CREATE TABLE
+NOTICE:  table "region" does not exist, skipping
+DROP TABLE
+CREATE TABLE
+NOTICE:  drop cascades to 14 other objects
+DETAIL:  drop cascades to table tmp.order_line_dummy
+drop cascades to table tmp.new_order_dummy
+drop cascades to table tmp.stock_dummy
+drop cascades to table tmp.orders_dummy
+drop cascades to table tmp.orders_secondary_dummy
+drop cascades to table tmp.history_dummy
+drop cascades to table tmp.customer_dummy
+drop cascades to table tmp.customer_secondary_dummy
+drop cascades to table tmp.district_dummy
+drop cascades to table tmp.item_dummy
+drop cascades to table tmp.warehouse_dummy
+drop cascades to table tmp.nation_dummy
+drop cascades to table tmp.supplier_dummy
+drop cascades to table tmp.region_dummy
+DROP SCHEMA
+You are now connected to database "postgres" as user "vagrant".
+DROP DATABASE
