@@ -56,11 +56,20 @@ CREATE TABLE tmp.orders (
   o_d_id int NOT NULL,
   o_id int NOT NULL,
   o_c_id int NOT NULL,
-  o_carrier_id int DEFAULT NULL,
+  o_carrier_id int,
   o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
   o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
   o_entry_d char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
   PRIMARY KEY (o_w_id,o_d_id,o_id)
+) tablespace tsurugi;
+
+DROP TABLE IF EXISTS tmp.orders_secondary;
+CREATE TABLE tmp.orders_secondary (
+  o_d_id INT NOT NULL,
+  o_w_id INT NOT NULL,
+  o_c_id INT NOT NULL,
+  o_id INT NOT NULL,
+  PRIMARY KEY(o_w_id, o_d_id, o_c_id, o_id)
 ) tablespace tsurugi;
 
 -- TODO: h_date ON UPDATE CURRENT_TIMESTAMP
@@ -100,6 +109,16 @@ CREATE TABLE tmp.customer (
   c_middle char(2) NOT NULL,
   c_data varchar(500) NOT NULL,
   PRIMARY KEY (c_w_id,c_d_id,c_id)
+) tablespace tsurugi;
+
+DROP TABLE IF EXISTS tmp.customer_secondary;
+CREATE TABLE tmp.customer_secondary (
+  c_d_id INT NOT NULL,
+  c_w_id INT NOT NULL,
+  c_last VARCHAR(16) NOT NULL,
+  c_first VARCHAR(16) NOT NULL,
+  c_id INT NOT NULL,
+  PRIMARY KEY(c_w_id, c_d_id, c_last, c_first)
 ) tablespace tsurugi;
 
 DROP TABLE IF EXISTS tmp.district;
