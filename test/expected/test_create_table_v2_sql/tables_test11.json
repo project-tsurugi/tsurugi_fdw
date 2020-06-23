@@ -1,0 +1,186 @@
+{
+    "formatVersion": "1",
+    "generation": "1",
+    "tables": [
+        {
+            "name": "test11",
+            "primaryKey": [
+                "4",
+                "5",
+                "6",
+                "15",
+                "16"
+            ],
+            "columns": [
+                {
+                    "ordinalPosition": "1",
+                    "name": "col0",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "4",
+                    "id": "137",
+                    "tableId": "9"
+                },
+                {
+                    "ordinalPosition": "2",
+                    "name": "col1",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "4",
+                    "id": "138",
+                    "tableId": "9"
+                },
+                {
+                    "ordinalPosition": "3",
+                    "name": "col2",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "4",
+                    "id": "139",
+                    "tableId": "9"
+                },
+                {
+                    "ordinalPosition": "4",
+                    "name": "col3",
+                    "direction": "1",
+                    "nullable": "false",
+                    "dataTypeId": "6",
+                    "id": "140",
+                    "tableId": "9"
+                },
+                {
+                    "ordinalPosition": "5",
+                    "name": "col4",
+                    "direction": "1",
+                    "nullable": "false",
+                    "dataTypeId": "6",
+                    "id": "141",
+                    "tableId": "9"
+                },
+                {
+                    "ordinalPosition": "6",
+                    "name": "col5",
+                    "direction": "1",
+                    "nullable": "false",
+                    "dataTypeId": "8",
+                    "id": "142",
+                    "tableId": "9"
+                },
+                {
+                    "ordinalPosition": "7",
+                    "name": "col6",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "8",
+                    "id": "143",
+                    "tableId": "9"
+                },
+                {
+                    "ordinalPosition": "8",
+                    "name": "col7",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "9",
+                    "id": "144",
+                    "tableId": "9"
+                },
+                {
+                    "ordinalPosition": "9",
+                    "name": "col8",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "9",
+                    "id": "145",
+                    "tableId": "9"
+                },
+                {
+                    "ordinalPosition": "10",
+                    "name": "col9",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "13",
+                    "varying": "false",
+                    "dataLength": "1",
+                    "id": "146",
+                    "tableId": "9"
+                },
+                {
+                    "ordinalPosition": "11",
+                    "name": "col10",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "13",
+                    "varying": "false",
+                    "dataLength": "1000",
+                    "id": "147",
+                    "tableId": "9"
+                },
+                {
+                    "ordinalPosition": "12",
+                    "name": "col11",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "13",
+                    "varying": "false",
+                    "dataLength": "1",
+                    "id": "148",
+                    "tableId": "9"
+                },
+                {
+                    "ordinalPosition": "13",
+                    "name": "col12",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "13",
+                    "varying": "false",
+                    "dataLength": "1000",
+                    "id": "149",
+                    "tableId": "9"
+                },
+                {
+                    "ordinalPosition": "14",
+                    "name": "col13",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "14",
+                    "varying": "true",
+                    "id": "150",
+                    "tableId": "9"
+                },
+                {
+                    "ordinalPosition": "15",
+                    "name": "col14",
+                    "direction": "1",
+                    "nullable": "false",
+                    "dataTypeId": "14",
+                    "varying": "true",
+                    "dataLength": "1000",
+                    "id": "151",
+                    "tableId": "9"
+                },
+                {
+                    "ordinalPosition": "16",
+                    "name": "col15",
+                    "direction": "1",
+                    "nullable": "false",
+                    "dataTypeId": "14",
+                    "varying": "true",
+                    "id": "152",
+                    "tableId": "9"
+                },
+                {
+                    "ordinalPosition": "17",
+                    "name": "col16",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "14",
+                    "varying": "true",
+                    "dataLength": "1000",
+                    "id": "153",
+                    "tableId": "9"
+                }
+            ],
+            "id": "9"
+        }
+    ]
+}
