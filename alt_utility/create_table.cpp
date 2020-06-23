@@ -50,7 +50,7 @@ static bool execute_create_table(std::string_view query_string);
  */
 bool create_table(List *stmts)
 {
-    Assert(stmt != nullptr);
+    Assert(stmts != nullptr);
 
     CreateTable cmds{stmts};
     bool success = cmds.define_relation();
