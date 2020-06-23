@@ -23,6 +23,7 @@ class CreateTable {
 
     private:
         const std::string dbname{DBNAME};
+        List *stmts;
         CreateStmt *create_stmt;
         IndexStmt *index_stmt;
 
@@ -36,6 +37,7 @@ class CreateTable {
         std::unordered_set<uint64_t> get_ordinal_positions_of_primary_keys();
         void show_type_error_msg(List *type_names);
         void show_syntax_error_msg();
+        void show_table_constraint_syntax_error_msg(const char *error_message);
 };
 
 #endif // TABLECMDS_

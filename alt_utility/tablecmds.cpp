@@ -45,8 +45,9 @@ extern "C" {
  * @brief C'tors
  */
 
-CreateTable::CreateTable(List *stmts)
+CreateTable::CreateTable(List *stmts_)
 {
+    stmts = stmts_;
     create_stmt = nullptr;
     index_stmt = nullptr;
 
@@ -197,16 +198,16 @@ bool
 CreateTable::is_syntax_supported()
 {
     bool ret_value{false};
+    ListCell *l;
 
     List *table_elts = create_stmt->tableElts;
-    ListCell *l;
 
     foreach(l, table_elts)
     {
         ColumnDef *colDef = (ColumnDef *)lfirst(l);
         List *colDef_constraints = colDef->constraints;
 
-        if (colDef_constraints != nullptr)
+        if (colDef_constraints != NIL)
         {
             ListCell   *l;
             foreach(l, colDef_constraints)
@@ -215,10 +216,108 @@ CreateTable::is_syntax_supported()
 
                 if (constr->contype != CONSTR_NOTNULL && constr->contype != CONSTR_PRIMARY)
                 {
-                    elog(ERROR, "Tsurugi supports column constraint NOT NULL and PRIMARY KEY");
+                    elog(ERROR, "Tsurugi supports column constraint NOT nullptr and PRIMARY KEY");
                     return ret_value;
                 }
             }
+        }
+    }
+
+    List *table_constraints = create_stmt->constraints;
+
+    foreach(l, table_constraints)
+    {
+        Constraint *constr = (Constraint *)lfirst(l);
+
+        if (constr->contype != CONSTR_PRIMARY)
+        {
+            elog(ERROR, "Tsurugi supports only table constraint PRIMARY KEY");
+            return ret_value;
+        }
+    }
+
+    if (index_stmt != nullptr)
+    {
+        if (index_stmt->unique && !(index_stmt->primary))
+        {
+            show_table_constraint_syntax_error_msg("Tsurugi does not support table constraint UNIQUE");
+            return ret_value;
+        }
+
+        if (index_stmt->excludeOpNames != nullptr)
+        {
+            show_table_constraint_syntax_error_msg("Tsurugi does not support table constraint EXCLUDE");
+            return ret_value;
+        }
+
+        if (index_stmt->deferrable)
+        {
+            show_table_constraint_syntax_error_msg("Tsurugi does not support table constraint DEFERRABLE");
+            return ret_value;
+        }
+
+        if (index_stmt->initdeferred)
+        {
+            show_table_constraint_syntax_error_msg("Tsurugi does not support table constraint DEFERRABLE");
+            return ret_value;
+        }
+    }
+
+    if (create_stmt->inhRelations != NIL)
+    {
+        show_table_constraint_syntax_error_msg("Tsurugi does not support INHERITS clause");
+        return ret_value;
+    }
+
+    if (create_stmt->partbound != nullptr)
+    {
+        show_table_constraint_syntax_error_msg("Tsurugi does not support FOR VALUES clause");
+        return ret_value;
+    }
+
+    if (create_stmt->partspec != nullptr)
+    {
+        show_table_constraint_syntax_error_msg("Tsurugi does not support PARTITION BY clause");
+        return ret_value;
+    }
+
+    if (create_stmt->ofTypename != nullptr)
+    {
+        show_table_constraint_syntax_error_msg("Tsurugi does not support OF typename clause");
+        return ret_value;
+    }
+
+    if (create_stmt->options != NIL)
+    {
+        show_table_constraint_syntax_error_msg("Tsurugi does not support WITH clause");
+        return ret_value;
+    }
+
+    if (create_stmt->oncommit != ONCOMMIT_NOOP)
+    {
+        show_table_constraint_syntax_error_msg("Tsurugi does not support ON COMMIT clause");
+        return ret_value;
+    }
+
+#if PG_VERSION_NUM >= 120000
+    if (create_stmt->accessMethod != nullptr)
+    {
+        show_table_constraint_syntax_error_msg("Tsurugi does not support USING clause");
+        return ret_value;
+    }
+#endif
+
+    foreach(l, stmts)
+    {
+        Node *stmt = (Node *) lfirst(l);
+
+        if (!IsA(stmt, CreateStmt) && !IsA(stmt, IndexStmt))
+        {
+            ereport(ERROR,
+                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                 errmsg("Tsurugi supports only table constraint PRIMARY KEY"),
+                 errhint("Tsurugi does not support table constraint FOREIGN KEY")));
+            return ret_value;
         }
     }
 
@@ -278,7 +377,7 @@ CreateTable::store_metadata()
         List *colDef_constraints = colDef->constraints;
         bool nullable = true;
 
-        if (colDef_constraints != nullptr)
+        if (colDef_constraints != NIL)
         {
             ListCell   *l;
             foreach(l, colDef_constraints)
@@ -300,7 +399,7 @@ CreateTable::store_metadata()
         }
         else
         {
-            // primary key makes the column NOT NULL
+            // primary key makes the column NOT nullptr
             nullable = false;
 
             ptree primary_key;
@@ -427,7 +526,10 @@ CreateTable::store_metadata()
             return ret_value;
             break;
         case ErrorCode::TABLE_NAME_ALREADY_EXISTS:
-            elog(ERROR, "table name \"%s\" already exsists", relname);
+            if (!create_stmt->if_not_exists)
+            {
+                elog(ERROR, "table name \"%s\" already exsists", relname);
+            }
             return ret_value;
             break;
         default:
@@ -486,7 +588,7 @@ CreateTable::get_ordinal_positions_of_primary_keys()
 
             List *colDef_constraints = colDef->constraints;
 
-            if (colDef_constraints != nullptr)
+            if (colDef_constraints != NIL)
             {
                 ListCell   *l;
                 foreach(l, colDef_constraints)
@@ -518,4 +620,13 @@ void
 CreateTable::show_syntax_error_msg()
 {
     elog(ERROR, "Tsurugi does not support this syntax");
+}
+
+void
+CreateTable::show_table_constraint_syntax_error_msg(const char *error_message)
+{
+    ereport(ERROR,
+        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+         errmsg("%s",error_message),
+         errhint("Tsurugi supports only table constraint PRIMARY KEY")));
 }
