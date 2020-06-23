@@ -1,0 +1,63 @@
+name: Frontend-CI
+
+on: [push, pull_request]
+
+jobs:
+  Build:
+    name: Build with PosgreSQL ${{ matrix.postgresql }}
+    runs-on: [self-hosted, oltp]
+    strategy:
+      matrix:
+        postgresql: [11.1, 12.3]
+
+    steps:
+      - id: Begin
+        name: Begin
+        run: |
+          echo "Begin ${GITHUB_WORKFLOW}/${GITHUB_JOB} hostname:$(hostname)"
+
+      - id: Setup_PostgreSQL
+        name: Setup_PostgreSQL
+        run: |
+          if [ ! -e ./postgresql-${{ matrix.postgresql }} ]; then
+            curl -sL https://ftp.postgresql.org/pub/source/v${{ matrix.postgresql }}/postgresql-${{ matrix.postgresql }}.tar.bz2 | tar -xj
+          fi
+          cd postgresql-${{ matrix.postgresql }}
+          ./configure --prefix=${GITHUB_WORKSPACE}/pgsql
+          make -j8
+          make install
+
+      - id: Checkout
+        name: Checkout
+        uses: actions/checkout@v2
+        with:
+          path: postgresql-${{ matrix.postgresql }}/contrib/frontend
+          submodules: recursive
+          ssh-key: ${{ secrets.SSH_KEY }}
+
+      - id: CMake_Build_ogawayama
+        name: CMake_Build_ogawayama
+        run: |
+          cd postgresql-${{ matrix.postgresql }}/contrib/frontend/third_party/ogawayama
+          git clean -dfx
+          mkdir build
+          cd build
+          cmake -DBUILD_STUB_ONLY=ON -DBUILD_TESTS=OFF ..
+          cmake --build . --target all --clean-first -- -j8
+
+      - id: CMake_Build_metadata_manager
+        name: CMake_Build_metadata_manager
+        run: |
+          cd postgresql-${{ matrix.postgresql }}/contrib/frontend/third_party/manager/metadata-manager
+          git clean -dfx
+          mkdir build
+          cd build
+          cmake ..
+          cmake --build . --target all --clean-first -- -j8
+
+      - id: Make_Install
+        name: Make_Build
+        run: |
+          cd postgresql-${{ matrix.postgresql }}/contrib/frontend
+          make -j8
+          make install

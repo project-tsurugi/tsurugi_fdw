@@ -3,9 +3,10 @@
 
 #ifdef __cplusplus
 extern "C" {
+
 #endif
 
-bool create_table(const char* query_string);
+bool create_table(List *stmts);
 
 #ifdef __cplusplus
 }
