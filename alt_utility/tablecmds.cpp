@@ -196,7 +196,33 @@ CreateTable::is_type_supported()
 bool
 CreateTable::is_syntax_supported()
 {
-    bool ret_value{true};
+    bool ret_value{false};
+
+    List *table_elts = create_stmt->tableElts;
+    ListCell *l;
+
+    foreach(l, table_elts)
+    {
+        ColumnDef *colDef = (ColumnDef *)lfirst(l);
+        List *colDef_constraints = colDef->constraints;
+
+        if (colDef_constraints != nullptr)
+        {
+            ListCell   *l;
+            foreach(l, colDef_constraints)
+            {
+                Constraint *constr = (Constraint *)lfirst(l);
+
+                if (constr->contype != CONSTR_NOTNULL && constr->contype != CONSTR_PRIMARY)
+                {
+                    elog(ERROR, "Tsurugi supports column constraint NOT NULL and PRIMARY KEY");
+                    return ret_value;
+                }
+            }
+        }
+    }
+
+    ret_value = true;
     return ret_value;
 }
 
@@ -216,7 +242,7 @@ CreateTable::store_metadata()
 
     if (relation != nullptr && relation->relname != nullptr)
     {
-        char *relname = relation->relname;
+        relname = relation->relname;
         new_table.put(Tables::NAME, relname);
     }
     else
@@ -297,45 +323,38 @@ CreateTable::store_metadata()
             ListCell   *l;
             foreach(l, type_names)
             {
-                if (IsA(l, Value))
+                Value *type_name_value = (Value *)lfirst(l);
+                std::string type_name{std::string(strVal(type_name_value))};
+                // get dataTypeId
+                ErrorCode err;
+                ptree datatype;
+                err = datatypes->get(DataTypes::PG_DATA_TYPE_QUALIFIED_NAME, type_name, datatype);
+                if (err == ErrorCode::OK)
                 {
-                    Value *type_name_value = (Value *)lfirst(l);
-                    std::string type_name{std::string(strVal(type_name_value))};
-                    // get dataTypeId
-                    ErrorCode err;
-                    ptree datatype;
-                    err = datatypes->get(DataTypes::PG_DATA_TYPE_QUALIFIED_NAME, type_name, datatype);
-                    if (err == ErrorCode::OK)
+                    data_type_id = datatype.get_optional<ObjectIdType>(DataTypes::ID);
+                    if (!data_type_id)
                     {
-                        data_type_id = datatype.get_optional<ObjectIdType>(DataTypes::ID);
-                        if (!data_type_id)
-                        {
-                            elog(ERROR, "Tsurugi could not data type ids");
-                            return ret_value;
-                        }
-                        else
-                        {
-                            // put dataTypeId
-                            ObjectIdType id = data_type_id.get();
-                            column.put<ObjectIdType>(Tables::Column::DATA_TYPE_ID, id);
-
-                            if (id == TSURUGI_TYPE_VARCHAR_ID)
-                            {
-                                // varying
-                                column.put<bool>(Tables::Column::VARYING, true);
-                            }
-                            else if (id == TSURUGI_TYPE_CHAR_ID)
-                            {
-                                // varying
-                                column.put<bool>(Tables::Column::VARYING, false);
-                            }
-                        }
-                        break;
+                        elog(ERROR, "Tsurugi could not data type ids");
+                        return ret_value;
                     }
-                }
-                else
-                {
-                    show_syntax_error_msg();
+                    else
+                    {
+                        // put dataTypeId
+                        ObjectIdType id = data_type_id.get();
+                        column.put<ObjectIdType>(Tables::Column::DATA_TYPE_ID, id);
+
+                        if (id == TSURUGI_TYPE_VARCHAR_ID)
+                        {
+                            // varying
+                            column.put<bool>(Tables::Column::VARYING, true);
+                        }
+                        else if (id == TSURUGI_TYPE_CHAR_ID)
+                        {
+                            // varying
+                            column.put<bool>(Tables::Column::VARYING, false);
+                        }
+                    }
+                    break;
                 }
             }
 
