@@ -32,6 +32,8 @@ using namespace boost::property_tree;
 extern "C" {
 #endif
 #include "postgres.h"
+
+#include "catalog/pg_class.h"
 #include "nodes/nodes.h"
 #include "nodes/parsenodes.h"
 #include "nodes/value.h"
@@ -225,7 +227,7 @@ CreateTable::is_syntax_supported()
             }
         }
 
-        if (colDef->collClause != nullptr | OidIsValid(colDef->collOid) )
+        if ( (colDef->collClause != nullptr) | OidIsValid(colDef->collOid) )
         {
             ereport(ERROR,
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -335,18 +337,12 @@ CreateTable::is_syntax_supported()
     }
 
     RangeVar *relation = (RangeVar *)create_stmt->relation;
-    char *relname = nullptr;
-
-    if (relation != nullptr && relation->relpersistence != nullptr)
+    if (relation != nullptr && relation->relpersistence != RELPERSISTENCE_PERMANENT)
     {
-        if (relation->relpersistence != RELPERSISTENCE_PERMANENT)
-        {
-            ereport(ERROR,
-                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                 errmsg("Tsurugi supports only regular table")));
-            return ret_value;
-        }
-
+        ereport(ERROR,
+            (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+             errmsg("Tsurugi supports only regular table")));
+        return ret_value;
     }
 
     ret_value = true;
