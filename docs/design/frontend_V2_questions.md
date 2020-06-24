@@ -142,17 +142,17 @@ https://github.com/project-tsurugi/manager/blob/df3b3a7a0a7e7e7c3643a9bc00baef50
 |~~1~~ バグのため削除 |~~INT~~   |~~0~~	         | ~~smallint~~  ※これがバグ            | 
 |~~2~~ サポートしないため削除| INT16	   | 0	         |smallint              | int2
 |~~3~~ 不要なため削除| INT	   | 0	     | integer             | 
-|4| INT32	   | 0	                | **integer**           | int4
+|4| INT32	   | 23	                | **integer**           | int4
 |~~5~~ 不要なため削除| BIGINT   | 0	                | bigint             | 
-|6| INT64	   | 0	                | **bigint**            | int8
+|6| INT64	   | 20	                | **bigint**            | int8
 |~~7~~ 不要なため削除| FLOAT	   | 0	                | real             | 
-|8| FLOAT32  | 0	                | **real**             | float4
-|9| FLOAT64  | 0	                | **double precision**             | float8
+|8| FLOAT32  | 700                | **real**             | float4
+|9| FLOAT64  | 701                | **double precision**             | float8
 |~~10~~ 不要なため削除| DOUBLE   | 0	                | double precision | 
 |~~11~~ サポートしないため削除| TEXT	   | 0	                | text             | text
 |~~12~~ 不要なため削除| STRING   | 0	                | text          | 
-|13| CHAR	   | 0	                | char             | bpchar
-|14| VARCHAR  | 0	                | varchar             | varchar
+|13| CHAR	   | 1042                | char             | bpchar
+|14| VARCHAR  | 1043                | varchar             | varchar
 
 ### 4. 実行エンジンがサポートするロケール・文字エンコーディングは何かご教授ください。
 
