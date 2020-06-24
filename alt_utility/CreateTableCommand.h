@@ -13,22 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	create_table.h
- *	@brief  Dispatch the create-table command to ogawayama.
+ *	@file	CreateTableCommand.h
+ *	@brief  the create-table command class dipatched to ogawayama
  */
 
-#ifndef CREATE_TABLE_
-#define CREATE_TABLE_
+#ifndef CREATETABLECOMMAND_
+#define CREATETABLECOMMAND_
 
-#ifdef __cplusplus
-extern "C" {
+#include "Command.h"
 
-#endif
+class CreateTableCommand : public Command{
+};
 
-bool create_table(List *stmts);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif // CREATE_TABLE_
+#endif // CREATETABLECOMMAND_

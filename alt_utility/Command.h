@@ -13,22 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	create_table.h
- *	@brief  Dispatch the create-table command to ogawayama.
+ *	@file	Command.h
+ *	@brief  the command class dipatched to ogawayama
  */
 
-#ifndef CREATE_TABLE_
-#define CREATE_TABLE_
+#ifndef COMMAND_
+#define COMMAND_
 
-#ifdef __cplusplus
-extern "C" {
+class Command {
+    private:
+        std::string name; //command type name ex)"CREATE TABLE"
+        int table_id; // id of table meta data object
+        virtual int execute() = 0; // frontend does not use. ogawayama use?
 
-#endif
+    public:
+        // C'tors
+        explicit Command(std::string name, int table_id) : name(name),table_id(table_id) {}
+        // D'tor.
+        virtual ~Command();
+};
 
-bool create_table(List *stmts);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif // CREATE_TABLE_
+#endif // COMMAND_

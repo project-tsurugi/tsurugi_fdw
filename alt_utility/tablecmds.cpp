@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  *	@file	tablecmds.cpp
- *	@brief
+ *	@brief  send metadata to metadata-manager
  */
 
 #include <boost/optional.hpp>
@@ -47,9 +47,8 @@ extern "C" {
  * @brief C'tors
  */
 
-CreateTable::CreateTable(List *stmts_)
+CreateTable::CreateTable(List *stmts) : stmts(stmts)
 {
-    stmts = stmts_;
     create_stmt = nullptr;
     index_stmt = nullptr;
 

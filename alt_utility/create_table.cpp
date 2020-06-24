@@ -40,6 +40,8 @@ extern "C" {
 #endif
 
 #include "tablecmds.h"
+#include "CreateTableCommand.h"
+
 #include "create_table.h"
 
 static std::string rewrite_query(std::string_view query_string);
