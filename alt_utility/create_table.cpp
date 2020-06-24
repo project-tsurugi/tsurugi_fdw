@@ -56,7 +56,7 @@ bool create_table(List *stmts)
     bool success = cmds.define_relation();
     if (!success)
     {
-        elog(ERROR, "Tsurugi failed to define relation");
+        // error handling
     }
 
     return success;

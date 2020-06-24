@@ -578,10 +578,15 @@ CreateTable::store_metadata()
             return ret_value;
             break;
         case ErrorCode::TABLE_NAME_ALREADY_EXISTS:
-            if (!create_stmt->if_not_exists)
+            if (create_stmt->if_not_exists)
             {
+                ereport(NOTICE,
+                    (errcode(ERRCODE_DUPLICATE_TABLE),
+                     errmsg("table name \"%s\" already exsists, skipping", relname)));
+            }
+            else{
                 ereport(ERROR,
-                    (errcode(ERRCODE_INTERNAL_ERROR),
+                    (errcode(ERRCODE_DUPLICATE_TABLE),
                      errmsg("table name \"%s\" already exsists", relname)));
             }
             return ret_value;
