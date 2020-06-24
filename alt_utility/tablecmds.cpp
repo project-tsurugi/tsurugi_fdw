@@ -423,23 +423,8 @@ CreateTable::store_metadata()
         // column name
         column.put(Tables::Column::NAME, colDef->colname);
 
-        List *colDef_constraints = colDef->constraints;
-        bool nullable = true;
-
-        if (colDef_constraints != NIL)
-        {
-            ListCell   *l;
-            foreach(l, colDef_constraints)
-            {
-                Constraint *constr = (Constraint *)lfirst(l);
-
-                if (constr->contype == CONSTR_NOTNULL)
-                {
-                    // nullable
-                    nullable = false;
-                }
-            }
-        }
+        // nullable
+        column.put<bool>(Tables::Column::NULLABLE, !colDef->is_not_null);
 
         // primary key and direction
         if (op_pkeys.find(ordinal_position) == op_pkeys.end())
@@ -448,18 +433,12 @@ CreateTable::store_metadata()
         }
         else
         {
-            // primary key makes the column NOT nullptr
-            nullable = false;
-
             ptree primary_key;
             primary_key.put<uint64_t>("", ordinal_position);
             primary_keys.push_back(std::make_pair("", primary_key));
 
             column.put<uint64_t>(Tables::Column::DIRECTION,TSURUGI_DIRECTION_ASC);
         }
-
-        // nullable
-        column.put<bool>(Tables::Column::NULLABLE, nullable);
 
         TypeName *colDef_type_name = colDef->typeName;
 
