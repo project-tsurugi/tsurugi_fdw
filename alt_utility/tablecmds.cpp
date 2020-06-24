@@ -423,9 +423,6 @@ CreateTable::store_metadata()
         // column name
         column.put(Tables::Column::NAME, colDef->colname);
 
-        // nullable
-        column.put<bool>(Tables::Column::NULLABLE, !colDef->is_not_null);
-
         // primary key and direction
         if (op_pkeys.find(ordinal_position) == op_pkeys.end())
         {
@@ -439,6 +436,9 @@ CreateTable::store_metadata()
 
             column.put<uint64_t>(Tables::Column::DIRECTION,TSURUGI_DIRECTION_ASC);
         }
+
+        // nullable
+        column.put<bool>(Tables::Column::NULLABLE, !colDef->is_not_null);
 
         TypeName *colDef_type_name = colDef->typeName;
 
