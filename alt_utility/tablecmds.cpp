@@ -149,6 +149,7 @@ CreateTable::is_type_supported()
     ListCell *l;
 
     List *type_names_not_supported = NIL;
+    std::vector<int> type_oid_not_supported;
 
     foreach(l, table_elts)
     {
@@ -159,27 +160,43 @@ CreateTable::is_type_supported()
         {
             List *type_names = colDef_type_name->names;
 
-            bool is_supported{false};
-
-            ListCell   *l;
-            foreach(l, type_names)
+            if (type_names != NIL)
             {
-                Value *type_name_value = (Value *)lfirst(l);
-                std::string type_name{std::string(strVal(type_name_value))};
-                ErrorCode err;
-                ptree datatype;
-                err = datatypes->get(DataTypes::PG_DATA_TYPE_QUALIFIED_NAME, type_name, datatype);
-                if (err == ErrorCode::OK)
+                bool is_supported{false};
+
+                ListCell   *l;
+                foreach(l, type_names)
                 {
-                    is_supported = true;
+                    Value *type_name_value = (Value *)lfirst(l);
+                    std::string type_name{std::string(strVal(type_name_value))};
+
+                    ptree datatype;
+                    ErrorCode err = datatypes->get(DataTypes::PG_DATA_TYPE_QUALIFIED_NAME, type_name, datatype);
+                    if (err == ErrorCode::OK)
+                    {
+                        is_supported = true;
+                    }
+                }
+
+                if (!is_supported)
+                {
+                    type_names_not_supported = lappend(type_names_not_supported,type_names);
+                    ret_value = false;
                 }
             }
 
-            if (!is_supported)
+            if (OidIsValid(colDef_type_name->typeOid))
             {
-                type_names_not_supported = lappend(type_names_not_supported,type_names);
-                ret_value = false;
+                ptree datatype;
+                std::string type_oid_str = std::to_string(colDef_type_name->typeOid);
+                ErrorCode err = datatypes->get(DataTypes::PG_DATA_TYPE, type_oid_str, datatype);
+                if (err != ErrorCode::OK)
+                {
+                    type_oid_not_supported.push_back(colDef_type_name->typeOid);
+                    ret_value = false;
+                }
             }
+
         }
         else
         {
@@ -191,7 +208,15 @@ CreateTable::is_type_supported()
 
     if (!ret_value)
     {
-        show_type_error_msg(type_names_not_supported);
+        if (type_names_not_supported != NIL)
+        {
+            show_type_error_msg(type_names_not_supported);
+        }
+
+        if (!type_oid_not_supported.empty())
+        {
+            show_type_error_msg(type_oid_not_supported);
+        }
     }
 
     return ret_value;
@@ -227,7 +252,7 @@ CreateTable::is_syntax_supported()
             }
         }
 
-        if ( (colDef->collClause != nullptr) | OidIsValid(colDef->collOid) )
+        if ( colDef->collClause != nullptr )
         {
             ereport(ERROR,
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -455,75 +480,97 @@ CreateTable::store_metadata()
                 if (err == ErrorCode::OK)
                 {
                     data_type_id = datatype.get_optional<ObjectIdType>(DataTypes::ID);
-                    if (!data_type_id)
-                    {
-                        ereport(ERROR,
-                            (errcode(ERRCODE_INTERNAL_ERROR),
-                             errmsg("Tsurugi could not get data type ids")));
-                        return ret_value;
-                    }
-                    else
-                    {
-                        // put dataTypeId
-                        ObjectIdType id = data_type_id.get();
-                        column.put<ObjectIdType>(Tables::Column::DATA_TYPE_ID, id);
-
-                        if (id == TSURUGI_TYPE_VARCHAR_ID)
-                        {
-                            // varying
-                            column.put<bool>(Tables::Column::VARYING, true);
-                        }
-                        else if (id == TSURUGI_TYPE_CHAR_ID)
-                        {
-                            // varying
-                            column.put<bool>(Tables::Column::VARYING, false);
-                        }
-                    }
                     break;
                 }
             }
 
-            List *typmods = colDef_type_name->typmods;
-            int32 typemod = colDef_type_name->typemod;
-
-            if (typmods != NIL)
+            if (OidIsValid(colDef_type_name->typeOid))
             {
-                ptree datalengths;
-
-                ListCell *l;
-                foreach(l, typmods)
+                ptree datatype;
+                std::string type_oid_str = std::to_string(colDef_type_name->typeOid);
+                ErrorCode err = datatypes->get(DataTypes::PG_DATA_TYPE, type_oid_str, datatype);
+                if (err == ErrorCode::OK)
                 {
-                    Node *tm = (Node *) lfirst(l);
-
-                    if (IsA(tm, A_Const))
-                    {
-                        A_Const    *ac = (A_Const *) tm;
-
-                        if (IsA(&ac->val, Integer))
-                        {
-                            datalengths.put<uint64_t>("", ac->val.val.ival);
-                        }
-                        else
-                        {
-                            show_syntax_error_msg("can use only integer value in data length");
-                            return ret_value;
-                        }
-                    }
-                    else
-                    {
-                        show_syntax_error_msg("can use only constant value in data length");
-                        return ret_value;
-                    }
-                }
-
-                if (!datalengths.data().empty())
-                {
-                    column.add_child(Tables::Column::DATA_LENGTH, datalengths);
+                    data_type_id = datatype.get_optional<ObjectIdType>(DataTypes::ID);
                 }
             }
-            else if (typemod != TYPEMOD_NULL_VALUE )
+
+            if (!data_type_id)
             {
-                column.put<uint64_t>(Tables::Column::DATA_LENGTH, typemod);
+                ereport(ERROR,
+                    (errcode(ERRCODE_INTERNAL_ERROR),
+                     errmsg("Tsurugi could not get data type ids")));
+                return ret_value;
+            }
+            else
+            {
+                // put dataTypeId
+                ObjectIdType id = data_type_id.get();
+                column.put<ObjectIdType>(Tables::Column::DATA_TYPE_ID, id);
+
+                if (id == TSURUGI_TYPE_VARCHAR_ID)
+                {
+                    // varying
+                    column.put<bool>(Tables::Column::VARYING, true);
+                }
+                else if (id == TSURUGI_TYPE_CHAR_ID)
+                {
+                    // varying
+                    column.put<bool>(Tables::Column::VARYING, false);
+                }
+
+                switch (id)
+                {
+                    case TSURUGI_TYPE_VARCHAR_ID:
+                    case TSURUGI_TYPE_CHAR_ID:
+                        List *typmods = colDef_type_name->typmods;
+
+                        /* typemod includes varlena header */
+                        int typemod = (int)colDef_type_name->typemod - VARHDRSZ;
+
+                        if (typmods != NIL)
+                        {
+                            ptree datalengths;
+
+                            ListCell *l;
+                            foreach(l, typmods)
+                            {
+                                Node *tm = (Node *) lfirst(l);
+
+                                if (IsA(tm, A_Const))
+                                {
+                                    A_Const    *ac = (A_Const *) tm;
+
+                                    if (IsA(&ac->val, Integer))
+                                    {
+                                        datalengths.put<uint64_t>("", ac->val.val.ival);
+                                    }
+                                    else
+                                    {
+                                        show_syntax_error_msg("can use only integer value in data length");
+                                        return ret_value;
+                                    }
+                                }
+                                else
+                                {
+                                    show_syntax_error_msg("can use only constant value in data length");
+                                    return ret_value;
+                                }
+                            }
+
+                            if (!datalengths.data().empty())
+                            {
+                                column.add_child(Tables::Column::DATA_LENGTH, datalengths);
+                            }
+                        }
+                        /* if typmod is -1, typmod is NULL VALUE*/
+                        else if (typemod >= 0)
+                        {
+                            column.put<uint64_t>(Tables::Column::DATA_LENGTH, typemod);
+                        }
+
+                }
+
             }
 
         }
@@ -646,6 +693,17 @@ CreateTable::show_type_error_msg(List *type_names)
     ereport(ERROR,
         (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
          errmsg("Tsurugi does not support type %s", nodeToString(type_names))));
+}
+
+void
+CreateTable::show_type_error_msg(std::vector<int> type_oids)
+{
+    std::stringstream type_oid_str;
+    std::copy(type_oids.begin(), type_oids.end(), std::ostream_iterator<int>(type_oid_str, ", "));
+
+    ereport(ERROR,
+        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+         errmsg("Tsurugi does not support type oid %s", type_oid_str.str().c_str())));
 }
 
 void
