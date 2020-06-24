@@ -224,6 +224,14 @@ CreateTable::is_syntax_supported()
                 }
             }
         }
+
+        if (colDef->collClause != nullptr | OidIsValid(colDef->collOid) )
+        {
+            ereport(ERROR,
+                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                 errmsg("Tsurugi does not support COLLATE clause")));
+            return ret_value;
+        }
     }
 
     List *table_constraints = create_stmt->constraints;
@@ -324,6 +332,21 @@ CreateTable::is_syntax_supported()
                  errdetail("Tsurugi does not support FOREIGN KEY table constraint")));
             return ret_value;
         }
+    }
+
+    RangeVar *relation = (RangeVar *)create_stmt->relation;
+    char *relname = nullptr;
+
+    if (relation != nullptr && relation->relpersistence != nullptr)
+    {
+        if (relation->relpersistence != RELPERSISTENCE_PERMANENT)
+        {
+            ereport(ERROR,
+                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                 errmsg("Tsurugi supports only regular table")));
+            return ret_value;
+        }
+
     }
 
     ret_value = true;
