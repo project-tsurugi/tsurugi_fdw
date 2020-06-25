@@ -73,7 +73,7 @@ CreateTable::CreateTable(List *stmts) : stmts(stmts)
  *  @brief:
  */
 bool
-CreateTable::define_relation()
+CreateTable::define_relation( uint64_t* object_id )
 {
     Assert(create_stmt != nullptr);
 
@@ -101,7 +101,7 @@ CreateTable::define_relation()
     }
 
     // send metadata to metadata manager
-    if (!store_metadata())
+    if (!store_metadata( object_id ))
     {
         return ret_value;
     }
@@ -374,7 +374,7 @@ CreateTable::is_syntax_supported()
 }
 
 bool
-CreateTable::store_metadata()
+CreateTable::store_metadata( uint64_t* object_id )
 {
 
     bool ret_value{false};
@@ -568,7 +568,8 @@ CreateTable::store_metadata()
     new_table.add_child(Tables::COLUMNS_NODE, columns);
 
     ErrorCode error = ErrorCode::UNKNOWN;
-    error = tables->add(new_table);
+
+    error = tables->add(new_table, object_id);
 
     switch (error)
     {

@@ -55,10 +55,16 @@ bool create_table(List *stmts)
     Assert(stmts != nullptr);
 
     CreateTable cmds{stmts};
-    bool success = cmds.define_relation();
+    uint64_t object_id = 0;
+    bool success = cmds.define_relation( &object_id );
     if (!success)
     {
         // error handling
+    }
+    else
+    {
+        CreateTableCommand command{object_id};
+        elog(DEBUG2, "command type name: %s, object id: %d", command.get_command_type_name().c_str(), command.get_table_id());
     }
 
     return success;

@@ -13,24 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	Command.h
+ *	@file	Command.cpp
  *	@brief  the command class dipatched to ogawayama
  */
 
-#ifndef COMMAND_
-#define COMMAND_
+#include <string>
 
-class Command {
-    public:
-        // C'tors
-        Command(std::string command_type_name, uint64_t table_id)
-            : command_type_name(command_type_name), table_id(table_id) {};
-        std::string get_command_type_name();
-        uint64_t get_table_id();
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "postgres.h"
+#ifdef __cplusplus
+}
+#endif
 
-    private:
-        std::string command_type_name; //command type name ex)"CREATE TABLE"
-        uint64_t table_id;             // id of table meta data object
-};
+#include "Command.h"
 
-#endif // COMMAND_
+std::string Command::get_command_type_name()
+{
+    return command_type_name;
+}
+
+uint64_t Command::get_table_id()
+{
+    return table_id;
+}

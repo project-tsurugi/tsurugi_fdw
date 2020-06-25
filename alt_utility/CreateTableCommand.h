@@ -13,16 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	CreateTableCommand.h
+ *	@file	create_table_command.h
  *	@brief  the create-table command class dipatched to ogawayama
  */
 
 #ifndef CREATETABLECOMMAND_
 #define CREATETABLECOMMAND_
 
+#include <string>
+
 #include "Command.h"
 
+const std::string COMMAND_TYPE_NANE_CREATE_TABLE = "CREATE TABLE";
+
 class CreateTableCommand : public Command{
+    public:
+        // C'tors
+        CreateTableCommand(uint64_t table_id)
+            : Command(COMMAND_TYPE_NANE_CREATE_TABLE, table_id) {}
 };
 
 #endif // CREATETABLECOMMAND_

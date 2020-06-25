@@ -36,7 +36,7 @@ const uint64_t ORDINAL_POSITION_BASE_INDEX = 1;
 class CreateTable {
     public:
         CreateTable(List *stmts);
-        bool define_relation();
+        bool define_relation( uint64_t* object_id );
 
     private:
         const std::string dbname{DBNAME};
@@ -50,7 +50,7 @@ class CreateTable {
         bool load_metadata();
         bool is_type_supported();
         bool is_syntax_supported();
-        bool store_metadata();
+        bool store_metadata( uint64_t* object_id );
         std::unordered_set<uint64_t> get_ordinal_positions_of_primary_keys();
         void show_type_error_msg(List *type_names);
         void show_type_error_msg(std::vector<int> type_oids);
