@@ -371,9 +371,9 @@ ERROR:  Tsurugi does not support type %s.
 * V1:テーブルおよびデータ型に関するメタデータの格納先が固定されていない。
 * V2:次の格納先とする。
     * テーブルのメタデータの格納先
-        * <PostgreSQLのインストールディレクトリ>/../.local/tables.json
+        * <PostgreSQLのインストールディレクトリ>/data/tsurugi_metadata/tables.json
     * データ型のメタデータの格納先
-        * <PostgreSQLのインストールディレクトリ>/../.local/datatypes.json
+        * <PostgreSQLのインストールディレクトリ>/data/tsurugi_metadata/datatypes.json
     * 将来的には、DBにするため、一時的な対処
 
 #### 4. DebugビルドとReleaseビルドを分ける
