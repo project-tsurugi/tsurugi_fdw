@@ -17,11 +17,11 @@
 |12 error|2| 1| 1|
 
 ### SQL
-* [orthogonal_table_of_constraints.sql](/orthogonal_table_of_constraints/orthogonal_table_of_constraints.sql)
+* [orthogonal_table_of_constraints.sql](./orthogonal_table_of_constraints/orthogonal_table_of_constraints.sql)
 
 ## 正常系
 ### SQL
-* [ch-benchmark-ddl.sql](/ch-benchmark-test/ch-benchmark-ddl.sql)
+* [ch-benchmark-ddl.sql](./ch-benchmark-test/ch-benchmark-ddl.sql)
 	* 参考：https://github.com/citusdata/ch-benchmark.git
 
 ## 異常系
@@ -30,4 +30,4 @@
 * サポートしない型エラー
 
 * 同じテーブル名が入力された
-	* [orthogonal_table_of_constraints.sql](/orthogonal_table_of_constraints/orthogonal_table_of_constraints.sql)を2回実行する。
+	* [orthogonal_table_of_constraints.sql](./orthogonal_table_of_constraints/orthogonal_table_of_constraints.sql)を2回実行する。
