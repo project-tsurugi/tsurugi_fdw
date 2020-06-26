@@ -17,12 +17,12 @@
 |12 error|2| 1| 1|
 
 ### SQL
-* test_create_table_v2.sql
+* [orthogonal_table_of_constraints.sql](/orthogonal_table_of_constraints/orthogonal_table_of_constraints.sql)
 
 ## 正常系
 ### SQL
-* https://github.com/citusdata/ch-benchmark.git
-	* 本ディレクトリ直下のch-benchmark-ddl.sqlに置き換え
+* [ch-benchmark-ddl.sql](/ch-benchmark-test/ch-benchmark-ddl.sql)
+	* 参考：https://github.com/citusdata/ch-benchmark.git
 
 ## 異常系
 * サポートしない構文エラー
@@ -30,7 +30,4 @@
 * サポートしない型エラー
 
 * 同じテーブル名が入力された
-	* 同一DB・同一スキーマ
-	* 同一DB・別スキーマ
-	* 別DB・同一スキーマ
-	* 別DB・別スキーマ
+	* [orthogonal_table_of_constraints.sql](/orthogonal_table_of_constraints/orthogonal_table_of_constraints.sql)を2回実行する。
