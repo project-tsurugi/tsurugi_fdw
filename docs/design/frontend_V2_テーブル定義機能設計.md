@@ -86,8 +86,7 @@
 
 CREATE TABLE *table_name* ( [  
 &nbsp;&nbsp;{ *column_name* *data_type* [ *column_constraint* [ ... ] ]  
-&nbsp;&nbsp;&nbsp;&nbsp;| *table_constraint*
-&nbsp;&nbsp;&nbsp;&nbsp;| LIKE *source_table* }  
+&nbsp;&nbsp;&nbsp;&nbsp;| *table_constraint* }  
 &nbsp;&nbsp;&nbsp;&nbsp;[, ... ]
 ] )  
 TABLESPACE tsurugi
