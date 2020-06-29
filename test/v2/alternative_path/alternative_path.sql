@@ -140,13 +140,6 @@ CREATE TABLE tmp.distributors_table_with (
 )
 WITH (fillfactor=70) tablespace tsurugi;
 
--- WITHOUT OIDS clause of table
-CREATE TABLE tmp.distributors_without_oid (
-    did     integer,
-    name    varchar(40)
-)
-WITHOUT OIDS tablespace tsurugi;
-
 -- ON COMMIT PRESERVE ROWS
 create global temporary table oncommit_prows (
   id int not null primary key,
@@ -482,18 +475,7 @@ CREATE TABLE tmp.deferrable_tc(
     CONSTRAINT posts2_pk PRIMARY KEY (id) DEFERRABLE
 ) tablespace tsurugi;
 
--- NOT DEFERRABLE
-CREATE TABLE tmp.not_deferrable_tc(
-    id integer NOT NULL,
-    CONSTRAINT posts2_pk PRIMARY KEY (id) NOT DEFERRABLE
-) tablespace tsurugi;
-
 DROP SCHEMA tmp CASCADE;
-DROP TABLE temptbl_dummy;
-DROP TABLE temporarytbl_dummy;
-DROP TABLE oncommit_prows_dummy;
-DROP TABLE oncommit_drows_dummy;
-DROP TABLE oncommit_drop_dummy;
 
 \c postgres
 
