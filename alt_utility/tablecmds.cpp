@@ -229,6 +229,50 @@ CreateTable::is_syntax_supported()
 
     List *table_elts = create_stmt->tableElts;
 
+    if (create_stmt->inhRelations != NIL)
+    {
+        show_table_constraint_syntax_error_msg("Tsurugi does not support INHERITS clause");
+        return ret_value;
+    }
+
+    if (create_stmt->partbound != nullptr)
+    {
+        show_table_constraint_syntax_error_msg("Tsurugi does not support FOR VALUES clause");
+        return ret_value;
+    }
+
+    if (create_stmt->partspec != nullptr)
+    {
+        show_table_constraint_syntax_error_msg("Tsurugi does not support PARTITION BY clause");
+        return ret_value;
+    }
+
+    if (create_stmt->ofTypename != nullptr)
+    {
+        show_table_constraint_syntax_error_msg("Tsurugi does not support OF typename clause");
+        return ret_value;
+    }
+
+    if (create_stmt->options != NIL)
+    {
+        show_table_constraint_syntax_error_msg("Tsurugi does not support WITH clause");
+        return ret_value;
+    }
+
+    if (create_stmt->oncommit != ONCOMMIT_NOOP)
+    {
+        show_table_constraint_syntax_error_msg("Tsurugi does not support ON COMMIT clause");
+        return ret_value;
+    }
+
+#if PG_VERSION_NUM >= 120000
+    if (create_stmt->accessMethod != nullptr)
+    {
+        show_table_constraint_syntax_error_msg("Tsurugi does not support USING clause");
+        return ret_value;
+    }
+#endif
+
     foreach(l, table_elts)
     {
         ColumnDef *colDef = (ColumnDef *)lfirst(l);
@@ -326,50 +370,6 @@ CreateTable::is_syntax_supported()
         }
 
     }
-
-    if (create_stmt->inhRelations != NIL)
-    {
-        show_table_constraint_syntax_error_msg("Tsurugi does not support INHERITS clause");
-        return ret_value;
-    }
-
-    if (create_stmt->partbound != nullptr)
-    {
-        show_table_constraint_syntax_error_msg("Tsurugi does not support FOR VALUES clause");
-        return ret_value;
-    }
-
-    if (create_stmt->partspec != nullptr)
-    {
-        show_table_constraint_syntax_error_msg("Tsurugi does not support PARTITION BY clause");
-        return ret_value;
-    }
-
-    if (create_stmt->ofTypename != nullptr)
-    {
-        show_table_constraint_syntax_error_msg("Tsurugi does not support OF typename clause");
-        return ret_value;
-    }
-
-    if (create_stmt->options != NIL)
-    {
-        show_table_constraint_syntax_error_msg("Tsurugi does not support WITH clause");
-        return ret_value;
-    }
-
-    if (create_stmt->oncommit != ONCOMMIT_NOOP)
-    {
-        show_table_constraint_syntax_error_msg("Tsurugi does not support ON COMMIT clause");
-        return ret_value;
-    }
-
-#if PG_VERSION_NUM >= 120000
-    if (create_stmt->accessMethod != nullptr)
-    {
-        show_table_constraint_syntax_error_msg("Tsurugi does not support USING clause");
-        return ret_value;
-    }
-#endif
 
     foreach(l, stmts)
     {
