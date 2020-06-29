@@ -1,0 +1,514 @@
+CREATE DATABASE test TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'C' LC_CTYPE = 'en_US.utf8';
+CREATE DATABASE
+\c test
+You are now connected to database "test" as user "vagrant".
+CREATE SCHEMA tmp;
+CREATE SCHEMA
+-- referred by FOREIGN KEY constraint
+CREATE TABLE tmp.customer (
+  c_w_id int NOT NULL,
+  c_d_id int NOT NULL,
+  c_id int NOT NULL,
+  c_discount double precision NOT NULL, -- decimal(4,4) NOT NULL
+  c_credit char(2) NOT NULL,
+  c_last varchar(16) NOT NULL,
+  c_first varchar(16) NOT NULL,
+  c_credit_lim double precision NOT NULL, -- decimal(12,2) NOT NULL
+  c_balance double precision NOT NULL, -- decimal(12,2) NOT NULL
+  c_ytd_payment float NOT NULL,
+  c_payment_cnt int NOT NULL,
+  c_delivery_cnt int NOT NULL,
+  c_street_1 varchar(20) NOT NULL,
+  c_street_2 varchar(20) NOT NULL,
+  c_city varchar(20) NOT NULL,
+  c_state char(2) NOT NULL,
+  c_zip char(9) NOT NULL,
+  c_phone char(16) NOT NULL,
+  c_since char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  c_middle char(2) NOT NULL,
+  c_data varchar(500) NOT NULL,
+  PRIMARY KEY (c_w_id,c_d_id,c_id)
+) tablespace tsurugi;
+CREATE TABLE
+-- type error not supported
+CREATE TABLE tmp.orders_type_error (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt decimal(2,0) NOT NULL,
+  o_all_local decimal(1,0) NOT NULL,
+  o_entry_d timestamp NOT NULL,
+  PRIMARY KEY (o_w_id,o_d_id,o_id)
+) tablespace tsurugi;
+ERROR:  Tsurugi does not support type (("pg_catalog" "numeric") ("pg_catalog" "numeric") ("pg_catalog" "timestamp"))
+-- TEMP TABLE
+create temp table temptbl (
+  id integer,
+  name varchar(10)
+) tablespace tsurugi;
+ERROR:  Tsurugi supports only regular table
+create temporary table temporarytbl (
+  id integer,
+  name varchar(10)
+) tablespace tsurugi;
+ERROR:  Tsurugi supports only regular table
+-- UNLOGGED TABLE
+create unlogged table tmp.unloggedtbl (
+  id integer,
+  name varchar(10)
+) tablespace tsurugi;
+ERROR:  Tsurugi supports only regular table
+-- COLLATE column
+CREATE TABLE tmp.distributors_unique_cc (
+    did     varchar(1000) COLLATE "C"
+) tablespace tsurugi;
+ERROR:  Tsurugi does not support COLLATE clause
+-- LIKE clause
+CREATE TABLE tmp.customer_copied (
+    LIKE tmp.customer_dummy
+) tablespace tsurugi;
+ERROR:  Tsurugi does not support COLLATE clause
+-- LIKE INCLUDING ALL
+CREATE TABLE tmp.customer_copied_including (
+    LIKE tmp.customer_dummy INCLUDING ALL
+) tablespace tsurugi;
+ERROR:  Tsurugi does not support COLLATE clause
+-- LIKE EXCLUDING
+CREATE TABLE tmp.customer_copied_excluding (
+    LIKE tmp.customer_dummy EXCLUDING CONSTRAINTS
+) tablespace tsurugi;
+ERROR:  Tsurugi does not support COLLATE clause
+-- INHERITS clause
+-- parent table
+CREATE TABLE tmp.cities (
+    name            varchar,
+    population      float,
+    altitude        int     -- in feet
+) tablespace tsurugi;
+CREATE TABLE
+-- INHERITS clause (child table)
+CREATE TABLE tmp.capitals (
+    state           char(2)
+) INHERITS (cities) tablespace tsurugi;
+ERROR:  Tsurugi does not support INHERITS clause
+-- PARTITION BY RANGE
+CREATE TABLE tmp.measurement (
+    logdate         varchar(24) not null,
+    peaktemp        int,
+    unitsales       int
+) PARTITION BY RANGE (logdate) tablespace tsurugi;
+ERROR:  Tsurugi does not support PARTITION BY clause
+-- PARTITION BY RANGE COLLATE
+CREATE TABLE tmp.measurement_collate (
+    logdate         varchar(24) not null,
+    peaktemp        int,
+    unitsales       int
+) PARTITION BY RANGE (logdate COLLATE "C") tablespace tsurugi;
+ERROR:  Tsurugi does not support PARTITION BY clause
+CREATE TABLE tmp.measurement_y2016m07
+PARTITION OF measurement
+FOR VALUES FROM ('2016-07-01') TO ('2016-08-01') tablespace tsurugi;
+ERROR:  Tsurugi does not support INHERITS clause
+-- PARTITION BY LIST
+CREATE TABLE tmp.cities (
+    city_id      bigint not null,
+    name         varchar not null,
+    population   bigint
+) PARTITION BY LIST (name) tablespace tsurugi;
+ERROR:  Tsurugi does not support PARTITION BY clause
+CREATE TABLE tmp.cities_ab
+PARTITION OF cities
+FOR VALUES IN ('a', 'b') tablespace tsurugi;
+ERROR:  Tsurugi does not support INHERITS clause
+-- PARTITION BY HASH
+CREATE TABLE tmp.orders_partition_by_hash (
+    order_id     bigint not null,
+    cust_id      bigint not null,
+    status       varchar
+) PARTITION BY HASH (order_id) tablespace tsurugi;
+ERROR:  Tsurugi does not support PARTITION BY clause
+CREATE TABLE tmp.orders_p1 PARTITION OF orders_partition_by_hash
+FOR VALUES WITH (MODULUS 4, REMAINDER 0) tablespace tsurugi;
+ERROR:  Tsurugi does not support INHERITS clause
+-- USING method
+CREATE ACCESS METHOD myheap TYPE TABLE HANDLER heap_tableam_handler;
+CREATE ACCESS METHOD
+CREATE TABLE tmp.t_myheap (
+    id int, v text
+) USING myheap tablespace tsurugi;
+ERROR:  Tsurugi does not support USING clause
+-- WITH clause of table
+CREATE TABLE tmp.distributors_table_with (
+    did     integer,
+    name    varchar(40)
+)
+WITH (fillfactor=70) tablespace tsurugi;
+ERROR:  Tsurugi does not support WITH clause
+-- ON COMMIT PRESERVE ROWS
+create global temporary table oncommit_prows (
+  id int not null primary key,
+  txt varchar(32)
+)
+on commit preserve rows tablespace tsurugi;
+WARNING:  GLOBAL is deprecated in temporary table creation
+LINE 1: create global temporary table oncommit_prows (
+               ^
+ERROR:  Tsurugi does not support ON COMMIT clause
+-- ON COMMIT DELETE ROWS
+create global temporary table oncommit_drows (
+  id int not null primary key,
+  txt varchar(32)
+)
+on commit delete rows tablespace tsurugi;
+WARNING:  GLOBAL is deprecated in temporary table creation
+LINE 1: create global temporary table oncommit_drows (
+               ^
+ERROR:  Tsurugi does not support ON COMMIT clause
+-- ON COMMIT DROP
+create global temporary table oncommit_drop (
+  id int not null primary key,
+  txt varchar(32)
+)
+on commit drop tablespace tsurugi;
+WARNING:  GLOBAL is deprecated in temporary table creation
+LINE 1: create global temporary table oncommit_drop (
+               ^
+ERROR:  Tsurugi does not support ON COMMIT clause
+-- OF clause
+CREATE TYPE employee_type AS (name text, salary numeric);
+CREATE TYPE
+CREATE TABLE tmp.employees OF employee_type (
+    PRIMARY KEY (name),
+    salary
+) tablespace tsurugi;
+ERROR:  Tsurugi does not support OF typename clause
+-- *** column constraint ***
+-- NULL column constraint
+CREATE TABLE tmp.orders_null_cc (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int NULL,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  PRIMARY KEY (o_w_id,o_d_id,o_id)
+) tablespace tsurugi;
+ERROR:  Tsurugi supports only NOT NULL and PRIMARY KEY in column constraint
+-- CHECK column constraint
+CREATE TABLE tmp.distributors_check_cc (
+    did     integer CHECK (did > 100),
+    name    varchar(40)
+) tablespace tsurugi;
+ERROR:  Tsurugi supports only NOT NULL and PRIMARY KEY in column constraint
+-- CHECK column constraint NO INHERIT
+CREATE TABLE tmp.distributors_check_cc_ni (
+    did     integer CHECK (did > 100) NO INHERIT,
+    name    varchar(40)
+) tablespace tsurugi;
+ERROR:  Tsurugi supports only NOT NULL and PRIMARY KEY in column constraint
+-- DEFAULT column constraint
+CREATE TABLE tmp.orders_default_cc (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int DEFAULT NULL,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  PRIMARY KEY (o_w_id,o_d_id,o_id)
+) tablespace tsurugi;
+ERROR:  Tsurugi supports only NOT NULL and PRIMARY KEY in column constraint
+-- GENERATED ALWAYS AS
+CREATE TABLE tmp.generated_always_as (
+    x float,
+    y float,
+    "(x + y)" float GENERATED ALWAYS AS (x + y) STORED,
+    "(x - y)" float GENERATED ALWAYS AS (x - y) STORED,
+    "(x * y)" float GENERATED ALWAYS AS (x * y) STORED,
+    "(x / y)" float GENERATED ALWAYS AS (x / y) STORED
+) tablespace tsurugi;
+ERROR:  Tsurugi supports only NOT NULL and PRIMARY KEY in column constraint
+-- GENERATED BY DEFAULT AS IDENTITY
+CREATE TABLE tmp.distributors_generated_by_default (
+     did    integer PRIMARY KEY GENERATED BY DEFAULT AS IDENTITY,
+     name   varchar(40) NOT NULL
+) tablespace tsurugi;
+ERROR:  Tsurugi supports only NOT NULL and PRIMARY KEY in column constraint
+-- GENERATED ALWAYS AS IDENTITY
+CREATE TABLE tmp.distributors_generated_always (
+     did    integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+     name   varchar(40) NOT NULL
+) tablespace tsurugi;
+ERROR:  Tsurugi supports only NOT NULL and PRIMARY KEY in column constraint
+-- UNIQUE column constraint
+CREATE TABLE tmp.distributors_unique_cc (
+    did     integer,
+    name    varchar(40) UNIQUE
+) tablespace tsurugi;
+ERROR:  Tsurugi supports only NOT NULL and PRIMARY KEY in column constraint
+-- PRIMARY KEY WITH
+CREATE TABLE tmp.distributors_pkey_cc_include (
+    id             integer PRIMARY KEY WITH (fillfactor=70),
+    first_name     varchar,
+    last_name      varchar
+) tablespace tsurugi;
+ERROR:  Tsurugi does not support WITH clause
+-- PRIMARY KEY USING INDEX
+CREATE TABLE tmp.distributors_pkey_cc_using_index (
+    id             integer PRIMARY KEY USING INDEX TABLESPACE tsurugi,
+    first_name     varchar,
+    last_name      varchar
+) tablespace tsurugi;
+ERROR:  Tsurugi does not support USING INDEX TABLESPACE clause
+-- FOREIGN KEY column constraint
+CREATE TABLE tmp.orders_fkey_cc (
+  o_w_id int NOT NULL REFERENCES customer (c_w_id),
+  o_d_id int NOT NULL REFERENCES customer (c_d_id),
+  o_id int NOT NULL REFERENCES customer (c_id),
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  PRIMARY KEY (o_w_id,o_d_id,o_id)
+) tablespace tsurugi;
+ERROR:  Tsurugi supports only NOT NULL and PRIMARY KEY in column constraint
+-- FOREIGN KEY column constraint MATCH FULL
+CREATE TABLE tmp.orders_fkey_cc_mf (
+  o_w_id int NOT NULL REFERENCES customer (c_w_id) MATCH FULL ON UPDATE CASCADE ON DELETE CASCADE,
+  o_d_id int NOT NULL REFERENCES customer (c_d_id) MATCH FULL ON UPDATE CASCADE ON DELETE CASCADE,
+  o_id int NOT NULL REFERENCES customer (c_id) MATCH FULL ON UPDATE CASCADE ON DELETE CASCADE,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  PRIMARY KEY (o_w_id,o_d_id,o_id)
+) tablespace tsurugi;
+ERROR:  Tsurugi supports only NOT NULL and PRIMARY KEY in column constraint
+-- FOREIGN KEY column constraint MATCH PARTIAL
+CREATE TABLE tmp.orders_fkey_cc_mp (
+  o_w_id int NOT NULL REFERENCES customer (c_w_id) MATCH PARTIAL ON UPDATE NO ACTION ON DELETE NO ACTION,
+  o_d_id int NOT NULL REFERENCES customer (c_d_id) MATCH PARTIAL ON UPDATE NO ACTION ON DELETE NO ACTION,
+  o_id int NOT NULL REFERENCES customer (c_id) MATCH PARTIAL ON UPDATE NO ACTION ON DELETE NO ACTION,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  PRIMARY KEY (o_w_id,o_d_id,o_id)
+) tablespace tsurugi;
+ERROR:  MATCH PARTIAL not yet implemented
+LINE 2: ... o_w_id int NOT NULL REFERENCES customer (c_w_id) MATCH PART...
+                                                             ^
+-- FOREIGN KEY column constraint MATCH SIMPLE
+CREATE TABLE tmp.orders_fkey_cc_ms (
+  o_w_id int REFERENCES customer (c_w_id) MATCH SIMPLE ON UPDATE SET NULL ON DELETE SET NULL,
+  o_d_id int REFERENCES customer (c_d_id) MATCH SIMPLE ON UPDATE SET NULL ON DELETE SET NULL,
+  o_id int REFERENCES customer (c_id) MATCH SIMPLE ON UPDATE SET NULL ON DELETE SET NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  PRIMARY KEY (o_w_id,o_d_id,o_id)
+) tablespace tsurugi;
+ERROR:  Tsurugi supports only NOT NULL and PRIMARY KEY in column constraint
+-- DEFERRABLE INITIALLY DEFERRED column constraint
+CREATE TABLE tmp.deferrable_initially_deferred_cc(
+    id integer PRIMARY KEY DEFERRABLE INITIALLY DEFERRED
+) tablespace tsurugi;
+ERROR:  Tsurugi supports only NOT NULL and PRIMARY KEY in column constraint
+-- DEFERRABLE INITIALLY IMMEDIATE column constraint
+CREATE TABLE tmp.deferrable_initially_immediate_cc(
+    id integer PRIMARY KEY DEFERRABLE INITIALLY IMMEDIATE
+) tablespace tsurugi;
+ERROR:  Tsurugi supports only NOT NULL and PRIMARY KEY in column constraint
+-- DEFERRABLE column constraint
+CREATE TABLE tmp.deferrable_cc(
+    id integer PRIMARY KEY DEFERRABLE
+) tablespace tsurugi;
+ERROR:  Tsurugi supports only NOT NULL and PRIMARY KEY in column constraint
+-- NOT DEFERRABLE column constraint
+CREATE TABLE tmp.not_deferrable_cc(
+    id integer PRIMARY KEY NOT DEFERRABLE
+) tablespace tsurugi;
+ERROR:  Tsurugi supports only NOT NULL and PRIMARY KEY in column constraint
+-- *** table constraint ***
+-- CHECK table constraint
+CREATE TABLE tmp.distributors_check_tc (
+    did     integer,
+    name    varchar(40),
+    CONSTRAINT con1 CHECK (did > 100 AND name <> '')
+) tablespace tsurugi;
+ERROR:  Tsurugi supports only PRIMARY KEY in table constraint
+-- CHECK table constraint NO INHERIT
+CREATE TABLE tmp.distributors_check_tc_ni (
+    did     integer,
+    name    varchar(40),
+    CONSTRAINT con1 CHECK (did > 100 AND name <> '') NO INHERIT
+) tablespace tsurugi;
+ERROR:  Tsurugi supports only PRIMARY KEY in table constraint
+-- UNIQUE table constraint
+CREATE TABLE tmp.orders_unique_tc (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  PRIMARY KEY (o_w_id,o_d_id,o_id),
+  UNIQUE (o_w_id,o_d_id,o_c_id,o_id)
+) tablespace tsurugi;
+ERROR:  Tsurugi does not support UNIQUE table constraint
+DETAIL:  Tsurugi supports only PRIMARY KEY in table constraint
+-- WITH clause
+CREATE TABLE tmp.distributors_column_with (
+    did     integer,
+    name    varchar(40),
+    PRIMARY KEY(name) WITH (fillfactor=70)
+) tablespace tsurugi;
+ERROR:  Tsurugi does not support WITH clause
+-- PRIMARY KEY INCLUDE
+CREATE TABLE tmp.distributors_pkey_tc_include (
+    id             integer,
+    first_name     varchar,
+    last_name      varchar,
+    PRIMARY KEY(id) INCLUDE (first_name,last_name)
+) tablespace tsurugi;
+ERROR:  Tsurugi does not support INCLUDE clause
+-- PRIMARY KEY USING INDEX
+CREATE TABLE tmp.distributors_pkey_tc_using_index (
+    id             integer,
+    first_name     varchar,
+    last_name      varchar,
+    PRIMARY KEY(id) USING INDEX TABLESPACE tsurugi
+) tablespace tsurugi;
+ERROR:  Tsurugi does not support USING INDEX TABLESPACE clause
+-- EXCLUDE USING
+CREATE TABLE tmp.distributotrs_exclude_using (
+    name varchar,
+    age integer,
+    EXCLUDE USING gist (age WITH <>)
+) tablespace tsurugi;
+ERROR:  Tsurugi does not support EXCLUDE table constraint
+DETAIL:  Tsurugi supports only PRIMARY KEY in table constraint
+CREATE TABLE tmp.distributotrs_exclude_using_where (
+    name varchar,
+    age integer,
+    EXCLUDE USING btree (age WITH =) WHERE (age between 0 and 200)
+) tablespace tsurugi;
+ERROR:  Tsurugi does not support EXCLUDE table constraint
+DETAIL:  Tsurugi supports only PRIMARY KEY in table constraint
+create table tmp.account_exclude_using_op_class
+(
+  MANUAL_NO         VARCHAR(12),
+  EXCLUDE USING btree (MANUAL_NO varchar_pattern_ops WITH =)
+) tablespace tsurugi;
+ERROR:  Tsurugi does not support EXCLUDE table constraint
+DETAIL:  Tsurugi supports only PRIMARY KEY in table constraint
+create table tmp.account_exclude_using_op_class_desc_nulls_last
+(
+  MANUAL_NO         VARCHAR(12),
+  EXCLUDE USING btree (MANUAL_NO varchar_pattern_ops DESC NULLS LAST WITH =)
+) tablespace tsurugi;
+ERROR:  Tsurugi does not support EXCLUDE table constraint
+DETAIL:  Tsurugi supports only PRIMARY KEY in table constraint
+-- FOREIGN KEY table constraint
+CREATE TABLE tmp.orders_fkey_tc (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  PRIMARY KEY (o_w_id,o_d_id,o_id),
+  FOREIGN KEY(o_w_id,o_d_id,o_c_id) REFERENCES customer(c_w_id,c_d_id,c_id)
+) tablespace tsurugi;
+ERROR:  Tsurugi supports only PRIMARY KEY in table constraint
+DETAIL:  Tsurugi does not support FOREIGN KEY table constraint
+-- FOREIGN KEY table constraint
+CREATE TABLE tmp.orders_fkey_tc_mf (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  PRIMARY KEY (o_w_id,o_d_id,o_id),
+  FOREIGN KEY(o_w_id,o_d_id,o_c_id) REFERENCES customer(c_w_id,c_d_id,c_id)
+  MATCH FULL ON UPDATE RESTRICT ON DELETE RESTRICT
+) tablespace tsurugi;
+ERROR:  Tsurugi supports only PRIMARY KEY in table constraint
+DETAIL:  Tsurugi does not support FOREIGN KEY table constraint
+-- FOREIGN KEY table constraint
+CREATE TABLE tmp.orders_fkey_tc_mp (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  PRIMARY KEY (o_w_id,o_d_id,o_id),
+  FOREIGN KEY(o_w_id,o_d_id,o_c_id) REFERENCES customer(c_w_id,c_d_id,c_id)
+  MATCH PARTIAL ON UPDATE SET DEFAULT ON DELETE SET DEFAULT
+) tablespace tsurugi;
+ERROR:  MATCH PARTIAL not yet implemented
+LINE 12:   MATCH PARTIAL ON UPDATE SET DEFAULT ON DELETE SET DEFAULT
+           ^
+-- FOREIGN KEY table constraint
+CREATE TABLE tmp.orders_fkey_tc_ms (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  PRIMARY KEY (o_w_id,o_d_id,o_id),
+  FOREIGN KEY(o_w_id,o_d_id,o_c_id) REFERENCES customer(c_w_id,c_d_id,c_id)
+  MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
+) tablespace tsurugi;
+ERROR:  Tsurugi supports only PRIMARY KEY in table constraint
+DETAIL:  Tsurugi does not support FOREIGN KEY table constraint
+-- DEFERRABLE INITIALLY DEFERRED
+CREATE TABLE tmp.deferrable_initially_deferred_tc(
+    id integer NOT NULL,
+    CONSTRAINT posts2_pk PRIMARY KEY (id) DEFERRABLE INITIALLY DEFERRED
+) tablespace tsurugi;
+ERROR:  Tsurugi does not support DEFERRABLE
+-- DEFERRABLE INITIALLY IMMEDIATE
+CREATE TABLE tmp.deferrable_initially_immediate_tc(
+    id integer NOT NULL,
+    CONSTRAINT posts2_pk PRIMARY KEY (id) DEFERRABLE INITIALLY IMMEDIATE
+) tablespace tsurugi;
+ERROR:  Tsurugi does not support DEFERRABLE
+-- DEFERRABLE
+CREATE TABLE tmp.deferrable_tc(
+    id integer NOT NULL,
+    CONSTRAINT posts2_pk PRIMARY KEY (id) DEFERRABLE
+) tablespace tsurugi;
+ERROR:  Tsurugi does not support DEFERRABLE
+DROP SCHEMA tmp CASCADE;
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to table tmp.customer_dummy
+drop cascades to table tmp.cities_dummy
+DROP SCHEMA
+\c postgres
+You are now connected to database "postgres" as user "vagrant".
+DROP DATABASE test;
+DROP DATABASE
