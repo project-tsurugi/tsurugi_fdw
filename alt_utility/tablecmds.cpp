@@ -283,6 +283,30 @@ CreateTable::is_syntax_supported()
             return ret_value;
         }
 
+        if (index_stmt->tableSpace != nullptr)
+        {
+            ereport(ERROR,
+                    (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("Tsurugi does not support USING INDEX TABLESPACE clause")));
+            return ret_value;
+        }
+
+        if (index_stmt->indexIncludingParams != NIL)
+        {
+            ereport(ERROR,
+                    (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("Tsurugi does not support INCLUDE clause")));
+            return ret_value;
+        }
+
+        if (index_stmt->options != NIL)
+        {
+            ereport(ERROR,
+                    (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("Tsurugi does not support WITH clause")));
+            return ret_value;
+        }
+
         if (index_stmt->excludeOpNames != nullptr)
         {
             show_table_constraint_syntax_error_msg("Tsurugi does not support EXCLUDE table constraint");
@@ -300,6 +324,7 @@ CreateTable::is_syntax_supported()
             show_table_constraint_syntax_error_msg("Tsurugi does not support INITIALLY DEFERRED table constraint");
             return ret_value;
         }
+
     }
 
     if (create_stmt->inhRelations != NIL)
