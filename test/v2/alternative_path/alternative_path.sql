@@ -1,0 +1,500 @@
+CREATE DATABASE test TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'C' LC_CTYPE = 'en_US.utf8';
+
+\c test
+
+CREATE SCHEMA tmp;
+
+-- referred by FOREIGN KEY constraint
+CREATE TABLE tmp.customer (
+  c_w_id int NOT NULL,
+  c_d_id int NOT NULL,
+  c_id int NOT NULL,
+  c_discount double precision NOT NULL, -- decimal(4,4) NOT NULL
+  c_credit char(2) NOT NULL,
+  c_last varchar(16) NOT NULL,
+  c_first varchar(16) NOT NULL,
+  c_credit_lim double precision NOT NULL, -- decimal(12,2) NOT NULL
+  c_balance double precision NOT NULL, -- decimal(12,2) NOT NULL
+  c_ytd_payment float NOT NULL,
+  c_payment_cnt int NOT NULL,
+  c_delivery_cnt int NOT NULL,
+  c_street_1 varchar(20) NOT NULL,
+  c_street_2 varchar(20) NOT NULL,
+  c_city varchar(20) NOT NULL,
+  c_state char(2) NOT NULL,
+  c_zip char(9) NOT NULL,
+  c_phone char(16) NOT NULL,
+  c_since char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  c_middle char(2) NOT NULL,
+  c_data varchar(500) NOT NULL,
+  PRIMARY KEY (c_w_id,c_d_id,c_id)
+) tablespace tsurugi;
+
+-- type error not supported
+CREATE TABLE tmp.orders_type_error (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt decimal(2,0) NOT NULL,
+  o_all_local decimal(1,0) NOT NULL,
+  o_entry_d timestamp NOT NULL,
+  PRIMARY KEY (o_w_id,o_d_id,o_id)
+) tablespace tsurugi;
+
+-- TEMP TABLE
+create temp table temptbl (
+  id integer,
+  name varchar(10)
+) tablespace tsurugi;
+
+create temporary table temporarytbl (
+  id integer,
+  name varchar(10)
+) tablespace tsurugi;
+
+-- UNLOGGED TABLE
+create unlogged table tmp.unloggedtbl (
+  id integer,
+  name varchar(10)
+) tablespace tsurugi;
+
+-- COLLATE column
+CREATE TABLE tmp.distributors_unique_cc (
+    did     varchar(1000) COLLATE "C"
+) tablespace tsurugi;
+
+-- LIKE INCLUDING ALL
+CREATE TABLE tmp.customer_copied_including (
+    LIKE tmp.customer_dummy INCLUDING ALL
+) tablespace tsurugi;
+
+-- LIKE EXCLUDING
+CREATE TABLE tmp.customer_copied_excluding (
+    LIKE tmp.customer_dummy EXCLUDING CONSTRAINTS
+) tablespace tsurugi;
+
+-- INHERITS clause
+-- parent table
+CREATE TABLE tmp.cities (
+    name            varchar,
+    population      float,
+    altitude        int     -- in feet
+) tablespace tsurugi;
+
+-- INHERITS clause (child table)
+CREATE TABLE tmp.capitals (
+    state           char(2)
+) INHERITS (cities) tablespace tsurugi;
+
+-- PARTITION BY RANGE
+CREATE TABLE tmp.measurement (
+    logdate         varchar(24) not null,
+    peaktemp        int,
+    unitsales       int
+) PARTITION BY RANGE (logdate) tablespace tsurugi;
+
+-- PARTITION BY RANGE COLLATE
+CREATE TABLE tmp.measurement_collate (
+    logdate         varchar(24) not null,
+    peaktemp        int,
+    unitsales       int
+) PARTITION BY RANGE (logdate COLLATE "C") tablespace tsurugi;
+
+CREATE TABLE tmp.measurement_y2016m07
+PARTITION OF measurement
+FOR VALUES FROM ('2016-07-01') TO ('2016-08-01') tablespace tsurugi;
+
+-- PARTITION BY LIST
+CREATE TABLE tmp.cities (
+    city_id      bigint not null,
+    name         varchar not null,
+    population   bigint
+) PARTITION BY LIST (name) tablespace tsurugi;
+
+CREATE TABLE tmp.cities_ab
+PARTITION OF cities
+FOR VALUES IN ('a', 'b') tablespace tsurugi;
+
+-- PARTITION BY HASH
+CREATE TABLE tmp.orders_partition_by_hash (
+    order_id     bigint not null,
+    cust_id      bigint not null,
+    status       varchar
+) PARTITION BY HASH (order_id) tablespace tsurugi;
+
+CREATE TABLE tmp.orders_p1 PARTITION OF orders_partition_by_hash
+FOR VALUES WITH (MODULUS 4, REMAINDER 0) tablespace tsurugi;
+
+-- USING method
+CREATE ACCESS METHOD myheap TYPE TABLE HANDLER heap_tableam_handler;
+CREATE TABLE tmp.t_myheap (
+    id int, v text
+) USING myheap tablespace tsurugi;
+
+-- WITH clause of table
+CREATE TABLE tmp.distributors_table_with (
+    did     integer,
+    name    varchar(40)
+)
+WITH (fillfactor=70) tablespace tsurugi;
+
+-- WITHOUT OIDS clause of table
+CREATE TABLE tmp.distributors_without_oid (
+    did     integer,
+    name    varchar(40)
+)
+WITHOUT OIDS tablespace tsurugi;
+
+-- ON COMMIT PRESERVE ROWS
+create global temporary table oncommit_prows (
+  id int not null primary key,
+  txt varchar(32)
+)
+on commit preserve rows tablespace tsurugi;
+
+-- ON COMMIT DELETE ROWS
+create global temporary table oncommit_drows (
+  id int not null primary key,
+  txt varchar(32)
+)
+on commit delete rows tablespace tsurugi;
+
+-- ON COMMIT DROP
+create global temporary table oncommit_drop (
+  id int not null primary key,
+  txt varchar(32)
+)
+on commit drop tablespace tsurugi;
+
+-- OF clause
+CREATE TYPE employee_type AS (name text, salary numeric);
+CREATE TABLE tmp.employees OF employee_type (
+    PRIMARY KEY (name),
+    salary
+) tablespace tsurugi;
+
+-- *** column constraint ***
+-- NULL column constraint
+CREATE TABLE tmp.orders_null_cc (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int NULL,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  PRIMARY KEY (o_w_id,o_d_id,o_id)
+) tablespace tsurugi;
+
+-- CHECK column constraint
+CREATE TABLE tmp.distributors_check_cc (
+    did     integer CHECK (did > 100),
+    name    varchar(40)
+) tablespace tsurugi;
+
+-- CHECK column constraint NO INHERIT
+CREATE TABLE tmp.distributors_check_cc_ni (
+    did     integer CHECK (did > 100) NO INHERIT,
+    name    varchar(40)
+) tablespace tsurugi;
+
+-- DEFAULT column constraint
+CREATE TABLE tmp.orders_default_cc (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int DEFAULT NULL,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  PRIMARY KEY (o_w_id,o_d_id,o_id)
+) tablespace tsurugi;
+
+-- GENERATED ALWAYS AS
+CREATE TABLE tmp.generated_always_as (
+    x float,
+    y float,
+    "(x + y)" float GENERATED ALWAYS AS (x + y) STORED,
+    "(x - y)" float GENERATED ALWAYS AS (x - y) STORED,
+    "(x * y)" float GENERATED ALWAYS AS (x * y) STORED,
+    "(x / y)" float GENERATED ALWAYS AS (x / y) STORED
+) tablespace tsurugi;
+
+-- GENERATED BY DEFAULT AS IDENTITY
+CREATE TABLE tmp.distributors_generated_by_default (
+     did    integer PRIMARY KEY GENERATED BY DEFAULT AS IDENTITY,
+     name   varchar(40) NOT NULL
+) tablespace tsurugi;
+
+-- GENERATED ALWAYS AS IDENTITY
+CREATE TABLE tmp.distributors_generated_always (
+     did    integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+     name   varchar(40) NOT NULL
+) tablespace tsurugi;
+
+-- UNIQUE column constraint
+CREATE TABLE tmp.distributors_unique_cc (
+    did     integer,
+    name    varchar(40) UNIQUE
+) tablespace tsurugi;
+
+-- PRIMARY KEY WITH
+CREATE TABLE tmp.distributors_pkey_cc_include (
+    id             integer PRIMARY KEY WITH (fillfactor=70),
+    first_name     varchar,
+    last_name      varchar
+) tablespace tsurugi;
+
+-- PRIMARY KEY USING INDEX
+CREATE TABLE tmp.distributors_pkey_cc_using_index (
+    id             integer PRIMARY KEY USING INDEX TABLESPACE tsurugi,
+    first_name     varchar,
+    last_name      varchar
+) tablespace tsurugi;
+
+-- FOREIGN KEY column constraint
+CREATE TABLE tmp.orders_fkey_cc (
+  o_w_id int NOT NULL REFERENCES customer (c_w_id),
+  o_d_id int NOT NULL REFERENCES customer (c_d_id),
+  o_id int NOT NULL REFERENCES customer (c_id),
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  PRIMARY KEY (o_w_id,o_d_id,o_id)
+) tablespace tsurugi;
+
+-- FOREIGN KEY column constraint MATCH FULL
+CREATE TABLE tmp.orders_fkey_cc_mf (
+  o_w_id int NOT NULL REFERENCES customer (c_w_id) MATCH FULL ON UPDATE CASCADE ON DELETE CASCADE,
+  o_d_id int NOT NULL REFERENCES customer (c_d_id) MATCH FULL ON UPDATE CASCADE ON DELETE CASCADE,
+  o_id int NOT NULL REFERENCES customer (c_id) MATCH FULL ON UPDATE CASCADE ON DELETE CASCADE,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  PRIMARY KEY (o_w_id,o_d_id,o_id)
+) tablespace tsurugi;
+
+-- FOREIGN KEY column constraint MATCH PARTIAL
+CREATE TABLE tmp.orders_fkey_cc_mp (
+  o_w_id int NOT NULL REFERENCES customer (c_w_id) MATCH PARTIAL ON UPDATE NO ACTION ON DELETE NO ACTION,
+  o_d_id int NOT NULL REFERENCES customer (c_d_id) MATCH PARTIAL ON UPDATE NO ACTION ON DELETE NO ACTION,
+  o_id int NOT NULL REFERENCES customer (c_id) MATCH PARTIAL ON UPDATE NO ACTION ON DELETE NO ACTION,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  PRIMARY KEY (o_w_id,o_d_id,o_id)
+) tablespace tsurugi;
+
+-- FOREIGN KEY column constraint MATCH SIMPLE
+CREATE TABLE tmp.orders_fkey_cc_ms (
+  o_w_id int REFERENCES customer (c_w_id) MATCH SIMPLE ON UPDATE SET NULL ON DELETE SET NULL,
+  o_d_id int REFERENCES customer (c_d_id) MATCH SIMPLE ON UPDATE SET NULL ON DELETE SET NULL,
+  o_id int REFERENCES customer (c_id) MATCH SIMPLE ON UPDATE SET NULL ON DELETE SET NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  PRIMARY KEY (o_w_id,o_d_id,o_id)
+) tablespace tsurugi;
+
+-- DEFERRABLE INITIALLY DEFERRED column constraint
+CREATE TABLE tmp.deferrable_initially_deferred_cc(
+    id integer PRIMARY KEY DEFERRABLE INITIALLY DEFERRED
+) tablespace tsurugi;
+
+-- DEFERRABLE INITIALLY IMMEDIATE column constraint
+CREATE TABLE tmp.deferrable_initially_immediate_cc(
+    id integer PRIMARY KEY DEFERRABLE INITIALLY IMMEDIATE
+) tablespace tsurugi;
+
+-- DEFERRABLE column constraint
+CREATE TABLE tmp.deferrable_cc(
+    id integer PRIMARY KEY DEFERRABLE
+) tablespace tsurugi;
+
+-- NOT DEFERRABLE column constraint
+CREATE TABLE tmp.not_deferrable_cc(
+    id integer PRIMARY KEY NOT DEFERRABLE
+) tablespace tsurugi;
+
+-- *** table constraint ***
+-- CHECK table constraint
+CREATE TABLE tmp.distributors_check_tc (
+    did     integer,
+    name    varchar(40),
+    CONSTRAINT con1 CHECK (did > 100 AND name <> '')
+) tablespace tsurugi;
+
+-- CHECK table constraint NO INHERIT
+CREATE TABLE tmp.distributors_check_tc_ni (
+    did     integer,
+    name    varchar(40),
+    CONSTRAINT con1 CHECK (did > 100 AND name <> '') NO INHERIT
+) tablespace tsurugi;
+
+-- UNIQUE table constraint
+CREATE TABLE tmp.orders_unique_tc (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  PRIMARY KEY (o_w_id,o_d_id,o_id),
+  UNIQUE (o_w_id,o_d_id,o_c_id,o_id)
+) tablespace tsurugi;
+
+-- WITH clause
+CREATE TABLE tmp.distributors_column_with (
+    did     integer,
+    name    varchar(40),
+    PRIMARY KEY(name) WITH (fillfactor=70)
+) tablespace tsurugi;
+
+-- PRIMARY KEY INCLUDE
+CREATE TABLE tmp.distributors_pkey_tc_include (
+    id             integer,
+    first_name     varchar,
+    last_name      varchar,
+    PRIMARY KEY(id) INCLUDE (first_name,last_name)
+) tablespace tsurugi;
+
+-- PRIMARY KEY USING INDEX
+CREATE TABLE tmp.distributors_pkey_tc_using_index (
+    id             integer,
+    first_name     varchar,
+    last_name      varchar,
+    PRIMARY KEY(id) USING INDEX TABLESPACE tsurugi
+) tablespace tsurugi;
+
+-- EXCLUDE USING
+CREATE TABLE tmp.distributotrs_exclude_using (
+    name varchar,
+    age integer,
+    EXCLUDE USING gist (age WITH <>)
+) tablespace tsurugi;
+
+CREATE TABLE tmp.distributotrs_exclude_using_where (
+    name varchar,
+    age integer,
+    EXCLUDE USING btree (age WITH =) WHERE (age between 0 and 200)
+) tablespace tsurugi;
+
+create table tmp.account_exclude_using_op_class
+(
+  MANUAL_NO         VARCHAR(12),
+  EXCLUDE USING btree (MANUAL_NO varchar_pattern_ops WITH =)
+) tablespace tsurugi;
+
+create table tmp.account_exclude_using_op_class_desc_nulls_last
+(
+  MANUAL_NO         VARCHAR(12),
+  EXCLUDE USING btree (MANUAL_NO varchar_pattern_ops DESC NULLS LAST WITH =)
+) tablespace tsurugi;
+
+-- FOREIGN KEY table constraint
+CREATE TABLE tmp.orders_fkey_tc (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  PRIMARY KEY (o_w_id,o_d_id,o_id),
+  FOREIGN KEY(o_w_id,o_d_id,o_c_id) REFERENCES customer(c_w_id,c_d_id,c_id)
+) tablespace tsurugi;
+
+-- FOREIGN KEY table constraint
+CREATE TABLE tmp.orders_fkey_tc_mf (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  PRIMARY KEY (o_w_id,o_d_id,o_id),
+  FOREIGN KEY(o_w_id,o_d_id,o_c_id) REFERENCES customer(c_w_id,c_d_id,c_id)
+  MATCH FULL ON UPDATE RESTRICT ON DELETE RESTRICT
+) tablespace tsurugi;
+
+-- FOREIGN KEY table constraint
+CREATE TABLE tmp.orders_fkey_tc_mp (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  PRIMARY KEY (o_w_id,o_d_id,o_id),
+  FOREIGN KEY(o_w_id,o_d_id,o_c_id) REFERENCES customer(c_w_id,c_d_id,c_id)
+  MATCH PARTIAL ON UPDATE SET DEFAULT ON DELETE SET DEFAULT
+) tablespace tsurugi;
+
+-- FOREIGN KEY table constraint
+CREATE TABLE tmp.orders_fkey_tc_ms (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  PRIMARY KEY (o_w_id,o_d_id,o_id),
+  FOREIGN KEY(o_w_id,o_d_id,o_c_id) REFERENCES customer(c_w_id,c_d_id,c_id)
+  MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
+) tablespace tsurugi;
+
+-- DEFERRABLE INITIALLY DEFERRED
+CREATE TABLE tmp.deferrable_initially_deferred_tc(
+    id integer NOT NULL,
+    CONSTRAINT posts2_pk PRIMARY KEY (id) DEFERRABLE INITIALLY DEFERRED
+) tablespace tsurugi;
+
+-- DEFERRABLE INITIALLY IMMEDIATE
+CREATE TABLE tmp.deferrable_initially_immediate_tc(
+    id integer NOT NULL,
+    CONSTRAINT posts2_pk PRIMARY KEY (id) DEFERRABLE INITIALLY IMMEDIATE
+) tablespace tsurugi;
+
+-- DEFERRABLE
+CREATE TABLE tmp.deferrable_tc(
+    id integer NOT NULL,
+    CONSTRAINT posts2_pk PRIMARY KEY (id) DEFERRABLE
+) tablespace tsurugi;
+
+-- NOT DEFERRABLE
+CREATE TABLE tmp.not_deferrable_tc(
+    id integer NOT NULL,
+    CONSTRAINT posts2_pk PRIMARY KEY (id) NOT DEFERRABLE
+) tablespace tsurugi;
+
+DROP SCHEMA tmp CASCADE;
+DROP TABLE temptbl_dummy;
+DROP TABLE temporarytbl_dummy;
+DROP TABLE oncommit_prows_dummy;
+DROP TABLE oncommit_drows_dummy;
+DROP TABLE oncommit_drop_dummy;
+
+\c postgres
+
+DROP DATABASE test;
