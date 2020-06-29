@@ -251,11 +251,11 @@ CreateTable::is_syntax_supported()
             }
         }
 
-        if ( colDef->collClause != nullptr )
+        if (colDef->collClause != nullptr | OidIsValid(colDef->collOid))
         {
             ereport(ERROR,
-                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                 errmsg("Tsurugi does not support COLLATE clause")));
+                    (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("Tsurugi does not support COLLATE clause")));
             return ret_value;
         }
     }
