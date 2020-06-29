@@ -44,12 +44,12 @@ CREATE TABLE tmp.orders_type_error (
 ) tablespace tsurugi;
 
 -- TEMP TABLE
-create temp table tmp.temptbl (
+create temp table temptbl (
   id integer,
   name varchar(10)
 ) tablespace tsurugi;
 
-create temporary table tmp.temporarytbl (
+create temporary table temporarytbl (
   id integer,
   name varchar(10)
 ) tablespace tsurugi;
@@ -62,17 +62,17 @@ create unlogged table tmp.unloggedtbl (
 
 -- COLLATE column
 CREATE TABLE tmp.distributors_unique_cc (
-    did     integer COLLATE 'C'
+    did     varchar(1000) COLLATE "C"
 ) tablespace tsurugi;
 
 -- LIKE INCLUDING ALL
-CREATE TABLE tmp.customer_copied (
-    LIKE customer_dummy INCLUDING ALL
+CREATE TABLE tmp.customer_copied_including (
+    LIKE tmp.customer_dummy INCLUDING ALL
 ) tablespace tsurugi;
 
 -- LIKE EXCLUDING
-CREATE TABLE tmp.customer_copied (
-    LIKE customer_dummy EXCLUDING CONSTRAINTS
+CREATE TABLE tmp.customer_copied_excluding (
+    LIKE tmp.customer_dummy EXCLUDING CONSTRAINTS
 ) tablespace tsurugi;
 
 -- INHERITS clause
@@ -100,7 +100,7 @@ CREATE TABLE tmp.measurement_collate (
     logdate         varchar(24) not null,
     peaktemp        int,
     unitsales       int
-) PARTITION BY RANGE (logdate COLLATE 'C') tablespace tsurugi;
+) PARTITION BY RANGE (logdate COLLATE "C") tablespace tsurugi;
 
 CREATE TABLE tmp.measurement_y2016m07
 PARTITION OF measurement
@@ -148,21 +148,21 @@ CREATE TABLE tmp.distributors_without_oid (
 WITHOUT OIDS tablespace tsurugi;
 
 -- ON COMMIT PRESERVE ROWS
-create global temporary table tmp.oncommit_prows (
+create global temporary table oncommit_prows (
   id int not null primary key,
   txt varchar(32)
 )
 on commit preserve rows tablespace tsurugi;
 
 -- ON COMMIT DELETE ROWS
-create global temporary table tmp.oncommit_drows (
+create global temporary table oncommit_drows (
   id int not null primary key,
   txt varchar(32)
 )
 on commit delete rows tablespace tsurugi;
 
 -- ON COMMIT DROP
-create global temporary table tmp.oncommit_drop (
+create global temporary table oncommit_drop (
   id int not null primary key,
   txt varchar(32)
 )
@@ -242,13 +242,6 @@ CREATE TABLE tmp.distributors_unique_cc (
     name    varchar(40) UNIQUE
 ) tablespace tsurugi;
 
--- PRIMARY KEY INCLUDE
-CREATE TABLE tmp.distributors_pkey_cc_include (
-    id             integer PRIMARY KEY INCLUDE (first_name,last_name),
-    first_name     varchar,
-    last_name      varchar
-) tablespace tsurugi;
-
 -- PRIMARY KEY WITH
 CREATE TABLE tmp.distributors_pkey_cc_include (
     id             integer PRIMARY KEY WITH (fillfactor=70),
@@ -317,22 +310,22 @@ CREATE TABLE tmp.orders_fkey_cc_ms (
 
 -- DEFERRABLE INITIALLY DEFERRED column constraint
 CREATE TABLE tmp.deferrable_initially_deferred_cc(
-    id integer NOT NULL DEFERRABLE INITIALLY DEFERRED
+    id integer PRIMARY KEY DEFERRABLE INITIALLY DEFERRED
 ) tablespace tsurugi;
 
 -- DEFERRABLE INITIALLY IMMEDIATE column constraint
 CREATE TABLE tmp.deferrable_initially_immediate_cc(
-    id integer NOT NULL DEFERRABLE INITIALLY IMMEDIATE
+    id integer PRIMARY KEY DEFERRABLE INITIALLY IMMEDIATE
 ) tablespace tsurugi;
 
 -- DEFERRABLE column constraint
 CREATE TABLE tmp.deferrable_cc(
-    id integer NOT NULL DEFERRABLE
+    id integer PRIMARY KEY DEFERRABLE
 ) tablespace tsurugi;
 
 -- NOT DEFERRABLE column constraint
 CREATE TABLE tmp.not_deferrable_cc(
-    id integer NOT NULL NOT DEFERRABLE
+    id integer PRIMARY KEY NOT DEFERRABLE
 ) tablespace tsurugi;
 
 -- *** table constraint ***
@@ -453,7 +446,7 @@ CREATE TABLE tmp.orders_fkey_tc_mp (
   o_entry_d char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
   PRIMARY KEY (o_w_id,o_d_id,o_id),
   FOREIGN KEY(o_w_id,o_d_id,o_c_id) REFERENCES customer(c_w_id,c_d_id,c_id)
-  MATCH PARTIAL SET DEFAULT ON DELETE SET DEFAULT
+  MATCH PARTIAL ON UPDATE SET DEFAULT ON DELETE SET DEFAULT
 ) tablespace tsurugi;
 
 -- FOREIGN KEY table constraint
@@ -468,7 +461,7 @@ CREATE TABLE tmp.orders_fkey_tc_ms (
   o_entry_d char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
   PRIMARY KEY (o_w_id,o_d_id,o_id),
   FOREIGN KEY(o_w_id,o_d_id,o_c_id) REFERENCES customer(c_w_id,c_d_id,c_id)
-  MATCH SIMPLE SET CASCADE ON DELETE SET CASCADE
+  MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
 ) tablespace tsurugi;
 
 -- DEFERRABLE INITIALLY DEFERRED
@@ -496,6 +489,11 @@ CREATE TABLE tmp.not_deferrable_tc(
 ) tablespace tsurugi;
 
 DROP SCHEMA tmp CASCADE;
+DROP TABLE temptbl_dummy;
+DROP TABLE temporarytbl_dummy;
+DROP TABLE oncommit_prows_dummy;
+DROP TABLE oncommit_drows_dummy;
+DROP TABLE oncommit_drop_dummy;
 
 \c postgres
 
