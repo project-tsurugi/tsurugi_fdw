@@ -245,7 +245,7 @@ CreateTable::is_syntax_supported()
                 {
                     ereport(ERROR,
                         (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                         errmsg("Tsurugi supports only NOT NULL and PRIMARY KEY column constraint")));
+                         errmsg("Tsurugi supports only NOT NULL and PRIMARY KEY in column constraint")));
                     return ret_value;
                 }
             }
@@ -270,7 +270,7 @@ CreateTable::is_syntax_supported()
         {
             ereport(ERROR,
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                 errmsg("Tsurugi supports only PRIMARY KEY table constraint")));
+                 errmsg("Tsurugi supports only PRIMARY KEY in table constraint")));
             return ret_value;
         }
     }
@@ -354,7 +354,7 @@ CreateTable::is_syntax_supported()
         {
             ereport(ERROR,
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                 errmsg("Tsurugi supports only PRIMARY KEY table constraint"),
+                 errmsg("Tsurugi supports only PRIMARY KEY in table constraint"),
                  errdetail("Tsurugi does not support FOREIGN KEY table constraint")));
             return ret_value;
         }
@@ -705,5 +705,5 @@ CreateTable::show_table_constraint_syntax_error_msg(const char *error_message)
     ereport(ERROR,
         (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
          errmsg("%s",error_message),
-         errdetail("Tsurugi supports only PRIMARY KEY table constraint")));
+         errdetail("Tsurugi supports only PRIMARY KEY in table constraint")));
 }
