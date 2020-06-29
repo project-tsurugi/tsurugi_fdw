@@ -25,9 +25,8 @@
 	* 参考：https://github.com/citusdata/ch-benchmark.git
 
 ## 異常系
-* サポートしない構文エラー
-	
-* サポートしない型エラー
+* サポートしない構文エラー、サポートしない型エラー
+	* [alternative_path.sql](./alternative_path/alternative_path.sql)
 
 * 同じテーブル名が入力された
 	* [orthogonal_table_of_constraints.sql](./orthogonal_table_of_constraints/orthogonal_table_of_constraints.sql)を2回実行する。
