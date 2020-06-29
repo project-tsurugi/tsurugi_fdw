@@ -65,6 +65,11 @@ CREATE TABLE tmp.distributors_unique_cc (
     did     varchar(1000) COLLATE "C"
 ) tablespace tsurugi;
 
+-- LIKE clause
+CREATE TABLE tmp.customer_copied (
+    LIKE tmp.customer_dummy
+) tablespace tsurugi;
+
 -- LIKE INCLUDING ALL
 CREATE TABLE tmp.customer_copied_including (
     LIKE tmp.customer_dummy INCLUDING ALL
