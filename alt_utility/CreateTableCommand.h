@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	create_table_command.h
+ *	@file	CreateTableCommand.h
  *	@brief  the create-table command class dipatched to ogawayama
  */
 

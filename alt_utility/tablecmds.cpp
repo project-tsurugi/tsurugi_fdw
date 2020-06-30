@@ -45,6 +45,7 @@ extern "C" {
 
 /**
  * @brief C'tors. Initialize member variables.
+ * @param [in] List of statements.
  */
 CreateTable::CreateTable(List *stmts) : stmts(stmts)
 {
@@ -70,8 +71,9 @@ CreateTable::CreateTable(List *stmts) : stmts(stmts)
 
 /**
  *  @brief  Defines relation include loading metadata, syntax check, type check, storing metadata.
- *  @param  [out] The object id of the newly created table.
- *  @return true if metadata was successfully stored, otherwize false.
+ *  @param  [out] The object id stored if new table was successfully created.
+ *  @return true if metadata was successfully stored
+ *  @return false otherwize
  */
 bool
 CreateTable::define_relation( uint64_t* object_id )
@@ -111,7 +113,8 @@ CreateTable::define_relation( uint64_t* object_id )
 
 /**
  *  @brief  Loads metadata from metadata-manager.
- *  @return true if metadata was successfully loaded, otherwize false.
+ *  @return true if metadata was successfully loaded
+ *  @return false otherwize.
  */
 bool
 CreateTable::load_metadata()
@@ -147,7 +150,8 @@ CreateTable::load_metadata()
 
 /**
  *  @brief  Check if given type supported or not by Tsurugi
- *  @return true if supported, otherwise false.
+ *  @return true if supported
+ *  @return false otherwise.
  */
 bool
 CreateTable::is_type_supported()
@@ -260,7 +264,8 @@ CreateTable::is_type_supported()
 
 /**
  *  @brief  Check if given syntax supported or not by Tsurugi
- *  @return true if supported, otherwise false.
+ *  @return true if supported
+ *  @return false otherwise.
  */
 bool
 CreateTable::is_syntax_supported()
@@ -471,8 +476,9 @@ CreateTable::is_syntax_supported()
 
 /**
  *  @brief  Sends metadata to metadata-manager.
- *  @param  [out] The object id of the newly created table.
- *  @return true if metadata was successfully sended, otherwize false.
+ *  @param  [out] The object id stored if new table was successfully created.
+ *  @return true if metadata was successfully sended
+ *  @return false otherwize.
  */
 bool
 CreateTable::store_metadata( uint64_t* object_id )
@@ -731,7 +737,7 @@ CreateTable::store_metadata( uint64_t* object_id )
 }
 
 /**
- *  @brief  Get ordinal positions of table's primary key columns in a table or column constraints.
+ *  @brief  Get ordinal positions of table's primary key columns in table or column constraints.
  *  @return ordinal positions of table's primary key columns.
  */
 std::unordered_set<uint64_t>

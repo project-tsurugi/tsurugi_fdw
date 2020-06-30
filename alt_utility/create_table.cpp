@@ -47,22 +47,28 @@ extern "C" {
 static std::string rewrite_query(std::string_view query_string);
 static bool execute_create_table(std::string_view query_string);
 
-/*
- *  @brief:
+/**
+ *  @brief Calls the function sending metadata to metadata-manager and creates parameters sended to ogawayama.
+ *  @param [in] List of statements.
  */
 bool create_table(List *stmts)
 {
     Assert(stmts != nullptr);
 
-    CreateTable cmds{stmts};
+    /* The object id stored if new table was successfully created */
     uint64_t object_id = 0;
+
+    /* Call the function sending metadata to metadata-manager. */
+    CreateTable cmds{stmts};
     bool success = cmds.define_relation( &object_id );
+
     if (!success)
     {
         // error handling
     }
     else
     {
+        /* parameters sended to ogawayama */
         CreateTableCommand command{object_id};
         elog(DEBUG2, "command type name: %s, object id: %d", command.get_command_type_name().c_str(), command.get_table_id());
     }
