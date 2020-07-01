@@ -1,0 +1,173 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - PostgreSQL 12.3 - contrib/frontend/third_party/manager/metadata-manager/include/manager/metadata/datatypes.h</title>
+  <link rel="stylesheet" type="text/css" href="../../../../../../../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../../../../../../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../../../../../../../index.html">top level</a> - <a href="index.html">contrib/frontend/third_party/manager/metadata-manager/include/manager/metadata</a> - datatypes.h<span style="font-size: 80%;"> (source / <a href="datatypes.h.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">PostgreSQL 12.3</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">4</td>
+            <td class="headerCovTableEntry">9</td>
+            <td class="headerCovTableEntryLo">44.4 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2020-07-01 02:50:32</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">3</td>
+            <td class="headerCovTableEntry">6</td>
+            <td class="headerCovTableEntryLo">50.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Legend:</td>
+            <td class="headerValueLeg">            Lines:
+            <span class="coverLegendCov">hit</span>
+            <span class="coverLegendNoCov">not hit</span>
+</td>
+            <td></td>
+          </tr>
+          <tr><td><img src="../../../../../../../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../../../../../../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : /*</a>
+<span class="lineNum">       2 </span>            :  * Copyright 2020 tsurugi project.
+<span class="lineNum">       3 </span>            :  *
+<span class="lineNum">       4 </span>            :  * Licensed under the Apache License, version 2.0 (the &quot;License&quot;);
+<span class="lineNum">       5 </span>            :  * you may not use this file except in compliance with the License.
+<span class="lineNum">       6 </span>            :  * You may obtain a copy of the License at
+<span class="lineNum">       7 </span>            :  *
+<span class="lineNum">       8 </span>            :  *     http://www.apache.org/licenses/LICENSE-2.0
+<span class="lineNum">       9 </span>            :  *
+<span class="lineNum">      10 </span>            :  * Unless required by applicable law or agreed to in writing, software
+<span class="lineNum">      11 </span>            :  * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<span class="lineNum">      12 </span>            :  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<span class="lineNum">      13 </span>            :  * See the License for the specific language governing permissions and
+<span class="lineNum">      14 </span>            :  * limitations under the License.
+<span class="lineNum">      15 </span>            :  */
+<span class="lineNum">      16 </span>            : #pragma once
+<span class="lineNum">      17 </span>            : 
+<span class="lineNum">      18 </span>            : #include &lt;string&gt;
+<span class="lineNum">      19 </span>            : #include &lt;string_view&gt;
+<span class="lineNum">      20 </span>            : #include &lt;boost/property_tree/ptree.hpp&gt;
+<span class="lineNum">      21 </span>            : 
+<span class="lineNum">      22 </span>            : #include &quot;manager/metadata/error_code.h&quot;
+<span class="lineNum">      23 </span>            : #include &quot;manager/metadata/metadata.h&quot;
+<span class="lineNum">      24 </span>            : 
+<a name="25"><span class="lineNum">      25 </span>            : namespace manager::metadata {</a>
+<span class="lineNum">      26 </span>            : 
+<span class="lineNum">      27 </span><span class="lineNoCov">          0 : class DataTypes : public Metadata {</span>
+<span class="lineNum">      28 </span>            :     public:
+<span class="lineNum">      29 </span>            :         // root object.
+<span class="lineNum">      30 </span>            :         static constexpr const char* const DATATYPES_NODE = &quot;dataTypes&quot;;
+<span class="lineNum">      31 </span>            : 
+<span class="lineNum">      32 </span>            :         // data type metadata-object.
+<span class="lineNum">      33 </span>            :         // ID is defined in base class.
+<span class="lineNum">      34 </span>            :         // NAME is defined in base class.
+<span class="lineNum">      35 </span>            :         static constexpr const char* const PG_DATA_TYPE                = &quot;pg_dataType&quot;;
+<span class="lineNum">      36 </span>            :         static constexpr const char* const PG_DATA_TYPE_NAME           = &quot;pg_dataTypeName&quot;;
+<span class="lineNum">      37 </span>            :         static constexpr const char* const PG_DATA_TYPE_QUALIFIED_NAME = &quot;pg_dataTypeQualifiedName&quot;;
+<span class="lineNum">      38 </span>            : 
+<span class="lineNum">      39 </span>            :         static ErrorCode init();
+<span class="lineNum">      40 </span>            : 
+<span class="lineNum">      41 </span>            :         /**
+<span class="lineNum">      42 </span>            :          *  @brief  Load metadata from metadata-table.
+<span class="lineNum">      43 </span>            :          *  @param  (database)   [in]  database name
+<span class="lineNum">      44 </span>            :          *  @param  (pt)         [out] property_tree object to populating metadata.
+<span class="lineNum">      45 </span>            :          *  @param  (generation) [in]  metadata generation to load. load latest generation if NOT provided.
+<span class="lineNum">      46 </span>            :          *  @return ErrorCode::OK if success, otherwise an error code.
+<span class="lineNum">      47 </span>            :          */
+<span class="lineNum">      48 </span>            :         static ErrorCode load(
+<span class="lineNum">      49 </span>            :             std::string_view database, boost::property_tree::ptree&amp; pt,
+<span class="lineNum">      50 </span>            :             const GenerationType generation = Metadata::LATEST_VERSION);
+<span class="lineNum">      51 </span>            : 
+<span class="lineNum">      52 </span>            :         /**
+<span class="lineNum">      53 </span>            :          *  @brief  Save the metadta to metadta-table.
+<span class="lineNum">      54 </span>            :          *  @param  (database)   [in]  database name.
+<span class="lineNum">      55 </span>            :          *  @param  (pt)         [in]  property_tree object that stores metadata to be saved.
+<span class="lineNum">      56 </span>            :          *  @param  (generation) [out] the generation of saved metadata.
+<span class="lineNum">      57 </span>            :          */
+<span class="lineNum">      58 </span>            :         static ErrorCode save(
+<span class="lineNum">      59 </span>            :             std::string_view database, boost::property_tree::ptree&amp; pt,
+<span class="lineNum">      60 </span>            :             GenerationType* generation = nullptr);
+<span class="lineNum">      61 </span>            : 
+<span class="lineNum">      62 </span>            :         /**
+<span class="lineNum">      63 </span>            :          *  @brief  Constructor
+<span class="lineNum">      64 </span>            :          *  @param  (database) [in]  database name.
+<a name="65"><span class="lineNum">      65 </span>            :          *  @return none.</a>
+<span class="lineNum">      66 </span>            :          */
+<span class="lineNum">      67 </span><span class="lineCov">        222 :         DataTypes(std::string_view database, std::string_view component = &quot;visitor&quot;)</span>
+<span class="lineNum">      68 </span><span class="lineCov">        222 :             : Metadata(database, component) { init(); }</span>
+<span class="lineNum">      69 </span>            : 
+<span class="lineNum">      70 </span>            :         DataTypes(const DataTypes&amp;) = delete;
+<span class="lineNum">      71 </span>            :         DataTypes&amp; operator=(const DataTypes&amp;) = delete;
+<span class="lineNum">      72 </span>            : 
+<a name="73"><span class="lineNum">      73 </span>            :     protected:</a>
+<a name="74"><span class="lineNum">      74 </span>            :         // functions for template-method</a>
+<a name="75"><span class="lineNum">      75 </span><span class="lineCov">        222 :         std::string_view table_name() const { return TABLE_NAME; }</span></a>
+<span class="lineNum">      76 </span><span class="lineCov">       4472 :         const std::string root_node() const { return DATATYPES_NODE; }</span>
+<span class="lineNum">      77 </span><span class="lineNoCov">          0 :         uint64_t generate_object_id() const {</span>
+<span class="lineNum">      78 </span>            :             static ObjectIdType datatype_id = 0;
+<a name="79"><span class="lineNum">      79 </span><span class="lineNoCov">          0 :             return ++datatype_id;</span></a>
+<span class="lineNum">      80 </span>            :         }
+<span class="lineNum">      81 </span><span class="lineNoCov">          0 :         ErrorCode fill_parameters( __attribute__((unused)) boost::property_tree::ptree&amp; object) {</span>
+<span class="lineNum">      82 </span><span class="lineNoCov">          0 :             return ErrorCode::OK;</span>
+<span class="lineNum">      83 </span>            :         }
+<span class="lineNum">      84 </span>            : 
+<span class="lineNum">      85 </span>            :     private:
+<span class="lineNum">      86 </span>            :         static constexpr const char* const TABLE_NAME = &quot;datatypes&quot;;
+<span class="lineNum">      87 </span>            : };
+<span class="lineNum">      88 </span>            : 
+<span class="lineNum">      89 </span>            : } // namespace manager::metadata
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../../../../../../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>
