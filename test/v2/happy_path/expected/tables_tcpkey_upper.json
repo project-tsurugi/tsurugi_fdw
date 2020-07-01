@@ -1,0 +1,182 @@
+{
+    "formatVersion": "1",
+    "generation": "1",
+    "tables": [
+        {
+            "name": "tcpkey_upper",
+            "primaryKey": [
+                "1"
+            ],
+            "columns": [
+                {
+                    "ordinalPosition": "1",
+                    "name": "col0",
+                    "direction": "1",
+                    "nullable": "false",
+                    "dataTypeId": "4",
+                    "id": "2",
+                    "tableId": "2"
+                },
+                {
+                    "ordinalPosition": "2",
+                    "name": "col1",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "4",
+                    "id": "3",
+                    "tableId": "2"
+                },
+                {
+                    "ordinalPosition": "3",
+                    "name": "col2",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "4",
+                    "id": "4",
+                    "tableId": "2"
+                },
+                {
+                    "ordinalPosition": "4",
+                    "name": "col3",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "6",
+                    "id": "5",
+                    "tableId": "2"
+                },
+                {
+                    "ordinalPosition": "5",
+                    "name": "col4",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "6",
+                    "id": "6",
+                    "tableId": "2"
+                },
+                {
+                    "ordinalPosition": "6",
+                    "name": "col5",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "8",
+                    "id": "7",
+                    "tableId": "2"
+                },
+                {
+                    "ordinalPosition": "7",
+                    "name": "col6",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "8",
+                    "id": "8",
+                    "tableId": "2"
+                },
+                {
+                    "ordinalPosition": "8",
+                    "name": "col7",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "9",
+                    "id": "9",
+                    "tableId": "2"
+                },
+                {
+                    "ordinalPosition": "9",
+                    "name": "col8",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "9",
+                    "id": "10",
+                    "tableId": "2"
+                },
+                {
+                    "ordinalPosition": "10",
+                    "name": "col9",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "13",
+                    "varying": "false",
+                    "dataLength": "1",
+                    "id": "11",
+                    "tableId": "2"
+                },
+                {
+                    "ordinalPosition": "11",
+                    "name": "col10",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "13",
+                    "varying": "false",
+                    "dataLength": "1000",
+                    "id": "12",
+                    "tableId": "2"
+                },
+                {
+                    "ordinalPosition": "12",
+                    "name": "col11",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "13",
+                    "varying": "false",
+                    "dataLength": "1",
+                    "id": "13",
+                    "tableId": "2"
+                },
+                {
+                    "ordinalPosition": "13",
+                    "name": "col12",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "13",
+                    "varying": "false",
+                    "dataLength": "1000",
+                    "id": "14",
+                    "tableId": "2"
+                },
+                {
+                    "ordinalPosition": "14",
+                    "name": "col13",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "14",
+                    "varying": "true",
+                    "id": "15",
+                    "tableId": "2"
+                },
+                {
+                    "ordinalPosition": "15",
+                    "name": "col14",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "14",
+                    "varying": "true",
+                    "dataLength": "1000",
+                    "id": "16",
+                    "tableId": "2"
+                },
+                {
+                    "ordinalPosition": "16",
+                    "name": "col15",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "14",
+                    "varying": "true",
+                    "id": "17",
+                    "tableId": "2"
+                },
+                {
+                    "ordinalPosition": "17",
+                    "name": "col16",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "14",
+                    "varying": "true",
+                    "dataLength": "1000",
+                    "id": "18",
+                    "tableId": "2"
+                }
+            ],
+            "id": "2"
+        }
+    ]
+}
