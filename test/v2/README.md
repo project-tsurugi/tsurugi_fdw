@@ -30,3 +30,6 @@
 
 * 同じテーブル名が入力された
 	* [orthogonal_table_of_constraints.sql](./orthogonal_table_of_constraints/orthogonal_table_of_constraints.sql)を2回実行する。
+
+## カバレッジレポート
+* [カバレッジレポート](./coverage/index.html)
