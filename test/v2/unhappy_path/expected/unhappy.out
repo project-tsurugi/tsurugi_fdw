@@ -1,0 +1,117 @@
+CREATE DATABASE test TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'C' LC_CTYPE = 'en_US.utf8';
+CREATE DATABASE
+\c test
+You are now connected to database "test" as user "vagrant".
+CREATE SCHEMA tmp;
+CREATE SCHEMA
+-- default constraint
+CREATE TABLE tmp.customer2 (
+  "c_credit" char(2) DEFAULT "apple"
+) tablespace tsurugi;
+ERROR:  Tsurugi supports only NOT NULL and PRIMARY KEY in column constraint
+-- default constraint
+CREATE TABLE tmp.customer3 (
+  id serial
+) tablespace tsurugi;
+ERROR:  Tsurugi supports only NOT NULL and PRIMARY KEY in column constraint
+-- multiple column pkey
+create table tmp.oorder1 (
+  ol_w_id int not null primary key,
+  ol_d_id int,
+  ol_o_id int not null primary key,
+  ol_number int not null primary key
+) tablespace tsurugi;
+ERROR:  multiple primary keys for table "oorder1" are not allowed
+LINE 4:   ol_o_id int not null primary key,
+                               ^
+-- same column name
+create table tmp.oorder2 (
+  ol_w_id int,
+  ol_w_id int,
+  ol_o_id int,
+  ol_number int not null primary key
+) tablespace tsurugi;
+ERROR:  column "ol_w_id" specified more than once
+create table tmp.oorder3 (
+  ol_w_id int,
+  ol_d_id varchar(),
+  ol_o_id int,
+  ol_number int not null primary key
+) tablespace tsurugi;
+ERROR:  syntax error at or near ")"
+LINE 3:   ol_d_id varchar(),
+                          ^
+create table tmp.oorder4 (
+) tablespace tsurugi;
+CREATE TABLE
+create table tmp.oorder5 (
+  ol_w_id,
+  ol_d_id varchar(100),
+  ol_o_id int,
+  ol_number int not null primary key
+) tablespace tsurugi;
+ERROR:  syntax error at or near "varchar"
+LINE 3:   ol_d_id varchar(100),
+                  ^
+create table tmp.oorder (
+  ol_w_id int not null primary key,
+  ol_d_id int,
+  ol_o_id int,
+  ol_number int
+) tablespace tsurugi;
+CREATE TABLE
+CREATE SCHEMA tmp2;
+CREATE SCHEMA
+create table tmp2.oorder (
+  ol_w_id int not null primary key,
+  ol_d_id int,
+  ol_o_id int,
+  ol_number int
+) tablespace tsurugi;
+ERROR:  table name "oorder" already exsists
+CREATE DATABASE test2 TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'C' LC_CTYPE = 'en_US.utf8';
+CREATE DATABASE
+\c test2
+You are now connected to database "test2" as user "vagrant".
+create table oorder (
+  ol_w_id int not null primary key,
+  ol_d_id int,
+  ol_o_id int,
+  ol_number int
+) tablespace tsurugi;
+ERROR:  table name "oorder" already exsists
+CREATE SCHEMA tmp;
+CREATE SCHEMA
+create table tmp.oorder (
+  ol_w_id int not null primary key,
+  ol_d_id int,
+  ol_o_id int,
+  ol_number int
+) tablespace tsurugi;
+ERROR:  table name "oorder" already exsists
+create table tmp.oorder (
+  ol_w_id int not null primary key,
+  ol_d_id int,
+  ol_o_id int,
+  ol_number int
+) tablespace tsurugi;
+ERROR:  table name "oorder" already exsists
+drop table oorder_dummy;
+ERROR:  table "oorder_dummy" does not exist
+DROP SCHEMA tmp CASCADE;
+DROP SCHEMA
+\c test
+You are now connected to database "test" as user "vagrant".
+DROP SCHEMA tmp CASCADE;
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to table tmp.oorder4_dummy
+drop cascades to table tmp.oorder_dummy
+DROP SCHEMA
+DROP SCHEMA tmp2 CASCADE;
+DROP SCHEMA
+\c postgres
+You are now connected to database "postgres" as user "vagrant".
+DROP DATABASE test;
+DROP DATABASE
+DROP DATABASE test2;
+DROP DATABASE
