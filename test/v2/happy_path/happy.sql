@@ -90,6 +90,13 @@ col15 character varying       constraint nn15 not null,
 col16 character varying(1000) constraint nn16 not null primary key
 ) tablespace tsurugi;
 
+create table tmp.order1 (
+  ol_w_id int ,
+  ol_d_id varchar(0),
+  ol_o_id int,
+  ol_number int not null primary key,
+) tablespace tsurugi;
+
 DROP SCHEMA tmp CASCADE;
 
 \c postgres
