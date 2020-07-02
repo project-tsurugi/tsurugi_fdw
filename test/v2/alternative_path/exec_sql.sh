@@ -1,3 +1,0 @@
-PSQLHOME_FOR_TEST=~/pgsql12cov/bin
-../rm_metadata.sh
-$PSQLHOME_FOR_TEST/psql -p 5438 -a postgres < alternative_path.sql > expected/alternative_path.out 2>&1
