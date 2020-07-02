@@ -491,6 +491,7 @@ CreateTable::store_metadata( uint64_t* object_id )
 
     RangeVar *relation = (RangeVar *)create_stmt->relation;
 
+    /* table name used later */
     char *relname = nullptr;
 
     /* put table name metadata */
@@ -768,11 +769,8 @@ CreateTable::get_ordinal_positions_of_primary_keys()
                 IndexElem *index_elem = (IndexElem *)lfirst(lip);
                 ColumnDef *colDef = (ColumnDef *)lfirst(lte);
 
-                char *index_elem_name = index_elem->name;
-                char *coldef_colname = colDef->colname;
-
                 /* Get oridinal positions of table constraints' primary key columns */
-                if (strcmp(index_elem_name,coldef_colname) == 0)
+                if (strcmp(index_elem->name, colDef->colname) == 0)
                 {
                     op_pkeys.insert(ordinal_position);
                 }
