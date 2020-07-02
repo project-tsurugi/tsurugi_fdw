@@ -94,6 +94,48 @@ create table tmp.oorder (
   ol_number int
 ) tablespace tsurugi;
 
+CREATE TABLE TMP.pkey_not_specified (
+COL0  INTEGER                 ,
+COL1  INT                     ,
+COL2  INT4                    ,
+COL3  BIGINT                  ,
+COL4  INT8                    ,
+COL5  REAL                    ,
+COL6  FLOAT4                  ,
+COL7  DOUBLE PRECISION        ,
+COL8  FLOAT8                  ,
+COL9  CHAR                    ,
+COL10 CHAR(1000)              ,
+COL11 CHARACTER               ,
+COL12 CHARACTER(1000)         ,
+COL13 VARCHAR                 ,
+COL14 VARCHAR(1000)           ,
+COL15 CHARACTER VARYING       ,
+COL16 CHARACTER VARYING(1000) ,
+CONSTRAINT pkey_not_specified PRIMARY KEY()
+) TABLESPACE TSURUGI;
+
+CREATE TABLE TMP.pkey_not_exists (
+COL0  INTEGER                 ,
+COL1  INT                     ,
+COL2  INT4                    ,
+COL3  BIGINT                  ,
+COL4  INT8                    ,
+COL5  REAL                    ,
+COL6  FLOAT4                  ,
+COL7  DOUBLE PRECISION        ,
+COL8  FLOAT8                  ,
+COL9  CHAR                    ,
+COL10 CHAR(1000)              ,
+COL11 CHARACTER               ,
+COL12 CHARACTER(1000)         ,
+COL13 VARCHAR                 ,
+COL14 VARCHAR(1000)           ,
+COL15 CHARACTER VARYING       ,
+COL16 CHARACTER VARYING(1000) ,
+CONSTRAINT pkey_not_specified PRIMARY KEY(COL17)
+) TABLESPACE TSURUGI;
+
 drop table oorder_dummy;
 
 DROP SCHEMA tmp CASCADE;

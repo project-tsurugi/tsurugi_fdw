@@ -97,6 +97,28 @@ col15 character varying       constraint nn15 not null,
 col16 character varying(1000) constraint nn16 not null primary key
 ) tablespace tsurugi;
 
+CREATE TABLE TMP.pkey_all_column (
+COL0  INTEGER                 ,
+COL1  INT                     ,
+COL2  INT4                    ,
+COL3  BIGINT                  ,
+COL4  INT8                    ,
+COL5  REAL                    ,
+COL6  FLOAT4                  ,
+COL7  DOUBLE PRECISION        ,
+COL8  FLOAT8                  ,
+COL9  CHAR                    ,
+COL10 CHAR(1000)              ,
+COL11 CHARACTER               ,
+COL12 CHARACTER(1000)         ,
+COL13 VARCHAR                 ,
+COL14 VARCHAR(1000)           ,
+COL15 CHARACTER VARYING       ,
+COL16 CHARACTER VARYING(1000) ,
+CONSTRAINT pkey_all_column
+PRIMARY KEY(COL0 ,COL1 ,COL2 ,COL3 ,COL4 ,COL5 ,COL6 ,COL7 ,COL8 ,COL9 ,COL10,COL11,COL12,COL13,COL14,COL15,COL16 )
+) TABLESPACE TSURUGI;
+
 DROP SCHEMA tmp CASCADE;
 
 \c postgres

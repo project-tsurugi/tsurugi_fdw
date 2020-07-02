@@ -729,6 +729,198 @@
                 }
             ],
             "id": "6"
+        },
+        {
+            "name": "pkey_all_column",
+            "primaryKey": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "8",
+                "9",
+                "10",
+                "11",
+                "12",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17"
+            ],
+            "columns": [
+                {
+                    "ordinalPosition": "1",
+                    "name": "col0",
+                    "direction": "1",
+                    "nullable": "false",
+                    "dataTypeId": "4",
+                    "id": "70",
+                    "tableId": "7"
+                },
+                {
+                    "ordinalPosition": "2",
+                    "name": "col1",
+                    "direction": "1",
+                    "nullable": "false",
+                    "dataTypeId": "4",
+                    "id": "71",
+                    "tableId": "7"
+                },
+                {
+                    "ordinalPosition": "3",
+                    "name": "col2",
+                    "direction": "1",
+                    "nullable": "false",
+                    "dataTypeId": "4",
+                    "id": "72",
+                    "tableId": "7"
+                },
+                {
+                    "ordinalPosition": "4",
+                    "name": "col3",
+                    "direction": "1",
+                    "nullable": "false",
+                    "dataTypeId": "6",
+                    "id": "73",
+                    "tableId": "7"
+                },
+                {
+                    "ordinalPosition": "5",
+                    "name": "col4",
+                    "direction": "1",
+                    "nullable": "false",
+                    "dataTypeId": "6",
+                    "id": "74",
+                    "tableId": "7"
+                },
+                {
+                    "ordinalPosition": "6",
+                    "name": "col5",
+                    "direction": "1",
+                    "nullable": "false",
+                    "dataTypeId": "8",
+                    "id": "75",
+                    "tableId": "7"
+                },
+                {
+                    "ordinalPosition": "7",
+                    "name": "col6",
+                    "direction": "1",
+                    "nullable": "false",
+                    "dataTypeId": "8",
+                    "id": "76",
+                    "tableId": "7"
+                },
+                {
+                    "ordinalPosition": "8",
+                    "name": "col7",
+                    "direction": "1",
+                    "nullable": "false",
+                    "dataTypeId": "9",
+                    "id": "77",
+                    "tableId": "7"
+                },
+                {
+                    "ordinalPosition": "9",
+                    "name": "col8",
+                    "direction": "1",
+                    "nullable": "false",
+                    "dataTypeId": "9",
+                    "id": "78",
+                    "tableId": "7"
+                },
+                {
+                    "ordinalPosition": "10",
+                    "name": "col9",
+                    "direction": "1",
+                    "nullable": "false",
+                    "dataTypeId": "13",
+                    "varying": "false",
+                    "dataLength": "1",
+                    "id": "79",
+                    "tableId": "7"
+                },
+                {
+                    "ordinalPosition": "11",
+                    "name": "col10",
+                    "direction": "1",
+                    "nullable": "false",
+                    "dataTypeId": "13",
+                    "varying": "false",
+                    "dataLength": "1000",
+                    "id": "80",
+                    "tableId": "7"
+                },
+                {
+                    "ordinalPosition": "12",
+                    "name": "col11",
+                    "direction": "1",
+                    "nullable": "false",
+                    "dataTypeId": "13",
+                    "varying": "false",
+                    "dataLength": "1",
+                    "id": "81",
+                    "tableId": "7"
+                },
+                {
+                    "ordinalPosition": "13",
+                    "name": "col12",
+                    "direction": "1",
+                    "nullable": "false",
+                    "dataTypeId": "13",
+                    "varying": "false",
+                    "dataLength": "1000",
+                    "id": "82",
+                    "tableId": "7"
+                },
+                {
+                    "ordinalPosition": "14",
+                    "name": "col13",
+                    "direction": "1",
+                    "nullable": "false",
+                    "dataTypeId": "14",
+                    "varying": "true",
+                    "id": "83",
+                    "tableId": "7"
+                },
+                {
+                    "ordinalPosition": "15",
+                    "name": "col14",
+                    "direction": "1",
+                    "nullable": "false",
+                    "dataTypeId": "14",
+                    "varying": "true",
+                    "dataLength": "1000",
+                    "id": "84",
+                    "tableId": "7"
+                },
+                {
+                    "ordinalPosition": "16",
+                    "name": "col15",
+                    "direction": "1",
+                    "nullable": "false",
+                    "dataTypeId": "14",
+                    "varying": "true",
+                    "id": "85",
+                    "tableId": "7"
+                },
+                {
+                    "ordinalPosition": "17",
+                    "name": "col16",
+                    "direction": "1",
+                    "nullable": "false",
+                    "dataTypeId": "14",
+                    "varying": "true",
+                    "dataLength": "1000",
+                    "id": "86",
+                    "tableId": "7"
+                }
+            ],
+            "id": "7"
         }
     ]
 }
