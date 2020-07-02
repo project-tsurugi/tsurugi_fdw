@@ -37,9 +37,25 @@ sh -x ./exec_sql.sh > result.txt 2>&1
 ## 異常系
 * [alternative.sql](./alternative/alternative.sql)
 * [unhappy.sql](./unhappy/unhappy.sql)
-* <PostgreSQLのインストールディレクトリ>/data/tsurugi_metadata/datatypes.jsonのみ所有権をroot:rootに変更
-* <PostgreSQLのインストールディレクトリ>/data/tsurugi_metadata/{datatypes,tables}.jsonのみ所有権をroot:rootに変更
-* <PostgreSQLのインストールディレクトリ>/data/tsurugi_metadata/配下のファイルすべて、所有権をroot:rootに変更
+* メタデータのロード失敗
+	* <PostgreSQLのインストールディレクトリ>/data/tsurugi_metadata/datatypes.jsonのみ所有権をroot:rootに変更
+	* <PostgreSQLのインストールディレクトリ>/data/tsurugi_metadata/{datatypes,tables}.jsonのみ所有権をroot:rootに変更
+	* <PostgreSQLのインストールディレクトリ>/data/tsurugi_metadata/配下のファイルすべて、所有権をroot:rootに変更
 
 ## カバレッジレポートの生成
 * https://www.postgresql.org/docs/12/regress-coverage.html
+
+## 参考
+
+### テストパターン数
+|種類|テストケース名|テストパターン数|
+| :--- | :--- | ---: |
+|正常系|otable_of_constr.sql|12|
+|正常系|ch-benchmark-ddl.sql|14|
+|正常系|happy.sql|11|
+|異常系|alternative.sql|52|
+|異常系|unhappy.sql|18|
+|異常系|メタデータのロード失敗|3|
+|正常系|計|37|
+|異常系|計|73|
+||総計|110|
