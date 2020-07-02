@@ -335,6 +335,9 @@ CreateTable::is_syntax_supported()
     }
 #endif
 
+    /* for duplicate column name check */
+    std::unordered_set<std::string> column_names;
+
     /* Check members of each column */
     foreach(l, table_elts)
     {
@@ -367,6 +370,19 @@ CreateTable::is_syntax_supported()
                      errmsg("Tsurugi does not support COLLATE clause")));
             return ret_value;
         }
+
+        /* Check for duplicates */
+        std::string colname = std::string(colDef->colname);
+        if (column_names.find(colname) != column_names.end())
+        {
+            ereport(ERROR,
+                    (errcode(ERRCODE_DUPLICATE_COLUMN),
+                     errmsg("column \"%s\" specified more than once",
+                            colname.c_str()),
+                     errdetail("Tsurugi does not support this syntax")));
+            return ret_value;
+        }
+        column_names.insert(colname);
     }
 
     List *table_constraints = create_stmt->constraints;
