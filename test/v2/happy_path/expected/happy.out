@@ -4,10 +4,19 @@ CREATE DATABASE
 You are now connected to database "test" as user "vagrant".
 CREATE SCHEMA tmp;
 CREATE SCHEMA
-CREATE TABLE IF NOT EXISTS tmp.customer (
+create table tmp.oorder4 (
+) tablespace tsurugi;
+CREATE TABLE
+CREATE TABLE tmp.customer (
   c_credit char(2)
 ) tablespace tsurugi;
 CREATE TABLE
+CREATE TABLE IF NOT EXISTS tmp.customer (
+  c_credit char(2)
+) tablespace tsurugi;
+NOTICE:  table name "customer" already exsists, skipping
+NOTICE:  create_table() failed.
+ERROR:  relation "customer_dummy" already exists
 CREATE TABLE TMP.TCPKEY_UPPER (
 COL0  INTEGER                 CONSTRAINT NN0 NOT NULL,
 COL1  INT                     CONSTRAINT NN1 NOT NULL,
@@ -91,8 +100,9 @@ col16 character varying(1000) constraint nn16 not null primary key
 ) tablespace tsurugi;
 CREATE TABLE
 DROP SCHEMA tmp CASCADE;
-NOTICE:  drop cascades to 5 other objects
-DETAIL:  drop cascades to table tmp.customer_dummy
+NOTICE:  drop cascades to 6 other objects
+DETAIL:  drop cascades to table tmp.oorder4_dummy
+drop cascades to table tmp.customer_dummy
 drop cascades to table tmp.tcpkey_upper_dummy
 drop cascades to table tmp.tcpkey_lower_dummy
 drop cascades to table tmp.ccpkey_upper_dummy

@@ -4,6 +4,13 @@ CREATE DATABASE test TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'C' LC_
 
 CREATE SCHEMA tmp;
 
+create table tmp.oorder4 (
+) tablespace tsurugi;
+
+CREATE TABLE tmp.customer (
+  c_credit char(2)
+) tablespace tsurugi;
+
 CREATE TABLE IF NOT EXISTS tmp.customer (
   c_credit char(2)
 ) tablespace tsurugi;
@@ -88,13 +95,6 @@ col13 varchar                 constraint nn13 not null,
 col14 varchar(1000)           constraint nn14 not null,
 col15 character varying       constraint nn15 not null,
 col16 character varying(1000) constraint nn16 not null primary key
-) tablespace tsurugi;
-
-create table tmp.order1 (
-  ol_w_id int ,
-  ol_d_id varchar(0),
-  ol_o_id int,
-  ol_number int not null primary key,
 ) tablespace tsurugi;
 
 DROP SCHEMA tmp CASCADE;

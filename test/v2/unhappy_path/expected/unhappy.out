@@ -32,6 +32,7 @@ create table tmp.oorder2 (
   ol_number int not null primary key
 ) tablespace tsurugi;
 ERROR:  column "ol_w_id" specified more than once
+DETAIL:  Tsurugi does not support this syntax
 create table tmp.oorder3 (
   ol_w_id int,
   ol_d_id varchar(),
@@ -41,9 +42,15 @@ create table tmp.oorder3 (
 ERROR:  syntax error at or near ")"
 LINE 3:   ol_d_id varchar(),
                           ^
-create table tmp.oorder4 (
+create table tmp.order4 (
+  ol_w_id int ,
+  ol_d_id varchar(0),
+  ol_o_id int,
+  ol_number int not null primary key
 ) tablespace tsurugi;
-CREATE TABLE
+ERROR:  length for type varchar must be at least 1
+LINE 3:   ol_d_id varchar(0),
+                  ^
 create table tmp.oorder5 (
   ol_w_id,
   ol_d_id varchar(100),
@@ -103,9 +110,7 @@ DROP SCHEMA
 \c test
 You are now connected to database "test" as user "vagrant".
 DROP SCHEMA tmp CASCADE;
-NOTICE:  drop cascades to 2 other objects
-DETAIL:  drop cascades to table tmp.oorder4_dummy
-drop cascades to table tmp.oorder_dummy
+NOTICE:  drop cascades to table tmp.oorder_dummy
 DROP SCHEMA
 DROP SCHEMA tmp2 CASCADE;
 DROP SCHEMA

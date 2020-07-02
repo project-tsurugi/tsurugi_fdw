@@ -37,7 +37,11 @@ create table tmp.oorder3 (
   ol_number int not null primary key
 ) tablespace tsurugi;
 
-create table tmp.oorder4 (
+create table tmp.order4 (
+  ol_w_id int ,
+  ol_d_id varchar(0),
+  ol_o_id int,
+  ol_number int not null primary key
 ) tablespace tsurugi;
 
 create table tmp.oorder5 (

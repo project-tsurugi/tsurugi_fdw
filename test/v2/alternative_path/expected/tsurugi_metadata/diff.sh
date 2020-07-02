@@ -1,7 +1,7 @@
 DATATYPES=datatypes.json
 OID=oid
 TABLES=tables.json
-OUTPUT=~/pgsql12/data/tsurugi_metadata/
+OUTPUT=~/pgsql12cov/data/tsurugi_metadata/
 
 diff $DATATYPES $OUTPUT$DATATYPES
 diff $OID $OUTPUT$OID
