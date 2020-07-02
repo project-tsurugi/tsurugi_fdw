@@ -51,6 +51,25 @@ create table tmp.oorder5 (
   ol_number int not null primary key
 ) tablespace tsurugi;
 
+create table tmp.order6 (
+  int
+) tablespace tsurugi;
+
+create table (
+  column int
+) tablespace tsurugi;
+
+create table tmp.order7 (
+  ol_w_id int ,
+  ol_d_id char(0),
+  ol_o_id int,
+  ol_number int not null primary key
+) tablespace tsurugi;
+
+create table tmp.order8 (
+  1 int
+) tablespace tsurugi;
+
 create table tmp.oorder (
   ol_w_id int not null primary key,
   ol_d_id int,

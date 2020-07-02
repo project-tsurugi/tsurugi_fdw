@@ -4,7 +4,7 @@ CREATE DATABASE test TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'C' LC_
 
 CREATE SCHEMA tmp;
 
-create table tmp.oorder4 (
+create table tmp.no_column (
 ) tablespace tsurugi;
 
 CREATE TABLE tmp.customer (
@@ -118,6 +118,21 @@ COL16 CHARACTER VARYING(1000) ,
 CONSTRAINT pkey_all_column
 PRIMARY KEY(COL0 ,COL1 ,COL2 ,COL3 ,COL4 ,COL5 ,COL6 ,COL7 ,COL8 ,COL9 ,COL10,COL11,COL12,COL13,COL14,COL15,COL16 )
 ) TABLESPACE TSURUGI;
+
+create table tmp.order1 (
+  ol_w_id int ,
+  ol_d_id char(1),
+  ol_o_id int,
+  ol_number int not null primary key
+) tablespace tsurugi;
+
+create table tmp.order2 (
+  カラム int
+) tablespace tsurugi;
+
+create table tmp.order3 (
+  o int
+) tablespace tsurugi;
 
 DROP SCHEMA tmp CASCADE;
 

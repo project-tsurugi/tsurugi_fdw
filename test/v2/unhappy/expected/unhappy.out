@@ -60,6 +60,33 @@ create table tmp.oorder5 (
 ERROR:  syntax error at or near "varchar"
 LINE 3:   ol_d_id varchar(100),
                   ^
+create table tmp.order6 (
+  int
+) tablespace tsurugi;
+ERROR:  syntax error at or near ";"
+LINE 3: ) tablespace tsurugi;
+                            ^
+create table (
+  column int
+) tablespace tsurugi;
+ERROR:  syntax error at or near "("
+LINE 1: create table (
+                     ^
+create table tmp.order7 (
+  ol_w_id int ,
+  ol_d_id char(0),
+  ol_o_id int,
+  ol_number int not null primary key
+) tablespace tsurugi;
+ERROR:  length for type char must be at least 1
+LINE 3:   ol_d_id char(0),
+                  ^
+create table tmp.order8 (
+  1 int
+) tablespace tsurugi;
+ERROR:  syntax error at or near "1"
+LINE 2:   1 int
+          ^
 create table tmp.oorder (
   ol_w_id int not null primary key,
   ol_d_id int,

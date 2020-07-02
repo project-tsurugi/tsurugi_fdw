@@ -3,7 +3,7 @@
     "generation": "1",
     "tables": [
         {
-            "name": "oorder4",
+            "name": "no_column",
             "primaryKey": "",
             "columns": "",
             "id": "1"
@@ -921,6 +921,85 @@
                 }
             ],
             "id": "7"
+        },
+        {
+            "name": "order1",
+            "primaryKey": [
+                "4"
+            ],
+            "columns": [
+                {
+                    "ordinalPosition": "1",
+                    "name": "ol_w_id",
+                    "direction": "0",
+                    "nullable": "true",
+                    "dataTypeId": "4",
+                    "id": "87",
+                    "tableId": "8"
+                },
+                {
+                    "ordinalPosition": "2",
+                    "name": "ol_d_id",
+                    "direction": "0",
+                    "nullable": "true",
+                    "dataTypeId": "13",
+                    "varying": "false",
+                    "dataLength": "1",
+                    "id": "88",
+                    "tableId": "8"
+                },
+                {
+                    "ordinalPosition": "3",
+                    "name": "ol_o_id",
+                    "direction": "0",
+                    "nullable": "true",
+                    "dataTypeId": "4",
+                    "id": "89",
+                    "tableId": "8"
+                },
+                {
+                    "ordinalPosition": "4",
+                    "name": "ol_number",
+                    "direction": "1",
+                    "nullable": "false",
+                    "dataTypeId": "4",
+                    "id": "90",
+                    "tableId": "8"
+                }
+            ],
+            "id": "8"
+        },
+        {
+            "name": "order2",
+            "primaryKey": "",
+            "columns": [
+                {
+                    "ordinalPosition": "1",
+                    "name": "カラム",
+                    "direction": "0",
+                    "nullable": "true",
+                    "dataTypeId": "4",
+                    "id": "91",
+                    "tableId": "9"
+                }
+            ],
+            "id": "9"
+        },
+        {
+            "name": "order3",
+            "primaryKey": "",
+            "columns": [
+                {
+                    "ordinalPosition": "1",
+                    "name": "o",
+                    "direction": "0",
+                    "nullable": "true",
+                    "dataTypeId": "4",
+                    "id": "92",
+                    "tableId": "10"
+                }
+            ],
+            "id": "10"
         }
     ]
 }

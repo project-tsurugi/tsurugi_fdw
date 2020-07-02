@@ -4,7 +4,7 @@ CREATE DATABASE
 You are now connected to database "test" as user "vagrant".
 CREATE SCHEMA tmp;
 CREATE SCHEMA
-create table tmp.oorder4 (
+create table tmp.no_column (
 ) tablespace tsurugi;
 CREATE TABLE
 CREATE TABLE tmp.customer (
@@ -121,15 +121,33 @@ CONSTRAINT pkey_all_column
 PRIMARY KEY(COL0 ,COL1 ,COL2 ,COL3 ,COL4 ,COL5 ,COL6 ,COL7 ,COL8 ,COL9 ,COL10,COL11,COL12,COL13,COL14,COL15,COL16 )
 ) TABLESPACE TSURUGI;
 CREATE TABLE
+create table tmp.order1 (
+  ol_w_id int ,
+  ol_d_id char(1),
+  ol_o_id int,
+  ol_number int not null primary key
+) tablespace tsurugi;
+CREATE TABLE
+create table tmp.order2 (
+  カラム int
+) tablespace tsurugi;
+CREATE TABLE
+create table tmp.order3 (
+  o int
+) tablespace tsurugi;
+CREATE TABLE
 DROP SCHEMA tmp CASCADE;
-NOTICE:  drop cascades to 7 other objects
-DETAIL:  drop cascades to table tmp.oorder4_dummy
+NOTICE:  drop cascades to 10 other objects
+DETAIL:  drop cascades to table tmp.no_column_dummy
 drop cascades to table tmp.customer_dummy
 drop cascades to table tmp.tcpkey_upper_dummy
 drop cascades to table tmp.tcpkey_lower_dummy
 drop cascades to table tmp.ccpkey_upper_dummy
 drop cascades to table tmp.ccpkey_lower_dummy
 drop cascades to table tmp.pkey_all_column_dummy
+drop cascades to table tmp.order1_dummy
+drop cascades to table tmp.order2_dummy
+drop cascades to table tmp.order3_dummy
 DROP SCHEMA
 \c postgres
 You are now connected to database "postgres" as user "vagrant".
