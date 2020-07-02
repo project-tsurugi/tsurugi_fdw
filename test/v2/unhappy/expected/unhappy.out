@@ -87,6 +87,12 @@ create table tmp.order8 (
 ERROR:  syntax error at or near "1"
 LINE 2:   1 int
           ^
+create table tmp.order9 (
+  ??? int
+) tablespace tsurugi;
+ERROR:  syntax error at or near "???"
+LINE 2:   ??? int
+          ^
 create table tmp.oorder (
   ol_w_id int not null primary key,
   ol_d_id int,
