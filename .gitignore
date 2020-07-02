@@ -1,0 +1,10 @@
+# object file
+*.o
+*.so
+
+# coverage report
+*.gcno
+*.gcda
+
+# third_party
+third_party/*
