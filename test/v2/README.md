@@ -2,14 +2,14 @@
 ## テストツール
 [exec_sql.sh](./exec_sql.sh)
 
-## 実行方法
+### 実行方法
 
 ```bash
 sh -x ./exec_sql.sh > result.txt 2>&1
 ```
 
-# テストパターン
-## 制約の直行表
+## テストパターン
+### 制約の直行表
 
 |項番|表制約<br>0=なし<br>1=単主キーあり<br>2=複合主キーあり|列制約NOT NULL<br>0=なし<br>1=あり|列制約PRYMARY KEY<br>0=なし<br>1=あり|
 |---|---|---|---|
@@ -26,15 +26,15 @@ sh -x ./exec_sql.sh > result.txt 2>&1
 |11|2| 1| 0|
 |12 error|2| 1| 1|
 
-### SQL
+#### SQL
 * [otable_of_constr.sql](./otable_of_constr/otable_of_constr.sql)
 
-## 正常系
+### 正常系
 * [ch-benchmark-ddl.sql](./ch-benchmark-ddl/ch-benchmark-ddl.sql)
 	* 参考：https://github.com/citusdata/ch-benchmark.git
 * [happy.sql](./happy/happy.sql)
 
-## 異常系
+### 異常系
 * [alternative.sql](./alternative/alternative.sql)
 * [unhappy.sql](./unhappy/unhappy.sql)
 * メタデータのロード失敗
