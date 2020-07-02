@@ -42,6 +42,9 @@ sh -x ./exec_sql.sh > result.txt 2>&1
 	* <PostgreSQLのインストールディレクトリ>/data/tsurugi_metadata/{datatypes,tables}.jsonのみ所有権をroot:rootに変更
 	* <PostgreSQLのインストールディレクトリ>/data/tsurugi_metadata/配下のファイルすべて、所有権をroot:rootに変更
 
+### tsurugi用のテーブル出ない場合（tablespace tsurugiをつけない場合）
+* [not_tsurugi.sql](./not_tsurugi/not_tsurugi.sql)
+
 ## カバレッジレポートの生成
 * https://www.postgresql.org/docs/12/regress-coverage.html
 

@@ -9,7 +9,7 @@ OID=oid
 TABLES=tables.json
 PORT=5438
 
-for TESTCASE in otable_of_constr ch-benchmark-ddl alternative happy unhappy
+for TESTCASE in otable_of_constr ch-benchmark-ddl alternative happy unhappy not_tsurugi
 do
     rm -rf $TSURUGI_METADATA_HOME
 
