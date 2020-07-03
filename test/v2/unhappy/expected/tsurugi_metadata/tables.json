@@ -3,7 +3,7 @@
     "generation": "1",
     "tables": [
         {
-            "name": "oorder",
+            "name": "same_table_name_test",
             "primaryKey": [
                 "1"
             ],

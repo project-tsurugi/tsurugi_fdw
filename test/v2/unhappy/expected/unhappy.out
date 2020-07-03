@@ -4,28 +4,28 @@ CREATE DATABASE
 You are now connected to database "test" as user "vagrant".
 CREATE SCHEMA tmp;
 CREATE SCHEMA
--- default constraint
-CREATE TABLE tmp.customer2 (
+-- double quote in default constraint
+CREATE TABLE tmp.default_constr_double_quote (
   "c_credit" char(2) DEFAULT "apple"
 ) tablespace tsurugi;
 ERROR:  Tsurugi supports only NOT NULL and PRIMARY KEY in column constraint
--- default constraint
-CREATE TABLE tmp.customer3 (
+-- default constraint serial
+CREATE TABLE tmp.default_constr_serial (
   id serial
 ) tablespace tsurugi;
 ERROR:  Tsurugi supports only NOT NULL and PRIMARY KEY in column constraint
 -- multiple column pkey
-create table tmp.oorder1 (
+create table tmp.multiple_col_pkey (
   ol_w_id int not null primary key,
   ol_d_id int,
   ol_o_id int not null primary key,
   ol_number int not null primary key
 ) tablespace tsurugi;
-ERROR:  multiple primary keys for table "oorder1" are not allowed
+ERROR:  multiple primary keys for table "multiple_col_pkey" are not allowed
 LINE 4:   ol_o_id int not null primary key,
                                ^
 -- same column name
-create table tmp.oorder2 (
+create table tmp.same_col_name (
   ol_w_id int,
   ol_w_id int,
   ol_o_id int,
@@ -33,7 +33,8 @@ create table tmp.oorder2 (
 ) tablespace tsurugi;
 ERROR:  column "ol_w_id" specified more than once
 DETAIL:  Tsurugi does not support this syntax
-create table tmp.oorder3 (
+-- varchar data length is empty
+create table tmp.varchar_length_empty (
   ol_w_id int,
   ol_d_id varchar(),
   ol_o_id int,
@@ -42,7 +43,8 @@ create table tmp.oorder3 (
 ERROR:  syntax error at or near ")"
 LINE 3:   ol_d_id varchar(),
                           ^
-create table tmp.order4 (
+-- varchar data length is zero
+create table tmp.varchar_length_0 (
   ol_w_id int ,
   ol_d_id varchar(0),
   ol_o_id int,
@@ -51,7 +53,8 @@ create table tmp.order4 (
 ERROR:  length for type varchar must be at least 1
 LINE 3:   ol_d_id varchar(0),
                   ^
-create table tmp.oorder5 (
+-- type of ol_w_id is not specified
+create table tmp.type_is_not_specified (
   ol_w_id,
   ol_d_id varchar(100),
   ol_o_id int,
@@ -60,19 +63,22 @@ create table tmp.oorder5 (
 ERROR:  syntax error at or near "varchar"
 LINE 3:   ol_d_id varchar(100),
                   ^
-create table tmp.order6 (
+-- column name is not specified
+create table tmp.col_name_is_not_specified (
   int
 ) tablespace tsurugi;
 ERROR:  syntax error at or near ";"
 LINE 3: ) tablespace tsurugi;
                             ^
+-- table name is not specified
 create table (
   column int
 ) tablespace tsurugi;
 ERROR:  syntax error at or near "("
 LINE 1: create table (
                      ^
-create table tmp.order7 (
+-- char data length is zero
+create table tmp.char_length_0 (
   ol_w_id int ,
   ol_d_id char(0),
   ol_o_id int,
@@ -81,19 +87,30 @@ create table tmp.order7 (
 ERROR:  length for type char must be at least 1
 LINE 3:   ol_d_id char(0),
                   ^
-create table tmp.order8 (
+-- column name is 1
+create table tmp.col_name_is_1 (
   1 int
 ) tablespace tsurugi;
 ERROR:  syntax error at or near "1"
 LINE 2:   1 int
           ^
-create table tmp.order9 (
+-- column name is 1c
+create table tmp.col_name_is_1 (
+  1c int
+) tablespace tsurugi;
+ERROR:  syntax error at or near "1"
+LINE 2:   1c int
+          ^
+-- column name is japanese
+create table tmp.col_name_is_japanese (
   ??? int
 ) tablespace tsurugi;
 ERROR:  syntax error at or near "???"
 LINE 2:   ??? int
           ^
-create table tmp.oorder (
+-- *** same table name is specified ***
+-- success to create table in the schema "tmp"
+create table tmp.same_table_name_test (
   ol_w_id int not null primary key,
   ol_d_id int,
   ol_o_id int,
@@ -102,40 +119,40 @@ create table tmp.oorder (
 CREATE TABLE
 CREATE SCHEMA tmp2;
 CREATE SCHEMA
-create table tmp2.oorder (
+-- If same table name is defined in another schema,
+-- fail to create table.
+create table tmp2.same_table_name_test (
   ol_w_id int not null primary key,
   ol_d_id int,
   ol_o_id int,
   ol_number int
 ) tablespace tsurugi;
-ERROR:  table name "oorder" already exsists
+ERROR:  table name "same_table_name_test" already exsists
 CREATE DATABASE test2 TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'C' LC_CTYPE = 'en_US.utf8';
 CREATE DATABASE
 \c test2
 You are now connected to database "test2" as user "vagrant".
-create table oorder (
+-- If same table name is defined in another database,
+-- fail to create table.
+create table same_table_name_test (
   ol_w_id int not null primary key,
   ol_d_id int,
   ol_o_id int,
   ol_number int
 ) tablespace tsurugi;
-ERROR:  table name "oorder" already exsists
+ERROR:  table name "same_table_name_test" already exsists
 CREATE SCHEMA tmp;
 CREATE SCHEMA
-create table tmp.oorder (
+-- If same table name is defined in another schema of another database,
+-- fail to create table.
+create table tmp.same_table_name_test (
   ol_w_id int not null primary key,
   ol_d_id int,
   ol_o_id int,
   ol_number int
 ) tablespace tsurugi;
-ERROR:  table name "oorder" already exsists
-create table tmp.oorder (
-  ol_w_id int not null primary key,
-  ol_d_id int,
-  ol_o_id int,
-  ol_number int
-) tablespace tsurugi;
-ERROR:  table name "oorder" already exsists
+ERROR:  table name "same_table_name_test" already exsists
+-- primary key is not specified
 CREATE TABLE TMP.pkey_not_specified (
 COL0  INTEGER                 ,
 COL1  INT                     ,
@@ -159,6 +176,7 @@ CONSTRAINT pkey_not_specified PRIMARY KEY()
 ERROR:  syntax error at or near ")"
 LINE 19: CONSTRAINT pkey_not_specified PRIMARY KEY()
                                                    ^
+-- primary key column does not exist
 CREATE TABLE TMP.pkey_not_exists (
 COL0  INTEGER                 ,
 COL1  INT                     ,
@@ -182,14 +200,12 @@ CONSTRAINT pkey_not_specified PRIMARY KEY(COL17)
 ERROR:  column "col17" named in key does not exist
 LINE 19: CONSTRAINT pkey_not_specified PRIMARY KEY(COL17)
          ^
-drop table oorder_dummy;
-ERROR:  table "oorder_dummy" does not exist
 DROP SCHEMA tmp CASCADE;
 DROP SCHEMA
 \c test
 You are now connected to database "test" as user "vagrant".
 DROP SCHEMA tmp CASCADE;
-NOTICE:  drop cascades to table tmp.oorder_dummy
+NOTICE:  drop cascades to table tmp.same_table_name_test_dummy
 DROP SCHEMA
 DROP SCHEMA tmp2 CASCADE;
 DROP SCHEMA

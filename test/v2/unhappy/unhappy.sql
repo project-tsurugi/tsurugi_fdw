@@ -4,18 +4,18 @@ CREATE DATABASE test TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'C' LC_
 
 CREATE SCHEMA tmp;
 
--- default constraint
-CREATE TABLE tmp.customer2 (
+-- double quote in default constraint
+CREATE TABLE tmp.default_constr_double_quote (
   "c_credit" char(2) DEFAULT "apple"
 ) tablespace tsurugi;
 
--- default constraint
-CREATE TABLE tmp.customer3 (
+-- default constraint serial
+CREATE TABLE tmp.default_constr_serial (
   id serial
 ) tablespace tsurugi;
 
 -- multiple column pkey
-create table tmp.oorder1 (
+create table tmp.multiple_col_pkey (
   ol_w_id int not null primary key,
   ol_d_id int,
   ol_o_id int not null primary key,
@@ -23,58 +23,74 @@ create table tmp.oorder1 (
 ) tablespace tsurugi;
 
 -- same column name
-create table tmp.oorder2 (
+create table tmp.same_col_name (
   ol_w_id int,
   ol_w_id int,
   ol_o_id int,
   ol_number int not null primary key
 ) tablespace tsurugi;
 
-create table tmp.oorder3 (
+-- varchar data length is empty
+create table tmp.varchar_length_empty (
   ol_w_id int,
   ol_d_id varchar(),
   ol_o_id int,
   ol_number int not null primary key
 ) tablespace tsurugi;
 
-create table tmp.order4 (
+-- varchar data length is zero
+create table tmp.varchar_length_0 (
   ol_w_id int ,
   ol_d_id varchar(0),
   ol_o_id int,
   ol_number int not null primary key
 ) tablespace tsurugi;
 
-create table tmp.oorder5 (
+-- type of ol_w_id is not specified
+create table tmp.type_is_not_specified (
   ol_w_id,
   ol_d_id varchar(100),
   ol_o_id int,
   ol_number int not null primary key
 ) tablespace tsurugi;
 
-create table tmp.order6 (
+-- column name is not specified
+create table tmp.col_name_is_not_specified (
   int
 ) tablespace tsurugi;
 
+-- table name is not specified
 create table (
   column int
 ) tablespace tsurugi;
 
-create table tmp.order7 (
+-- char data length is zero
+create table tmp.char_length_0 (
   ol_w_id int ,
   ol_d_id char(0),
   ol_o_id int,
   ol_number int not null primary key
 ) tablespace tsurugi;
 
-create table tmp.order8 (
+-- column name is 1
+create table tmp.col_name_is_1 (
   1 int
 ) tablespace tsurugi;
 
-create table tmp.order9 (
+-- column name is 1c
+create table tmp.col_name_is_1 (
+  1c int
+) tablespace tsurugi;
+
+-- column name is japanese
+create table tmp.col_name_is_japanese (
   ??? int
 ) tablespace tsurugi;
 
-create table tmp.oorder (
+-- *** same table name is specified ***
+
+-- success to create table in the schema "tmp"
+create table tmp.same_table_name_test (
   ol_w_id int not null primary key,
   ol_d_id int,
   ol_o_id int,
@@ -83,7 +99,9 @@ create table tmp.oorder (
 
 CREATE SCHEMA tmp2;
 
-create table tmp2.oorder (
+-- If same table name is defined in another schema,
+-- fail to create table.
+create table tmp2.same_table_name_test (
   ol_w_id int not null primary key,
   ol_d_id int,
   ol_o_id int,
@@ -94,7 +112,9 @@ CREATE DATABASE test2 TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'C' LC
 
 \c test2
 
-create table oorder (
+-- If same table name is defined in another database,
+-- fail to create table.
+create table same_table_name_test (
   ol_w_id int not null primary key,
   ol_d_id int,
   ol_o_id int,
@@ -103,20 +123,16 @@ create table oorder (
 
 CREATE SCHEMA tmp;
 
-create table tmp.oorder (
+-- If same table name is defined in another schema of another database,
+-- fail to create table.
+create table tmp.same_table_name_test (
   ol_w_id int not null primary key,
   ol_d_id int,
   ol_o_id int,
   ol_number int
 ) tablespace tsurugi;
 
-create table tmp.oorder (
-  ol_w_id int not null primary key,
-  ol_d_id int,
-  ol_o_id int,
-  ol_number int
-) tablespace tsurugi;
-
+-- primary key is not specified
 CREATE TABLE TMP.pkey_not_specified (
 COL0  INTEGER                 ,
 COL1  INT                     ,
@@ -138,6 +154,7 @@ COL16 CHARACTER VARYING(1000) ,
 CONSTRAINT pkey_not_specified PRIMARY KEY()
 ) TABLESPACE TSURUGI;
 
+-- primary key column does not exist
 CREATE TABLE TMP.pkey_not_exists (
 COL0  INTEGER                 ,
 COL1  INT                     ,
@@ -158,8 +175,6 @@ COL15 CHARACTER VARYING       ,
 COL16 CHARACTER VARYING(1000) ,
 CONSTRAINT pkey_not_specified PRIMARY KEY(COL17)
 ) TABLESPACE TSURUGI;
-
-drop table oorder_dummy;
 
 DROP SCHEMA tmp CASCADE;
 
