@@ -39,8 +39,8 @@
 * [unhappy.sql](./unhappy/unhappy.sql)
 * メタデータのロード失敗
 	* <PostgreSQLのインストールディレクトリ>/data/tsurugi_metadata/datatypes.jsonのみ所有権をroot:rootに変更
-	* <PostgreSQLのインストールディレクトリ>/data/tsurugi_metadata/{datatypes,tables}.jsonのみ所有権をroot:rootに変更
-	* <PostgreSQLのインストールディレクトリ>/data/tsurugi_metadata/配下のファイルすべて、所有権をroot:rootに変更
+	* <PostgreSQLのインストールディレクトリ>/data/tsurugi_metadata/tables.jsonのみ所有権をroot:rootに変更
+	* <PostgreSQLのインストールディレクトリ>/data/tsurugi_metadata/oidのみ所有権をroot:rootに変更
 
 ### tsurugi用のテーブル以外の場合（tablespace tsurugiをつけない場合）
 * [wo_tsurugi.sql](./wo_tsurugi/wo_tsurugi.sql)
@@ -53,12 +53,12 @@
 ### テストパターン数
 |種類|テストケース名|テストパターン数|
 | :--- | :--- | ---: |
-|正常系|otable_of_constr.sql|12|
+|正常系|otable_of_constr.sql|15|
 |正常系|ch-benchmark-ddl.sql|14|
 |正常系|happy.sql|11|
-|異常系|alternative.sql|52|
-|異常系|unhappy.sql|18|
+|異常系|alternative.sql|89|
+|異常系|unhappy.sql|23|
 |異常系|メタデータのロード失敗|3|
-|正常系|計|37|
-|異常系|計|73|
-||総計|110|
+|正常系|計|40|
+|異常系|計|115|
+||総計|155|
