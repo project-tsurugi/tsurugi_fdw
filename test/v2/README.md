@@ -1,11 +1,11 @@
 # 機能テスト
 ## テストツール
-[exec_sql.sh](./exec_sql.sh)
+[run_test.sh](./run_test.sh)
 
 ### 実行方法
 
 ```bash
-./exec_sql.sh
+./run_test.sh
 ```
 
 ## テストパターン
