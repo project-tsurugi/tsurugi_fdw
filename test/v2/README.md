@@ -5,7 +5,7 @@
 ### 実行方法
 
 ```bash
-sh -x ./exec_sql.sh > result.txt 2>&1
+./exec_sql.sh
 ```
 
 ## テストパターン
