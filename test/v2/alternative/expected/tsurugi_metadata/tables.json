@@ -227,6 +227,64 @@
             "id": "1"
         },
         {
+            "name": "customer_secondary",
+            "primaryKey": [
+                "2"
+            ],
+            "columns": [
+                {
+                    "ordinalPosition": "1",
+                    "name": "c_d_id",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "4",
+                    "id": "22",
+                    "tableId": "2"
+                },
+                {
+                    "ordinalPosition": "2",
+                    "name": "c_w_id",
+                    "direction": "1",
+                    "nullable": "false",
+                    "dataTypeId": "4",
+                    "id": "23",
+                    "tableId": "2"
+                },
+                {
+                    "ordinalPosition": "3",
+                    "name": "c_last",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "14",
+                    "varying": "true",
+                    "dataLength": "16",
+                    "id": "24",
+                    "tableId": "2"
+                },
+                {
+                    "ordinalPosition": "4",
+                    "name": "c_first",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "14",
+                    "varying": "true",
+                    "dataLength": "16",
+                    "id": "25",
+                    "tableId": "2"
+                },
+                {
+                    "ordinalPosition": "5",
+                    "name": "c_id",
+                    "direction": "0",
+                    "nullable": "false",
+                    "dataTypeId": "4",
+                    "id": "26",
+                    "tableId": "2"
+                }
+            ],
+            "id": "2"
+        },
+        {
             "name": "cities",
             "primaryKey": "",
             "columns": [
@@ -237,8 +295,8 @@
                     "nullable": "true",
                     "dataTypeId": "14",
                     "varying": "true",
-                    "id": "22",
-                    "tableId": "2"
+                    "id": "27",
+                    "tableId": "3"
                 },
                 {
                     "ordinalPosition": "2",
@@ -246,8 +304,8 @@
                     "direction": "0",
                     "nullable": "true",
                     "dataTypeId": "9",
-                    "id": "23",
-                    "tableId": "2"
+                    "id": "28",
+                    "tableId": "3"
                 },
                 {
                     "ordinalPosition": "3",
@@ -255,11 +313,11 @@
                     "direction": "0",
                     "nullable": "true",
                     "dataTypeId": "4",
-                    "id": "24",
-                    "tableId": "2"
+                    "id": "29",
+                    "tableId": "3"
                 }
             ],
-            "id": "2"
+            "id": "3"
         }
     ]
 }
