@@ -1,7 +1,5 @@
 # frontend V2 テーブル定義機能設計書 {ignore=True}
-2020.05.29 NEC 
-
-★は要検討・他コンポーネントとの調整項目
+2020.07.03 NEC 
 
 ## 目次 {ignore=True}
 <!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
@@ -37,6 +35,7 @@
   - [基本方針](#基本方針-1)
   - [処理フロー](#処理フロー)
   - [メッセージ方式](#メッセージ方式)
+    - [エラーコード一覧](#エラーコード一覧)
   - [メッセージ内容](#メッセージ内容)
     - [構文エラー](#構文エラー)
     - [型エラー](#型エラー)
@@ -68,15 +67,15 @@
 * metadata-managerを改造する。[metadata-managerの改造](#metadata-managerの改造)を参照。
 * PostgreSQL互換
 
-* 将来verで検討する機能項目一覧 ★要検討
+* 将来verで検討する機能項目一覧
 
 |将来verで検討する機能項目|V2での実装方針|将来verでの方針|優先度|
 |----|----|----|----|
 |[サポートする型](#サポートする型)以外の型|エラーメッセージを出力。<br>テーブル定義されない。<br>date、配列がお客様に利用されるため、拡張性ある実装とする。|date、配列の利用あり|高|
-|列制約のNOT NULL・PRIMARY KEY制約、および表制約のPRIMARY KEY制約（複合主キー含む）以外の制約|エラーメッセージを出力。<br>テーブル定義されない。|外部キー制約など性能測定に必要であるため優先？|中|
+|列制約におけるNOT NULL・PRIMARY KEY制約以外の制約<br>表制約におけるPRIMARY KEY制約以外の制約|エラーメッセージを出力。<br>テーブル定義されない。|外部キー制約など性能測定に必要であるため優先？|中|
 |スキーマ名|frontendは、PostgreSQLでスキーマ名が入力されても、構文エラーとしないが、<br>スキーマ名はmetadata-managerに格納されない。<br>つまり、スキーマ名の入力は無視して処理する。|性能測定が優先であるため、ユーザー管理機能で検討？|中|
-|インデックスの方向(DEFAULT,ASC,DSC)|**V1と同様に、PRIMARY KEY制約のカラムに対して"1"を格納、その他のカラムに対して常に"0"を格納** <br> ★ノーチラス・テクノロジーズ様に確認||中|
-|DEFAULT制約の式の格納|**keyを作成しない。** <br> ※V1.0ではDEFAULT制約を指定しない場合、常に"(undefined)"で格納されている <br> ★ノーチラス・テクノロジーズ様に確認||低|
+|インデックスの方向(DEFAULT,ASC,DSC)|**V1と同様に、PRIMARY KEY制約のカラムに対して"1"を格納、その他のカラムに対して常に"0"を格納** <br> ||中|
+|DEFAULT制約の式の格納|**keyを作成しない。** <br> ※V1.0ではDEFAULT制約を指定しない場合、常に"(undefined)"で格納されている <br> ||低|
 |[サポートするロケール・文字エンコーディング](#サポートするロケール文字エンコーディング)以外のロケール|エラーハンドリングしない<br>注意事項として提示||低|
 |データ形式フォーマットバージョン、メタデータの世代|"1"固定||低|
 
@@ -128,7 +127,7 @@ TABLESPACE tsurugi
 ### 構文例
 
 * filmsテーブルを作成します。
-    * 列制約にPRIMARY KEY制約
+    * 列制約にPRIMARY KEY制約・NOT NULL制約
     ~~~sql
     CREATE TABLE films (
         code        char(5) CONSTRAINT firstkey PRIMARY KEY,
@@ -137,7 +136,7 @@ TABLESPACE tsurugi
         kind        varchar(10),
     ) tablespace tsurugi;
     ~~~
-    * 表制約にPRIMARY KEY制約
+    * 表制約にPRIMARY KEY制約、列制約にNOT NULL制約
     ~~~sql
     CREATE TABLE films (
         code        char(5),
@@ -158,16 +157,12 @@ TABLESPACE tsurugi
 ![](img/out/Command/Command.png)
 
 #### 図中のmessage(Command command)
-* デザインパターンについて
-    * V1では、Builderパターンを使用されていると認識している。
-        * Builderパターン  
-        https://www.techscore.com/tech/DesignPattern/Builder.html/    
-    * V2では、ogawayamaへのパラメーターの渡し方は、次のように、Builderパターンの中で、Commandクラスを渡してもよいか。★ノーチラス・テクノロジーズ様に確認
-        * こうすることで、ogawayamaと通信するコード量が減るため。
-        * パラーメーターの渡し方例
+* デザインパターンについて   
+    * V2では、ogawayamaへのパラメーターの渡し方は、次のように、Commandクラスを渡す。
+        * パラーメーターの渡し方
 
     ~~~C
-        CreateTableCommand command{id,name,table_id} //今回追加するCommandクラスの具象クラス
+        CreateTableCommand command{command_type_name,table_id} //今回追加するCommandクラスの具象クラス
 
         stub::Transaction* transaction;
         error = StubManager::begin(&transaction);
@@ -199,24 +194,13 @@ TABLESPACE tsurugi
     }
     ~~~
 
-    * 岡田(耕)さんのコメント
-        * Win32のSendMessage関数のような実装を想定しているが、Tsurugiに最適なのかは確信はない。   
-        https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-sendmessage
-        * この方法のいいところは、複数のコンポーネントに向けて同じメッセージをブロードキャストしやすいところだと思っている。
-        * 例えば、メタデータの更新を全体に知らせたり、システム停止の開始を要求する、など。
-        * ちなみにWindowsでは同期型がSendMessageで非同期型はPostMessageと言う。
-
 #### metadata-managerに格納する値一覧
 
 ##### データベース名
 * V1と同様に、keyを作成しない。
-    * データベース名は、CreateStmtクエリツリーから取得できない。
-        * RangeVarクラスのcatalognameはnull
 
 ##### スキーマ名
-* V1と同様に、keyを作成しない？★ノーチラス・テクノロジーズ様に確認
-    * V1では、SELECT/INSERT/UPDATE/DELETE構文で、Tsurugiにスキーマ名を指定するとエラーになるがどうするか？
-    * ユーザー管理機能で対応でもよさそう？よく分からない。
+* V1と同様に、keyを作成しない。
 
 ##### Tableメタデータ(root)
 * valueの型 凡例
@@ -240,7 +224,7 @@ TABLESPACE tsurugi
 | "name"       | string [*]        | テーブル名                           | V1と同じ                     | RangeVar.relname    |
 | "namespace"  | string [+]        | スキーマ名    | **keyを作成しない。**  | - |
 | "columns"    | array[object] [*] | Columnメタデータオブジェクト          | [Columnメタデータオブジェクト](#columnメタデータオブジェクト)                       | -                   |
-| "primaryKey" | array[number] [*] | primaryKeyカラムの"ordinal_position" | **列制約に指定された主キー1つ、表制約に指定された複合主キーのどちらか1つ。**(PostgreSQLと同様に、複数の主キーは設定できない。)| CreateStmt.constraints **xor** ColumnDef.constraints |
+| "primaryKey" | array[number] [*] | primaryKeyカラムの"ordinal_position" | **列制約に指定された主キー1つ、表制約に指定された複合主キーのどちらか1つ。**(PostgreSQLと同様に、複数の主キーは設定できない。)| <span>IndexStmt.indexParams.name</span> **xor** ColumnDef.constraints |
 
 ##### Columnメタデータオブジェクト
 
@@ -250,12 +234,12 @@ TABLESPACE tsurugi
 | "tableId"           | number        [-] | カラムが属するテーブルのID                             | V1と同じ | - |
 | "name"              | string        [*] | カラム名                                              | V1と同じ | ColumnDef.colname |
 | "ordinalPosition"   | number        [*] | カラム番号(1 origin)                                  | V1と同じ | CreateStmt.tableEltsリストの並び順 |
-| "dataTypeId"        | number        [*] | カラムのデータ型のID | smallint以外の型は、V1と同じID。[PostgreSQLとカラムのデータ型のID対応表](#postgresqlとカラムのデータ型のid対応表)を参照 | TypeName.names **xor** TypeName.typeOid |
+| "dataTypeId"        | number        [*] | カラムのデータ型のID | [PostgreSQLとカラムのデータ型のID対応表](#postgresqlとカラムのデータ型のid対応表)を参照 | TypeName.names **xor** TypeName.typeOid |
 | "dataLength"        | array[number] [+] | データ長(配列長) varchar(20)など ※NUMERIC(precision,scale)を考慮してarray[number] にしている。               | **V1と同様に文字列長を格納** | TypeName.typmods **xor** TypeName.typmod |
-| "varying"         | bool        [+] | **文字列長が可変か否か** | **PostgreSQLの型で、varcharの場合、true。charの場合false。それ以外の場合、keyを作成しない。** <br> ★ノーチラス・テクノロジーズ様に確認 | TypeName.names **xor** TypeName.typeOid |
-| "nullable"          | bool          [*] | NOT NULL制約の有無                                    | V1と同じ(NOT NULL制約あり：false、NOT NULL制約なし：true) | ColumnDef.constraints |
-| "default"           | string        [+] | デフォルト式 |**keyを作成しない。** <br> ※V1.0ではDEFAULT制約を指定しない場合、常に"(undefined)"で格納されている <br> ★ノーチラス・テクノロジーズ様に確認 | 取得しない |
-| "direction"         | number        [+] | 方向（0: DEFAULT, 1: ASCENDANT, 2: DESCENDANT）| **V1と同様に、PRIMARY KEY制約のカラムに対して"1"を格納、その他のカラムに対して常に"0"を格納** <br> ★ノーチラス・テクノロジーズ様に確認 |CreateStmt.constraints **xor** ColumnDef.constraints |
+| "varying"         | bool        [+] | **文字列長が可変か否か** | **PostgreSQLの型で、varcharの場合、true。charの場合false。それ以外の場合、keyを作成しない。**  | TypeName.names **xor** TypeName.typeOid |
+| "nullable"          | bool          [*] | NOT NULL制約の有無                                    | V1と同じ(NOT NULL制約あり：false、NOT NULL制約なし：true) | ColumnDef.is_not_null |
+| "default"           | string        [+] | デフォルト式 |**keyを作成しない。** <br> ※V1.0ではDEFAULT制約を指定しない場合、常に"(undefined)"で格納されている  | 取得しない |
+| "direction"         | number        [+] | 方向（0: DEFAULT, 1: ASCENDANT, 2: DESCENDANT）| **V1と同様に、PRIMARY KEY制約のカラムに対して"1"を格納、その他のカラムに対して常に"0"を格納**  | <span>IndexStmt.indexParams.name</span> **xor** ColumnDef.constraints |
 
 ###### PostgreSQLとカラムのデータ型のID対応表
 
@@ -285,8 +269,6 @@ TABLESPACE tsurugi
 | "pg_dataTypeQualifiedName"      | string    | PostgreSQL内部の修飾型名 |同上|
 
 ###### データ型ID一覧
-
-★ノーチラス・テクノロジーズ様に確認
 
 * 太字は変更
 * id番号に削除と書いてあるものは、key自体を削除。id番号は変更しない。
@@ -337,23 +319,33 @@ frontendがPostgreSQLから受け取るクエリツリー
 7. frontendは、ogawayamaから戻り値でエラーを受け取って、エラーメッセージを出力する。
 
 ### メッセージ方式
-* エラーメッセージを出力する場合、PostgreSQLのライブラリelog関数を利用する。
+* エラーメッセージを出力する場合、PostgreSQLのライブラリereport関数を利用する。
     * エラーレベルはERRORとする。
-    * elog(ERROR, %s);
+    * 例:(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+         errmsg("Tsurugi does not support type %s", nodeToString(type_names))));
 * 標準エラー出力・ログ出力については、PostgreSQLの仕様と同じとなる。
+
+#### エラーコード一覧
+|エラーコード|説明|
+|---|---|
+|ERRCODE_SYNTAX_ERROR|構文エラー|
+|ERRCODE_FEATURE_NOT_SUPPORTED|サポートしない機能|
+|ERRCODE_INTERNAL_ERROR|Tsurugiの内部エラー|
+|ERRCODE_DUPLICATE_TABLE|テーブル名の重複|
+|ERRCODE_DUPLICATE_COLUMN|カラム名の重複|
 
 ### メッセージ内容
 #### 構文エラー
 * Tsurugiでサポートしない構文が実行されたとき、次のエラーメッセージを出力する。
 ```
-ERROR:  Tsurugi does not support this syntax.
+ERROR:  Tsurugi does not support this syntax
 ```
 
 #### 型エラー
 * Tsurugiでサポートしない型が指定されたとき、次のエラーメッセージを出力する。
     * %sは、データ型名を出力
 ```
-ERROR:  Tsurugi does not support type %s.
+ERROR:  Tsurugi does not support type %s
 ```
 
 ## metadata-managerの改造
@@ -373,14 +365,12 @@ ERROR:  Tsurugi does not support type %s.
         * <PostgreSQLのインストールディレクトリ>/data/tsurugi_metadata/tables.json
     * データ型のメタデータの格納先
         * <PostgreSQLのインストールディレクトリ>/data/tsurugi_metadata/datatypes.json
+    * テーブル数・カラム数の格納先
+        * <PostgreSQLのインストールディレクトリ>/data/tsurugi_metadata/oid
     * 将来的には、DBにするため、一時的な対処
 
 #### 4. DebugビルドとReleaseビルドを分ける
-* Debugビルドは-O0フラグ、Releaseビルドは-O2フラグにする。 
-CMakeLists.txt
-```
-set(CMAKE_CXX_FLAGS "-O0 -Wall -Wextra")
-```
+* Debugビルドは-O0フラグ、cmakeのオプションを何も指定しない場合は-O2フラグにする。 
 
 ### データ型に関するメタデータを追加する理由
 * PostgreSQLのCreateStmtクエリツリーから取得できる型名が次の表になっており、型変換を実施するため。

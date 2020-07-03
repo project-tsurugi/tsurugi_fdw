@@ -18,7 +18,6 @@
     - [Columnメタデータオブジェクト](#columnメタデータオブジェクト)
     - [PostgreSQLとカラムのデータ型のID対応表](#postgresqlとカラムのデータ型のid対応表)
     - [データ型ID一覧](#データ型id一覧)
-  - [4. 実行エンジンがサポートするロケール・文字エンコーディングは何かご教授ください。](#4-実行エンジンがサポートするロケール文字エンコーディングは何かご教授ください)
 
 <!-- /code_chunk_output -->
 
@@ -48,16 +47,13 @@
 ![](img/out/Command/Command.png)
 
 ##### 図中のmessage(Command command)
-* デザインパターンについて
-    * V1では、Builderパターンを使用されていると認識している。
-        * Builderパターン  
-        https://www.techscore.com/tech/DesignPattern/Builder.html/    
-    * 【質問】V2では、ogawayamaへのパラメーターの渡し方は、次のように、Builderパターンの中で、Commandクラスを渡してもよいか。
+* デザインパターンについて 
+    * V2では、ogawayamaへのパラメーターの渡し方は、次のように、Commandクラスを渡す。
         * こうすることで、ogawayamaと通信するコード量が減るため。
-        * パラーメーターの渡し方例
+        * パラーメーターの渡し方
 
     ~~~C
-        CreateTableCommand command{id,name,table_id} //今回追加するCommandクラスの具象クラス
+        CreateTableCommand command{command_type_name,table_id} //今回追加するCommandクラスの具象クラス
 
         stub::Transaction* transaction;
         error = StubManager::begin(&transaction);
@@ -103,7 +99,7 @@ https://github.com/project-tsurugi/manager/blob/df3b3a7a0a7e7e7c3643a9bc00baef50
 
 ##### Tableメタデータオブジェクト
 * スキーマ名について
-    * V1と同様に、keyを作成しない？★ノーチラス・テクノロジーズ様に確認
+    * V1と同様に、keyを作成しない。
         * V1では、SELECT/INSERT/UPDATE/DELETE構文で、Tsurugiにスキーマ名を指定するとエラーになるがどうするか？
         * ユーザー管理機能で対応でもよさそう？よく分からない。
 
@@ -116,7 +112,7 @@ https://github.com/project-tsurugi/manager/blob/df3b3a7a0a7e7e7c3643a9bc00baef50
 
 |key|valueの型|valueの説明|valueに格納する値|
 |----|----|----|----|
-| "dataTypeId"        | number        [*] | カラムのデータ型のID | smallint以外、V1と同じID。[PostgreSQLとカラムのデータ型のID対応表](#postgresqlとカラムのデータ型のid対応表)を参照 | 
+| "dataTypeId"        | number        [*] | カラムのデータ型のID | [PostgreSQLとカラムのデータ型のID対応表](#postgresqlとカラムのデータ型のid対応表)を参照 |
 | "varying"         | bool        [+] | **文字列長が可変か否か** | **PostgreSQLの型で、varcharの場合、true。charの場合false。それ以外の場合、keyを作成しない。** |
 | "default"           | string        [+] | デフォルト式 | **keyを作成しない** <br> ※V1.0ではDEFAULT制約を指定しない場合、常に"(undefined)"で格納されている |
 | "direction"         | number        [+] | 方向（0: DEFAULT, 1: ASCENDANT, 2: DESCENDANT）| **V1と同様に、PRIMARY KEY制約のカラムに対して"1"を格納、その他のカラムに対して常に"0"を格納** <br> |
@@ -153,11 +149,3 @@ https://github.com/project-tsurugi/manager/blob/df3b3a7a0a7e7e7c3643a9bc00baef50
 |~~12~~ 不要なため削除| STRING   | 0	                | text          | 
 |13| CHAR	   | 1042                | char             | bpchar
 |14| VARCHAR  | 1043                | varchar             | varchar
-
-### 4. 実行エンジンがサポートするロケール・文字エンコーディングは何かご教授ください。
-
-|項目|値|
-|----|----|
-|照合順序(LC_COLLATE) |C|
-|文字の種類(LC_CTYPE)|en_US|
-|エンコーディング(ENCODING)|UTF-8|

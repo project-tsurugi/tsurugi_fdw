@@ -3,18 +3,15 @@
 Command <|-- CreateTableCommand
 
 abstract class Command{
-	{field} private int id; //コマンドの種類を特定するID ex)0
-	{field} private string name; //コマンドの種類の名前 ex)"CREATE TABLE"
-	{field} private int table_id; // TableメタデータオブジェクトのテーブルID
+	{field} private std::string command_type_name; //command type name ex)"CREATE TABLE"
+	{field} private uint64_t table_id;             // id of table meta data object
 
-	{abstract} public explicit Command(int id, string name, int table_id) //コンストラクタ
-	{abstract} public virtual ~Command() //デストラクタ
-    {abstract} private virtual int execute(); //実行エンジンで利用する。frontendでは利用しない。
+	{abstract} public Command(std::string command_type_name, uint64_t table_id) // C'tors
+    {abstract} private virtual int execute() = 0; // used by ogawayama. not used by frontend.
 }
 
 class CreateTableCommand{
-	public CreateTableCommand(int id, string name, int table_id)
-	public ~CreateTableCommand()
+	public CreateTableCommand(uint64_t table_id);
     private int execute();
 }
 
