@@ -28,22 +28,33 @@ cd third_party/ogawayama
 mkdir build
 cd build
 cmake -G Ninja -DBUILD_STUB_ONLY=ON -DBUILD_TESTS=OFF ..
+cmake -G Ninja \
+	-DBUILD_STUB_ONLY=ON \
+	-DBUILD_TESTS=OFF \
+    -DCMAKE_INSTALL_PREFIX=<tsurugi install directory> \
+    -DFORCE_INSTALL_RPATH=ON \
+    ..
 ninja
-# install ogawayama in default install directory /usr/local/{lib,include}
-sudo ninja install 
+# install ogawayama in <tsurugi install directory>
+ninja install 
 
 # build metadata-manager
 cd ../../manager/metadata-manager
 mkdir build
 cd build
-cmake -G 'Unix Makefiles' ..
+cmake -G 'Unix Makefiles' \
+    -DCMAKE_INSTALL_PREFIX=<tsurugi install directory> \
+    -DFORCE_INSTALL_RPATH=ON \
+    ..
 make
-# install metadata-manager in default install directory /usr/local/{lib,include}
-sudo make install 
+# install metadata-manager in <tsurugi install directory>
+make install
 
 # change directory postgresql-x.x/contrib/frontend
 cd ../../../..
+# make ogawayama_fdw.so
 make
+# install ogawayama_fdw.so in <PostgreSQL install directory>/lib
 make install
 ```
 
@@ -52,7 +63,7 @@ make install
 1. Update the shared library search path for metadata-manager and ogawayama.  
 	The method to set the shared library search path varies between platforms, but the most widely-used method is to set the environment variable LD_LIBRARY_PATH like so: In Bourne shells (sh, ksh, bash, zsh):
 	```
-	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<tsurugi install directory>/lib
 	export LD_LIBRARY_PATH
 	```
 
