@@ -3,10 +3,30 @@
 [run_test.sh](./run_test.sh)
 
 ### 実行方法
+#### 前提条件
+* 次のREADME「How to build frontend」「How to set up for frontend」を実施済みであること。
+	* https://github.com/project-tsurugi/frontend/tree/feature/create_table_v2#frontend-for-ogawayama-postgresql-add-on
+* テストを実施したPostgreSQLのバージョン
+	* 11.1
+	* 12.3
 
-```bash
-./run_test.sh
-```
+#### 実行手順
+1. 次のコードを修正
+
+	```bash
+	# Fix below
+	# PostgreSQL install directory
+	PSQLHOME_FOR_TEST=~/pgsql12cov
+	# connection port number
+	PORT=5438
+	# Fix above
+	```
+
+1. 実行
+
+	```bash
+	./run_test.sh
+	```
 
 ## テストパターン
 ### 制約の直行表
