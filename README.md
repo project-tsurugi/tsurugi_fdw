@@ -30,9 +30,9 @@ cd build
 cmake -G Ninja \
 	-DBUILD_STUB_ONLY=ON \
 	-DBUILD_TESTS=OFF \
-    -DCMAKE_INSTALL_PREFIX=<tsurugi install directory> \
-    -DFORCE_INSTALL_RPATH=ON \
-    ..
+	-DCMAKE_INSTALL_PREFIX=<tsurugi install directory> \
+	-DFORCE_INSTALL_RPATH=ON \
+	..
 ninja
 # install ogawayama in <tsurugi install directory>
 ninja install 
@@ -42,9 +42,9 @@ cd ../../manager/metadata-manager
 mkdir build
 cd build
 cmake -G 'Unix Makefiles' \
-    -DCMAKE_INSTALL_PREFIX=<tsurugi install directory> \
-    -DFORCE_INSTALL_RPATH=ON \
-    ..
+	-DCMAKE_INSTALL_PREFIX=<tsurugi install directory> \
+	-DFORCE_INSTALL_RPATH=ON \
+	..
 make
 # install metadata-manager in <tsurugi install directory>
 make install
@@ -68,14 +68,14 @@ make install
 
 1. Update **shared_preload_libraries** parameter in postgresql.conf as below.
 	```
-    shared_preload_libraries = 'ogawayama_fdw'
+	shared_preload_libraries = 'ogawayama_fdw'
 	```
-   * postgresql.conf exists in "<*PostgreSQL install directory*>/data/".
+	* postgresql.conf exists in "<*PostgreSQL install directory*>/data/".
 
 		
 1. Restart PostgreSQL.
 	```
-     pg_ctl restart
+	pg_ctl restart
 	```
 
 1. Install frontend extension
@@ -141,7 +141,7 @@ make install
 1. Define foreign table
 	* Execute **CREATE FOREIGN TABLE** command
 		* You must define same table name and schema as specified in CREATE TABLE
-		* You must **NOT** PRIMARY KEY
+		* You must **NOT** specify PRIMARY KEY
 		* You must specify same server name as specified in CREATE SERVER
 			```sql
 			CREATE FOREIGN TABLE table1 (column1 INTEGER NOT NULL) SERVER ogawayama;
