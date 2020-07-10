@@ -27,7 +27,6 @@ git submodule update --init
 cd third_party/ogawayama
 mkdir build
 cd build
-cmake -G Ninja -DBUILD_STUB_ONLY=ON -DBUILD_TESTS=OFF ..
 cmake -G Ninja \
 	-DBUILD_STUB_ONLY=ON \
 	-DBUILD_TESTS=OFF \
