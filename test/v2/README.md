@@ -16,9 +16,9 @@
 	```bash
 	# Fix below
 	# PostgreSQL install directory
-	PSQLHOME_FOR_TEST=~/pgsql12cov
+	PSQLHOME_FOR_TEST=~/pgsql
 	# connection port number
-	PORT=5438
+	PORT=5432
 	# Fix above
 	```
 

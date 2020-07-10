@@ -1,5 +1,11 @@
 #!/bin/bash
-PSQLHOME_FOR_TEST=~/pgsql12cov
+# Fix below
+# PostgreSQL install directory
+PSQLHOME_FOR_TEST=~/pgsql
+# connection port number
+PORT=5432
+# Fix above
+
 PSQLBIN=$PSQLHOME_FOR_TEST/bin
 TSURUGI_METADATA=tsurugi_metadata
 TSURUGI_METADATA_HOME=$PSQLHOME_FOR_TEST/data/$TSURUGI_METADATA
@@ -7,7 +13,6 @@ TSURUGI_METADATA_HOME=$PSQLHOME_FOR_TEST/data/$TSURUGI_METADATA
 DATATYPES=datatypes.json
 OID=oid
 TABLES=tables.json
-PORT=5438
 
 OK_COUNT=0
 FAILED_COUNT=0
