@@ -34,7 +34,7 @@ std::string Command::get_command_type_name()
     return command_type_name;
 }
 
-uint64_t Command::get_table_id()
+uint64_t Command::get_object_id()
 {
-    return table_id;
+    return object_id;
 }

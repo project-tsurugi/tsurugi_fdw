@@ -70,7 +70,7 @@ bool create_table(List *stmts)
     {
         /* parameters sended to ogawayama */
         CreateTableCommand command{object_id};
-        elog(DEBUG2, "command type name: %s, object id: %d", command.get_command_type_name().c_str(), command.get_table_id());
+        elog(DEBUG2, "command type name: %s, object id: %d", command.get_command_type_name().c_str(), command.get_object_id());
     }
 
     return success;
