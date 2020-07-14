@@ -1,0 +1,18 @@
+@startuml
+
+Command <|-- CreateTableCommand
+
+abstract class Command{
+	{field} private std::string command_type_name; //command type name ex)"CREATE TABLE"
+	{field} private uint64_t table_id;             // id of table meta data object
+
+	{abstract} public Command(std::string command_type_name, uint64_t table_id) // C'tors
+    {abstract} private virtual int execute() = 0; // used by ogawayama. not used by frontend.
+}
+
+class CreateTableCommand{
+	public CreateTableCommand(uint64_t table_id);
+    private int execute();
+}
+
+@enduml

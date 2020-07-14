@@ -1,0 +1,47 @@
+@startuml
+title テーブル定義シーケンス概要
+hide footbox
+
+actor 利用者
+boundary PostgreSQL
+control "utility_hook"
+control "metadata-manager"
+control ogawayama
+
+利用者 -> PostgreSQL : テーブル定義要求()
+activate PostgreSQL
+note right
+CREATE TABLE文
+end note
+
+PostgreSQL -> "utility_hook" : hook()
+activate "utility_hook"
+
+"utility_hook" -> "metadata-manager" : 実テーブル定義
+activate "metadata-manager"
+
+"metadata-manager" --> "utility_hook"
+deactivate "metadata-manager"
+
+"utility_hook" -> ogawayama : message(Command command)
+activate ogawayama
+note right
+テーブル定義要求
+end note
+
+ogawayama -> "metadata-manager" : テーブル情報取得
+activate "metadata-manager"
+"metadata-manager" --> ogawayama : テーブル情報
+deactivate "metadata-manager"
+
+ogawayama -> ogawayama : CREATE TABLE
+ogawayama  --> "utility_hook"
+deactivate ogawayama
+
+"utility_hook" --> PostgreSQL
+deactivate "utility_hook"
+
+PostgreSQL --> 利用者
+deactivate PostgreSQL
+
+@enduml
