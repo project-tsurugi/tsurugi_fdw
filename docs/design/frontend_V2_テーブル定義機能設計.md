@@ -176,7 +176,7 @@ TABLESPACE tsurugi
 
         if (error != ERROR_CODE::OK) 
         {
-            elog(ERROR, "transaction::message(%s) failed. (%d)", command.name, (int) error); //エラーメッセージの変更
+            elog(ERROR, "transaction::message(%s) failed. (%d)", command.command_type_name, (int) error); //エラーメッセージの変更
             return ret_value;
         }
 
