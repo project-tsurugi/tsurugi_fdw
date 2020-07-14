@@ -162,7 +162,9 @@ TABLESPACE tsurugi
         * パラーメーターの渡し方
 
     ~~~C
-        CreateTableCommand command{command_type_name,table_id} //今回追加するCommandクラスの具象クラス
+        CreateTableCommand command{command_type_name,object_id} // 今回追加するCommandクラスの具象クラス
+                                                                // command_type_nameには、"CREATE TABLE"を代入。エラーメッセージを出力するためにfrontendで使用。
+                                                                // object_idには、新しく追加したテーブルのオブジェクトidを代入
 
         stub::Transaction* transaction;
         error = StubManager::begin(&transaction);
