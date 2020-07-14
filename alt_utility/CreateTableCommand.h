@@ -29,8 +29,8 @@ const std::string COMMAND_TYPE_NANE_CREATE_TABLE = "CREATE TABLE";
 class CreateTableCommand : public Command{
     public:
         // C'tors
-        CreateTableCommand(uint64_t table_id)
-            : Command(COMMAND_TYPE_NANE_CREATE_TABLE, table_id) {}
+        CreateTableCommand(uint64_t object_id)
+            : Command(COMMAND_TYPE_NANE_CREATE_TABLE, object_id) {}
 };
 
 #endif // CREATETABLECOMMAND_

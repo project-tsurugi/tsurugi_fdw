@@ -23,14 +23,14 @@
 class Command {
     public:
         // C'tors
-        Command(std::string command_type_name, uint64_t table_id)
-            : command_type_name(command_type_name), table_id(table_id) {};
+        Command(std::string command_type_name, uint64_t object_id)
+            : command_type_name(command_type_name), object_id(object_id) {};
         std::string get_command_type_name();
-        uint64_t get_table_id();
+        uint64_t get_object_id();
 
     private:
         std::string command_type_name; //command type name ex)"CREATE TABLE"
-        uint64_t table_id;             // id of table meta data object
+        uint64_t object_id;             // id of table meta data object
 };
 
 #endif // COMMAND_
