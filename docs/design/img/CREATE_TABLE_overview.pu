@@ -5,7 +5,8 @@ hide footbox
 actor 利用者
 boundary PostgreSQL
 control "utility_hook"
-control "metadata-manager"
+control "manager/metadata-manager" as metadata_manager
+control "manager/message-broker" as message_broker
 control ogawayama
 
 利用者 -> PostgreSQL : テーブル定義要求()
@@ -17,26 +18,32 @@ end note
 PostgreSQL -> "utility_hook" : hook()
 activate "utility_hook"
 
-"utility_hook" -> "metadata-manager" : 実テーブル定義
-activate "metadata-manager"
+"utility_hook" -> metadata_manager : 実テーブル定義
+activate metadata_manager
 
-"metadata-manager" --> "utility_hook"
-deactivate "metadata-manager"
+metadata_manager --> "utility_hook"
+deactivate metadata_manager
 
-"utility_hook" -> ogawayama : message(Command command)
+"utility_hook" -> message_broker : send_message(Message* message)
+activate message_broker
+message_broker -> ogawayama : message(Message* message)
 activate ogawayama
 note right
 テーブル定義要求
 end note
 
-ogawayama -> "metadata-manager" : テーブル情報取得
-activate "metadata-manager"
-"metadata-manager" --> ogawayama : テーブル情報
-deactivate "metadata-manager"
+ogawayama -> message_broker : テーブル情報取得
+message_broker -> metadata_manager : テーブル情報取得
+activate metadata_manager
+metadata_manager --> message_broker : テーブル情報
+deactivate metadata_manager
+message_broker --> ogawayama : テーブル情報
 
 ogawayama -> ogawayama : CREATE TABLE
-ogawayama  --> "utility_hook"
+ogawayama  --> message_broker
 deactivate ogawayama
+message_broker --> "utility_hook"
+deactivate message_broker
 
 "utility_hook" --> PostgreSQL
 deactivate "utility_hook"

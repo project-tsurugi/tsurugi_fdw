@@ -1,18 +1,70 @@
+' =========================================================
+'
+' =========================================================
 @startuml
+left to right direction
 
-Command <|-- CreateTableCommand
+package message-broker {
+  abstract class Receiver {
+    {abstract} public virtual ErrorCode receive_message(Message* message) = 0;
+  }
 
-abstract class Command{
-	{field} private std::string command_type_name; //command type name ex)"CREATE TABLE"
-	{field} private uint64_t object_id;             // id of meta data object
+  abstract class Message{
+  	{field} private MESSAGE_ID id;                  // message type ID
+  	{field} private uint64_t object_id;             // object ID that will be added, updated, or deleted
+  	{field} private vector<Receiver*> receivers;    // receiver ex) OLTP_Receiver, OLAP_Receiver
+  	{field} private std::string message_type_name;  // for error message ex)"CREATE TABLE"
+    {method}// C'tors
+  	{method}{abstract} public Message(MESSAGE_ID id, uint64_t object_id, std::string message_type_name)
+    {method}
+    {method}// set receiver
+  	{method}{abstract} public void set_receiver(Receiver *receiver_)
+    {method}
+    {method}// getter
+  	{method}{abstract} public MESSAGE_ID  get_id();
+  	{method}{abstract} public uint64_t    get_object_id();
+  	{method}{abstract} public std::string get_message_type_name();
+  }
 
-	{abstract} public Command(std::string command_type_name, uint64_t object_id) // C'tors
-    {abstract} private virtual int execute() = 0; // used by ogawayama. not used by frontend.
+  class CreateTableMessage {
+    public ErrorCode collect_data(property_tree& table, property_tree& datatypes);
+  }
+
+  class MessageBroker {
+    public ErrorCode send_message(Message* message);
+  }
 }
 
-class CreateTableCommand{
-	public CreateTableCommand(uint64_t object_id);
-    private int execute();
+package ogawayama {
+  class OLTP_Receiver {
+    public ErrorCode receive_message(Message* message)
+  }
 }
+
+package OLAP_EntryPoint {
+  class OLAP_Receiver {
+    public ErrorCode receive_message(Message* message)
+  }
+}
+
+package frontend {
+  class Client {
+  }
+
+}
+
+OLTP_Receiver --|> Receiver
+
+MessageBroker --> Message
+Message --> Receiver
+
+Message <|- CreateTableMessage
+
+Client --> CreateTableMessage : create
+Client --> OLTP_Receiver : create
+MessageBroker <-- Client : create
+
+OLAP_Receiver --|> Receiver
+Client --> OLAP_Receiver : create
 
 @enduml

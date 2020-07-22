@@ -16,8 +16,8 @@
 - [テーブル定義機能シーケンス](#テーブル定義機能シーケンス)
   - [シーケンス概要](#シーケンス概要)
     - [シーケンス図](#シーケンス図)
-    - [Commandクラス](#commandクラス)
-    - [図中のmessage(Command command)](#図中のmessagecommand-command)
+    - [クラス図](#クラス図)
+    - [図中のmessage(Message* message)](#図中のmessagemessage-message)
     - [metadata-managerに格納する値一覧](#metadata-managerに格納する値一覧)
       - [データベース名](#データベース名)
       - [スキーマ名](#スキーマ名)
@@ -153,48 +153,106 @@ TABLESPACE tsurugi
 #### シーケンス図
 ![](img/out/CREATE_TABLE_overview/テーブル定義シーケンス概要.png)
 
-#### Commandクラス
+#### クラス図
 ![](img/out/Command/Command.png)
 
-#### 図中のmessage(Command command)
+#### 図中のmessage(Message* message)
 * デザインパターンについて   
-    * V2では、ogawayamaへのパラメーターの渡し方は、次のように、Commandクラスを渡す。
-        * パラーメーターの渡し方
+    * V2では、デザインパターンのCommandパターンを採用する。
+        * ogawayama用インタフェース案（コンポーネント間メッセージインタフェースに従って実装する案）
 
-    ~~~C
-        CreateTableCommand command{command_type_name,object_id} // 今回追加するCommandクラスの具象クラス
-                                                                // command_type_nameには、"CREATE TABLE"を代入。エラーメッセージを出力するためにfrontendで使用。
-                                                                // object_idには、新しく追加したテーブルのオブジェクトidを代入
+        ~~~C++
+
+        message-broker
+        message_broker.h
+
+        // Receiverインタフェースクラス
+        class Receiver {
+          virtual void receive_message(Message*) = 0;
+        };
+
+        // Message IDリスト
+        enum {
+          CREATE_TABLE,
+          ALTER_TABLE,
+          DROP_TABLE
+          ...
+        } MESSAGE_ID;
+
+        // Messageインタフェースクラス
+        class Message {
+          MESSAGE_ID id;                
+          int object_id;                // メタデータ群を一意に指定するID
+          vector<Receiver> receivers;   // メッセージ送信先
+          void* param1;                 
+          void* param2;                 
+
+        public:
+          void set_receiver(Receiver* receiver_) {receivers.push_back(receiver);}}
+        };
+
+        // Message派生クラス
+        class CreateTableMessage : Message {
+          CreateTableMessage() {
+            id = CREATE_TABLE;
+          }
+        };
+
+        class MessageBroker {
+          void send_message(Message* message)
+          {
+            for (auto& receiver : message->receivers) {
+              receiver.receive_message(message);
+            }
+          }
+        };
+        ~~~
+
+        * frontend
+
+        ~~~C++
+        #include "message_broker.h"
+        #include "ogawayama_xxx.h"
+
+        MessageBroker broker;
+        Message* ct_message = new CreateTableCommand();
+        Receiver* oltp_receiver = new OltpReceiver();
 
         stub::Transaction* transaction;
-        error = StubManager::begin(&transaction);
-        if (error != ERROR_CODE::OK) 
-        {
-            std::cerr << "begin() failed." << std::endl;
-            return ret_value;
-        }
+        StubManager::begin(&transaction);
 
-        error = transaction->message(command); //今回追加するmessage(Command command)関数。引数はCommandクラス
+        ct_message->set_receiver(oltp_receiver);
+        ct_message->param1 = (void*) transaction;
 
-        if (error != ERROR_CODE::OK) 
-        {
-            elog(ERROR, "transaction::message(%s) failed. (%d)", command.command_type_name, (int) error); //エラーメッセージの変更
-            return ret_value;
-        }
+        broker.send_command(ct_message);
+        ~~~
 
-        error = transaction->commit();
-        if (error != ERROR_CODE::OK) 
-        {
-            elog(ERROR, "transaction::commit() failed. (%d)", (int) error);
-            return ret_value;
-        }
-        StubManager::end();
+        * OLTP Receiver(ogawayama::stub)
+            * ogawayama_xxx.hpp
 
-        ret_value = true;
+        ~~~C++
+        #include "message_broker.h"
 
-        return ret_value;
-    }
-    ~~~
+        // Receiver派生クラス
+        class OltpReceiver : Receiver {
+          void receive_message(Message* message) {
+          
+            switch(message->id) 
+            {
+              case CREATE_TABLE:
+                  std::unique_ptr<Metadata> tables(new Tables("database"));
+                  Propert_tree& pt;
+                  stub::Transaction* transaction = (stub::Transaction*) message->param1;
+
+                  tables->get(message->object_id, pt);
+                  transaction->execute_statement( ... );
+                  break;
+              case ALTER_TABLE:
+                    ...
+            }
+          }
+        };
+        ~~~
 
 #### metadata-managerに格納する値一覧
 
