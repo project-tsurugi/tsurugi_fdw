@@ -1,17 +1,38 @@
-@startuml
+
+' =========================================================
+' OLAP/OLTP
+' =========================================================
+@startuml テーブル定義シーケンス詳細
+
 title テーブル定義シーケンス詳細
-hide footbox
 
 actor 利用者
 boundary PostgreSQL
-control "alt_utility/alt_utility.c"
-control "alt_utility/create_table.cpp"
-control "alt_utility/tablecmds.cpp"
-control "metadata-manager"
-database datatypes.json
-database tables.json
-control ogawayama
-control umikongo
+
+box "コンポーネント名：frontend" #LightSkyBlue
+control utility_hook
+control StubManager
+end box
+
+box "コンポーネント名：manager/message-broker" #LightGreen
+control MessageBroker
+entity "CreateTable\nMessage" as concrete_message
+end box
+
+box "コンポーネント名：ogawayama" #LightYellow
+control "OLTP_Receiver" as oltp_receiver
+control "stub::Transaction" as tran
+control ogawayama_server
+end box
+
+box "コンポーネント名：OLAP" #LightPink
+control "OLAP_Receiver" as olap_receiver
+end box
+
+box "コンポーネント名：manager/metadata-manager" #GreenYellow
+control tables
+database metadata
+end box
 
 利用者 -> PostgreSQL : テーブル定義要求()
 activate PostgreSQL
@@ -19,74 +40,90 @@ note right
 CREATE TABLE文
 end note
 
-PostgreSQL -> "alt_utility/alt_utility.c" : static void tsurugi_ProcessUtilitySlow(...)
-activate "alt_utility/alt_utility.c"
+PostgreSQL -> utility_hook
+activate utility_hook
+  ' write meta-data
+  utility_hook -> tables : write meta-data
+  activate tables
+    tables -> metadata : write
+    utility_hook <<- tables
+  deactivate tables
 
-"alt_utility/alt_utility.c" -> "alt_utility/create_table.cpp" : create_table((CreateStmt *)stmt)
-activate "alt_utility/create_table.cpp"
+  ' create objects
+  create concrete_message
+  utility_hook -> concrete_message : new
+  create oltp_receiver
+  utility_hook -> oltp_receiver : new
+  create olap_receiver
+  utility_hook -> olap_receiver : new
 
-"alt_utility/create_table.cpp" -> "alt_utility/tablecmds.cpp" : define_relation((CreateStmt *)stmt)
-activate "alt_utility/tablecmds.cpp"
+  ' set receiver
+  utility_hook -> concrete_message : set_receiver\n(OLTP_Receiver)
+  activate concrete_message
+    utility_hook <<- concrete_message
+  deactivate concrete_message
+  utility_hook -> concrete_message : set_receiver\n(OLAP_Receiver)
+  activate concrete_message
+    utility_hook <<- concrete_message
+  deactivate concrete_message
 
-create "metadata-manager"
+  ' begin transaction
+  create tran
+  utility_hook -> tran : new
+  utility_hook -> StubManager : begin(&transaction)
+  activate StubManager
+  utility_hook -> concrete_message : set_transaction\n(stub::Transaction* transaction)
 
-alt metadata-managerインスタンスが生成されていない
-"alt_utility/tablecmds.cpp" -> "metadata-manager" : metadata-managerインスタンス生成
-activate "metadata-manager"
+  ' send message to MessageBroker
+  utility_hook -> MessageBroker : send_message\n(CreateTableMessage)
+  activate MessageBroker
 
-alt datatypes.jsonが生成されていない
-    create datatypes.json
-    "metadata-manager" -> datatypes.json : datatypes.jsonファイル生成
-end
-
-"alt_utility/tablecmds.cpp" -> "metadata-manager" : metadata-managerにテーブル情報を送信
-
-alt tables.jsonが生成されていなければ
-    create tables.json
-    "metadata-manager" -> tables.json
-end
-"metadata-manager" -> tables.json : テーブル情報をjsonに書き出し
-"metadata-manager" --> "alt_utility/tablecmds.cpp"
-deactivate "metadata-manager"
-
-"alt_utility/tablecmds.cpp" --> "alt_utility/create_table.cpp"
-deactivate "alt_utility/tablecmds.cpp"
-
-"alt_utility/create_table.cpp" -> ogawayama : message(Command command)
-activate ogawayama
-note right
-テーブル定義要求
-end note
-
-ogawayama -> "metadata-manager" : テーブル情報取得
-activate "metadata-manager"
-
-"metadata-manager" -> tables.json : テーブル情報取得
-tables.json --> "metadata-manager" : テーブル情報
-"metadata-manager" --> ogawayama : テーブル情報
-deactivate "metadata-manager"
-
-ogawayama -> umikongo : テーブル定義要求
-activate umikongo
-umikongo --> ogawayama
-deactivate umikongo
-
-ogawayama --> "alt_utility/create_table.cpp"
-
-"alt_utility/create_table.cpp" -> ogawayama : commit()
-ogawayama --> "alt_utility/create_table.cpp"
-
-"alt_utility/create_table.cpp" -> ogawayama : end()
-ogawayama --> "alt_utility/create_table.cpp"
-deactivate ogawayama
-
-"alt_utility/create_table.cpp" --> "alt_utility/alt_utility.c"
-deactivate "alt_utility/create_table.cpp"
-
-"alt_utility/alt_utility.c" --> PostgreSQL
-deactivate "alt_utility/alt_utility.c"
-
-PostgreSQL --> 利用者
+  ' execute command
+  MessageBroker -> concrete_message
+  activate concrete_message
+    concrete_message -> oltp_receiver : receive_message(Message *message)
+    activate oltp_receiver
+      oltp_receiver -> tables : collect_data(property_tree& table, property_tree& datatypes)
+      activate tables
+        tables -> metadata : read
+        oltp_receiver <<-tables
+      deactivate tables
+      oltp_receiver -> tran : execute_statement(...)
+      activate tran
+        tran -> ogawayama_server : CREATE TABLE
+        activate ogawayama_server
+        tran <<- ogawayama_server
+        deactivate ogawayama_server
+        tran ->> oltp_receiver
+      oltp_receiver -> tran : commit()
+      tran -> oltp_receiver
+      deactivate tran
+      oltp_receiver -> concrete_message
+    deactivate oltp_receiver
+  MessageBroker <<- concrete_message
+  deactivate concrete_message
+  utility_hook <<- MessageBroker
+  utility_hook -> StubManager : end()
+  deactivate StubManager
+  MessageBroker -> concrete_message
+  activate concrete_message
+    concrete_message -> olap_receiver : receive_message(Message *message)
+    activate olap_receiver
+      olap_receiver -> tables : collect_data(property_tree& table, property_tree& datatypes);
+      activate tables
+        tables -> metadata : read
+        olap_receiver <<-tables
+      deactivate tables
+      olap_receiver -> olap_receiver : CREATE TABLE
+      concrete_message <<- olap_receiver
+    deactivate olap_receiver
+  MessageBroker <<- concrete_message
+  deactivate concrete_message
+  utility_hook <<- MessageBroker
+  deactivate MessageBroker
+utility_hook -> PostgreSQL
+deactivate utility_hook
+PostgreSQL -> 利用者
 deactivate PostgreSQL
 
 @enduml
