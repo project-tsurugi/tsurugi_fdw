@@ -29,8 +29,6 @@
         - [DataTypeメタデータオブジェクト](#datatypeメタデータオブジェクト)
         - [データ型ID一覧](#データ型id一覧)
     - [CreateStmt・IndexStmtクエリツリーのクラス図](#createstmtindexstmtクエリツリーのクラス図)
-  - [シーケンス詳細](#シーケンス詳細)
-    - [シーケンス図](#シーケンス図-1)
 - [エラー処理](#エラー処理)
   - [基本方針](#基本方針-1)
   - [処理フロー](#処理フロー)
@@ -151,10 +149,18 @@ TABLESPACE tsurugi
 ### シーケンス概要
 
 #### シーケンス図
+##### 概要
 ![](img/out/CREATE_TABLE_overview/テーブル定義シーケンス概要.png)
 
+##### 詳細
+![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細.png)
+
 #### クラス図
-![](img/out/Command/Command.png)
+##### 概要
+![](img/out/Command_overview/Command_overview.png)
+
+##### 詳細
+![](img/out/Command_detail/Command_detail.png)
 
 #### 図中のmessage(Message* message)
 * デザインパターンについて   
@@ -354,10 +360,6 @@ TABLESPACE tsurugi
 #### CreateStmt・IndexStmtクエリツリーのクラス図　
 frontendがPostgreSQLから受け取るクエリツリー
 ![](img/out/query_tree/query_tree.svg)
-
-### シーケンス詳細
-#### シーケンス図
-![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細.png)
 
 ## エラー処理
 ### 基本方針

@@ -1,0 +1,61 @@
+' =========================================================
+'
+' =========================================================
+@startuml Command_overview
+left to right direction
+
+package message-broker {
+  abstract class Receiver {
+    {abstract} ErrorCode receive_message(Message* message)
+  }
+
+  abstract class Message{
+  	{field} private MESSAGE_ID id;
+  	{field} private uint64_t object_id;
+  	{field} private vector<Receiver*> receivers;
+  	{field} private std::string message_type_name;
+  	{method}{abstract} public void set_receiver(Receiver*)
+  }
+
+  class CreateTableMessage {
+    ErrorCode collect_data(property_tree&);
+  }
+
+  class MessageBroker {
+    ErrorCode send_message(Message*);
+  }
+}
+
+package ogawayama {
+  class OLTP_Receiver {
+    ErrorCode receive_message(Message*)
+  }
+}
+
+package OLAP_EntryPoint {
+  class OLAP_Receiver {
+    ErrorCode receive_message(Message*)
+  }
+}
+
+package frontend {
+  class Client {
+  }
+
+}
+
+OLTP_Receiver --|> Receiver
+
+MessageBroker --> Message
+Message --> Receiver
+
+Message <|- CreateTableMessage
+
+Client --> CreateTableMessage : create
+Client --> OLTP_Receiver : create
+MessageBroker <-- Client : create
+
+OLAP_Receiver --|> Receiver
+Client --> OLAP_Receiver : create
+
+@enduml
