@@ -6,18 +6,22 @@
 
 <!-- code_chunk_output -->
 
-- [開発の目的](#開発の目的)
-- [基本方針](#基本方針)
-- [構文・型](#構文型)
-  - [サポートするCREATE TABLE構文](#サポートするcreate-table構文)
-  - [サポートする型](#サポートする型)
-  - [サポートするロケール・文字エンコーディング](#サポートするロケール文字エンコーディング)
-  - [構文例](#構文例)
-- [テーブル定義機能シーケンス](#テーブル定義機能シーケンス)
-  - [シーケンス概要](#シーケンス概要)
+  - [開発の目的](#開発の目的)
+  - [基本方針](#基本方針)
+  - [構文・型](#構文型)
+    - [サポートするCREATE TABLE構文](#サポートするcreate-table構文)
+    - [サポートする型](#サポートする型)
+    - [サポートするロケール・文字エンコーディング](#サポートするロケール文字エンコーディング)
+    - [構文例](#構文例)
+  - [テーブル定義機能シーケンス](#テーブル定義機能シーケンス)
     - [シーケンス図](#シーケンス図)
+      - [概要](#概要)
+      - [詳細](#詳細)
     - [クラス図](#クラス図)
-    - [図中のmessage(Message* message)](#図中のmessagemessage-message)
+      - [概要](#概要-1)
+      - [詳細](#詳細-1)
+    - [デザインパターン](#デザインパターン)
+    - [シーケンス図パターン1の実装案](#シーケンス図パターン1の実装案)
     - [metadata-managerに格納する値一覧](#metadata-managerに格納する値一覧)
       - [データベース名](#データベース名)
       - [スキーマ名](#スキーマ名)
@@ -29,26 +33,26 @@
         - [DataTypeメタデータオブジェクト](#datatypeメタデータオブジェクト)
         - [データ型ID一覧](#データ型id一覧)
     - [CreateStmt・IndexStmtクエリツリーのクラス図](#createstmtindexstmtクエリツリーのクラス図)
-- [エラー処理](#エラー処理)
-  - [基本方針](#基本方針-1)
-  - [処理フロー](#処理フロー)
-  - [メッセージ方式](#メッセージ方式)
-    - [エラーコード一覧](#エラーコード一覧)
-  - [メッセージ内容](#メッセージ内容)
-    - [構文エラー](#構文エラー)
-    - [型エラー](#型エラー)
-- [metadata-managerの改造](#metadata-managerの改造)
-  - [改造項目](#改造項目)
-    - [1. データ型に関するメタデータの変更](#1-データ型に関するメタデータの変更)
-    - [2. エラー処理の追加](#2-エラー処理の追加)
-    - [3. メタデータの格納先を固定](#3-メタデータの格納先を固定)
-    - [4. DebugビルドとReleaseビルドを分ける](#4-debugビルドとreleaseビルドを分ける)
-  - [データ型に関するメタデータを追加する理由](#データ型に関するメタデータを追加する理由)
-- [コーディング規約](#コーディング規約)
-- [詳細設計書](#詳細設計書)
-- [Appendix. DEFAULT制約](#appendix-default制約)
-  - [V2で実装しない理由](#v2で実装しない理由)
-  - [将来バージョンでのDEFAULT制約格納方式案](#将来バージョンでのdefault制約格納方式案)
+  - [エラー処理](#エラー処理)
+    - [基本方針](#基本方針-1)
+    - [処理フロー](#処理フロー)
+    - [メッセージ方式](#メッセージ方式)
+      - [エラーコード一覧](#エラーコード一覧)
+    - [メッセージ内容](#メッセージ内容)
+      - [構文エラー](#構文エラー)
+      - [型エラー](#型エラー)
+  - [metadata-managerの改造](#metadata-managerの改造)
+    - [改造項目](#改造項目)
+      - [1. データ型に関するメタデータの変更](#1-データ型に関するメタデータの変更)
+      - [2. エラー処理の追加](#2-エラー処理の追加)
+      - [3. メタデータの格納先を固定](#3-メタデータの格納先を固定)
+      - [4. DebugビルドとReleaseビルドを分ける](#4-debugビルドとreleaseビルドを分ける)
+    - [データ型に関するメタデータを追加する理由](#データ型に関するメタデータを追加する理由)
+  - [コーディング規約](#コーディング規約)
+  - [詳細設計書](#詳細設計書)
+  - [Appendix. DEFAULT制約](#appendix-default制約)
+    - [V2で実装しない理由](#v2で実装しない理由)
+    - [将来バージョンでのDEFAULT制約格納方式案](#将来バージョンでのdefault制約格納方式案)
 
 <!-- /code_chunk_output -->
 
@@ -146,129 +150,128 @@ TABLESPACE tsurugi
 
 ## テーブル定義機能シーケンス
 
-### シーケンス概要
-
-#### シーケンス図
-##### 概要
+### シーケンス図
+#### 概要
 ![](img/out/CREATE_TABLE_overview/テーブル定義シーケンス概要.png)
 
-##### 詳細
-![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細.png)
+#### 詳細
+* パターン1
+![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細pattern1.png)
 
-#### クラス図
-##### 概要
+* パターン2
+![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細pattern2.png)
+
+### クラス図
+#### 概要
 ![](img/out/Command_overview/Command_overview.png)
 
-##### 詳細
+#### 詳細
 ![](img/out/Command_detail/Command_detail.png)
 
-#### 図中のmessage(Message* message)
-* デザインパターンについて   
-    * V2では、デザインパターンのCommandパターンを採用する。
-        * ogawayama用インタフェース案（コンポーネント間メッセージインタフェースに従って実装する案）
+### デザインパターン
+* V2では、デザインパターンのCommandパターンを採用する。
 
-        ~~~C++
+### シーケンス図パターン1の実装案
+* ogawayama用インタフェース案（コンポーネント間メッセージインタフェースに従って実装する案）
 
-        message-broker
-        message_broker.h
+~~~C++
+message-broker
+message_broker.h
 
-        // Receiverインタフェースクラス
-        class Receiver {
-          virtual void receive_message(Message*) = 0;
-        };
+// Receiverインタフェースクラス
+class Receiver {
+  virtual void receive_message(Message*) = 0;
+};
 
-        // Message IDリスト
-        enum {
-          CREATE_TABLE,
-          ALTER_TABLE,
-          DROP_TABLE
-          ...
-        } MESSAGE_ID;
+// Message IDリスト
+enum {
+  CREATE_TABLE,
+  ALTER_TABLE,
+  DROP_TABLE
+  ...
+} MESSAGE_ID;
 
-        // Messageインタフェースクラス
-        class Message {
-          MESSAGE_ID id;                
-          int object_id;                // メタデータ群を一意に指定するID
-          vector<Receiver> receivers;   // メッセージ送信先
-          void* param1;                 
-          void* param2;                 
+// Messageインタフェースクラス
+class Message {
+  MESSAGE_ID id;                
+  int object_id;                // メタデータ群を一意に指定するID
+  vector<Receiver> receivers;   // メッセージ送信先
+  void* param1;                 
+  void* param2;                 
+public:
+  void set_receiver(Receiver* receiver_) {receivers.push_back(receiver);}}
+};
 
-        public:
-          void set_receiver(Receiver* receiver_) {receivers.push_back(receiver);}}
-        };
+// Message派生クラス
+class CreateTableMessage : Message {
+  CreateTableMessage() {
+    id = CREATE_TABLE;
+  }
+};
 
-        // Message派生クラス
-        class CreateTableMessage : Message {
-          CreateTableMessage() {
-            id = CREATE_TABLE;
-          }
-        };
+class MessageBroker {
+  void send_message(Message* message)
+  {
+    for (auto& receiver : message->receivers) {
+      receiver.receive_message(message);
+    }
+  }
+};
+~~~
 
-        class MessageBroker {
-          void send_message(Message* message)
-          {
-            for (auto& receiver : message->receivers) {
-              receiver.receive_message(message);
-            }
-          }
-        };
-        ~~~
+* frontend
 
-        * frontend
+~~~C++
 
-        ~~~C++
-        #include "message_broker.h"
-        #include "ogawayama_xxx.h"
+#include "message_broker.h"
+#include "ogawayama_xxx.h"
 
-        MessageBroker broker;
-        Message* ct_message = new CreateTableCommand();
-        Receiver* oltp_receiver = new OltpReceiver();
+MessageBroker broker;
+Message* ct_message = new CreateTableCommand();
+Receiver* oltp_receiver = new OltpReceiver();
 
-        stub::Transaction* transaction;
-        StubManager::begin(&transaction);
+stub::Transaction* transaction;
+StubManager::begin(&transaction);
+ct_message->set_receiver(oltp_receiver);
+ct_message->param1 = (void*) transaction;
+broker.send_command(ct_message);
 
-        ct_message->set_receiver(oltp_receiver);
-        ct_message->param1 = (void*) transaction;
+~~~
 
-        broker.send_command(ct_message);
-        ~~~
+* OLTP Receiver(ogawayama::stub)
+    * ogawayama_xxx.hpp
+    ~~~C++
+    #include "message_broker.h"
 
-        * OLTP Receiver(ogawayama::stub)
-            * ogawayama_xxx.hpp
+    // Receiver派生クラス
+    class OltpReceiver : Receiver {
+      void receive_message(Message* message) {
+      
+        switch(message->id) 
+        {
+          case CREATE_TABLE:
+              std::unique_ptr<Metadata> tables(new Tables("database"));
+              Propert_tree& pt;
+              stub::Transaction* transaction = (stub::Transaction*) message->param1;
+              tables->get(message->object_id, pt);
+              transaction->execute_statement( ... );
+              break;
+          case ALTER_TABLE:
+                ...
+        }
+      }
+    };
+    ~~~
 
-        ~~~C++
-        #include "message_broker.h"
+### metadata-managerに格納する値一覧
 
-        // Receiver派生クラス
-        class OltpReceiver : Receiver {
-          void receive_message(Message* message) {
-          
-            switch(message->id) 
-            {
-              case CREATE_TABLE:
-                  std::unique_ptr<Metadata> tables(new Tables("database"));
-                  Propert_tree& pt;
-                  stub::Transaction* transaction = (stub::Transaction*) message->param1;
-
-                  tables->get(message->object_id, pt);
-                  transaction->execute_statement( ... );
-                  break;
-              case ALTER_TABLE:
-                    ...
-            }
-          }
-        };
-        ~~~
-
-#### metadata-managerに格納する値一覧
-
-##### データベース名
+#### データベース名
 * V1と同様に、keyを作成しない。
 
-##### スキーマ名
+#### スキーマ名
 * V1と同様に、keyを作成しない。
 
-##### Tableメタデータ(root)
+#### Tableメタデータ(root)
 * valueの型 凡例
 ```
 '*'　:　メタデータ登録時に必須の項目
@@ -282,7 +285,7 @@ TABLESPACE tsurugi
 |"generation"    | number [-]        | メタデータの世代 ※V1は"1"固定                | "1"固定 | - |
 |"tables"        | array[object] [*] | Tableメタデータオブジェクト                   | [Tableメタデータオブジェクト](#tableメタデータオブジェクト)  | - |
 
-##### Tableメタデータオブジェクト
+#### Tableメタデータオブジェクト
 
 |key|valueの型|valueの説明|valueに格納する値|[CreateStmt・IndexStmtクエリツリーのクラス図](#createstmtindexstmtクエリツリーのクラス図)から取得する属性(クラス名.属性)|
 |----|----|----|----|----|
@@ -292,7 +295,7 @@ TABLESPACE tsurugi
 | "columns"    | array[object] [*] | Columnメタデータオブジェクト          | [Columnメタデータオブジェクト](#columnメタデータオブジェクト)                       | -                   |
 | "primaryKey" | array[number] [*] | primaryKeyカラムの"ordinal_position" | **列制約に指定された主キー1つ、表制約に指定された複合主キーのどちらか1つ。**(PostgreSQLと同様に、複数の主キーは設定できない。)| <span>IndexStmt.indexParams.name</span> **xor** ColumnDef.constraints |
 
-##### Columnメタデータオブジェクト
+#### Columnメタデータオブジェクト
 
 |key|valueの型|valueの説明|valueに格納する値|[CreateStmt・IndexStmtクエリツリーのクラス図](#createstmtindexstmtクエリツリーのクラス図)から取得する属性(クラス名.属性)|
 |----|----|----|----|----|
@@ -307,7 +310,7 @@ TABLESPACE tsurugi
 | "default"           | string        [+] | デフォルト式 |**keyを作成しない。** <br> ※V1.0ではDEFAULT制約を指定しない場合、常に"(undefined)"で格納されている  | 取得しない |
 | "direction"         | number        [+] | 方向（0: DEFAULT, 1: ASCENDANT, 2: DESCENDANT）| **V1と同様に、PRIMARY KEY制約のカラムに対して"1"を格納、その他のカラムに対して常に"0"を格納**  | <span>IndexStmt.indexParams.name</span> **xor** ColumnDef.constraints |
 
-###### PostgreSQLとカラムのデータ型のID対応表
+##### PostgreSQLとカラムのデータ型のID対応表
 
 |大分類|PostgreSQLの型(名)|PostgreSQLの型(別名)|カラムのデータ型のID <br>※[データ型ID一覧](#データ型id一覧)を参照|
 |-:|:-|:-|:-|
@@ -318,14 +321,14 @@ TABLESPACE tsurugi
 |文字列|character [ (n) ]|char [ (n) ]|**13**|
 |文字列|character varying [ (n) ]|varchar [ (n) ]|**14**|
 
-##### DataTypeメタデータ(root)
+#### DataTypeメタデータ(root)
 |key|valueの型|valueの説明|valueに格納する値|
 |----|----|----|----|
 |"formatVersion" | number       | データ形式フォーマットバージョン | "1" 固定 |
 |"generation"    | number       | メタデータの世代 | "1" 固定 |
 |"dataTypes"     | array[object] | DataTypeメタデータオブジェクト | [DataTypeメタデータオブジェクト](#datatypeメタデータオブジェクト) |
 
-###### DataTypeメタデータオブジェクト
+##### DataTypeメタデータオブジェクト
 |key|valueの型|valueの説明|valueに格納する値|
 |----|----|----|----|
 | "id"            | number   | データ型ID | [データ型ID一覧](#データ型id一覧) |
@@ -334,7 +337,7 @@ TABLESPACE tsurugi
 | "pg_dataTypeName"      | string    | ユーザーが入力するPostgreSQLの型名 |同上|
 | "pg_dataTypeQualifiedName"      | string    | PostgreSQL内部の修飾型名 |同上|
 
-###### データ型ID一覧
+##### データ型ID一覧
 
 * 太字は変更
 * id番号に削除と書いてあるものは、key自体を削除。id番号は変更しない。
@@ -357,7 +360,7 @@ TABLESPACE tsurugi
 |14| VARCHAR  | 1043                | varchar             | varchar
 
 
-#### CreateStmt・IndexStmtクエリツリーのクラス図　
+### CreateStmt・IndexStmtクエリツリーのクラス図　
 frontendがPostgreSQLから受け取るクエリツリー
 ![](img/out/query_tree/query_tree.svg)
 

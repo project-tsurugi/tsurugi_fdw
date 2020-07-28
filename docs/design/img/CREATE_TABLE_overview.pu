@@ -1,54 +1,26 @@
-@startuml
-title テーブル定義シーケンス概要
+' =========================================================
+' 概要シーケンス
+' =========================================================
+@startuml テーブル定義シーケンス概要
 hide footbox
 
-actor 利用者
-boundary PostgreSQL
-control "utility_hook"
-control "manager/metadata-manager" as metadata_manager
-control "manager/message-broker" as message_broker
-control ogawayama
+control PostgreSQL as pg
+control frontend as frontend
+control "ogawayama-stub" as stub
+entity "metadata-manager" as metadata
 
-利用者 -> PostgreSQL : テーブル定義要求()
-activate PostgreSQL
-note right
-CREATE TABLE文
-end note
-
-PostgreSQL -> "utility_hook" : hook()
-activate "utility_hook"
-
-"utility_hook" -> metadata_manager : 実テーブル定義
-activate metadata_manager
-
-metadata_manager --> "utility_hook"
-deactivate metadata_manager
-
-"utility_hook" -> message_broker : send_message(Message* message)
-activate message_broker
-message_broker -> ogawayama : message(Message* message)
-activate ogawayama
-note right
-テーブル定義要求
-end note
-
-ogawayama -> message_broker : テーブル情報取得
-message_broker -> metadata_manager : テーブル情報取得
-activate metadata_manager
-metadata_manager --> message_broker : テーブル情報
-deactivate metadata_manager
-message_broker --> ogawayama : テーブル情報
-
-ogawayama -> ogawayama : CREATE TABLE
-ogawayama  --> message_broker
-deactivate ogawayama
-message_broker --> "utility_hook"
-deactivate message_broker
-
-"utility_hook" --> PostgreSQL
-deactivate "utility_hook"
-
-PostgreSQL --> 利用者
-deactivate PostgreSQL
-
+activate pg
+  pg -> frontend : hook DDL command
+  activate frontend
+    frontend -> metadata : write DDL parameters
+    frontend -> stub : message(DDL command)
+    activate stub
+      stub -> metadata : read DDL parameters
+      stub -> stub : schema defined on Tsurugi
+      stub -> metadata : update DDL parameters
+      frontend <<-- stub
+      deactivate stub
+    pg <<-- frontend
+  deactivate frontend
+deactivate pg
 @enduml
