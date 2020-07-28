@@ -17,7 +17,9 @@ activate pg
     activate stub
       stub -> metadata : read DDL parameters
       stub -> stub : schema defined on Tsurugi
+      alt option
       stub -> metadata : update DDL parameters
+      end
       frontend <<-- stub
       deactivate stub
     pg <<-- frontend
