@@ -6,18 +6,22 @@
 
 <!-- code_chunk_output -->
 
-- [開発の目的](#開発の目的)
-- [基本方針](#基本方針)
-- [構文・型](#構文型)
-  - [サポートするCREATE TABLE構文](#サポートするcreate-table構文)
-  - [サポートする型](#サポートする型)
-  - [サポートするロケール・文字エンコーディング](#サポートするロケール文字エンコーディング)
-  - [構文例](#構文例)
-- [テーブル定義機能シーケンス](#テーブル定義機能シーケンス)
-  - [シーケンス概要](#シーケンス概要)
+  - [開発の目的](#開発の目的)
+  - [基本方針](#基本方針)
+  - [構文・型](#構文型)
+    - [サポートするCREATE TABLE構文](#サポートするcreate-table構文)
+    - [サポートする型](#サポートする型)
+    - [サポートするロケール・文字エンコーディング](#サポートするロケール文字エンコーディング)
+    - [構文例](#構文例)
+  - [テーブル定義機能シーケンス](#テーブル定義機能シーケンス)
     - [シーケンス図](#シーケンス図)
+      - [概要](#概要)
+      - [詳細](#詳細)
     - [クラス図](#クラス図)
-    - [図中のmessage(Message* message)](#図中のmessagemessage-message)
+      - [概要](#概要-1)
+      - [詳細](#詳細-1)
+    - [デザインパターン](#デザインパターン)
+    - [シーケンス図パターン1の実装案](#シーケンス図パター
     - [metadata-managerに格納する値一覧](#metadata-managerに格納する値一覧)
       - [データベース名](#データベース名)
       - [スキーマ名](#スキーマ名)
@@ -29,26 +33,26 @@
         - [DataTypeメタデータオブジェクト](#datatypeメタデータオブジェクト)
         - [データ型ID一覧](#データ型id一覧)
     - [CreateStmt・IndexStmtクエリツリーのクラス図](#createstmtindexstmtクエリツリーのクラス図)
-- [エラー処理](#エラー処理)
-  - [基本方針](#基本方針-1)
-  - [処理フロー](#処理フロー)
-  - [メッセージ方式](#メッセージ方式)
-    - [エラーコード一覧](#エラーコード一覧)
-  - [メッセージ内容](#メッセージ内容)
-    - [構文エラー](#構文エラー)
-    - [型エラー](#型エラー)
-- [metadata-managerの改造](#metadata-managerの改造)
-  - [改造項目](#改造項目)
-    - [1. データ型に関するメタデータの変更](#1-データ型に関するメタデータの変更)
-    - [2. エラー処理の追加](#2-エラー処理の追加)
-    - [3. メタデータの格納先を固定](#3-メタデータの格納先を固定)
-    - [4. DebugビルドとReleaseビルドを分ける](#4-debugビルドとreleaseビルドを分ける)
-  - [データ型に関するメタデータを追加する理由](#データ型に関するメタデータを追加する理由)
-- [コーディング規約](#コーディング規約)
-- [詳細設計書](#詳細設計書)
-- [Appendix. DEFAULT制約](#appendix-default制約)
-  - [V2で実装しない理由](#v2で実装しない理由)
-  - [将来バージョンでのDEFAULT制約格納方式案](#将来バージョンでのdefault制約格納方式案)
+  - [エラー処理](#エラー処理)
+    - [基本方針](#基本方針-1)
+    - [処理フロー](#処理フロー)
+    - [メッセージ方式](#メッセージ方式)
+      - [エラーコード一覧](#エラーコード一覧)
+    - [メッセージ内容](#メッセージ内容)
+      - [構文エラー](#構文エラー)
+      - [型エラー](#型エラー)
+  - [metadata-managerの改造](#metadata-managerの改造)
+    - [改造項目](#改造項目)
+      - [1. データ型に関するメタデータの変更](#1-データ型に関するメタデータの変更)
+      - [2. エラー処理の追加](#2-エラー処理の追加)
+      - [3. メタデータの格納先を固定](#3-メタデータの格納先を固定)
+      - [4. DebugビルドとReleaseビルドを分ける](#4-debugビルドとreleaseビルドを分ける)
+    - [データ型に関するメタデータを追加する理由](#データ型に関するメタデータを追加する理由)
+  - [コーディング規約](#コーディング規約)
+  - [詳細設計書](#詳細設計書)
+  - [Appendix. DEFAULT制約](#appendix-default制約)
+    - [V2で実装しない理由](#v2で実装しない理由)
+    - [将来バージョンでのDEFAULT制約格納方式案](#将来バージョンでのdefault制約格納方式案)
 
 <!-- /code_chunk_output -->
 
@@ -146,30 +150,28 @@ TABLESPACE tsurugi
 
 ## テーブル定義機能シーケンス
 
-### シーケンス概要
-
-#### シーケンス図
-##### 概要
+### シーケンス図
+#### 概要
 ![](img/out/CREATE_TABLE_overview/テーブル定義シーケンス概要.png)
 
-##### 詳細
+#### 詳細
 * パターン1
 ![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細pattern1.png)
 
 * パターン2
 ![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細pattern2.png)
 
-#### クラス図
-##### 概要
+### クラス図
+#### 概要
 ![](img/out/Command_overview/Command_overview.png)
 
-##### 詳細
+#### 詳細
 ![](img/out/Command_detail/Command_detail.png)
 
-#### デザインパターン
+### デザインパターン
 * V2では、デザインパターンのCommandパターンを採用する。
 
-##### シーケンス図パターン1の実装案
+### シーケンス図パターン1の実装案
 * ogawayama用インタフェース案（コンポーネント間メッセージインタフェースに従って実装する案）
 
 ~~~C++
@@ -220,6 +222,7 @@ class MessageBroker {
 * frontend
 
 ~~~C++
+
 #include "message_broker.h"
 #include "ogawayama_xxx.h"
 
@@ -260,15 +263,15 @@ broker.send_command(ct_message);
     };
     ~~~
 
-#### metadata-managerに格納する値一覧
+### metadata-managerに格納する値一覧
 
-##### データベース名
+#### データベース名
 * V1と同様に、keyを作成しない。
 
-##### スキーマ名
+#### スキーマ名
 * V1と同様に、keyを作成しない。
 
-##### Tableメタデータ(root)
+#### Tableメタデータ(root)
 * valueの型 凡例
 ```
 '*'　:　メタデータ登録時に必須の項目
@@ -282,7 +285,7 @@ broker.send_command(ct_message);
 |"generation"    | number [-]        | メタデータの世代 ※V1は"1"固定                | "1"固定 | - |
 |"tables"        | array[object] [*] | Tableメタデータオブジェクト                   | [Tableメタデータオブジェクト](#tableメタデータオブジェクト)  | - |
 
-##### Tableメタデータオブジェクト
+#### Tableメタデータオブジェクト
 
 |key|valueの型|valueの説明|valueに格納する値|[CreateStmt・IndexStmtクエリツリーのクラス図](#createstmtindexstmtクエリツリーのクラス図)から取得する属性(クラス名.属性)|
 |----|----|----|----|----|
@@ -292,7 +295,7 @@ broker.send_command(ct_message);
 | "columns"    | array[object] [*] | Columnメタデータオブジェクト          | [Columnメタデータオブジェクト](#columnメタデータオブジェクト)                       | -                   |
 | "primaryKey" | array[number] [*] | primaryKeyカラムの"ordinal_position" | **列制約に指定された主キー1つ、表制約に指定された複合主キーのどちらか1つ。**(PostgreSQLと同様に、複数の主キーは設定できない。)| <span>IndexStmt.indexParams.name</span> **xor** ColumnDef.constraints |
 
-##### Columnメタデータオブジェクト
+#### Columnメタデータオブジェクト
 
 |key|valueの型|valueの説明|valueに格納する値|[CreateStmt・IndexStmtクエリツリーのクラス図](#createstmtindexstmtクエリツリーのクラス図)から取得する属性(クラス名.属性)|
 |----|----|----|----|----|
@@ -307,7 +310,7 @@ broker.send_command(ct_message);
 | "default"           | string        [+] | デフォルト式 |**keyを作成しない。** <br> ※V1.0ではDEFAULT制約を指定しない場合、常に"(undefined)"で格納されている  | 取得しない |
 | "direction"         | number        [+] | 方向（0: DEFAULT, 1: ASCENDANT, 2: DESCENDANT）| **V1と同様に、PRIMARY KEY制約のカラムに対して"1"を格納、その他のカラムに対して常に"0"を格納**  | <span>IndexStmt.indexParams.name</span> **xor** ColumnDef.constraints |
 
-###### PostgreSQLとカラムのデータ型のID対応表
+##### PostgreSQLとカラムのデータ型のID対応表
 
 |大分類|PostgreSQLの型(名)|PostgreSQLの型(別名)|カラムのデータ型のID <br>※[データ型ID一覧](#データ型id一覧)を参照|
 |-:|:-|:-|:-|
@@ -318,14 +321,14 @@ broker.send_command(ct_message);
 |文字列|character [ (n) ]|char [ (n) ]|**13**|
 |文字列|character varying [ (n) ]|varchar [ (n) ]|**14**|
 
-##### DataTypeメタデータ(root)
+#### DataTypeメタデータ(root)
 |key|valueの型|valueの説明|valueに格納する値|
 |----|----|----|----|
 |"formatVersion" | number       | データ形式フォーマットバージョン | "1" 固定 |
 |"generation"    | number       | メタデータの世代 | "1" 固定 |
 |"dataTypes"     | array[object] | DataTypeメタデータオブジェクト | [DataTypeメタデータオブジェクト](#datatypeメタデータオブジェクト) |
 
-###### DataTypeメタデータオブジェクト
+##### DataTypeメタデータオブジェクト
 |key|valueの型|valueの説明|valueに格納する値|
 |----|----|----|----|
 | "id"            | number   | データ型ID | [データ型ID一覧](#データ型id一覧) |
@@ -334,7 +337,7 @@ broker.send_command(ct_message);
 | "pg_dataTypeName"      | string    | ユーザーが入力するPostgreSQLの型名 |同上|
 | "pg_dataTypeQualifiedName"      | string    | PostgreSQL内部の修飾型名 |同上|
 
-###### データ型ID一覧
+##### データ型ID一覧
 
 * 太字は変更
 * id番号に削除と書いてあるものは、key自体を削除。id番号は変更しない。
@@ -357,7 +360,7 @@ broker.send_command(ct_message);
 |14| VARCHAR  | 1043                | varchar             | varchar
 
 
-#### CreateStmt・IndexStmtクエリツリーのクラス図　
+### CreateStmt・IndexStmtクエリツリーのクラス図　
 frontendがPostgreSQLから受け取るクエリツリー
 ![](img/out/query_tree/query_tree.svg)
 
