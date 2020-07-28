@@ -156,10 +156,10 @@ TABLESPACE tsurugi
 
 #### 詳細
 * 案1
-![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細pattern1.png)
+![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細案1.png)
 
 * 案2
-![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細pattern2.png)
+![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細案2.png)
 
 ### クラス図
 #### 概要
