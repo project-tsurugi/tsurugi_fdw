@@ -1,6 +1,6 @@
 
 ' =========================================================
-' OLAP/OLTP
+' OLAP/OLTP 案1
 ' =========================================================
 @startuml テーブル定義シーケンス詳細案1
 
@@ -178,16 +178,17 @@ control tables
 database metadata
 end box
 
-box "コンポーネント名：\nfrontend" #LightSkyBlue
+box "コンポーネント名：\nogawayama" #LightYellow
 control "OLTP_Receiver" as oltp_receiver
 control StubManager
-control "OLAP_Receiver" as olap_receiver
-end box
-
-box "コンポーネント名：\nogawayama" #LightYellow
 control "stub::Transaction" as tran
 control ogawayama_server
 end box
+
+box "コンポーネント名：\nolap" #LightPink
+control "OLAP_Receiver" as olap_receiver
+end box
+
 
 利用者 -> PostgreSQL : テーブル定義要求()
 activate PostgreSQL
