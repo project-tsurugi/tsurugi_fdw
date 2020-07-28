@@ -155,10 +155,10 @@ TABLESPACE tsurugi
 ![](img/out/CREATE_TABLE_overview/テーブル定義シーケンス概要.png)
 
 #### 詳細
-* パターン1
+* 案1
 ![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細pattern1.png)
 
-* パターン2
+* 案2
 ![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細pattern2.png)
 
 ### クラス図
@@ -171,7 +171,7 @@ TABLESPACE tsurugi
 ### デザインパターン
 * V2では、デザインパターンのCommandパターンを採用する。
 
-### シーケンス図パターン1の実装案
+### シーケンス図案1の実装案
 * ogawayama用インタフェース案（コンポーネント間メッセージインタフェースに従って実装する案）
 
 ~~~C++
