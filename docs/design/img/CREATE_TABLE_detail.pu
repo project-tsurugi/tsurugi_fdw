@@ -48,6 +48,9 @@ activate utility_hook
   utility_hook -> tables : write meta-data
   activate tables
     tables -> metadata : write
+    activate metadata
+    tables <<-- metadata
+    deactivate metadata
     utility_hook <<-- tables
   deactivate tables
 
@@ -91,7 +94,9 @@ activate utility_hook
       concrete_message -> tables : read metadata
       activate tables
         tables -> metadata : read
+        activate metadata
         tables <<-- metadata
+        deactivate metadata
         concrete_message <<-- tables
       deactivate tables
       oltp_receiver <<-- concrete_message
@@ -103,7 +108,7 @@ activate utility_hook
           deactivate ogawayama_server
         oltp_receiver <<-- tran
         oltp_receiver -> tran : commit()
-        tran -> oltp_receiver
+        oltp_receiver <<-- tran
       deactivate tran
     Receiver <<-- oltp_receiver
     deactivate oltp_receiver
@@ -124,7 +129,9 @@ activate utility_hook
       concrete_message -> tables : read metadata
       activate tables
         tables -> metadata : read
+        activate metadata
         tables <<-- metadata
+        deactivate metadata
         concrete_message <<-- tables
         olap_receiver <<-- concrete_message
       deactivate tables
@@ -194,6 +201,9 @@ activate utility_hook
   utility_hook -> tables : write meta-data
   activate tables
     tables -> metadata : write
+    activate metadata
+    tables <<-- metadata
+    deactivate metadata
     utility_hook <<-- tables
   deactivate tables
 
@@ -238,7 +248,9 @@ activate utility_hook
     concrete_message -> tables : read metadata
       activate tables
       tables -> metadata : read
+      activate metadata
       tables <<-- metadata
+      deactivate metadata
       concrete_message <<-- tables
       deactivate tables
         tran <<-- concrete_message
@@ -248,7 +260,7 @@ activate utility_hook
           deactivate ogawayama_server
         oltp_receiver <<-- tran
         oltp_receiver -> tran : commit()
-        tran -> oltp_receiver
+        oltp_receiver <<-- tran
       deactivate tran
     oltp_receiver -> StubManager : end()
     deactivate StubManager
@@ -269,7 +281,9 @@ activate utility_hook
       concrete_message -> tables: read metadata
       activate tables
       tables -> metadata : read
+      activate metadata
       tables <<-- metadata
+      deactivate metadata
       concrete_message <<-- tables
       deactivate tables
       olap_receiver <<-- concrete_message
