@@ -153,7 +153,11 @@ TABLESPACE tsurugi
 ![](img/out/CREATE_TABLE_overview/テーブル定義シーケンス概要.png)
 
 ##### 詳細
-![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細.png)
+* パターン1
+![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細pattern1.png)
+
+* パターン2
+![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細pattern2.png)
 
 #### クラス図
 ##### 概要
@@ -162,103 +166,99 @@ TABLESPACE tsurugi
 ##### 詳細
 ![](img/out/Command_detail/Command_detail.png)
 
-#### 図中のmessage(Message* message)
-* デザインパターンについて   
-    * V2では、デザインパターンのCommandパターンを採用する。
-        * ogawayama用インタフェース案（コンポーネント間メッセージインタフェースに従って実装する案）
+#### デザインパターン
+* V2では、デザインパターンのCommandパターンを採用する。
 
-        ~~~C++
+##### シーケンス図パターン1の実装案
+* ogawayama用インタフェース案（コンポーネント間メッセージインタフェースに従って実装する案）
 
-        message-broker
-        message_broker.h
+~~~C++
+message-broker
+message_broker.h
 
-        // Receiverインタフェースクラス
-        class Receiver {
-          virtual void receive_message(Message*) = 0;
-        };
+// Receiverインタフェースクラス
+class Receiver {
+  virtual void receive_message(Message*) = 0;
+};
 
-        // Message IDリスト
-        enum {
-          CREATE_TABLE,
-          ALTER_TABLE,
-          DROP_TABLE
-          ...
-        } MESSAGE_ID;
+// Message IDリスト
+enum {
+  CREATE_TABLE,
+  ALTER_TABLE,
+  DROP_TABLE
+  ...
+} MESSAGE_ID;
 
-        // Messageインタフェースクラス
-        class Message {
-          MESSAGE_ID id;                
-          int object_id;                // メタデータ群を一意に指定するID
-          vector<Receiver> receivers;   // メッセージ送信先
-          void* param1;                 
-          void* param2;                 
+// Messageインタフェースクラス
+class Message {
+  MESSAGE_ID id;                
+  int object_id;                // メタデータ群を一意に指定するID
+  vector<Receiver> receivers;   // メッセージ送信先
+  void* param1;                 
+  void* param2;                 
+public:
+  void set_receiver(Receiver* receiver_) {receivers.push_back(receiver);}}
+};
 
-        public:
-          void set_receiver(Receiver* receiver_) {receivers.push_back(receiver);}}
-        };
+// Message派生クラス
+class CreateTableMessage : Message {
+  CreateTableMessage() {
+    id = CREATE_TABLE;
+  }
+};
 
-        // Message派生クラス
-        class CreateTableMessage : Message {
-          CreateTableMessage() {
-            id = CREATE_TABLE;
-          }
-        };
+class MessageBroker {
+  void send_message(Message* message)
+  {
+    for (auto& receiver : message->receivers) {
+      receiver.receive_message(message);
+    }
+  }
+};
+~~~
 
-        class MessageBroker {
-          void send_message(Message* message)
-          {
-            for (auto& receiver : message->receivers) {
-              receiver.receive_message(message);
-            }
-          }
-        };
-        ~~~
+* frontend
 
-        * frontend
+~~~C++
+#include "message_broker.h"
+#include "ogawayama_xxx.h"
 
-        ~~~C++
-        #include "message_broker.h"
-        #include "ogawayama_xxx.h"
+MessageBroker broker;
+Message* ct_message = new CreateTableCommand();
+Receiver* oltp_receiver = new OltpReceiver();
 
-        MessageBroker broker;
-        Message* ct_message = new CreateTableCommand();
-        Receiver* oltp_receiver = new OltpReceiver();
+stub::Transaction* transaction;
+StubManager::begin(&transaction);
+ct_message->set_receiver(oltp_receiver);
+ct_message->param1 = (void*) transaction;
+broker.send_command(ct_message);
 
-        stub::Transaction* transaction;
-        StubManager::begin(&transaction);
+~~~
 
-        ct_message->set_receiver(oltp_receiver);
-        ct_message->param1 = (void*) transaction;
+* OLTP Receiver(ogawayama::stub)
+    * ogawayama_xxx.hpp
+    ~~~C++
+    #include "message_broker.h"
 
-        broker.send_command(ct_message);
-        ~~~
-
-        * OLTP Receiver(ogawayama::stub)
-            * ogawayama_xxx.hpp
-
-        ~~~C++
-        #include "message_broker.h"
-
-        // Receiver派生クラス
-        class OltpReceiver : Receiver {
-          void receive_message(Message* message) {
-          
-            switch(message->id) 
-            {
-              case CREATE_TABLE:
-                  std::unique_ptr<Metadata> tables(new Tables("database"));
-                  Propert_tree& pt;
-                  stub::Transaction* transaction = (stub::Transaction*) message->param1;
-
-                  tables->get(message->object_id, pt);
-                  transaction->execute_statement( ... );
-                  break;
-              case ALTER_TABLE:
-                    ...
-            }
-          }
-        };
-        ~~~
+    // Receiver派生クラス
+    class OltpReceiver : Receiver {
+      void receive_message(Message* message) {
+      
+        switch(message->id) 
+        {
+          case CREATE_TABLE:
+              std::unique_ptr<Metadata> tables(new Tables("database"));
+              Propert_tree& pt;
+              stub::Transaction* transaction = (stub::Transaction*) message->param1;
+              tables->get(message->object_id, pt);
+              transaction->execute_statement( ... );
+              break;
+          case ALTER_TABLE:
+                ...
+        }
+      }
+    };
+    ~~~
 
 #### metadata-managerに格納する値一覧
 
