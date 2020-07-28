@@ -137,3 +137,146 @@ PostgreSQL -> 利用者
 deactivate PostgreSQL
 
 @enduml
+
+
+' =========================================================
+' OLAP/OLTP
+' =========================================================
+@startuml テーブル定義シーケンス詳細pattern2
+
+title テーブル定義シーケンス詳細pattern2
+
+actor 利用者
+boundary PostgreSQL
+
+box "コンポーネント名：\nfrontend" #LightSkyBlue
+control utility_hook
+end box
+
+box "コンポーネント名：\nmanager/message-broker" #LightGreen
+control MessageBroker
+entity Message
+entity "CreateTable\nMessage" as concrete_message
+entity Receiver
+end box
+
+box "コンポーネント名：\nmanager/metadata-manager" #GreenYellow
+control tables
+database metadata
+end box
+
+box "コンポーネント名：\nfrontend" #LightSkyBlue
+control "OLTP_Receiver" as oltp_receiver
+control StubManager
+control "OLAP_Receiver" as olap_receiver
+end box
+
+box "コンポーネント名：\nogawayama" #LightYellow
+control "stub::Transaction" as tran
+control ogawayama_server
+end box
+
+利用者 -> PostgreSQL : テーブル定義要求()
+activate PostgreSQL
+note right
+CREATE TABLE文
+end note
+
+PostgreSQL -> utility_hook
+activate utility_hook
+  ' write meta-data
+  utility_hook -> tables : write meta-data
+  activate tables
+    tables -> metadata : write
+    utility_hook <<- tables
+  deactivate tables
+
+  ' create objects
+  create concrete_message
+  utility_hook -> concrete_message : new
+  create oltp_receiver
+  utility_hook -> oltp_receiver : new
+  create olap_receiver
+  utility_hook -> olap_receiver : new
+
+  ' set receiver
+  utility_hook -> concrete_message : set_receiver\n(OLTP_Receiver)
+  activate concrete_message
+    utility_hook <<- concrete_message
+  deactivate concrete_message
+  utility_hook -> concrete_message : set_receiver\n(OLAP_Receiver)
+  activate concrete_message
+    utility_hook <<- concrete_message
+  deactivate concrete_message
+
+  ' send message to MessageBroker
+  utility_hook -> MessageBroker : send_message\n(CreateTableMessage)
+  activate MessageBroker
+
+  ' execute command
+  MessageBroker -> Message
+  Message -> concrete_message
+  activate concrete_message
+    concrete_message -> Receiver : receive_message\n(Message *message)
+    Receiver -> oltp_receiver
+
+  ' begin transaction
+  create tran
+  activate oltp_receiver
+  oltp_receiver -> tran : new
+  oltp_receiver -> StubManager : begin(&transaction)
+  activate StubManager
+  oltp_receiver -> tran : message(Message *message)
+  activate tran
+    tran -> concrete_message : collect_data\n(property_tree& table,\n property_tree& datatypes)
+    concrete_message -> tables : read metadata
+      activate tables
+      tables -> metadata : read
+      concrete_message <<- tables
+      deactivate tables
+        tran <<- concrete_message
+        tran -> ogawayama_server : CREATE TABLE
+          activate ogawayama_server
+            tran <<- ogawayama_server
+          deactivate ogawayama_server
+        oltp_receiver <<- tran
+        oltp_receiver -> tran : commit()
+        tran -> oltp_receiver
+      deactivate tran
+    oltp_receiver -> StubManager : end()
+    deactivate StubManager
+    Receiver <<- oltp_receiver
+    deactivate oltp_receiver
+    concrete_message <<- Receiver
+  Message <<- concrete_message
+  deactivate concrete_message
+  MessageBroker <<- Message
+  utility_hook <<- MessageBroker
+  MessageBroker -> Message
+  Message -> concrete_message
+  activate concrete_message
+    concrete_message -> Receiver : receive_message\n(Message *message)
+    Receiver -> olap_receiver
+    activate olap_receiver
+      olap_receiver -> concrete_message: collect_data\n(property_tree& table,\n property_tree& datatypes)
+      concrete_message -> tables
+      activate tables
+      tables -> metadata : read
+      concrete_message <<- tables
+      deactivate tables
+      olap_receiver <<- concrete_message
+      olap_receiver -> olap_receiver : CREATE TABLE
+      Receiver <<- olap_receiver
+      deactivate olap_receiver
+      concrete_message <<- Receiver
+  Message <<- concrete_message
+  deactivate concrete_message
+  MessageBroker <<- Message
+  utility_hook <<- MessageBroker
+  deactivate MessageBroker
+utility_hook -> PostgreSQL
+deactivate utility_hook
+PostgreSQL -> 利用者
+deactivate PostgreSQL
+
+@enduml
