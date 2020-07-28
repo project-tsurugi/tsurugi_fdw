@@ -155,9 +155,14 @@ TABLESPACE tsurugi
 ![](img/out/CREATE_TABLE_overview/テーブル定義シーケンス概要.png)
 
 #### 詳細
-* 案1
+* 案1a
   * ogawayamaがCommandパターンに則って実装する
-![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細案1.png)
+![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細案1a.png)
+
+* 案1b
+  * ogawayamaがCommandパターンに則って実装する
+  * Transactionクラスにget_receiver()のようなメソッドを追加して、frontendはそれで取得したreceiverオブジェクトをCommandオブジェクトにset_receiver()するような案です。
+![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細案1b.png)
 
 * 案2
   * frontendがCommandパターンを隠蔽する
