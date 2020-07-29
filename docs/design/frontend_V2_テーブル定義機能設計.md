@@ -325,16 +325,7 @@ TABLESPACE tsurugi
           // 1案aと違い、ここでtransactionオブジェクトのvoidポインターを取得
           stub::Transaction* transaction;　　
           StubManager::begin(&transaction);
-
-          switch(message->id) 
-          {
-            case CREATE_TABLE:
-                transaction->message(message);
-                break;
-            case ALTER_TABLE:
-                  ...
-          }
-
+          transaction->message(message);
           StubManager::end();
         }
       };
