@@ -326,6 +326,7 @@ TABLESPACE tsurugi
           stub::Transaction* transaction;　　
           StubManager::begin(&transaction);
           transaction->message(message);
+          transaction->commit();
           StubManager::end();
         }
       };
