@@ -73,11 +73,12 @@ activate utility_hook
   deactivate concrete_message
 
   ' begin transaction
-  create tran
-  utility_hook -> tran : new
   utility_hook -> StubManager : begin(&transaction)
-  activate StubManager
-  utility_hook -> concrete_message : set_transaction\n(stub::Transaction* transaction)
+  note right
+  connection = Stub->get_connection();
+  transaction = connection->begin();
+  end note
+  utility_hook -> concrete_message : stub::transactionオブジェクトのvoidポインターを\nMessageオブジェクトのメンバー変数paramにセットする。
 
   ' send message to MessageBroker
   utility_hook -> MessageBroker : send_message\n(CreateTableMessage)
@@ -108,6 +109,9 @@ activate utility_hook
           deactivate ogawayama_server
         oltp_receiver <<-- tran
         oltp_receiver -> tran : commit()
+        note right
+        transaction->commit();
+        end note
         oltp_receiver <<-- tran
       deactivate tran
     Receiver <<-- oltp_receiver
@@ -118,7 +122,9 @@ activate utility_hook
   MessageBroker <<-- Message
   utility_hook <<-- MessageBroker
   utility_hook -> StubManager : end()
-  deactivate StubManager
+  note right
+  結果セット（rs）の開放とコネクション（connection）の切断（と関連リソースの開放）
+  end note
   MessageBroker -> Message
   Message -> concrete_message
   activate concrete_message
@@ -164,7 +170,7 @@ boundary PostgreSQL
 
 box "コンポーネント名：\nfrontend" #LightSkyBlue
 control utility_hook
-control "stub::Transaction" as tran
+control StubManager
 end box
 
 box "コンポーネント名：\nmanager/message-broker" #LightGreen
@@ -180,9 +186,9 @@ database metadata
 end box
 
 box "コンポーネント名：\nogawayama" #LightYellow
+control "stub::Transaction" as tran
 control "OLTP_Receiver" as oltp_receiver
 control "ogawayama" as ogawayama
-control ogawayama_server
 end box
 
 box "コンポーネント名：\nOLAP" #LightPink
@@ -214,8 +220,11 @@ activate utility_hook
   utility_hook -> olap_receiver : new
 
   ' set receiver
-  create tran
-  utility_hook -> tran : new
+  utility_hook -> StubManager : begin(&transaction)
+  note right
+  connection = Stub->get_connection();
+  transaction = connection->begin();
+  end note
   utility_hook -> tran : get_receiver()
   activate tran
   tran -> ogawayama : get_receiver()
@@ -234,8 +243,6 @@ activate utility_hook
   activate concrete_message
     utility_hook <<-- concrete_message
   deactivate concrete_message
-
-  utility_hook -> concrete_message : set_transaction\n(stub::Transaction* transaction)
 
   ' send message to MessageBroker
   utility_hook -> MessageBroker : send_message\n(CreateTableMessage)
@@ -260,11 +267,7 @@ activate utility_hook
       oltp_receiver <<-- concrete_message
       oltp_receiver -> ogawayama : CREATE TABLE
       activate ogawayama
-        ogawayama -> ogawayama_server : CREATE TABLE
-          activate ogawayama_server
-            ogawayama <<-- ogawayama_server
-          deactivate ogawayama_server
-        oltp_receiver <<-- ogawayama
+      oltp_receiver <<-- ogawayama
       deactivate ogawayama
     Receiver <<-- oltp_receiver
     deactivate oltp_receiver
@@ -273,6 +276,10 @@ activate utility_hook
   deactivate concrete_message
   MessageBroker <<-- Message
   utility_hook <<-- MessageBroker
+  utility_hook -> StubManager : end()
+  note right
+  結果セット（rs）の開放とコネクション（connection）の切断（と関連リソースの開放）
+  end note
   MessageBroker -> Message
   Message -> concrete_message
   activate concrete_message
@@ -331,9 +338,12 @@ control tables
 database metadata
 end box
 
-box "コンポーネント名：\nogawayama" #LightYellow
+box "コンポーネント名：\nfrontend" #LightSkyBlue
 control "OLTP_Receiver" as oltp_receiver
 control StubManager
+end box
+
+box "コンポーネント名：\nogawayama" #LightYellow
 control "stub::Transaction" as tran
 control ogawayama_server
 end box
@@ -395,7 +405,10 @@ activate utility_hook
   activate oltp_receiver
   oltp_receiver -> tran : new
   oltp_receiver -> StubManager : begin(&transaction)
-  activate StubManager
+  note right
+  connection = Stub->get_connection();
+  transaction = connection->begin();
+  end note
   oltp_receiver -> tran : message(Message *message)
   activate tran
     tran -> concrete_message : collect_data\n(property_tree& table,\n property_tree& datatypes)
@@ -414,10 +427,15 @@ activate utility_hook
           deactivate ogawayama_server
         oltp_receiver <<-- tran
         oltp_receiver -> tran : commit()
+        note right
+        transaction->commit()
+        end note
         oltp_receiver <<-- tran
       deactivate tran
     oltp_receiver -> StubManager : end()
-    deactivate StubManager
+    note right
+    結果セット（rs）の開放とコネクション（connection）の切断（と関連リソースの開放）
+    end note
     Receiver <<-- oltp_receiver
     deactivate oltp_receiver
     concrete_message <<-- Receiver

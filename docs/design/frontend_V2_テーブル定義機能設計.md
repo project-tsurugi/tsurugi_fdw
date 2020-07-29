@@ -1,7 +1,7 @@
-# frontend V2 テーブル定義機能設計書 {ignore=True}
+# frontend V2 テーブル定義機能設計書
 2020.07.03 NEC 
 
-## 目次 {ignore=True}
+## 目次
 <!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
 
 <!-- code_chunk_output -->
@@ -14,13 +14,13 @@
     - [サポートするロケール・文字エンコーディング](#サポートするロケール文字エンコーディング)
     - [構文例](#構文例)
   - [テーブル定義機能シーケンス](#テーブル定義機能シーケンス)
+    - [デザインパターン](#デザインパターン)
     - [シーケンス図](#シーケンス図)
       - [概要](#概要)
       - [詳細](#詳細)
     - [クラス図](#クラス図)
       - [概要](#概要-1)
       - [詳細](#詳細-1)
-    - [デザインパターン](#デザインパターン)
     - [シーケンス図案1の実装案](#シーケンス図案1の実装案)
     - [metadata-managerに格納する値一覧](#metadata-managerに格納する値一覧)
       - [データベース名](#データベース名)
@@ -150,22 +150,43 @@ TABLESPACE tsurugi
 
 ## テーブル定義機能シーケンス
 
+### デザインパターン
+* V2では、デザインパターンのCommandパターンを採用する。
+
 ### シーケンス図
 #### 概要
 ![](img/out/CREATE_TABLE_overview/テーブル定義シーケンス概要.png)
 
 #### 詳細
 * 案1a
-  * ogawayamaがCommandパターンに則って実装する
+  * ogawayamaがCommandパターンに則って実装する。
+    * Messageクラス（CommandパターンのCommandクラス）のメンバー変数paramに、Stub::Transactionオブジェクトのvoidポインターを渡す。
+    * メリット
+      * frontendは、ogawayamaの実装を知らなくてよい。
+    * デメリット
+      * Messageクラスのメンバー変数にvoidポインター型のメンバーが追加されるため、構造化できていない。
+        * つまり、ogawayama用のMessageクラスを作成しなければいけない。
 ![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細案1a.png)
 
-* 案1b
-  * ogawayamaがCommandパターンに則って実装する
-  * Transactionクラスにget_receiver()のようなメソッドを追加して、frontendはそれで取得したreceiverオブジェクトをCommandオブジェクトにset_receiver()するような案です。
+* 案1b　堀川さんの案
+  * ogawayamaがCommandパターンに則って実装する。
+    * Stub::Transactionクラスにget_receiver()のようなメソッドを追加して、frontendはそれで取得したreceiverオブジェクトをCommandオブジェクトにset_receiver()するような案です。
+    * メリット
+      * frontendは、ogawayamaの実装を知らなくてよい。
+      * ogawayama用のMessageクラスを作る必要がなく、構造化できている。
+    * デメリット
+      * frontendでogawayama用の処理を記述する必要がある。
+        * 例えば、frontendで、olapに対してメッセージを送る場合、Receiverオブジェクトをセットして、Brokerにメッセージを送信するだけである。しかし、ogawayamaに対してメッセージを送る場合、Stub::Transactionオブジェクトのvoidポインターを取得して、OLTP_Receiverオブジェクトを取得する処理が追加で必要となる。
 ![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細案1b.png)
 
 * 案2
-  * frontendがCommandパターンを隠蔽する
+  * frontendがCommandパターンを隠蔽する。
+    * メリット
+      * ogawayama用のMessageクラスを作る必要がなく、構造化できている。
+    * デメリット
+      * ogawayamaの実装を知る必要がある
+      * frontendでogawayama用の処理を記述する必要がある。
+        * 例えば、frontendで、olapに対してメッセージを送る場合、Receiverオブジェクトをセットして、Brokerにメッセージを送信するだけである。しかし、ogawayamaに対してメッセージを送る場合、Stub::Transactionオブジェクトのvoidポインターを取得する処理が追加で発生する。
 ![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細案2.png)
 
 ### クラス図
@@ -175,10 +196,7 @@ TABLESPACE tsurugi
 #### 詳細
 ![](img/out/Command_detail/Command_detail.png)
 
-### デザインパターン
-* V2では、デザインパターンのCommandパターンを採用する。
-
-### シーケンス図案1の実装案
+### シーケンス図案1aの疑似コード
 * ogawayamaがCommandパターンに則って実装する
   * ogawayama用インタフェース案
   
@@ -267,6 +285,52 @@ TABLESPACE tsurugi
             case ALTER_TABLE:
                   ...
           }
+        }
+      };
+      ~~~
+
+### シーケンス図案2の疑似コード
+* frontendがCommandパターンを隠蔽する。
+  * ogawayama用インタフェース案
+    * 案1aと同じ疑似コード
+  
+  * frontend
+  
+  ~~~C++
+  #include "message_broker.h"
+  #include "ogawayama_xxx.h"
+  
+  MessageBroker broker;
+  Message* ct_message = new CreateTableCommand();
+  Receiver* oltp_receiver = new OltpReceiver();
+
+  ct_message->set_receiver(oltp_receiver);
+  broker.send_command(ct_message);
+  ~~~
+  
+  * OLTP Receiver(ogawayama::stub)
+      * ogawayama_xxx.hpp
+      ~~~C++
+      #include "message_broker.h"
+  
+      // Receiver派生クラス
+      class OltpReceiver : Receiver {
+        void receive_message(Message* message) {
+          
+          // 1案aと違い、ここでtransactionオブジェクトのvoidポインターを取得
+          stub::Transaction* transaction;　　
+          StubManager::begin(&transaction);
+
+          switch(message->id) 
+          {
+            case CREATE_TABLE:
+                transaction->message(message);
+                break;
+            case ALTER_TABLE:
+                  ...
+          }
+
+          StubManager::end();
         }
       };
       ~~~
