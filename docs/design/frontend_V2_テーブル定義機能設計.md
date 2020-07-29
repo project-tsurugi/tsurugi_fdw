@@ -15,13 +15,13 @@
     - [構文例](#構文例)
   - [テーブル定義機能シーケンス](#テーブル定義機能シーケンス)
     - [デザインパターン](#デザインパターン)
-    - [シーケンス図](#シーケンス図)
-      - [概要](#概要)
-      - [詳細](#詳細)
     - [クラス図](#クラス図)
       - [概要](#概要-1)
       - [詳細](#詳細-1)
-    - [シーケンス図案1の実装案](#シーケンス図案1の実装案)
+    - [シーケンス図](#シーケンス図)
+      - [概要](#概要)
+      - [詳細](#詳細)
+    - [シーケンス図の疑似コード](#シーケンス図の疑似コード)
     - [metadata-managerに格納する値一覧](#metadata-managerに格納する値一覧)
       - [データベース名](#データベース名)
       - [スキーマ名](#スキーマ名)
@@ -153,6 +153,13 @@ TABLESPACE tsurugi
 ### デザインパターン
 * V2では、デザインパターンのCommandパターンを採用する。
 
+### クラス図
+#### 概要
+![](img/out/Command_overview/Command_overview.png)
+
+#### 詳細
+![](img/out/Command_detail/Command_detail.png)
+
 ### シーケンス図
 #### 概要
 ![](img/out/CREATE_TABLE_overview/テーブル定義シーケンス概要.png)
@@ -166,6 +173,7 @@ TABLESPACE tsurugi
     * デメリット
       * Messageクラスのメンバー変数にvoidポインター型のメンバーが追加されるため、構造化できていない。
         * つまり、ogawayama用のMessageクラスを作成しなければいけない。
+      * void*型に安全にオブジェクトのポインタを渡せるのかが不明。
 ![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細案1a.png)
 
 * 案1b　堀川さんの案
@@ -174,6 +182,7 @@ TABLESPACE tsurugi
     * メリット
       * frontendは、ogawayamaの実装を知らなくてよい。
       * ogawayama用のMessageクラスを作る必要がなく、構造化できている。
+      * 実装がシンプル
     * デメリット
       * frontendでogawayama用の処理を記述する必要がある。
         * 例えば、frontendで、olapに対してメッセージを送る場合、Receiverオブジェクトをセットして、Brokerにメッセージを送信するだけである。しかし、ogawayamaに対してメッセージを送る場合、Stub::Transactionオブジェクトのvoidポインターを取得して、OLTP_Receiverオブジェクトを取得する処理が追加で必要となる。
@@ -183,20 +192,15 @@ TABLESPACE tsurugi
   * frontendがCommandパターンを隠蔽する。
     * メリット
       * ogawayama用のMessageクラスを作る必要がなく、構造化できている。
+      * 実装がシンプル
     * デメリット
       * ogawayamaの実装を知る必要がある
       * frontendでogawayama用の処理を記述する必要がある。
         * 例えば、frontendで、olapに対してメッセージを送る場合、Receiverオブジェクトをセットして、Brokerにメッセージを送信するだけである。しかし、ogawayamaに対してメッセージを送る場合、Stub::Transactionオブジェクトのvoidポインターを取得する処理が追加で発生する。
 ![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細案2.png)
 
-### クラス図
-#### 概要
-![](img/out/Command_overview/Command_overview.png)
-
-#### 詳細
-![](img/out/Command_detail/Command_detail.png)
-
-### シーケンス図案1aの疑似コード
+### シーケンス図の疑似コード
+#### シーケンス図案1aの疑似コード
 * ogawayamaがCommandパターンに則って実装する
   * ogawayama用インタフェース案
   
@@ -289,7 +293,7 @@ TABLESPACE tsurugi
       };
       ~~~
 
-### シーケンス図案2の疑似コード
+#### シーケンス図案2の疑似コード
 * frontendがCommandパターンを隠蔽する。
   * ogawayama用インタフェース案
     * 案1aと同じ疑似コード
@@ -304,6 +308,7 @@ TABLESPACE tsurugi
   Message* ct_message = new CreateTableCommand();
   Receiver* oltp_receiver = new OltpReceiver();
 
+  // 1案aと違い、transactionオブジェクトのvoidポインターを取得するのは、Receiverの役割
   ct_message->set_receiver(oltp_receiver);
   broker.send_command(ct_message);
   ~~~
