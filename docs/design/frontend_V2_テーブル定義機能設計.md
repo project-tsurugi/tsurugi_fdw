@@ -16,8 +16,6 @@
   - [テーブル定義機能シーケンス](#テーブル定義機能シーケンス)
     - [デザインパターン](#デザインパターン)
     - [クラス図](#クラス図)
-      - [概要](#概要-1)
-      - [詳細](#詳細-1)
     - [シーケンス図](#シーケンス図)
       - [概要](#概要)
       - [詳細](#詳細)
@@ -154,10 +152,6 @@ TABLESPACE tsurugi
 * V2では、デザインパターンのCommandパターンを採用する。
 
 ### クラス図
-#### 概要
-![](img/out/Command_overview/Command_overview.png)
-
-#### 詳細
 ![](img/out/Command_detail/Command_detail.png)
 
 ### シーケンス図
@@ -165,51 +159,30 @@ TABLESPACE tsurugi
 ![](img/out/CREATE_TABLE_overview/テーブル定義シーケンス概要.png)
 
 #### 詳細
-#### 案1a
-  * ogawayamaがCommandパターンに則って実装する。
-    * Messageクラス（CommandパターンのCommandクラス）のメンバー変数paramに、Stub::Transactionオブジェクトのvoidポインターを渡す。
-    * メリット
-      * frontendは、ogawayamaの実装を知らなくてよい。
-    * デメリット
-      * Messageクラスのメンバー変数にvoidポインター型のメンバーが追加されるため、構造化できていない。
-        * つまり、ogawayama用のMessageクラスを作成しなければいけない。
-      * void*型に安全にオブジェクトのポインタを渡せるのかが不明。
-![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細案1a.png)
+* Stub::TransactionクラスがReceiverクラスを継承する。
+![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細.png)
 
-#### 案1b　堀川さんの案
-  * ogawayamaがCommandパターンに則って実装する。
-    * Stub::TransactionクラスがReceiverクラスを継承する。
-    * メリット
-      * ogawayama用のMessageクラスを作る必要がなく、構造化できている。
-      * ogawayamaリポジトリに、Receiverクラスの具象クラスを置くことができる。
-      * 調査不足だが、1つのトランザクションで複数メッセージを処理できるように見える。
-      * 実装がシンプル
-    * デメリット
-      * 思いつかない。
-![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細案1b.png)
+* メリット
+  * ogawayama用のMessageクラスを作る必要がなく、構造化できている。
+  * ogawayamaリポジトリに、Receiverクラスの具象クラスを置くことができる。
+  * 調査不足だが、1つのトランザクションで複数メッセージを処理できるように見える。
+  * 実装がシンプル
+* デメリット
+  * 特に思いつかない。
 
-#### 案2
-  * frontendがCommandパターンを隠蔽する。
-    * メリット
-      * ogawayama用のMessageクラスを作る必要がなく、構造化できている。
-      * 実装がシンプル
-    * デメリット
-      * 調査不足だが、1つのトランザクションで1つのメッセージしか処理できないように見える。
-      * frontendリポジトリに、Receiverクラスの具象クラスを置く必要がある。
-![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細案2.png)
+* 採用理由
+  * 本案はメリットが多く、他の案はデメリットが多い。具体的には、他の案では、下記のデメリットがある。
+    * ogawayama用のMessageクラスを作成しなければいけない。
+    * void*型に安全にオブジェクトのポインタを渡せるのかが不明。
+    * 1つのトランザクションで1つのメッセージしか処理できない。
+    * frontendリポジトリに、Receiverクラスの具象クラスを置く必要がある。
 
 ### シーケンス図の疑似コード
-#### シーケンス図案1aの疑似コード
-* ogawayamaがCommandパターンに則って実装する
-  * ogawayama用インタフェース案
-  
+  * manager/message-broker/include/message_broker.h
   ~~~C++
-  message-broker
-  message_broker.h
-  
   // Receiverインタフェースクラス
   class Receiver {
-    virtual void receive_message(Message*) = 0;
+    virtual void receive_message(Message* message) = 0;
   };
   
   // Message IDリスト
@@ -225,16 +198,14 @@ TABLESPACE tsurugi
     MESSAGE_ID id;                
     int object_id;                // メタデータ群を一意に指定するID
     vector<Receiver> receivers;   // メッセージ送信先
-    void* param1;                 
-    void* param2;                 
   public:
     void set_receiver(Receiver* receiver_) {receivers.push_back(receiver);}}
   };
   
   // Message派生クラス
   class CreateTableMessage : Message {
-    CreateTableMessage() {
-      id = CREATE_TABLE;
+    CreateTableMessage(uint64_t object_id){
+        id = CREATE_TABLE;
     }
   };
   
@@ -248,12 +219,13 @@ TABLESPACE tsurugi
   };
   ~~~
   
-  * frontend
+  * frontend/alt_utility/create_table.cpp
   
   ~~~C++
   
-  #include "message_broker.h"
-  #include "ogawayama_xxx.h"
+  #include "manager/message-broker/message_broker.h"
+  #include "ogawayama/stub/api.h"
+  #include "stub_manager.h"
   
   MessageBroker broker;
   Message* ct_message = new CreateTableCommand();
@@ -262,74 +234,33 @@ TABLESPACE tsurugi
   stub::Transaction* transaction;
   StubManager::begin(&transaction);
   ct_message->set_receiver(oltp_receiver);
-  ct_message->param1 = (void*) transaction;
   broker.send_command(ct_message);
+  transaction->commit();
+  StubManager::end();
   
   ~~~
   
-  * OLTP Receiver(ogawayama::stub)
-      * ogawayama_xxx.hpp
-      ~~~C++
-      #include "message_broker.h"
-  
-      // Receiver派生クラス
-      class OltpReceiver : Receiver {
-        void receive_message(Message* message) {
-        
-          switch(message->id) 
-          {
-            case CREATE_TABLE:
-                std::unique_ptr<Metadata> tables(new Tables("database"));
-                Propert_tree& pt;
-                stub::Transaction* transaction = (stub::Transaction*) message->param1;
-                tables->get(message->object_id, pt);
-                transaction->execute_statement( ... );
-                break;
-            case ALTER_TABLE:
-                  ...
-          }
-        }
-      };
-      ~~~
-
-#### シーケンス図案2の疑似コード
-* frontendがCommandパターンを隠蔽する。
-  * ogawayama用インタフェース案
-    * 案1aと同じ疑似コード
-  
-  * frontend
-  
+  * ogawayama/stub/api.h stub::Transactionクラス (Receiver派生クラス）
   ~~~C++
-  #include "message_broker.h"
-  #include "ogawayama_xxx.h"
+  #include "manager/message-broker/message_broker.h"
   
-  MessageBroker broker;
-  Message* ct_message = new CreateTableCommand();
-  Receiver* oltp_receiver = new OltpReceiver();
-
-  // 1案aと違い、transactionオブジェクトのvoidポインターを取得するのは、Receiverの役割
-  ct_message->set_receiver(oltp_receiver);
-  broker.send_command(ct_message);
+  // Receiver派生クラス
+  class Transaction : Receiver {
+    ...
+    void receive_message(Message* message) {
+    
+      switch(message->id) 
+      {
+        case CREATE_TABLE:
+            execute_statement( ... ); // ogawayama-serverにテーブル定義メッセージを送信
+            break;
+        case ALTER_TABLE:
+              ...
+      }
+    }
+    ...
+  };
   ~~~
-  
-  * OLTP Receiver(ogawayama::stub)
-      * ogawayama_xxx.hpp
-      ~~~C++
-      #include "message_broker.h"
-  
-      // Receiver派生クラス
-      class OltpReceiver : Receiver {
-        void receive_message(Message* message) {
-          
-          // 1案aと違い、ここでtransactionオブジェクトのvoidポインターを取得
-          stub::Transaction* transaction;　　
-          StubManager::begin(&transaction);
-          transaction->message(message);
-          transaction->commit();
-          StubManager::end();
-        }
-      };
-      ~~~
 
 ### metadata-managerに格納する値一覧
 

@@ -4,18 +4,18 @@
 @startuml Command_detail
 left to right direction
 
-package message-broker {
+package "manager/message-broker" {
   abstract class Receiver {
     {abstract} public virtual ErrorCode receive_message(Message* message) = 0;
   }
 
   abstract class Message{
-  	{field} private MESSAGE_ID id;                  // message type ID
-  	{field} private uint64_t object_id;             // object ID that will be added, updated, or deleted
-  	{field} private vector<Receiver*> receivers;    // receiver ex) OLTP_Receiver, OLAP_Receiver
-  	{field} private std::string message_type_name;  // for error message ex)"CREATE TABLE"
+  	{field} private MESSAGE_ID id;　　　　　　　　　// message type ID
+  	{field} private uint64_t object_id;　　　　　　　　// ID of object that will be added, updated, or deleted
+  	{field} private vector<Receiver*> receivers;　　　// receivers
+  	{field} private std::string message_type_name;　// for error message ex) CREATE TABLE
     {method}// C'tors
-  	{method}{abstract} public Message(MESSAGE_ID id, uint64_t object_id, std::string message_type_name)
+  	{method}public Message(MESSAGE_ID id, uint64_t object_id, std::string message_type_name)
     {method}
     {method}// set receiver
   	{method}{abstract} public void set_receiver(Receiver *receiver_)
@@ -27,7 +27,8 @@ package message-broker {
   }
 
   class CreateTableMessage {
-    public ErrorCode collect_data(property_tree& table, property_tree& datatypes);
+    {method}// C'tors
+  	{method}public CreateTableMessage(uint64_t object_id)
   }
 
   class MessageBroker {
@@ -36,7 +37,7 @@ package message-broker {
 }
 
 package ogawayama {
-  class OLTP_Receiver {
+  class "stub::Transaction" {
     public ErrorCode receive_message(Message* message)
   }
 }
@@ -53,7 +54,7 @@ package frontend {
 
 }
 
-OLTP_Receiver --|> Receiver
+"stub::Transaction" -|> Receiver
 
 MessageBroker --> Message
 Message --> Receiver
@@ -61,10 +62,10 @@ Message --> Receiver
 Message <|- CreateTableMessage
 
 Client --> CreateTableMessage : create
-Client --> OLTP_Receiver : create
-MessageBroker <-- Client : create
+Client -> "stub::Transaction" : create
+MessageBroker <- Client : create
 
-OLAP_Receiver --|> Receiver
-Client --> OLAP_Receiver : create
+OLAP_Receiver -|> Receiver
+Client -> OLAP_Receiver : create
 
 @enduml

@@ -1,10 +1,10 @@
 
 ' =========================================================
-' OLAP/OLTP 案1a
+' OLAP/OLTP テーブル定義シーケンス詳細
 ' =========================================================
-@startuml テーブル定義シーケンス詳細案1a
+@startuml テーブル定義シーケンス詳細
 
-title テーブル定義シーケンス詳細案1a
+title テーブル定義シーケンス詳細
 
 actor 利用者
 boundary PostgreSQL
@@ -19,180 +19,20 @@ control MessageBroker
 entity Message
 entity "CreateTable\nMessage" as concrete_message
 entity Receiver
-end box
-
-box "コンポーネント名：\nmanager/metadata-manager" #GreenYellow
-control tables
-database metadata
-end box
-
-box "コンポーネント名：\nogawayama" #LightYellow
-control "OLTP_Receiver" as oltp_receiver
-control "stub::Transaction" as tran
-control ogawayama_server
-end box
-
-box "コンポーネント名：\nOLAP" #LightPink
-control "OLAP_Receiver" as olap_receiver
-end box
-
-利用者 -> PostgreSQL : テーブル定義要求()
-activate PostgreSQL
-note right
-CREATE TABLE文
-end note
-
-PostgreSQL -> utility_hook
-activate utility_hook
-  ' write meta-data
-  utility_hook -> tables : write meta-data
-  activate tables
-    tables -> metadata : write
-    activate metadata
-    tables <<-- metadata
-    deactivate metadata
-    utility_hook <<-- tables
-  deactivate tables
-
-  ' create objects
-  create concrete_message
-  utility_hook -> concrete_message : new
-  create oltp_receiver
-  utility_hook -> oltp_receiver : new
-  create olap_receiver
-  utility_hook -> olap_receiver : new
-
-  ' set receiver
-  utility_hook -> concrete_message : set_receiver\n(OLTP_Receiver)
-  activate concrete_message
-    utility_hook <<-- concrete_message
-  deactivate concrete_message
-  utility_hook -> concrete_message : set_receiver\n(OLAP_Receiver)
-  activate concrete_message
-    utility_hook <<-- concrete_message
-  deactivate concrete_message
-
-  ' begin transaction
-  utility_hook -> StubManager : begin(&transaction)
-  note right
-  connection = Stub->get_connection();
-  transaction = connection->begin();
-  end note
-  utility_hook -> concrete_message : stub::transactionオブジェクトのvoidポインターを\nMessageオブジェクトのメンバー変数paramにセットする。
-
-  ' send message to MessageBroker
-  utility_hook -> MessageBroker : send_message\n(CreateTableMessage)
-  activate MessageBroker
-
-  ' execute command
-  MessageBroker -> Message
-  Message -> concrete_message
-  activate concrete_message
-    concrete_message -> Receiver : receive_message\n(Message *message)
-    Receiver -> oltp_receiver
-    activate oltp_receiver
-      oltp_receiver -> concrete_message : collect_data\n(property_tree& table,\n property_tree& datatypes)
-      concrete_message -> tables : read metadata
-      activate tables
-        tables -> metadata : read
-        activate metadata
-        tables <<-- metadata
-        deactivate metadata
-        concrete_message <<-- tables
-      deactivate tables
-      oltp_receiver <<-- concrete_message
-      oltp_receiver -> tran : execute_statement(...)
-      activate tran
-        tran -> ogawayama_server : CREATE TABLE
-          activate ogawayama_server
-            tran <<-- ogawayama_server
-          deactivate ogawayama_server
-        oltp_receiver <<-- tran
-        oltp_receiver -> tran : commit()
-        note right
-        transaction->commit();
-        end note
-        oltp_receiver <<-- tran
-      deactivate tran
-    Receiver <<-- oltp_receiver
-    deactivate oltp_receiver
-    concrete_message <<-- Receiver
-  Message <<-- concrete_message
-  deactivate concrete_message
-  MessageBroker <<-- Message
-  utility_hook <<-- MessageBroker
-  utility_hook -> StubManager : end()
-  note right
-  ・stub::Transactionオブジェクトがdeleteされる
-  ・コネクション（connection）の切断（と関連リソースの開放）
-  end note
-  MessageBroker -> Message
-  Message -> concrete_message
-  activate concrete_message
-    concrete_message -> Receiver : receive_message\n(Message *message)
-    Receiver -> olap_receiver
-    activate olap_receiver
-      olap_receiver -> concrete_message : collect_data\n(property_tree& table,\n property_tree& datatypes)
-      concrete_message -> tables : read metadata
-      activate tables
-        tables -> metadata : read
-        activate metadata
-        tables <<-- metadata
-        deactivate metadata
-        concrete_message <<-- tables
-        olap_receiver <<-- concrete_message
-      deactivate tables
-      olap_receiver -> olap_receiver : CREATE TABLE
-      Receiver <<-- olap_receiver
-      deactivate olap_receiver
-      concrete_message <<-- Receiver
-  Message <<-- concrete_message
-  deactivate concrete_message
-  MessageBroker <<-- Message
-  utility_hook <<-- MessageBroker
-  deactivate MessageBroker
-PostgreSQL <<-- utility_hook
-deactivate utility_hook
-利用者 <<-- PostgreSQL
-deactivate PostgreSQL
-
-@enduml
-
-
-' =========================================================
-' OLAP/OLTP 案1b (2020/07/28 堀川さんの案)
-' =========================================================
-@startuml テーブル定義シーケンス詳細案1b
-
-title テーブル定義シーケンス詳細案1b
-
-actor 利用者
-boundary PostgreSQL
-
-box "コンポーネント名：\nfrontend" #LightSkyBlue
-control utility_hook
-control StubManager
-end box
-
-box "コンポーネント名：\nmanager/message-broker" #LightGreen
-control MessageBroker
-entity Message
-entity "CreateTable\nMessage" as concrete_message
-entity Receiver
-end box
-
-box "コンポーネント名：\nmanager/metadata-manager" #GreenYellow
-control tables
-database metadata
 end box
 
 box "コンポーネント名：\nogawayama" #LightYellow
 control "stub::Transaction\n（Receiverを継承）" as tran
-control "ogawayama" as ogawayama
+control "ogawayama_server" as ogawayama
 end box
 
 box "コンポーネント名：\nOLAP" #LightPink
 control "OLAP_Receiver" as olap_receiver
+end box
+
+box "コンポーネント名：\nmanager/metadata-manager" #GreenYellow
+control tables
+database metadata
 end box
 
 利用者 -> PostgreSQL : テーブル定義要求()
@@ -247,18 +87,17 @@ activate utility_hook
     concrete_message -> Receiver : receive_message\n(Message *message)
     Receiver -> tran
     activate tran
-      tran -> concrete_message : collect_data\n(property_tree& table,\n property_tree& datatypes)
-      concrete_message -> tables : read metadata
+      tran -> ogawayama : CREATE TABLE
+      activate ogawayama
+      ogawayama -> tables : read metadata
       activate tables
         tables -> metadata : read
         activate metadata
         tables <<-- metadata
         deactivate metadata
-        concrete_message <<-- tables
+        ogawayama <<-- tables : メタデータ
       deactivate tables
-      tran <<-- concrete_message
-      tran -> ogawayama : CREATE TABLE
-      activate ogawayama
+      ogawayama -> ogawayama : CREATE TABLE
       tran <<-- ogawayama
       deactivate ogawayama
     Receiver <<-- tran
@@ -286,180 +125,14 @@ activate utility_hook
     concrete_message -> Receiver : receive_message\n(Message *message)
     Receiver -> olap_receiver
     activate olap_receiver
-      olap_receiver -> concrete_message : collect_data\n(property_tree& table,\n property_tree& datatypes)
-      concrete_message -> tables : read metadata
+      olap_receiver -> tables : read metadata
       activate tables
         tables -> metadata : read
         activate metadata
         tables <<-- metadata
         deactivate metadata
-        concrete_message <<-- tables
-        olap_receiver <<-- concrete_message
+        olap_receiver <<-- tables : メタデータ
       deactivate tables
-      olap_receiver -> olap_receiver : CREATE TABLE
-      Receiver <<-- olap_receiver
-      deactivate olap_receiver
-      concrete_message <<-- Receiver
-  Message <<-- concrete_message
-  deactivate concrete_message
-  MessageBroker <<-- Message
-  utility_hook <<-- MessageBroker
-  deactivate MessageBroker
-PostgreSQL <<-- utility_hook
-deactivate utility_hook
-利用者 <<-- PostgreSQL
-deactivate PostgreSQL
-
-@enduml
-
-' =========================================================
-' OLAP/OLTP 案2
-' =========================================================
-@startuml テーブル定義シーケンス詳細案2
-
-title テーブル定義シーケンス詳細案2
-
-actor 利用者
-boundary PostgreSQL
-
-box "コンポーネント名：\nfrontend" #LightSkyBlue
-control utility_hook
-end box
-
-box "コンポーネント名：\nmanager/message-broker" #LightGreen
-control MessageBroker
-entity Message
-entity "CreateTable\nMessage" as concrete_message
-entity Receiver
-end box
-
-box "コンポーネント名：\nmanager/metadata-manager" #GreenYellow
-control tables
-database metadata
-end box
-
-box "コンポーネント名：\nfrontend" #LightSkyBlue
-control "OLTP_Receiver" as oltp_receiver
-control StubManager
-end box
-
-box "コンポーネント名：\nogawayama" #LightYellow
-control "stub::Transaction" as tran
-control ogawayama_server
-end box
-
-box "コンポーネント名：\nolap" #LightPink
-control "OLAP_Receiver" as olap_receiver
-end box
-
-
-利用者 -> PostgreSQL : テーブル定義要求()
-activate PostgreSQL
-note right
-CREATE TABLE文
-end note
-
-PostgreSQL -> utility_hook
-activate utility_hook
-  ' write meta-data
-  utility_hook -> tables : write meta-data
-  activate tables
-    tables -> metadata : write
-    activate metadata
-    tables <<-- metadata
-    deactivate metadata
-    utility_hook <<-- tables
-  deactivate tables
-
-  ' create objects
-  create concrete_message
-  utility_hook -> concrete_message : new
-  create oltp_receiver
-  utility_hook -> oltp_receiver : new
-  create olap_receiver
-  utility_hook -> olap_receiver : new
-
-  ' set receiver
-  utility_hook -> concrete_message : set_receiver\n(OLTP_Receiver)
-  activate concrete_message
-    utility_hook <<-- concrete_message
-  deactivate concrete_message
-  utility_hook -> concrete_message : set_receiver\n(OLAP_Receiver)
-  activate concrete_message
-    utility_hook <<-- concrete_message
-  deactivate concrete_message
-
-  ' send message to MessageBroker
-  utility_hook -> MessageBroker : send_message\n(CreateTableMessage)
-  activate MessageBroker
-
-  ' execute command
-  MessageBroker -> Message
-  Message -> concrete_message
-  activate concrete_message
-    concrete_message -> Receiver : receive_message\n(Message *message)
-    Receiver -> oltp_receiver
-
-  ' begin transaction
-  create tran
-  activate oltp_receiver
-  oltp_receiver -> tran : new
-  oltp_receiver -> StubManager : begin(&transaction)
-  note right
-  connection = Stub->get_connection();
-  transaction = connection->begin();
-  end note
-  oltp_receiver -> tran : message(Message *message)
-  activate tran
-    tran -> concrete_message : collect_data\n(property_tree& table,\n property_tree& datatypes)
-    concrete_message -> tables : read metadata
-      activate tables
-      tables -> metadata : read
-      activate metadata
-      tables <<-- metadata
-      deactivate metadata
-      concrete_message <<-- tables
-      deactivate tables
-        tran <<-- concrete_message
-        tran -> ogawayama_server : CREATE TABLE
-          activate ogawayama_server
-            tran <<-- ogawayama_server
-          deactivate ogawayama_server
-        oltp_receiver <<-- tran
-        oltp_receiver -> tran : commit()
-        note right
-        transaction->commit()
-        end note
-        oltp_receiver <<-- tran
-      deactivate tran
-    oltp_receiver -> StubManager : end()
-    note right
-    ・stub::Transactionオブジェクトがdeleteされる
-    ・コネクション（connection）の切断（と関連リソースの開放）
-    end note
-    Receiver <<-- oltp_receiver
-    deactivate oltp_receiver
-    concrete_message <<-- Receiver
-  Message <<-- concrete_message
-  deactivate concrete_message
-  MessageBroker <<-- Message
-  utility_hook <<-- MessageBroker
-  MessageBroker -> Message
-  Message -> concrete_message
-  activate concrete_message
-    concrete_message -> Receiver : receive_message\n(Message *message)
-    Receiver -> olap_receiver
-    activate olap_receiver
-      olap_receiver -> concrete_message: collect_data\n(property_tree& table,\n property_tree& datatypes)
-      concrete_message -> tables: read metadata
-      activate tables
-      tables -> metadata : read
-      activate metadata
-      tables <<-- metadata
-      deactivate metadata
-      concrete_message <<-- tables
-      deactivate tables
-      olap_receiver <<-- concrete_message
       olap_receiver -> olap_receiver : CREATE TABLE
       Receiver <<-- olap_receiver
       deactivate olap_receiver
