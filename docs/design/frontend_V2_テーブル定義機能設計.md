@@ -183,7 +183,7 @@ TABLESPACE tsurugi
       * ogawayama用のMessageクラスを作る必要がなく、構造化できている。
       * 実装がシンプル
     * デメリット
-      * トランザクションが終了するとそのTransactionクラスはなくなってしまうので、set_receiver --恒久的なクラスを渡すイメージ-- とは合わないと感じました。そういう意味では、案1bもTransactionが終わるとReceiverもなくなってしまう
+      * （堀川さんの発言）トランザクションが終了するとそのTransactionクラスはなくなってしまうので、set_receiver --恒久的なクラスを渡すイメージ-- とは合わないと感じました。そういう意味では、案1bもTransactionが終わるとReceiverもなくなってしまう
 ![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細案1b.png)
 
 * 案2
