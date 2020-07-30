@@ -185,7 +185,7 @@ TABLESPACE tsurugi
       * 調査不足だが、1つのトランザクションで複数メッセージを処理できるように見える。
       * 実装がシンプル
     * デメリット
-      * （堀川さんの発言）トランザクションが終了するとそのTransactionクラスはなくなってしまうので、set_receiver --恒久的なクラスを渡すイメージ-- とは合わないと感じました。Transactionが終わるとReceiverもなくなってしまう。
+      * 思いつかない。
 ![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細案1b.png)
 
 * 案2

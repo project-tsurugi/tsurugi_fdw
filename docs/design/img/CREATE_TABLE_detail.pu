@@ -123,7 +123,8 @@ activate utility_hook
   utility_hook <<-- MessageBroker
   utility_hook -> StubManager : end()
   note right
-  結果セット（rs）の開放とコネクション（connection）の切断（と関連リソースの開放）
+  ・stub:Transactionオブジェクトがdeleteされる
+  ・コネクション（connection）の切断（と関連リソースの開放）
   end note
   MessageBroker -> Message
   Message -> concrete_message
@@ -276,7 +277,8 @@ activate utility_hook
   end note
   utility_hook -> StubManager : end()
   note right
-  結果セット（rs）の開放とコネクション（connection）の切断（と関連リソースの開放）
+  ・stub:Transactionオブジェクトがdeleteされる
+  ・コネクション（connection）の切断（と関連リソースの開放）
   end note
   MessageBroker -> Message
   Message -> concrete_message
@@ -432,7 +434,8 @@ activate utility_hook
       deactivate tran
     oltp_receiver -> StubManager : end()
     note right
-    結果セット（rs）の開放とコネクション（connection）の切断（と関連リソースの開放）
+    ・stub:Transactionオブジェクトがdeleteされる
+    ・コネクション（connection）の切断（と関連リソースの開放）
     end note
     Receiver <<-- oltp_receiver
     deactivate oltp_receiver
