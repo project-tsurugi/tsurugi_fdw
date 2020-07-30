@@ -186,8 +186,7 @@ database metadata
 end box
 
 box "コンポーネント名：\nogawayama" #LightYellow
-control "stub::Transaction" as tran
-control "OLTP_Receiver" as oltp_receiver
+control "stub::Transaction\n（Receiverを継承）" as tran
 control "ogawayama" as ogawayama
 end box
 
@@ -225,17 +224,9 @@ activate utility_hook
   connection = Stub->get_connection();
   transaction = connection->begin();
   end note
-  utility_hook -> tran : get_receiver()
-  activate tran
-  tran -> ogawayama : get_receiver()
-  activate ogawayama
-  create oltp_receiver
-  ogawayama -> oltp_receiver : new
-  tran <<-- ogawayama : OLTP_Receiver
-  deactivate ogawayama
-  utility_hook <<-- tran
-  deactivate tran
-  utility_hook -> concrete_message : set_receiver\n(OLTP_Receiver)
+  create tran
+  ogawayama -> tran : new
+  utility_hook -> concrete_message : set_receiver\n(transaction)
   activate concrete_message
     utility_hook <<-- concrete_message
   deactivate concrete_message
@@ -253,9 +244,9 @@ activate utility_hook
   Message -> concrete_message
   activate concrete_message
     concrete_message -> Receiver : receive_message\n(Message *message)
-    Receiver -> oltp_receiver
-    activate oltp_receiver
-      oltp_receiver -> concrete_message : collect_data\n(property_tree& table,\n property_tree& datatypes)
+    Receiver -> tran
+    activate tran
+      tran -> concrete_message : collect_data\n(property_tree& table,\n property_tree& datatypes)
       concrete_message -> tables : read metadata
       activate tables
         tables -> metadata : read
@@ -264,18 +255,25 @@ activate utility_hook
         deactivate metadata
         concrete_message <<-- tables
       deactivate tables
-      oltp_receiver <<-- concrete_message
-      oltp_receiver -> ogawayama : CREATE TABLE
+      tran <<-- concrete_message
+      tran -> ogawayama : CREATE TABLE
       activate ogawayama
-      oltp_receiver <<-- ogawayama
+      tran <<-- ogawayama
       deactivate ogawayama
-    Receiver <<-- oltp_receiver
-    deactivate oltp_receiver
+    Receiver <<-- tran
+    deactivate tran
     concrete_message <<-- Receiver
   Message <<-- concrete_message
   deactivate concrete_message
   MessageBroker <<-- Message
   utility_hook <<-- MessageBroker
+  utility_hook -> tran : commit()
+  activate tran
+  tran <<-- utility_hook
+  deactivate tran
+  note right
+  transaction->commit()
+  end note
   utility_hook -> StubManager : end()
   note right
   結果セット（rs）の開放とコネクション（connection）の切断（と関連リソースの開放）

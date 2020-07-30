@@ -178,14 +178,12 @@ TABLESPACE tsurugi
 
 * 案1b　堀川さんの案
   * ogawayamaがCommandパターンに則って実装する。
-    * Stub::Transactionクラスにget_receiver()のようなメソッドを追加して、frontendはそれで取得したreceiverオブジェクトをCommandオブジェクトにset_receiver()するような案です。
+    * Stub::TransactionクラスがReceiverクラスを継承する。
     * メリット
-      * frontendは、ogawayamaの実装を知らなくてよい。
       * ogawayama用のMessageクラスを作る必要がなく、構造化できている。
       * 実装がシンプル
     * デメリット
-      * frontendでogawayama用の処理を記述する必要がある。
-        * 例えば、frontendで、olapに対してメッセージを送る場合、Receiverオブジェクトをセットして、Brokerにメッセージを送信するだけである。しかし、ogawayamaに対してメッセージを送る場合、Stub::Transactionオブジェクトのvoidポインターを取得して、OLTP_Receiverオブジェクトを取得する処理が追加で必要となる。
+      * トランザクションが終了するとそのTransactionクラスはなくなってしまうので、set_receiver --恒久的なクラスを渡すイメージ-- とは合わないと感じました。そういう意味では、案1bもTransactionが終わるとReceiverもなくなってしまう
 ![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細案1b.png)
 
 * 案2
