@@ -165,7 +165,7 @@ TABLESPACE tsurugi
 ![](img/out/CREATE_TABLE_overview/テーブル定義シーケンス概要.png)
 
 #### 詳細
-* 案1a
+#### 案1a
   * ogawayamaがCommandパターンに則って実装する。
     * Messageクラス（CommandパターンのCommandクラス）のメンバー変数paramに、Stub::Transactionオブジェクトのvoidポインターを渡す。
     * メリット
@@ -176,7 +176,7 @@ TABLESPACE tsurugi
       * void*型に安全にオブジェクトのポインタを渡せるのかが不明。
 ![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細案1a.png)
 
-* 案1b　堀川さんの案
+#### 案1b　堀川さんの案
   * ogawayamaがCommandパターンに則って実装する。
     * Stub::TransactionクラスがReceiverクラスを継承する。
     * メリット
@@ -188,7 +188,7 @@ TABLESPACE tsurugi
       * 思いつかない。
 ![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細案1b.png)
 
-* 案2
+#### 案2
   * frontendがCommandパターンを隠蔽する。
     * メリット
       * ogawayama用のMessageクラスを作る必要がなく、構造化できている。
