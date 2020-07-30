@@ -181,9 +181,11 @@ TABLESPACE tsurugi
     * Stub::TransactionクラスがReceiverクラスを継承する。
     * メリット
       * ogawayama用のMessageクラスを作る必要がなく、構造化できている。
+      * ogawayamaリポジトリに、Receiverクラスの具象クラスを置くことができる。
+      * 調査不足だが、1つのトランザクションで複数メッセージを処理できるように見える。
       * 実装がシンプル
     * デメリット
-      * トランザクションが終了するとそのTransactionクラスはなくなってしまうので、set_receiver --恒久的なクラスを渡すイメージ-- とは合わないと感じました。そういう意味では、案1bもTransactionが終わるとReceiverもなくなってしまう
+      * （堀川さんの発言）トランザクションが終了するとそのTransactionクラスはなくなってしまうので、set_receiver --恒久的なクラスを渡すイメージ-- とは合わないと感じました。Transactionが終わるとReceiverもなくなってしまう。
 ![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細案1b.png)
 
 * 案2
@@ -192,9 +194,8 @@ TABLESPACE tsurugi
       * ogawayama用のMessageクラスを作る必要がなく、構造化できている。
       * 実装がシンプル
     * デメリット
-      * ogawayamaの実装を知る必要がある
-      * frontendでogawayama用の処理を記述する必要がある。
-        * 例えば、frontendで、olapに対してメッセージを送る場合、Receiverオブジェクトをセットして、Brokerにメッセージを送信するだけである。しかし、ogawayamaに対してメッセージを送る場合、Stub::Transactionオブジェクトのvoidポインターを取得する処理が追加で発生する。
+      * 調査不足だが、1つのトランザクションで1つのメッセージしか処理できないように見える。
+      * frontendリポジトリに、Receiverクラスの具象クラスを置く必要がある。
 ![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細案2.png)
 
 ### シーケンス図の疑似コード
