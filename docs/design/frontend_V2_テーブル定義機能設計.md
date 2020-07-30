@@ -228,12 +228,11 @@ TABLESPACE tsurugi
   #include "stub_manager.h"
   
   MessageBroker broker;
-  Message* ct_message = new CreateTableCommand();
-  Receiver* oltp_receiver = new OltpReceiver();
+  CreateTableMessage ct_message{object_id};
   
   stub::Transaction* transaction;
   StubManager::begin(&transaction);
-  ct_message->set_receiver(oltp_receiver);
+  ct_message->set_receiver(transaction);
   broker.send_command(ct_message);
   transaction->commit();
   StubManager::end();
