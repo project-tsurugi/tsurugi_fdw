@@ -1,18 +1,16 @@
-# frontend V2 テーブル定義機能設計書 technical design {ignore=True}
+# frontend V2 テーブル定義機能 technical design
 2020.07.31 NEC 
 
-## 目次 {ignore=True}
+## 目次
 <!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
 
 <!-- code_chunk_output -->
 
-- [テーブル定義機能シーケンス](#テーブル定義機能シーケンス)
-  - [デザインパターン](#デザインパターン)
-  - [クラス図](#クラス図)
-  - [シーケンス図](#シーケンス図)
-    - [概要](#概要)
-    - [詳細](#詳細)
-  - [CreateStmt・IndexStmtクエリツリーのクラス図](#createstmtindexstmtクエリツリーのクラス図)
+- [デザインパターン](#デザインパターン)
+- [クラス図](#クラス図)
+- [シーケンス図](#シーケンス図)
+  - [概要](#概要)
+  - [詳細](#詳細)
 - [エラー処理](#エラー処理)
   - [処理フロー](#処理フロー)
   - [メッセージ方式](#メッセージ方式)
@@ -26,19 +24,17 @@
 
 <!-- /code_chunk_output -->
 
-## テーブル定義機能シーケンス
-
-### デザインパターン
+## デザインパターン
 * V2では、デザインパターンのCommandパターンを採用する。
 
-### クラス図
+## クラス図
 ![](img/out/Command_detail/Command_detail.png)
 
-### シーケンス図
-#### 概要
+## シーケンス図
+### 概要
 ![](img/out/CREATE_TABLE_overview/テーブル定義シーケンス概要.png)
 
-#### 詳細
+### 詳細
 * OLTP 特殊パターン
   * Stub::TransactionクラスがReceiverクラスを継承する。
   ![](img/out/CREATE_TABLE_detail/テーブル定義シーケンス詳細_OLTP_特殊パターン.png)
@@ -60,11 +56,6 @@
     * void*型に安全にオブジェクトのポインタを渡せるのかが不明。
     * 1つのトランザクションで1つのメッセージしか処理できない。
     * frontendリポジトリに、Receiverクラスの具象クラスを置く必要がある。
-
-
-### CreateStmt・IndexStmtクエリツリーのクラス図　
-frontendがPostgreSQLから受け取るクエリツリー
-![](img/out/query_tree/query_tree.svg)
 
 ## エラー処理
 

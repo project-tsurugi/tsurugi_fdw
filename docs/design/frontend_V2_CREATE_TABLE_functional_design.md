@@ -1,7 +1,7 @@
-# frontend V2 テーブル定義機能 functional design {ignore=True}
+# frontend V2 テーブル定義機能 functional design
 2020.07.31 NEC 
 
-## 目次 {ignore=True}
+## 目次
 <!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
 
 <!-- code_chunk_output -->
@@ -23,6 +23,7 @@
   - [DataTypeメタデータ(root)](#datatypeメタデータroot)
     - [DataTypeメタデータオブジェクト](#datatypeメタデータオブジェクト)
     - [データ型ID一覧](#データ型id一覧)
+  - [CreateStmt・IndexStmtクエリツリーのクラス図](#createstmtindexstmtクエリツリーのクラス図)
 - [エラー処理](#エラー処理)
   - [基本方針](#基本方針-1)
   - [メッセージ内容](#メッセージ内容)
@@ -225,6 +226,10 @@ TABLESPACE tsurugi
 |~~12~~ 不要なため削除| STRING   | 0	                | text          | 
 |13| CHAR	   | 1042                | char             | bpchar
 |14| VARCHAR  | 1043                | varchar             | varchar
+
+### CreateStmt・IndexStmtクエリツリーのクラス図　
+frontendがPostgreSQLから受け取るクエリツリー
+![](img/out/query_tree/query_tree.svg)
 
 ## エラー処理
 ### 基本方針
