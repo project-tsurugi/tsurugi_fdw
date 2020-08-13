@@ -58,9 +58,10 @@
       * 名前空間：manager::message 
     * メッセージID一覧
       * ユーザーが入力した構文に応じて、各コンポーネントにその構文に対応するメッセージIDを伝える。
-      |メッセージID|ユーザーが入力した構文|
-      |---|---|
-      |CREATE_TABLE|CREATE TABLE構文|
+
+        |メッセージID|ユーザーが入力した構文|
+        |---|---|
+        |CREATE_TABLE|CREATE TABLE構文|
 
 #### メソッド
 * void set_receiver(Receiver *receiver_)
@@ -103,11 +104,12 @@
   * 列挙型(enum class)で作成する。
     * 規定型:int
     * コンポーネントID一覧
-    |コンポーネントID|コンポーネント|
-    |---|---|
-    |ALL_COMPONENTS|すべてのコンポーネント|
-    |OGAWAYAMA|ogawayama|
-    |OLAP|olap|
+
+      |コンポーネントID|コンポーネント|
+      |---|---|
+      |ALL_COMPONENTS|すべてのコンポーネント|
+      |OGAWAYAMA|ogawayama|
+      |OLAP|olap|
 
 ## シーケンス図
 ### 概要
