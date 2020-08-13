@@ -32,7 +32,7 @@ namespace manager::message {
         {method}public OgawayamaStatus(ErrorCode error_code, T sub_error_code)
     }
 
-    note top of OgawayamaStatus : ogawayamaのtransactionが返すエラーコード
+    note top of OgawayamaStatus : ogawayamaのstub::Transactionが返すエラーコード
 
     class OlapStatus<T>
     {
