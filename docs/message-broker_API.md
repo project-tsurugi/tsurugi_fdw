@@ -8,14 +8,14 @@
 * メッセージを送信する。
 #### メソッド
 * Status send_message(Message* message)
-  * 処理内容：MessageクラスにセットされたすべてのReceiverに対して、メッセージを送信する。
+  * 処理内容：MessageクラスにセットされたすべてのReceiverに対して、receiver_message()メソッドでメッセージを送信する。
   * 条件
     * 事前条件：Messageクラスのすべてのフィールドがセットされている。
     * 事後条件：
       * メッセージを受信したコンポーネントが返したエラーコードが「FAILURE」である場合、概要エラーコード・詳細エラーコードを返す。
         * 概要エラーコード：メッセージに対応する処理が成功したか失敗したか
         * 詳細エラーコード：各コンポーネントで定義されているエラーコード
-      * すべてのコンポーネントが返したエラーコードが「SUCCESS」である場合、AllComponentsSuccessStatusを返す。
+      * すべてのコンポーネントがreceiver_message()メソッドで返したエラーコードが「SUCCESS」である場合、AllComponentsSuccessStatusを返す。
       * 詳細は[Statusクラス](#statusクラス)を参照。
 
 ### Message
@@ -97,10 +97,29 @@
       |OLAP|olap|
 
 #### AllComponentsSuccessStatus
-* send_message()の戻り値。すべてのコンポーネントが、受信したメッセージに対応する処理を成功した場合返される。
+* send_message()メソッドで返す戻り値。
+* すべてのコンポーネントがreceiver_message()メソッドで返したエラーコードが「SUCCESS」である場合の戻り値。
 * 各フィールドに格納される値
   |フィールド名| 値|
   |---|---|
   | error_code | SUCCESS | 
   | sub_error_code | SUCCESS |
   | component_id |  ALL_COMPONENTS |
+
+#### OgawayamaStatus
+* ogawayamaのstub::Transactionがreceiver_message()メソッドで返す戻り値
+* 各フィールドに格納される値
+  |フィールド名| 値|
+  |---|---|
+  | error_code | manager/message-brokerが管理する概要エラーコード | 
+  | sub_error_code | 各コンポーネントが管理する詳細エラーコード |
+  | component_id |  OGAWAYAMA |
+
+#### OlapStatus
+* OlapReceiverががreceiver_message()メソッドで返す戻り値
+* 各フィールドに格納される値
+  |フィールド名| 値|
+  |---|---|
+  | error_code | manager/message-brokerが管理する概要エラーコード | 
+  | sub_error_code | 各コンポーネントが管理する詳細エラーコード |
+  | component_id |  OLAP |

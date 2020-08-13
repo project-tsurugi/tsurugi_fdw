@@ -24,23 +24,17 @@ namespace manager::message {
     {
     }
 
-    note top of AllComponentsSuccessStatus : すべてのReceiverが成功時に返される。
-
     class OgawayamaStatus<T>
     {
         {method}//C'tor
         {method}public OgawayamaStatus(ErrorCode error_code, T sub_error_code)
     }
 
-    note top of OgawayamaStatus : ogawayamaのstub::Transactionが返すエラーコード
-
     class OlapStatus<T>
     {
         {method}//C'tor
         {method}public OlapStatus(ErrorCode error_code, T sub_error_code)
     }
-
-    note top of OlapStatus : OlapReceiverが返すエラーコード
 
 AllComponentsSuccessStatus -|> Status
 OgawayamaStatus -|> Status
