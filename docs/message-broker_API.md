@@ -4,6 +4,7 @@
 
 ## 各クラスの説明
 ### MessageBroker
+#### 説明
 * メッセージを送信する。
 #### メソッド
 * Status send_message(Message* message)
@@ -12,7 +13,8 @@
     * 事前条件：Messageクラスのすべてのフィールドがセットされている。
     * 事後条件：Statusクラスを利用して、概要エラーコード・詳細エラーコードを返す。詳細は[Statusクラス](#statusクラス)を参照。
 
-### Messageクラス
+### Message
+#### 説明
 * メッセージの内容、メッセージの受信者リストを保持する。
 
 #### フィールド
@@ -40,13 +42,14 @@
 * void set_receiver(Receiver *receiver_)
   * メッセージの受信者をセットする。
 
-### Message派生クラス一覧
+#### Message派生クラス一覧
 
 |クラス名|ユーザーが入力した構文|
 |---|---|
 |CreateTableMessage|CREATE TABLE構文|
 
 ### Receiver
+#### 説明
 * メッセージを受信する。
 #### メソッド
 * Status receive_message(Message* message)
@@ -55,9 +58,11 @@
     * 事前条件：なし
     * 事後条件：Statusクラスを利用して、概要エラーコード・詳細エラーコードを返す。詳細は[Statusクラス](#statusクラス)を参照。
 
-### Statusクラス
+### Status
+#### 説明
 * send_message()やreceive_message()の戻り値
 
+#### クラス図
   ![](img/out/Status/Status.png)
 
 #### フィールド
