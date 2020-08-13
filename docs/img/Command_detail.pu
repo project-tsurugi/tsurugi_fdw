@@ -1,0 +1,46 @@
+' =========================================================
+'
+' =========================================================
+@startuml Command_detail
+left to right direction
+skinparam defaultFontSize 20
+
+package "manager/message-broker" {
+  namespace manager::message{
+    abstract class Receiver {
+      {abstract} Status receive_message(Message* message)
+    }
+
+    abstract class Message{
+    	{field}MessageId id　　　　　　
+    	{field}uint64_t object_id　　
+    	{field}std::vector<Receiver*> receivers
+    	{field}std::string message_type_name
+      {method}// C'tor
+    	{method}Message(...)
+      {method}
+      {method}// set receiver
+    	{method}void set_receiver(Receiver *receiver_)
+      {method}
+      {method}// getter
+    	{method}MessageId  get_id()
+    	{method}uint64_t    get_object_id()
+    	{method}std::string get_message_type_name()
+    }
+
+    class CreateTableMessage {
+      {method}// C'tor
+    	{method}CreateTableMessage(uint64_t object_id)
+    }
+
+    class MessageBroker {
+      {method}Status send_message(Message* message)
+    }
+
+    MessageBroker --> Message
+    Message --> Receiver
+    CreateTableMessage -|> Message
+  }
+}
+
+@enduml
