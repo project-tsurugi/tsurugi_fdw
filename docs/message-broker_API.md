@@ -31,17 +31,16 @@
 |message_type_name|エラーメッセージ出力用の文字列　例）"CREATE TABLE"|
 
 * id
-  * 列挙型(enum class)
+  * ユーザーが入力した構文に応じて、各コンポーネントにその構文に対応するメッセージIDを伝える。
+  * 型:列挙型(enum class)
     * 規定型:int
     * 次の通り管理する。
       * コンポーネント名：manager/message-broker
       * 名前空間：manager::message 
     * メッセージID一覧
-      * ユーザーが入力した構文に応じて、各コンポーネントにその構文に対応するメッセージIDを伝える。
-
-        |メッセージID|ユーザーが入力した構文|
-        |---|---|
-        |CREATE_TABLE|CREATE TABLE構文|
+      |メッセージID|ユーザーが入力した構文|
+      |---|---|
+      |CREATE_TABLE|CREATE TABLE構文|
 
 #### メソッド
 * void set_receiver(Receiver *receiver_)
@@ -88,10 +87,9 @@
 
 * component_id
   * エラーコードを返すコンポーネントに対して、コンポーネントを一意に特定するためID
-  * 列挙型(enum class)で作成する。
+  * 型:列挙型(enum class)
     * 規定型:int
     * コンポーネントID一覧
-
       |コンポーネントID|コンポーネント|
       |---|---|
       |ALL_COMPONENTS|すべてのコンポーネント|
