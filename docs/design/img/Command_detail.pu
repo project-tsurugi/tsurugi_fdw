@@ -7,45 +7,45 @@ skinparam defaultFontSize 20
 
 package "manager/message-broker" {
   abstract class Receiver {
-    {abstract} public virtual Status receive_message(Message* message) = 0;
+    {abstract} Status receive_message(Message* message)
   }
 
   abstract class Message{
-  	{field} private MessageId id;　　　　　　　　　
-  	{field} private uint64_t object_id;　　　　
-  	{field} private std::vector<Receiver*> receivers;　
-  	{field} private std::string message_type_name;
+  	{field}MessageId id　　　　　　
+  	{field}uint64_t object_id　　
+  	{field}std::vector<Receiver*> receivers
+  	{field}std::string message_type_name
     {method}// C'tor
-  	{method}public Message(...)
+  	{method}Message(...)
     {method}
     {method}// set receiver
-  	{method}public void set_receiver(Receiver *receiver_)
+  	{method}void set_receiver(Receiver *receiver_)
     {method}
     {method}// getter
-  	{method}public MessageId  get_id();
-  	{method}public uint64_t    get_object_id();
-  	{method}public std::string get_message_type_name();
+  	{method}MessageId  get_id()
+  	{method}uint64_t    get_object_id()
+  	{method}std::string get_message_type_name()
   }
 
   class CreateTableMessage {
     {method}// C'tor
-  	{method}public CreateTableMessage(uint64_t object_id)
+  	{method}CreateTableMessage(uint64_t object_id)
   }
 
   class MessageBroker {
-    public Status send_message(Message* message);
+    {method}Status send_message(Message* message)
   }
 }
 
 package ogawayama {
   class "stub::Transaction" {
-    public Status receive_message(Message* message)
+    {method}Status receive_message(Message* message)
   }
 }
 
 package OLAP_EntryPoint {
   class OlapReceiver {
-    public Status receive_message(Message* message)
+    {method}Status receive_message(Message* message)
   }
 }
 
