@@ -2,32 +2,34 @@
 ## クラス図
 ![](img/out/Command_detail/Command_detail.png)
 
+## 用語
+* 派生Receiver
+  * Receiverクラスを継承するクラス
+
 ## 各クラスの説明
 ### MessageBroker
 #### 説明
 * メッセージを送信する。
 #### メソッド
 * Status send_message(Message* message)
-  * 処理内容：MessageクラスにセットされたすべてのReceiverに対して、receiver_message()メソッドでメッセージを送信する。
+  * 処理内容：Messageクラスにセットされたすべての派生Receiverに対して、receiver_message()メソッドでメッセージを送信する。
   * 条件
     * 事前条件：Messageクラスのすべてのフィールドがセットされている。
     * 事後条件：
-      * メッセージを受信したコンポーネントが返したエラーコードが「FAILURE」である場合、概要エラーコード・詳細エラーコードを返す。
-        * 概要エラーコード：メッセージに対応する処理が成功したか失敗したか
-        * 詳細エラーコード：各コンポーネントで定義されているエラーコード
-      * すべてのコンポーネントがreceiver_message()メソッドで返したエラーコードが「SUCCESS」である場合、AllComponentsSuccessStatusを返す。
+      * 派生Receiverが返した概要エラーコードが「FAILURE」である場合、「FAILURE」が返ってきた時点で即座に、「FAILURE」を返した派生ReceiverのStatusを返す。
+      * すべての派生Receiverが返したエラーコードが「SUCCESS」である場合、AllComponentsSuccessStatusを返す。
       * 詳細は[Statusクラス](#statusクラス)を参照。
 
 ### Message
 #### 説明
-* メッセージの内容、メッセージのReceiverリストを保持する。
+* メッセージの内容、メッセージの受信者である派生Receiverリストを保持する。
 
 #### フィールド
 |フィールド名|説明|
 |---|---|
 |id|ユーザーが入力した構文を伝えるためのID|
 |object_id|追加・更新・削除される対象のオブジェクトID 例）テーブルメタデータのオブジェクトID|
-|receivers|メッセージのReceiverのリスト。例）OltpReceiver、OlapReceiver|
+|receivers|メッセージの受信者である派生Receiverリスト。例）OltpReceiver、OlapReceiver|
 |message_type_name|エラーメッセージ出力用の文字列　例）"CREATE TABLE"|
 
 * id
@@ -44,7 +46,7 @@
 
 #### メソッド
 * void set_receiver(Receiver *receiver_)
-  * メッセージのReceiverをセットする。
+  * メッセージの受信者である派生Receiverをセットする。
 
 #### Message派生クラス一覧
 
@@ -57,13 +59,11 @@
 * メッセージを受信する。
 #### メソッド
 * Status receive_message(Message* message)
-  * 処理内容：メッセージを受信する。
+  * 処理内容：メッセージを受信して、派生Receiverはメッセージに対応する処理を実行、または、実行を指示する。
   * 条件
     * 事前条件：なし
     * 事後条件：
-      * メッセージを受信したコンポーネントは、概要エラーコード・詳細エラーコードを返す。
-        * 概要エラーコード：メッセージに対応する処理が成功した場合「SUCCESS」。失敗した場合「FAILURE」
-        * 詳細エラーコード：各コンポーネントで定義されているエラーコード
+      * メッセージに対応する処理を実行後、派生Receiverは、Statusクラスのインスタンス(概要エラーコード・詳細エラーコード)を返す。
       * 詳細は[Statusクラス](#statusクラス)を参照。
 
 ### Status
@@ -79,18 +79,18 @@
 |フィールド名|説明|どのコンポーネントが管理するか|名前空間|
 |---|---|---|---|
 |error_code|概要エラーコード|manager/message-broker|manager::message|
-|sub_error_code|詳細エラーコード|Receiverを継承するコンポーネント|Receiverを継承するコンポーネントで管理|
+|sub_error_code|詳細エラーコード|派生Receiver|派生Receiverで管理|
 |component_id|コンポーネントID|manager/message-broker|manager::message|
 
 * 概要エラーコードと対応する詳細エラーコード
 
 |error_code|sub_error_code|
 |---|---|
-|SUCCESS|Receiverを継承するコンポーネントで管理される成功したときのエラーコード 例)ogawayama::stub::ErrorCode::OK|
-|FAILURE|Receiverを継承するコンポーネントで管理される成功以外のエラーコード 例)ogawayama::stub::ErrorCode::UNKNOWN,ogawayama::stub::ErrorCode::SERVER_FAILUREなど|
+|SUCCESS|派生Receiverで管理される成功したときのエラーコード 例)ogawayama::stub::ErrorCode::OK|
+|FAILURE|派生Receiverで管理される成功以外のエラーコード 例)ogawayama::stub::ErrorCode::UNKNOWN,ogawayama::stub::ErrorCode::SERVER_FAILUREなど|
 
 * component_id
-  * エラーコードを返すコンポーネントに対して、コンポーネントを一意に特定するためID
+  * 派生Receiverを一意に特定するためID
   * 型:列挙型(enum class)
     * 規定型:int
     * コンポーネントID一覧
