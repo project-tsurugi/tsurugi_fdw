@@ -30,7 +30,25 @@
 ## クラス図
 ![](img/out/Command_detail/Command_detail.png)
 
+### MessageBroker
+* メッセージを送信する。
+#### メソッド
+* Status send_message(Message* message)
+  * 処理内容：メッセージを送信する。
+  * 条件
+    * 事前条件：Messageクラスのすべてのフィールドがセットされている。
+    * 事後条件：Statusクラスを利用して、概要エラーコード・詳細エラーコードを返す。詳細は[Statusクラス](#statusクラス)を参照。
+
 ### Messageクラス
+* メッセージの内容、メッセージの受信者リストを保持する。
+#### フィールド
+|変数名|説明|
+|---|---|
+|id|ユーザーが入力した構文を伝えるためのID|
+|object_id|追加・更新・削除される対象のオブジェクトID 例）テーブルメタデータのオブジェクトID|
+|receivers|メッセージの受信者のリスト。例）OltpReceiver、OlapReceiver|
+|message_type_name|エラーメッセージ出力用の文字列　例）"CREATE TABLE"|
+
 * id
   * 列挙型(enum class)で作成する。規定型はintとする。
   * 列挙子一覧
@@ -40,19 +58,34 @@
     |---|---|
     |CREATE_TABLE|CREATE TABLE構文|
 
+#### メソッド
+* void set_receiver(Receiver *receiver_)
+  * メッセージの受信者をセットする。
+
 ### Message派生クラス一覧
 
 |クラス名|ユーザーが入力した構文|
 |---|---|
 |CreateTableMessage|CREATE TABLE構文|
 
+### Receiver
+* メッセージを受信する。
+#### メソッド
+* Status receive_message(Message* message)
+  * 処理内容：メッセージを受信する。
+  * 条件
+    * 事前条件：なし
+    * 事後条件：Statusクラスを利用して、概要エラーコード・詳細エラーコードを返す。詳細は[Statusクラス](#statusクラス)を参照。
+
 ### Statusクラス
 * send_message()やreceive_message()の戻り値
-* message-brokerが管理する。
-* 名前空間は、manager::messageとする。
-![](img/out/Status/Status.png)
+* message-brokerが管理する。名前空間は、manager::messageとする。  
 
-#### メンバー変数
+  ![](img/out/Status/Status.png)
+
+#### フィールド
+* 概要エラーコードと対応する詳細エラーコード
+
 |error_code|sub_error_code|
 |---|---|
 |manager::message::SUCCESS|各コンポーネントで管理される成功したときのエラーコード 例)ogawayama::stub::ErrorCode::OK|
