@@ -31,9 +31,8 @@
 ![](img/out/Command_detail/Command_detail.png)
 
 ### Messageクラス
-* message_id
-  * 列挙型(enum class)で作成する。
-  * 規定型はintとする。
+* id
+  * 列挙型(enum class)で作成する。規定型はintとする。
   * 列挙子一覧
     * ユーザーが入力した構文に応じて、各コンポーネントにその構文に対応する列挙子の値を伝える。
 
@@ -55,8 +54,7 @@
 
 * component_id
   * エラーコードを返すコンポーネントに対して、コンポーネントを一意に特定するためID
-  * 列挙型(enum class)で作成する。
-  * 規定型はintとする。
+  * 列挙型(enum class)で作成する。規定型はintとする。
   * 列挙子一覧
     |列挙子|対応するコンポーネント|
     |---|---|
