@@ -12,7 +12,7 @@
 * メッセージを送信する。
 #### メソッド
 * Status send_message(Message* message)
-  * 処理内容：Messageクラスにセットされたすべての派生Receiverに対して、receiver_message()メソッドでメッセージを送信する。
+  * 処理内容：Messageクラスにセットされたすべての派生Receiverに対して、receive_message()メソッドでメッセージを送信する。
   * 条件
     * 事前条件：Messageクラスのすべてのフィールドがセットされている。
     * 事後条件：
@@ -102,7 +102,7 @@
 
 #### AllReceiversSuccessStatus
 * send_message()メソッドで返す戻り値。
-* すべての派生Receiverがreceiver_message()メソッドで返したエラーコードが「SUCCESS」である場合の戻り値。
+* すべての派生Receiverがreceive_message()メソッドで返したエラーコードが「SUCCESS」である場合の戻り値。
 * 各フィールドに格納される値
   |フィールド名| 値|
   |---|---|
@@ -111,7 +111,7 @@
   | receiver_id |  ALL_RECEIVERS |
 
 #### OgawayamaStatus
-* ogawayamaのstub::Transactionがreceiver_message()メソッドで返す戻り値
+* ogawayamaのstub::Transactionがreceive_message()メソッドで返す戻り値
 * 各フィールドに格納される値
   |フィールド名| 値|
   |---|---|
@@ -120,7 +120,7 @@
   | receiver_id |  OGAWAYAMA |
 
 #### OlapStatus
-* OlapReceiverががreceiver_message()メソッドで返す戻り値
+* OlapReceiverががreceive_message()メソッドで返す戻り値
 * 各フィールドに格納される値
   |フィールド名| 値|
   |---|---|
