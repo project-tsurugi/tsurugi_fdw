@@ -3,7 +3,6 @@
 ' =========================================================
 @startuml Command_detail
 left to right direction
-skinparam defaultFontSize 20
 
 package "manager/message-broker" {
   namespace manager::message{
