@@ -1,10 +1,10 @@
 # message-broker API
-## クラス図
-![](img/out/Command_detail/Command_detail.png)
-
 ## 用語
 * 派生Receiver
   * Receiverクラスを継承するクラス
+
+## クラス図
+![](img/out/Command_detail/Command_detail.png)
 
 ## 各クラスの説明
 ### MessageBroker
@@ -17,7 +17,7 @@
     * 事前条件：Messageクラスのすべてのフィールドがセットされている。
     * 事後条件：
       * 派生Receiverが返した概要エラーコードが「FAILURE」である場合、「FAILURE」が返ってきた時点で即座に、「FAILURE」を返した派生ReceiverのStatusを返す。
-      * すべての派生Receiverが返したエラーコードが「SUCCESS」である場合、AllComponentsSuccessStatusを返す。
+      * すべての派生Receiverが返したエラーコードが「SUCCESS」である場合、AllReceiversSuccessStatusを返す。
       * 詳細は[Statusクラス](#statusクラス)を参照。
 
 ### Message
@@ -33,11 +33,11 @@
 |message_type_name|エラーメッセージ出力用の文字列　例）"CREATE TABLE"|
 
 * id
-  * ユーザーが入力した構文に応じて、各コンポーネントにその構文に対応するメッセージIDを伝える。
+  * ユーザーが入力した構文に応じて、すべての派生Receiverにその構文に対応するメッセージIDを伝える。
   * 型:列挙型(enum class)
     * 規定型:int
     * 次の通り管理する。
-      * コンポーネント名：manager/message-broker
+      * リポジトリ名：manager/message-broker
       * 名前空間：manager::message 
     * メッセージID一覧
       |メッセージID|ユーザーが入力した構文|
@@ -76,11 +76,11 @@
 #### フィールド
 * フィールド一覧
 
-|フィールド名|説明|どのコンポーネントが管理するか|名前空間|
+|フィールド名|説明|リポジトリ名|名前空間|
 |---|---|---|---|
 |error_code|概要エラーコード|manager/message-broker|manager::message|
-|sub_error_code|詳細エラーコード|派生Receiver|派生Receiverで管理|
-|component_id|コンポーネントID|manager/message-broker|manager::message|
+|sub_error_code|詳細エラーコード|派生Receiverが配置されるリポジトリ|派生Receiverで管理|
+|receiver_id|派生ReceiverのID|manager/message-broker|manager::message|
 
 * 概要エラーコードと対応する詳細エラーコード
 
@@ -89,26 +89,26 @@
 |SUCCESS|派生Receiverで管理される成功したときのエラーコード 例)ogawayama::stub::ErrorCode::OK|
 |FAILURE|派生Receiverで管理される成功以外のエラーコード 例)ogawayama::stub::ErrorCode::UNKNOWN,ogawayama::stub::ErrorCode::SERVER_FAILUREなど|
 
-* component_id
+* receiver_id
   * 派生Receiverを一意に特定するためID
   * 型:列挙型(enum class)
     * 規定型:int
-    * コンポーネントID一覧
-      |コンポーネントID|コンポーネント|
+    * 派生ReceiverのID一覧
+      |派生ReceiverのID|派生Receiver|
       |---|---|
-      |ALL_COMPONENTS|すべてのコンポーネント|
+      |ALL_RECEIVERS|すべての派生Receiver|
       |OGAWAYAMA|ogawayama|
       |OLAP|olap|
 
-#### AllComponentsSuccessStatus
+#### AllReceiversSuccessStatus
 * send_message()メソッドで返す戻り値。
-* すべてのコンポーネントがreceiver_message()メソッドで返したエラーコードが「SUCCESS」である場合の戻り値。
+* すべての派生Receiverがreceiver_message()メソッドで返したエラーコードが「SUCCESS」である場合の戻り値。
 * 各フィールドに格納される値
   |フィールド名| 値|
   |---|---|
   | error_code | SUCCESS | 
   | sub_error_code | SUCCESS |
-  | component_id |  ALL_COMPONENTS |
+  | receiver_id |  ALL_RECEIVERS |
 
 #### OgawayamaStatus
 * ogawayamaのstub::Transactionがreceiver_message()メソッドで返す戻り値
@@ -116,8 +116,8 @@
   |フィールド名| 値|
   |---|---|
   | error_code | manager/message-brokerが管理する概要エラーコード | 
-  | sub_error_code | 各コンポーネントが管理する詳細エラーコード |
-  | component_id |  OGAWAYAMA |
+  | sub_error_code | ogawayamaが管理する詳細エラーコード |
+  | receiver_id |  OGAWAYAMA |
 
 #### OlapStatus
 * OlapReceiverががreceiver_message()メソッドで返す戻り値
@@ -125,5 +125,5 @@
   |フィールド名| 値|
   |---|---|
   | error_code | manager/message-brokerが管理する概要エラーコード | 
-  | sub_error_code | 各コンポーネントが管理する詳細エラーコード |
-  | component_id |  OLAP |
+  | sub_error_code | OLAPが管理する詳細エラーコード |
+  | receiver_id |  OLAP |

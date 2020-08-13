@@ -10,17 +10,17 @@ namespace manager::message {
     abstract class Status<T>
     {
         {method}//C'tor
-        {method}public Status(ErrorCode error_code, T sub_error_code, ComponentId component_id)
+        {method}public Status(ErrorCode error_code, T sub_error_code, ReceiverId receiver_id)
         {method}//getter
         {method}public ErrorCode get_error_code()
         {method}public T get_sub_error_code()
-        {method}public ComponentId get_component_id()
-        {field}private ErrorCode error_code //概要エラーコード
-        {field}private T sub_error_code //詳細エラーコード
-        {field}private ComponentId component_id //コンポーネントID
+        {method}public ReceiverId get_receiver_id()
+        {field}private ErrorCode error_code
+        {field}private T sub_error_code
+        {field}private ReceiverId receiver_id
     }
 
-    class AllComponentsSuccessStatus<ErrorCode>
+    class AllReceiversSuccessStatus<ErrorCode>
     {
     }
 
@@ -36,7 +36,7 @@ namespace manager::message {
         {method}public OlapStatus(ErrorCode error_code, T sub_error_code)
     }
 
-AllComponentsSuccessStatus -|> Status
+AllReceiversSuccessStatus -|> Status
 OgawayamaStatus -|> Status
 OlapStatus -|> Status
 }
