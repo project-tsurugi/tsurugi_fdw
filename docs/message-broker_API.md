@@ -8,21 +8,26 @@
 * メッセージを送信する。
 #### メソッド
 * Status send_message(Message* message)
-  * 処理内容：メッセージを送信する。
+  * 処理内容：MessageクラスにセットされたすべてのReceiverに対して、メッセージを送信する。
   * 条件
     * 事前条件：Messageクラスのすべてのフィールドがセットされている。
-    * 事後条件：Statusクラスを利用して、概要エラーコード・詳細エラーコードを返す。詳細は[Statusクラス](#statusクラス)を参照。
+    * 事後条件：
+      * メッセージを受信したコンポーネントが返したエラーコードが「FAILURE」である場合、概要エラーコード・詳細エラーコードを返す。
+        * 概要エラーコード：メッセージに対応する処理が成功したか失敗したか
+        * 詳細エラーコード：各コンポーネントで定義されているエラーコード
+      * すべてのコンポーネントが返したエラーコードが「SUCCESS」である場合、AllComponentsSuccessStatusを返す。
+      * 詳細は[Statusクラス](#statusクラス)を参照。
 
 ### Message
 #### 説明
-* メッセージの内容、メッセージの受信者リストを保持する。
+* メッセージの内容、メッセージのReceiverリストを保持する。
 
 #### フィールド
 |変数名|説明|
 |---|---|
 |id|ユーザーが入力した構文を伝えるためのID|
 |object_id|追加・更新・削除される対象のオブジェクトID 例）テーブルメタデータのオブジェクトID|
-|receivers|メッセージの受信者のリスト。例）OltpReceiver、OlapReceiver|
+|receivers|メッセージのReceiverのリスト。例）OltpReceiver、OlapReceiver|
 |message_type_name|エラーメッセージ出力用の文字列　例）"CREATE TABLE"|
 
 * id
@@ -40,7 +45,7 @@
 
 #### メソッド
 * void set_receiver(Receiver *receiver_)
-  * メッセージの受信者をセットする。
+  * メッセージのReceiverをセットする。
 
 #### Message派生クラス一覧
 
@@ -56,7 +61,11 @@
   * 処理内容：メッセージを受信する。
   * 条件
     * 事前条件：なし
-    * 事後条件：Statusクラスを利用して、概要エラーコード・詳細エラーコードを返す。詳細は[Statusクラス](#statusクラス)を参照。
+    * 事後条件：
+      * メッセージを受信したコンポーネントは、概要エラーコード・詳細エラーコードを返す。
+        * 概要エラーコード：メッセージに対応する処理が成功した場合「SUCCESS」。失敗した場合「FAILURE」
+        * 詳細エラーコード：各コンポーネントで定義されているエラーコード
+      * 詳細は[Statusクラス](#statusクラス)を参照。
 
 ### Status
 #### 説明
@@ -88,3 +97,12 @@
       |ALL_COMPONENTS|すべてのコンポーネント|
       |OGAWAYAMA|ogawayama|
       |OLAP|olap|
+
+#### AllComponentsSuccessStatus
+* send_message()の戻り値。すべてのコンポーネントが、受信したメッセージに対応する処理を成功した場合返される。
+* 各フィールドに格納される値
+  |フィールド名| 値|
+  |---|---|
+  | error_code | SUCCESS | 
+  | sub_error_code | SUCCESS |
+  | component_id |  ALL_COMPONENTS |
