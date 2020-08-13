@@ -74,16 +74,19 @@
   ![](img/out/Status/Status.png)
 
 #### フィールド
-* 概要エラーコード・コンポーネントIDは、次の通り管理する。
-  * コンポーネント名：manager/message-broker
-  * 名前空間：manager::message  
-* 詳細エラーコードは、各コンポーネントが管理する。名前空間は各コンポーネントが決定する。
+* フィールド一覧
+|フィールド名|説明|どのコンポーネントが管理するか|名前空間|
+|---|---|---|---|
+|error_code|概要エラーコード|manager/message-broker|manager::message|
+|sub_error_code|詳細エラーコード|Receiverを継承するコンポーネント|Receiverを継承するコンポーネントで管理|
+|component_id|コンポーネントID|manager/message-broker|manager::message|
+
 * 概要エラーコードと対応する詳細エラーコード
 
 |error_code|sub_error_code|
 |---|---|
-|SUCCESS|各コンポーネントで管理される成功したときのエラーコード 例)ogawayama::stub::ErrorCode::OK|
-|FAILURE|各コンポーネントで管理される成功以外のエラーコード 例)ogawayama::stub::ErrorCode::UNKNOWN,ogawayama::stub::ErrorCode::SERVER_FAILUREなど|
+|SUCCESS|Receiverを継承するコンポーネントで管理される成功したときのエラーコード 例)ogawayama::stub::ErrorCode::OK|
+|FAILURE|Receiverを継承するコンポーネントで管理される成功以外のエラーコード 例)ogawayama::stub::ErrorCode::UNKNOWN,ogawayama::stub::ErrorCode::SERVER_FAILUREなど|
 
 * component_id
   * エラーコードを返すコンポーネントに対して、コンポーネントを一意に特定するためID
