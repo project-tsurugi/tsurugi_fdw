@@ -141,7 +141,7 @@ entity Receiver
 end box
 
 box "コンポーネント名：\nOLAP" #LightPink
-control "OLAP_Receiver" as olap_receiver
+control "OlapReceiver" as olap_receiver
 end box
 
 box "コンポーネント名：\nmanager/metadata-manager" #GreenYellow

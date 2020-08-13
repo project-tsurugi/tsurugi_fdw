@@ -7,45 +7,45 @@ skinparam defaultFontSize 20
 
 package "manager/message-broker" {
   abstract class Receiver {
-    {abstract} public virtual ErrorCode receive_message(Message* message) = 0;
+    {abstract} public virtual Status receive_message(Message* message) = 0;
   }
 
   abstract class Message{
-  	{field} private MESSAGE_ID id;　　　　　　　　　// message type ID
-  	{field} private uint64_t object_id;　　　　　　　　// ID of object that will be added, updated, or deleted
-  	{field} private vector<Receiver*> receivers;　　　// receivers
-  	{field} private std::string message_type_name;　// for error message ex) CREATE TABLE
-    {method}// C'tors
-  	{method}public Message(MESSAGE_ID id, uint64_t object_id, std::string message_type_name)
+  	{field} private MessageId id;　　　　　　　　　
+  	{field} private uint64_t object_id;　　　　
+  	{field} private std::vector<Receiver*> receivers;　
+  	{field} private std::string message_type_name;
+    {method}// C'tor
+  	{method}public Message(MessageId id, uint64_t object_id, std::string message_type_name)
     {method}
     {method}// set receiver
-  	{method}{abstract} public void set_receiver(Receiver *receiver_)
+  	{method}public void set_receiver(Receiver *receiver_)
     {method}
     {method}// getter
-  	{method}{abstract} public MESSAGE_ID  get_id();
-  	{method}{abstract} public uint64_t    get_object_id();
-  	{method}{abstract} public std::string get_message_type_name();
+  	{method}public MessageId  get_id();
+  	{method}public uint64_t    get_object_id();
+  	{method}public std::string get_message_type_name();
   }
 
   class CreateTableMessage {
-    {method}// C'tors
+    {method}// C'tor
   	{method}public CreateTableMessage(uint64_t object_id)
   }
 
   class MessageBroker {
-    public ErrorCode send_message(Message* message);
+    public Status send_message(Message* message);
   }
 }
 
 package ogawayama {
   class "stub::Transaction" {
-    public ErrorCode receive_message(Message* message)
+    public Status receive_message(Message* message)
   }
 }
 
 package OLAP_EntryPoint {
-  class OLAP_Receiver {
-    public ErrorCode receive_message(Message* message)
+  class OlapReceiver {
+    public Status receive_message(Message* message)
   }
 }
 
@@ -66,7 +66,7 @@ Client --> CreateTableMessage : create
 Client -> "stub::Transaction" : create
 MessageBroker <- Client : create
 
-OLAP_Receiver -|> Receiver
-Client -> OLAP_Receiver : create
+OlapReceiver -|> Receiver
+Client -> OlapReceiver : create
 
 @enduml

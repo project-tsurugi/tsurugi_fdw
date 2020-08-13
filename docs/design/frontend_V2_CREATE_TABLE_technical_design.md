@@ -30,6 +30,40 @@
 ## クラス図
 ![](img/out/Command_detail/Command_detail.png)
 
+### Messageクラス
+* message_id
+  * 列挙型(enum class)で作成する。
+  * 規定型はintとする。
+  * 列挙子一覧
+    * ユーザーが入力した構文に応じて、各コンポーネントにその構文に対応する列挙子の値を伝える。
+
+    |列挙子|ユーザーが入力した構文|
+    |---|---|
+    |CREATE_TABLE|CREATE TABLE構文|
+
+### Statusクラス
+* send_message()やreceive_message()の戻り値
+* message-brokerが管理する。
+* 名前空間は、manager::messageとする。
+![](img/out/Status/Status.png)
+
+#### メンバー変数
+|error_code|sub_error_code|
+|---|---|
+|manager::message::SUCCESS|各コンポーネントで管理される成功したときのエラーコード 例)ogawayama::stub::ErrorCode::OK|
+|manager::message::FAILURE|各コンポーネントで管理される成功以外のエラーコード 例)ogawayama::stub::ErrorCode::UNKNOWN,ogawayama::stub::ErrorCode::SERVER_FAILUREなど|
+
+* component_id
+  * エラーコードを返すコンポーネントに対して、コンポーネントを一意に特定するためID
+  * 列挙型(enum class)で作成する。
+  * 規定型はintとする。
+  * 列挙子一覧
+    |列挙子|対応するコンポーネント|
+    |---|---|
+    |ALL_COMPONENTS|すべてのコンポーネント|
+    |OGAWAYAMA|ogawayama|
+    |OLAP|olap|
+
 ## シーケンス図
 ### 概要
 ![](img/out/CREATE_TABLE_overview/テーブル定義シーケンス概要.png)
