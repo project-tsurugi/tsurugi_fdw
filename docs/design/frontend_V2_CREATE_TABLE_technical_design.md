@@ -40,6 +40,12 @@
     |---|---|
     |CREATE_TABLE|CREATE TABLE構文|
 
+### Message派生クラス一覧
+
+|クラス名|ユーザーが入力した構文|
+|---|---|
+|CreateTableMessage|CREATE TABLE構文|
+
 ### Statusクラス
 * send_message()やreceive_message()の戻り値
 * message-brokerが管理する。

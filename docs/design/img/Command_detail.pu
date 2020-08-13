@@ -16,7 +16,7 @@ package "manager/message-broker" {
   	{field} private std::vector<Receiver*> receivers;　
   	{field} private std::string message_type_name;
     {method}// C'tor
-  	{method}public Message(MessageId id, uint64_t object_id, std::string message_type_name)
+  	{method}public Message(...)
     {method}
     {method}// set receiver
   	{method}public void set_receiver(Receiver *receiver_)
