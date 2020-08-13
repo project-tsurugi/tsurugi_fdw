@@ -75,6 +75,7 @@
 
 #### フィールド
 * フィールド一覧
+
 |フィールド名|説明|どのコンポーネントが管理するか|名前空間|
 |---|---|---|---|
 |error_code|概要エラーコード|manager/message-broker|manager::message|
