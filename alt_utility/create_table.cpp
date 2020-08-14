@@ -17,12 +17,17 @@
  *	@brief  Dispatch the create-table command to ogawayama.
  */
 
+#include <regex>
 #include <string>
 #include <string_view>
-#include <regex>
 
 #include "ogawayama/stub/api.h"
 #include "stub_manager.h"
+
+#include "manager/message/olap_receiver.h"
+#include "manager/message/message.h"
+#include "manager/message/message_broker.h"
+#include "manager/message/status.h"
 #include "manager/metadata/metadata.h"
 #include "manager/metadata/datatypes.h"
 
@@ -31,7 +36,8 @@ using namespace manager;
 using namespace ogawayama;
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 #include "postgres.h"
 #include "nodes/parsenodes.h"
@@ -40,7 +46,6 @@ extern "C" {
 #endif
 
 #include "tablecmds.h"
-#include "CreateTableCommand.h"
 
 #include "create_table.h"
 
@@ -66,11 +71,17 @@ bool create_table(List *stmts)
     {
         // error handling
     }
-    else
-    {
+    else {
         /* parameters sended to ogawayama */
-        CreateTableCommand command{object_id};
-        elog(DEBUG2, "command type name: %s, object id: %d", command.get_command_type_name().c_str(), command.get_object_id());
+        message::CreateTableMessage ct_msg{object_id};
+
+        elog(NOTICE, "message type name: %s, object id: %d", ct_msg.get_message_type_name().c_str(), ct_msg.get_object_id());
+
+        message::MessageBroker broker;
+        message::OlapReceiver olap_receiver;
+        ct_msg.set_receiver(&olap_receiver);
+        message::Status status = broker.send_message(&ct_msg);
+        elog(NOTICE, "error code: %d, sub error code: %d", status.get_error_code(), status.get_sub_error_code());
     }
 
     return success;
