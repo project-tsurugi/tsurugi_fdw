@@ -123,7 +123,7 @@
   | receiver_id |  OGAWAYAMA |
 
 #### OlapStatus
-* OlapReceiverががreceive_message()メソッドで返す戻り値
+* OlapReceiverがreceive_message()メソッドで返す戻り値
 * コンストラクタで各フィールドに格納される値
   |フィールド名| 値|
   |---|---|
