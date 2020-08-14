@@ -10,7 +10,7 @@ package "manager/message-broker" {
       {abstract} Status receive_message(Message* message)
     }
 
-    abstract class Message{
+    class Message{
     	{field}MessageId id　　　　　　
     	{field}uint64_t object_id　　
     	{field}std::vector<Receiver*> receivers

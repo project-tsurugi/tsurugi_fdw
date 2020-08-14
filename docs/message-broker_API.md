@@ -10,14 +10,15 @@
 ### MessageBroker
 #### 説明
 * メッセージを送信する。
+
 #### メソッド
 * Status send_message(Message* message)
-  * 処理内容：Messageクラスにセットされたすべての派生Receiverに対して、receive_message()メソッドでメッセージを送信する。
+  * 処理内容：MessageBrokerは、Messageクラスにセットされたすべての派生Receiverに対して、receive_message()メソッドでメッセージを送信する。
   * 条件
     * 事前条件：Messageクラスのすべてのフィールドがセットされている。
     * 事後条件：
-      * 派生Receiverが返した概要エラーコードが「FAILURE」である場合、「FAILURE」が返ってきた時点で即座に、「FAILURE」を返した派生ReceiverのStatusを返す。
-      * すべての派生Receiverが返したエラーコードが「SUCCESS」である場合、AllReceiversSuccessStatusを返す。
+      * 派生Receiverが返した概要エラーコードが「FAILURE」である場合、「FAILURE」が返ってきた時点で即座に、「FAILURE」を返した派生Receiverに対応するStatusクラスのインスタンスを返す。
+      * すべての派生Receiverが返した概要エラーコードが「SUCCESS」である場合、AllReceiversSuccessStatusクラスのインスタンスを返す。
       * 詳細は[Statusクラス](#statusクラス)を参照。
 
 ### Message
@@ -27,13 +28,12 @@
 #### フィールド
 |フィールド名|説明|
 |---|---|
-|id|ユーザーが入力した構文を伝えるためのID|
+|id|メッセージID。ユーザーが入力した構文に応じて、すべての派生Receiverにその構文を伝えるためID。|
 |object_id|追加・更新・削除される対象のオブジェクトID 例）テーブルメタデータのオブジェクトID|
 |receivers|メッセージの受信者である派生Receiverリスト。例）OltpReceiver、OlapReceiver|
 |message_type_name|エラーメッセージ出力用の文字列　例）"CREATE TABLE"|
 
 * id
-  * ユーザーが入力した構文に応じて、すべての派生Receiverにその構文に対応するメッセージIDを伝える。
   * 型:列挙型(enum class)
     * 規定型:int
     * 次の通り管理する。
@@ -46,7 +46,7 @@
 
 #### メソッド
 * void set_receiver(Receiver *receiver_)
-  * メッセージの受信者である派生Receiverをセットする。
+  * Messageクラスの派生Receiverリストに、派生Receiverをセットする。
 
 #### Message派生クラス一覧
 
@@ -57,18 +57,21 @@
 ### Receiver
 #### 説明
 * メッセージを受信する。
+* 抽象クラス。
+
 #### メソッド
 * Status receive_message(Message* message)
-  * 処理内容：メッセージを受信して、派生Receiverはメッセージに対応する処理を実行、または、実行を指示する。
+  * 実際の処理は、
+  * 処理内容：派生Receiverは、メッセージを受信して、メッセージに対応する処理の実行または、実行を指示する。
   * 条件
     * 事前条件：なし
     * 事後条件：
-      * メッセージに対応する処理を実行後、派生Receiverは、Statusクラスのインスタンス(概要エラーコード・詳細エラーコード)を返す。
+      * 派生Receiverは、メッセージに対応する処理を実行後、Statusクラスのインスタンスを生成する。このとき、コンストラクタで概要エラーコード・詳細エラーコードをセットする。生成したStatusクラスのインスタンスを返す。
       * 詳細は[Statusクラス](#statusクラス)を参照。
 
 ### Status
 #### 説明
-* send_message()やreceive_message()の戻り値
+* send_message()およびreceive_message()の戻り値
 
 #### クラス図
   ![](img/out/Status/Status.png)
@@ -82,7 +85,7 @@
 |sub_error_code|詳細エラーコード|派生Receiverが配置されるリポジトリ|派生Receiverで管理|
 |receiver_id|派生ReceiverのID|manager/message-broker|manager::message|
 
-* 概要エラーコードと対応する詳細エラーコード
+* 概要エラーコードと詳細エラーコードの対応表
 
 |error_code|sub_error_code|
 |---|---|
@@ -101,9 +104,9 @@
       |OLAP|olap|
 
 #### AllReceiversSuccessStatus
-* send_message()メソッドで返す戻り値。
-* すべての派生Receiverがreceive_message()メソッドで返したエラーコードが「SUCCESS」である場合の戻り値。
-* 各フィールドに格納される値
+* send_message()メソッドの戻り値。
+* すべての派生Receiverがreceive_message()メソッドで返した概要エラーコードが「SUCCESS」である場合、send_message()メソッドの戻り値がこのクラスのインスタンスとなる。
+* コンストラクタで各フィールドに格納される値
   |フィールド名| 値|
   |---|---|
   | error_code | SUCCESS | 
@@ -112,7 +115,7 @@
 
 #### OgawayamaStatus
 * ogawayamaのstub::Transactionがreceive_message()メソッドで返す戻り値
-* 各フィールドに格納される値
+* コンストラクタで各フィールドに格納される値
   |フィールド名| 値|
   |---|---|
   | error_code | manager/message-brokerが管理する概要エラーコード | 
@@ -121,7 +124,7 @@
 
 #### OlapStatus
 * OlapReceiverががreceive_message()メソッドで返す戻り値
-* 各フィールドに格納される値
+* コンストラクタで各フィールドに格納される値
   |フィールド名| 値|
   |---|---|
   | error_code | manager/message-brokerが管理する概要エラーコード | 
