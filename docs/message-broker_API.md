@@ -22,27 +22,12 @@
 |error_code|概要エラーコード|manager/message-broker|manager::message|
 |sub_error_code|詳細エラーコード|派生Receiverが配置されるリポジトリ|派生Receiverで管理|
 
-|フィールド名|説明|派生ReceiverのIDを管理するリポジトリ名|派生ReceiverのIDを管理する名前空間|
-|---|---|---|---|
-|receiver_id|派生ReceiverのID|manager/message-broker|manager::message|
-
 * 概要エラーコードと詳細エラーコードの対応表
 
 |error_code|sub_error_code|
 |---|---|
 |SUCCESS|派生Receiverで管理される成功したときのエラーコードをint型にキャストした値。 例)(int)ogawayama::stub::ErrorCode::OK|
 |FAILURE|派生Receiverで管理される成功以外のエラーコードをint型にキャストした値。 例)(int)ogawayama::stub::ErrorCode::UNKNOWN,(int)ogawayama::stub::ErrorCode::SERVER_FAILUREなど|
-
-* receiver_id
-  * 派生Receiverを一意に特定するためID
-  * 型:列挙型(enum class)
-    * 規定型:int
-    * 派生ReceiverのID一覧
-      |派生ReceiverのID|派生Receiver|
-      |---|---|
-      |ALL_RECEIVERS|すべての派生Receiver|
-      |OGAWAYAMA|ogawayama|
-      |OLAP|olap|
 
 ### MessageBroker
 #### 説明
@@ -60,7 +45,6 @@
           |---|---|
           | error_code | SUCCESS | 
           | sub_error_code | (int)SUCCESS |
-          | receiver_id |  ALL_RECEIVERS |
       * 詳細は[Status](#status)を参照。
 
 ### Message
