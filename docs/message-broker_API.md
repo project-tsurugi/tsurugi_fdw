@@ -1,10 +1,12 @@
 # message-broker API
+2020.08.14 NEC
+
 ## 用語
 * 派生Receiver
   * Receiverクラスを継承するクラス
 
 ## クラス図
-![](img/out/Command_detail/Command_detail.png)
+![](img/out/Message/Message.png)
 
 ## 各クラスの説明
 ### MessageBroker
@@ -19,7 +21,7 @@
     * 事後条件：
       * 派生Receiverが返した概要エラーコードが「FAILURE」である場合、「FAILURE」が返ってきた時点で即座に、「FAILURE」を返した派生Receiverに対応するStatusクラスのインスタンスを返す。
       * すべての派生Receiverが返した概要エラーコードが「SUCCESS」である場合、AllReceiversSuccessStatusクラスのインスタンスを返す。
-      * 詳細は[Statusクラス](#statusクラス)を参照。
+      * 詳細は[Status](#status)を参照。
 
 ### Message
 #### 説明
@@ -67,7 +69,7 @@
     * 事前条件：なし
     * 事後条件：
       * 派生Receiverは、メッセージに対応する処理を実行後、Statusクラスのインスタンスを生成する。このとき、コンストラクタで概要エラーコード・詳細エラーコードをセットする。生成したStatusクラスのインスタンスを返す。
-      * 詳細は[Statusクラス](#statusクラス)を参照。
+      * 詳細は[Status](#status)を参照。
 
 ### Status
 #### 説明
@@ -130,3 +132,5 @@
   | error_code | manager/message-brokerが管理する概要エラーコード | 
   | sub_error_code | OLAPが管理する詳細エラーコード |
   | receiver_id |  OLAP |
+
+以上

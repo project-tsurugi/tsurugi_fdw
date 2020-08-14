@@ -1,7 +1,7 @@
 ' =========================================================
 '
 ' =========================================================
-@startuml Command_detail
+@startuml Message
 left to right direction
 
 package "manager/message-broker" {
