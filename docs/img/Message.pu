@@ -36,6 +36,19 @@ package "manager/message-broker" {
       {method}Status send_message(Message* message)
     }
 
+    abstract class Status
+    {
+        {method}//C'tor
+        {method}public Status(ErrorCode error_code, int sub_error_code, ReceiverId receiver_id)
+        {method}//getter
+        {method}public ErrorCode get_error_code()
+        {method}public int get_sub_error_code()
+        {method}public ReceiverId get_receiver_id()
+        {field}private ErrorCode error_code
+        {field}private int sub_error_code
+        {field}private ReceiverId receiver_id
+    }
+
     MessageBroker --> Message
     Message --> Receiver
     CreateTableMessage -|> Message

@@ -9,6 +9,44 @@
 ![](img/out/Message/Message.png)
 
 ## 各クラスの説明
+
+### Status
+#### 説明
+* send_message()およびreceive_message()の戻り値
+
+#### クラス図
+  ![](img/out/Status/Status.png)
+
+#### フィールド
+* フィールド一覧
+
+|フィールド名|説明|エラーコードを管理するリポジトリ名|エラーコードを管理する名前空間|
+|---|---|---|---|
+|error_code|概要エラーコード|manager/message-broker|manager::message|
+|sub_error_code|詳細エラーコード|派生Receiverが配置されるリポジトリ|派生Receiverで管理|
+
+|フィールド名|説明|派生ReceiverのIDを管理するリポジトリ名|派生ReceiverのIDを管理する名前空間|
+|---|---|---|---|
+|receiver_id|派生ReceiverのID|manager/message-broker|manager::message|
+
+* 概要エラーコードと詳細エラーコードの対応表
+
+|error_code|sub_error_code|
+|---|---|
+|SUCCESS|派生Receiverで管理される成功したときのエラーコードをint型にキャストした値。 例)(int)ogawayama::stub::ErrorCode::OK|
+|FAILURE|派生Receiverで管理される成功以外のエラーコードをint型にキャストした値。 例)(int)ogawayama::stub::ErrorCode::UNKNOWN,(int)ogawayama::stub::ErrorCode::SERVER_FAILUREなど|
+
+* receiver_id
+  * 派生Receiverを一意に特定するためID
+  * 型:列挙型(enum class)
+    * 規定型:int
+    * 派生ReceiverのID一覧
+      |派生ReceiverのID|派生Receiver|
+      |---|---|
+      |ALL_RECEIVERS|すべての派生Receiver|
+      |OGAWAYAMA|ogawayama|
+      |OLAP|olap|
+
 ### MessageBroker
 #### 説明
 * メッセージを送信する。
@@ -19,8 +57,13 @@
   * 条件
     * 事前条件：Messageクラスのすべてのフィールドがセットされている。
     * 事後条件：
-      * 派生Receiverが返した概要エラーコードが「FAILURE」である場合、「FAILURE」が返ってきた時点で即座に、「FAILURE」を返した派生Receiverに対応するStatusクラスのインスタンスを返す。
-      * すべての派生Receiverが返した概要エラーコードが「SUCCESS」である場合、AllReceiversSuccessStatusクラスのインスタンスを返す。
+      * 派生Receiverが返した概要エラーコードが「FAILURE」である場合、「FAILURE」が返ってきた時点で即座に、Statusクラスのインスタンスを返す。
+      * すべての派生Receiverが返した概要エラーコードが「SUCCESS」である場合、Statusクラスのコンストラクタに次の値をセットして返す。
+          |フィールド名| 値|
+          |---|---|
+          | error_code | SUCCESS | 
+          | sub_error_code | (int)SUCCESS |
+          | receiver_id |  ALL_RECEIVERS |
       * 詳細は[Status](#status)を参照。
 
 ### Message
@@ -70,67 +113,5 @@
     * 事後条件：
       * 派生Receiverは、メッセージに対応する処理を実行後、Statusクラスのインスタンスを生成する。このとき、コンストラクタで概要エラーコード・詳細エラーコードをセットする。生成したStatusクラスのインスタンスを返す。
       * 詳細は[Status](#status)を参照。
-
-### Status
-#### 説明
-* send_message()およびreceive_message()の戻り値
-
-#### クラス図
-  ![](img/out/Status/Status.png)
-
-#### フィールド
-* フィールド一覧
-
-|フィールド名|説明|リポジトリ名|名前空間|
-|---|---|---|---|
-|error_code|概要エラーコード|manager/message-broker|manager::message|
-|sub_error_code|詳細エラーコード|派生Receiverが配置されるリポジトリ|派生Receiverで管理|
-|receiver_id|派生ReceiverのID|manager/message-broker|manager::message|
-
-* 概要エラーコードと詳細エラーコードの対応表
-
-|error_code|sub_error_code|
-|---|---|
-|SUCCESS|派生Receiverで管理される成功したときのエラーコード 例)ogawayama::stub::ErrorCode::OK|
-|FAILURE|派生Receiverで管理される成功以外のエラーコード 例)ogawayama::stub::ErrorCode::UNKNOWN,ogawayama::stub::ErrorCode::SERVER_FAILUREなど|
-
-* receiver_id
-  * 派生Receiverを一意に特定するためID
-  * 型:列挙型(enum class)
-    * 規定型:int
-    * 派生ReceiverのID一覧
-      |派生ReceiverのID|派生Receiver|
-      |---|---|
-      |ALL_RECEIVERS|すべての派生Receiver|
-      |OGAWAYAMA|ogawayama|
-      |OLAP|olap|
-
-#### AllReceiversSuccessStatus
-* send_message()メソッドの戻り値。
-* すべての派生Receiverがreceive_message()メソッドで返した概要エラーコードが「SUCCESS」である場合、send_message()メソッドの戻り値がこのクラスのインスタンスとなる。
-* コンストラクタで各フィールドに格納される値
-  |フィールド名| 値|
-  |---|---|
-  | error_code | SUCCESS | 
-  | sub_error_code | SUCCESS |
-  | receiver_id |  ALL_RECEIVERS |
-
-#### OgawayamaStatus
-* ogawayamaのstub::Transactionがreceive_message()メソッドで返す戻り値
-* コンストラクタで各フィールドに格納される値
-  |フィールド名| 値|
-  |---|---|
-  | error_code | manager/message-brokerが管理する概要エラーコード | 
-  | sub_error_code | ogawayamaが管理する詳細エラーコード |
-  | receiver_id |  OGAWAYAMA |
-
-#### OlapStatus
-* OlapReceiverがreceive_message()メソッドで返す戻り値
-* コンストラクタで各フィールドに格納される値
-  |フィールド名| 値|
-  |---|---|
-  | error_code | manager/message-brokerが管理する概要エラーコード | 
-  | sub_error_code | OLAPが管理する詳細エラーコード |
-  | receiver_id |  OLAP |
 
 以上
