@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 tsurugi project.
+ * Copyright 2019-2020 tsurugi project.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	error_code.h
- *	@brief  error code of message-broker
+ *	@file	receiver.h
+ *	@brief  the receiver class that handle message
  */
 
-#ifndef MESSAGE_BROKER_ERROR_CODE_H_
-#define MESSAGE_BROKER_ERROR_CODE_H_
+#ifndef RECEIVER_H
+#define RECEIVER_H
 
-namespace manager::message-broker {
+#include "manager/message/status.h"
+#include "manager/message/message.h"
 
-    enum class ErrorCode {
-        /**
-         *  @brief Success.
-         */
-        OK = 0,
+namespace manager::message
+{
+    class Message;
 
-        /**
-         * @brief Unknown error.
-         */
-        UNKNOWN
+    class Receiver
+    {
+        public:
+            virtual Status receive_message(Message *message) = 0;
     };
 
-} // namespace manager::message-broker
+}; // namespace manager::message
 
-#endif // MESSAGE_BROKER_ERROR_CODE_H_
+#endif // RECEIVER_H

@@ -13,30 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	MessageBroker.h
+ *	@file	message_broker.h
  *	@brief  the message broker class sends message from frontend to Receiver
  */
 
-#ifndef MESSAGEBROKER_
-#define MESSAGEBROKER_
+#ifndef MESSAGE_BROKER_H
+#define MESSAGE_BROKER_H
 
-#include "Message.h"
-#include "Receiver.h"
+#include "manager/message/status.h"
+#include "manager/message/message.h"
+#include "manager/message/receiver.h"
 
-namespace manager::message-broker
+namespace manager::message
 {
 
     class MessageBroker {
         public:
-            void send_message(Message *message)
+            Status send_message(Message *message)
             {
-                for (Receiver &receiver : message->receivers)
+                Status ret_val{ErrorCode::SUCCESS, (int)ErrorCode::SUCCESS, ReceiverId::ALL_RECEIVERS};
+
+                for (Receiver *receiver : message->get_receivers())
                 {
-                    receiver.receive_message(message);
+                    auto status = receiver->receive_message(message);
+                    if(status.get_error_code() == ErrorCode::FAILURE){
+                        return status;
+                    }
                 }
+                return ret_val;
             }
     };
 
-}; // namespace manager::message-broker
+}; // namespace manager::message
 
-#endif // MESSAGEBROKER_
+#endif // MESSAGE_BROKER_H
