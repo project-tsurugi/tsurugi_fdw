@@ -14,9 +14,6 @@
 #### 説明
 * send_message()およびreceive_message()の戻り値
 
-#### クラス図
-  ![](img/out/Status/Status.png)
-
 #### フィールド
 * フィールド一覧
 
