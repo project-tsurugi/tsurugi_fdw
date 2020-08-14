@@ -23,13 +23,6 @@
 namespace manager::message
 {
 
-    enum class ReceiverId : int
-    {
-        ALL_RECEIVERS = 0,
-        OGAWAYAMA,
-        OLAP
-    };
-
     enum class ErrorCode : int
     {
         SUCCESS = 0,
@@ -39,9 +32,8 @@ namespace manager::message
     class Status
     {
         public:
-            Status(ErrorCode error_code, int sub_error_code, ReceiverId receiver_id)
-                : error_code(error_code), sub_error_code(sub_error_code), receiver_id(receiver_id) {}
-            virtual ~Status() {}
+            Status(ErrorCode error_code, int sub_error_code)
+                : error_code(error_code), sub_error_code(sub_error_code) {}
             ErrorCode get_error_code()
             {
                 return error_code;
@@ -50,15 +42,10 @@ namespace manager::message
             {
                 return sub_error_code;
             }
-            ReceiverId get_receiver_id()
-            {
-                return receiver_id;
-            }
 
         private:
             ErrorCode error_code;
             int sub_error_code;
-            ReceiverId receiver_id;
     };
 } // namespace manager::message
 

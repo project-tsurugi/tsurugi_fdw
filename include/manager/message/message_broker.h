@@ -31,11 +31,11 @@ namespace manager::message
         public:
             Status send_message(Message *message)
             {
-                Status ret_val{ErrorCode::SUCCESS, (int)ErrorCode::SUCCESS, ReceiverId::ALL_RECEIVERS};
+                Status ret_val{ErrorCode::SUCCESS, (int)ErrorCode::SUCCESS};
 
                 for (Receiver *receiver : message->get_receivers())
                 {
-                    auto status = receiver->receive_message(message);
+                    Status status = receiver->receive_message(message);
                     if(status.get_error_code() == ErrorCode::FAILURE){
                         return status;
                     }
