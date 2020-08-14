@@ -1,5 +1,5 @@
 # frontend V2 テーブル定義機能 technical design
-2020.07.31 NEC 
+2020.08.14 NEC 
 
 ## 目次
 <!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
@@ -31,7 +31,7 @@
 * クラス図の詳細説明は、次のドキュメントを参照する。
   * https://github.com/project-tsurugi/manager/blob/develop/message-broker/docs/message-broker_API.md
 
-    ![](img/out/Command_detail/Command_detail.png)
+    ![](img/out/Message/Message.png)
 
 ## シーケンス図
 ### 概要
