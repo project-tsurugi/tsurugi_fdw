@@ -22,8 +22,9 @@ package "manager/message-broker" {
     	{method}void set_receiver(Receiver *receiver_)
       {method}
       {method}// getter
-    	{method}MessageId  get_id()
+    	{method}MessageId   get_id()
     	{method}uint64_t    get_object_id()
+      {method}std::vector<Receiver *> get_receivers()
     	{method}std::string get_message_type_name()
     }
 
