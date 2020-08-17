@@ -41,8 +41,8 @@ namespace manager::message
     class Message {
         public:
             // C'tors
-            Message(MessageId id, std::string message_type_name, uint64_t object_id)
-                : id(id), message_type_name(message_type_name), object_id(object_id){};
+            Message(MessageId id, uint64_t object_id, std::string message_type_name)
+                : id(id), object_id(object_id), message_type_name(message_type_name){};
 
             void set_receiver(Receiver *receiver_) {
                 receivers.push_back(receiver_);
@@ -51,9 +51,6 @@ namespace manager::message
             MessageId get_id(){
                 return id;
             };
-            std::string get_message_type_name(){
-                return message_type_name;
-            };
             uint64_t get_object_id(){
                 return object_id;
             };
@@ -61,12 +58,16 @@ namespace manager::message
             {
                 return receivers;
             };
+            std::string get_message_type_name()
+            {
+                return message_type_name;
+            };
 
         private:
             MessageId id;                      // message type ID
-            std::string message_type_name;     // for error message ex)"CREATE TABLE"
-            uint64_t object_id;                 // object ID that will be added, updated, or deleted
-            std::vector<Receiver *> receivers;  // receiver ex) OLTP_Receiver, OLAP_Receiver
+            uint64_t object_id;                // object ID that will be added, updated, or deleted
+            std::vector<Receiver *> receivers; // receiver ex) OLTP_Receiver, OLAP_Receiver
+            std::string message_type_name;      // for error message ex)"CREATE TABLE"
     };
 
     class CreateTableMessage : public Message
@@ -74,7 +75,7 @@ namespace manager::message
         public:
             // C'tors
             CreateTableMessage(uint64_t object_id)
-                : Message{MessageId::CREATE_TABLE, MESSAGE_TYPE_NANE_CREATE_TABLE, object_id} {}
+                : Message{MessageId::CREATE_TABLE, object_id, MESSAGE_TYPE_NANE_CREATE_TABLE} {}
     };
 
 }; // namespace manager::message
