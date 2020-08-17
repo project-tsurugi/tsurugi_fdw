@@ -15,10 +15,12 @@
 
 	```bash
 	# Fix below
-	# PostgreSQL install directory
-	PSQLHOME_FOR_TEST=~/pgsql
+	# PostgreSQL install directory PGHOME
+	PGHOME_FOR_TEST=~/pgsql12
 	# connection port number
 	PORT=5432
+	# the cluster's data directory PGDATA
+	PGDATA_FOR_TEST=$PGHOME_FOR_TEST/data
 	# Fix above
 	```
 
