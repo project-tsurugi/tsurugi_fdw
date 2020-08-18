@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 tsurugi project.
+ * Copyright 2020 tsurugi project.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,8 @@
  * limitations under the License.
  *
  *	@file	message_broker.h
- *	@brief  the message broker class sends message from frontend to Receiver
+ *	@brief  the message broker class sends message
+ *          to all receivers of message
  */
 
 #ifndef MESSAGE_BROKER_H
@@ -29,6 +30,14 @@ namespace manager::message
 
     class MessageBroker {
         public:
+            /**
+             * @brief MessageBroker sends message to all receivers.
+             * @return both primary error code and secondary error code
+             * are ErrorCode::SUCCESS
+             * if all receivers' process is successfully completed.
+             * @return an instance of Status class otherwize.
+             * A primary error code and a secondary error code must be set.
+             */
             Status send_message(Message *message)
             {
                 Status ret_val{ErrorCode::SUCCESS, (int)ErrorCode::SUCCESS};

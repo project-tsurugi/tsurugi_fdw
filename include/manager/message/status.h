@@ -23,28 +23,59 @@
 namespace manager::message
 {
 
+    /**
+     *  @brief a primary error code.
+     */
     enum class ErrorCode : int
     {
+        /**
+         *  @brief Success.
+         */
         SUCCESS = 0,
+
+        /**
+         *  @brief Failure.
+         */
         FAILURE
     };
 
     class Status
     {
         public:
+            /**
+             * @brief C'tor. Initialize member variables.
+             * @param [in] ErrorCode primary error code.
+             * @param [in] int secondary error code.
+             */
             Status(ErrorCode error_code, int sub_error_code)
                 : error_code(error_code), sub_error_code(sub_error_code) {}
+            /**
+             *  @brief Get a primary error code.
+             *  @return ErrorCode::SUCCESS if metadata was successfully stored
+             *  @return ErrorCode::FAILURE otherwize
+             */
             ErrorCode get_error_code()
             {
                 return error_code;
             }
+            /**
+             *  @brief Get a secondary error code.
+             *  @return an integer value of error code managed by other component.
+             */
             int get_sub_error_code()
             {
                 return sub_error_code;
             }
 
         private:
+            /**
+             * @brief a primary error code.
+             */
             ErrorCode error_code;
+
+            /**
+             * @brief a secondary error code that is an integer value of error code managed by other component.
+             */
             int sub_error_code;
     };
 } // namespace manager::message

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 tsurugi project.
+ * Copyright 2020 tsurugi project.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,13 @@ namespace manager::message
     class Receiver
     {
         public:
+            /**
+             * @brief Derived class of this Receiver class will receive
+             * an instance of Message class
+             * and will get MessageId using message->get_id() method.
+             * @return an instance of Status class.
+             * A primary error code and a secondary error code must be set.
+             */
             virtual Status receive_message(Message *message) = 0;
     };
 
