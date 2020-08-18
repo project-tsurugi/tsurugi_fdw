@@ -75,13 +75,10 @@ bool create_table(List *stmts)
         /* parameters sended to ogawayama */
         message::CreateTableMessage ct_msg{object_id};
 
-        elog(NOTICE, "message type name: %s, object id: %d", ct_msg.get_message_type_name().c_str(), ct_msg.get_object_id());
-
         message::MessageBroker broker;
         message::OlapReceiver olap_receiver;
         ct_msg.set_receiver(&olap_receiver);
         message::Status status = broker.send_message(&ct_msg);
-        elog(NOTICE, "error code: %d, sub error code: %d", status.get_error_code(), status.get_sub_error_code());
     }
 
     return success;
