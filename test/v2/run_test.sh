@@ -1,7 +1,7 @@
 #!/bin/bash
 # Fix below
 # PostgreSQL install directory PGHOME
-PGHOME_FOR_TEST=~/pgsql12
+PGHOME_FOR_TEST=~/pgsql
 # connection port number
 PORT=5432
 # the cluster's data directory PGDATA
