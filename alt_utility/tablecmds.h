@@ -17,8 +17,8 @@
  *	@brief  Sends metadata to metadata-manager.
  */
 
-#ifndef TABLECMDS_
-#define TABLECMDS_
+#ifndef TABLECMDS_H
+#define TABLECMDS_H
 
 #include <unordered_set>
 
@@ -131,4 +131,4 @@ class CreateTable {
         void show_table_constraint_syntax_error_msg(const char *error_message);
 };
 
-#endif // TABLECMDS_
+#endif // TABLECMDS_H

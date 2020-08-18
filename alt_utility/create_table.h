@@ -17,8 +17,8 @@
  *	@brief  Dispatch the create-table command to ogawayama.
  */
 
-#ifndef CREATE_TABLE_
-#define CREATE_TABLE_
+#ifndef CREATE_TABLE_H
+#define CREATE_TABLE_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,4 +31,4 @@ bool create_table(List *stmts);
 }
 #endif
 
-#endif // CREATE_TABLE_
+#endif // CREATE_TABLE_H
