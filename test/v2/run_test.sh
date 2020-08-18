@@ -1,14 +1,16 @@
 #!/bin/bash
 # Fix below
-# PostgreSQL install directory
-PSQLHOME_FOR_TEST=~/pgsql
+# PostgreSQL install directory PGHOME
+PGHOME_FOR_TEST=~/pgsql
 # connection port number
 PORT=5432
+# the cluster's data directory PGDATA
+PGDATA_FOR_TEST=$PGHOME_FOR_TEST/data
 # Fix above
 
-PSQLBIN=$PSQLHOME_FOR_TEST/bin
+PSQLBIN=$PGHOME_FOR_TEST/bin
 TSURUGI_METADATA=tsurugi_metadata
-TSURUGI_METADATA_HOME=$PSQLHOME_FOR_TEST/data/$TSURUGI_METADATA
+TSURUGI_METADATA_HOME=$PGDATA_FOR_TEST/$TSURUGI_METADATA
 
 DATATYPES=datatypes.json
 OID=oid
