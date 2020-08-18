@@ -15,8 +15,7 @@ PG_CPPFLAGS = -Iinclude \
               -Ithird_party/manager/message-broker/include \
               -std=c++17 -fPIC -Dregister= -O0
 
-SHLIB_LINK = -Lthird_party/ogawayama/build/stub/src -logawayama-stub \
-             -Lthird_party/manager/metadata-manager/build/output -lmetadata
+SHLIB_LINK = -logawayama-stub -lmetadata
 
 EXTENSION = ogawayama_fdw
 DATA = ogawayama_fdw--0.1.sql

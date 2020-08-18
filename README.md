@@ -23,34 +23,15 @@ git clone git@github.com:project-tsurugi/frontend.git
 cd frontend
 git submodule update --init
 
-# build ogawayama
-cd third_party/ogawayama
-mkdir build
-cd build
-cmake -G Ninja \
-	-DBUILD_STUB_ONLY=ON \
-	-DBUILD_TESTS=OFF \
-	-DCMAKE_INSTALL_PREFIX=<tsurugi install directory> \
-	-DFORCE_INSTALL_RPATH=ON \
-	..
-ninja
-# install ogawayama in <tsurugi install directory>
-ninja install 
+# install tsurugi in default tsurugi install directory $HOME/.local
+# By changing INSTALL_PREFIX=$HOME/.local in the script, you can change install directory 
+./scripts/devenv.sh
 
-# build metadata-manager
-cd ../../manager/metadata-manager
-mkdir build
-cd build
-cmake -G 'Unix Makefiles' \
-	-DCMAKE_INSTALL_PREFIX=<tsurugi install directory> \
-	-DFORCE_INSTALL_RPATH=ON \
-	..
-make
-# install metadata-manager in <tsurugi install directory>
-make install
+# add LIBRARY_PATH to tsurugi library
+export LIBRARY_PATH=$LIBRARY_PATH:<tsurugi install directory>/lib
+# If <tsurugi install directory> is ~/.local,
+# export LIBRARY_PATH=$LIBRARY_PATH:~/.local/lib
 
-# change directory postgresql-x.x/contrib/frontend
-cd ../../../..
 # make ogawayama_fdw.so
 make
 # install ogawayama_fdw.so in <PostgreSQL install directory>/lib
