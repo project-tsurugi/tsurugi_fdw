@@ -24,6 +24,7 @@ namespace manager::message
 {
 
     /**
+     *  @enum ErrorCode
      *  @brief a primary error code.
      */
     enum class ErrorCode : int
@@ -44,20 +45,23 @@ namespace manager::message
         public:
             /**
              * @brief C'tor. Initialize member variables.
-             * @param [in] ErrorCode primary error code.
-             * @param [in] int secondary error code.
+             * @param [in] error_code a primary error code managed by message-broker.
+             * @param [in] sub_error_code a secondary error code
+             * that is an integer value of error code managed by receiver.
              */
-            Status(ErrorCode error_code, int sub_error_code)
-                : error_code(error_code), sub_error_code(sub_error_code) {}
+
+            Status(ErrorCode error_code, int sub_error_code) :
+                error_code(error_code),sub_error_code(sub_error_code){}
             /**
              *  @brief Get a primary error code.
-             *  @return ErrorCode::SUCCESS if metadata was successfully stored
+             *  @return ErrorCode::SUCCESS if metadata is successfully stored
              *  @return ErrorCode::FAILURE otherwize
              */
             ErrorCode get_error_code()
             {
                 return error_code;
             }
+
             /**
              *  @brief Get a secondary error code.
              *  @return an integer value of error code managed by other component.
@@ -69,12 +73,13 @@ namespace manager::message
 
         private:
             /**
-             * @brief a primary error code.
+             * @brief a primary error code managed by message-broker.
              */
             ErrorCode error_code;
 
             /**
-             * @brief a secondary error code that is an integer value of error code managed by other component.
+             * @brief a secondary error code
+             * that is an integer value of error code managed by receiver.
              */
             int sub_error_code;
     };

@@ -31,7 +31,8 @@ namespace manager::message
     class MessageBroker {
         public:
             /**
-             * @brief MessageBroker sends message to all receivers.
+             * @brief MessageBroker sends a message to all receivers.
+             * @param [in] message an instance of Message class that Receiver will receive.
              * @return both primary error code and secondary error code
              * are ErrorCode::SUCCESS
              * if all receivers' process is successfully completed.

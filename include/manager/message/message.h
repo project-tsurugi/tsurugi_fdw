@@ -31,13 +31,14 @@ namespace manager::message
     const std::string MESSAGE_TYPE_NANE_CREATE_TABLE = "CREATE TABLE";
 
     /**
+     * @enum MessageId
      * @brief message type ID that is an uniquely determined statement ID inputted by user.
      */
     enum class MessageId : int
     {
         /**
-        *  @brief CREATE TABLE statement.
-        */
+         *  @brief CREATE TABLE statement.
+         */
         CREATE_TABLE = 0
     };
 
@@ -45,22 +46,23 @@ namespace manager::message
         public:
             /**
              * @brief C'tor. Initialize member variables.
-             * @param [in] MessageId message type ID that is an uniquely determined statement ID inputted by user.
-             * @param [in] uint64_t object ID that will be added, updated, or deleted.
-             * @param [in] std::string string in order to report error messages.
+             * @param [in] id message type ID that is an uniquely determined statement ID inputted by user.
+             * @param [in] object_id object ID that will be added, updated, or deleted.
+             * @param [in] message_type_name string in order to report error messages.
              */
             Message(MessageId id, uint64_t object_id, std::string message_type_name)
                 : id(id), object_id(object_id), message_type_name(message_type_name){};
 
             /**
-             * @brief set receivers that will receive message.
+             * @brief Set a receiver that will receive messages.
+             * @param [in] receiver_ a receiver
              */
             void set_receiver(Receiver *receiver_) {
                 receivers.push_back(receiver_);
             };
 
             /**
-             * @brief get message type ID that is an uniquely determined statement ID inputted by user.
+             * @brief Get message type ID that is an uniquely determined statement ID inputted by user.
              * @return message type ID.
              */
             MessageId get_id(){
@@ -68,7 +70,7 @@ namespace manager::message
             };
 
             /**
-             * @brief get object ID that will be added, updated, or deleted.
+             * @brief Get object ID that will be added, updated, or deleted.
              * @return object ID.
              */
             uint64_t get_object_id(){
@@ -76,7 +78,7 @@ namespace manager::message
             };
 
             /**
-             * @brief get all receivers that will receive message.
+             * @brief Get all receivers that will receive messages.
              * @return all receivers.
              */
             std::vector<Receiver *> get_receivers()
@@ -85,8 +87,8 @@ namespace manager::message
             };
 
             /**
-             * @brief get message type name to report error messages.
-             * @return message type ID.
+             * @brief Get message type name to report error messages.
+             * @return message type name.
              */
             std::string get_message_type_name()
             {
@@ -94,25 +96,10 @@ namespace manager::message
             };
 
         private:
-            /**
-             * @brief message type ID that is an uniquely determined statement ID inputted by user.
-             */
-            MessageId id;
-
-            /**
-             * @brief object ID that will be added, updated, or deleted.
-             */
-            uint64_t object_id;
-
-            /**
-             * @brief receivers that will receive message ex) OLTP_Receiver, OLAP_Receiver.
-             */
-            std::vector<Receiver *> receivers;
-
-            /**
-             * @brief string in order to report error messages ex)"CREATE TABLE"
-             */
-            std::string message_type_name;
+            MessageId id; //!< @brief message type ID that is an uniquely determined statement ID inputted by user.
+            uint64_t object_id; //!< @brief object ID that will be added, updated, or deleted.
+            std::vector<Receiver *> receivers; //!< @brief receivers that will receive message ex) OLTP_Receiver, OLAP_Receiver.
+            std::string message_type_name; //!< @brief string in order to report error messages ex)"CREATE TABLE"
     };
 
     class CreateTableMessage : public Message
@@ -120,7 +107,7 @@ namespace manager::message
         public:
             /**
              * @brief C'tor. Initialize member variables.
-             * @param [in] uint64_t object ID that will be added, updated, or deleted.
+             * @param [in] object_id object ID that will be added, updated, or deleted.
              */
             CreateTableMessage(uint64_t object_id)
                 : Message{MessageId::CREATE_TABLE, object_id, MESSAGE_TYPE_NANE_CREATE_TABLE} {}

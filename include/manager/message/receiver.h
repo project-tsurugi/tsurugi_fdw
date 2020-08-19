@@ -34,6 +34,7 @@ namespace manager::message
              * @brief Derived class of this Receiver class will receive
              * an instance of Message class
              * and will get MessageId using message->get_id() method.
+             * @param [in] message an instance of Message class that Receiver will receive.
              * @return an instance of Status class.
              * A primary error code and a secondary error code must be set.
              */
