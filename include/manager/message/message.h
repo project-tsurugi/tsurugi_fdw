@@ -21,6 +21,7 @@
 #define MESSAGE_H
 
 #include <string>
+#include <vector>
 
 #include "manager/message/receiver.h"
 
