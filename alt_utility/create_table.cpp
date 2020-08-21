@@ -24,7 +24,6 @@
 #include "ogawayama/stub/api.h"
 #include "stub_manager.h"
 
-#include "manager/message/olap_receiver.h"
 #include "manager/message/message.h"
 #include "manager/message/message_broker.h"
 #include "manager/message/status.h"
@@ -49,6 +48,7 @@ extern "C"
 
 #include "create_table.h"
 
+bool send_message(message::Message* message);
 static std::string rewrite_query(std::string_view query_string);
 static bool execute_create_table(std::string_view query_string);
 
@@ -67,21 +67,54 @@ bool create_table(List *stmts)
     CreateTable cmds{stmts};
     bool success = cmds.define_relation( &object_id );
 
-    if (!success)
-    {
-        // error handling
-    }
-    else {
-        /* parameters sended to ogawayama */
+    if (success) {
         message::CreateTableMessage ct_msg{object_id};
-
-        message::MessageBroker broker;
-        message::OlapReceiver olap_receiver;
-        ct_msg.set_receiver(&olap_receiver);
-        message::Status status = broker.send_message(&ct_msg);
+        success = send_message(&ct_msg);
     }
 
     return success;
+}
+
+
+/*
+ *  @brief:
+ */
+bool send_message(message::Message* message)
+{
+    bool ret_value = false;
+    ERROR_CODE error = ERROR_CODE::UNKNOWN;
+
+    /* sends message to ogawayama */
+    stub::Transaction* transaction;
+    error = StubManager::begin(&transaction);
+    if (error != ERROR_CODE::OK)
+    {
+        std::cerr << "begin() failed." << std::endl;
+        return ret_value;
+    }
+
+    message::MessageBroker broker;
+    message->set_receiver(transaction);
+    message::Status status = broker.send_message(message);
+
+    if (status.get_error_code() != message::ErrorCode::SUCCESS)
+    {
+        elog(ERROR, "transaction::receive_message() %s failed. (%d)",
+             message->get_message_type_name(), (int) status.get_sub_error_code());
+        return ret_value;
+    }
+
+    error = transaction->commit();
+    if (error != ERROR_CODE::OK)
+    {
+        elog(ERROR, "transaction::commit() failed. (%d)", (int) error);
+        return ret_value;
+    }
+    StubManager::end();
+
+    ret_value = true;
+
+    return ret_value;
 }
 
 /*
