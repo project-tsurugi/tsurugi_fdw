@@ -24,7 +24,6 @@
 #include "ogawayama/stub/api.h"
 #include "stub_manager.h"
 
-#include "manager/message/olap_receiver.h"
 #include "manager/message/message.h"
 #include "manager/message/message_broker.h"
 #include "manager/message/status.h"
@@ -66,20 +65,6 @@ bool create_table(List *stmts)
     /* Call the function sending metadata to metadata-manager. */
     CreateTable cmds{stmts};
     bool success = cmds.define_relation( &object_id );
-
-    if (!success)
-    {
-        // error handling
-    }
-    else {
-        /* parameters sended to ogawayama */
-        message::CreateTableMessage ct_msg{object_id};
-
-        message::MessageBroker broker;
-        message::OlapReceiver olap_receiver;
-        ct_msg.set_receiver(&olap_receiver);
-        message::Status status = broker.send_message(&ct_msg);
-    }
 
     return success;
 }
