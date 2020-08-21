@@ -23,19 +23,12 @@
   - [DataTypeメタデータ(root)](#datatypeメタデータroot)
     - [DataTypeメタデータオブジェクト](#datatypeメタデータオブジェクト)
     - [データ型ID一覧](#データ型id一覧)
-  - [CreateStmt・IndexStmtクエリツリーのクラス図](#createstmtindexstmtクエリツリーのクラス図)
 - [エラー処理](#エラー処理)
   - [基本方針](#基本方針-1)
   - [メッセージ内容](#メッセージ内容)
     - [構文エラー](#構文エラー)
     - [型エラー](#型エラー)
-- [metadata-managerの改造](#metadata-managerの改造)
-  - [改造項目](#改造項目)
-    - [1. データ型に関するメタデータの変更](#1-データ型に関するメタデータの変更)
-    - [2. エラー処理の追加](#2-エラー処理の追加)
-    - [3. メタデータの格納先を固定](#3-メタデータの格納先を固定)
-    - [4. DebugビルドとReleaseビルドを分ける](#4-debugビルドとreleaseビルドを分ける)
-  - [データ型に関するメタデータを追加する理由](#データ型に関するメタデータを追加する理由)
+- [Appendix. PostgreSQLのクエリツリー](#appendix-postgresqlのクエリツリー)
 
 <!-- /code_chunk_output -->
 
@@ -49,7 +42,6 @@
 
 ## 基本方針
 * frontend V2の機能は、V1の機能と同じとして、シーケンスの変更およびエラー処理の追加を実施する。
-* metadata-managerを改造する。[metadata-managerの改造](#metadata-managerの改造)を参照。
 * PostgreSQL互換
 
 * 将来verで検討する機能項目一覧
@@ -147,7 +139,7 @@ TABLESPACE tsurugi
 '-'　:　metadata-managerが値を付与する項目
 ```
 
-|key|valueの型|valueの説明|valueに格納する値|[CreateStmt・IndexStmtクエリツリーのクラス図](#createstmtindexstmtクエリツリーのクラス図)から取得する属性(クラス名.属性)|
+|key|valueの型|valueの説明|valueに格納する値|[PostgreSQLのクエリツリー](#appendix-PostgreSQLのクエリツリー)から取得する属性(クラス名.属性)|
 |----|----|----|----|----|
 |"formatVersion" | number [-]        | データ形式フォーマットバージョン ※V1は"1"固定 | "1"固定 | - |
 |"generation"    | number [-]        | メタデータの世代 ※V1は"1"固定                | "1"固定 | - |
@@ -155,7 +147,7 @@ TABLESPACE tsurugi
 
 ### Tableメタデータオブジェクト
 
-|key|valueの型|valueの説明|valueに格納する値|[CreateStmt・IndexStmtクエリツリーのクラス図](#createstmtindexstmtクエリツリーのクラス図)から取得する属性(クラス名.属性)|
+|key|valueの型|valueの説明|valueに格納する値|[PostgreSQLのクエリツリー](#appendix-PostgreSQLのクエリツリー)から取得する属性(クラス名.属性)|
 |----|----|----|----|----|
 | "id"         | number [-]        | テーブルID                           | V1と同じ  | -                   |
 | "name"       | string [*]        | テーブル名                           | V1と同じ                     | RangeVar.relname    |
@@ -165,7 +157,7 @@ TABLESPACE tsurugi
 
 ### Columnメタデータオブジェクト
 
-|key|valueの型|valueの説明|valueに格納する値|[CreateStmt・IndexStmtクエリツリーのクラス図](#createstmtindexstmtクエリツリーのクラス図)から取得する属性(クラス名.属性)|
+|key|valueの型|valueの説明|valueに格納する値|[PostgreSQLのクエリツリー](#appendix-PostgreSQLのクエリツリー)から取得する属性(クラス名.属性)|
 |----|----|----|----|----|
 | "id"                | number        [-] | カラムID                                              | V1と同じ | - |
 | "tableId"           | number        [-] | カラムが属するテーブルのID                             | V1と同じ | - |
@@ -227,10 +219,6 @@ TABLESPACE tsurugi
 |13| CHAR	   | 1042                | char             | bpchar
 |14| VARCHAR  | 1043                | varchar             | varchar
 
-### CreateStmt・IndexStmtクエリツリーのクラス図　
-frontendがPostgreSQLから受け取るクエリツリー
-![](img/out/query_tree/query_tree.svg)
-
 ## エラー処理
 ### 基本方針
 * frontendは、Tsurugiでサポートしない構文・型をチェックしてエラーメッセージを出力する。
@@ -254,42 +242,8 @@ ERROR:  Tsurugi does not support this syntax
 ERROR:  Tsurugi does not support type %s
 ```
 
-## metadata-managerの改造
-### 改造項目
-#### 1. データ型に関するメタデータの変更
-* datatypes.jsonに新たなキー"pg_dataTypeQualifiedName"を追加して、値にCreateStmtクエリツリーから取得できる型名を追加する。
-* メタデータのバグ修正および、不要なkeyの削除
-    * [データ型ID一覧](#データ型id一覧)を参照。
-
-#### 2. エラー処理の追加
-* metadata-managerは、テーブル定義要求を受け取った時、同一テーブル名が既に登録されていた場合、エラーとする。
-
-#### 3. メタデータの格納先を固定
-* V1:テーブルおよびデータ型に関するメタデータの格納先が固定されていない。
-* V2:次の格納先とする。
-    * テーブルのメタデータの格納先
-        * $HOME/.local/tsurugi/metadata/tables.json
-    * データ型のメタデータの格納先
-        * $HOME/.local/tsurugi/metadata/datatypes.json
-    * テーブル数・カラム数の格納先
-        * $HOME/.local/tsurugi/metadata/oid
-    * 将来的には、DBにするため、一時的な対処
-
-#### 4. DebugビルドとReleaseビルドを分ける
-* Debugビルドは-O0フラグ、cmakeのオプションを何も指定しない場合は-O2フラグにする。 
-
-### データ型に関するメタデータを追加する理由
-* PostgreSQLのCreateStmtクエリツリーから取得できる型名が次の表になっており、型変換を実施するため。
-
-|SQLで指定したPostgreSQLの型|CreateStmtクエリツリーから取得できる型([...,...]は配列を示す)|ogawayamaの型|
-|----|----|----|
-|SMALLINT|[pg_catalog,int2] **xor** int2のoid|INT16 |
-|INTEGER|[pg_catalog,int4] **xor** int4のoid|INT32 |
-|BIGINT|[pg_catalog,int8] **xor** int8のoid|INT64 |
-|REAL|[pg_catalog,float4] **xor** float4のoid|FLOAT32 |
-|DOUBLE PRECISION|[pg_catalog,float8] **xor** float8のoid|FLOAT64 |
-|TEXT|[text] **xor** textのoid|TEXT |
-|CHAR[(n)],CHARACTER[(n)]|([pg_catalog,bpchar] **xor** bpcharのoid) |CHAR|
-|VARCHAR[(n)],CHARACTER VARYING[(n)]|([pg_catalog,varchar] **xor** varcharのoid) |VARCHAR|
+## Appendix. PostgreSQLのクエリツリー
+frontendがPostgreSQLから受け取るクエリツリー
+![](img/out/query_tree/query_tree.svg)
 
 以上
