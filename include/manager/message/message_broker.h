@@ -39,19 +39,7 @@ namespace manager::message
              * @return an instance of Status class otherwize.
              * A primary error code and a secondary error code must be set.
              */
-            Status send_message(Message *message)
-            {
-                Status ret_val{ErrorCode::SUCCESS, (int)ErrorCode::SUCCESS};
-
-                for (Receiver *receiver : message->get_receivers())
-                {
-                    Status status = receiver->receive_message(message);
-                    if(status.get_error_code() == ErrorCode::FAILURE){
-                        return status;
-                    }
-                }
-                return ret_val;
-            }
+            Status send_message(Message *message);
     };
 
 }; // namespace manager::message
