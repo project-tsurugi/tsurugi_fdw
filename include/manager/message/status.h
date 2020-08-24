@@ -54,7 +54,7 @@ namespace manager::message
                 error_code(error_code),sub_error_code(sub_error_code){}
             /**
              *  @brief Get a primary error code.
-             *  @return ErrorCode::SUCCESS if metadata is successfully stored
+             *  @return ErrorCode::SUCCESS if Receiver's process is successed.
              *  @return ErrorCode::FAILURE otherwize
              */
             ErrorCode get_error_code()
