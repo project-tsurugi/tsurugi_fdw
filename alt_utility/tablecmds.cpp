@@ -555,7 +555,7 @@ CreateTable::store_metadata( uint64_t* object_id )
          */
         if (op_pkeys.find(ordinal_position) == op_pkeys.end())
         {
-            column.put<uint64_t>(Tables::Column::DIRECTION,TSURUGI_DIRECTION_DEFAULT);
+            column.put<int>(Tables::Column::DIRECTION, static_cast<int>(Tables::Column::Direction::DEFAULT));
         }
         else
         {
@@ -563,7 +563,7 @@ CreateTable::store_metadata( uint64_t* object_id )
             primary_key.put<uint64_t>("", ordinal_position);
             primary_keys.push_back(std::make_pair("", primary_key));
 
-            column.put<uint64_t>(Tables::Column::DIRECTION,TSURUGI_DIRECTION_ASC);
+            column.put<int>(Tables::Column::DIRECTION, static_cast<int>(Tables::Column::Direction::ASCENDANT));
         }
 
         /* put nullable metadata */
@@ -626,12 +626,12 @@ CreateTable::store_metadata( uint64_t* object_id )
                 column.put<ObjectIdType>(Tables::Column::DATA_TYPE_ID, id);
 
                 /* put varying metadata if given type is varchar or char */
-                if (id == TSURUGI_TYPE_VARCHAR_ID)
+                if (id == static_cast<ObjectIdType>(DataTypes::DataTypesId::VARCHAR))
                 {
                     /* put true if given type is varchar */
                     column.put<bool>(Tables::Column::VARYING, true);
                 }
-                else if (id == TSURUGI_TYPE_CHAR_ID)
+                else if (id == static_cast<ObjectIdType>(DataTypes::DataTypesId::CHAR))
                 {
                     /* put false if given type is char */
                     column.put<bool>(Tables::Column::VARYING, false);
@@ -640,8 +640,8 @@ CreateTable::store_metadata( uint64_t* object_id )
                 /* put data type lengths metadata if given type is varchar or char */
                 switch (id)
                 {
-                    case TSURUGI_TYPE_VARCHAR_ID:
-                    case TSURUGI_TYPE_CHAR_ID:
+                    case static_cast<ObjectIdType>(DataTypes::DataTypesId::VARCHAR):
+                    case static_cast<ObjectIdType>(DataTypes::DataTypesId::CHAR):
                         /*
                          * if "typmods" is NIL then the actual typmod is expected to
                          * be prespecified in typemod, otherwise typemod is unused.

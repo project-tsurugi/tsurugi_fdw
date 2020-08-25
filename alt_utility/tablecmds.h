@@ -22,18 +22,6 @@
 
 #include <unordered_set>
 
-/* char type id value obtained from metadata-manager  */
-const manager::metadata::ObjectIdType TSURUGI_TYPE_CHAR_ID = 13;
-/* varchar type id value obtained from metadata-manager  */
-const manager::metadata::ObjectIdType TSURUGI_TYPE_VARCHAR_ID = 14;
-
-/* default direction value metadata-manager manages */
-const int TSURUGI_DIRECTION_DEFAULT = 0;
-/* ascending direction value metadata-manager manages */
-const int TSURUGI_DIRECTION_ASC = 1;
-/* descending direction value metadata-manager manages */
-const int TSURUGI_DIRECTION_DESC = 2;
-
 /* DB name metadata-manager manages */
 const std::string DBNAME = "Tsurugi";
 
