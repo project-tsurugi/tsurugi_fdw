@@ -56,21 +56,21 @@
 	```
 
 	Add LIBRARY_PATH to tsurugi library to build ogawayama_fdw.  
-	For example, if tsurugi install directory is ~/.local,  
-	export LIBRARY_PATH=$LIBRARY_PATH:~/.local/lib  
+	For example, if tsurugi install directory is \~/.local,  
+	export LIBRARY_PATH=$LIBRARY_PATH:\~/.local/lib  
 
 	```sh
 	export LIBRARY_PATH=$LIBRARY_PATH:<tsurugi install directory>/lib
 	```
 
-	Build and Install ogawayama_fdw.  
-	If you want to install ogawayama_fdw in a source tree of PostgreSQL, use
+	Build and Install ogawayama_fdw.
 	```sh
 	make
 	make install
 	```
 
-	If you want to install pg_config PATH, add a directory of pg_config to PATH and use
+	Or in case when PostgreSQL is installed in a custom location,  
+	add a directory of pg_config to PATH and use
 	```sh
 	make USE_PGXS=1
 	make install USE_PGXS=1
