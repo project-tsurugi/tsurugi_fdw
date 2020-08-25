@@ -5,38 +5,76 @@
 * Source code of PostgreSQL `>=11.1`
 
 ## How to build frontend
-Clone fronend to "contrib" directory in PostgreSQL.
-```sh
-sudo apt -y install libreadline-dev zlib1g-dev # for PostgreSQL
-sudo apt -y install make gcc g++
-# and packages to build ogawayama
 
-# build PostgreSQL
-curl -sL https://ftp.postgresql.org/pub/source/v12.3/postgresql-12.3.tar.bz2 | tar -xj
-cd postgresql-12.3
-./configure --prefix=$HOME/pgsql
-make
-make install
+1. Install required packages.
 
-cd contrib
-git clone git@github.com:project-tsurugi/frontend.git
-cd frontend
-git submodule update --init
+	Install required packages for building PostgreSQL.  
 
-# install tsurugi in default tsurugi install directory $HOME/.local
-# By changing INSTALL_PREFIX=$HOME/.local in the script, you can change install directory 
-./scripts/devenv.sh
+	```sh
+	sudo apt -y install libreadline-dev zlib1g-dev
+	```
 
-# add LIBRARY_PATH to tsurugi library
-export LIBRARY_PATH=$LIBRARY_PATH:<tsurugi install directory>/lib
-# If <tsurugi install directory> is ~/.local,
-# export LIBRARY_PATH=$LIBRARY_PATH:~/.local/lib
+	Install required packages for building ogawayama_fdw.
 
-# make ogawayama_fdw.so
-make
-# install ogawayama_fdw.so in <PostgreSQL install directory>/lib
-make install
-```
+	```sh
+	sudo apt -y install make gcc g++
+	```
+
+1. Build and Install tsurugi.
+
+	Install tsurugi in default tsurugi install directory $HOME/.local.  
+	By changing INSTALL_PREFIX=$HOME/.local in the script, you can change install directory.  
+
+	```sh
+	./scripts/devenv.sh
+	```
+
+1. Build and Install PostgreSQL.
+
+	```sh
+	curl -sL https://ftp.postgresql.org/pub/source/v12.3/postgresql-12.3.tar.bz2 | tar -xj
+	cd postgresql-12.3
+	./configure --prefix=$HOME/pgsql
+	make
+	make install
+	```
+
+1.  Build and Install ogawayama_fdw.
+
+	Clone fronend to "contrib" directory in PostgreSQL.
+
+	```sh
+	cd contrib
+	git clone git@github.com:project-tsurugi/frontend.git
+	```
+
+	Clone required packages for building ogawayama_fdw. 
+
+	```sh
+	cd frontend
+	git submodule update --init
+	```
+
+	Add LIBRARY_PATH to tsurugi library to build ogawayama_fdw.  
+	For example, if tsurugi install directory is ~/.local,  
+	export LIBRARY_PATH=$LIBRARY_PATH:~/.local/lib  
+
+	```sh
+	export LIBRARY_PATH=$LIBRARY_PATH:<tsurugi install directory>/lib
+	```
+
+	Build and Install ogawayama_fdw.  
+	If you want to install ogawayama_fdw in a source tree of PostgreSQL, use
+	```sh
+	make
+	make install
+	```
+
+	If you want to install pg_config PATH, add a directory of pg_config to PATH and use
+	```sh
+	make USE_PGXS=1
+	make install USE_PGXS=1
+	```
 
 ## How to set up for frontend
 
