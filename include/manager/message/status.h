@@ -43,15 +43,16 @@ namespace manager::message
     class Status
     {
         public:
+
             /**
              * @brief C'tor. Initialize member variables.
              * @param [in] error_code a primary error code managed by message-broker.
              * @param [in] sub_error_code a secondary error code
              * that is an integer value of error code managed by receiver.
              */
-
             Status(ErrorCode error_code, int sub_error_code) :
                 error_code(error_code),sub_error_code(sub_error_code){}
+
             /**
              *  @brief Get a primary error code.
              *  @return ErrorCode::SUCCESS if Receiver's process is successed.
