@@ -81,6 +81,8 @@ bool create_table(List *stmts)
  */
 bool send_message(message::Message* message)
 {
+    Assert(message != nullptr);
+
     bool ret_value = false;
     ERROR_CODE error = ERROR_CODE::UNKNOWN;
 
@@ -100,7 +102,7 @@ bool send_message(message::Message* message)
     if (status.get_error_code() != message::ErrorCode::SUCCESS)
     {
         elog(ERROR, "transaction::receive_message() %s failed. (%d)",
-             message->get_message_type_name(), (int) status.get_sub_error_code());
+             message->get_message_type_name().c_str(), (int) status.get_sub_error_code());
         return ret_value;
     }
 
