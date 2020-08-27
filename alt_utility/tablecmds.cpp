@@ -626,22 +626,23 @@ CreateTable::store_metadata( uint64_t* object_id )
                 column.put<ObjectIdType>(Tables::Column::DATA_TYPE_ID, id);
 
                 /* put varying metadata if given type is varchar or char */
-                if (id == static_cast<ObjectIdType>(DataTypes::DataTypesId::VARCHAR))
+                switch (static_cast<DataTypes::DataTypesId>(id))
                 {
-                    /* put true if given type is varchar */
-                    column.put<bool>(Tables::Column::VARYING, true);
-                }
-                else if (id == static_cast<ObjectIdType>(DataTypes::DataTypesId::CHAR))
-                {
-                    /* put false if given type is char */
-                    column.put<bool>(Tables::Column::VARYING, false);
+                    case DataTypes::DataTypesId::VARCHAR:
+                        /* put true if given type is varchar */
+                        column.put<bool>(Tables::Column::VARYING, true);
+                        break;
+                    case DataTypes::DataTypesId::CHAR:
+                        /* put false if given type is char */
+                        column.put<bool>(Tables::Column::VARYING, false);
+                        break;
                 }
 
                 /* put data type lengths metadata if given type is varchar or char */
-                switch (id)
+                switch (static_cast<DataTypes::DataTypesId>(id))
                 {
-                    case static_cast<ObjectIdType>(DataTypes::DataTypesId::VARCHAR):
-                    case static_cast<ObjectIdType>(DataTypes::DataTypesId::CHAR):
+                    case DataTypes::DataTypesId::VARCHAR:
+                    case DataTypes::DataTypesId::CHAR:
                         /*
                          * if "typmods" is NIL then the actual typmod is expected to
                          * be prespecified in typemod, otherwise typemod is unused.
