@@ -149,26 +149,26 @@ TABLESPACE tsurugi
 
 |key|valueの型|valueの説明|valueに格納する値|[PostgreSQLのクエリツリー](#appendix-PostgreSQLのクエリツリー)から取得する属性(クラス名.属性)|
 |----|----|----|----|----|
-| "id"         | number [-]        | テーブルID                           | V1と同じ  | -                   |
-| "name"       | string [*]        | テーブル名                           | V1と同じ                     | RangeVar.relname    |
-| "namespace"  | string [+]        | スキーマ名    | **keyを作成しない。**  | - |
+| "id"         | number [-]        | テーブルID                           | -  | -                   |
+| "name"       | string [*]        | テーブル名                           | テーブル名                     | RangeVar.relname    |
+| "namespace"  | string [+]        | スキーマ名    | **本keyを作成しない。**  | - |
 | "columns"    | array[object] [*] | Columnメタデータオブジェクト          | [Columnメタデータオブジェクト](#columnメタデータオブジェクト)                       | -                   |
-| "primaryKey" | array[number] [*] | primaryKeyカラムの"ordinal_position" | **列制約に指定された主キー1つ、表制約に指定された複合主キーのどちらか1つ。**(PostgreSQLと同様に、複数の主キーは設定できない。)| <span>IndexStmt.indexParams.name</span> **xor** ColumnDef.constraints |
+| "primaryKey" | array[number] [*] | primaryKeyカラムの"ordinal_position" | **列制約に指定された主キー1つ、表制約に指定された複合主キーのどちらか1つ。**<br>(PostgreSQLと同様に、複数の主キーは設定できない。)| <span>IndexStmt.indexParams.name</span> **xor** ColumnDef.constraints |
 
 ### Columnメタデータオブジェクト
 
 |key|valueの型|valueの説明|valueに格納する値|[PostgreSQLのクエリツリー](#appendix-PostgreSQLのクエリツリー)から取得する属性(クラス名.属性)|
 |----|----|----|----|----|
-| "id"                | number        [-] | カラムID                                              | V1と同じ | - |
-| "tableId"           | number        [-] | カラムが属するテーブルのID                             | V1と同じ | - |
-| "name"              | string        [*] | カラム名                                              | V1と同じ | ColumnDef.colname |
-| "ordinalPosition"   | number        [*] | カラム番号(1 origin)                                  | V1と同じ | CreateStmt.tableEltsリストの並び順 |
+| "id"                | number        [-] | カラムID                                              | - | - |
+| "tableId"           | number        [-] | カラムが属するテーブルのID                             | - | - |
+| "name"              | string        [*] | カラム名                                              | カラム名 | ColumnDef.colname |
+| "ordinalPosition"   | number        [*] | カラム番号(1 origin)                                  | カラム番号(1 origin) | CreateStmt.tableEltsリストの並び順 |
 | "dataTypeId"        | number        [*] | カラムのデータ型のID | [PostgreSQLとカラムのデータ型のID対応表](#postgresqlとカラムのデータ型のid対応表)を参照 | TypeName.names **xor** TypeName.typeOid |
-| "dataLength"        | array[number] [+] | データ長(配列長) varchar(20)など ※NUMERIC(precision,scale)を考慮してarray[number] にしている。               | **V1と同様に文字列長を格納** | TypeName.typmods **xor** TypeName.typmod |
-| "varying"         | bool        [+] | **文字列長が可変か否か** | **PostgreSQLの型で、varcharの場合、true。charの場合false。それ以外の場合、keyを作成しない。**  | TypeName.names **xor** TypeName.typeOid |
-| "nullable"          | bool          [*] | NOT NULL制約の有無                                    | V1と同じ(NOT NULL制約あり：false、NOT NULL制約なし：true) | ColumnDef.is_not_null |
-| "default"           | string        [+] | デフォルト式 |**keyを作成しない。** <br> ※V1.0ではDEFAULT制約を指定しない場合、常に"(undefined)"で格納されている  | 取得しない |
-| "direction"         | number        [+] | 方向（0: DEFAULT, 1: ASCENDANT, 2: DESCENDANT）| **V1と同様に、PRIMARY KEY制約のカラムに対して"1"を格納、その他のカラムに対して常に"0"を格納**  | <span>IndexStmt.indexParams.name</span> **xor** ColumnDef.constraints |
+| "dataLength"        | array[number] [+] | データ長(配列長) varchar(20)など ※NUMERIC(precision,scale)を考慮してarray[number] にしている。               | **char [ (n) ](またはcharacter [ (n) ]), varchar [ (n) ](またはcharacter varying [ (n) ])で(n)が指定された場合、nを格納。<br>(n)が省略された場合、charの場合は1を格納、varcharの場合は本keyを作成しない。<br>char、varchar以外の型の場合、本keyを作成しない。** | TypeName.typmods **xor** TypeName.typmod |
+| "varying"         | bool        [+] | **文字列長が可変か否か** | **varchar [ (n) ](またはcharacter varying [ (n) ])の場合、true。<br>char [ (n) ](またはcharacter [ (n) ])の場合false。<br>それ以外の場合、keyを作成しない。**  | TypeName.names **xor** TypeName.typeOid |
+| "nullable"          | bool          [*] | NOT NULL制約の有無                                    | NOT NULL制約あり：false、NOT NULL制約なし：true | ColumnDef.is_not_null |
+| "default"           | string        [+] | デフォルト式 |**常に本keyを作成しない。** | 取得しない |
+| "direction"         | number        [+] | 方向（0: DEFAULT, 1: ASCENDANT, 2: DESCENDANT）| **PRIMARY KEY制約のカラムに対して"1"を格納、その他のカラムに対して常に"0"を格納**  | <span>IndexStmt.indexParams.name</span> **xor** ColumnDef.constraints |
 
 #### PostgreSQLとカラムのデータ型のID対応表
 
