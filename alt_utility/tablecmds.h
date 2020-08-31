@@ -22,9 +22,6 @@
 
 #include <unordered_set>
 
-/* DB name metadata-manager manages */
-const std::string DBNAME = "Tsurugi";
-
 /* base index of ordinal position metadata-manager manages */
 const uint64_t ORDINAL_POSITION_BASE_INDEX = 1;
 
@@ -34,7 +31,7 @@ class CreateTable {
          * @brief C'tors. Initialize member variables.
          * @param [in] List of statements.
          */
-        CreateTable(List *stmts);
+        CreateTable(List *stmts, std::string dbname);
 
         /**
          *  @brief  Defines relation include loading metadata, syntax check, type check, storing metadata.
@@ -46,7 +43,7 @@ class CreateTable {
 
     private:
         /* DB name metadata-manager manages */
-        const std::string dbname{DBNAME};
+        const std::string dbname;
         /* List of statements */
         List *stmts;
         /* Create Table Statement */

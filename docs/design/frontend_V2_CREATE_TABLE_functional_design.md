@@ -87,7 +87,9 @@ TABLESPACE tsurugi
 |浮動小数点|real|float4|FLOAT32|
 |浮動小数点|double precision|float8|FLOAT64|
 |文字列|character [ (n) ]|char [ (n) ]|TEXT|
-|文字列|character varying [ (n) ]|varchar [ (n) ]|TEXT|
+|文字列|character varying (n) |varchar (n) |TEXT|
+
+※varcharの場合、(n)の省略は未サポート
 
 ### サポートするロケール・文字エンコーディング
 

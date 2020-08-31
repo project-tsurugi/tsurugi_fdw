@@ -27,8 +27,9 @@
 #include "manager/message/message.h"
 #include "manager/message/message_broker.h"
 #include "manager/message/status.h"
-#include "manager/metadata/metadata.h"
 #include "manager/metadata/datatypes.h"
+#include "manager/metadata/metadata.h"
+#include "manager/metadata/tables.h"
 
 using namespace boost::property_tree;
 using namespace manager;
@@ -48,7 +49,10 @@ extern "C"
 
 #include "create_table.h"
 
-bool send_message(message::Message* message);
+/* DB name metadata-manager manages */
+const std::string DBNAME = "Tsurugi";
+
+bool send_message(message::Message *message, std::unique_ptr<metadata::Metadata> &objects);
 static std::string rewrite_query(std::string_view query_string);
 static bool execute_create_table(std::string_view query_string);
 
@@ -64,12 +68,13 @@ bool create_table(List *stmts)
     uint64_t object_id = 0;
 
     /* Call the function sending metadata to metadata-manager. */
-    CreateTable cmds{stmts};
+    CreateTable cmds{stmts, DBNAME};
     bool success = cmds.define_relation( &object_id );
 
     if (success) {
         message::CreateTableMessage ct_msg{object_id};
-        success = send_message(&ct_msg);
+        std::unique_ptr<metadata::Metadata> tables{new metadata::Tables(DBNAME)};
+        success = send_message(&ct_msg, tables);
     }
 
     return success;
@@ -79,7 +84,7 @@ bool create_table(List *stmts)
 /*
  *  @brief:
  */
-bool send_message(message::Message* message)
+bool send_message(message::Message *message, std::unique_ptr<metadata::Metadata> &objects)
 {
     Assert(message != nullptr);
 
@@ -101,8 +106,16 @@ bool send_message(message::Message* message)
 
     if (status.get_error_code() != message::ErrorCode::SUCCESS)
     {
-        elog(ERROR, "transaction::receive_message() %s failed. (%d)",
-             message->get_message_type_name().c_str(), (int) status.get_sub_error_code());
+        if (objects->load() == metadata::ErrorCode::OK)
+        {
+            objects->remove(message->get_object_id());
+        }
+
+        ereport(ERROR,
+                (errcode(ERRCODE_INTERNAL_ERROR),
+                 errmsg("transaction::receive_message() %s failed. (%d)",
+                message->get_message_type_name().c_str(), (int)status.get_sub_error_code())));
+
         return ret_value;
     }
 
