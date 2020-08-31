@@ -223,10 +223,10 @@ TABLESPACE tsurugi
 ### 基本方針
 * frontendは、Tsurugiでサポートしない構文・型をチェックしてエラーメッセージを出力する。
 * frontendは、PostgreSQLでスキーマ名が入力されても、構文エラーとしないが、スキーマ名はmetadata-managerに格納されない。
-    * つまり、スキーマ名の入力は無視して処理する。
-* エラーが発生した場合、Tsurugiに新しいテーブルは定義されない。
+  * つまり、スキーマ名の入力は無視して処理する。
 * PostgreSQLでチェックできないエラー処理のみを、frontendで実施する。
 * metadata-manager、ogawayamaで発生したエラーは、呼び出した関数の戻り値でエラーを受け取ってエラーメッセージを出力する。
+* PostgreSQLまたはfrontendでエラーが発生した場合、またはfrontendがmetadata-manager、ogawayamaからエラーを受け取った場合、Tsurugiに新しいテーブルは定義されない。また、この場合、metadata-managerに新しいテーブルのメタデータは格納されない。
 
 ### メッセージ内容
 #### 構文エラー
