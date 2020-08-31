@@ -47,7 +47,7 @@ extern "C" {
  * @brief C'tors. Initialize member variables.
  * @param [in] List of statements.
  */
-CreateTable::CreateTable(List *stmts) : stmts(stmts)
+CreateTable::CreateTable(List *stmts, std::string dbname) : stmts(stmts), dbname(dbname)
 {
     create_stmt = nullptr;
     index_stmt = nullptr;
