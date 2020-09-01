@@ -153,6 +153,10 @@
 		* 1文字
 		* 10文字
 		* 1000文字
+	* [制約の直行表](#制約の直行表)
+		* 全カラム値を挿入
+		* PRIMARY KEY制約のカラムはNULL以外の値、PRIMARY KEY制約以外のカラムはNULLを挿入
+		* NOT NULL制約のカラムはNULL以外の値、NOT NULL制約のカラムはNULLを挿入
 * UPDATE
 	```
 	CREATE TABLE t2(c1 INTEGER NOT NULL PRIMARY KEY, c2 BIGINT, c3 DOUBLE PRECISION) TABLESPACE tsurugi;
@@ -225,6 +229,9 @@
 			* 9223372036854775807
 	* char(10)/varchar(10)
 		* 11文字
+	* [制約の直行表](#制約の直行表)
+		* PRIMARY KEY制約のカラムに、NULLを挿入
+		* NOT NULL制約のカラムに、NULLを挿入
 * UPDATE
 	```
 	CREATE TABLE t2(c1 INTEGER NOT NULL PRIMARY KEY, c2 BIGINT, c3 DOUBLE PRECISION) TABLESPACE tsurugi;
