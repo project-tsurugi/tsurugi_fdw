@@ -167,7 +167,7 @@
 
 ## 異常系
 * 構文エラー
-	* [サポートするCREATE_TABLE構文](../../docs/design/frontend_V2_CREATE_TABLE_functional_design.md#サポートするCREATETABLE構文)以外を入力
+	* [サポートするCREATE_TABLE構文](../../docs/design/frontend_V2_CREATE_TABLE_functional_design.md#サポートするcreate-table構文)以外を入力
 		* [alternative.sql](./alternative/alternative.sql)
 * 型エラー
 	* [サポートする型](../../docs/design/frontend_V2_CREATE_TABLE_functional_design.md#サポートする型)以外を入力
