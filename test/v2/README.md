@@ -60,9 +60,9 @@
 * [alternative.sql](./alternative/alternative.sql)
 * [unhappy.sql](./unhappy/unhappy.sql)
 * メタデータのロード失敗
-	* <PostgreSQLのインストールディレクトリ>/data/tsurugi_metadata/datatypes.jsonのみ所有権をroot:rootに変更
-	* <PostgreSQLのインストールディレクトリ>/data/tsurugi_metadata/tables.jsonのみ所有権をroot:rootに変更
-	* <PostgreSQLのインストールディレクトリ>/data/tsurugi_metadata/oidのみ所有権をroot:rootに変更
+	* ~/.local/tsurugi/metadata/datatypes.jsonのみ所有権をroot:rootに変更
+	* ~/.local/tsurugi/metadata/tables.jsonのみ所有権をroot:rootに変更
+	* ~/.local/tsurugi/metadata/oidのみ所有権をroot:rootに変更
 
 ### tsurugi用のテーブル以外の場合（tablespace tsurugiをつけない場合）
 * [wo_tsurugi.sql](./wo_tsurugi/wo_tsurugi.sql)
@@ -120,8 +120,7 @@
 			* 1文字の半角英語
 
 * サポートされる型が正常に動作するか。
-	* サポートする型一覧
-		* [サポートする型一覧](../../docs/design/frontend_V2_CREATE_TABLE_functional_design.md#サポートする型)
+	* [サポートする型一覧](../../docs/design/frontend_V2_CREATE_TABLE_functional_design.md#サポートする型)
 	* varchar
 		* varchar(1)
 		* varchar(1000)
@@ -181,7 +180,6 @@
 			* nを省略　varchar()
 			* varchar(0)
 		* char
-			* (n)を省略する。
 			* nを省略　char()
 			* char(0)
 		* カラムに型が指定されていない
