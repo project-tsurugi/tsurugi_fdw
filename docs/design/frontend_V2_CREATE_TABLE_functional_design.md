@@ -1,5 +1,5 @@
 # frontend V2 テーブル定義機能 functional design
-2020.07.31 NEC 
+2020.09.01 NEC 
 
 ## 目次
 <!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
@@ -87,9 +87,9 @@ TABLESPACE tsurugi
 |浮動小数点|real|float4|FLOAT32|
 |浮動小数点|double precision|float8|FLOAT64|
 |文字列|character [ (n) ]|char [ (n) ]|TEXT|
-|文字列|character varying (n)[^1] |varchar (n) |TEXT|
+|文字列|character varying (n)<sup>[※1](#note1)</sup>|varchar (n) |TEXT|
 
-[^1]:varcharの場合、(n)の省略は未サポート
+<small id="note1">※1 varcharの場合、(n)の省略は未サポート</small>
 
 ### サポートするロケール・文字エンコーディング
 
