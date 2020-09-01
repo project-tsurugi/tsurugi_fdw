@@ -87,3 +87,149 @@
 |正常系|計|40|
 |異常系|計|115|
 ||総計|155|
+
+# 機能テスト
+
+## 基本方針
+* DML文の構文自体は簡単な内容。
+	* 例
+		* [test_create_table.sql](../v1/test_create_table.sql)
+* ただし、CREATE TABLEに関係する要素(カラム数やデータ型など)については考慮した構文にする。
+	* 可能であれば、v1をベースに組み合わせや網羅性を向上させる。
+
+## 正常系
+* ch-benchmark-ddl
+	* [ch-benchmark-ddl.sql](./ch-benchmark-ddl/ch-benchmark-ddl.sql)
+
+* サポートされる構文が正常に動作するか。
+	* 制約の直交表
+		* [otable_of_constr.sql](./otable_of_constr/otable_of_constr.sql)
+		* [制約の直行表](#制約の直行表)
+
+	* [happy.sql](./happy/happy.sql)
+		* カラムなし
+		* sql文がupper case
+			* 表制約PRIMARY KEY
+			* 列制約PRIMARY KEY
+		* sql文がlower case
+			* 表制約PRIMARY KEY
+			* 列制約PRIMARY KEY
+		* すべてのカラムがPRIMARY KEY
+		* カラム名
+			* 全角日本語
+			* 1文字の半角英語
+
+* サポートされる型が正常に動作するか。
+	* サポートする型一覧
+		* [サポートする型一覧](../../docs/design/frontend_V2_CREATE_TABLE_functional_design.md)
+	* varchar
+		* varchar(1)
+		* varchar(1000)
+	* char
+		* char(1)
+		* char(1000)
+		* (n)を省略する。
+
+* INSERT/SELLECT
+	* int
+		* intの範囲内
+			* -2147483647
+			* 0
+			* 2147483646
+	* bigint
+		* bigintの範囲内
+			* -9223372036854775807
+			* 0
+			* 9223372036854775806
+	* real
+		* 天文台のSQLに記載の値
+			* 3.24000001
+			* -2.27600002
+	* double precision
+		* 天文台のSQLに記載の値
+			* -0.299999999999999989
+			* 25.8000000000000007
+	* char/varchar
+		* 1文字
+		* 10文字
+		* 1000文字
+* UPDATE
+	```
+	CREATE TABLE t2(c1 INTEGER NOT NULL PRIMARY KEY, c2 BIGINT, c3 DOUBLE PRECISION) TABLESPACE tsurugi;
+	INSERT INTO t2 VALUES (1, 100, 1.1);
+	UPDATE t2 SET c2 = c2+9223372036854775706;
+	UPDATE t2 SET c3 = c3+3.24000001 WHERE c2 = 9223372036854775806;
+	```
+
+## 異常系
+* 構文エラー
+	* サポートする構文以外を入力
+		* [サポートする構文一覧](../../docs/design/frontend_V2_CREATE_TABLE_functional_design.md)
+	* [alternative.sql](./alternative/alternative.sql)
+* 型エラー
+	* サポートする型以外を入力
+		* [サポートする型一覧](../../docs/design/frontend_V2_CREATE_TABLE_functional_design.md)
+		* [alternative.sql](./alternative/alternative.sql)
+		* varchar
+			* (n)を省略する。
+			* nを省略　varchar()
+			* varchar(0)
+		* char
+			* (n)を省略する。
+			* nを省略　char()
+			* char(0)
+		* カラムに型が指定されていない
+
+* [unhappy.sql](./unhappy/unhappy.sql)
+	* DEFAULT制約
+		* DEFAULT制約のDEFAULT値をダブルクオートで囲む
+		* DEFAULT制約のserialを入力
+
+	* PRIMARY KEY制約
+		* 列制約でPRIMARY KEY制約を複数カラム入力
+		* カラム名が指定されていなかった。例) PRIMARY KEY()
+			* 列制約
+			* 表制約
+		* 表制約のPRIMARY KEY制約で、存在しないカラム名を指定。
+
+	* カラム名
+		* 1つのテーブルに同じカラム名を入力
+		* カラム名が指定されていない。
+		* カラム名が数字のみ　例)1
+		* カラム名が数字から始まる　例)1c
+		* カラム名が日本語　例) ???
+
+	* テーブル名
+		* すでに存在するテーブル名を入力
+			* 同一PostgreSQLデータベース・同一スキーマ名にすでに存在するテーブル名を入力
+			* 同一PostgreSQLデータベース・スキーマ名が異なるスキーマにすでに存在するテーブル名を入力
+			* 別PostgreSQLデータベース・同一スキーマ名にすでに存在するテーブル名を入力
+			* 別PostgreSQLデータベース・別スキーマ名にすでに存在するテーブル名を入力
+		* テーブル名が指定されていない。
+		* テーブル名が数字のみ　例)1
+		* テーブル名が数字から始まる　例)1c
+		* テーブル名が日本語　例) ???
+
+* ogawayama-serverが起動していない。
+* メタデータのロード失敗
+	* ~/.local/tsurugi/metadata/datatypes.jsonのみ所有権をroot:rootに変更
+	* ~/.local/tsurugi/metadata/tables.jsonのみ所有権をroot:rootに変更
+	* ~/.local/tsurugi/metadata/oidのみ所有権をroot:rootに変更
+
+* INSERT
+	* int
+		* intの範囲外
+			* -2147483648
+			* 2147483647
+	* bigint
+		* bigintの範囲内
+			* -9223372036854775808
+			* 9223372036854775807
+	* char(10)/varchar(10)
+		* 11文字
+* UPDATE
+	```
+	CREATE TABLE t2(c1 INTEGER NOT NULL PRIMARY KEY, c2 BIGINT, c3 DOUBLE PRECISION) TABLESPACE tsurugi;
+	INSERT INTO t2 VALUES (1, 100, 1.1);
+	UPDATE t2 SET c2 = c2+9223372036854775807;
+	```
