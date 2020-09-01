@@ -60,9 +60,9 @@
 * [alternative.sql](./alternative/alternative.sql)
 * [unhappy.sql](./unhappy/unhappy.sql)
 * メタデータのロード失敗
-	* <PostgreSQLのインストールディレクトリ>/data/tsurugi_metadata/datatypes.jsonのみ所有権をroot:rootに変更
-	* <PostgreSQLのインストールディレクトリ>/data/tsurugi_metadata/tables.jsonのみ所有権をroot:rootに変更
-	* <PostgreSQLのインストールディレクトリ>/data/tsurugi_metadata/oidのみ所有権をroot:rootに変更
+	* ~/.local/tsurugi/metadata/datatypes.jsonのみ所有権をroot:rootに変更
+	* ~/.local/tsurugi/metadata/tables.jsonのみ所有権をroot:rootに変更
+	* ~/.local/tsurugi/metadata/oidのみ所有権をroot:rootに変更
 
 ### tsurugi用のテーブル以外の場合（tablespace tsurugiをつけない場合）
 * [wo_tsurugi.sql](./wo_tsurugi/wo_tsurugi.sql)
