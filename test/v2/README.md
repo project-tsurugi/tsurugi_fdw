@@ -88,7 +88,7 @@
 |異常系|計|115|
 ||総計|155|
 
-# 機能テスト
+# 機能テスト(結合テスト)
 
 ## 基本方針
 * DML文の構文自体は簡単な内容。
@@ -121,7 +121,7 @@
 
 * サポートされる型が正常に動作するか。
 	* サポートする型一覧
-		* [サポートする型一覧](../../docs/design/frontend_V2_CREATE_TABLE_functional_design.md)
+		* [サポートする型一覧](../../docs/design/frontend_V2_CREATE_TABLE_functional_design.md#サポートする型)
 	* varchar
 		* varchar(1)
 		* varchar(1000)
@@ -163,12 +163,10 @@
 
 ## 異常系
 * 構文エラー
-	* サポートする構文以外を入力
-		* [サポートする構文一覧](../../docs/design/frontend_V2_CREATE_TABLE_functional_design.md)
-	* [alternative.sql](./alternative/alternative.sql)
+	* [サポートするCREATE_TABLE構文](../../docs/design/frontend_V2_CREATE_TABLE_functional_design.md#サポートするCREATETABLE構文)以外を入力
+		* [alternative.sql](./alternative/alternative.sql)
 * 型エラー
-	* サポートする型以外を入力
-		* [サポートする型一覧](../../docs/design/frontend_V2_CREATE_TABLE_functional_design.md)
+	* [サポートする型](../../docs/design/frontend_V2_CREATE_TABLE_functional_design.md#サポートする型)以外を入力
 		* [alternative.sql](./alternative/alternative.sql)
 		* varchar
 			* (n)を省略する。
