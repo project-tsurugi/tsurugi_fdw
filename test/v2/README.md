@@ -111,7 +111,7 @@
 			* サポートされる型が正常に動作するか。
 			* 制約が正常に動作するか。
 		* INSERT/SELECT文が、値の範囲内で、正常に動作するか
-		* UPDATE文が、値の範囲内で、正常に動作するか
+		* UPDATE/DELETE文が、正常に動作するか
 * 異常系
 	* テスト確認観点
 		* サポートする構文・型以外を入力する、または、エラーとなる動作を行った場合、frontendでエラーメッセージが出力され、Tsurugiでテーブルが定義されない、かつ定義要求したテーブルメタデータがTsurugiで保存されないことを確認する。
@@ -124,6 +124,7 @@
 		* 範囲外の値をINSERTしたとき、エラーメッセージが出力されるか確認する。
 		* PRIMARY KEY/NOT NULL制約が正常に動作して、NULLを入力したときにエラーメッセージが出力されるか確認する。
 		* 最大値を超える値でUPDATEすると、エラーメッセージが出力されるか確認する。
+		* UPDATE/DELETE文を実行し、エラーメッセージが出力される確認する。
 
 ## 正常系
 ### CREATE TABLE
@@ -204,17 +205,12 @@
 		* PRIMARY KEY制約のカラムはNULL以外の値、PRIMARY KEY制約以外のカラムはNULLを挿入
 		* NOT NULL制約のカラムはNULL以外の値、NOT NULL制約のカラムはNULLを挿入
 
-### UPDATE
-####  UPDATE正常テスト
-* 目的：UPDATEが正常に動作するか確認する。
-* 内容：次のSQL文の通り、最大値で正常にUPDATEできることを確認する。
-
-```
-CREATE TABLE t2(c1 INTEGER NOT NULL PRIMARY KEY, c2 BIGINT, c3 DOUBLE PRECISION) TABLESPACE tsurugi;
-INSERT INTO t2 VALUES (1, 100, 1.1);
-UPDATE t2 SET c2 = c2+9223372036854775707;
-UPDATE t2 SET c3 = c3+3.24000001 WHERE c2 = 9223372036854775807;
-```
+### UPDATE/DELETE
+####  UPDATE/DELETE正常テスト
+* 目的：UPDATE/DELETEが正常に動作するか確認する。
+* 内容：
+	* すべての型のカラムに対してUPDATEできることを確認する。
+	* すべての型のカラムに対してDELETEできることを確認する。
 
 ## 異常系
 ### CREATE TABLE
@@ -311,14 +307,11 @@ UPDATE t2 SET c3 = c3+3.24000001 WHERE c2 = 9223372036854775807;
 		* 制約があるカラムには、NULLを挿入できないことを確認する。
 			* PRIMARY KEY制約のカラムに、NULLを挿入
 			* NOT NULL制約のカラムに、NULLを挿入
-### UPDATE
-#### UPDATE異常テスト
 
-* 目的：UPDATEが正常に動作するか確認する。
-* 内容：次のSQL文の通り、最大値を超える値でUPDATEすると、エラーメッセージが出力されるか確認する。
-
-```
-CREATE TABLE t2(c1 INTEGER NOT NULL PRIMARY KEY, c2 BIGINT, c3 DOUBLE PRECISION) TABLESPACE tsurugi;
-INSERT INTO t2 VALUES (1, 100, 1.1);
-UPDATE t2 SET c2 = c2+9223372036854775807;
-```
+### UPDATE/DELETE
+####  UPDATE/DELETE異常テスト
+* 目的：UPDATE/DELETEが正常に動作するか確認する。
+* 内容：
+	* すべての型のカラムに対してUPDATEを行い、エラーメッセージが出力されることを確認する。
+	* すべての型のカラムに対してDELETEを行い、エラーメッセージが出力されることを確認する。
+	
