@@ -1,10 +1,7 @@
 CREATE DATABASE test TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'C' LC_CTYPE = 'en_US.utf8';
-
 \c test
-
 CREATE EXTENSION ogawayama_fdw;
 CREATE SERVER ogawayama FOREIGN DATA WRAPPER ogawayama_fdw;
-
 CREATE TABLE order_line (
   ol_w_id int NOT NULL,
   ol_d_id int NOT NULL,
@@ -18,16 +15,12 @@ CREATE TABLE order_line (
   ol_dist_info char(24) NOT NULL,
   PRIMARY KEY (ol_w_id,ol_d_id,ol_o_id,ol_number)
 ) tablespace tsurugi;
-
-
 CREATE TABLE new_order (
   no_w_id int NOT NULL,
   no_d_id int NOT NULL,
   no_o_id int NOT NULL,
   PRIMARY KEY (no_w_id,no_d_id,no_o_id)
 ) tablespace tsurugi;
-
-
 CREATE TABLE stock (
   s_w_id int NOT NULL,
   s_i_id int NOT NULL,
@@ -48,9 +41,7 @@ CREATE TABLE stock (
   s_dist_10 char(24) NOT NULL,
   PRIMARY KEY (s_w_id,s_i_id)
 ) tablespace tsurugi;
-
 -- TODO: o_entry_d  ON UPDATE CURRENT_TIMESTAMP
-
 CREATE TABLE orders (
   o_w_id int NOT NULL,
   o_d_id int NOT NULL,
@@ -62,8 +53,6 @@ CREATE TABLE orders (
   o_entry_d char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
   PRIMARY KEY (o_w_id,o_d_id,o_id)
 ) tablespace tsurugi;
-
-
 CREATE TABLE orders_secondary (
   o_d_id INT NOT NULL,
   o_w_id INT NOT NULL,
@@ -71,9 +60,7 @@ CREATE TABLE orders_secondary (
   o_id INT NOT NULL,
   PRIMARY KEY(o_w_id, o_d_id, o_c_id, o_id)
 ) tablespace tsurugi;
-
 -- TODO: h_date ON UPDATE CURRENT_TIMESTAMP
-
 CREATE TABLE history (
   h_c_id int NOT NULL,
   h_c_d_id int NOT NULL,
@@ -84,8 +71,6 @@ CREATE TABLE history (
   h_amount double precision NOT NULL, -- decimal(6,2) NOT NULL
   h_data varchar(24) NOT NULL
 ) tablespace tsurugi;
-
-
 CREATE TABLE customer (
   c_w_id int NOT NULL,
   c_d_id int NOT NULL,
@@ -110,8 +95,6 @@ CREATE TABLE customer (
   c_data varchar(500) NOT NULL,
   PRIMARY KEY (c_w_id,c_d_id,c_id)
 ) tablespace tsurugi;
-
-
 CREATE TABLE customer_secondary (
   c_d_id INT NOT NULL,
   c_w_id INT NOT NULL,
@@ -120,8 +103,6 @@ CREATE TABLE customer_secondary (
   c_id INT NOT NULL,
   PRIMARY KEY(c_w_id, c_d_id, c_last, c_first)
 ) tablespace tsurugi;
-
-
 CREATE TABLE district (
   d_w_id int NOT NULL,
   d_id int NOT NULL,
@@ -136,9 +117,6 @@ CREATE TABLE district (
   d_zip char(9) NOT NULL,
   PRIMARY KEY (d_w_id,d_id)
 ) tablespace tsurugi;
-
-
-
 CREATE TABLE item (
   i_id int NOT NULL,
   i_name varchar(24) NOT NULL,
@@ -147,8 +125,6 @@ CREATE TABLE item (
   i_im_id int NOT NULL,
   PRIMARY KEY (i_id)
 ) tablespace tsurugi;
-
-
 CREATE TABLE warehouse (
   w_id int NOT NULL,
   w_ytd double precision NOT NULL, -- decimal(12,2) NOT NULL
@@ -161,10 +137,7 @@ CREATE TABLE warehouse (
   w_zip char(9) NOT NULL,
   PRIMARY KEY (w_id)
 ) tablespace tsurugi;
-
 -- Add table for ch-benchmark
-
-
 CREATE TABLE nation (
     n_nationkey integer NOT NULL,
     n_name character(25) NOT NULL,
@@ -172,8 +145,6 @@ CREATE TABLE nation (
     n_comment character(152) NOT NULL,
     PRIMARY KEY (n_nationkey)
 ) tablespace tsurugi;
-
-
 CREATE TABLE supplier (
     su_suppkey integer NOT NULL,
     su_name character(25) NOT NULL,
@@ -184,16 +155,12 @@ CREATE TABLE supplier (
     su_comment character(101) NOT NULL,
     PRIMARY KEY (su_suppkey)
 ) tablespace tsurugi;
-
-
 CREATE TABLE region (
     r_regionkey integer NOT NULL,
     r_name character(55) NOT NULL,
     r_comment character(152) NOT NULL,
     PRIMARY KEY (r_regionkey)
 ) tablespace tsurugi;
-
-
 CREATE FOREIGN TABLE order_line (
   ol_w_id int NOT NULL,
   ol_d_id int NOT NULL,
@@ -206,15 +173,11 @@ CREATE FOREIGN TABLE order_line (
   ol_quantity double precision NOT NULL, -- decimal(2,0) NOT NULL
   ol_dist_info char(24) NOT NULL
 ) SERVER ogawayama;
-
-
 CREATE FOREIGN TABLE new_order (
   no_w_id int NOT NULL,
   no_d_id int NOT NULL,
   no_o_id int NOT NULL
 ) SERVER ogawayama;
-
-
 CREATE FOREIGN TABLE stock (
   s_w_id int NOT NULL,
   s_i_id int NOT NULL,
@@ -234,9 +197,7 @@ CREATE FOREIGN TABLE stock (
   s_dist_09 char(24) NOT NULL,
   s_dist_10 char(24) NOT NULL
 ) SERVER ogawayama;
-
 -- TODO: o_entry_d  ON UPDATE CURRENT_TIMESTAMP
-
 CREATE FOREIGN TABLE orders (
   o_w_id int NOT NULL,
   o_d_id int NOT NULL,
@@ -247,17 +208,13 @@ CREATE FOREIGN TABLE orders (
   o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
   o_entry_d char(24) NOT NULL -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) SERVER ogawayama;
-
-
 CREATE FOREIGN TABLE orders_secondary (
   o_d_id INT NOT NULL,
   o_w_id INT NOT NULL,
   o_c_id INT NOT NULL,
   o_id INT NOT NULL
 ) SERVER ogawayama;
-
 -- TODO: h_date ON UPDATE CURRENT_TIMESTAMP
-
 CREATE FOREIGN TABLE history (
   h_c_id int NOT NULL,
   h_c_d_id int NOT NULL,
@@ -268,8 +225,6 @@ CREATE FOREIGN TABLE history (
   h_amount double precision NOT NULL, -- decimal(6,2) NOT NULL
   h_data varchar(24) NOT NULL
 ) SERVER ogawayama;
-
-
 CREATE FOREIGN TABLE customer (
   c_w_id int NOT NULL,
   c_d_id int NOT NULL,
@@ -293,8 +248,6 @@ CREATE FOREIGN TABLE customer (
   c_middle char(2) NOT NULL,
   c_data varchar(500) NOT NULL
 ) SERVER ogawayama;
-
-
 CREATE FOREIGN TABLE customer_secondary (
   c_d_id INT NOT NULL,
   c_w_id INT NOT NULL,
@@ -302,8 +255,6 @@ CREATE FOREIGN TABLE customer_secondary (
   c_first VARCHAR(16) NOT NULL,
   c_id INT NOT NULL
 ) SERVER ogawayama;
-
-
 CREATE FOREIGN TABLE district (
   d_w_id int NOT NULL,
   d_id int NOT NULL,
@@ -317,9 +268,6 @@ CREATE FOREIGN TABLE district (
   d_state char(2) NOT NULL,
   d_zip char(9) NOT NULL
 ) SERVER ogawayama;
-
-
-
 CREATE FOREIGN TABLE item (
   i_id int NOT NULL,
   i_name varchar(24) NOT NULL,
@@ -327,8 +275,6 @@ CREATE FOREIGN TABLE item (
   i_data varchar(50) NOT NULL,
   i_im_id int NOT NULL
 ) SERVER ogawayama;
-
-
 CREATE FOREIGN TABLE warehouse (
   w_id int NOT NULL,
   w_ytd double precision NOT NULL, -- decimal(12,2) NOT NULL
@@ -340,18 +286,13 @@ CREATE FOREIGN TABLE warehouse (
   w_state char(2) NOT NULL,
   w_zip char(9) NOT NULL
 ) SERVER ogawayama;
-
 -- Add table for ch-benchmark
-
-
 CREATE FOREIGN TABLE nation (
     n_nationkey integer NOT NULL,
     n_name character(25) NOT NULL,
     n_regionkey integer NOT NULL,
     n_comment character(152) NOT NULL
 ) SERVER ogawayama;
-
-
 CREATE FOREIGN TABLE supplier (
     su_suppkey integer NOT NULL,
     su_name character(25) NOT NULL,
@@ -361,40 +302,95 @@ CREATE FOREIGN TABLE supplier (
     su_acctbal double precision NOT NULL, -- numeric(12,2) NOT NULL
     su_comment character(101) NOT NULL
 ) SERVER ogawayama;
-
-
 CREATE FOREIGN TABLE region (
     r_regionkey integer NOT NULL,
     r_name character(55) NOT NULL,
     r_comment character(152) NOT NULL
 ) SERVER ogawayama;
-
-
 SELECT * from order_line;
+ ol_w_id | ol_d_id | ol_o_id | ol_number | ol_i_id | ol_delivery_d | ol_amount | ol_supply_w_id | ol_quantity | ol_dist_info 
+---------+---------+---------+-----------+---------+---------------+-----------+----------------+-------------+--------------
+(0 rows)
+
 SELECT * from new_order;
+ no_w_id | no_d_id | no_o_id 
+---------+---------+---------
+(0 rows)
+
 SELECT * from stock;
+ s_w_id | s_i_id | s_quantity | s_ytd | s_order_cnt | s_remote_cnt | s_data | s_dist_01 | s_dist_02 | s_dist_03 | s_dist_04 | s_dist_05 | s_dist_06 | s_dist_07 | s_dist_08 | s_dist_09 | s_dist_10 
+--------+--------+------------+-------+-------------+--------------+--------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------
+(0 rows)
+
 SELECT * from orders;
+ o_w_id | o_d_id | o_id | o_c_id | o_carrier_id | o_ol_cnt | o_all_local | o_entry_d 
+--------+--------+------+--------+--------------+----------+-------------+-----------
+(0 rows)
+
 SELECT * from orders_secondary;
+ o_d_id | o_w_id | o_c_id | o_id 
+--------+--------+--------+------
+(0 rows)
+
 SELECT * from history;
+ h_c_id | h_c_d_id | h_c_w_id | h_d_id | h_w_id | h_date | h_amount | h_data 
+--------+----------+----------+--------+--------+--------+----------+--------
+(0 rows)
+
 SELECT * from customer;
+ c_w_id | c_d_id | c_id | c_discount | c_credit | c_last | c_first | c_credit_lim | c_balance | c_ytd_payment | c_payment_cnt | c_delivery_cnt | c_street_1 | c_street_2 | c_city | c_state | c_zip | c_phone | c_since | c_middle | c_data 
+--------+--------+------+------------+----------+--------+---------+--------------+-----------+---------------+---------------+----------------+------------+------------+--------+---------+-------+---------+---------+----------+--------
+(0 rows)
+
 SELECT * from customer_secondary;
+ c_d_id | c_w_id | c_last | c_first | c_id 
+--------+--------+--------+---------+------
+(0 rows)
+
 SELECT * from district;
+ d_w_id | d_id | d_ytd | d_tax | d_next_o_id | d_name | d_street_1 | d_street_2 | d_city | d_state | d_zip 
+--------+------+-------+-------+-------------+--------+------------+------------+--------+---------+-------
+(0 rows)
+
 SELECT * from item;
+ i_id | i_name | i_price | i_data | i_im_id 
+------+--------+---------+--------+---------
+(0 rows)
+
 SELECT * from warehouse;
+ w_id | w_ytd | w_tax | w_name | w_street_1 | w_street_2 | w_city | w_state | w_zip 
+------+-------+-------+--------+------------+------------+--------+---------+-------
+(0 rows)
+
 SELECT * from nation;
+ n_nationkey | n_name | n_regionkey | n_comment 
+-------------+--------+-------------+-----------
+(0 rows)
+
 SELECT * from supplier;
+ su_suppkey | su_name | su_address | su_nationkey | su_phone | su_acctbal | su_comment 
+------------+---------+------------+--------------+----------+------------+------------
+(0 rows)
+
 SELECT * from region;
+ r_regionkey | r_name | r_comment 
+-------------+--------+-----------
+(0 rows)
 
 INSERT INTO order_line VALUES (974,1,1,1,49876,'2020-09-01 06:19:55',0.00,5,2.09,'igebHozKYD8JjLxfXTt?uXaR');
 INSERT INTO new_order VALUES (2920,1,1);
 INSERT INTO new_order VALUES (2839,1,1);
 INSERT INTO stock VALUES (1,1,73,0,0,1,'v7HGGr@mYEf0Av1pxNosnrL5','fk5m85ndyvC4FZS9lZaMMDEi','ItiMb?P7Oh@KloVk7JC@pVBt','o@Kqnxttlh06QFXwggBjdH?f','D8CTTn0i4O?iVL?l2sUfnT77','Djuyt6Kn0Z?leuJwXumIyGiE','25s0byEfmFENUs?XYBjpIFs0','F5is3TawHS39R1AaH9pZKlha','jYjPHAHKNb0z5fQ@PbqiUPHp','AidrXn0CRuDVHvWuoc2EsSxS','sB09deduXnuUyXRUpNeSeYohnQtTtnl5RJG');
+ERROR:  transaction::execute_statement() failed. (9)
 INSERT INTO orders VALUES (974,1,1,1,8,7,1,'2020-09-01 06:19:55');
 INSERT INTO orders_secondary VALUES (893,1,1,4);
 INSERT INTO history VALUES (1,1,1,1,1,'2020-09-01 06:19:55',10.00,'?qO6YMvDuCVyQQ');
 INSERT INTO customer VALUES (1,1,1,882711111,'OE','YGw89hId','BARBARBAR',50000.00,0.0135,-10.00,1,53,'kU1gw6cmC?b0','0EvtoSo6haMZNOgk','WE9wusQn8MlIfyrWwIs','5Y','VlQIzx7Gl','0120-11111-12222','2020-09-01 06:19:55','GC','@GvTnhlqcYlWD?7Fk43@owVlQIzx7GlsTgPXwPW@HxAXV3KyMaoTxaMnnmCTKs6ky17p2i6CxwzHuqefsA5y4sk1LoITnJc5JiH0e0HHrfFmKEZC6DIuC41FdKcLcY6dqx9RCPxGf@ClUEO5Sc9TbSqgoe8XCumo3xkTu7?o4dII87mT@zpLZADMRAL399euHeUiU8zV2rGldCKEI78Rl2hngBz?9GlSuby@dZMdK@NHLaKTlVYdwTcq7J5j1yDKqIDao0@nl623jyWm92xt5fc6ep4ifM3c31gkoAZrD2YkLt2Vyi?hhlaouBYafNrzE1nssAlvQjMIAB62pvuWSoR');
 INSERT INTO customer_secondary VALUES (4,1,'bZK8UUzZk6OJQwbi','BARBARPRI',829611111);
 INSERT INTO district VALUES (1,1,0.1224,30000.00,3001,185311111,'7KxYQrnz','5fg6lud3tkcnGw','IHKgOEqlYdZD543lan','2Jwyu80wQLC','Tn','HeUiU8zV2');
+ERROR:  INSERT has more expressions than target columns
+LINE 1: ...d3tkcnGw','IHKgOEqlYdZD543lan','2Jwyu80wQLC','Tn','HeUiU8zV2...
+                                                             ^
 INSERT INTO item VALUES (1,'7KxYQrnz',0.1224,'5fg6lud3tkcnGw',185311111);
 INSERT INTO warehouse VALUES (1,0.078,300000.00,'HO73DCcj6s','67oATAPEmE5','mM48NK@U7TQTK@Z@ma','sitmvvuwAzB','g5','405911111');
 INSERT INTO nation VALUES (48,'ALGERIA',0,'the bravely busy theodolites will dazzle blithely according to the never silent');
@@ -404,22 +400,56 @@ INSERT INTO region VALUES (1,'AMERICA','the pearls : doggedly final platelets al
 INSERT INTO region VALUES (2,'ASIA','s try to engage quickly past the regul');
 INSERT INTO region VALUES (3,'EUROPE','ss the idly ironic somas ! evenly busy warthogs past the slyly even notornis must print q');
 INSERT INTO region VALUES (4,'MIDDLE EAST','ructions ; quietly sly dolphins besi');
-
 SELECT * from order_line;
+ERROR:  invalid memory alloc request size 1579231200
 SELECT * from new_order;
+ no_w_id | no_d_id | no_o_id 
+---------+---------+---------
+    2839 |       1 |       1
+    2920 |       1 |       1
+(2 rows)
+
 SELECT * from stock;
+ s_w_id | s_i_id | s_quantity | s_ytd | s_order_cnt | s_remote_cnt | s_data | s_dist_01 | s_dist_02 | s_dist_03 | s_dist_04 | s_dist_05 | s_dist_06 | s_dist_07 | s_dist_08 | s_dist_09 | s_dist_10 
+--------+--------+------------+-------+-------------+--------------+--------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------
+(0 rows)
+
 SELECT * from orders;
+ERROR:  invalid memory alloc request size 1579231200
 SELECT * from orders_secondary;
+ o_d_id | o_w_id | o_c_id | o_id 
+--------+--------+--------+------
+    893 |      1 |      1 |    4
+(1 row)
+
 SELECT * from history;
+ERROR:  invalid memory alloc request size 1579231200
 SELECT * from customer;
+ERROR:  invalid memory alloc request size 1579231200
 SELECT * from customer_secondary;
+ c_d_id | c_w_id |      c_last      |  c_first  |   c_id    
+--------+--------+------------------+-----------+-----------
+      4 |      1 | bZK8UUzZk6OJQwbi | BARBARPRI | 829611111
+(1 row)
+
 SELECT * from district;
+ d_w_id | d_id | d_ytd | d_tax | d_next_o_id | d_name | d_street_1 | d_street_2 | d_city | d_state | d_zip 
+--------+------+-------+-------+-------------+--------+------------+------------+--------+---------+-------
+(0 rows)
+
 SELECT * from item;
+ i_id |  i_name  | i_price |     i_data     |  i_im_id  
+------+----------+---------+----------------+-----------
+    1 | 7KxYQrnz |  0.1224 | 5fg6lud3tkcnGw | 185311111
+(1 row)
+
 SELECT * from warehouse;
+ERROR:  invalid memory alloc request size 1579231200
 SELECT * from nation;
+ERROR:  invalid memory alloc request size 1579231200
 SELECT * from supplier;
+ERROR:  invalid memory alloc request size 1579231200
 SELECT * from region;
-
+ERROR:  invalid memory alloc request size 1579231200
 \c postgres
-
 DROP DATABASE test;
