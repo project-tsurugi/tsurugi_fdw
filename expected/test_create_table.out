@@ -1,0 +1,101 @@
+/* DDL */
+CREATE TABLE t1(c1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
+CREATE TABLE
+CREATE FOREIGN TABLE t1(c1 INTEGER NOT NULL) SERVER ogawayama;
+CREATE FOREIGN TABLE
+CREATE TABLE t2(c1 INTEGER NOT NULL PRIMARY KEY, c2 BIGINT, c3 DOUBLE PRECISION) TABLESPACE tsurugi;
+CREATE TABLE
+CREATE FOREIGN TABLE t2(c1 INTEGER NOT NULL, c2 BIGINT, c3 DOUBLE PRECISION) SERVER ogawayama;
+CREATE FOREIGN TABLE
+/* DML */
+SELECT * FROM t1;
+ c1 
+----
+(0 rows)
+
+INSERT INTO t1 VALUES (1);
+INSERT 0 0
+SELECT * FROM t1;
+ c1 
+----
+  1
+(1 row)
+
+SELECT * FROM t2;
+ c1 | c2 | c3 
+----+----+----
+(0 rows)
+
+INSERT INTO t2 VALUES (1, 100, 1.1);
+INSERT 0 0
+INSERT INTO t2 VALUES (2, 200, 2.2);
+INSERT 0 0
+SELECT * FROM t2;
+ c1 | c2  | c3  
+----+-----+-----
+  1 | 100 | 1.1
+  2 | 200 | 2.2
+(2 rows)
+
+SELECT * FROM t1;
+ c1 
+----
+  1
+(1 row)
+
+INSERT INTO t1 VALUES (10);
+INSERT 0 0
+INSERT INTO t1 VALUES (100);
+INSERT 0 0
+SELECT * FROM t1;
+ c1  
+-----
+   1
+  10
+ 100
+(3 rows)
+
+SELECT * FROM t2;
+ c1 | c2  | c3  
+----+-----+-----
+  1 | 100 | 1.1
+  2 | 200 | 2.2
+(2 rows)
+
+UPDATE t2 SET c2 = c2+10;
+UPDATE 0
+UPDATE t2 SET c3 = c3+1.1 WHERE c2 = 110;
+UPDATE 0
+SELECT * FROM t2;
+ c1 | c2  | c3  
+----+-----+-----
+  1 | 110 | 2.2
+  2 | 210 | 2.2
+(2 rows)
+
+SELECT * FROM t1;
+ c1  
+-----
+   1
+  10
+ 100
+(3 rows)
+
+DELETE FROM t1 WHERE c1 = 10;
+DELETE 0
+SELECT * FROM t1;
+ c1  
+-----
+   1
+ 100
+(2 rows)
+
+/* Drop tables */
+DROP FOREIGN TABLE t1;
+DROP FOREIGN TABLE
+DROP TABLE t1_dummy;
+DROP TABLE
+DROP FOREIGN TABLE t2;
+DROP FOREIGN TABLE
+DROP TABLE t2_dummy;
+DROP TABLE
