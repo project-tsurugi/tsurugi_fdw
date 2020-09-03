@@ -377,20 +377,16 @@ SELECT * from region;
 -------------+--------+-----------
 (0 rows)
 
-INSERT INTO order_line VALUES (974,1,1,1,49876,'2020-09-01 06:19:55',0.00,5,2.09,'igebHozKYD8JjLxfXTt?uXaR');
+INSERT INTO order_line VALUES (974,1,1,1,49876,'2020-09-01 06:19:55',0.00,5,2.09,'ige');
 INSERT INTO new_order VALUES (2920,1,1);
 INSERT INTO new_order VALUES (2839,1,1);
-INSERT INTO stock VALUES (1,1,73,0,0,1,'v7HGGr@mYEf0Av1pxNosnrL5','fk5m85ndyvC4FZS9lZaMMDEi','ItiMb?P7Oh@KloVk7JC@pVBt','o@Kqnxttlh06QFXwggBjdH?f','D8CTTn0i4O?iVL?l2sUfnT77','Djuyt6Kn0Z?leuJwXumIyGiE','25s0byEfmFENUs?XYBjpIFs0','F5is3TawHS39R1AaH9pZKlha','jYjPHAHKNb0z5fQ@PbqiUPHp','AidrXn0CRuDVHvWuoc2EsSxS','sB09deduXnuUyXRUpNeSeYohnQtTtnl5RJG');
-ERROR:  transaction::execute_statement() failed. (9)
+INSERT INTO stock VALUES (1,1,73,0,0,1,'v7HGGr','fk5m8','ItiMb?','o@Kqn','D8CTTn','Djuyt6','25s0by','F5is3TawH','jYjPHA','Aidr','sB09');
 INSERT INTO orders VALUES (974,1,1,1,8,7,1,'2020-09-01 06:19:55');
 INSERT INTO orders_secondary VALUES (893,1,1,4);
 INSERT INTO history VALUES (1,1,1,1,1,'2020-09-01 06:19:55',10.00,'?qO6YMvDuCVyQQ');
-INSERT INTO customer VALUES (1,1,1,882711111,'OE','YGw89hId','BARBARBAR',50000.00,0.0135,-10.00,1,53,'kU1gw6cmC?b0','0EvtoSo6haMZNOgk','WE9wusQn8MlIfyrWwIs','5Y','VlQIzx7Gl','0120-11111-12222','2020-09-01 06:19:55','GC','@GvTnhlqcYlWD?7Fk43@owVlQIzx7GlsTgPXwPW@HxAXV3KyMaoTxaMnnmCTKs6ky17p2i6CxwzHuqefsA5y4sk1LoITnJc5JiH0e0HHrfFmKEZC6DIuC41FdKcLcY6dqx9RCPxGf@ClUEO5Sc9TbSqgoe8XCumo3xkTu7?o4dII87mT@zpLZADMRAL399euHeUiU8zV2rGldCKEI78Rl2hngBz?9GlSuby@dZMdK@NHLaKTlVYdwTcq7J5j1yDKqIDao0@nl623jyWm92xt5fc6ep4ifM3c31gkoAZrD2YkLt2Vyi?hhlaouBYafNrzE1nssAlvQjMIAB62pvuWSoR');
+INSERT INTO customer VALUES (1,1,1,882711111,'OE','YGw89hId','BARBARBAR',50000.00,0.0135,-10.00,1,53,'kU1gw6cmC?b0','0Evto','WE9wusQn8MlIfyrWwIs','5Y','VlQIzx7Gl','0120-11111-12222','2020-09-01 06:19:55','GC','@GvTnhlqcYlW');
 INSERT INTO customer_secondary VALUES (4,1,'bZK8UUzZk6OJQwbi','BARBARPRI',829611111);
-INSERT INTO district VALUES (1,1,0.1224,30000.00,3001,185311111,'7KxYQrnz','5fg6lud3tkcnGw','IHKgOEqlYdZD543lan','2Jwyu80wQLC','Tn','HeUiU8zV2');
-ERROR:  INSERT has more expressions than target columns
-LINE 1: ...d3tkcnGw','IHKgOEqlYdZD543lan','2Jwyu80wQLC','Tn','HeUiU8zV2...
-                                                             ^
+INSERT INTO district VALUES (1,1,0.1224,30000.00,3001,'7KxYQrnz','5fg6lud','IHKgOEqlYdZ','2Jwyu80wQLC','Tn','HeUiU8zV2');
 INSERT INTO item VALUES (1,'7KxYQrnz',0.1224,'5fg6lud3tkcnGw',185311111);
 INSERT INTO warehouse VALUES (1,0.078,300000.00,'HO73DCcj6s','67oATAPEmE5','mM48NK@U7TQTK@Z@ma','sitmvvuwAzB','g5','405911111');
 INSERT INTO nation VALUES (48,'ALGERIA',0,'the bravely busy theodolites will dazzle blithely according to the never silent');
@@ -401,7 +397,11 @@ INSERT INTO region VALUES (2,'ASIA','s try to engage quickly past the regul');
 INSERT INTO region VALUES (3,'EUROPE','ss the idly ironic somas ! evenly busy warthogs past the slyly even notornis must print q');
 INSERT INTO region VALUES (4,'MIDDLE EAST','ructions ; quietly sly dolphins besi');
 SELECT * from order_line;
-ERROR:  invalid memory alloc request size 1579231200
+ ol_w_id | ol_d_id | ol_o_id | ol_number | ol_i_id |      ol_delivery_d       | ol_amount | ol_supply_w_id | ol_quantity |       ol_dist_info       
+---------+---------+---------+-----------+---------+--------------------------+-----------+----------------+-------------+--------------------------
+     974 |       1 |       1 |         1 |   49876 | 2020-09-01 06:19:55      |         0 |              5 |        2.09 | ige                     
+(1 row)
+
 SELECT * from new_order;
  no_w_id | no_d_id | no_o_id 
 ---------+---------+---------
@@ -410,12 +410,17 @@ SELECT * from new_order;
 (2 rows)
 
 SELECT * from stock;
- s_w_id | s_i_id | s_quantity | s_ytd | s_order_cnt | s_remote_cnt | s_data | s_dist_01 | s_dist_02 | s_dist_03 | s_dist_04 | s_dist_05 | s_dist_06 | s_dist_07 | s_dist_08 | s_dist_09 | s_dist_10 
---------+--------+------------+-------+-------------+--------------+--------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------
-(0 rows)
+ s_w_id | s_i_id | s_quantity | s_ytd | s_order_cnt | s_remote_cnt | s_data |        s_dist_01         |        s_dist_02         |        s_dist_03         |        s_dist_04         |        s_dist_05         |        s_dist_06         |        s_dist_07         |        s_dist_08         |        s_dist_09         |        s_dist_10         
+--------+--------+------------+-------+-------------+--------------+--------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------
+      1 |      1 |         73 |     0 |           0 |            1 | v7HGGr | fk5m8                    | ItiMb?                   | o@Kqn                    | D8CTTn                   | Djuyt6                   | 25s0by                   | F5is3TawH                | jYjPHA                   | Aidr                     | sB09                    
+(1 row)
 
 SELECT * from orders;
-ERROR:  invalid memory alloc request size 1579231200
+ o_w_id | o_d_id | o_id | o_c_id | o_carrier_id | o_ol_cnt | o_all_local |        o_entry_d         
+--------+--------+------+--------+--------------+----------+-------------+--------------------------
+    974 |      1 |    1 |      1 |            8 |        7 |           1 | 2020-09-01 06:19:55     
+(1 row)
+
 SELECT * from orders_secondary;
  o_d_id | o_w_id | o_c_id | o_id 
 --------+--------+--------+------
@@ -423,9 +428,17 @@ SELECT * from orders_secondary;
 (1 row)
 
 SELECT * from history;
-ERROR:  invalid memory alloc request size 1579231200
+ h_c_id | h_c_d_id | h_c_w_id | h_d_id | h_w_id |          h_date          | h_amount |     h_data     
+--------+----------+----------+--------+--------+--------------------------+----------+----------------
+      1 |        1 |        1 |      1 |      1 | 2020-09-01 06:19:55      |       10 | ?qO6YMvDuCVyQQ
+(1 row)
+
 SELECT * from customer;
-ERROR:  invalid memory alloc request size 1579231200
+ c_w_id | c_d_id | c_id | c_discount | c_credit |  c_last  |  c_first  | c_credit_lim | c_balance | c_ytd_payment | c_payment_cnt | c_delivery_cnt |  c_street_1  | c_street_2 |       c_city        | c_state |   c_zip   |     c_phone      |         c_since          | c_middle |    c_data    
+--------+--------+------+------------+----------+----------+-----------+--------------+-----------+---------------+---------------+----------------+--------------+------------+---------------------+---------+-----------+------------------+--------------------------+----------+--------------
+      1 |      1 |    1 |  882711111 | OE       | YGw89hId | BARBARBAR |        50000 |    0.0135 |           -10 |             1 |             53 | kU1gw6cmC?b0 | 0Evto      | WE9wusQn8MlIfyrWwIs | 5Y      | VlQIzx7Gl | 0120-11111-12222 | 2020-09-01 06:19:55      | GC       | @GvTnhlqcYlW
+(1 row)
+
 SELECT * from customer_secondary;
  c_d_id | c_w_id |      c_last      |  c_first  |   c_id    
 --------+--------+------------------+-----------+-----------
@@ -433,9 +446,10 @@ SELECT * from customer_secondary;
 (1 row)
 
 SELECT * from district;
- d_w_id | d_id | d_ytd | d_tax | d_next_o_id | d_name | d_street_1 | d_street_2 | d_city | d_state | d_zip 
---------+------+-------+-------+-------------+--------+------------+------------+--------+---------+-------
-(0 rows)
+ d_w_id | d_id | d_ytd  | d_tax | d_next_o_id |  d_name  | d_street_1 | d_street_2  |   d_city    | d_state |   d_zip   
+--------+------+--------+-------+-------------+----------+------------+-------------+-------------+---------+-----------
+      1 |    1 | 0.1224 | 30000 |        3001 | 7KxYQrnz | 5fg6lud    | IHKgOEqlYdZ | 2Jwyu80wQLC | Tn      | HeUiU8zV2
+(1 row)
 
 SELECT * from item;
  i_id |  i_name  | i_price |     i_data     |  i_im_id  
@@ -444,12 +458,32 @@ SELECT * from item;
 (1 row)
 
 SELECT * from warehouse;
-ERROR:  invalid memory alloc request size 1579231200
+ w_id | w_ytd | w_tax  |   w_name   | w_street_1  |     w_street_2     |   w_city    | w_state |   w_zip   
+------+-------+--------+------------+-------------+--------------------+-------------+---------+-----------
+    1 | 0.078 | 300000 | HO73DCcj6s | 67oATAPEmE5 | mM48NK@U7TQTK@Z@ma | sitmvvuwAzB | g5      | 405911111
+(1 row)
+
 SELECT * from nation;
-ERROR:  invalid memory alloc request size 1579231200
+ n_nationkey |          n_name           | n_regionkey |                                                                        n_comment                                                                         
+-------------+---------------------------+-------------+----------------------------------------------------------------------------------------------------------------------------------------------------------
+          48 | ALGERIA                   |           0 | the bravely busy theodolites will dazzle blithely according to the never silent                                                                         
+(1 row)
+
 SELECT * from supplier;
-ERROR:  invalid memory alloc request size 1579231200
+ su_suppkey |          su_name          |                su_address                | su_nationkey |    su_phone     | su_acctbal |                                              su_comment                                               
+------------+---------------------------+------------------------------------------+--------------+-----------------+------------+-------------------------------------------------------------------------------------------------------
+          0 | Supplier#000000000        | UFUqtuYH2qwWrqma@FRKKRsTeZpC5pQiKqk6g    |          103 | 10-520-573-2995 |    7942.04 |  slyly on the sometimes permanent somas -- enticingly daring attai                                   
+(1 row)
+
 SELECT * from region;
-ERROR:  invalid memory alloc request size 1579231200
+ r_regionkey |                         r_name                          |                                                                        r_comment                                                                         
+-------------+---------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------
+           0 | AFRICA                                                  |  ? closely enticing attainments around the quietly careful dinos may was idly over the slowly st                                                        
+           1 | AMERICA                                                 | the pearls : doggedly final platelets alongside of the quickly even pinto beans sh                                                                      
+           2 | ASIA                                                    | s try to engage quickly past the regul                                                                                                                  
+           3 | EUROPE                                                  | ss the idly ironic somas ! evenly busy warthogs past the slyly even notornis must print q                                                               
+           4 | MIDDLE EAST                                             | ructions ; quietly sly dolphins besi                                                                                                                    
+(5 rows)
+
 \c postgres
 DROP DATABASE test;
