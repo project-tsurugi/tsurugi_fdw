@@ -122,7 +122,7 @@
 			* ogawayama-serverが起動していない場合
 			* メタデータのロードが失敗した場合
 		* 範囲外の値をINSERTしたとき、エラーメッセージが出力されるか確認する。
-		* PRIMARY KEY/NOT NULL制約が正常に動作して、NULLを入力したときにエラーメッセージが出力されるか確認する。
+		* PRIMARY KEY/NOT NULL制約が正常に動作して、NULLまたはUNIQUEではない値を入力したときにエラーメッセージが出力されるか確認する。
 		* 最大値を超える値でUPDATEすると、エラーメッセージが出力されるか確認する。
 		* UPDATE/DELETE文を実行し、エラーメッセージが出力される確認する。
 
@@ -132,7 +132,7 @@
 * 目的：CH-benCHmarkを測定するためのテーブルが、正常に定義できるか確認する。シナリオテストとして行う。
 * 内容：CH-benCHmarkの公式サイトを参照すること。
 	* https://db.in.tum.de/research/projects/CHbenCHmark/?lang=en
-* SQL例：[ch-benchmark-ddl.sql](./ch-benchmark-ddl/ch-benchmark-ddl.sql)
+* SQL例：[ch-benchmark-ddl.sql](../../sql/ch-benchmark-ddl.sql)
 	* 参考：https://github.com/citusdata/ch-benchmark.git）
 
 #### サポートされるCREATE TABLE構文が正常に動作するか
@@ -140,7 +140,7 @@
 	* 目的：表制約・列のNOT NULL制約・列のPRYMARY KEY制約それぞれの組み合わせのテーブルが、正常に定義できるか確認する。
 	* 内容：表制約（なし・単主キーあり・複合主キーあり）、列制約NOT NULL（なし・あり）、列制約PRYMARY KEY（なし・あり）の組み合わせのテスト
 		* 各制約の組み合わせは、[制約の直交表](#制約の直交表)を参照
-	* SQL例：[otable_of_constr.sql](./otable_of_constr/otable_of_constr.sql)
+	* SQL例：[otable_of_constr.sql](../../sql/otable_of_constr.sql)
 
 * サポートされる構文テスト
 	* 目的：CREATE TABLE構文で、サポートされる構文が正常に動作するか確認する。
@@ -157,7 +157,7 @@
 			* カラム名が次の場合
 				* 全角日本語
 				* 1文字の半角英語
-	* SQL例：[happy.sql](./happy/happy.sql)
+	* SQL例：[happy.sql](../../sql/happy.sql)
 
 #### CREATE TABLE構文で、サポートされる型が正常に動作するか。
 * 目的：CREATE TABLE構文で、サポートされる型が正常に動作するか確認する。
@@ -186,13 +186,19 @@
 				* 最大値：9223372036854775807
 		* real
 			* 次の天文台のSQLに記載の値をINSERT/SELECTする。
-				* 負の数で桁数が大きそうな値：3.24000001
-				* 正の数で桁数が大きそうな値：-2.27600002
+				* 負の数で桁数が大きそうな値：-2.27600002
+				* 正の数で桁数が大きそうな値：3.24000001
 		* double precision
 			* 次の天文台のSQLに記載の値をINSERT/SELECTする。
 				* 負の数で桁数が大きそうな値：-0.299999999999999989
 				* 正の数で桁数が大きそうな値：25.8000000000000007
-		* char(1000)/varchar(1000)
+		* char(1)
+			* 1文字をINSERT/SELECTする。
+		* char(10)
+			* 1文字をINSERT/SELECTする。
+		* char(1000)
+			* 1文字をINSERT/SELECTする。
+		* varchar(1000)
 			* 次の文字数をINSERT/SELECTする。
 				* 1文字
 				* 10文字
@@ -202,7 +208,7 @@
 	* 目的：[制約の直交表](#制約の直交表)の全テーブルに対してINSERT/SELECT可能かどうかテスト
 	* 内容：
 		* 全カラム値を挿入
-		* PRIMARY KEY制約のカラムはNULL以外の値、PRIMARY KEY制約以外のカラムはNULLを挿入
+		* PRIMARY KEY制約のカラムにUNIQUEな値を挿入
 		* NOT NULL制約のカラムはNULL以外の値、NOT NULL制約のカラムはNULLを挿入
 
 ### UPDATE/DELETE
@@ -217,7 +223,7 @@
 #### 構文エラーテスト
 * 目的：サポートする構文以外を入力すると、frontendでエラーメッセージが出力され、Tsurugiでテーブルが定義されない、かつ定義要求したテーブルメタデータがTsurugiで保存されないことを確認する。
 * 内容：[サポートするCREATE_TABLE構文](../../docs/design/frontend_V2_CREATE_TABLE_functional_design.md#サポートすcreate-table構文)以外を入力
-* SQL例：[alternative.sql](./alternative/alternative.sql)
+* SQL例：[alternative.sql](../../sql/alternative.sql)
 
 #### 型エラーテスト
 * 目的：サポートする構文以外を入力すると、frontendでエラーメッセージが出力され、Tsurugiでテーブルが定義されない、かつ定義要求したテーブルメタデータがTsurugiで保存されないことを確認する。
@@ -233,7 +239,7 @@
 			* nを省略　char()
 			* char(0)
 	* カラムに型が指定されていない場合の構文を入力する。
-* SQL例：[alternative.sql](./alternative/alternative.sql)
+* SQL例：[alternative.sql](../../sql/alternative.sql)
 
 #### その他構文エラーとなるテスト
 * 目的：サポートする構文以外を入力すると、frontendでエラーメッセージが出力され、Tsurugiでテーブルが定義されない、かつ定義要求したテーブルメタデータがTsurugiで保存されないことを確認する。
@@ -246,9 +252,7 @@
 	* PRIMARY KEY制約
 		* 次の構文を入力する。
 			* 列制約でPRIMARY KEY制約を複数カラム入力
-			* カラム名が指定されていなかった。例) PRIMARY KEY	()
-				* 列制約
-				* 表制約
+			* 表制約のPRIMARY KEY制約でカラム名が指定されていなかった。例) PRIMARY KEY	()
 			* 表制約のPRIMARY KEY制約で、存在しないカラム名を指定。
 
 	* カラム名
@@ -270,7 +274,7 @@
 			* テーブル名が数字のみ　例)1
 			* テーブル名が数字から始まる　例)1c
 			* テーブル名が日本語　例) ???
-* SQL例：[unhappy.sql](./unhappy/unhappy.sql)
+* SQL例：[unhappy.sql](../../sql/unhappy.sql)
 
 #### ogawayama-serverが起動していない場合の異常テスト
 * 目的：ogawayama-serverが起動していないとき、frontendでエラーメッセージが出力され、Tsurugiでテーブルが定義されない、かつ定義要求したテーブルメタデータがTsurugiで保存されないことを確認する。
@@ -304,8 +308,9 @@
 * 制約の直交表テーブルテスト
 	* 目的：[制約の直交表](#制約の直交表)の全テーブルに対して、制約が正常に動作するか確認する。
 	* 内容：
-		* 制約があるカラムには、NULLを挿入できないことを確認する。
+		* NOT NULL/PRIMARY KEY制約があるカラムにはNULLを挿入できない、PRIMARY KEY制約があるカラムにはUNIQUEではない値を挿入できないことを確認する。
 			* PRIMARY KEY制約のカラムに、NULLを挿入
+			* PRIMARY KEY制約のカラムにUNIQUEではない値を挿入
 			* NOT NULL制約のカラムに、NULLを挿入
 
 ### UPDATE/DELETE
