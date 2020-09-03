@@ -177,6 +177,63 @@ CREATE TABLE tmp.type_error_all_other_than_above (
   col4 xml
 ) tablespace tsurugi;
 ERROR:  Tsurugi does not support type (("tsquery") ("tsvector") ("txid_snapshot") ("uuid") ("xml"))
+-- varchar data length (n) is not specified
+create table tmp.varchar (
+  ol_w_id int,
+  ol_d_id varchar,
+  ol_o_id int,
+  ol_number int not null primary key
+) tablespace tsurugi;
+CREATE TABLE
+-- varchar data length is empty
+create table tmp.varchar_length_empty (
+  ol_w_id int,
+  ol_d_id varchar(),
+  ol_o_id int,
+  ol_number int not null primary key
+) tablespace tsurugi;
+ERROR:  syntax error at or near ")"
+LINE 3:   ol_d_id varchar(),
+                          ^
+-- varchar data length is zero
+create table tmp.varchar_length_0 (
+  ol_w_id int ,
+  ol_d_id varchar(0),
+  ol_o_id int,
+  ol_number int not null primary key
+) tablespace tsurugi;
+ERROR:  length for type varchar must be at least 1
+LINE 3:   ol_d_id varchar(0),
+                  ^
+create table tmp.varchar_length_empty (
+  ol_w_id int,
+  ol_d_id char(),
+  ol_o_id int,
+  ol_number int not null primary key
+) tablespace tsurugi;
+ERROR:  syntax error at or near ")"
+LINE 3:   ol_d_id char(),
+                       ^
+-- char data length is zero
+create table tmp.char_length_0 (
+  ol_w_id int ,
+  ol_d_id char(0),
+  ol_o_id int,
+  ol_number int not null primary key
+) tablespace tsurugi;
+ERROR:  length for type char must be at least 1
+LINE 3:   ol_d_id char(0),
+                  ^
+-- type of ol_w_id is not specified
+create table tmp.type_is_not_specified (
+  ol_w_id,
+  ol_d_id varchar(100),
+  ol_o_id int,
+  ol_number int not null primary key
+) tablespace tsurugi;
+ERROR:  syntax error at or near "varchar"
+LINE 3:   ol_d_id varchar(100),
+                  ^
 -- TEMP TABLE
 create temp table temptbl (
   id integer,
@@ -814,9 +871,10 @@ CREATE TABLE tmp.deferrable_tc(
 ) tablespace tsurugi;
 ERROR:  Tsurugi does not support DEFERRABLE
 DROP SCHEMA tmp CASCADE;
-NOTICE:  drop cascades to 3 other objects
+NOTICE:  drop cascades to 4 other objects
 DETAIL:  drop cascades to table tmp.customer_dummy
 drop cascades to table tmp.customer_secondary_dummy
+drop cascades to table tmp.varchar_dummy
 drop cascades to table tmp.cities_dummy
 DROP SCHEMA
 \c postgres

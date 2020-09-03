@@ -147,6 +147,11 @@
 
 ## Define table
 
+1. Start ogawayama-server
+	```
+	ogawayama-server &
+	```
+
 1. Define table
 	* Execute **CREATE TABLE** command
 		* You must add "TABLESPACE tsurugi"
@@ -173,4 +178,8 @@
 	```sql
 	SELECT * FROM table1;
 	INSERT INTO table1 VALUES (100);
+	```
+1. If you want to stop ogawayama-server, use
+	```
+	ogawayama-cli -terminate
 	```
