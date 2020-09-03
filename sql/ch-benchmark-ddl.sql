@@ -1,4 +1,3 @@
-DROP DATABASE IF EXISTS test;
 CREATE DATABASE test TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'C' LC_CTYPE = 'en_US.utf8';
 
 \c test
