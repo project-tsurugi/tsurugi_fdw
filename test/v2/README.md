@@ -195,9 +195,9 @@
 		* char(1)
 			* 1文字をINSERT/SELECTする。
 		* char(10)
-			* 1文字をINSERT/SELECTする。
+			* 10文字をINSERT/SELECTする。
 		* char(1000)
-			* 1文字をINSERT/SELECTする。
+			* 1000文字をINSERT/SELECTする。
 		* varchar(1000)
 			* 次の文字数をINSERT/SELECTする。
 				* 1文字
