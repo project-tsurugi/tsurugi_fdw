@@ -22,6 +22,50 @@ create table tmp.multiple_col_pkey (
   ol_number int not null primary key
 ) tablespace tsurugi;
 
+-- primary key is not specified
+CREATE TABLE TMP.pkey_not_specified (
+COL0  INTEGER                 ,
+COL1  INT                     ,
+COL2  INT4                    ,
+COL3  BIGINT                  ,
+COL4  INT8                    ,
+COL5  REAL                    ,
+COL6  FLOAT4                  ,
+COL7  DOUBLE PRECISION        ,
+COL8  FLOAT8                  ,
+COL9  CHAR                    ,
+COL10 CHAR(1000)              ,
+COL11 CHARACTER               ,
+COL12 CHARACTER(1000)         ,
+COL13 VARCHAR                 ,
+COL14 VARCHAR(1000)           ,
+COL15 CHARACTER VARYING       ,
+COL16 CHARACTER VARYING(1000) ,
+CONSTRAINT pkey_not_specified PRIMARY KEY()
+) TABLESPACE TSURUGI;
+
+-- primary key column does not exist
+CREATE TABLE TMP.pkey_not_exists (
+COL0  INTEGER                 ,
+COL1  INT                     ,
+COL2  INT4                    ,
+COL3  BIGINT                  ,
+COL4  INT8                    ,
+COL5  REAL                    ,
+COL6  FLOAT4                  ,
+COL7  DOUBLE PRECISION        ,
+COL8  FLOAT8                  ,
+COL9  CHAR                    ,
+COL10 CHAR(1000)              ,
+COL11 CHARACTER               ,
+COL12 CHARACTER(1000)         ,
+COL13 VARCHAR                 ,
+COL14 VARCHAR(1000)           ,
+COL15 CHARACTER VARYING       ,
+COL16 CHARACTER VARYING(1000) ,
+CONSTRAINT pkey_not_specified PRIMARY KEY(COL17)
+) TABLESPACE TSURUGI;
+
 -- same column name
 create table tmp.same_col_name (
   ol_w_id int,
@@ -30,46 +74,9 @@ create table tmp.same_col_name (
   ol_number int not null primary key
 ) tablespace tsurugi;
 
--- varchar data length is empty
-create table tmp.varchar_length_empty (
-  ol_w_id int,
-  ol_d_id varchar(),
-  ol_o_id int,
-  ol_number int not null primary key
-) tablespace tsurugi;
-
--- varchar data length is zero
-create table tmp.varchar_length_0 (
-  ol_w_id int ,
-  ol_d_id varchar(0),
-  ol_o_id int,
-  ol_number int not null primary key
-) tablespace tsurugi;
-
--- type of ol_w_id is not specified
-create table tmp.type_is_not_specified (
-  ol_w_id,
-  ol_d_id varchar(100),
-  ol_o_id int,
-  ol_number int not null primary key
-) tablespace tsurugi;
-
 -- column name is not specified
 create table tmp.col_name_is_not_specified (
   int
-) tablespace tsurugi;
-
--- table name is not specified
-create table (
-  column int
-) tablespace tsurugi;
-
--- char data length is zero
-create table tmp.char_length_0 (
-  ol_w_id int ,
-  ol_d_id char(0),
-  ol_o_id int,
-  ol_number int not null primary key
 ) tablespace tsurugi;
 
 -- column name is 1
@@ -85,6 +92,26 @@ create table tmp.col_name_is_1 (
 -- column name is japanese
 create table tmp.col_name_is_japanese (
   ??? int
+) tablespace tsurugi;
+
+-- table name is not specified
+create table (
+  column int
+) tablespace tsurugi;
+
+-- table name is 1
+create table 1 (
+  column int
+) tablespace tsurugi;
+
+-- column name is 1c
+create table 1c (
+  column int
+) tablespace tsurugi;
+
+-- column name is japanese
+create table ??? (
+  column int
 ) tablespace tsurugi;
 
 -- *** same table name is specified ***
@@ -131,50 +158,6 @@ create table tmp.same_table_name_test (
   ol_o_id int,
   ol_number int
 ) tablespace tsurugi;
-
--- primary key is not specified
-CREATE TABLE TMP.pkey_not_specified (
-COL0  INTEGER                 ,
-COL1  INT                     ,
-COL2  INT4                    ,
-COL3  BIGINT                  ,
-COL4  INT8                    ,
-COL5  REAL                    ,
-COL6  FLOAT4                  ,
-COL7  DOUBLE PRECISION        ,
-COL8  FLOAT8                  ,
-COL9  CHAR                    ,
-COL10 CHAR(1000)              ,
-COL11 CHARACTER               ,
-COL12 CHARACTER(1000)         ,
-COL13 VARCHAR                 ,
-COL14 VARCHAR(1000)           ,
-COL15 CHARACTER VARYING       ,
-COL16 CHARACTER VARYING(1000) ,
-CONSTRAINT pkey_not_specified PRIMARY KEY()
-) TABLESPACE TSURUGI;
-
--- primary key column does not exist
-CREATE TABLE TMP.pkey_not_exists (
-COL0  INTEGER                 ,
-COL1  INT                     ,
-COL2  INT4                    ,
-COL3  BIGINT                  ,
-COL4  INT8                    ,
-COL5  REAL                    ,
-COL6  FLOAT4                  ,
-COL7  DOUBLE PRECISION        ,
-COL8  FLOAT8                  ,
-COL9  CHAR                    ,
-COL10 CHAR(1000)              ,
-COL11 CHARACTER               ,
-COL12 CHARACTER(1000)         ,
-COL13 VARCHAR                 ,
-COL14 VARCHAR(1000)           ,
-COL15 CHARACTER VARYING       ,
-COL16 CHARACTER VARYING(1000) ,
-CONSTRAINT pkey_not_specified PRIMARY KEY(COL17)
-) TABLESPACE TSURUGI;
 
 DROP SCHEMA tmp CASCADE;
 

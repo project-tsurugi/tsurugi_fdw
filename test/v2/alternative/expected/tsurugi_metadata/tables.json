@@ -285,6 +285,52 @@
             "id": "2"
         },
         {
+            "name": "varchar",
+            "primaryKey": [
+                "4"
+            ],
+            "columns": [
+                {
+                    "ordinalPosition": "1",
+                    "name": "ol_w_id",
+                    "direction": "0",
+                    "nullable": "true",
+                    "dataTypeId": "4",
+                    "id": "27",
+                    "tableId": "3"
+                },
+                {
+                    "ordinalPosition": "2",
+                    "name": "ol_d_id",
+                    "direction": "0",
+                    "nullable": "true",
+                    "dataTypeId": "14",
+                    "varying": "true",
+                    "id": "28",
+                    "tableId": "3"
+                },
+                {
+                    "ordinalPosition": "3",
+                    "name": "ol_o_id",
+                    "direction": "0",
+                    "nullable": "true",
+                    "dataTypeId": "4",
+                    "id": "29",
+                    "tableId": "3"
+                },
+                {
+                    "ordinalPosition": "4",
+                    "name": "ol_number",
+                    "direction": "1",
+                    "nullable": "false",
+                    "dataTypeId": "4",
+                    "id": "30",
+                    "tableId": "3"
+                }
+            ],
+            "id": "3"
+        },
+        {
             "name": "cities",
             "primaryKey": "",
             "columns": [
@@ -295,8 +341,8 @@
                     "nullable": "true",
                     "dataTypeId": "14",
                     "varying": "true",
-                    "id": "27",
-                    "tableId": "3"
+                    "id": "31",
+                    "tableId": "4"
                 },
                 {
                     "ordinalPosition": "2",
@@ -304,8 +350,8 @@
                     "direction": "0",
                     "nullable": "true",
                     "dataTypeId": "9",
-                    "id": "28",
-                    "tableId": "3"
+                    "id": "32",
+                    "tableId": "4"
                 },
                 {
                     "ordinalPosition": "3",
@@ -313,11 +359,11 @@
                     "direction": "0",
                     "nullable": "true",
                     "dataTypeId": "4",
-                    "id": "29",
-                    "tableId": "3"
+                    "id": "33",
+                    "tableId": "4"
                 }
             ],
-            "id": "3"
+            "id": "4"
         }
     ]
 }
