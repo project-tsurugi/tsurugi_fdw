@@ -171,6 +171,63 @@ CREATE TABLE type_error_all_other_than_above (
   col4 xml
 ) tablespace tsurugi;
 ERROR:  Tsurugi does not support type (("tsquery") ("tsvector") ("txid_snapshot") ("uuid") ("xml"))
+-- varchar data length (n) is not specified
+create table varchar (
+  ol_w_id int,
+  ol_d_id varchar,
+  ol_o_id int,
+  ol_number int not null primary key
+) tablespace tsurugi;
+ERROR:  transaction::receive_message() CREATE TABLE failed. (5)
+-- varchar data length is empty
+create table varchar_length_empty (
+  ol_w_id int,
+  ol_d_id varchar(),
+  ol_o_id int,
+  ol_number int not null primary key
+) tablespace tsurugi;
+ERROR:  syntax error at or near ")"
+LINE 3:   ol_d_id varchar(),
+                          ^
+-- varchar data length is zero
+create table varchar_length_0 (
+  ol_w_id int ,
+  ol_d_id varchar(0),
+  ol_o_id int,
+  ol_number int not null primary key
+) tablespace tsurugi;
+ERROR:  length for type varchar must be at least 1
+LINE 3:   ol_d_id varchar(0),
+                  ^
+create table varchar_length_empty (
+  ol_w_id int,
+  ol_d_id char(),
+  ol_o_id int,
+  ol_number int not null primary key
+) tablespace tsurugi;
+ERROR:  syntax error at or near ")"
+LINE 3:   ol_d_id char(),
+                       ^
+-- char data length is zero
+create table char_length_0 (
+  ol_w_id int ,
+  ol_d_id char(0),
+  ol_o_id int,
+  ol_number int not null primary key
+) tablespace tsurugi;
+ERROR:  length for type char must be at least 1
+LINE 3:   ol_d_id char(0),
+                  ^
+-- type of ol_w_id is not specified
+create table type_is_not_specified (
+  ol_w_id,
+  ol_d_id varchar(100),
+  ol_o_id int,
+  ol_number int not null primary key
+) tablespace tsurugi;
+ERROR:  syntax error at or near "varchar"
+LINE 3:   ol_d_id varchar(100),
+                  ^
 -- TEMP TABLE
 create temp table temptbl (
   id integer,

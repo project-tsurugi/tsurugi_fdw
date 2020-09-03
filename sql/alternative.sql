@@ -174,6 +174,53 @@ CREATE TABLE type_error_all_other_than_above (
   col4 xml
 ) tablespace tsurugi;
 
+-- varchar data length (n) is not specified
+create table varchar (
+  ol_w_id int,
+  ol_d_id varchar,
+  ol_o_id int,
+  ol_number int not null primary key
+) tablespace tsurugi;
+
+-- varchar data length is empty
+create table varchar_length_empty (
+  ol_w_id int,
+  ol_d_id varchar(),
+  ol_o_id int,
+  ol_number int not null primary key
+) tablespace tsurugi;
+
+-- varchar data length is zero
+create table varchar_length_0 (
+  ol_w_id int ,
+  ol_d_id varchar(0),
+  ol_o_id int,
+  ol_number int not null primary key
+) tablespace tsurugi;
+
+create table varchar_length_empty (
+  ol_w_id int,
+  ol_d_id char(),
+  ol_o_id int,
+  ol_number int not null primary key
+) tablespace tsurugi;
+
+-- char data length is zero
+create table char_length_0 (
+  ol_w_id int ,
+  ol_d_id char(0),
+  ol_o_id int,
+  ol_number int not null primary key
+) tablespace tsurugi;
+
+-- type of ol_w_id is not specified
+create table type_is_not_specified (
+  ol_w_id,
+  ol_d_id varchar(100),
+  ol_o_id int,
+  ol_number int not null primary key
+) tablespace tsurugi;
+
 -- TEMP TABLE
 create temp table temptbl (
   id integer,
