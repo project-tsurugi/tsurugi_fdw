@@ -99,9 +99,9 @@ TABLESPACE tsurugi
 
 |項目|値|
 |----|----|
-|照合順序(LC_COLLATE) |C|
-|文字の種類(LC_CTYPE)|en_US|
-|エンコーディング(ENCODING)|UTF-8|
+|LC_COLLATE(String sort order) |C|
+|LC_CTYPE(Character classification)|en_US|
+|ENCODING|UTF-8|
 
 ### 構文例
 
