@@ -117,31 +117,103 @@ CONSTRAINT pkey_all_column_pkey
 PRIMARY KEY(COL0 ,COL1 ,COL2 ,COL3 ,COL4 ,COL5 ,COL6 ,COL7 ,COL8 ,COL9 ,COL10,COL11,COL12,COL13,COL14,COL15,COL16 )
 ) TABLESPACE TSURUGI;
 
-create table order1 (
+create table order1_1 (
   ol_w_id int
 ) tablespace tsurugi;
 
-create table order2 (
+create table order1_2 (
+  ol_w_id int
+) tablespace tsurugi;
+
+create table order1_3 (
+  ol_w_id int
+) tablespace tsurugi;
+
+create table order1_4 (
+  ol_w_id int
+) tablespace tsurugi;
+
+create table order1_5 (
+  ol_w_id int
+) tablespace tsurugi;
+
+create table order2_1 (
   カラム bigint
 ) tablespace tsurugi;
 
-create table order3 (
-  o bigint
+create table order2_2 (
+  カラム bigint
 ) tablespace tsurugi;
 
-create table order4 (
-  ol_w_id char(1)
+create table order2_3 (
+  カラム bigint
+) tablespace tsurugi;
+
+create table order2_4 (
+  カラム bigint
+) tablespace tsurugi;
+
+create table order3_1 (
+  o real
+) tablespace tsurugi;
+
+create table order3_2 (
+  o real
+) tablespace tsurugi;
+
+create table order3_3 (
+  o real
+) tablespace tsurugi;
+
+create table order3_4 (
+  o real
+) tablespace tsurugi;
+
+create table order3_5 (
+  o real
+) tablespace tsurugi;
+
+create table order3_6 (
+  o real
+) tablespace tsurugi;
+
+create table order4_1 (
+  ol_w_id double precision
+) tablespace tsurugi;
+
+create table order4_2 (
+  ol_w_id double precision
+) tablespace tsurugi;
+
+create table order4_3 (
+  ol_w_id double precision
+) tablespace tsurugi;
+
+create table order4_4 (
+  ol_w_id double precision
+) tablespace tsurugi;
+
+create table order4_5 (
+  ol_w_id double precision
+) tablespace tsurugi;
+
+create table order4_6 (
+  ol_w_id double precision
 ) tablespace tsurugi;
 
 create table order5 (
-  ol_w_id varchar(1)
+  ol_w_id char(1)
 ) tablespace tsurugi;
 
 create table order6 (
-  ol_w_id char(10)
+  ol_w_id varchar(1)
 ) tablespace tsurugi;
 
 create table order7 (
+  ol_w_id char(10)
+) tablespace tsurugi;
+
+create table order8 (
   ol_w_id varchar(10)
 ) tablespace tsurugi;
 
@@ -249,33 +321,105 @@ col15 varchar(1000)           ,
 col16 character varying(1000)
 ) SERVER ogawayama;
 
-create foreign table order1 (
+create foreign table order1_1 (
   ol_w_id int
-)  SERVER ogawayama;
+) SERVER ogawayama;
 
-create foreign table order2 (
+create foreign table order1_2 (
+  ol_w_id int
+) SERVER ogawayama;
+
+create foreign table order1_3 (
+  ol_w_id int
+) SERVER ogawayama;
+
+create foreign table order1_4 (
+  ol_w_id int
+) SERVER ogawayama;
+
+create foreign table order1_5 (
+  ol_w_id int
+) SERVER ogawayama;
+
+create foreign table order2_1 (
   カラム bigint
-)  SERVER ogawayama;
+) SERVER ogawayama;
 
-create foreign table order3 (
-  o bigint
-)  SERVER ogawayama;
+create foreign table order2_2 (
+  カラム bigint
+) SERVER ogawayama;
 
-create foreign table order4 (
-  ol_w_id char(1)
-)  SERVER ogawayama;
+create foreign table order2_3 (
+  カラム bigint
+) SERVER ogawayama;
+
+create foreign table order2_4 (
+  カラム bigint
+) SERVER ogawayama;
+
+create foreign table order3_1 (
+  o real
+) SERVER ogawayama;
+
+create foreign table order3_2 (
+  o real
+) SERVER ogawayama;
+
+create foreign table order3_3 (
+  o real
+) SERVER ogawayama;
+
+create foreign table order3_4 (
+  o real
+) SERVER ogawayama;
+
+create foreign table order3_5 (
+  o real
+) SERVER ogawayama;
+
+create foreign table order3_6 (
+  o real
+) SERVER ogawayama;
+
+create foreign table order4_1 (
+  ol_w_id double precision
+) SERVER ogawayama;
+
+create foreign table order4_2 (
+  ol_w_id double precision
+) SERVER ogawayama;
+
+create foreign table order4_3 (
+  ol_w_id double precision
+) SERVER ogawayama;
+
+create foreign table order4_4 (
+  ol_w_id double precision
+) SERVER ogawayama;
+
+create foreign table order4_5 (
+  ol_w_id double precision
+) SERVER ogawayama;
+
+create foreign table order4_6 (
+  ol_w_id double precision
+) SERVER ogawayama;
 
 create foreign table order5 (
-  ol_w_id varchar(1)
-)  SERVER ogawayama;
+  ol_w_id char(1)
+) SERVER ogawayama;
 
 create foreign table order6 (
-  ol_w_id char(10)
-)  SERVER ogawayama;
+  ol_w_id varchar(1)
+) SERVER ogawayama;
 
 create foreign table order7 (
+  ol_w_id char(10)
+) SERVER ogawayama;
+
+create foreign table order8 (
   ol_w_id varchar(10)
-)  SERVER ogawayama;
+) SERVER ogawayama;
 
 SELECT * FROM customer_fifth;
 INSERT INTO customer_fifth VALUES ('TE');
@@ -301,51 +445,108 @@ SELECT * FROM pkey_all_column;
 INSERT INTO pkey_all_column VALUES (-2147483648, 0, 2147483647,-3147483648, 3147483647,3.24000001, -2.27600002,-0.299999999999999989, 25.8000000000000007,'A','B','a','abcdefghij','0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789', 'b','KLMNOPQRST','ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKL');
 SELECT * FROM pkey_all_column;
 
-SELECT * FROM order1;
-INSERT INTO order1 VALUES (2147483647);
-SELECT * FROM order1;
-INSERT INTO order1 VALUES (-2147483648);
-SELECT * FROM order1;
-INSERT INTO order1 VALUES (-2147483649);
-SELECT * FROM order1;
-INSERT INTO order1 VALUES (2147483648);
-SELECT * FROM order1;
+--- out of range test
+--- int
+SELECT * FROM order1_1;
+INSERT INTO order1_1 VALUES (2147483647);
+SELECT * FROM order1_1;
 
-SELECT * FROM order2;
-INSERT INTO order2 VALUES (-9223372036854775808);
-SELECT * FROM order2;
-INSERT INTO order2 VALUES (-9223372036854775809);
-SELECT * FROM order2;
+SELECT * FROM order1_2;
+INSERT INTO order1_2 VALUES (-2147483648);
+SELECT * FROM order1_2;
 
-SELECT * FROM order3;
-INSERT INTO order3 VALUES (9223372036854775807);
-SELECT * FROM order3;
-INSERT INTO order3 VALUES (9223372036854775808);
-SELECT * FROM order3;
+SELECT * FROM order1_3;
+INSERT INTO order1_3 VALUES (-2147483649);
+SELECT * FROM order1_3;
 
-SELECT * FROM order4;
-INSERT INTO order4 VALUES ('P');
-SELECT * FROM order4;
-INSERT INTO order4 VALUES ('Po');
-SELECT * FROM order4;
+SELECT * FROM order1_4;
+INSERT INTO order1_4 VALUES (2147483648);
+SELECT * FROM order1_4;
 
+SELECT * FROM order1_5;
+INSERT INTO order1_5 VALUES (2147483648);
+SELECT * FROM order1_5;
+
+--- bigint
+SELECT * FROM order2_1;
+INSERT INTO order2_1 VALUES (-9223372036854775808);
+SELECT * FROM order2_1;
+
+SELECT * FROM order2_2;
+INSERT INTO order2_2 VALUES (-9223372036854775809);
+SELECT * FROM order2_2;
+
+SELECT * FROM order2_3;
+INSERT INTO order2_3 VALUES (9223372036854775807);
+SELECT * FROM order2_3;
+
+SELECT * FROM order2_4;
+INSERT INTO order2_4 VALUES (9223372036854775808);
+SELECT * FROM order2_4;
+
+--- real
+--- comment out out of range test because I don't know specs about range of type
+---SELECT * FROM order3_1;
+---INSERT INTO order3_1 VALUES (10000000000000000000000000000000000000);
+---SELECT * FROM order3_1;
+---
+---SELECT * FROM order3_2;
+---INSERT INTO order3_2 VALUES (100000000000000000000000000000000000000);
+---SELECT * FROM order3_2;
+
+SELECT * FROM order3_5;
+INSERT INTO order3_5 VALUES (0.1);
+SELECT * FROM order3_5;
+
+SELECT * FROM order3_6;
+INSERT INTO order3_6 VALUES (1.1);
+SELECT * FROM order3_6;
+
+--- double precision
+--- comment out out of range test because I don't know specs about range of type
+---SELECT * FROM order4_1;
+---INSERT INTO order4_1 VALUES ---(10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000);
+---SELECT * FROM order4_1;
+---
+---SELECT * FROM order4_2;
+---INSERT INTO order4_2 VALUES ---(100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000);
+---SELECT * FROM order4_2;
+
+SELECT * FROM order4_5;
+INSERT INTO order4_5 VALUES (0.1);
+SELECT * FROM order4_5;
+
+SELECT * FROM order4_6;
+INSERT INTO order4_6 VALUES (1.1);
+SELECT * FROM order4_6;
+
+--- char(1)
 SELECT * FROM order5;
 INSERT INTO order5 VALUES ('P');
 SELECT * FROM order5;
 INSERT INTO order5 VALUES ('Po');
 SELECT * FROM order5;
 
+--- varchar(1)
 SELECT * FROM order6;
-INSERT INTO order6 VALUES ('PostgreSQL');
+INSERT INTO order6 VALUES ('P');
 SELECT * FROM order6;
-INSERT INTO order6 VALUES ('PostgreSQL1');
+INSERT INTO order6 VALUES ('Po');
 SELECT * FROM order6;
 
+--- char(10)
 SELECT * FROM order7;
 INSERT INTO order7 VALUES ('PostgreSQL');
 SELECT * FROM order7;
 INSERT INTO order7 VALUES ('PostgreSQL1');
 SELECT * FROM order7;
+
+--- varchar(10)
+SELECT * FROM order8;
+INSERT INTO order8 VALUES ('PostgreSQL');
+SELECT * FROM order8;
+INSERT INTO order8 VALUES ('PostgreSQL1');
+SELECT * FROM order8;
 
 \c postgres
 
