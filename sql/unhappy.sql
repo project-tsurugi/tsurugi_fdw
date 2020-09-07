@@ -2,20 +2,18 @@ CREATE DATABASE test TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'C' LC_
 
 \c test
 
-CREATE SCHEMA tmp;
-
 -- double quote in default constraint
-CREATE TABLE tmp.default_constr_double_quote (
+CREATE TABLE default_constr_double_quote (
   "c_credit" char(2) DEFAULT "apple"
 ) tablespace tsurugi;
 
 -- default constraint serial
-CREATE TABLE tmp.default_constr_serial (
+CREATE TABLE default_constr_serial (
   id serial
 ) tablespace tsurugi;
 
 -- multiple column pkey
-create table tmp.multiple_col_pkey (
+create table multiple_col_pkey (
   ol_w_id int not null primary key,
   ol_d_id int,
   ol_o_id int not null primary key,
@@ -23,7 +21,7 @@ create table tmp.multiple_col_pkey (
 ) tablespace tsurugi;
 
 -- primary key is not specified
-CREATE TABLE TMP.pkey_not_specified (
+CREATE TABLE pkey_not_specified (
 COL0  INTEGER                 ,
 COL1  INT                     ,
 COL2  INT4                    ,
@@ -45,7 +43,7 @@ CONSTRAINT pkey_not_specified PRIMARY KEY()
 ) TABLESPACE TSURUGI;
 
 -- primary key column does not exist
-CREATE TABLE TMP.pkey_not_exists (
+CREATE TABLE pkey_not_exists (
 COL0  INTEGER                 ,
 COL1  INT                     ,
 COL2  INT4                    ,
@@ -67,7 +65,7 @@ CONSTRAINT pkey_not_specified PRIMARY KEY(COL17)
 ) TABLESPACE TSURUGI;
 
 -- same column name
-create table tmp.same_col_name (
+create table same_col_name (
   ol_w_id int,
   ol_w_id int,
   ol_o_id int,
@@ -75,22 +73,22 @@ create table tmp.same_col_name (
 ) tablespace tsurugi;
 
 -- column name is not specified
-create table tmp.col_name_is_not_specified (
+create table col_name_is_not_specified (
   int
 ) tablespace tsurugi;
 
 -- column name is 1
-create table tmp.col_name_is_1 (
+create table col_name_is_1 (
   1 int
 ) tablespace tsurugi;
 
 -- column name is 1c
-create table tmp.col_name_is_1 (
+create table col_name_is_1 (
   1c int
 ) tablespace tsurugi;
 
 -- column name is japanese
-create table tmp.col_name_is_japanese (
+create table col_name_is_japanese (
   ??? int
 ) tablespace tsurugi;
 
@@ -115,7 +113,7 @@ create table ??? (
 ) tablespace tsurugi;
 
 -- *** same table name is specified ***
-
+CREATE SCHEMA tmp;
 -- success to create table in the schema "tmp"
 create table tmp.same_table_name_test (
   ol_w_id int not null primary key,
