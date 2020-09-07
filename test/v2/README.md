@@ -149,7 +149,7 @@
 		* CH-benCHmarkを測定するためのテーブルが正常に定義できるか。
 			* CH-benCHmarkの公式サイト
 				* https://db.in.tum.de/research/projects/CHbenCHmark/?lang=en
-	* SQL例
+	* SQL
 		* [ch-benchmark-ddl.sql](../../sql/ch-benchmark-ddl.sql)
 			* 参考：https://github.com/citusdata/ch-benchmark.git）
 
@@ -171,7 +171,7 @@
 				* PRIMARY KEY制約のカラムに、NULLをINSERT
 				* PRIMARY KEY制約のカラムにUNIQUEではない値をINSERT
 				* NOT NULL制約のカラムに、NULLをINSERT
-	* SQL例
+	* SQL
 		* [otable_of_constr.sql](../../sql/otable_of_constr.sql)
 
 1. 構文テスト
@@ -192,12 +192,8 @@
 				* カラム名が次の場合
 					* 全角日本語
 					* 1文字の半角英語
-			* SQL例
-				* [happy.sql](../../sql/happy.sql)
 		* 異常系
 			* [サポートするCREATE_TABLE構文](../../docs/design/frontend_V2_CREATE_TABLE_functional_design.md#サポートすcreate-table構文)以外を入力
-				* SQL例
-					* [alternative.sql](../../sql/alternative.sql)
 			* その他サポートしないCREATE TABLE構文を入力
 				* DEFAULT制約
 					* 次の構文を入力する。
@@ -226,8 +222,8 @@
 						* テーブル名が数字のみ　例)1
 						* テーブル名が数字から始まる　例)1c
 						* テーブル名が日本語　例) ???
-				* SQL例
-					* [unhappy.sql](../../sql/unhappy.sql)
+	* SQL
+		* [create_table_syntax_type.sql](../../sql/create_table_syntax_type.sql)
 
 1. 型テスト
 	* テスト確認観点
@@ -245,7 +241,6 @@
 				* (n)を省略する。
 		* 異常系
 			* [サポートする型](../../docs/design/frontend_V2_CREATE_TABLE_functional_design.md#サポートする型)以外を入力
-				* SQL例：[alternative.sql](../../sql/alternative.sql)
 			* varchar
 				* 次の構文を入力する。
 					* (n)を省略する。
@@ -256,7 +251,9 @@
 					* nを省略　char()
 					* char(0)
 			* カラムに型が指定されていない場合の構文を入力する。
-		
+	* SQL
+		* [create_table_syntax_type.sql](../../sql/create_table_syntax_type.sql)
+				
 ### INSERT/SELECTに関するテスト
 * テスト確認観点
 	* 値の範囲内でINSERTして、SELECTした結果が正しいかどうか。
@@ -332,6 +329,8 @@
 				* 1文字
 				* 10文字
 				* 1000文字
+* SQL
+	* [insert_select.sql](../../sql/insert_select.sql)
 
 ### UPDATE/DELETEに関するテスト
 * テスト確認観点
