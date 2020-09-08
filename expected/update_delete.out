@@ -1,134 +1,302 @@
 CREATE DATABASE test TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'C' LC_CTYPE = 'en_US.utf8';
-
 \c test
-
 CREATE EXTENSION ogawayama_fdw;
 CREATE SERVER ogawayama FOREIGN DATA WRAPPER ogawayama_fdw;
-
 /* DDL */
 ---int
 CREATE TABLE update_delete_int1(col1 int PRIMARY KEY, col2 int) TABLESPACE tsurugi;
 CREATE FOREIGN TABLE update_delete_int1(col1 int, col2 int) SERVER ogawayama;
-
 ---bigint
 CREATE TABLE update_delete_bigint1(col1 int PRIMARY KEY, col2 bigint) TABLESPACE tsurugi;
 CREATE FOREIGN TABLE update_delete_bigint1(col1 int, col2 bigint) SERVER ogawayama;
-
 ---real
 CREATE TABLE update_delete_real1(col1 int PRIMARY KEY, col2 real) TABLESPACE tsurugi;
 CREATE FOREIGN TABLE update_delete_real1(col1 int, col2 real) SERVER ogawayama;
-
 ---double precision
 CREATE TABLE update_delete_double1(col1 int PRIMARY KEY, col2 double precision) TABLESPACE tsurugi;
 CREATE FOREIGN TABLE update_delete_double1(col1 int, col2 double precision) SERVER ogawayama;
-
 ---char
 CREATE TABLE update_delete_char1(col1 int PRIMARY KEY, col2 char(2)) TABLESPACE tsurugi;
 CREATE FOREIGN TABLE update_delete_char1(col1 int, col2 char(2)) SERVER ogawayama;
-
 ---varchar
 CREATE TABLE update_delete_varchar1(col1 int PRIMARY KEY, col2 varchar(2)) TABLESPACE tsurugi;
 CREATE FOREIGN TABLE update_delete_varchar1(col1 int, col2 varchar(2)) SERVER ogawayama;
-
 /* DML */
 ---int
 SELECT * FROM update_delete_int1;
+ col1 | col2 
+------+------
+(0 rows)
+
 INSERT INTO update_delete_int1 VALUES (1, 1);
 INSERT INTO update_delete_int1 VALUES (2, 2);
 SELECT * FROM update_delete_int1;
+ col1 | col2 
+------+------
+    1 |    1
+    2 |    2
+(2 rows)
 
 UPDATE update_delete_int1 SET col2 = col2+2147483645;
 SELECT * FROM update_delete_int1;
+ col1 |    col2    
+------+------------
+    1 | 2147483646
+    2 | 2147483647
+(2 rows)
 
 DELETE FROM update_delete_int1 WHERE col2 = 2147483647;
 SELECT * FROM update_delete_int1;
+ col1 |    col2    
+------+------------
+    1 | 2147483646
+(1 row)
 
 DELETE FROM update_delete_int1 WHERE col3 = 1;
+ERROR:  column "col3" does not exist
+LINE 1: DELETE FROM update_delete_int1 WHERE col3 = 1;
+                                             ^
+HINT:  Perhaps you meant to reference the column "update_delete_int1.col1" or the column "update_delete_int1.col2".
 SELECT * FROM update_delete_int1;
+ col1 |    col2    
+------+------------
+    1 | 2147483646
+(1 row)
 
 ---bigint
 SELECT * FROM update_delete_bigint1;
+ col1 | col2 
+------+------
+(0 rows)
+
 INSERT INTO update_delete_bigint1 VALUES (1, 1);
 INSERT INTO update_delete_bigint1 VALUES (2, 2);
 SELECT * FROM update_delete_bigint1;
+ col1 | col2 
+------+------
+    1 |    1
+    2 |    2
+(2 rows)
 
 UPDATE update_delete_bigint1 SET col2 = col2+9223372036854775805;
 SELECT * FROM update_delete_bigint1;
+ col1 |        col2         
+------+---------------------
+    1 | 9223372036854775806
+    2 | 9223372036854775807
+(2 rows)
 
 DELETE FROM update_delete_bigint1 WHERE col2 = 9223372036854775807;
 SELECT * FROM update_delete_bigint1;
+ col1 |        col2         
+------+---------------------
+    1 | 9223372036854775806
+(1 row)
 
 DELETE FROM update_delete_bigint1 WHERE col3 = 1;
+ERROR:  column "col3" does not exist
+LINE 1: DELETE FROM update_delete_bigint1 WHERE col3 = 1;
+                                                ^
+HINT:  Perhaps you meant to reference the column "update_delete_bigint1.col1" or the column "update_delete_bigint1.col2".
 SELECT * FROM update_delete_bigint1;
+ col1 |        col2         
+------+---------------------
+    1 | 9223372036854775806
+(1 row)
 
 ---real
 SELECT * FROM update_delete_real1;
+ col1 | col2 
+------+------
+(0 rows)
+
 INSERT INTO update_delete_real1 VALUES (1, 1.1);
 INSERT INTO update_delete_real1 VALUES (2, 0.1);
 INSERT INTO update_delete_real1 VALUES (3, 3.4);
 SELECT * FROM update_delete_real1;
+ col1 | col2 
+------+------
+    1 |  1.1
+    2 |  0.1
+    3 |  3.4
+(3 rows)
 
 UPDATE update_delete_real1 SET col2 = col2+1;
 SELECT * FROM update_delete_real1;
+ col1 | col2 
+------+------
+    1 |  2.1
+    2 |  1.1
+    3 |  4.4
+(3 rows)
 
 DELETE FROM update_delete_real1 WHERE col2 = 4.4;
 SELECT * FROM update_delete_real1;
+ col1 | col2 
+------+------
+    1 |  2.1
+    2 |  1.1
+    3 |  4.4
+(3 rows)
 
 DELETE FROM update_delete_real1 WHERE col3 = 0.1;
+ERROR:  column "col3" does not exist
+LINE 1: DELETE FROM update_delete_real1 WHERE col3 = 0.1;
+                                              ^
+HINT:  Perhaps you meant to reference the column "update_delete_real1.col1" or the column "update_delete_real1.col2".
 SELECT * FROM update_delete_real1;
+ col1 | col2 
+------+------
+    1 |  2.1
+    2 |  1.1
+    3 |  4.4
+(3 rows)
 
 ---double precision
 SELECT * FROM update_delete_double1;
+ col1 | col2 
+------+------
+(0 rows)
+
 INSERT INTO update_delete_double1 VALUES (1, 1.1);
 INSERT INTO update_delete_double1 VALUES (2, 0.1);
 INSERT INTO update_delete_double1 VALUES (3, 3.4);
 SELECT * FROM update_delete_double1;
+ col1 | col2 
+------+------
+    1 |  1.1
+    2 |  0.1
+    3 |  3.4
+(3 rows)
 
 UPDATE update_delete_double1 SET col2 = col2+1;
 SELECT * FROM update_delete_double1;
+ col1 | col2 
+------+------
+    1 |  2.1
+    2 |  1.1
+    3 |  4.4
+(3 rows)
 
 DELETE FROM update_delete_double1 WHERE col2 = 4.4;
 SELECT * FROM update_delete_double1;
+ col1 | col2 
+------+------
+    1 |  2.1
+    2 |  1.1
+(2 rows)
 
 DELETE FROM update_delete_double1 WHERE col3 = 0.1;
+ERROR:  column "col3" does not exist
+LINE 1: DELETE FROM update_delete_double1 WHERE col3 = 0.1;
+                                                ^
+HINT:  Perhaps you meant to reference the column "update_delete_double1.col1" or the column "update_delete_double1.col2".
 SELECT * FROM update_delete_double1;
+ col1 | col2 
+------+------
+    1 |  2.1
+    2 |  1.1
+(2 rows)
 
 ---char
 SELECT * FROM update_delete_char1;
+ col1 | col2 
+------+------
+(0 rows)
+
 INSERT INTO update_delete_char1 VALUES (1, 'ab');
 INSERT INTO update_delete_char1 VALUES (2, 'kl');
 SELECT * FROM update_delete_char1;
+ col1 | col2 
+------+------
+    1 | ab
+    2 | kl
+(2 rows)
 
 UPDATE update_delete_char1 SET col2 = 'uv' WHERE col2 = 'ab';
 SELECT * FROM update_delete_char1;
+ col1 | col2 
+------+------
+    1 | uv
+    2 | kl
+(2 rows)
 
 UPDATE update_delete_char1 SET col2 = 'uvd' WHERE col2 = 'kl';
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * FROM update_delete_char1;
+ col1 | col2 
+------+------
+    1 | uv
+    2 | kl
+(2 rows)
 
 DELETE FROM update_delete_char1 WHERE col2 = 'kl';
 SELECT * FROM update_delete_char1;
+ col1 | col2 
+------+------
+    1 | uv
+(1 row)
 
 DELETE FROM update_delete_char1 WHERE col3 = 'ab';
+ERROR:  column "col3" does not exist
+LINE 1: DELETE FROM update_delete_char1 WHERE col3 = 'ab';
+                                              ^
+HINT:  Perhaps you meant to reference the column "update_delete_char1.col1" or the column "update_delete_char1.col2".
 SELECT * FROM update_delete_char1;
+ col1 | col2 
+------+------
+    1 | uv
+(1 row)
 
 ---varchar
 SELECT * FROM update_delete_varchar1;
+ col1 | col2 
+------+------
+(0 rows)
+
 INSERT INTO update_delete_varchar1 VALUES (1, 'ab');
 INSERT INTO update_delete_varchar1 VALUES (2, 'kl');
 SELECT * FROM update_delete_varchar1;
+ col1 | col2 
+------+------
+    1 | ab
+    2 | kl
+(2 rows)
 
 UPDATE update_delete_varchar1 SET col2 = 'uv' WHERE col2 = 'ab';
 SELECT * FROM update_delete_varchar1;
+ col1 | col2 
+------+------
+    1 | uv
+    2 | kl
+(2 rows)
 
 UPDATE update_delete_varchar1 SET col2 = 'uvd' WHERE col2 = 'kl';
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * FROM update_delete_varchar1;
+ col1 | col2 
+------+------
+    1 | uv
+    2 | kl
+(2 rows)
 
 DELETE FROM update_delete_varchar1 WHERE col2 = 'kl';
 SELECT * FROM update_delete_varchar1;
+ col1 | col2 
+------+------
+    1 | uv
+(1 row)
 
 DELETE FROM update_delete_varchar1 WHERE col3 = 'ab';
+ERROR:  column "col3" does not exist
+LINE 1: DELETE FROM update_delete_varchar1 WHERE col3 = 'ab';
+                                                 ^
+HINT:  Perhaps you meant to reference the column "update_delete_varchar1.col1" or the column "update_delete_varchar1.col2".
 SELECT * FROM update_delete_varchar1;
+ col1 | col2 
+------+------
+    1 | uv
+(1 row)
 
 \c postgres
-
 DROP DATABASE test;
