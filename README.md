@@ -165,11 +165,13 @@
 make tests
 ```
 
-If regression tests failed, drop database "test" and "test2"
+If regression tests failed, drop database "test" and "test2":
 
 ```
-DROP DATABASE test
-DROP DATABASE test2
+psql postgres
+
+postgres=# DROP DATABASE test;
+postgres=# DROP DATABASE test2;
 ``` 
 
 ## Define table
