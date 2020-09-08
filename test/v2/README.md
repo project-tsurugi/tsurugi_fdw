@@ -110,7 +110,7 @@
 		* CREATE TABLE構文を発行してテーブル定義
 		* サポート対象外の構文・型が入力された場合、エラーメッセージが出力されるか。
 		
-1. 制約の直行表テーブルに関するテスト
+1. 制約の直交表テーブルに関するテスト
 	* テスト確認観点
 		* 表制約のPRYMARY KEY制約、列制約のNOT NULL/PRYMARY KEY制約それぞれの組み合わせのテーブルが、正常に定義できるか。制約の仕様を満たした動作となるか。
 	* 主なテスト項目
@@ -122,14 +122,14 @@
 * テスト確認観点
 	* INSERT/SELECTが正常に動作するか。
 * 主なテスト項目
-	* 境界値テスト
+	* 値の範囲に関する境界値テスト
 
 ### UPDATE/DELETEに関するテスト
 * テスト確認観点
 	* UPDATE/DELETEが正常に動作するか。
 * 主なテスト項目
 	* UPDATE
-		* 境界値テスト
+		* 値の範囲に関する境界値テスト
 	* DELETE
 		* WHERE句を指定し、DELETEが正常に動作するか
 
@@ -146,14 +146,14 @@
 	* テスト確認観点
 		* ユーザーが行う業務を想定してシナリオを作成し、そのシナリオが正常に動作するか。
 	* 内容
-		* CH-benCHmarkを測定するためのテーブルが正常に定義できるか。
+		* CH-benCHmarkを測定するためのテーブルを定義し、全テーブル全カラムに値をINSERTし、SELECTした結果が正しいかどうか。
 			* CH-benCHmarkの公式サイト
 				* https://db.in.tum.de/research/projects/CHbenCHmark/?lang=en
 	* SQL
 		* [ch-benchmark-ddl.sql](../../sql/ch-benchmark-ddl.sql)
 			* 参考：https://github.com/citusdata/ch-benchmark.git）
 
-1. 制約の直行表テーブルに関するテスト
+1. 制約の直交表テーブルに関するテスト
 	* テスト確認観点
 		* 表制約・列のNOT NULL制約・列のPRYMARY KEY制約それぞれの組み合わせのテーブルが、正常に定義できるか。
 		* [制約の直交表](#制約の直交表)の全テーブルに対して、INSERT/SELECT可能かどうか。
@@ -164,7 +164,7 @@
 				* 各制約の組み合わせは、[制約の直交表](#制約の直交表)を参照
 		* INSERT/SELECT
 			* 正常
-				* 全カラムに値をINSERTし、SELECTした結果が正しいかどうか。
+				* 全テーブル全カラムに値をINSERTし、SELECTした結果が正しいかどうか。
 				* PRIMARY KEY制約のカラムにUNIQUEな値をINSERT
 				* NOT NULL制約のカラムはNULL以外の値、NOT NULL制約のカラムはNULLをINSERT
 			* 異常
@@ -180,7 +180,7 @@
 		* サポートする構文以外を入力すると、frontendでエラーメッセージが出力され、Tsurugiでテーブルが定義されない、かつ定義要求したテーブルメタデータがTsurugiで保存されないことを確認する。
 	* 内容
 		* 正常系
-			* 次の通り、CREATE TABLE構文を入力する。
+			* 次の通り、CREATE TABLE構文を入力し、全テーブル全カラムに値をINSERTし、SELECTした結果が正しいかどうか。
 				* カラムなし
 				* sql文がupper caseの場合
 					* 表制約PRIMARY KEYを入力する場合
@@ -231,7 +231,7 @@
 		* サポートする型以外を入力すると、frontendでエラーメッセージが出力され、Tsurugiでテーブルが定義されない、かつ定義要求したテーブルメタデータがTsurugiで保存されないことを確認する。
 	* 内容
 		* 正常系
-			* [サポートする型](../../docs/design/frontend_V2_CREATE_TABLE_functional_design.md#サポートする型)すべてを利用して、CREATE TABLE構文を入力する。
+			* [サポートする型](../../docs/design/frontend_V2_CREATE_TABLE_functional_design.md#サポートする型)すべてを利用して、CREATE TABLE構文を入力する。全テーブル全カラムに値をINSERTし、SELECTした結果が正しいかどうか。
 			* varchar
 				* varchar(1)
 				* varchar(1000)
@@ -337,18 +337,20 @@
 	* UPDATE/DELETEが正常に動作するか。
 * 内容
 	* UPDATE
-		* 境界値テストを実施する。ただし、real/double precisionについては、型の仕様が不明であるため、境界値でない値でテストを実施する。
+		* 値の範囲に関する境界値テストを実施する。ただし、real/double precisionについては、型の仕様が不明であるため、境界値でない値でテストを実施する。
 			* 正常系
 				* 境界の範囲内の値でUPDATEし、SELECT結果が正しいかどうか確認する。
 			* 異常系
 				* 境界の範囲外の値でUPDATEし、エラーメッセージが出力されることを確認する。
 	* DELETE
-		* 値の存在有無により、DELETEが正常に動作するか。
+		* 値またはカラム名の存在有無により、DELETEが正常に動作するか。
 			* 正常系
 				* 存在する値をWHERE句で検索し、該当する行を削除した後、SELECT結果が正しいかどうか確認する。
 			* 異常系
-				* 存在しない値をWHERE句で検索し、エラーメッセージが出力されることを確認する。
-
+				* 存在しないカラム名をWHERE句で検索し、エラーメッセージが出力されることを確認する。
+* SQL
+	* [update_delete.sql](../../sql/update_delete.sql)
+	
 ### frontend以外のコンポーネント異常テスト
 * テスト確認観点
 	* frontend以外のコンポーネントでエラーが発生した場合、frontendでエラーメッセージが出力され、Tsurugiでテーブルが定義されない、かつ定義要求したテーブルメタデータがTsurugiで保存されないことを確認する。
