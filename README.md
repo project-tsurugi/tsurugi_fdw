@@ -145,6 +145,33 @@
 		 tsurugi    | postgres | /home/postgres/local/pgsql/data/tsurugi
 		```
 
+### Regression tests
+### Structure
+
+* **expected/** test results expectations
+* **results/** test results
+* **sql/** all the tests
+
+### How to execute the tests
+1. Build frontend
+	* [How to build frontend](#How-to-build-frontend)
+
+1. Set up frontend
+	* [How to set up for frontend](#How-to-set-up-for-frontend)
+
+1. Execute the following command: 
+
+```
+make tests
+```
+
+If regression tests failed, drop database "test" and "test2"
+
+```
+DROP DATABASE test
+DROP DATABASE test2
+``` 
+
 ## Define table
 
 1. Start ogawayama-server

@@ -7,6 +7,11 @@ OBJS = common/init.o common/stub_manager.o \
         alt_utility/tablecmds.o alt_utility/create_table.o alt_utility/alt_utility.o \
         $(WIN32RES)
 
+EXTENSION = ogawayama_fdw
+DATA = ogawayama_fdw--0.1.sql
+
+REGRESS = test_create_table otable_of_constr ch-benchmark-ddl create_table_syntax_type update_delete
+
 PGFILEDESC = "ogawayama_fdw - foregin data wrapper for ogawayama-server"
 
 PG_CPPFLAGS = -Iinclude \
@@ -16,9 +21,6 @@ PG_CPPFLAGS = -Iinclude \
               -std=c++17 -fPIC -Dregister= -O0
 
 SHLIB_LINK = -logawayama-stub -lmanager-metadata -lmanager-message -lboost_filesystem
-
-EXTENSION = ogawayama_fdw
-DATA = ogawayama_fdw--0.1.sql
 
 ifdef USE_PGXS
         PG_CONFIG = pg_config
@@ -30,3 +32,6 @@ else
         include $(top_builddir)/src/Makefile.global
         include $(top_srcdir)/contrib/contrib-global.mk
 endif
+
+tests:
+	bash test.sh
