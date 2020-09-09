@@ -145,7 +145,7 @@
 		 tsurugi    | postgres | /home/postgres/local/pgsql/data/tsurugi
 		```
 
-### Regression tests
+## Regression tests
 ### Structure
 
 * **expected/** test results expectations
