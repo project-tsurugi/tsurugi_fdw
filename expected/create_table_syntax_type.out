@@ -3,10 +3,10 @@ CREATE DATABASE test TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'C' LC_
 CREATE EXTENSION ogawayama_fdw;
 CREATE SERVER ogawayama FOREIGN DATA WRAPPER ogawayama_fdw;
 CREATE TABLE customer_fifth (
-  c_credit char(2)
+  c_credit char(2) PRIMARY KEY
 ) tablespace tsurugi;
 CREATE TABLE IF NOT EXISTS customer_fifth (
-  c_credit char(2)
+  c_credit char(2) PRIMARY KEY
 ) tablespace tsurugi;
 NOTICE:  table name "customer_fifth" already exsists, skipping
 NOTICE:  create_table() failed.
@@ -111,10 +111,10 @@ CONSTRAINT pkey_all_column_pkey
 PRIMARY KEY(COL0 ,COL1 ,COL2 ,COL3 ,COL4 ,COL5 ,COL6 ,COL7 ,COL8 ,COL9 ,COL10,COL11,COL12,COL13,COL14,COL15,COL16 )
 ) TABLESPACE TSURUGI;
 create table japanese_column_name (
-  カラム int
+  カラム int PRIMARY KEY
 ) tablespace tsurugi;
 create table one_english_column_name (
-  o int
+  o int PRIMARY KEY
 ) tablespace tsurugi;
 CREATE FOREIGN TABLE customer_fifth (
   c_credit char(2)
@@ -609,7 +609,7 @@ LINE 2:     LIKE customer_dummy EXCLUDING CONSTRAINTS
 -- INHERITS clause
 -- parent table
 CREATE TABLE cities (
-    name            varchar(1000),
+    name            varchar(1000) PRIMARY KEY,
     population      float,
     altitude        int     -- in feet
 ) tablespace tsurugi;
@@ -1309,7 +1309,6 @@ create table same_col_name (
   ol_number int not null primary key
 ) tablespace tsurugi;
 ERROR:  column "ol_w_id" specified more than once
-DETAIL:  Tsurugi does not support this syntax
 -- column name is not specified
 create table col_name_is_not_specified (
   int

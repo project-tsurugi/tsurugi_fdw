@@ -6,11 +6,11 @@ CREATE EXTENSION ogawayama_fdw;
 CREATE SERVER ogawayama FOREIGN DATA WRAPPER ogawayama_fdw;
 
 CREATE TABLE customer_fifth (
-  c_credit char(2)
+  c_credit char(2) PRIMARY KEY
 ) tablespace tsurugi;
 
 CREATE TABLE IF NOT EXISTS customer_fifth (
-  c_credit char(2)
+  c_credit char(2) PRIMARY KEY
 ) tablespace tsurugi;
 
 CREATE TABLE TCPKEY_UPPER (
@@ -118,11 +118,11 @@ PRIMARY KEY(COL0 ,COL1 ,COL2 ,COL3 ,COL4 ,COL5 ,COL6 ,COL7 ,COL8 ,COL9 ,COL10,CO
 ) TABLESPACE TSURUGI;
 
 create table japanese_column_name (
-  カラム int
+  カラム int PRIMARY KEY
 ) tablespace tsurugi;
 
 create table one_english_column_name (
-  o int
+  o int PRIMARY KEY
 ) tablespace tsurugi;
 
 CREATE FOREIGN TABLE customer_fifth (
@@ -541,7 +541,7 @@ CREATE TABLE customer_copied_excluding_failed (
 -- INHERITS clause
 -- parent table
 CREATE TABLE cities (
-    name            varchar(1000),
+    name            varchar(1000) PRIMARY KEY,
     population      float,
     altitude        int     -- in feet
 ) tablespace tsurugi;

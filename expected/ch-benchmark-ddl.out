@@ -62,7 +62,7 @@ CREATE TABLE orders_secondary (
 ) tablespace tsurugi;
 -- TODO: h_date ON UPDATE CURRENT_TIMESTAMP
 CREATE TABLE history (
-  h_c_id int NOT NULL,
+  h_c_id int NOT NULL PRIMARY KEY, -- actually this table don't have PRIMARY KEY constraint.
   h_c_d_id int NOT NULL,
   h_c_w_id int NOT NULL,
   h_d_id int NOT NULL,
