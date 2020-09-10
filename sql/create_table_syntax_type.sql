@@ -463,7 +463,7 @@ create table varchar_length_0 (
   ol_number int not null primary key
 ) tablespace tsurugi;
 
-create table varchar_length_empty (
+create table char_length_empty (
   ol_w_id int,
   ol_d_id char(),
   ol_o_id int,
@@ -554,7 +554,7 @@ CREATE TABLE capitals (
 -- INHERITS clause (child table) inherit no table
 CREATE TABLE capitals_fail_to_inherit (
     state           char(2)
-) INHERITS (cities) tablespace tsurugi;
+) INHERITS (nothing) tablespace tsurugi;
 
 -- PARTITION BY RANGE
 CREATE TABLE measurement (
@@ -575,22 +575,22 @@ PARTITION OF measurement
 FOR VALUES FROM ('2016-07-01') TO ('2016-08-01') tablespace tsurugi;
 
 CREATE TABLE measurement_y2016m07_of_no_table
-PARTITION OF measurement
+PARTITION OF nothing
 FOR VALUES FROM ('2016-07-01') TO ('2016-08-01') tablespace tsurugi;
 
 -- PARTITION BY LIST
-CREATE TABLE cities (
+CREATE TABLE cities_partition_by_list (
     city_id      bigint not null,
     name         varchar(1000) not null,
     population   bigint
 ) PARTITION BY LIST (name) tablespace tsurugi;
 
 CREATE TABLE cities_ab
-PARTITION OF cities
+PARTITION OF cities_partition_by_list
 FOR VALUES IN ('a', 'b') tablespace tsurugi;
 
 CREATE TABLE cities_ab_of_no_table
-PARTITION OF cities
+PARTITION OF nothing
 FOR VALUES IN ('a', 'b') tablespace tsurugi;
 
 -- PARTITION BY HASH
@@ -603,7 +603,7 @@ CREATE TABLE orders_partition_by_hash (
 CREATE TABLE orders_p1 PARTITION OF orders_partition_by_hash
 FOR VALUES WITH (MODULUS 4, REMAINDER 0) tablespace tsurugi;
 
-CREATE TABLE orders_p1_of_no_table PARTITION OF orders_partition_by_hash
+CREATE TABLE orders_p1_of_no_table PARTITION OF noting
 FOR VALUES WITH (MODULUS 4, REMAINDER 0) tablespace tsurugi;
 
 -- USING method
@@ -641,7 +641,7 @@ create global temporary table oncommit_drop (
 on commit drop tablespace tsurugi;
 
 -- OF clause
-CREATE TYPE employee_type AS (name text, salary numeric);
+CREATE TYPE employee_type AS (name varchar(1000), salary double precision);
 CREATE TABLE employees OF employee_type (
     PRIMARY KEY (name),
     salary
@@ -1106,7 +1106,7 @@ CREATE FOREIGN TABLE customer_third (
   c_since char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
   c_middle char(2) NOT NULL,
   c_data varchar(500) NOT NULL
-) SERVER ogawayama;
+) server ogawayama;
 
 -- referred by FOREIGN KEY table constraint
 CREATE FOREIGN TABLE customer_forth (
@@ -1115,18 +1115,969 @@ CREATE FOREIGN TABLE customer_forth (
   c_last VARCHAR(16) NOT NULL,
   c_first VARCHAR(16) NOT NULL,
   c_id INT NOT NULL
-) SERVER ogawayama;
+) server ogawayama;
 
+-- type error not supported
+CREATE FOREIGN TABLE orders_type_error (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt decimal(2,0) NOT NULL,
+  o_all_local decimal(1,0) NOT NULL,
+  o_entry_d timestamp NOT NULL
+) server ogawayama;
+
+CREATE FOREIGN TABLE type_error_bigserial (
+  col1 bigserial,
+  col2 serial8
+) server ogawayama;
+
+CREATE FOREIGN TABLE type_error_bit (
+  col1 bit,
+  col2 bit(1)
+) server ogawayama;
+
+CREATE FOREIGN TABLE type_error_bit_varying (
+  col1 bit varying,
+  col2 bit varying(100),
+  col3 varbit,
+  col4 varbit(1)
+) server ogawayama;
+
+CREATE FOREIGN TABLE type_error_bool (
+  col1 boolean,
+  col2 bool
+) server ogawayama;
+
+CREATE FOREIGN TABLE type_error_box (
+  col2 box
+) server ogawayama;
+
+CREATE FOREIGN TABLE type_error_bytea (
+  col3 bytea
+) server ogawayama;
+
+CREATE FOREIGN TABLE type_error_cidr_circle_date_inet (
+  col1 cidr,
+  col2 circle,
+  col3 date,
+  col4 inet
+) server ogawayama;
+
+CREATE FOREIGN TABLE type_error_interval (
+  col1 interval,
+  col2 interval YEAR,
+  col3 interval YEAR TO MONTH,
+  col4 interval HOUR,
+  col5 interval SECOND(0),
+  col6 interval MINUTE TO SECOND(6)
+) server ogawayama;
+
+CREATE FOREIGN TABLE type_error_json (
+  col1 json,
+  col2 jsonb
+) server ogawayama;
+
+CREATE FOREIGN TABLE type_error_line_lseg (
+  col1 line,
+  col2 lseg
+) server ogawayama;
+
+CREATE FOREIGN TABLE type_error_macaddr_money (
+  col1 macaddr,
+  col2 money
+) server ogawayama;
+
+CREATE FOREIGN TABLE type_error_numeric (
+  col1 numeric,
+  col2 numeric(1000),
+  col3 numeric(1000,1000),
+  col4 decimal,
+  col5 decimal(1),
+  col6 decimal(1000,1)
+) server ogawayama;
+
+CREATE FOREIGN TABLE type_error_p (
+  col1 path,
+  col2 pg_lsn,
+  col3 point,
+  col4 polygon
+) server ogawayama;
+
+CREATE FOREIGN TABLE type_error_small (
+  col1 smallint,
+  col2 int2,
+  col3 smallserial,
+  col4 serial2
+) server ogawayama;
+
+CREATE FOREIGN TABLE type_error_serial (
+  col1 serial
+) server ogawayama;
+
+CREATE FOREIGN TABLE type_error_text (
+  col1 text
+) server ogawayama;
+
+CREATE FOREIGN TABLE type_error_time (
+  col0 time,
+  col1 time (0),
+  col2 time (6),
+  col3 time (0) without time zone,
+  col4 time (6) without time zone,
+  col5 time with time zone,
+  col6 time (0) with time zone,
+  col7 time (6) with time zone,
+  col8 timestamp,
+  col9 timestamp (0),
+  col10 timestamp (6),
+  col11 timestamp (0) without time zone,
+  col12 timestamp (6) without time zone,
+  col13 timestamp with time zone,
+  col14 timestamp (0) with time zone,
+  col15 timestamp (6) with time zone
+) server ogawayama;
+
+CREATE FOREIGN TABLE type_error_all_other_than_above (
+  col0 tsquery,
+  col1 tsvector,
+  col2 txid_snapshot,
+  col3 uuid,
+  col4 xml
+) server ogawayama;
+
+-- varchar data length (n) is not specified
+CREATE FOREIGN TABLE varchar (
+  ol_w_id int,
+  ol_d_id varchar,
+  ol_o_id int,
+  ol_number int not null
+) server ogawayama;
+
+-- varchar data length is empty
+CREATE FOREIGN TABLE varchar_length_empty (
+  ol_w_id int,
+  ol_d_id varchar(10),
+  ol_o_id int,
+  ol_number int not null
+) server ogawayama;
+
+-- varchar data length is zero
+CREATE FOREIGN TABLE varchar_length_0 (
+  ol_w_id int ,
+  ol_d_id varchar(1),
+  ol_o_id int,
+  ol_number int not null
+) server ogawayama;
+
+CREATE FOREIGN TABLE char_length_empty (
+  ol_w_id int,
+  ol_d_id char,
+  ol_o_id int,
+  ol_number int not null
+) server ogawayama;
+
+-- char data length is zero
+CREATE FOREIGN TABLE char_length_0 (
+  ol_w_id int ,
+  ol_d_id char(1),
+  ol_o_id int,
+  ol_number int not null
+) server ogawayama;
+
+-- type of ol_w_id is not specified
+CREATE FOREIGN TABLE type_is_not_specified (
+  ol_w_id int,
+  ol_d_id varchar(100),
+  ol_o_id int,
+  ol_number int not null
+) server ogawayama;
+
+-- TEMP TABLE
+CREATE FOREIGN TABLE temptbl (
+  id integer,
+  name varchar(10)
+) server ogawayama;
+
+CREATE FOREIGN TABLE temporarytbl (
+  id integer,
+  name varchar(10)
+) server ogawayama;
+
+-- UNLOGGED TABLE
+CREATE FOREIGN TABLE unloggedtbl (
+  id integer,
+  name varchar(10)
+) server ogawayama;
+
+-- COLLATE column
+CREATE FOREIGN TABLE distributors_unique_cc (
+    did     varchar(1000)
+) server ogawayama;
+
+-- LIKE clause
+CREATE FOREIGN TABLE customer_copied (
+  c_w_id int NOT NULL,
+  c_d_id int NOT NULL,
+  c_id int NOT NULL,
+  c_discount double precision NOT NULL, -- decimal(4,4) NOT NULL
+  c_credit char(2) NOT NULL,
+  c_last varchar(16) NOT NULL,
+  c_first varchar(16) NOT NULL,
+  c_credit_lim double precision NOT NULL, -- decimal(12,2) NOT NULL
+  c_balance double precision NOT NULL, -- decimal(12,2) NOT NULL
+  c_ytd_payment float NOT NULL,
+  c_payment_cnt int NOT NULL,
+  c_delivery_cnt int NOT NULL,
+  c_street_1 varchar(20) NOT NULL,
+  c_street_2 varchar(20) NOT NULL,
+  c_city varchar(20) NOT NULL,
+  c_state char(2) NOT NULL,
+  c_zip char(9) NOT NULL,
+  c_phone char(16) NOT NULL,
+  c_since char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  c_middle char(2) NOT NULL,
+  c_data varchar(500) NOT NULL
+) server ogawayama;
+
+-- LIKE INCLUDING ALL
+CREATE FOREIGN TABLE customer_copied_including (
+  c_w_id int NOT NULL,
+  c_d_id int NOT NULL,
+  c_id int NOT NULL,
+  c_discount double precision NOT NULL, -- decimal(4,4) NOT NULL
+  c_credit char(2) NOT NULL,
+  c_last varchar(16) NOT NULL,
+  c_first varchar(16) NOT NULL,
+  c_credit_lim double precision NOT NULL, -- decimal(12,2) NOT NULL
+  c_balance double precision NOT NULL, -- decimal(12,2) NOT NULL
+  c_ytd_payment float NOT NULL,
+  c_payment_cnt int NOT NULL,
+  c_delivery_cnt int NOT NULL,
+  c_street_1 varchar(20) NOT NULL,
+  c_street_2 varchar(20) NOT NULL,
+  c_city varchar(20) NOT NULL,
+  c_state char(2) NOT NULL,
+  c_zip char(9) NOT NULL,
+  c_phone char(16) NOT NULL,
+  c_since char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  c_middle char(2) NOT NULL,
+  c_data varchar(500) NOT NULL
+) server ogawayama;
+
+-- LIKE EXCLUDING
+CREATE FOREIGN TABLE customer_copied_excluding (
+  c_w_id int NOT NULL,
+  c_d_id int NOT NULL,
+  c_id int NOT NULL,
+  c_discount double precision NOT NULL, -- decimal(4,4) NOT NULL
+  c_credit char(2) NOT NULL,
+  c_last varchar(16) NOT NULL,
+  c_first varchar(16) NOT NULL,
+  c_credit_lim double precision NOT NULL, -- decimal(12,2) NOT NULL
+  c_balance double precision NOT NULL, -- decimal(12,2) NOT NULL
+  c_ytd_payment float NOT NULL,
+  c_payment_cnt int NOT NULL,
+  c_delivery_cnt int NOT NULL,
+  c_street_1 varchar(20) NOT NULL,
+  c_street_2 varchar(20) NOT NULL,
+  c_city varchar(20) NOT NULL,
+  c_state char(2) NOT NULL,
+  c_zip char(9) NOT NULL,
+  c_phone char(16) NOT NULL,
+  c_since char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  c_middle char(2) NOT NULL,
+  c_data varchar(500) NOT NULL
+) server ogawayama;
+
+-- LIKE clause refers to no table
+CREATE FOREIGN TABLE customer_copied_failed (
+  c_w_id int NOT NULL,
+  c_d_id int NOT NULL,
+  c_id int NOT NULL,
+  c_discount double precision NOT NULL, -- decimal(4,4) NOT NULL
+  c_credit char(2) NOT NULL,
+  c_last varchar(16) NOT NULL,
+  c_first varchar(16) NOT NULL,
+  c_credit_lim double precision NOT NULL, -- decimal(12,2) NOT NULL
+  c_balance double precision NOT NULL, -- decimal(12,2) NOT NULL
+  c_ytd_payment float NOT NULL,
+  c_payment_cnt int NOT NULL,
+  c_delivery_cnt int NOT NULL,
+  c_street_1 varchar(20) NOT NULL,
+  c_street_2 varchar(20) NOT NULL,
+  c_city varchar(20) NOT NULL,
+  c_state char(2) NOT NULL,
+  c_zip char(9) NOT NULL,
+  c_phone char(16) NOT NULL,
+  c_since char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  c_middle char(2) NOT NULL,
+  c_data varchar(500) NOT NULL
+) server ogawayama;
+
+-- LIKE INCLUDING ALL refers to no table
+CREATE FOREIGN TABLE customer_copied_including_failed (
+  c_w_id int NOT NULL,
+  c_d_id int NOT NULL,
+  c_id int NOT NULL,
+  c_discount double precision NOT NULL, -- decimal(4,4) NOT NULL
+  c_credit char(2) NOT NULL,
+  c_last varchar(16) NOT NULL,
+  c_first varchar(16) NOT NULL,
+  c_credit_lim double precision NOT NULL, -- decimal(12,2) NOT NULL
+  c_balance double precision NOT NULL, -- decimal(12,2) NOT NULL
+  c_ytd_payment float NOT NULL,
+  c_payment_cnt int NOT NULL,
+  c_delivery_cnt int NOT NULL,
+  c_street_1 varchar(20) NOT NULL,
+  c_street_2 varchar(20) NOT NULL,
+  c_city varchar(20) NOT NULL,
+  c_state char(2) NOT NULL,
+  c_zip char(9) NOT NULL,
+  c_phone char(16) NOT NULL,
+  c_since char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  c_middle char(2) NOT NULL,
+  c_data varchar(500) NOT NULL
+) server ogawayama;
+
+-- LIKE EXCLUDING refers to no table
+CREATE FOREIGN TABLE customer_copied_excluding_failed (
+  c_w_id int NOT NULL,
+  c_d_id int NOT NULL,
+  c_id int NOT NULL,
+  c_discount double precision NOT NULL, -- decimal(4,4) NOT NULL
+  c_credit char(2) NOT NULL,
+  c_last varchar(16) NOT NULL,
+  c_first varchar(16) NOT NULL,
+  c_credit_lim double precision NOT NULL, -- decimal(12,2) NOT NULL
+  c_balance double precision NOT NULL, -- decimal(12,2) NOT NULL
+  c_ytd_payment float NOT NULL,
+  c_payment_cnt int NOT NULL,
+  c_delivery_cnt int NOT NULL,
+  c_street_1 varchar(20) NOT NULL,
+  c_street_2 varchar(20) NOT NULL,
+  c_city varchar(20) NOT NULL,
+  c_state char(2) NOT NULL,
+  c_zip char(9) NOT NULL,
+  c_phone char(16) NOT NULL,
+  c_since char(24) NOT NULL, -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  c_middle char(2) NOT NULL,
+  c_data varchar(500) NOT NULL
+) server ogawayama;
+
+-- INHERITS clause
+-- parent table
 CREATE FOREIGN TABLE cities (
     name            varchar(1000),
     population      float,
     altitude        int     -- in feet
-) SERVER ogawayama;
+) server ogawayama;
 
-SELECT * FROM customer_third;
-SELECT * FROM customer_forth;
-SELECT * FROM cities;
+-- INHERITS clause (child table)
+CREATE FOREIGN TABLE capitals(
+    name            varchar(1000),
+    population      float,
+    altitude        int,     -- in feet
+    state           char(2)
+) server ogawayama;
 
+-- INHERITS clause (child table) inherit no table
+CREATE FOREIGN TABLE capitals_fail_to_inherit(
+    name            varchar(1000),
+    population      float,
+    altitude        int,     -- in feet
+    state           char(2)
+) server ogawayama;
+
+-- PARTITION BY RANGE
+CREATE FOREIGN TABLE measurement (
+    logdate         varchar(24) not null,
+    peaktemp        int,
+    unitsales       int
+) server ogawayama;
+
+-- PARTITION BY RANGE COLLATE
+CREATE FOREIGN TABLE measurement_collate (
+    logdate         varchar(24) not null,
+    peaktemp        int,
+    unitsales       int
+) server ogawayama;
+
+CREATE FOREIGN TABLE measurement_y2016m07 (
+    logdate         varchar(24) not null,
+    peaktemp        int,
+    unitsales       int
+) server ogawayama;
+
+CREATE FOREIGN TABLE measurement_y2016m07_of_no_table (
+    logdate         varchar(24) not null,
+    peaktemp        int,
+    unitsales       int
+) server ogawayama;
+
+-- PARTITION BY LIST
+CREATE FOREIGN TABLE cities_partition_by_list (
+    city_id      bigint not null,
+    name         varchar(1000) not null,
+    population   bigint
+) server ogawayama;
+
+CREATE FOREIGN TABLE cities_ab (
+    city_id      bigint not null,
+    name         varchar(1000) not null,
+    population   bigint
+) server ogawayama;
+
+CREATE FOREIGN TABLE cities_ab_of_no_table (
+    city_id      bigint not null,
+    name         varchar(1000) not null,
+    population   bigint
+) server ogawayama;
+
+-- PARTITION BY HASH
+CREATE FOREIGN TABLE orders_partition_by_hash (
+    order_id     bigint not null,
+    cust_id      bigint not null,
+    status       varchar(1000)
+) server ogawayama;
+
+CREATE FOREIGN TABLE orders_p1 (
+    order_id     bigint not null,
+    cust_id      bigint not null,
+    status       varchar(1000)
+) server ogawayama;
+
+CREATE FOREIGN TABLE orders_p1_of_no_table (
+    order_id     bigint not null,
+    cust_id      bigint not null,
+    status       varchar(1000)
+) server ogawayama;
+
+-- USING method
+CREATE FOREIGN TABLE t_myheap (
+    id int, v text
+) server ogawayama;
+
+-- WITH clause of table
+CREATE FOREIGN TABLE distributors_table_with (
+    did     integer,
+    name    varchar(40)
+) server ogawayama;
+
+-- ON COMMIT PRESERVE ROWS
+CREATE FOREIGN TABLE oncommit_prows (
+  id int not null,
+  txt varchar(32)
+) server ogawayama;
+
+-- ON COMMIT DELETE ROWS
+CREATE FOREIGN TABLE oncommit_drows (
+  id int not null,
+  txt varchar(32)
+) server ogawayama;
+
+-- ON COMMIT DROP
+CREATE FOREIGN TABLE oncommit_drop (
+  id int not null,
+  txt varchar(32)
+) server ogawayama;
+
+-- OF clause
+CREATE FOREIGN TABLE employees(
+    name varchar(1000),
+    salary double precision
+) server ogawayama;
+
+-- *** column constraint ***
+-- NULL column constraint
+CREATE FOREIGN TABLE orders_null_cc (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int NULL,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) server ogawayama;
+
+-- CHECK column constraint
+CREATE FOREIGN TABLE distributors_check_cc (
+    did     integer,
+    name    varchar(40)
+) server ogawayama;
+
+-- CHECK column constraint NO INHERIT
+CREATE FOREIGN TABLE distributors_check_cc_ni (
+    did     integer,
+    name    varchar(40)
+) server ogawayama;
+
+-- DEFAULT column constraint
+CREATE FOREIGN TABLE orders_default_cc (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int DEFAULT NULL,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) server ogawayama;
+
+-- GENERATED ALWAYS AS
+CREATE FOREIGN TABLE generated_always_as (
+    x float,
+    y float,
+    "(x + y)" float,
+    "(x - y)" float,
+    "(x * y)" float,
+    "(x / y)" float
+) server ogawayama;
+
+-- GENERATED BY DEFAULT AS IDENTITY
+CREATE FOREIGN TABLE distributors_generated_by_default (
+     did    integer,
+     name   varchar(40) NOT NULL
+) server ogawayama;
+
+-- GENERATED ALWAYS AS IDENTITY
+CREATE FOREIGN TABLE distributors_generated_always (
+     did    integer,
+     name   varchar(40) NOT NULL
+) server ogawayama;
+
+-- UNIQUE column constraint
+CREATE FOREIGN TABLE distributors_unique_cc_collate (
+    did     integer,
+    name    varchar(40)
+) server ogawayama;
+
+-- PRIMARY KEY WITH
+CREATE FOREIGN TABLE distributors_pkey_cc_include (
+    id             integer,
+    first_name     varchar(1000),
+    last_name      varchar(1000)
+) server ogawayama;
+
+-- PRIMARY KEY USING INDEX
+CREATE FOREIGN TABLE distributors_pkey_cc_using_index (
+    id             integer,
+    first_name     varchar(1000),
+    last_name      varchar(1000)
+) server ogawayama;
+
+CREATE FOREIGN TABLE distributors_pkey_cc_using_index_syntax_error (
+    id             integer,
+    first_name     varchar(1000),
+    last_name      varchar(1000)
+) server ogawayama;
+
+-- FOREIGN KEY column constraint
+CREATE FOREIGN TABLE orders_fkey_cc (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) server ogawayama;
+
+CREATE FOREIGN TABLE orders_fkey_cc_no_unique_pkey (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL  ,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) server ogawayama;
+
+CREATE FOREIGN TABLE orders_fkey_cc_refers_to_no_table (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) server ogawayama;
+
+-- FOREIGN KEY column constraint MATCH FULL
+CREATE FOREIGN TABLE orders_fkey_cc_mf (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) server ogawayama;
+
+CREATE FOREIGN TABLE orders_fkey_cc_mf_no_unique_pkey (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL  ,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) server ogawayama;
+
+CREATE FOREIGN TABLE orders_fkey_cc_mf_refers_to_no_table (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) server ogawayama;
+
+-- FOREIGN KEY column constraint MATCH PARTIAL
+CREATE FOREIGN TABLE orders_fkey_cc_mp (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) server ogawayama;
+
+CREATE FOREIGN TABLE orders_fkey_cc_mp_no_unique_pkey (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) server ogawayama;
+
+-- FOREIGN KEY column constraint MATCH SIMPLE
+CREATE FOREIGN TABLE orders_fkey_cc_ms (
+  o_w_id int,
+  o_d_id int,
+  o_id int,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) server ogawayama;
+
+CREATE FOREIGN TABLE orders_fkey_cc_ms_no_unique_pkey (
+  o_w_id int,
+  o_d_id int,
+  o_id int,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) server ogawayama;
+
+-- DEFERRABLE INITIALLY DEFERRED column constraint
+CREATE FOREIGN TABLE deferrable_initially_deferred_cc(
+    id integer
+) server ogawayama;
+
+-- DEFERRABLE INITIALLY IMMEDIATE column constraint
+CREATE FOREIGN TABLE deferrable_initially_immediate_cc(
+    id integer
+) server ogawayama;
+
+-- DEFERRABLE column constraint
+CREATE FOREIGN TABLE deferrable_cc(
+    id integer
+) server ogawayama;
+
+-- NOT DEFERRABLE column constraint
+CREATE FOREIGN TABLE not_deferrable_cc(
+    id integer
+) server ogawayama;
+
+-- *** table constraint ***
+-- CHECK table constraint
+CREATE FOREIGN TABLE distributors_check_tc (
+    did     integer,
+    name    varchar(40)
+) server ogawayama;
+
+-- CHECK table constraint NO INHERIT
+CREATE FOREIGN TABLE distributors_check_tc_ni (
+    did     integer,
+    name    varchar(40)
+) server ogawayama;
+
+-- UNIQUE table constraint
+CREATE FOREIGN TABLE orders_unique_tc (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) server ogawayama;
+
+-- WITH clause
+CREATE FOREIGN TABLE distributors_column_with (
+    did     integer,
+    name    varchar(40)
+) server ogawayama;
+
+-- PRIMARY KEY INCLUDE
+CREATE FOREIGN TABLE distributors_pkey_tc_include (
+    id             integer,
+    first_name     varchar(1000),
+    last_name      varchar(1000)
+) server ogawayama;
+
+-- PRIMARY KEY USING INDEX
+CREATE FOREIGN TABLE distributors_pkey_tc_using_index (
+    id             integer,
+    first_name     varchar(1000),
+    last_name      varchar(1000)
+) server ogawayama;
+
+CREATE FOREIGN TABLE distributors_pkey_tc_using_index_syntax_error (
+    id             integer,
+    first_name     varchar(1000),
+    last_name      varchar(1000)
+) server ogawayama;
+
+-- EXCLUDE USING
+CREATE FOREIGN TABLE distributotrs_exclude_using (
+    name varchar(1000),
+    age integer
+) server ogawayama;
+
+CREATE FOREIGN TABLE distributotrs_exclude_using_failed (
+    name varchar(1000),
+    age integer
+) server ogawayama;
+
+CREATE FOREIGN TABLE distributotrs_exclude_using_where (
+    name varchar(1000),
+    age integer
+) server ogawayama;
+
+CREATE FOREIGN TABLE distributotrs_exclude_using_where_failed (
+    name varchar(1000),
+    age integer
+) server ogawayama;
+
+CREATE FOREIGN TABLE account_exclude_using_op_class
+(
+  MANUAL_NO         VARCHAR(12)
+) server ogawayama;
+
+CREATE FOREIGN TABLE account_exclude_using_op_class_desc_nulls_last
+(
+  MANUAL_NO         VARCHAR(12)
+) server ogawayama;
+
+-- FOREIGN KEY table constraint
+CREATE FOREIGN TABLE orders_fkey_tc (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) server ogawayama;
+
+CREATE FOREIGN TABLE orders_fkey_tc_fail_to_refer (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) server ogawayama;
+
+-- FOREIGN KEY table constraint
+CREATE FOREIGN TABLE orders_fkey_tc_mf (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) server ogawayama;
+
+CREATE FOREIGN TABLE orders_fkey_tc_mf_fail_to_refer (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) server ogawayama;
+
+-- FOREIGN KEY table constraint
+CREATE FOREIGN TABLE orders_fkey_tc_mp (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) server ogawayama;
+
+-- FOREIGN KEY table constraint
+CREATE FOREIGN TABLE orders_fkey_tc_ms (
+  o_w_id int NOT NULL,
+  o_d_id int NOT NULL,
+  o_id int NOT NULL,
+  o_c_id int NOT NULL,
+  o_carrier_id int,
+  o_ol_cnt double precision NOT NULL, -- decimal(2,0) NOT NULL
+  o_all_local double precision NOT NULL, -- decimal(1,0) NOT NULL
+  o_entry_d char(24) NOT NULL -- timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) server ogawayama;
+
+-- DEFERRABLE INITIALLY DEFERRED
+CREATE FOREIGN TABLE deferrable_initially_deferred_tc(
+    id integer NOT NULL
+) server ogawayama;
+
+-- DEFERRABLE INITIALLY IMMEDIATE
+CREATE FOREIGN TABLE deferrable_initially_immediate_tc(
+    id integer NOT NULL
+) server ogawayama;
+
+CREATE FOREIGN TABLE deferrable_initially_immediate_tc_pk_exists (
+    id integer NOT NULL
+) server ogawayama;
+
+-- DEFERRABLE
+CREATE FOREIGN TABLE deferrable_tc(
+    id integer NOT NULL
+) server ogawayama;
+
+SELECT * from customer_third ;
+SELECT * from customer_forth ;
+SELECT * from orders_type_error ;
+SELECT * from type_error_bigserial ;
+SELECT * from type_error_bit ;
+SELECT * from type_error_bit_varying ;
+SELECT * from type_error_bool ;
+SELECT * from type_error_box ;
+SELECT * from type_error_bytea ;
+SELECT * from type_error_cidr_circle_date_inet ;
+SELECT * from type_error_interval ;
+SELECT * from type_error_json ;
+SELECT * from type_error_line_lseg ;
+SELECT * from type_error_macaddr_money ;
+SELECT * from type_error_numeric ;
+SELECT * from type_error_p ;
+SELECT * from type_error_small ;
+SELECT * from type_error_serial ;
+SELECT * from type_error_text ;
+SELECT * from type_error_time ;
+SELECT * from type_error_all_other_than_above ;
+SELECT * from varchar ;
+SELECT * from varchar_length_empty ;
+SELECT * from varchar_length_0 ;
+SELECT * from char_length_empty ;
+SELECT * from char_length_0 ;
+SELECT * from type_is_not_specified ;
+SELECT * from distributors_unique_cc ;
+SELECT * from customer_copied ;
+SELECT * from customer_copied_including ;
+SELECT * from customer_copied_excluding ;
+SELECT * from customer_copied_failed ;
+SELECT * from customer_copied_including_failed ;
+SELECT * from customer_copied_excluding_failed ;
+SELECT * from cities ;
+SELECT * from capitals ;
+SELECT * from capitals_fail_to_inherit ;
+SELECT * from measurement ;
+SELECT * from measurement_collate ;
+SELECT * from measurement_y2016m07;
+SELECT * from measurement_y2016m07_of_no_table;
+SELECT * from cities_partition_by_list ;
+SELECT * from cities_ab;
+SELECT * from cities_ab_of_no_table;
+SELECT * from orders_partition_by_hash ;
+SELECT * from orders_p1;
+SELECT * from orders_p1_of_no_table;
+SELECT * from t_myheap ;
+SELECT * from distributors_table_with ;
+SELECT * from employees;
+SELECT * from orders_null_cc ;
+SELECT * from distributors_check_cc ;
+SELECT * from distributors_check_cc_ni ;
+SELECT * from orders_default_cc ;
+SELECT * from generated_always_as ;
+SELECT * from distributors_generated_by_default ;
+SELECT * from distributors_generated_always ;
+SELECT * from distributors_unique_cc_collate ;
+SELECT * from distributors_pkey_cc_include ;
+SELECT * from distributors_pkey_cc_using_index ;
+SELECT * from distributors_pkey_cc_using_index_syntax_error ;
+SELECT * from orders_fkey_cc ;
+SELECT * from orders_fkey_cc_no_unique_pkey ;
+SELECT * from orders_fkey_cc_refers_to_no_table ;
+SELECT * from orders_fkey_cc_mf ;
+SELECT * from orders_fkey_cc_mf_no_unique_pkey ;
+SELECT * from orders_fkey_cc_mf_refers_to_no_table ;
+SELECT * from orders_fkey_cc_mp ;
+SELECT * from orders_fkey_cc_mp_no_unique_pkey ;
+SELECT * from orders_fkey_cc_ms ;
+SELECT * from orders_fkey_cc_ms_no_unique_pkey ;
+SELECT * from deferrable_initially_deferred_cc;
+SELECT * from deferrable_initially_immediate_cc;
+SELECT * from deferrable_cc;
+SELECT * from not_deferrable_cc;
+SELECT * from distributors_check_tc ;
+SELECT * from distributors_check_tc_ni ;
+SELECT * from orders_unique_tc ;
+SELECT * from distributors_column_with ;
+SELECT * from distributors_pkey_tc_include ;
+SELECT * from distributors_pkey_tc_using_index ;
+SELECT * from distributors_pkey_tc_using_index_syntax_error ;
+SELECT * from distributotrs_exclude_using ;
+SELECT * from distributotrs_exclude_using_failed ;
+SELECT * from distributotrs_exclude_using_where ;
+SELECT * from distributotrs_exclude_using_where_failed ;
+SELECT * from account_exclude_using_op_class;
+SELECT * from account_exclude_using_op_class_desc_nulls_last;
+SELECT * from orders_fkey_tc ;
+SELECT * from orders_fkey_tc_fail_to_refer ;
+SELECT * from orders_fkey_tc_mf ;
+SELECT * from orders_fkey_tc_mf_fail_to_refer ;
+SELECT * from orders_fkey_tc_mp ;
+SELECT * from orders_fkey_tc_ms ;
+SELECT * from deferrable_initially_deferred_tc;
+SELECT * from deferrable_initially_immediate_tc;
+SELECT * from deferrable_initially_immediate_tc_pk_exists ;
+SELECT * from deferrable_tc;
 
 -- double quote in default constraint
 CREATE TABLE default_constr_double_quote (
@@ -1209,7 +2160,7 @@ create table col_name_is_1 (
 ) tablespace tsurugi;
 
 -- column name is 1c
-create table col_name_is_1 (
+create table col_name_is_1c (
   1c int
 ) tablespace tsurugi;
 
@@ -1237,6 +2188,111 @@ create table 1c (
 create table ??? (
   column int
 ) tablespace tsurugi;
+
+-- double quote in default constraint
+CREATE FOREIGN TABLE default_constr_double_quote (
+  "c_credit" char(2)
+) server ogawayama;
+
+-- default constraint serial
+CREATE FOREIGN TABLE default_constr_serial (
+  id serial
+) server ogawayama;
+
+-- multiple column pkey
+CREATE FOREIGN TABLE multiple_col_pkey (
+  ol_w_id int not null,
+  ol_d_id int,
+  ol_o_id int not null,
+  ol_number int not null
+) server ogawayama;
+
+-- primary key is not specified
+CREATE FOREIGN TABLE pkey_not_specified (
+COL0  INTEGER                 ,
+COL1  INT                     ,
+COL2  INT4                    ,
+COL3  BIGINT                  ,
+COL4  INT8                    ,
+COL5  REAL                    ,
+COL6  FLOAT4                  ,
+COL7  DOUBLE PRECISION        ,
+COL8  FLOAT8                  ,
+COL9  CHAR                    ,
+COL10 CHAR(1000)              ,
+COL11 CHARACTER               ,
+COL12 CHARACTER(1000)         ,
+COL13 VARCHAR                 ,
+COL14 VARCHAR(1000)           ,
+COL15 CHARACTER VARYING       ,
+COL16 CHARACTER VARYING(1000)
+) server ogawayama;
+
+-- primary key column does not exist
+CREATE FOREIGN TABLE pkey_not_exists (
+COL0  INTEGER                 ,
+COL1  INT                     ,
+COL2  INT4                    ,
+COL3  BIGINT                  ,
+COL4  INT8                    ,
+COL5  REAL                    ,
+COL6  FLOAT4                  ,
+COL7  DOUBLE PRECISION        ,
+COL8  FLOAT8                  ,
+COL9  CHAR                    ,
+COL10 CHAR(1000)              ,
+COL11 CHARACTER               ,
+COL12 CHARACTER(1000)         ,
+COL13 VARCHAR                 ,
+COL14 VARCHAR(1000)           ,
+COL15 CHARACTER VARYING       ,
+COL16 CHARACTER VARYING(1000)
+) server ogawayama;
+
+-- same column name
+CREATE FOREIGN TABLE same_col_name (
+  ol_w_id int,
+  ol_w_id int,
+  ol_o_id int,
+  ol_number int not null
+) server ogawayama;
+
+-- column name is japanese
+CREATE FOREIGN TABLE col_name_is_japanese (
+  ??? int
+) server ogawayama;
+
+-- table name is not specified
+CREATE FOREIGN TABLE (
+  column int
+) server ogawayama;
+
+-- table name is 1
+CREATE FOREIGN TABLE 1 (
+  column int
+) server ogawayama;
+
+-- column name is 1c
+CREATE FOREIGN TABLE 1c (
+  column int
+) server ogawayama;
+
+-- column name is japanese
+CREATE FOREIGN TABLE ??? (
+  column int
+) server ogawayama;
+
+SELECT * from  default_constr_double_quote ; 
+SELECT * from  default_constr_serial ; 
+SELECT * from  multiple_col_pkey ; 
+SELECT * from  pkey_not_specified ; 
+SELECT * from  pkey_not_exists ; 
+SELECT * from  same_col_name ; 
+SELECT * from  col_name_is_japanese ; 
+SELECT * from  ; 
+SELECT * from  1 ; 
+SELECT * from  1c ; 
+SELECT * from  ??? ; 
 
 -- *** same table name is specified ***
 CREATE SCHEMA tmp;
@@ -1282,6 +2338,19 @@ create table tmp.same_table_name_test (
   ol_o_id int,
   ol_number int
 ) tablespace tsurugi;
+
+CREATE EXTENSION ogawayama_fdw;
+CREATE SERVER ogawayama FOREIGN DATA WRAPPER ogawayama_fdw;
+
+-- success to CREATE FOREIGN TABLE in the schema "tmp"
+CREATE FOREIGN TABLE same_table_name_test (
+  ol_w_id int not null,
+  ol_d_id int,
+  ol_o_id int,
+  ol_number int
+) server ogawayama;
+
+SELECT * from same_table_name_test ;
 
 \c postgres
 
