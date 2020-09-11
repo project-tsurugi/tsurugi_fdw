@@ -8,410 +8,416 @@ CREATE SERVER ogawayama FOREIGN DATA WRAPPER ogawayama_fdw;
 --error
 CREATE TABLE test1 (
 col1  int,
-col3  bigint,
-col5  real,
-col7  double precision,
-col10 char(1000),
-col14 varchar(1000)
+col2  bigint,
+col3  real,
+col4  double precision,
+col5 char(20),
+col6 varchar(20)
 ) tablespace tsurugi;
 
 CREATE TABLE test2 (
 col1  int PRIMARY KEY,
-col3  bigint,
-col5  real,
-col7  double precision,
-col10 char(1000),
-col14 varchar(1000)
+col2  bigint,
+col3  real,
+col4  double precision,
+col5 char(20),
+col6 varchar(20)
 ) tablespace tsurugi;
 
 --error
 CREATE TABLE test3 (
 col1  int NOT NULL,
-col3  bigint NOT NULL,
-col5  real NOT NULL,
-col7  double precision NOT NULL,
-col10 char(1000) NOT NULL,
-col14 varchar(1000) NOT NULL
+col2  bigint NOT NULL,
+col3  real NOT NULL,
+col4  double precision NOT NULL,
+col5 char(20) NOT NULL,
+col6 varchar(20) NOT NULL
 ) tablespace tsurugi;
 
 CREATE TABLE test4_1 (
 col1  int PRIMARY KEY NOT NULL,
-col3  bigint NOT NULL,
-col5  real NOT NULL,
-col7  double precision NOT NULL,
-col10 char(1000) NOT NULL,
-col14 varchar(1000) NOT NULL
+col2  bigint NOT NULL,
+col3  real NOT NULL,
+col4  double precision NOT NULL,
+col5 char(20) NOT NULL,
+col6 varchar(20) NOT NULL
 ) tablespace tsurugi;
 
 CREATE TABLE test4_2 (
 col1  int NOT NULL,
-col3  bigint NOT NULL,
-col5  real NOT NULL,
-col7  double precision NOT NULL PRIMARY KEY,
-col10 char(1000) NOT NULL,
-col14 varchar(1000) NOT NULL
+col2  bigint NOT NULL,
+col3  real NOT NULL,
+col4  double precision NOT NULL PRIMARY KEY,
+col5 char(20) NOT NULL,
+col6 varchar(20) NOT NULL
+) tablespace tsurugi;
+
+CREATE TABLE test4_3 (
+col1  int NOT NULL,
+col2  bigint,
+col3  real,
+col4  double precision PRIMARY KEY,
+col5 char(20),
+col6 varchar(20)
+) tablespace tsurugi;
+
+CREATE TABLE test4_4 (
+col1  int,
+col2  bigint,
+col3  real,
+col4  double precision PRIMARY KEY NOT NULL,
+col5 char(20),
+col6 varchar(20)
 ) tablespace tsurugi;
 
 CREATE TABLE test5 (
 col1  int,
-col3  bigint,
-col5  real,
-col7  double precision,
-col10 char(1000),
-col14 varchar(1000),
-PRIMARY KEY(col10)
+col2  bigint,
+col3  real,
+col4  double precision,
+col5 char(20),
+col6 varchar(20),
+PRIMARY KEY(col5)
 ) tablespace tsurugi;
 
 --error
 CREATE TABLE test6 (
-col0  integer,
 col1  int,
-col2  int4,
-col3  bigint,
-col4  int8,
-col5  real,
-col6  float4,
-col7  double precision,
-col8  float8,
-col9  char,
-col10 char(1000) PRIMARY KEY,
-col11 character,
-col12 character(1000),
-col14 varchar(1000),
-col16 character varying(1000),
+col2  bigint,
+col3  real,
+col4  double precision,
+col5 char(20) PRIMARY KEY,
+col6 varchar(20),
 PRIMARY KEY(col1)
 ) tablespace tsurugi;
 
-CREATE TABLE test7 (
+CREATE TABLE test7_1 (
 col1  int NOT NULL,
-col3  bigint NOT NULL,
-col5  real NOT NULL,
-col7  double precision NOT NULL,
-col10 char(1000) NOT NULL,
-col14 varchar(1000) NOT NULL,
-PRIMARY KEY(col3)
+col2  bigint NOT NULL,
+col3  real NOT NULL,
+col4  double precision NOT NULL,
+col5 char(20) NOT NULL,
+col6 varchar(20) NOT NULL,
+PRIMARY KEY(col2)
+) tablespace tsurugi;
+
+CREATE TABLE test7_2 (
+col1  int,
+col2  bigint,
+col3  real,
+col4  double precision,
+col5 char(20),
+col6 varchar(20) NOT NULL,
+PRIMARY KEY(col2)
+) tablespace tsurugi;
+
+CREATE TABLE test7_3 (
+col1  int,
+col2  bigint NOT NULL,
+col3  real,
+col4  double precision,
+col5 char(20),
+col6 varchar(20),
+PRIMARY KEY(col2)
 ) tablespace tsurugi;
 
 --error
 CREATE TABLE test8_1 (
-col0  integer NOT NULL,
 col1  int NOT NULL,
-col2  int4 NOT NULL,
-col3  bigint NOT NULL PRIMARY KEY,
-col4  int8 NOT NULL,
-col5  real NOT NULL,
-col6  float4 NOT NULL,
-col7  double precision NOT NULL,
-col8  float8 NOT NULL,
-col9  char NOT NULL,
-col10 char(1000) NOT NULL,
-col11 character NOT NULL,
-col12 character(1000) NOT NULL,
-col14 varchar(1000) NOT NULL,
-col16 character varying(1000) NOT NULL,
+col2  bigint NOT NULL PRIMARY KEY,
+col3  real NOT NULL,
+col4  double precision NOT NULL,
+col5 char(20) NOT NULL,
+col6 varchar(20) NOT NULL,
 PRIMARY KEY(col4)
 ) tablespace tsurugi;
 
 --error
 CREATE TABLE test8_2 (
-col0  integer NOT NULL,
 col1  int NOT NULL,
-col2  int4 NOT NULL,
-col3  bigint PRIMARY KEY NOT NULL,
-col4  int8 NOT NULL,
-col5  real NOT NULL,
-col6  float4 NOT NULL,
-col7  double precision NOT NULL,
-col8  float8 NOT NULL,
-col9  char NOT NULL,
-col10 char(1000) NOT NULL,
-col11 character NOT NULL,
-col12 character(1000) NOT NULL,
-col14 varchar(1000) NOT NULL,
-col16 character varying(1000) NOT NULL,
-PRIMARY KEY(col5)
+col2  bigint PRIMARY KEY NOT NULL,
+col3  real NOT NULL,
+col4  double precision NOT NULL,
+col5 char(20) NOT NULL,
+col6 varchar(20) NOT NULL,
+PRIMARY KEY(col3)
 ) tablespace tsurugi;
 
 CREATE TABLE test9 (
 col1  int,
-col3  bigint,
-col5  real,
-col7  double precision,
-col10 char(1000),
-col14 varchar(1000),
-PRIMARY KEY(col1,col3,col5,col10)
+col2  bigint,
+col3  real,
+col4  double precision,
+col5 char(20),
+col6 varchar(20),
+PRIMARY KEY(col1,col2,col3,col5)
 ) tablespace tsurugi;
 
 --error
 CREATE TABLE test10 (
-col0  integer,
 col1  int,
-col2  int4,
-col3  bigint PRIMARY KEY,
-col4  int8,
-col5  real,
-col6  float4,
-col7  double precision,
-col8  float8,
-col9  char,
-col10 char(1000),
-col11 character,
-col12 character(1000),
-col14 varchar(1000),
-col16 character varying(1000),
+col2  bigint PRIMARY KEY,
+col3  real,
+col4  double precision,
+col5 char(20),
+col6 varchar(20),
 PRIMARY KEY(col1,col2)
 ) tablespace tsurugi;
 
-CREATE TABLE test11 (
+CREATE TABLE test11_1 (
 col1  int NOT NULL,
-col3  bigint NOT NULL,
-col5  real NOT NULL,
-col7  double precision NOT NULL,
-col10 char(1000) NOT NULL,
-col14 varchar(1000) NOT NULL,
-PRIMARY KEY(col1,col3,col5,col10,col14)
+col2  bigint NOT NULL,
+col3  real NOT NULL,
+col4  double precision NOT NULL,
+col5 char(20) NOT NULL,
+col6 varchar(20) NOT NULL,
+PRIMARY KEY(col1,col2,col3,col5,col6)
+) tablespace tsurugi;
+
+CREATE TABLE test11_2 (
+col1  int NOT NULL,
+col2  bigint NOT NULL,
+col3  real NOT NULL,
+col4  double precision,
+col5 char(20) NOT NULL,
+col6 varchar(20) NOT NULL,
+PRIMARY KEY(col1,col2,col3,col5,col6)
+) tablespace tsurugi;
+
+CREATE TABLE test11_3 (
+col1  int,
+col2  bigint,
+col3  real,
+col4  double precision NOT NULL,
+col5 char(20),
+col6 varchar(20),
+PRIMARY KEY(col1,col2,col3,col5,col6)
 ) tablespace tsurugi;
 
 --error
 CREATE TABLE test12_1 (
-col0  integer NOT NULL,
 col1  int NOT NULL,
-col2  int4 NOT NULL,
-col3  bigint NOT NULL,
-col4  int8 NOT NULL,
-col5  real NOT NULL,
-col6  float4 NOT NULL,
-col7  double precision NOT NULL,
-col8  float8 NOT NULL,
-col9  char NOT NULL,
-col10 char(1000) NOT NULL,
-col11 character NOT NULL,
-col12 character(1000) NOT NULL,
-col14 varchar(1000) NOT NULL,
-col16 character varying(1000) NOT NULL PRIMARY KEY,
-PRIMARY KEY(col7,col8,col9,col10)
+col2  bigint NOT NULL,
+col3  real NOT NULL,
+col4  double precision NOT NULL,
+col5 char(20) NOT NULL,
+col6 varchar(20) NOT NULL PRIMARY KEY,
+PRIMARY KEY(col4,col8,col9,col5)
 ) tablespace tsurugi;
 
 --error
 CREATE TABLE test12_2 (
-col0  integer NOT NULL,
 col1  int NOT NULL,
-col2  int4 NOT NULL,
-col3  bigint NOT NULL,
-col4  int8 NOT NULL,
-col5  real NOT NULL,
-col6  float4 NOT NULL,
-col7  double precision NOT NULL,
-col8  float8 NOT NULL,
-col9  char NOT NULL,
-col10 char(1000) NOT NULL,
-col11 character NOT NULL,
-col12 character(1000) NOT NULL,
-col14 varchar(1000) NOT NULL,
-col16 character varying(1000) PRIMARY KEY NOT NULL,
-PRIMARY KEY(col7,col8,col9,col10)
+col2  bigint NOT NULL,
+col3  real NOT NULL,
+col4  double precision NOT NULL,
+col5 char(20) NOT NULL,
+col6 varchar(20) PRIMARY KEY NOT NULL,
+PRIMARY KEY(col4,col8,col9,col5)
 ) tablespace tsurugi;
 
+--error
 CREATE FOREIGN TABLE test1 (
 col1  int,
-col3  bigint,
-col5  real,
-col7  double precision,
-col10 char(1000),
-col14 varchar(1000)
+col2  bigint,
+col3  real,
+col4  double precision,
+col5 char(20),
+col6 varchar(20)
 ) SERVER ogawayama;
 
 CREATE FOREIGN TABLE test2 (
 col1  int,
-col3  bigint,
-col5  real,
-col7  double precision,
-col10 char(1000),
-col14 varchar(1000)
+col2  bigint,
+col3  real,
+col4  double precision,
+col5 char(20),
+col6 varchar(20)
 ) SERVER ogawayama;
 
+--error
 CREATE FOREIGN TABLE test3 (
 col1  int NOT NULL,
-col3  bigint NOT NULL,
-col5  real NOT NULL,
-col7  double precision NOT NULL,
-col10 char(1000) NOT NULL,
-col14 varchar(1000) NOT NULL
+col2  bigint NOT NULL,
+col3  real NOT NULL,
+col4  double precision NOT NULL,
+col5 char(20) NOT NULL,
+col6 varchar(20) NOT NULL
 ) SERVER ogawayama;
 
 CREATE FOREIGN TABLE test4_1 (
 col1  int NOT NULL,
-col3  bigint NOT NULL,
-col5  real NOT NULL,
-col7  double precision NOT NULL,
-col10 char(1000) NOT NULL,
-col14 varchar(1000) NOT NULL
+col2  bigint NOT NULL,
+col3  real NOT NULL,
+col4  double precision NOT NULL,
+col5 char(20) NOT NULL,
+col6 varchar(20) NOT NULL
 ) SERVER ogawayama;
 
 CREATE FOREIGN TABLE test4_2 (
 col1  int NOT NULL,
-col3  bigint NOT NULL,
-col5  real NOT NULL,
-col7  double precision NOT NULL ,
-col10 char(1000) NOT NULL,
-col14 varchar(1000) NOT NULL
+col2  bigint NOT NULL,
+col3  real NOT NULL,
+col4  double precision NOT NULL,
+col5 char(20) NOT NULL,
+col6 varchar(20) NOT NULL
+) SERVER ogawayama;
+
+CREATE FOREIGN TABLE test4_3 (
+col1  int NOT NULL,
+col2  bigint,
+col3  real,
+col4  double precision,
+col5 char(20),
+col6 varchar(20)
+) SERVER ogawayama;
+
+CREATE FOREIGN TABLE test4_4 (
+col1  int,
+col2  bigint,
+col3  real,
+col4  double precision NOT NULL,
+col5 char(20),
+col6 varchar(20)
 ) SERVER ogawayama;
 
 CREATE FOREIGN TABLE test5 (
 col1  int,
-col3  bigint,
-col5  real,
-col7  double precision,
-col10 char(1000),
-col14 varchar(1000)
+col2  bigint,
+col3  real,
+col4  double precision,
+col5 char(20),
+col6 varchar(20)
 ) SERVER ogawayama;
 
 --error
 CREATE FOREIGN TABLE test6 (
-col0  integer,
 col1  int,
-col2  int4,
-col3  bigint,
-col4  int8,
-col5  real,
-col6  float4,
-col7  double precision,
-col8  float8,
-col9  char,
-col10 char(1000) ,
-col11 character,
-col12 character(1000),
-col14 varchar(1000),
-col16 character varying(1000)
+col2  bigint,
+col3  real,
+col4  double precision,
+col5 char(20),
+col6 varchar(20)
 ) SERVER ogawayama;
 
-CREATE FOREIGN TABLE test7 (
+CREATE FOREIGN TABLE test7_1 (
 col1  int NOT NULL,
-col3  bigint NOT NULL,
-col5  real NOT NULL,
-col7  double precision NOT NULL,
-col10 char(1000) NOT NULL,
-col14 varchar(1000) NOT NULL
+col2  bigint NOT NULL,
+col3  real NOT NULL,
+col4  double precision NOT NULL,
+col5 char(20) NOT NULL,
+col6 varchar(20) NOT NULL
+) SERVER ogawayama;
+
+CREATE FOREIGN TABLE test7_2 (
+col1  int,
+col2  bigint,
+col3  real,
+col4  double precision,
+col5 char(20),
+col6 varchar(20) NOT NULL
+) SERVER ogawayama;
+
+CREATE FOREIGN TABLE test7_3 (
+col1  int,
+col2  bigint NOT NULL,
+col3  real,
+col4  double precision,
+col5 char(20),
+col6 varchar(20)
 ) SERVER ogawayama;
 
 --error
 CREATE FOREIGN TABLE test8_1 (
-col0  integer NOT NULL,
 col1  int NOT NULL,
-col2  int4 NOT NULL,
-col3  bigint NOT NULL ,
-col4  int8 NOT NULL,
-col5  real NOT NULL,
-col6  float4 NOT NULL,
-col7  double precision NOT NULL,
-col8  float8 NOT NULL,
-col9  char NOT NULL,
-col10 char(1000) NOT NULL,
-col11 character NOT NULL,
-col12 character(1000) NOT NULL,
-col14 varchar(1000) NOT NULL,
-col16 character varying(1000) NOT NULL
+col2  bigint NOT NULL,
+col3  real NOT NULL,
+col4  double precision NOT NULL,
+col5 char(20) NOT NULL,
+col6 varchar(20) NOT NULL
 ) SERVER ogawayama;
 
 --error
 CREATE FOREIGN TABLE test8_2 (
-col0  integer NOT NULL,
 col1  int NOT NULL,
-col2  int4 NOT NULL,
-col3  bigint  NOT NULL,
-col4  int8 NOT NULL,
-col5  real NOT NULL,
-col6  float4 NOT NULL,
-col7  double precision NOT NULL,
-col8  float8 NOT NULL,
-col9  char NOT NULL,
-col10 char(1000) NOT NULL,
-col11 character NOT NULL,
-col12 character(1000) NOT NULL,
-col14 varchar(1000) NOT NULL,
-col16 character varying(1000) NOT NULL
+col2  bigint NOT NULL,
+col3  real NOT NULL,
+col4  double precision NOT NULL,
+col5 char(20) NOT NULL,
+col6 varchar(20) NOT NULL
 ) SERVER ogawayama;
 
 CREATE FOREIGN TABLE test9 (
 col1  int,
-col3  bigint,
-col5  real,
-col7  double precision,
-col10 char(1000),
-col14 varchar(1000)
+col2  bigint,
+col3  real,
+col4  double precision,
+col5 char(20),
+col6 varchar(20)
 ) SERVER ogawayama;
 
 --error
 CREATE FOREIGN TABLE test10 (
-col0  integer,
 col1  int,
-col2  int4,
-col3  bigint ,
-col4  int8,
-col5  real,
-col6  float4,
-col7  double precision,
-col8  float8,
-col9  char,
-col10 char(1000),
-col11 character,
-col12 character(1000),
-col14 varchar(1000),
-col16 character varying(1000)
+col2  bigint,
+col3  real,
+col4  double precision,
+col5 char(20),
+col6 varchar(20)
 ) SERVER ogawayama;
 
-CREATE FOREIGN TABLE test11 (
+CREATE FOREIGN TABLE test11_1 (
 col1  int NOT NULL,
-col3  bigint NOT NULL,
-col5  real NOT NULL,
-col7  double precision NOT NULL,
-col10 char(1000) NOT NULL,
-col14 varchar(1000) NOT NULL
+col2  bigint NOT NULL,
+col3  real NOT NULL,
+col4  double precision NOT NULL,
+col5 char(20) NOT NULL,
+col6 varchar(20) NOT NULL
+) SERVER ogawayama;
+
+CREATE FOREIGN TABLE test11_2 (
+col1  int NOT NULL,
+col2  bigint NOT NULL,
+col3  real NOT NULL,
+col4  double precision,
+col5 char(20) NOT NULL,
+col6 varchar(20) NOT NULL
+) SERVER ogawayama;
+
+CREATE FOREIGN TABLE test11_3 (
+col1  int,
+col2  bigint,
+col3  real,
+col4  double precision NOT NULL,
+col5 char(20),
+col6 varchar(20)
 ) SERVER ogawayama;
 
 --error
 CREATE FOREIGN TABLE test12_1 (
-col0  integer NOT NULL,
 col1  int NOT NULL,
-col2  int4 NOT NULL,
-col3  bigint NOT NULL,
-col4  int8 NOT NULL,
-col5  real NOT NULL,
-col6  float4 NOT NULL,
-col7  double precision NOT NULL,
-col8  float8 NOT NULL,
-col9  char NOT NULL,
-col10 char(1000) NOT NULL,
-col11 character NOT NULL,
-col12 character(1000) NOT NULL,
-col14 varchar(1000) NOT NULL,
-col16 character varying(1000) NOT NULL
+col2  bigint NOT NULL,
+col3  real NOT NULL,
+col4  double precision NOT NULL,
+col5 char(20) NOT NULL,
+col6 varchar(20) NOT NULL
 ) SERVER ogawayama;
 
 --error
 CREATE FOREIGN TABLE test12_2 (
-col0  integer NOT NULL,
 col1  int NOT NULL,
-col2  int4 NOT NULL,
-col3  bigint NOT NULL,
-col4  int8 NOT NULL,
-col5  real NOT NULL,
-col6  float4 NOT NULL,
-col7  double precision NOT NULL,
-col8  float8 NOT NULL,
-col9  char NOT NULL,
-col10 char(1000) NOT NULL,
-col11 character NOT NULL,
-col12 character(1000) NOT NULL,
-col14 varchar(1000) NOT NULL,
-col16 character varying(1000)
+col2  bigint NOT NULL,
+col3  real NOT NULL,
+col4  double precision NOT NULL,
+col5 char(20) NOT NULL,
+col6 varchar(20) NOT NULL
 ) SERVER ogawayama;
 
 --test1 all error
 SELECT * from test1;
 INSERT INTO test1 VALUES (1,1000,3.24,-2.27,'A','ABCDEFABCDEF');
 SELECT * from test1;
-INSERT INTO test1 (col14) VALUES ('ABCDEFABCDEF');
+INSERT INTO test1 (col6) VALUES ('ABCDEFABCDEF');
 SELECT * from test1;
 
 --test2
@@ -420,7 +426,7 @@ SELECT * from test2;
 INSERT INTO test2 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test2;
 --PKEY col1 null error
-INSERT INTO test2 (col3,col5,col7,col10,col14) VALUES (1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+INSERT INTO test2 (col2,col3,col4,col5,col6) VALUES (1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test2;
 --PKEY col1 not unique error
 INSERT INTO test2 (col1) VALUES (1);
@@ -432,7 +438,7 @@ SELECT * from test2;
 --test3 all error
 INSERT INTO test3 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test3;
-INSERT INTO test3 (col3) VALUES (1);
+INSERT INTO test3 (col2) VALUES (1);
 SELECT * from test3;
 
 --test4_1
@@ -444,7 +450,7 @@ SELECT * from test4_1;
 INSERT INTO test4_1 (col1) VALUES (3);
 SELECT * from test4_1;
 --PKEY col1 null error
-INSERT INTO test4_1 (col5) VALUES (3.24);
+INSERT INTO test4_1 (col3) VALUES (3.24);
 SELECT * from test4_1;
 --PKEY col1 not unique error
 INSERT INTO test4_1 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
@@ -458,54 +464,126 @@ SELECT * from test4_2;
 --ok
 INSERT INTO test4_2 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test4_2;
---PKEY col7 null error
-INSERT INTO test4_2 (col1,col3,col5,col10,col14) VALUES (1,1000,3.24,'ABC','ABCDEFABCDEF');
+--PKEY col4 null error
+INSERT INTO test4_2 (col1,col2,col3,col5,col6) VALUES (1,1000,3.24,'ABC','ABCDEFABCDEF');
 SELECT * from test4_2;
 --NOT NULL constraint null error
-INSERT INTO test4_2 (col3,col5,col7,col10,col14) VALUES (1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+INSERT INTO test4_2 (col2,col3,col4,col5,col6) VALUES (1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test4_2;
---PKEY col7 not unique error
+--PKEY col4 not unique error
 INSERT INTO test4_2 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test4_2;
 --ok
 INSERT INTO test4_2 VALUES (2,1000,3.24,-3.24,'ABC','ABCDEFABCDEF');
 SELECT * from test4_2;
 
+--test4_3
+SELECT * from test4_3;
+--ok
+INSERT INTO test4_3 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+SELECT * from test4_3;
+--PKEY col4 null error
+INSERT INTO test4_3 (col1) VALUES (1);
+SELECT * from test4_3;
+--NOT NULL constraint null error
+INSERT INTO test4_3 (col2,col3,col4,col5,col6) VALUES (1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+SELECT * from test4_3;
+--PKEY col4 not unique error
+INSERT INTO test4_3 (col1,col4) VALUES (1,-2.27);
+SELECT * from test4_3;
+--ok
+INSERT INTO test4_3 (col1,col4) VALUES (1,-3.24);
+SELECT * from test4_3;
+
+--test4_4
+SELECT * from test4_4;
+--ok
+INSERT INTO test4_4 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+SELECT * from test4_4;
+--PKEY col4 null error
+INSERT INTO test4_4 (col5) VALUES ('ABC');
+SELECT * from test4_4;
+--NOT NULL constraint null error
+INSERT INTO test4_4 (col6) VALUES ('ABCDEFABCDEF');
+SELECT * from test4_4;
+--PKEY col4 not unique error
+INSERT INTO test4_4 (col4) VALUES (-2.27);
+SELECT * from test4_4;
+--ok
+INSERT INTO test4_4 (col4) VALUES (-3.24);
+SELECT * from test4_4;
+
 --test5
 SELECT * from test5;
 --ok
 INSERT INTO test5 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test5;
---PKEY col10 null error
-INSERT INTO test5 (col1,col3,col5,col7,col14) VALUES (1,1000,3.24,-2.27,'ABCDEFABCDEF');
+--PKEY col5 null error
+INSERT INTO test5 (col1,col2,col3,col4,col6) VALUES (1,1000,3.24,-2.27,'ABCDEFABCDEF');
 SELECT * from test5;
---PKEY col10 not unique error
-INSERT INTO test5 (col10) VALUES ('ABC');
+--PKEY col5 not unique error
+INSERT INTO test5 (col5) VALUES ('ABC');
 SELECT * from test5;
 --ok
-INSERT INTO test5 (col10) VALUES ('AAA');
+INSERT INTO test5 (col5) VALUES ('AAA');
 SELECT * from test5;
 
 --test6 error
 SELECT * from test6;
 
---test7
-SELECT * from test7;
+--test7_1
+SELECT * from test7_1;
 --ok
-INSERT INTO test7 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
-SELECT * from test7;
+INSERT INTO test7_1 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+SELECT * from test7_1;
 -- NOT NULL constraint null error
-INSERT INTO test7 (col1,col3,col5,col7,col10) VALUES (1,1000,3.24,-2.27,'ABC');
-SELECT * from test7;
---PKEY col3 null error
-INSERT INTO test7 (col1,col5,col7,col10,col14) VALUES (1,3.24,-2.27,'ABC','ABCDEFABCDEF');
-SELECT * from test7;
---PKEY col3 not unique error
-INSERT INTO test7 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
-SELECT * from test7;
+INSERT INTO test7_1 (col1,col2,col3,col4,col5) VALUES (1,1000,3.24,-2.27,'ABC');
+SELECT * from test7_1;
+--PKEY col2 null error
+INSERT INTO test7_1 (col1,col3,col4,col5,col6) VALUES (1,3.24,-2.27,'ABC','ABCDEFABCDEF');
+SELECT * from test7_1;
+--PKEY col2 not unique error
+INSERT INTO test7_1 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+SELECT * from test7_1;
 --ok
-INSERT INTO test7 VALUES (1,1001,3.24,-2.27,'ABC','ABCDEFABCDEF');
-SELECT * from test7;
+INSERT INTO test7_1 VALUES (1,1001,3.24,-2.27,'ABC','ABCDEFABCDEF');
+SELECT * from test7_1;
+
+--test7_2
+SELECT * from test7_2;
+--ok
+INSERT INTO test7_2 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+SELECT * from test7_2;
+-- NOT NULL constraint null error
+INSERT INTO test7_2 (col2) VALUES (1000);
+SELECT * from test7_2;
+--PKEY col2 null error
+INSERT INTO test7_2 (col6) VALUES ('ABCDEFABCDEF');
+SELECT * from test7_2;
+--PKEY col2 not unique error
+INSERT INTO test7_2 (col2,col6) VALUES (1000,'ABCDEFABCDEF');
+SELECT * from test7_2;
+--ok
+INSERT INTO test7_2 (col2,col6) VALUES (1001,'ABCDEFABCDEF');
+SELECT * from test7_2;
+
+--test7_3
+SELECT * from test7_3;
+--ok
+INSERT INTO test7_3 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+SELECT * from test7_3;
+-- NOT NULL constraint null error
+INSERT INTO test7_3 (col3) VALUES (3.24);
+SELECT * from test7_3;
+--PKEY col2 null error
+INSERT INTO test7_3 (col4) VALUES (-2.27);
+SELECT * from test7_3;
+--PKEY col2 not unique error
+INSERT INTO test7_3 (col2) VALUES (1000);
+SELECT * from test7_3;
+--ok
+INSERT INTO test7_3 (col2) VALUES (1001);
+SELECT * from test7_3;
 
 --test8 all error
 SELECT * from test8_1;
@@ -516,35 +594,69 @@ SELECT * from test9;
 --ok
 INSERT INTO test9 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test9;
---PKEY (col1,col3,col5,col10) null error
-INSERT INTO test9 (col1,col3,col5) VALUES (2,1000,3.24);
+--PKEY (col1,col2,col3,col5) null error
+INSERT INTO test9 (col1,col2,col3) VALUES (2,1000,3.24);
 SELECT * from test9;
---PKEY (col1,col3,col5,col10) not unique error
-INSERT INTO test9 (col1,col3,col5,col10) VALUES (1,1000,3.24,'ABC');
+--PKEY (col1,col2,col3,col5) not unique error
+INSERT INTO test9 (col1,col2,col3,col5) VALUES (1,1000,3.24,'ABC');
 SELECT * from test9;
 --ok
-INSERT INTO test9 (col1,col3,col5,col10) VALUES (1,1000,3.24,'A');
+INSERT INTO test9 (col1,col2,col3,col5) VALUES (1,1000,3.24,'A');
 SELECT * from test9;
 
 --test10 error
 SELECT * from test10;
 
---test11
-SELECT * from test11;
+--test11_1
+SELECT * from test11_1;
 --ok
-INSERT INTO test11 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
-SELECT * from test11;
+INSERT INTO test11_1 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+SELECT * from test11_1;
 --NOT NULL constraint null error
-INSERT INTO test11 (col1,col3,col5,col10,col14) VALUES (3,1000,3.24,'ABC','ABCDEFABCDEF');
---PKEY (col1,col3,col5,col10,col14) null error
-INSERT INTO test11 (col1,col5,col7,col10,col14) VALUES (1,3.24,-2.27,'ABC','ABCDEFABCDEF');
-SELECT * from test11;
---PKEY (col1,col3,col5,col10,col14) not unique error
-INSERT INTO test11 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
-SELECT * from test11;
+INSERT INTO test11_1 (col1,col2,col3,col5,col6) VALUES (3,1000,3.24,'ABC','ABCDEFABCDEF');
+--PKEY (col1,col2,col3,col5,col6) null error
+INSERT INTO test11_1 (col1,col3,col4,col5,col6) VALUES (1,3.24,-2.27,'ABC','ABCDEFABCDEF');
+SELECT * from test11_1;
+--PKEY (col1,col2,col3,col5,col6) not unique error
+INSERT INTO test11_1 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+SELECT * from test11_1;
 --ok
-INSERT INTO test11 VALUES (2,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
-SELECT * from test11;
+INSERT INTO test11_1 VALUES (2,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+SELECT * from test11_1;
+
+--test11_2
+SELECT * from test11_2;
+--ok
+INSERT INTO test11_2 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+SELECT * from test11_2;
+--NOT NULL constraint null error
+INSERT INTO test11_2 (col1,col2,col3,col5) VALUES (3,1000,3.24,'ABC');
+--PKEY (col1,col2,col3,col5,col6) null error
+INSERT INTO test11_2 (col1,col2,col3,col6) VALUES (1,1000,3.24,'ABCDEFABCDEF');
+SELECT * from test11_2;
+--PKEY (col1,col2,col3,col5,col6) not unique error
+INSERT INTO test11_2 (col1,col2,col3,col5,col6) VALUES (1,1000,3.24,'ABC','ABCDEFABCDEF');
+SELECT * from test11_2;
+--ok
+INSERT INTO test11_2 (col1,col2,col3,col5,col6) VALUES (2,1000,3.24,'ABC','ABCDEFABCDEF');
+SELECT * from test11_2;
+
+--test11_3
+SELECT * from test11_3;
+--ok
+INSERT INTO test11_3 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+SELECT * from test11_3;
+--NOT NULL constraint null error
+INSERT INTO test11_3 (col1,col2,col3,col5,col6) VALUES (3,1000,3.24,'ABC','ABCDEFABCDEF');
+--PKEY (col1,col2,col3,col5,col6) null error
+INSERT INTO test11_3 (col1,col2,col3,col4,col5) VALUES (1,1001,3.24,-2.27,'ABC');
+SELECT * from test11_3;
+--PKEY (col1,col2,col3,col5,col6) not unique error
+INSERT INTO test11_3 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+SELECT * from test11_3;
+--ok
+INSERT INTO test11_3 VALUES (2,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+SELECT * from test11_3;
 
 --test12 error
 SELECT * from test12_1;
