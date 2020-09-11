@@ -253,6 +253,7 @@
 			* カラムに型が指定されていない場合の構文を入力する。
 	* SQL
 		* [create_table_syntax_type.sql](../../sql/create_table_syntax_type.sql)
+		* [insert_select.sql](../../sql/insert_select.sql)
 				
 ### INSERT/SELECTに関するテスト
 * テスト確認観点
