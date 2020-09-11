@@ -5,7 +5,7 @@ PGHOME_FOR_TEST=~/pgsql12
 # connection port number
 PORT=5432
 # the cluster's data directory PGDATA
-PGDATA_FOR_TEST=$PGHOME_FOR_TEST/data2
+PGDATA_FOR_TEST=$PGHOME_FOR_TEST/data
 # Fix above
 
 PSQLBIN=$PGHOME_FOR_TEST/bin
