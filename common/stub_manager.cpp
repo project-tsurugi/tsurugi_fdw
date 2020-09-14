@@ -45,7 +45,7 @@ ERROR_CODE StubManager::init()
 		error = make_stub(stub_);
 		if (error != ERROR_CODE::OK)
 		{
-			elog(ERROR, "stub::make_stub() failed. (%d)", (int) error);
+			std::cerr << "stub::make_stub() failed. " << (int) error << std::endl;
 			return error;
 		}
 		elog(DEBUG1, "make_stub() succeeded.");

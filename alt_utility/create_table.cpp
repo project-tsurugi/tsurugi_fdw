@@ -52,6 +52,7 @@ extern "C"
 /* DB name metadata-manager manages */
 const std::string DBNAME = "Tsurugi";
 
+void remove_metadata(message::Message *message, std::unique_ptr<metadata::Metadata> &objects);
 bool send_message(message::Message *message, std::unique_ptr<metadata::Metadata> &objects);
 static std::string rewrite_query(std::string_view query_string);
 static bool execute_create_table(std::string_view query_string);
@@ -96,7 +97,10 @@ bool send_message(message::Message *message, std::unique_ptr<metadata::Metadata>
     error = StubManager::begin(&transaction);
     if (error != ERROR_CODE::OK)
     {
-        std::cerr << "begin() failed." << std::endl;
+        remove_metadata(message, objects);
+        ereport(ERROR,
+                (errcode(ERRCODE_INTERNAL_ERROR),
+                 errmsg("StubManager::begin() failed.")));
         return ret_value;
     }
 
@@ -106,11 +110,7 @@ bool send_message(message::Message *message, std::unique_ptr<metadata::Metadata>
 
     if (status.get_error_code() != message::ErrorCode::SUCCESS)
     {
-        if (objects->load() == metadata::ErrorCode::OK)
-        {
-            objects->remove(message->get_object_id());
-        }
-
+        remove_metadata(message, objects);
         ereport(ERROR,
                 (errcode(ERRCODE_INTERNAL_ERROR),
                  errmsg("transaction::receive_message() %s failed. (%d)",
@@ -130,6 +130,17 @@ bool send_message(message::Message *message, std::unique_ptr<metadata::Metadata>
     ret_value = true;
 
     return ret_value;
+}
+
+/*
+ *  @brief:
+ */
+void remove_metadata(message::Message *message, std::unique_ptr<metadata::Metadata> &objects)
+{
+    if (objects->load() == metadata::ErrorCode::OK)
+    {
+        objects->remove(message->get_object_id());
+    }
 }
 
 /*
