@@ -35,3 +35,6 @@ endif
 
 tests:
 	bash test.sh
+        
+tests_extra:
+	bash test_extra.sh | tee regression_extra.out
