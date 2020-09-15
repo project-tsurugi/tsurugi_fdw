@@ -90,3 +90,5 @@ done
 echo "[========]"
 echo "[ FAILED ] $FAILED_COUNT tests"
 echo "[ PASSED ] $OK_COUNT tests"
+
+rm -rf $TSURUGI_METADATA_STORAGE_PATH
