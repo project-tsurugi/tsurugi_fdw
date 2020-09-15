@@ -42,7 +42,7 @@ git clone git@github.com:project-tsurugi/ogawayama.git
 
 # manager
 
-cd $TSURUGI_HOME/manager/metadata-manager
+cd $TSURUGI_HOME/manager
 
 rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
