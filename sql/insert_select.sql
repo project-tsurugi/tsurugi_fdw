@@ -29,35 +29,7 @@ create table integer1 (
   ol_w_id int PRIMARY KEY
 ) tablespace tsurugi;
 
-create table integer2 (
-  ol_w_id int PRIMARY KEY
-) tablespace tsurugi;
-
-create table integer3 (
-  ol_w_id int PRIMARY KEY
-) tablespace tsurugi;
-
-create table integer4 (
-  ol_w_id int PRIMARY KEY
-) tablespace tsurugi;
-
-create table integer5 (
-  ol_w_id int PRIMARY KEY
-) tablespace tsurugi;
-
 create table bigint1 (
-  ol_w_id bigint PRIMARY KEY
-) tablespace tsurugi;
-
-create table bigint2 (
-  ol_w_id bigint PRIMARY KEY
-) tablespace tsurugi;
-
-create table bigint3 (
-  ol_w_id bigint PRIMARY KEY
-) tablespace tsurugi;
-
-create table bigint4 (
   ol_w_id bigint PRIMARY KEY
 ) tablespace tsurugi;
 
@@ -65,47 +37,7 @@ create table real1 (
   ol_w_id real PRIMARY KEY
 ) tablespace tsurugi;
 
-create table real2 (
-  ol_w_id real PRIMARY KEY
-) tablespace tsurugi;
-
-create table real3 (
-  ol_w_id real PRIMARY KEY
-) tablespace tsurugi;
-
-create table real4 (
-  ol_w_id real PRIMARY KEY
-) tablespace tsurugi;
-
-create table real5 (
-  ol_w_id real PRIMARY KEY
-) tablespace tsurugi;
-
-create table real6 (
-  ol_w_id real PRIMARY KEY
-) tablespace tsurugi;
-
 create table double1 (
-  ol_w_id double precision PRIMARY KEY
-) tablespace tsurugi;
-
-create table double2 (
-  ol_w_id double precision PRIMARY KEY
-) tablespace tsurugi;
-
-create table double3 (
-  ol_w_id double precision PRIMARY KEY
-) tablespace tsurugi;
-
-create table double4 (
-  ol_w_id double precision PRIMARY KEY
-) tablespace tsurugi;
-
-create table double5 (
-  ol_w_id double precision PRIMARY KEY
-) tablespace tsurugi;
-
-create table double6 (
   ol_w_id double precision PRIMARY KEY
 ) tablespace tsurugi;
 
@@ -149,35 +81,7 @@ create foreign table integer1 (
   ol_w_id int
 ) SERVER ogawayama;
 
-create foreign table integer2 (
-  ol_w_id int
-) SERVER ogawayama;
-
-create foreign table integer3 (
-  ol_w_id int
-) SERVER ogawayama;
-
-create foreign table integer4 (
-  ol_w_id int
-) SERVER ogawayama;
-
-create foreign table integer5 (
-  ol_w_id int
-) SERVER ogawayama;
-
 create foreign table bigint1 (
-  ol_w_id bigint
-) SERVER ogawayama;
-
-create foreign table bigint2 (
-  ol_w_id bigint
-) SERVER ogawayama;
-
-create foreign table bigint3 (
-  ol_w_id bigint
-) SERVER ogawayama;
-
-create foreign table bigint4 (
   ol_w_id bigint
 ) SERVER ogawayama;
 
@@ -185,47 +89,7 @@ create foreign table real1 (
   ol_w_id real
 ) SERVER ogawayama;
 
-create foreign table real2 (
-  ol_w_id real
-) SERVER ogawayama;
-
-create foreign table real3 (
-  ol_w_id real
-) SERVER ogawayama;
-
-create foreign table real4 (
-  ol_w_id real
-) SERVER ogawayama;
-
-create foreign table real5 (
-  ol_w_id real
-) SERVER ogawayama;
-
-create foreign table real6 (
-  ol_w_id real
-) SERVER ogawayama;
-
 create foreign table double1 (
-  ol_w_id double precision
-) SERVER ogawayama;
-
-create foreign table double2 (
-  ol_w_id double precision
-) SERVER ogawayama;
-
-create foreign table double3 (
-  ol_w_id double precision
-) SERVER ogawayama;
-
-create foreign table double4 (
-  ol_w_id double precision
-) SERVER ogawayama;
-
-create foreign table double5 (
-  ol_w_id double precision
-) SERVER ogawayama;
-
-create foreign table double6 (
   ol_w_id double precision
 ) SERVER ogawayama;
 
@@ -259,77 +123,59 @@ SELECT * FROM insert_select_happy;
 --- out of range test
 --- int
 SELECT * FROM integer1;
+INSERT INTO integer1 VALUES (2147483645);
+SELECT * FROM integer1;
+INSERT INTO integer1 VALUES (2147483646);
+SELECT * FROM integer1;
 INSERT INTO integer1 VALUES (2147483647);
 SELECT * FROM integer1;
-
-SELECT * FROM integer2;
-INSERT INTO integer2 VALUES (-2147483648);
-SELECT * FROM integer2;
-
-SELECT * FROM integer3;
-INSERT INTO integer3 VALUES (-2147483649);
-SELECT * FROM integer3;
-
-SELECT * FROM integer4;
-INSERT INTO integer4 VALUES (2147483648);
-SELECT * FROM integer4;
-
-SELECT * FROM integer5;
-INSERT INTO integer5 VALUES (2147483648);
-SELECT * FROM integer5;
+INSERT INTO integer1 VALUES (2147483648);
+SELECT * FROM integer1;
+INSERT INTO integer1 VALUES (2147483649);
+SELECT * FROM integer1;
+INSERT INTO integer1 VALUES (2147483650);
+SELECT * FROM integer1;
+INSERT INTO integer1 VALUES (1.1);
+SELECT * FROM integer1;
+INSERT INTO integer1 VALUES (0.1);
+SELECT * FROM integer1;
 
 --- bigint
 SELECT * FROM bigint1;
-INSERT INTO bigint1 VALUES (-9223372036854775808);
+INSERT INTO bigint1 VALUES (9223372036854775805);
+SELECT * FROM bigint1;
+INSERT INTO bigint1 VALUES (9223372036854775806);
+SELECT * FROM bigint1;
+INSERT INTO bigint1 VALUES (9223372036854775807);
+SELECT * FROM bigint1;
+INSERT INTO bigint1 VALUES (9223372036854775808);
+SELECT * FROM bigint1;
+INSERT INTO bigint1 VALUES (9223372036854775809);
+SELECT * FROM bigint1;
+INSERT INTO bigint1 VALUES (9223372036854775810);
+SELECT * FROM bigint1;
+INSERT INTO bigint1 VALUES (1.1);
+SELECT * FROM bigint1;
+INSERT INTO bigint1 VALUES (0.1);
 SELECT * FROM bigint1;
 
-SELECT * FROM bigint2;
-INSERT INTO bigint2 VALUES (-9223372036854775809);
-SELECT * FROM bigint2;
-
-SELECT * FROM bigint3;
-INSERT INTO bigint3 VALUES (9223372036854775807);
-SELECT * FROM bigint3;
-
-SELECT * FROM bigint4;
-INSERT INTO bigint4 VALUES (9223372036854775808);
-SELECT * FROM bigint4;
-
 --- real
---- comment out out of range test because I don't know specs about range of type
----SELECT * FROM real1;
----INSERT INTO real1 VALUES (10000000000000000000000000000000000000);
----SELECT * FROM real1;
----
----SELECT * FROM real2;
----INSERT INTO real2 VALUES (100000000000000000000000000000000000000);
----SELECT * FROM real2;
-
-SELECT * FROM real5;
-INSERT INTO real5 VALUES (0.1);
-SELECT * FROM real5;
-
-SELECT * FROM real6;
-INSERT INTO real6 VALUES (1.1);
-SELECT * FROM real6;
+SELECT * FROM real1;
+INSERT INTO real1 VALUES (12.345678901234567890); --20 digits
+SELECT * FROM real1;
+INSERT INTO real1 VALUES (0.1);
+SELECT * FROM real1;
+INSERT INTO real1 VALUES (1.1);
+SELECT * FROM real1;
 
 --- double precision
---- comment out out of range test because I don't know specs about range of type
----SELECT * FROM double1;
----INSERT INTO double1 VALUES ---(10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000);
----SELECT * FROM double1;
----
----SELECT * FROM double2;
----INSERT INTO double2 VALUES ---(100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000);
----SELECT * FROM double2;
-
-SELECT * FROM double5;
-INSERT INTO double5 VALUES (0.1);
-SELECT * FROM double5;
-
-SELECT * FROM double6;
-INSERT INTO double6 VALUES (1.1);
-SELECT * FROM double6;
+SELECT * FROM double1;
+INSERT INTO double1 VALUES (12.345678901234567890); --20 digits
+SELECT * FROM double1;
+INSERT INTO double1 VALUES (0.1);
+SELECT * FROM double1;
+INSERT INTO double1 VALUES (1.1);
+SELECT * FROM double1;
 
 --- char(1)
 SELECT * FROM char_length_1;
