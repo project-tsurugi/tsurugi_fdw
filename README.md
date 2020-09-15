@@ -39,19 +39,13 @@
 	git clone git@github.com:project-tsurugi/frontend.git
 	```
 
-	Clone required packages for building ogawayama_fdw. 
-
-	```sh
-	cd frontend
-	git submodule update --init
-	```
-
 1. Build and Install tsurugi.
 
 	Install tsurugi in default tsurugi install directory $HOME/.local.  
 	By changing INSTALL_PREFIX=$HOME/.local in the script, you can change install directory.  
 
 	```sh
+	cd frontend
 	./scripts/devenv.sh
 	```
 	
