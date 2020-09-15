@@ -163,6 +163,7 @@
 
 ```
 make tests
+make tests_extra
 ```
 
 If regression tests failed, drop database "test" and "test2":
