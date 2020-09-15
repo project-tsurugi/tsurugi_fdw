@@ -20,15 +20,6 @@
 	sudo apt -y install make gcc g++
 	```
 
-1. Build and Install tsurugi.
-
-	Install tsurugi in default tsurugi install directory $HOME/.local.  
-	By changing INSTALL_PREFIX=$HOME/.local in the script, you can change install directory.  
-
-	```sh
-	./scripts/devenv.sh
-	```
-
 1. Build and Install PostgreSQL.
 
 	```sh
@@ -39,7 +30,7 @@
 	make install
 	```
 
-1.  Build and Install ogawayama_fdw.
+1.  Clone frontend.
 
 	Clone fronend to "contrib" directory in PostgreSQL.
 
@@ -54,6 +45,17 @@
 	cd frontend
 	git submodule update --init
 	```
+
+1. Build and Install tsurugi.
+
+	Install tsurugi in default tsurugi install directory $HOME/.local.  
+	By changing INSTALL_PREFIX=$HOME/.local in the script, you can change install directory.  
+
+	```sh
+	./scripts/devenv.sh
+	```
+	
+1.  Build and Install ogawayama_fdw.
 
 	Add LIBRARY_PATH to tsurugi library to build ogawayama_fdw.  
 	For example, if tsurugi install directory is \~/.local,  
