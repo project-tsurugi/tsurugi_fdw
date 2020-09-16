@@ -162,13 +162,12 @@ make tests
 make tests_extra
 ```
 
-If regression tests failed, drop database "test" and "test2":
+If regression tests failed, drop database "test":
 
 ```
 psql postgres
 
 postgres=# DROP DATABASE test;
-postgres=# DROP DATABASE test2;
 ``` 
 
 ## Define table
