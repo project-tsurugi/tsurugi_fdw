@@ -1,9 +1,5 @@
-CREATE DATABASE test TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'C' LC_CTYPE = 'en_US.utf8';
-
-\c test
-
-CREATE EXTENSION ogawayama_fdw;
-CREATE SERVER ogawayama FOREIGN DATA WRAPPER ogawayama_fdw;
+CREATE EXTENSION IF NOT EXISTS ogawayama_fdw;
+CREATE SERVER IF NOT EXISTS ogawayama FOREIGN DATA WRAPPER ogawayama_fdw;
 
 CREATE TABLE customer_fifth (
   c_credit char(2) PRIMARY KEY
@@ -515,27 +511,27 @@ CREATE TABLE customer_copied (
 
 -- LIKE INCLUDING ALL
 CREATE TABLE customer_copied_including (
-    LIKE customer_third INCLUDING ALL
+    LIKE customer_third_dummy INCLUDING ALL
 ) tablespace tsurugi;
 
 -- LIKE EXCLUDING
 CREATE TABLE customer_copied_excluding (
-    LIKE customer_third EXCLUDING CONSTRAINTS
+    LIKE customer_third_dummy EXCLUDING CONSTRAINTS
 ) tablespace tsurugi;
 
 -- LIKE clause refers to no table
 CREATE TABLE customer_copied_failed (
-    LIKE customer_dummy
+    LIKE customer_third
 ) tablespace tsurugi;
 
 -- LIKE INCLUDING ALL refers to no table
 CREATE TABLE customer_copied_including_failed (
-    LIKE customer_dummy INCLUDING ALL
+    LIKE customer_third INCLUDING ALL
 ) tablespace tsurugi;
 
 -- LIKE EXCLUDING refers to no table
 CREATE TABLE customer_copied_excluding_failed (
-    LIKE customer_dummy EXCLUDING CONSTRAINTS
+    LIKE customer_third EXCLUDING CONSTRAINTS
 ) tablespace tsurugi;
 
 -- INHERITS clause
@@ -2315,9 +2311,9 @@ create table tmp2.same_table_name_test (
   ol_number int
 ) tablespace tsurugi;
 
-CREATE DATABASE test2 TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'C' LC_CTYPE = 'en_US.utf8';
+CREATE DATABASE test TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'C' LC_CTYPE = 'en_US.utf8';
 
-\c test2
+\c test
 
 -- If same table name is defined in another database,
 -- fail to create table.
@@ -2355,4 +2351,3 @@ SELECT * from same_table_name_test ;
 \c postgres
 
 DROP DATABASE test;
-DROP DATABASE test2;

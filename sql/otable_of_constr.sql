@@ -1,9 +1,5 @@
-CREATE DATABASE test TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'C' LC_CTYPE = 'en_US.utf8';
-
-\c test
-
-CREATE EXTENSION ogawayama_fdw;
-CREATE SERVER ogawayama FOREIGN DATA WRAPPER ogawayama_fdw;
+CREATE EXTENSION IF NOT EXISTS ogawayama_fdw;
+CREATE SERVER IF NOT EXISTS ogawayama FOREIGN DATA WRAPPER ogawayama_fdw;
 
 --error
 CREATE TABLE test1 (
@@ -661,7 +657,3 @@ SELECT * from test11_3;
 --test12 error
 SELECT * from test12_1;
 SELECT * from test12_2;
-
-\c postgres
-
-DROP DATABASE test;

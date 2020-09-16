@@ -1,7 +1,7 @@
-CREATE DATABASE test TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'C' LC_CTYPE = 'en_US.utf8';
-\c test
-CREATE EXTENSION ogawayama_fdw;
-CREATE SERVER ogawayama FOREIGN DATA WRAPPER ogawayama_fdw;
+CREATE EXTENSION IF NOT EXISTS ogawayama_fdw;
+NOTICE:  extension "ogawayama_fdw" already exists, skipping
+CREATE SERVER IF NOT EXISTS ogawayama FOREIGN DATA WRAPPER ogawayama_fdw;
+NOTICE:  server "ogawayama" already exists, skipping
 CREATE TABLE customer_fifth (
   c_credit char(2) PRIMARY KEY
 ) tablespace tsurugi;
@@ -573,38 +573,34 @@ LINE 2:     LIKE customer_third
                  ^
 -- LIKE INCLUDING ALL
 CREATE TABLE customer_copied_including (
+    LIKE customer_third_dummy INCLUDING ALL
+) tablespace tsurugi;
+ERROR:  Tsurugi does not support COLLATE clause
+-- LIKE EXCLUDING
+CREATE TABLE customer_copied_excluding (
+    LIKE customer_third_dummy EXCLUDING CONSTRAINTS
+) tablespace tsurugi;
+ERROR:  Tsurugi does not support COLLATE clause
+-- LIKE clause refers to no table
+CREATE TABLE customer_copied_failed (
+    LIKE customer_third
+) tablespace tsurugi;
+ERROR:  relation "customer_third" does not exist
+LINE 2:     LIKE customer_third
+                 ^
+-- LIKE INCLUDING ALL refers to no table
+CREATE TABLE customer_copied_including_failed (
     LIKE customer_third INCLUDING ALL
 ) tablespace tsurugi;
 ERROR:  relation "customer_third" does not exist
 LINE 2:     LIKE customer_third INCLUDING ALL
                  ^
--- LIKE EXCLUDING
-CREATE TABLE customer_copied_excluding (
+-- LIKE EXCLUDING refers to no table
+CREATE TABLE customer_copied_excluding_failed (
     LIKE customer_third EXCLUDING CONSTRAINTS
 ) tablespace tsurugi;
 ERROR:  relation "customer_third" does not exist
 LINE 2:     LIKE customer_third EXCLUDING CONSTRAINTS
-                 ^
--- LIKE clause refers to no table
-CREATE TABLE customer_copied_failed (
-    LIKE customer_dummy
-) tablespace tsurugi;
-ERROR:  relation "customer_dummy" does not exist
-LINE 2:     LIKE customer_dummy
-                 ^
--- LIKE INCLUDING ALL refers to no table
-CREATE TABLE customer_copied_including_failed (
-    LIKE customer_dummy INCLUDING ALL
-) tablespace tsurugi;
-ERROR:  relation "customer_dummy" does not exist
-LINE 2:     LIKE customer_dummy INCLUDING ALL
-                 ^
--- LIKE EXCLUDING refers to no table
-CREATE TABLE customer_copied_excluding_failed (
-    LIKE customer_dummy EXCLUDING CONSTRAINTS
-) tablespace tsurugi;
-ERROR:  relation "customer_dummy" does not exist
-LINE 2:     LIKE customer_dummy EXCLUDING CONSTRAINTS
                  ^
 -- INHERITS clause
 -- parent table
@@ -2463,8 +2459,8 @@ create table tmp2.same_table_name_test (
   ol_number int
 ) tablespace tsurugi;
 ERROR:  table name "same_table_name_test" already exsists
-CREATE DATABASE test2 TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'C' LC_CTYPE = 'en_US.utf8';
-\c test2
+CREATE DATABASE test TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'C' LC_CTYPE = 'en_US.utf8';
+\c test
 -- If same table name is defined in another database,
 -- fail to create table.
 create table same_table_name_test (
@@ -2500,4 +2496,3 @@ SELECT * from same_table_name_test ;
 
 \c postgres
 DROP DATABASE test;
-DROP DATABASE test2;

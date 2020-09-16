@@ -1,7 +1,7 @@
-CREATE DATABASE test TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'C' LC_CTYPE = 'en_US.utf8';
-\c test
-CREATE EXTENSION ogawayama_fdw;
-CREATE SERVER ogawayama FOREIGN DATA WRAPPER ogawayama_fdw;
+CREATE EXTENSION IF NOT EXISTS ogawayama_fdw;
+NOTICE:  extension "ogawayama_fdw" already exists, skipping
+CREATE SERVER IF NOT EXISTS ogawayama FOREIGN DATA WRAPPER ogawayama_fdw;
+NOTICE:  server "ogawayama" already exists, skipping
 /* DDL */
 ---int
 CREATE TABLE update_delete_int1(col1 int PRIMARY KEY, col2 int) TABLESPACE tsurugi;
@@ -298,5 +298,3 @@ SELECT * FROM update_delete_varchar1;
     1 | uv
 (1 row)
 
-\c postgres
-DROP DATABASE test;

@@ -1,7 +1,7 @@
-CREATE DATABASE test TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'C' LC_CTYPE = 'en_US.utf8';
-\c test
-CREATE EXTENSION ogawayama_fdw;
-CREATE SERVER ogawayama FOREIGN DATA WRAPPER ogawayama_fdw;
+CREATE EXTENSION IF NOT EXISTS ogawayama_fdw;
+NOTICE:  extension "ogawayama_fdw" already exists, skipping
+CREATE SERVER IF NOT EXISTS ogawayama FOREIGN DATA WRAPPER ogawayama_fdw;
+NOTICE:  server "ogawayama" already exists, skipping
 CREATE TABLE order_line (
   ol_w_id int NOT NULL,
   ol_d_id int NOT NULL,
@@ -485,5 +485,3 @@ SELECT * from region;
            4 | MIDDLE EAST                                             | ructions ; quietly sly dolphins besi                                                                                                                    
 (5 rows)
 
-\c postgres
-DROP DATABASE test;

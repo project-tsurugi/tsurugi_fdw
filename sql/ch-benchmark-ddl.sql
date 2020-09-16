@@ -1,9 +1,5 @@
-CREATE DATABASE test TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'C' LC_CTYPE = 'en_US.utf8';
-
-\c test
-
-CREATE EXTENSION ogawayama_fdw;
-CREATE SERVER ogawayama FOREIGN DATA WRAPPER ogawayama_fdw;
+CREATE EXTENSION IF NOT EXISTS ogawayama_fdw;
+CREATE SERVER IF NOT EXISTS ogawayama FOREIGN DATA WRAPPER ogawayama_fdw;
 
 CREATE TABLE order_line (
   ol_w_id int NOT NULL,
@@ -419,7 +415,3 @@ SELECT * from warehouse;
 SELECT * from nation;
 SELECT * from supplier;
 SELECT * from region;
-
-\c postgres
-
-DROP DATABASE test;
