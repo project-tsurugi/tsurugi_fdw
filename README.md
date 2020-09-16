@@ -155,6 +155,26 @@
 1. Set up frontend
 	* [How to set up for frontend](#How-to-set-up-for-frontend)
 
+1. Define TABLESPACE
+	* Create a directory for TABLESPACE.
+		```
+		$ mkdir -p <PostgreSQL install directory>/data/tsurugi
+		```
+	* Execute **CREATE TABLESPACE** command
+		```sql
+		CREATE TABLESPACE tsurugi LOCATION '<PostgreSQL install directory>/data/tsurugi';
+		```
+	* Check with the meta-command(\db)
+		```
+		k-postgres=# \db
+                   List of tablespaces
+			Name    |  Owner   |             Location
+		------------+----------+-----------------------------------
+		 pg_default | postgres |
+		 pg_global  | postgres |
+		 tsurugi    | postgres | /home/postgres/local/pgsql/data/tsurugi
+		```
+		
 1. Execute the following command: 
 
 ```
