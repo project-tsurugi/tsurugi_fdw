@@ -37,6 +37,8 @@
 	```sh
 	cd contrib
 	git clone git@github.com:project-tsurugi/frontend.git
+	cd frontend
+	git submodule update --init
 	```
 
 1. Build and Install tsurugi.
@@ -45,7 +47,6 @@
 	By changing INSTALL_PREFIX=$HOME/.local in the script, you can change install directory.  
 
 	```sh
-	cd frontend
 	./scripts/devenv.sh
 	```
 	
