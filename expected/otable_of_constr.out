@@ -1,5 +1,7 @@
 CREATE EXTENSION IF NOT EXISTS ogawayama_fdw;
+NOTICE:  extension "ogawayama_fdw" already exists, skipping
 CREATE SERVER IF NOT EXISTS ogawayama FOREIGN DATA WRAPPER ogawayama_fdw;
+NOTICE:  server "ogawayama" already exists, skipping
 --error
 CREATE TABLE test1 (
 col1  int,
