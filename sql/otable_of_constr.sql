@@ -11,13 +11,58 @@ col5 char(20),
 col6 varchar(20)
 ) tablespace tsurugi;
 
-CREATE TABLE test2 (
+CREATE TABLE test2_1 (
 col1  int PRIMARY KEY,
 col2  bigint,
 col3  real,
 col4  double precision,
 col5 char(20),
 col6 varchar(20)
+) tablespace tsurugi;
+
+CREATE TABLE test2_2 (
+col1  int,
+col2  bigint PRIMARY KEY,
+col3  real,
+col4  double precision,
+col5 char(20),
+col6 varchar(20)
+) tablespace tsurugi;
+
+CREATE TABLE test2_3 (
+col1  int,
+col2  bigint,
+col3  real PRIMARY KEY,
+col4  double precision,
+col5 char(20),
+col6 varchar(20)
+) tablespace tsurugi;
+
+CREATE TABLE test2_4 (
+col1  int,
+col2  bigint,
+col3  real,
+col4  double precision PRIMARY KEY,
+col5 char(20),
+col6 varchar(20)
+) tablespace tsurugi;
+
+CREATE TABLE test2_5 (
+col1  int,
+col2  bigint,
+col3  real,
+col4  double precision,
+col5 char(20) PRIMARY KEY,
+col6 varchar(20)
+) tablespace tsurugi;
+
+CREATE TABLE test2_6 (
+col1  int,
+col2  bigint,
+col3  real,
+col4  double precision,
+col5 char(20),
+col6 varchar(20) PRIMARY KEY
 ) tablespace tsurugi;
 
 --error
@@ -222,7 +267,52 @@ col5 char(20),
 col6 varchar(20)
 ) SERVER ogawayama;
 
-CREATE FOREIGN TABLE test2 (
+CREATE FOREIGN TABLE test2_1 (
+col1  int,
+col2  bigint,
+col3  real,
+col4  double precision,
+col5 char(20),
+col6 varchar(20)
+) SERVER ogawayama;
+
+CREATE FOREIGN TABLE test2_2 (
+col1  int,
+col2  bigint,
+col3  real,
+col4  double precision,
+col5 char(20),
+col6 varchar(20)
+) SERVER ogawayama;
+
+CREATE FOREIGN TABLE test2_3 (
+col1  int,
+col2  bigint,
+col3  real,
+col4  double precision,
+col5 char(20),
+col6 varchar(20)
+) SERVER ogawayama;
+
+CREATE FOREIGN TABLE test2_4 (
+col1  int,
+col2  bigint,
+col3  real,
+col4  double precision,
+col5 char(20),
+col6 varchar(20)
+) SERVER ogawayama;
+
+CREATE FOREIGN TABLE test2_5 (
+col1  int,
+col2  bigint,
+col3  real,
+col4  double precision,
+col5 char(20),
+col6 varchar(20)
+) SERVER ogawayama;
+
+CREATE FOREIGN TABLE test2_6 (
 col1  int,
 col2  bigint,
 col3  real,
@@ -416,20 +506,95 @@ SELECT * from test1;
 INSERT INTO test1 (col6) VALUES ('ABCDEFABCDEF');
 SELECT * from test1;
 
---test2
-SELECT * from test2;
+--test2_1
+SELECT * from test2_1;
 --ok
-INSERT INTO test2 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
-SELECT * from test2;
+INSERT INTO test2_1 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+SELECT * from test2_1;
 --PKEY col1 null error
-INSERT INTO test2 (col2,col3,col4,col5,col6) VALUES (1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
-SELECT * from test2;
+INSERT INTO test2_1 (col2,col3,col4,col5,col6) VALUES (1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+SELECT * from test2_1;
 --PKEY col1 not unique error
-INSERT INTO test2 (col1) VALUES (1);
-SELECT * from test2;
+INSERT INTO test2_1 (col1) VALUES (1);
+SELECT * from test2_1;
 --ok
-INSERT INTO test2 (col1) VALUES (2);
-SELECT * from test2;
+INSERT INTO test2_1 (col1) VALUES (2);
+SELECT * from test2_1;
+
+--test2_2
+SELECT * from test2_2;
+--ok
+INSERT INTO test2_2 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+SELECT * from test2_2;
+--PKEY col2 null error
+INSERT INTO test2_2 (col1,col3,col4,col5,col6) VALUES (1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+SELECT * from test2_2;
+--PKEY col2 not unique error
+INSERT INTO test2_2 (col1, col2) VALUES (1, 1000);
+SELECT * from test2_2;
+--ok
+INSERT INTO test2_2 (col1, col2) VALUES (1, 2);
+SELECT * from test2_2;
+
+--test2_3
+SELECT * from test2_3;
+--ok
+INSERT INTO test2_3 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+SELECT * from test2_3;
+--PKEY col3 null error
+INSERT INTO test2_3 (col1,col2,col4,col5,col6) VALUES (1,1000,-2.27,'ABC','ABCDEFABCDEF');
+SELECT * from test2_3;
+--PKEY col3 not unique error
+INSERT INTO test2_3 (col2, col3) VALUES (1000,3.24);
+SELECT * from test2_3;
+--ok
+INSERT INTO test2_3 (col2, col3) VALUES (1000,3.25);
+SELECT * from test2_3;
+
+--test2_4
+SELECT * from test2_4;
+--ok
+INSERT INTO test2_4 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+SELECT * from test2_4;
+--PKEY col4 null error
+INSERT INTO test2_4 (col1,col2,col3,col5,col6) VALUES (1,1000,3.24,'ABC','ABCDEFABCDEF');
+SELECT * from test2_4;
+--PKEY col4 not unique error
+INSERT INTO test2_4 (col4,col6) VALUES (-2.27,'ABCDEFABCDEF');
+SELECT * from test2_4;
+--ok
+INSERT INTO test2_4 (col4,col6) VALUES (-2.28,'ABCDEFABCDEF');
+SELECT * from test2_4;
+
+--test2_5
+SELECT * from test2_5;
+--ok
+INSERT INTO test2_5 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+SELECT * from test2_5;
+--PKEY col5 null error
+INSERT INTO test2_5 (col1,col2,col3,col4,col6) VALUES (1,1000,3.24,-2.27,'ABCDEFABCDEF');
+SELECT * from test2_5;
+--PKEY col5 not unique error
+INSERT INTO test2_5 (col2, col5, col6) VALUES (1000,'ABC','ABCDEFABCDEF');
+SELECT * from test2_5;
+--ok
+INSERT INTO test2_5 (col2, col5, col6) VALUES (1000,'ABD','ABCDEFABCDEF');
+SELECT * from test2_5;
+
+--test2_6
+SELECT * from test2_6;
+--ok
+INSERT INTO test2_6 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+SELECT * from test2_6;
+--PKEY col6 null error
+INSERT INTO test2_6 (col1,col2,col3,col4,col5) VALUES (1,1000,3.24,-2.27,'ABC');
+SELECT * from test2_6;
+--PKEY col6 not unique error
+INSERT INTO test2_6 (col1, col4, col6) VALUES (1,-2.27,'ABCDEFABCDEF');
+SELECT * from test2_6;
+--ok
+INSERT INTO test2_6 (col1, col4, col6) VALUES (1,-2.27,'ABCDEFABCDEFG');
+SELECT * from test2_6;
 
 --test3 all error
 INSERT INTO test3 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
