@@ -10,7 +10,15 @@ OBJS = common/init.o common/stub_manager.o \
 EXTENSION = ogawayama_fdw
 DATA = ogawayama_fdw--0.1.sql
 
-REGRESS = test_create_table otable_of_constr otable_of_constr2 otable_of_constr3 ch-benchmark-ddl create_table_syntax_type update_delete insert_select
+# REGRESS_BASIC: variable used in frontend
+REGRESS_BASIC = test_create_table otable_of_constr ch-benchmark-ddl create_table_syntax_type update_delete insert_select
+ifdef REGRESS_EXTRA
+	# REGRESS: variable defined in PostgreSQL
+	REGRESS = $(REGRESS_BASIC) otable_of_constr2
+else
+	# REGRESS: variable defined in PostgreSQL
+	REGRESS = $(REGRESS_BASIC)
+endif
 
 PGFILEDESC = "ogawayama_fdw - foregin data wrapper for ogawayama-server"
 
@@ -33,8 +41,13 @@ else
         include $(top_srcdir)/contrib/contrib-global.mk
 endif
 
+BASIC_TEST_NAME = test.sh
+EXTRA_TEST_NAME = test_extra.sh
+
 tests:
-	bash test.sh
-        
-tests_extra:
-	bash test_extra.sh | tee regression_extra.out
+ifdef REGRESS_EXTRA
+	bash $(BASIC_TEST_NAME)
+	bash $(EXTRA_TEST_NAME) | tee regression_extra.out
+else
+	bash $(BASIC_TEST_NAME)
+endif
