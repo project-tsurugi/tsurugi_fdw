@@ -5,7 +5,7 @@
 ### 実行方法
 #### 前提条件
 * 次のREADME「How to build frontend」「How to set up for frontend」を実施済みであること。
-	* https://github.com/project-tsurugi/frontend/tree/feature/create_table_v2#frontend-for-ogawayama-postgresql-add-on
+	* [frontend README.md](../../README.md)
 * テストを実施したPostgreSQLのバージョン
 	* 11.1
 	* 12.3
@@ -94,6 +94,9 @@
 * DML文の構文自体は簡単な内容。ただし、CREATE TABLEに関係する要素(カラム数やデータ型など)については考慮した構文にする。
 	* 可能であれば、v1をベースに組み合わせや網羅性を向上させる。
 
+## 実行手順
+[frontend README.md](../../README.md#regression-tests)
+
 ## テスト全体の流れ
 ### CREATE TABLEに関するテスト
 1. シナリオテスト
@@ -173,6 +176,7 @@
 				* NOT NULL制約のカラムに、NULLをINSERT
 	* SQL
 		* [otable_of_constr.sql](../../sql/otable_of_constr.sql)
+		* [otable_of_constr2.sql](../../sql/otable_of_constr2.sql)
 
 1. 構文テスト
 	* テスト確認観点
@@ -369,4 +373,6 @@
 			* ~/.local/tsurugi/metadata/datatypes.jsonのみ所有権をroot:rootに変更
 			* ~/.local/tsurugi/metadata/tables.jsonのみ所有権をroot:rootに変更
 			* ~/.local/tsurugi/metadata/oidのみ所有権をroot:rootに変更
+* テストツール
+	* [test_extra.sh](../../test_extra.sh)
 
