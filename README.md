@@ -156,20 +156,28 @@
 1. Set up frontend
 	* [How to set up for frontend](#How-to-set-up-for-frontend)
 
-1. Execute the following command: 
+1. Execute the following command
 
-```
-make tests
-make tests_extra
-```
+	in case when you run only basic tests
+	
+	```sh
+	make tests
+	```
+	
+	Or in case when run extra tests with basic tests,  
+	execute the following command:
+	
+	```
+	make tests REGRESS_EXTRA=1
+	```
 
-If regression tests failed, drop database "test":
+1. If regression tests failed, drop database "test":
 
-```
-psql postgres
-
-postgres=# DROP DATABASE test;
-``` 
+	```
+	psql postgres
+	
+	postgres=# DROP DATABASE test;
+	``` 
 
 ## Define table
 
