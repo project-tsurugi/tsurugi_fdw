@@ -10,7 +10,7 @@ OBJS = common/init.o common/stub_manager.o \
 EXTENSION = ogawayama_fdw
 DATA = ogawayama_fdw--0.1.sql
 
-REGRESS = test_create_table otable_of_constr otable_of_constr2 ch-benchmark-ddl create_table_syntax_type update_delete insert_select
+REGRESS = test_create_table otable_of_constr otable_of_constr2 otable_of_constr3 ch-benchmark-ddl create_table_syntax_type update_delete insert_select
 
 PGFILEDESC = "ogawayama_fdw - foregin data wrapper for ogawayama-server"
 
