@@ -243,7 +243,7 @@ col3  real NOT NULL,
 col4  double precision NOT NULL,
 col5 char(20) NOT NULL,
 col6 varchar(20) NOT NULL PRIMARY KEY,
-PRIMARY KEY(col4,col8,col9,col5)
+PRIMARY KEY(col1,col2,col5,col6)
 ) tablespace tsurugi;
 
 --error
@@ -254,7 +254,7 @@ col3  real NOT NULL,
 col4  double precision NOT NULL,
 col5 char(20) NOT NULL,
 col6 varchar(20) PRIMARY KEY NOT NULL,
-PRIMARY KEY(col4,col8,col9,col5)
+PRIMARY KEY(col1,col2,col5,col6)
 ) tablespace tsurugi;
 
 --error
