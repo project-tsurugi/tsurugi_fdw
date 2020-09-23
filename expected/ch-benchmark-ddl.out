@@ -378,24 +378,52 @@ SELECT * from region;
 (0 rows)
 
 INSERT INTO order_line VALUES (974,1,1,1,49876,'2020-09-01 06:19:55',0.00,5,2.09,'ige');
+INSERT INTO order_line VALUES (974,1,1,1,49876,'2020-09-01 06:19:55',0.00,5,2.09,'ige');
+ERROR:  transaction::execute_statement() failed. (9)
 INSERT INTO new_order VALUES (2920,1,1);
 INSERT INTO new_order VALUES (2839,1,1);
+INSERT INTO new_order VALUES (2839,1,1);
+ERROR:  transaction::execute_statement() failed. (9)
 INSERT INTO stock VALUES (1,1,73,0,0,1,'v7HGGr','fk5m8','ItiMb?','o@Kqn','D8CTTn','Djuyt6','25s0by','F5is3TawH','jYjPHA','Aidr','sB09');
+INSERT INTO stock VALUES (1,1,73,0,0,1,'v7HGGr','fk5m8','ItiMb?','o@Kqn','D8CTTn','Djuyt6','25s0by','F5is3TawH','jYjPHA','Aidr','sB09');
+ERROR:  transaction::execute_statement() failed. (9)
 INSERT INTO orders VALUES (974,1,1,1,8,7,1,'2020-09-01 06:19:55');
+INSERT INTO orders VALUES (974,1,1,1,8,7,1,'2020-09-01 06:19:55');
+ERROR:  transaction::execute_statement() failed. (9)
 INSERT INTO orders_secondary VALUES (893,1,1,4);
+INSERT INTO orders_secondary VALUES (893,1,1,4);
+ERROR:  transaction::execute_statement() failed. (9)
 INSERT INTO history VALUES (1,1,1,1,1,'2020-09-01 06:19:55',10.00,'?qO6YMvDuCVyQQ');
+INSERT INTO history VALUES (1,1,1,1,1,'2020-09-01 06:19:55',10.00,'?qO6YMvDuCVyQQ');
+ERROR:  transaction::execute_statement() failed. (9)
 INSERT INTO customer VALUES (1,1,1,882711111,'OE','YGw89hId','BARBARBAR',50000.00,0.0135,-10.00,1,53,'kU1gw6cmC?b0','0Evto','WE9wusQn8MlIfyrWwIs','5Y','VlQIzx7Gl','0120-11111-12222','2020-09-01 06:19:55','GC','@GvTnhlqcYlW');
+INSERT INTO customer VALUES (1,1,1,882711111,'OE','YGw89hId','BARBARBAR',50000.00,0.0135,-10.00,1,53,'kU1gw6cmC?b0','0Evto','WE9wusQn8MlIfyrWwIs','5Y','VlQIzx7Gl','0120-11111-12222','2020-09-01 06:19:55','GC','@GvTnhlqcYlW');
+ERROR:  transaction::execute_statement() failed. (9)
 INSERT INTO customer_secondary VALUES (4,1,'bZK8UUzZk6OJQwbi','BARBARPRI',829611111);
+INSERT INTO customer_secondary VALUES (4,1,'bZK8UUzZk6OJQwbi','BARBARPRI',829611111);
+ERROR:  transaction::execute_statement() failed. (9)
 INSERT INTO district VALUES (1,1,0.1224,30000.00,3001,'7KxYQrnz','5fg6lud','IHKgOEqlYdZ','2Jwyu80wQLC','Tn','HeUiU8zV2');
+INSERT INTO district VALUES (1,1,0.1224,30000.00,3001,'7KxYQrnz','5fg6lud','IHKgOEqlYdZ','2Jwyu80wQLC','Tn','HeUiU8zV2');
+ERROR:  transaction::execute_statement() failed. (9)
 INSERT INTO item VALUES (1,'7KxYQrnz',0.1224,'5fg6lud3tkcnGw',185311111);
+INSERT INTO item VALUES (1,'7KxYQrnz',0.1224,'5fg6lud3tkcnGw',185311111);
+ERROR:  transaction::execute_statement() failed. (9)
 INSERT INTO warehouse VALUES (1,0.078,300000.00,'HO73DCcj6s','67oATAPEmE5','mM48NK@U7TQTK@Z@ma','sitmvvuwAzB','g5','405911111');
+INSERT INTO warehouse VALUES (1,0.078,300000.00,'HO73DCcj6s','67oATAPEmE5','mM48NK@U7TQTK@Z@ma','sitmvvuwAzB','g5','405911111');
+ERROR:  transaction::execute_statement() failed. (9)
 INSERT INTO nation VALUES (48,'ALGERIA',0,'the bravely busy theodolites will dazzle blithely according to the never silent');
+INSERT INTO nation VALUES (48,'ALGERIA',0,'the bravely busy theodolites will dazzle blithely according to the never silent');
+ERROR:  transaction::execute_statement() failed. (9)
 INSERT INTO supplier VALUES (0,'Supplier#000000000','UFUqtuYH2qwWrqma@FRKKRsTeZpC5pQiKqk6g',103,'10-520-573-2995',7942.04,' slyly on the sometimes permanent somas -- enticingly daring attai');
+INSERT INTO supplier VALUES (0,'Supplier#000000000','UFUqtuYH2qwWrqma@FRKKRsTeZpC5pQiKqk6g',103,'10-520-573-2995',7942.04,' slyly on the sometimes permanent somas -- enticingly daring attai');
+ERROR:  transaction::execute_statement() failed. (9)
 INSERT INTO region VALUES (0,'AFRICA',' ? closely enticing attainments around the quietly careful dinos may was idly over the slowly st');
 INSERT INTO region VALUES (1,'AMERICA','the pearls : doggedly final platelets alongside of the quickly even pinto beans sh');
 INSERT INTO region VALUES (2,'ASIA','s try to engage quickly past the regul');
 INSERT INTO region VALUES (3,'EUROPE','ss the idly ironic somas ! evenly busy warthogs past the slyly even notornis must print q');
 INSERT INTO region VALUES (4,'MIDDLE EAST','ructions ; quietly sly dolphins besi');
+INSERT INTO region VALUES (4,'MIDDLE EAST','ructions ; quietly sly dolphins besi');
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from order_line;
  ol_w_id | ol_d_id | ol_o_id | ol_number | ol_i_id |      ol_delivery_d       | ol_amount | ol_supply_w_id | ol_quantity |       ol_dist_info       
 ---------+---------+---------+-----------+---------+--------------------------+-----------+----------------+-------------+--------------------------
