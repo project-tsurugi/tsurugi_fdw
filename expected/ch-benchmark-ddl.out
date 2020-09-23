@@ -485,3 +485,1055 @@ SELECT * from region;
            4 | MIDDLE EAST                                             | ructions ; quietly sly dolphins besi                                                                                                                    
 (5 rows)
 
+SELECT * from order_line;
+ ol_w_id | ol_d_id | ol_o_id | ol_number | ol_i_id |      ol_delivery_d       | ol_amount | ol_supply_w_id | ol_quantity |       ol_dist_info       
+---------+---------+---------+-----------+---------+--------------------------+-----------+----------------+-------------+--------------------------
+     974 |       1 |       1 |         1 |   49876 | 2020-09-01 06:19:55      |         0 |              5 |        2.09 | ige                     
+(1 row)
+
+INSERT INTO order_line(ol_d_id,ol_o_id,ol_number,ol_i_id,ol_delivery_d,ol_amount,ol_supply_w_id,ol_quantity,ol_dist_info) VALUES (1,1,1,49876,'2020-09-01 06:19:55',0.00,5,2.09,'ige');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from order_line;
+ ol_w_id | ol_d_id | ol_o_id | ol_number | ol_i_id |      ol_delivery_d       | ol_amount | ol_supply_w_id | ol_quantity |       ol_dist_info       
+---------+---------+---------+-----------+---------+--------------------------+-----------+----------------+-------------+--------------------------
+     974 |       1 |       1 |         1 |   49876 | 2020-09-01 06:19:55      |         0 |              5 |        2.09 | ige                     
+(1 row)
+
+INSERT INTO order_line(ol_w_id,ol_o_id,ol_number,ol_i_id,ol_delivery_d,ol_amount,ol_supply_w_id,ol_quantity,ol_dist_info) VALUES (974,1,1,49876,'2020-09-01 06:19:55',0.00,5,2.09,'ige');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from order_line;
+ ol_w_id | ol_d_id | ol_o_id | ol_number | ol_i_id |      ol_delivery_d       | ol_amount | ol_supply_w_id | ol_quantity |       ol_dist_info       
+---------+---------+---------+-----------+---------+--------------------------+-----------+----------------+-------------+--------------------------
+     974 |       1 |       1 |         1 |   49876 | 2020-09-01 06:19:55      |         0 |              5 |        2.09 | ige                     
+(1 row)
+
+INSERT INTO order_line(ol_w_id,ol_d_id,ol_number,ol_i_id,ol_delivery_d,ol_amount,ol_supply_w_id,ol_quantity,ol_dist_info) VALUES (974,1,1,49876,'2020-09-01 06:19:55',0.00,5,2.09,'ige');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from order_line;
+ ol_w_id | ol_d_id | ol_o_id | ol_number | ol_i_id |      ol_delivery_d       | ol_amount | ol_supply_w_id | ol_quantity |       ol_dist_info       
+---------+---------+---------+-----------+---------+--------------------------+-----------+----------------+-------------+--------------------------
+     974 |       1 |       1 |         1 |   49876 | 2020-09-01 06:19:55      |         0 |              5 |        2.09 | ige                     
+(1 row)
+
+INSERT INTO order_line(ol_w_id,ol_d_id,ol_o_id,ol_i_id,ol_delivery_d,ol_amount,ol_supply_w_id,ol_quantity,ol_dist_info) VALUES (974,1,1,49876,'2020-09-01 06:19:55',0.00,5,2.09,'ige');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from order_line;
+ ol_w_id | ol_d_id | ol_o_id | ol_number | ol_i_id |      ol_delivery_d       | ol_amount | ol_supply_w_id | ol_quantity |       ol_dist_info       
+---------+---------+---------+-----------+---------+--------------------------+-----------+----------------+-------------+--------------------------
+     974 |       1 |       1 |         1 |   49876 | 2020-09-01 06:19:55      |         0 |              5 |        2.09 | ige                     
+(1 row)
+
+INSERT INTO order_line(ol_w_id,ol_d_id,ol_o_id,ol_number,ol_delivery_d,ol_amount,ol_supply_w_id,ol_quantity,ol_dist_info) VALUES (974,1,1,1,'2020-09-01 06:19:55',0.00,5,2.09,'ige');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from order_line;
+ ol_w_id | ol_d_id | ol_o_id | ol_number | ol_i_id |      ol_delivery_d       | ol_amount | ol_supply_w_id | ol_quantity |       ol_dist_info       
+---------+---------+---------+-----------+---------+--------------------------+-----------+----------------+-------------+--------------------------
+     974 |       1 |       1 |         1 |   49876 | 2020-09-01 06:19:55      |         0 |              5 |        2.09 | ige                     
+(1 row)
+
+INSERT INTO order_line(ol_w_id,ol_d_id,ol_o_id,ol_number,ol_i_id,ol_amount,ol_supply_w_id,ol_quantity,ol_dist_info) VALUES (974,1,1,1,49876,0.00,5,2.09,'ige');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from order_line;
+ ol_w_id | ol_d_id | ol_o_id | ol_number | ol_i_id |      ol_delivery_d       | ol_amount | ol_supply_w_id | ol_quantity |       ol_dist_info       
+---------+---------+---------+-----------+---------+--------------------------+-----------+----------------+-------------+--------------------------
+     974 |       1 |       1 |         1 |   49876 | 2020-09-01 06:19:55      |         0 |              5 |        2.09 | ige                     
+(1 row)
+
+INSERT INTO order_line(ol_w_id,ol_d_id,ol_o_id,ol_number,ol_i_id,ol_delivery_d,ol_supply_w_id,ol_quantity,ol_dist_info) VALUES (974,1,1,1,49876,'2020-09-01 06:19:55',5,2.09,'ige');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from order_line;
+ ol_w_id | ol_d_id | ol_o_id | ol_number | ol_i_id |      ol_delivery_d       | ol_amount | ol_supply_w_id | ol_quantity |       ol_dist_info       
+---------+---------+---------+-----------+---------+--------------------------+-----------+----------------+-------------+--------------------------
+     974 |       1 |       1 |         1 |   49876 | 2020-09-01 06:19:55      |         0 |              5 |        2.09 | ige                     
+(1 row)
+
+INSERT INTO order_line(ol_w_id,ol_d_id,ol_o_id,ol_number,ol_i_id,ol_delivery_d,ol_amount,ol_quantity,ol_dist_info) VALUES (974,1,1,1,49876,'2020-09-01 06:19:55',0.00,2.09,'ige');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from order_line;
+ ol_w_id | ol_d_id | ol_o_id | ol_number | ol_i_id |      ol_delivery_d       | ol_amount | ol_supply_w_id | ol_quantity |       ol_dist_info       
+---------+---------+---------+-----------+---------+--------------------------+-----------+----------------+-------------+--------------------------
+     974 |       1 |       1 |         1 |   49876 | 2020-09-01 06:19:55      |         0 |              5 |        2.09 | ige                     
+(1 row)
+
+INSERT INTO order_line(ol_w_id,ol_d_id,ol_o_id,ol_number,ol_i_id,ol_delivery_d,ol_amount,ol_supply_w_id,ol_dist_info) VALUES (974,1,1,1,49876,'2020-09-01 06:19:55',0.00,5,'ige');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from order_line;
+ ol_w_id | ol_d_id | ol_o_id | ol_number | ol_i_id |      ol_delivery_d       | ol_amount | ol_supply_w_id | ol_quantity |       ol_dist_info       
+---------+---------+---------+-----------+---------+--------------------------+-----------+----------------+-------------+--------------------------
+     974 |       1 |       1 |         1 |   49876 | 2020-09-01 06:19:55      |         0 |              5 |        2.09 | ige                     
+(1 row)
+
+INSERT INTO order_line(ol_w_id,ol_d_id,ol_o_id,ol_number,ol_i_id,ol_delivery_d,ol_amount,ol_supply_w_id,ol_quantity) VALUES (974,1,1,1,49876,'2020-09-01 06:19:55',0.00,5,2.09);
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from order_line;
+ ol_w_id | ol_d_id | ol_o_id | ol_number | ol_i_id |      ol_delivery_d       | ol_amount | ol_supply_w_id | ol_quantity |       ol_dist_info       
+---------+---------+---------+-----------+---------+--------------------------+-----------+----------------+-------------+--------------------------
+     974 |       1 |       1 |         1 |   49876 | 2020-09-01 06:19:55      |         0 |              5 |        2.09 | ige                     
+(1 row)
+
+SELECT * from new_order;
+ no_w_id | no_d_id | no_o_id 
+---------+---------+---------
+    2839 |       1 |       1
+    2920 |       1 |       1
+(2 rows)
+
+INSERT INTO new_order(no_d_id,no_o_id) VALUES (1,1);
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from new_order;
+ no_w_id | no_d_id | no_o_id 
+---------+---------+---------
+    2839 |       1 |       1
+    2920 |       1 |       1
+(2 rows)
+
+INSERT INTO new_order(no_w_id,no_o_id) VALUES (2920,1);
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from new_order;
+ no_w_id | no_d_id | no_o_id 
+---------+---------+---------
+    2839 |       1 |       1
+    2920 |       1 |       1
+(2 rows)
+
+INSERT INTO new_order(no_w_id,no_d_id) VALUES (2920,1);
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from new_order;
+ no_w_id | no_d_id | no_o_id 
+---------+---------+---------
+    2839 |       1 |       1
+    2920 |       1 |       1
+(2 rows)
+
+SELECT * from stock;
+ s_w_id | s_i_id | s_quantity | s_ytd | s_order_cnt | s_remote_cnt | s_data |        s_dist_01         |        s_dist_02         |        s_dist_03         |        s_dist_04         |        s_dist_05         |        s_dist_06         |        s_dist_07         |        s_dist_08         |        s_dist_09         |        s_dist_10         
+--------+--------+------------+-------+-------------+--------------+--------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------
+      1 |      1 |         73 |     0 |           0 |            1 | v7HGGr | fk5m8                    | ItiMb?                   | o@Kqn                    | D8CTTn                   | Djuyt6                   | 25s0by                   | F5is3TawH                | jYjPHA                   | Aidr                     | sB09                    
+(1 row)
+
+INSERT INTO stock(s_i_id,s_quantity,s_ytd,s_order_cnt,s_remote_cnt,s_data,s_dist_01,s_dist_02,s_dist_03,s_dist_04,s_dist_05,s_dist_06,s_dist_07,s_dist_08,s_dist_09,s_dist_10) VALUES (1,73,0,0,1,'v7HGGr','fk5m8','ItiMb?','o@Kqn','D8CTTn','Djuyt6','25s0by','F5is3TawH','jYjPHA','Aidr','sB09');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from stock;
+ s_w_id | s_i_id | s_quantity | s_ytd | s_order_cnt | s_remote_cnt | s_data |        s_dist_01         |        s_dist_02         |        s_dist_03         |        s_dist_04         |        s_dist_05         |        s_dist_06         |        s_dist_07         |        s_dist_08         |        s_dist_09         |        s_dist_10         
+--------+--------+------------+-------+-------------+--------------+--------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------
+      1 |      1 |         73 |     0 |           0 |            1 | v7HGGr | fk5m8                    | ItiMb?                   | o@Kqn                    | D8CTTn                   | Djuyt6                   | 25s0by                   | F5is3TawH                | jYjPHA                   | Aidr                     | sB09                    
+(1 row)
+
+INSERT INTO stock(s_w_id,s_quantity,s_ytd,s_order_cnt,s_remote_cnt,s_data,s_dist_01,s_dist_02,s_dist_03,s_dist_04,s_dist_05,s_dist_06,s_dist_07,s_dist_08,s_dist_09,s_dist_10) VALUES (1,73,0,0,1,'v7HGGr','fk5m8','ItiMb?','o@Kqn','D8CTTn','Djuyt6','25s0by','F5is3TawH','jYjPHA','Aidr','sB09');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from stock;
+ s_w_id | s_i_id | s_quantity | s_ytd | s_order_cnt | s_remote_cnt | s_data |        s_dist_01         |        s_dist_02         |        s_dist_03         |        s_dist_04         |        s_dist_05         |        s_dist_06         |        s_dist_07         |        s_dist_08         |        s_dist_09         |        s_dist_10         
+--------+--------+------------+-------+-------------+--------------+--------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------
+      1 |      1 |         73 |     0 |           0 |            1 | v7HGGr | fk5m8                    | ItiMb?                   | o@Kqn                    | D8CTTn                   | Djuyt6                   | 25s0by                   | F5is3TawH                | jYjPHA                   | Aidr                     | sB09                    
+(1 row)
+
+INSERT INTO stock(s_w_id,s_i_id,s_ytd,s_order_cnt,s_remote_cnt,s_data,s_dist_01,s_dist_02,s_dist_03,s_dist_04,s_dist_05,s_dist_06,s_dist_07,s_dist_08,s_dist_09,s_dist_10) VALUES (1,1,0,0,1,'v7HGGr','fk5m8','ItiMb?','o@Kqn','D8CTTn','Djuyt6','25s0by','F5is3TawH','jYjPHA','Aidr','sB09');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from stock;
+ s_w_id | s_i_id | s_quantity | s_ytd | s_order_cnt | s_remote_cnt | s_data |        s_dist_01         |        s_dist_02         |        s_dist_03         |        s_dist_04         |        s_dist_05         |        s_dist_06         |        s_dist_07         |        s_dist_08         |        s_dist_09         |        s_dist_10         
+--------+--------+------------+-------+-------------+--------------+--------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------
+      1 |      1 |         73 |     0 |           0 |            1 | v7HGGr | fk5m8                    | ItiMb?                   | o@Kqn                    | D8CTTn                   | Djuyt6                   | 25s0by                   | F5is3TawH                | jYjPHA                   | Aidr                     | sB09                    
+(1 row)
+
+INSERT INTO stock(s_w_id,s_i_id,s_quantity,s_order_cnt,s_remote_cnt,s_data,s_dist_01,s_dist_02,s_dist_03,s_dist_04,s_dist_05,s_dist_06,s_dist_07,s_dist_08,s_dist_09,s_dist_10) VALUES (1,1,73,0,1,'v7HGGr','fk5m8','ItiMb?','o@Kqn','D8CTTn','Djuyt6','25s0by','F5is3TawH','jYjPHA','Aidr','sB09');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from stock;
+ s_w_id | s_i_id | s_quantity | s_ytd | s_order_cnt | s_remote_cnt | s_data |        s_dist_01         |        s_dist_02         |        s_dist_03         |        s_dist_04         |        s_dist_05         |        s_dist_06         |        s_dist_07         |        s_dist_08         |        s_dist_09         |        s_dist_10         
+--------+--------+------------+-------+-------------+--------------+--------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------
+      1 |      1 |         73 |     0 |           0 |            1 | v7HGGr | fk5m8                    | ItiMb?                   | o@Kqn                    | D8CTTn                   | Djuyt6                   | 25s0by                   | F5is3TawH                | jYjPHA                   | Aidr                     | sB09                    
+(1 row)
+
+INSERT INTO stock(s_w_id,s_i_id,s_quantity,s_ytd,s_remote_cnt,s_data,s_dist_01,s_dist_02,s_dist_03,s_dist_04,s_dist_05,s_dist_06,s_dist_07,s_dist_08,s_dist_09,s_dist_10) VALUES (1,1,73,0,1,'v7HGGr','fk5m8','ItiMb?','o@Kqn','D8CTTn','Djuyt6','25s0by','F5is3TawH','jYjPHA','Aidr','sB09');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from stock;
+ s_w_id | s_i_id | s_quantity | s_ytd | s_order_cnt | s_remote_cnt | s_data |        s_dist_01         |        s_dist_02         |        s_dist_03         |        s_dist_04         |        s_dist_05         |        s_dist_06         |        s_dist_07         |        s_dist_08         |        s_dist_09         |        s_dist_10         
+--------+--------+------------+-------+-------------+--------------+--------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------
+      1 |      1 |         73 |     0 |           0 |            1 | v7HGGr | fk5m8                    | ItiMb?                   | o@Kqn                    | D8CTTn                   | Djuyt6                   | 25s0by                   | F5is3TawH                | jYjPHA                   | Aidr                     | sB09                    
+(1 row)
+
+INSERT INTO stock(s_w_id,s_i_id,s_quantity,s_ytd,s_order_cnt,s_data,s_dist_01,s_dist_02,s_dist_03,s_dist_04,s_dist_05,s_dist_06,s_dist_07,s_dist_08,s_dist_09,s_dist_10) VALUES (1,1,73,0,0,'v7HGGr','fk5m8','ItiMb?','o@Kqn','D8CTTn','Djuyt6','25s0by','F5is3TawH','jYjPHA','Aidr','sB09');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from stock;
+ s_w_id | s_i_id | s_quantity | s_ytd | s_order_cnt | s_remote_cnt | s_data |        s_dist_01         |        s_dist_02         |        s_dist_03         |        s_dist_04         |        s_dist_05         |        s_dist_06         |        s_dist_07         |        s_dist_08         |        s_dist_09         |        s_dist_10         
+--------+--------+------------+-------+-------------+--------------+--------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------
+      1 |      1 |         73 |     0 |           0 |            1 | v7HGGr | fk5m8                    | ItiMb?                   | o@Kqn                    | D8CTTn                   | Djuyt6                   | 25s0by                   | F5is3TawH                | jYjPHA                   | Aidr                     | sB09                    
+(1 row)
+
+INSERT INTO stock(s_w_id,s_i_id,s_quantity,s_ytd,s_order_cnt,s_remote_cnt,s_dist_01,s_dist_02,s_dist_03,s_dist_04,s_dist_05,s_dist_06,s_dist_07,s_dist_08,s_dist_09,s_dist_10) VALUES (1,1,73,0,0,1,'fk5m8','ItiMb?','o@Kqn','D8CTTn','Djuyt6','25s0by','F5is3TawH','jYjPHA','Aidr','sB09');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from stock;
+ s_w_id | s_i_id | s_quantity | s_ytd | s_order_cnt | s_remote_cnt | s_data |        s_dist_01         |        s_dist_02         |        s_dist_03         |        s_dist_04         |        s_dist_05         |        s_dist_06         |        s_dist_07         |        s_dist_08         |        s_dist_09         |        s_dist_10         
+--------+--------+------------+-------+-------------+--------------+--------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------
+      1 |      1 |         73 |     0 |           0 |            1 | v7HGGr | fk5m8                    | ItiMb?                   | o@Kqn                    | D8CTTn                   | Djuyt6                   | 25s0by                   | F5is3TawH                | jYjPHA                   | Aidr                     | sB09                    
+(1 row)
+
+INSERT INTO stock(s_w_id,s_i_id,s_quantity,s_ytd,s_order_cnt,s_remote_cnt,s_data,s_dist_02,s_dist_03,s_dist_04,s_dist_05,s_dist_06,s_dist_07,s_dist_08,s_dist_09,s_dist_10) VALUES (1,1,73,0,0,1,'v7HGGr','ItiMb?','o@Kqn','D8CTTn','Djuyt6','25s0by','F5is3TawH','jYjPHA','Aidr','sB09');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from stock;
+ s_w_id | s_i_id | s_quantity | s_ytd | s_order_cnt | s_remote_cnt | s_data |        s_dist_01         |        s_dist_02         |        s_dist_03         |        s_dist_04         |        s_dist_05         |        s_dist_06         |        s_dist_07         |        s_dist_08         |        s_dist_09         |        s_dist_10         
+--------+--------+------------+-------+-------------+--------------+--------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------
+      1 |      1 |         73 |     0 |           0 |            1 | v7HGGr | fk5m8                    | ItiMb?                   | o@Kqn                    | D8CTTn                   | Djuyt6                   | 25s0by                   | F5is3TawH                | jYjPHA                   | Aidr                     | sB09                    
+(1 row)
+
+INSERT INTO stock(s_w_id,s_i_id,s_quantity,s_ytd,s_order_cnt,s_remote_cnt,s_data,s_dist_01,s_dist_03,s_dist_04,s_dist_05,s_dist_06,s_dist_07,s_dist_08,s_dist_09,s_dist_10) VALUES (1,1,73,0,0,1,'v7HGGr','fk5m8','o@Kqn','D8CTTn','Djuyt6','25s0by','F5is3TawH','jYjPHA','Aidr','sB09');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from stock;
+ s_w_id | s_i_id | s_quantity | s_ytd | s_order_cnt | s_remote_cnt | s_data |        s_dist_01         |        s_dist_02         |        s_dist_03         |        s_dist_04         |        s_dist_05         |        s_dist_06         |        s_dist_07         |        s_dist_08         |        s_dist_09         |        s_dist_10         
+--------+--------+------------+-------+-------------+--------------+--------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------
+      1 |      1 |         73 |     0 |           0 |            1 | v7HGGr | fk5m8                    | ItiMb?                   | o@Kqn                    | D8CTTn                   | Djuyt6                   | 25s0by                   | F5is3TawH                | jYjPHA                   | Aidr                     | sB09                    
+(1 row)
+
+INSERT INTO stock(s_w_id,s_i_id,s_quantity,s_ytd,s_order_cnt,s_remote_cnt,s_data,s_dist_01,s_dist_02,s_dist_04,s_dist_05,s_dist_06,s_dist_07,s_dist_08,s_dist_09,s_dist_10) VALUES (1,1,73,0,0,1,'v7HGGr','fk5m8','ItiMb?','D8CTTn','Djuyt6','25s0by','F5is3TawH','jYjPHA','Aidr','sB09');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from stock;
+ s_w_id | s_i_id | s_quantity | s_ytd | s_order_cnt | s_remote_cnt | s_data |        s_dist_01         |        s_dist_02         |        s_dist_03         |        s_dist_04         |        s_dist_05         |        s_dist_06         |        s_dist_07         |        s_dist_08         |        s_dist_09         |        s_dist_10         
+--------+--------+------------+-------+-------------+--------------+--------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------
+      1 |      1 |         73 |     0 |           0 |            1 | v7HGGr | fk5m8                    | ItiMb?                   | o@Kqn                    | D8CTTn                   | Djuyt6                   | 25s0by                   | F5is3TawH                | jYjPHA                   | Aidr                     | sB09                    
+(1 row)
+
+INSERT INTO stock(s_w_id,s_i_id,s_quantity,s_ytd,s_order_cnt,s_remote_cnt,s_data,s_dist_01,s_dist_02,s_dist_03,s_dist_05,s_dist_06,s_dist_07,s_dist_08,s_dist_09,s_dist_10) VALUES (1,1,73,0,0,1,'v7HGGr','fk5m8','ItiMb?','o@Kqn','Djuyt6','25s0by','F5is3TawH','jYjPHA','Aidr','sB09');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from stock;
+ s_w_id | s_i_id | s_quantity | s_ytd | s_order_cnt | s_remote_cnt | s_data |        s_dist_01         |        s_dist_02         |        s_dist_03         |        s_dist_04         |        s_dist_05         |        s_dist_06         |        s_dist_07         |        s_dist_08         |        s_dist_09         |        s_dist_10         
+--------+--------+------------+-------+-------------+--------------+--------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------
+      1 |      1 |         73 |     0 |           0 |            1 | v7HGGr | fk5m8                    | ItiMb?                   | o@Kqn                    | D8CTTn                   | Djuyt6                   | 25s0by                   | F5is3TawH                | jYjPHA                   | Aidr                     | sB09                    
+(1 row)
+
+INSERT INTO stock(s_w_id,s_i_id,s_quantity,s_ytd,s_order_cnt,s_remote_cnt,s_data,s_dist_01,s_dist_02,s_dist_03,s_dist_04,s_dist_06,s_dist_07,s_dist_08,s_dist_09,s_dist_10) VALUES (1,1,73,0,0,1,'v7HGGr','fk5m8','ItiMb?','o@Kqn','D8CTTn','25s0by','F5is3TawH','jYjPHA','Aidr','sB09');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from stock;
+ s_w_id | s_i_id | s_quantity | s_ytd | s_order_cnt | s_remote_cnt | s_data |        s_dist_01         |        s_dist_02         |        s_dist_03         |        s_dist_04         |        s_dist_05         |        s_dist_06         |        s_dist_07         |        s_dist_08         |        s_dist_09         |        s_dist_10         
+--------+--------+------------+-------+-------------+--------------+--------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------
+      1 |      1 |         73 |     0 |           0 |            1 | v7HGGr | fk5m8                    | ItiMb?                   | o@Kqn                    | D8CTTn                   | Djuyt6                   | 25s0by                   | F5is3TawH                | jYjPHA                   | Aidr                     | sB09                    
+(1 row)
+
+INSERT INTO stock(s_w_id,s_i_id,s_quantity,s_ytd,s_order_cnt,s_remote_cnt,s_data,s_dist_01,s_dist_02,s_dist_03,s_dist_04,s_dist_05,s_dist_07,s_dist_08,s_dist_09,s_dist_10) VALUES (1,1,73,0,0,1,'v7HGGr','fk5m8','ItiMb?','o@Kqn','D8CTTn','Djuyt6','F5is3TawH','jYjPHA','Aidr','sB09');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from stock;
+ s_w_id | s_i_id | s_quantity | s_ytd | s_order_cnt | s_remote_cnt | s_data |        s_dist_01         |        s_dist_02         |        s_dist_03         |        s_dist_04         |        s_dist_05         |        s_dist_06         |        s_dist_07         |        s_dist_08         |        s_dist_09         |        s_dist_10         
+--------+--------+------------+-------+-------------+--------------+--------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------
+      1 |      1 |         73 |     0 |           0 |            1 | v7HGGr | fk5m8                    | ItiMb?                   | o@Kqn                    | D8CTTn                   | Djuyt6                   | 25s0by                   | F5is3TawH                | jYjPHA                   | Aidr                     | sB09                    
+(1 row)
+
+INSERT INTO stock(s_w_id,s_i_id,s_quantity,s_ytd,s_order_cnt,s_remote_cnt,s_data,s_dist_01,s_dist_02,s_dist_03,s_dist_04,s_dist_05,s_dist_06,s_dist_08,s_dist_09,s_dist_10) VALUES (1,1,73,0,0,1,'v7HGGr','fk5m8','ItiMb?','o@Kqn','D8CTTn','Djuyt6','25s0by','jYjPHA','Aidr','sB09');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from stock;
+ s_w_id | s_i_id | s_quantity | s_ytd | s_order_cnt | s_remote_cnt | s_data |        s_dist_01         |        s_dist_02         |        s_dist_03         |        s_dist_04         |        s_dist_05         |        s_dist_06         |        s_dist_07         |        s_dist_08         |        s_dist_09         |        s_dist_10         
+--------+--------+------------+-------+-------------+--------------+--------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------
+      1 |      1 |         73 |     0 |           0 |            1 | v7HGGr | fk5m8                    | ItiMb?                   | o@Kqn                    | D8CTTn                   | Djuyt6                   | 25s0by                   | F5is3TawH                | jYjPHA                   | Aidr                     | sB09                    
+(1 row)
+
+INSERT INTO stock(s_w_id,s_i_id,s_quantity,s_ytd,s_order_cnt,s_remote_cnt,s_data,s_dist_01,s_dist_02,s_dist_03,s_dist_04,s_dist_05,s_dist_06,s_dist_07,s_dist_09,s_dist_10) VALUES (1,1,73,0,0,1,'v7HGGr','fk5m8','ItiMb?','o@Kqn','D8CTTn','Djuyt6','25s0by','F5is3TawH','Aidr','sB09');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from stock;
+ s_w_id | s_i_id | s_quantity | s_ytd | s_order_cnt | s_remote_cnt | s_data |        s_dist_01         |        s_dist_02         |        s_dist_03         |        s_dist_04         |        s_dist_05         |        s_dist_06         |        s_dist_07         |        s_dist_08         |        s_dist_09         |        s_dist_10         
+--------+--------+------------+-------+-------------+--------------+--------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------
+      1 |      1 |         73 |     0 |           0 |            1 | v7HGGr | fk5m8                    | ItiMb?                   | o@Kqn                    | D8CTTn                   | Djuyt6                   | 25s0by                   | F5is3TawH                | jYjPHA                   | Aidr                     | sB09                    
+(1 row)
+
+INSERT INTO stock(s_w_id,s_i_id,s_quantity,s_ytd,s_order_cnt,s_remote_cnt,s_data,s_dist_01,s_dist_02,s_dist_03,s_dist_04,s_dist_05,s_dist_06,s_dist_07,s_dist_08,s_dist_10) VALUES (1,1,73,0,0,1,'v7HGGr','fk5m8','ItiMb?','o@Kqn','D8CTTn','Djuyt6','25s0by','F5is3TawH','jYjPHA','sB09');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from stock;
+ s_w_id | s_i_id | s_quantity | s_ytd | s_order_cnt | s_remote_cnt | s_data |        s_dist_01         |        s_dist_02         |        s_dist_03         |        s_dist_04         |        s_dist_05         |        s_dist_06         |        s_dist_07         |        s_dist_08         |        s_dist_09         |        s_dist_10         
+--------+--------+------------+-------+-------------+--------------+--------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------
+      1 |      1 |         73 |     0 |           0 |            1 | v7HGGr | fk5m8                    | ItiMb?                   | o@Kqn                    | D8CTTn                   | Djuyt6                   | 25s0by                   | F5is3TawH                | jYjPHA                   | Aidr                     | sB09                    
+(1 row)
+
+INSERT INTO stock(s_w_id,s_i_id,s_quantity,s_ytd,s_order_cnt,s_remote_cnt,s_data,s_dist_01,s_dist_02,s_dist_03,s_dist_04,s_dist_05,s_dist_06,s_dist_07,s_dist_08,s_dist_09) VALUES (1,1,73,0,0,1,'v7HGGr','fk5m8','ItiMb?','o@Kqn','D8CTTn','Djuyt6','25s0by','F5is3TawH','jYjPHA','Aidr');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from stock;
+ s_w_id | s_i_id | s_quantity | s_ytd | s_order_cnt | s_remote_cnt | s_data |        s_dist_01         |        s_dist_02         |        s_dist_03         |        s_dist_04         |        s_dist_05         |        s_dist_06         |        s_dist_07         |        s_dist_08         |        s_dist_09         |        s_dist_10         
+--------+--------+------------+-------+-------------+--------------+--------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------+--------------------------
+      1 |      1 |         73 |     0 |           0 |            1 | v7HGGr | fk5m8                    | ItiMb?                   | o@Kqn                    | D8CTTn                   | Djuyt6                   | 25s0by                   | F5is3TawH                | jYjPHA                   | Aidr                     | sB09                    
+(1 row)
+
+SELECT * from orders;
+ o_w_id | o_d_id | o_id | o_c_id | o_carrier_id | o_ol_cnt | o_all_local |        o_entry_d         
+--------+--------+------+--------+--------------+----------+-------------+--------------------------
+    974 |      1 |    1 |      1 |            8 |        7 |           1 | 2020-09-01 06:19:55     
+(1 row)
+
+INSERT INTO orders(o_d_id,o_id,o_c_id,o_carrier_id,o_ol_cnt,o_all_local,o_entry_d) VALUES (1,1,1,8,7,1,'2020-09-01 06:19:55');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from orders;
+ o_w_id | o_d_id | o_id | o_c_id | o_carrier_id | o_ol_cnt | o_all_local |        o_entry_d         
+--------+--------+------+--------+--------------+----------+-------------+--------------------------
+    974 |      1 |    1 |      1 |            8 |        7 |           1 | 2020-09-01 06:19:55     
+(1 row)
+
+INSERT INTO orders(o_w_id,o_id,o_c_id,o_carrier_id,o_ol_cnt,o_all_local,o_entry_d) VALUES (974,1,1,8,7,1,'2020-09-01 06:19:55');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from orders;
+ o_w_id | o_d_id | o_id | o_c_id | o_carrier_id | o_ol_cnt | o_all_local |        o_entry_d         
+--------+--------+------+--------+--------------+----------+-------------+--------------------------
+    974 |      1 |    1 |      1 |            8 |        7 |           1 | 2020-09-01 06:19:55     
+(1 row)
+
+INSERT INTO orders(o_w_id,o_d_id,o_c_id,o_carrier_id,o_ol_cnt,o_all_local,o_entry_d) VALUES (974,1,1,8,7,1,'2020-09-01 06:19:55');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from orders;
+ o_w_id | o_d_id | o_id | o_c_id | o_carrier_id | o_ol_cnt | o_all_local |        o_entry_d         
+--------+--------+------+--------+--------------+----------+-------------+--------------------------
+    974 |      1 |    1 |      1 |            8 |        7 |           1 | 2020-09-01 06:19:55     
+(1 row)
+
+INSERT INTO orders(o_w_id,o_d_id,o_id,o_carrier_id,o_ol_cnt,o_all_local,o_entry_d) VALUES (974,1,1,8,7,1,'2020-09-01 06:19:55');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from orders;
+ o_w_id | o_d_id | o_id | o_c_id | o_carrier_id | o_ol_cnt | o_all_local |        o_entry_d         
+--------+--------+------+--------+--------------+----------+-------------+--------------------------
+    974 |      1 |    1 |      1 |            8 |        7 |           1 | 2020-09-01 06:19:55     
+(1 row)
+
+INSERT INTO orders(o_w_id,o_d_id,o_id,o_c_id,o_ol_cnt,o_all_local,o_entry_d) VALUES (974,1,1,1,7,1,'2020-09-01 06:19:55');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from orders;
+ o_w_id | o_d_id | o_id | o_c_id | o_carrier_id | o_ol_cnt | o_all_local |        o_entry_d         
+--------+--------+------+--------+--------------+----------+-------------+--------------------------
+    974 |      1 |    1 |      1 |            8 |        7 |           1 | 2020-09-01 06:19:55     
+(1 row)
+
+INSERT INTO orders(o_w_id,o_d_id,o_id,o_c_id,o_carrier_id,o_all_local,o_entry_d) VALUES (974,1,1,1,8,1,'2020-09-01 06:19:55');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from orders;
+ o_w_id | o_d_id | o_id | o_c_id | o_carrier_id | o_ol_cnt | o_all_local |        o_entry_d         
+--------+--------+------+--------+--------------+----------+-------------+--------------------------
+    974 |      1 |    1 |      1 |            8 |        7 |           1 | 2020-09-01 06:19:55     
+(1 row)
+
+INSERT INTO orders(o_w_id,o_d_id,o_id,o_c_id,o_carrier_id,o_ol_cnt,o_entry_d) VALUES (974,1,1,1,8,7,'2020-09-01 06:19:55');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from orders;
+ o_w_id | o_d_id | o_id | o_c_id | o_carrier_id | o_ol_cnt | o_all_local |        o_entry_d         
+--------+--------+------+--------+--------------+----------+-------------+--------------------------
+    974 |      1 |    1 |      1 |            8 |        7 |           1 | 2020-09-01 06:19:55     
+(1 row)
+
+INSERT INTO orders(o_w_id,o_d_id,o_id,o_c_id,o_carrier_id,o_ol_cnt,o_all_local) VALUES (974,1,1,1,8,7,1);
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from orders;
+ o_w_id | o_d_id | o_id | o_c_id | o_carrier_id | o_ol_cnt | o_all_local |        o_entry_d         
+--------+--------+------+--------+--------------+----------+-------------+--------------------------
+    974 |      1 |    1 |      1 |            8 |        7 |           1 | 2020-09-01 06:19:55     
+(1 row)
+
+SELECT * from orders_secondary;
+ o_d_id | o_w_id | o_c_id | o_id 
+--------+--------+--------+------
+    893 |      1 |      1 |    4
+(1 row)
+
+INSERT INTO orders_secondary(o_d_id,o_c_id,o_id) VALUES (1,1,4);
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from orders_secondary;
+ o_d_id | o_w_id | o_c_id | o_id 
+--------+--------+--------+------
+    893 |      1 |      1 |    4
+(1 row)
+
+INSERT INTO orders_secondary(o_w_id,o_c_id,o_id) VALUES (893,1,4);
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from orders_secondary;
+ o_d_id | o_w_id | o_c_id | o_id 
+--------+--------+--------+------
+    893 |      1 |      1 |    4
+(1 row)
+
+INSERT INTO orders_secondary(o_w_id,o_d_id,o_id) VALUES (893,1,4);
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from orders_secondary;
+ o_d_id | o_w_id | o_c_id | o_id 
+--------+--------+--------+------
+    893 |      1 |      1 |    4
+(1 row)
+
+INSERT INTO orders_secondary(o_w_id,o_d_id,o_c_id) VALUES (893,1,1);
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from orders_secondary;
+ o_d_id | o_w_id | o_c_id | o_id 
+--------+--------+--------+------
+    893 |      1 |      1 |    4
+(1 row)
+
+SELECT * from history;
+ h_c_id | h_c_d_id | h_c_w_id | h_d_id | h_w_id |          h_date          | h_amount |     h_data     
+--------+----------+----------+--------+--------+--------------------------+----------+----------------
+      1 |        1 |        1 |      1 |      1 | 2020-09-01 06:19:55      |       10 | ?qO6YMvDuCVyQQ
+(1 row)
+
+INSERT INTO history(h_c_d_id,h_c_w_id,h_d_id,h_w_id,h_date,h_amount,h_data) VALUES ( 1, 1, 1, 1, '2020-09-01 06:19:55', 10.00, '?qO6YMvDuCVyQQ');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from history;
+ h_c_id | h_c_d_id | h_c_w_id | h_d_id | h_w_id |          h_date          | h_amount |     h_data     
+--------+----------+----------+--------+--------+--------------------------+----------+----------------
+      1 |        1 |        1 |      1 |      1 | 2020-09-01 06:19:55      |       10 | ?qO6YMvDuCVyQQ
+(1 row)
+
+INSERT INTO history(h_c_id,h_c_w_id,h_d_id,h_w_id,h_date,h_amount,h_data) VALUES (1, 1, 1, 1, '2020-09-01 06:19:55', 10.00, '?qO6YMvDuCVyQQ');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from history;
+ h_c_id | h_c_d_id | h_c_w_id | h_d_id | h_w_id |          h_date          | h_amount |     h_data     
+--------+----------+----------+--------+--------+--------------------------+----------+----------------
+      1 |        1 |        1 |      1 |      1 | 2020-09-01 06:19:55      |       10 | ?qO6YMvDuCVyQQ
+(1 row)
+
+INSERT INTO history(h_c_id,h_c_d_id,h_d_id,h_w_id,h_date,h_amount,h_data) VALUES (1, 1, 1, 1, '2020-09-01 06:19:55', 10.00, '?qO6YMvDuCVyQQ');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from history;
+ h_c_id | h_c_d_id | h_c_w_id | h_d_id | h_w_id |          h_date          | h_amount |     h_data     
+--------+----------+----------+--------+--------+--------------------------+----------+----------------
+      1 |        1 |        1 |      1 |      1 | 2020-09-01 06:19:55      |       10 | ?qO6YMvDuCVyQQ
+(1 row)
+
+INSERT INTO history(h_c_id,h_c_d_id,h_c_w_id,h_w_id,h_date,h_amount,h_data) VALUES (1, 1, 1, 1, '2020-09-01 06:19:55', 10.00, '?qO6YMvDuCVyQQ');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from history;
+ h_c_id | h_c_d_id | h_c_w_id | h_d_id | h_w_id |          h_date          | h_amount |     h_data     
+--------+----------+----------+--------+--------+--------------------------+----------+----------------
+      1 |        1 |        1 |      1 |      1 | 2020-09-01 06:19:55      |       10 | ?qO6YMvDuCVyQQ
+(1 row)
+
+INSERT INTO history(h_c_id,h_c_d_id,h_c_w_id,h_d_id,h_date,h_amount,h_data) VALUES (1, 1, 1, 1, '2020-09-01 06:19:55', 10.00, '?qO6YMvDuCVyQQ');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from history;
+ h_c_id | h_c_d_id | h_c_w_id | h_d_id | h_w_id |          h_date          | h_amount |     h_data     
+--------+----------+----------+--------+--------+--------------------------+----------+----------------
+      1 |        1 |        1 |      1 |      1 | 2020-09-01 06:19:55      |       10 | ?qO6YMvDuCVyQQ
+(1 row)
+
+INSERT INTO history(h_c_id,h_c_d_id,h_c_w_id,h_d_id,h_w_id,h_amount,h_data) VALUES (1, 1, 1, 1, 1, 10.00, '?qO6YMvDuCVyQQ');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from history;
+ h_c_id | h_c_d_id | h_c_w_id | h_d_id | h_w_id |          h_date          | h_amount |     h_data     
+--------+----------+----------+--------+--------+--------------------------+----------+----------------
+      1 |        1 |        1 |      1 |      1 | 2020-09-01 06:19:55      |       10 | ?qO6YMvDuCVyQQ
+(1 row)
+
+INSERT INTO history(h_c_id,h_c_d_id,h_c_w_id,h_d_id,h_w_id,h_date,h_data) VALUES (1, 1, 1, 1, 1, '2020-09-01 06:19:55', '?qO6YMvDuCVyQQ');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from history;
+ h_c_id | h_c_d_id | h_c_w_id | h_d_id | h_w_id |          h_date          | h_amount |     h_data     
+--------+----------+----------+--------+--------+--------------------------+----------+----------------
+      1 |        1 |        1 |      1 |      1 | 2020-09-01 06:19:55      |       10 | ?qO6YMvDuCVyQQ
+(1 row)
+
+INSERT INTO history(h_c_id,h_c_d_id,h_c_w_id,h_d_id,h_w_id,h_date,h_amount) VALUES (1, 1, 1, 1, 1, '2020-09-01 06:19:55', 10.00);
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from history;
+ h_c_id | h_c_d_id | h_c_w_id | h_d_id | h_w_id |          h_date          | h_amount |     h_data     
+--------+----------+----------+--------+--------+--------------------------+----------+----------------
+      1 |        1 |        1 |      1 |      1 | 2020-09-01 06:19:55      |       10 | ?qO6YMvDuCVyQQ
+(1 row)
+
+SELECT * from customer;
+ c_w_id | c_d_id | c_id | c_discount | c_credit |  c_last  |  c_first  | c_credit_lim | c_balance | c_ytd_payment | c_payment_cnt | c_delivery_cnt |  c_street_1  | c_street_2 |       c_city        | c_state |   c_zip   |     c_phone      |         c_since          | c_middle |    c_data    
+--------+--------+------+------------+----------+----------+-----------+--------------+-----------+---------------+---------------+----------------+--------------+------------+---------------------+---------+-----------+------------------+--------------------------+----------+--------------
+      1 |      1 |    1 |  882711111 | OE       | YGw89hId | BARBARBAR |        50000 |    0.0135 |           -10 |             1 |             53 | kU1gw6cmC?b0 | 0Evto      | WE9wusQn8MlIfyrWwIs | 5Y      | VlQIzx7Gl | 0120-11111-12222 | 2020-09-01 06:19:55      | GC       | @GvTnhlqcYlW
+(1 row)
+
+INSERT INTO customer(c_d_id,c_id,c_discount,c_credit,c_last,c_first,c_credit_lim,c_balance,c_ytd_payment,c_payment_cnt,c_delivery_cnt,c_street_1,c_street_2,c_city,c_state,c_zip,c_phone,c_since,c_middle,c_data) VALUES ( 1, 1, 882711111, 'OE', 'YGw89hId', 'BARBARBAR', 50000.00, 0.0135, -10.00, 1, 53, 'kU1gw6cmC?b0', '0Evto', 'WE9wusQn8MlIfyrWwIs', '5Y', 'VlQIzx7Gl', '0120-11111-12222', '2020-09-01 06:19:55', 'GC', '@GvTnhlqcYlW');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from customer;
+ c_w_id | c_d_id | c_id | c_discount | c_credit |  c_last  |  c_first  | c_credit_lim | c_balance | c_ytd_payment | c_payment_cnt | c_delivery_cnt |  c_street_1  | c_street_2 |       c_city        | c_state |   c_zip   |     c_phone      |         c_since          | c_middle |    c_data    
+--------+--------+------+------------+----------+----------+-----------+--------------+-----------+---------------+---------------+----------------+--------------+------------+---------------------+---------+-----------+------------------+--------------------------+----------+--------------
+      1 |      1 |    1 |  882711111 | OE       | YGw89hId | BARBARBAR |        50000 |    0.0135 |           -10 |             1 |             53 | kU1gw6cmC?b0 | 0Evto      | WE9wusQn8MlIfyrWwIs | 5Y      | VlQIzx7Gl | 0120-11111-12222 | 2020-09-01 06:19:55      | GC       | @GvTnhlqcYlW
+(1 row)
+
+INSERT INTO customer(c_w_id,c_id,c_discount,c_credit,c_last,c_first,c_credit_lim,c_balance,c_ytd_payment,c_payment_cnt,c_delivery_cnt,c_street_1,c_street_2,c_city,c_state,c_zip,c_phone,c_since,c_middle,c_data) VALUES (1, 1, 882711111, 'OE', 'YGw89hId', 'BARBARBAR', 50000.00, 0.0135, -10.00, 1, 53, 'kU1gw6cmC?b0', '0Evto', 'WE9wusQn8MlIfyrWwIs', '5Y', 'VlQIzx7Gl', '0120-11111-12222', '2020-09-01 06:19:55', 'GC', '@GvTnhlqcYlW');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from customer;
+ c_w_id | c_d_id | c_id | c_discount | c_credit |  c_last  |  c_first  | c_credit_lim | c_balance | c_ytd_payment | c_payment_cnt | c_delivery_cnt |  c_street_1  | c_street_2 |       c_city        | c_state |   c_zip   |     c_phone      |         c_since          | c_middle |    c_data    
+--------+--------+------+------------+----------+----------+-----------+--------------+-----------+---------------+---------------+----------------+--------------+------------+---------------------+---------+-----------+------------------+--------------------------+----------+--------------
+      1 |      1 |    1 |  882711111 | OE       | YGw89hId | BARBARBAR |        50000 |    0.0135 |           -10 |             1 |             53 | kU1gw6cmC?b0 | 0Evto      | WE9wusQn8MlIfyrWwIs | 5Y      | VlQIzx7Gl | 0120-11111-12222 | 2020-09-01 06:19:55      | GC       | @GvTnhlqcYlW
+(1 row)
+
+INSERT INTO customer(c_w_id,c_d_id,c_discount,c_credit,c_last,c_first,c_credit_lim,c_balance,c_ytd_payment,c_payment_cnt,c_delivery_cnt,c_street_1,c_street_2,c_city,c_state,c_zip,c_phone,c_since,c_middle,c_data) VALUES (1, 1, 882711111, 'OE', 'YGw89hId', 'BARBARBAR', 50000.00, 0.0135, -10.00, 1, 53, 'kU1gw6cmC?b0', '0Evto', 'WE9wusQn8MlIfyrWwIs', '5Y', 'VlQIzx7Gl', '0120-11111-12222', '2020-09-01 06:19:55', 'GC', '@GvTnhlqcYlW');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from customer;
+ c_w_id | c_d_id | c_id | c_discount | c_credit |  c_last  |  c_first  | c_credit_lim | c_balance | c_ytd_payment | c_payment_cnt | c_delivery_cnt |  c_street_1  | c_street_2 |       c_city        | c_state |   c_zip   |     c_phone      |         c_since          | c_middle |    c_data    
+--------+--------+------+------------+----------+----------+-----------+--------------+-----------+---------------+---------------+----------------+--------------+------------+---------------------+---------+-----------+------------------+--------------------------+----------+--------------
+      1 |      1 |    1 |  882711111 | OE       | YGw89hId | BARBARBAR |        50000 |    0.0135 |           -10 |             1 |             53 | kU1gw6cmC?b0 | 0Evto      | WE9wusQn8MlIfyrWwIs | 5Y      | VlQIzx7Gl | 0120-11111-12222 | 2020-09-01 06:19:55      | GC       | @GvTnhlqcYlW
+(1 row)
+
+INSERT INTO customer(c_w_id,c_d_id,c_id,c_credit,c_last,c_first,c_credit_lim,c_balance,c_ytd_payment,c_payment_cnt,c_delivery_cnt,c_street_1,c_street_2,c_city,c_state,c_zip,c_phone,c_since,c_middle,c_data) VALUES (1, 1, 1, 'OE', 'YGw89hId', 'BARBARBAR', 50000.00, 0.0135, -10.00, 1, 53, 'kU1gw6cmC?b0', '0Evto', 'WE9wusQn8MlIfyrWwIs', '5Y', 'VlQIzx7Gl', '0120-11111-12222', '2020-09-01 06:19:55', 'GC', '@GvTnhlqcYlW');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from customer;
+ c_w_id | c_d_id | c_id | c_discount | c_credit |  c_last  |  c_first  | c_credit_lim | c_balance | c_ytd_payment | c_payment_cnt | c_delivery_cnt |  c_street_1  | c_street_2 |       c_city        | c_state |   c_zip   |     c_phone      |         c_since          | c_middle |    c_data    
+--------+--------+------+------------+----------+----------+-----------+--------------+-----------+---------------+---------------+----------------+--------------+------------+---------------------+---------+-----------+------------------+--------------------------+----------+--------------
+      1 |      1 |    1 |  882711111 | OE       | YGw89hId | BARBARBAR |        50000 |    0.0135 |           -10 |             1 |             53 | kU1gw6cmC?b0 | 0Evto      | WE9wusQn8MlIfyrWwIs | 5Y      | VlQIzx7Gl | 0120-11111-12222 | 2020-09-01 06:19:55      | GC       | @GvTnhlqcYlW
+(1 row)
+
+INSERT INTO customer(c_w_id,c_d_id,c_id,c_discount,c_last,c_first,c_credit_lim,c_balance,c_ytd_payment,c_payment_cnt,c_delivery_cnt,c_street_1,c_street_2,c_city,c_state,c_zip,c_phone,c_since,c_middle,c_data) VALUES (1, 1, 1, 882711111, 'YGw89hId', 'BARBARBAR', 50000.00, 0.0135, -10.00, 1, 53, 'kU1gw6cmC?b0', '0Evto', 'WE9wusQn8MlIfyrWwIs', '5Y', 'VlQIzx7Gl', '0120-11111-12222', '2020-09-01 06:19:55', 'GC', '@GvTnhlqcYlW');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from customer;
+ c_w_id | c_d_id | c_id | c_discount | c_credit |  c_last  |  c_first  | c_credit_lim | c_balance | c_ytd_payment | c_payment_cnt | c_delivery_cnt |  c_street_1  | c_street_2 |       c_city        | c_state |   c_zip   |     c_phone      |         c_since          | c_middle |    c_data    
+--------+--------+------+------------+----------+----------+-----------+--------------+-----------+---------------+---------------+----------------+--------------+------------+---------------------+---------+-----------+------------------+--------------------------+----------+--------------
+      1 |      1 |    1 |  882711111 | OE       | YGw89hId | BARBARBAR |        50000 |    0.0135 |           -10 |             1 |             53 | kU1gw6cmC?b0 | 0Evto      | WE9wusQn8MlIfyrWwIs | 5Y      | VlQIzx7Gl | 0120-11111-12222 | 2020-09-01 06:19:55      | GC       | @GvTnhlqcYlW
+(1 row)
+
+INSERT INTO customer(c_w_id,c_d_id,c_id,c_discount,c_credit,c_first,c_credit_lim,c_balance,c_ytd_payment,c_payment_cnt,c_delivery_cnt,c_street_1,c_street_2,c_city,c_state,c_zip,c_phone,c_since,c_middle,c_data) VALUES (1, 1, 1, 882711111, 'OE', 'BARBARBAR', 50000.00, 0.0135, -10.00, 1, 53, 'kU1gw6cmC?b0', '0Evto', 'WE9wusQn8MlIfyrWwIs', '5Y', 'VlQIzx7Gl', '0120-11111-12222', '2020-09-01 06:19:55', 'GC', '@GvTnhlqcYlW');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from customer;
+ c_w_id | c_d_id | c_id | c_discount | c_credit |  c_last  |  c_first  | c_credit_lim | c_balance | c_ytd_payment | c_payment_cnt | c_delivery_cnt |  c_street_1  | c_street_2 |       c_city        | c_state |   c_zip   |     c_phone      |         c_since          | c_middle |    c_data    
+--------+--------+------+------------+----------+----------+-----------+--------------+-----------+---------------+---------------+----------------+--------------+------------+---------------------+---------+-----------+------------------+--------------------------+----------+--------------
+      1 |      1 |    1 |  882711111 | OE       | YGw89hId | BARBARBAR |        50000 |    0.0135 |           -10 |             1 |             53 | kU1gw6cmC?b0 | 0Evto      | WE9wusQn8MlIfyrWwIs | 5Y      | VlQIzx7Gl | 0120-11111-12222 | 2020-09-01 06:19:55      | GC       | @GvTnhlqcYlW
+(1 row)
+
+INSERT INTO customer(c_w_id,c_d_id,c_id,c_discount,c_credit,c_last,c_credit_lim,c_balance,c_ytd_payment,c_payment_cnt,c_delivery_cnt,c_street_1,c_street_2,c_city,c_state,c_zip,c_phone,c_since,c_middle,c_data) VALUES (1, 1, 1, 882711111, 'OE', 'YGw89hId', 50000.00, 0.0135, -10.00, 1, 53, 'kU1gw6cmC?b0', '0Evto', 'WE9wusQn8MlIfyrWwIs', '5Y', 'VlQIzx7Gl', '0120-11111-12222', '2020-09-01 06:19:55', 'GC', '@GvTnhlqcYlW');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from customer;
+ c_w_id | c_d_id | c_id | c_discount | c_credit |  c_last  |  c_first  | c_credit_lim | c_balance | c_ytd_payment | c_payment_cnt | c_delivery_cnt |  c_street_1  | c_street_2 |       c_city        | c_state |   c_zip   |     c_phone      |         c_since          | c_middle |    c_data    
+--------+--------+------+------------+----------+----------+-----------+--------------+-----------+---------------+---------------+----------------+--------------+------------+---------------------+---------+-----------+------------------+--------------------------+----------+--------------
+      1 |      1 |    1 |  882711111 | OE       | YGw89hId | BARBARBAR |        50000 |    0.0135 |           -10 |             1 |             53 | kU1gw6cmC?b0 | 0Evto      | WE9wusQn8MlIfyrWwIs | 5Y      | VlQIzx7Gl | 0120-11111-12222 | 2020-09-01 06:19:55      | GC       | @GvTnhlqcYlW
+(1 row)
+
+INSERT INTO customer(c_w_id,c_d_id,c_id,c_discount,c_credit,c_last,c_first,c_balance,c_ytd_payment,c_payment_cnt,c_delivery_cnt,c_street_1,c_street_2,c_city,c_state,c_zip,c_phone,c_since,c_middle,c_data) VALUES (1, 1, 1, 882711111, 'OE', 'YGw89hId', 'BARBARBAR', 0.0135, -10.00, 1, 53, 'kU1gw6cmC?b0', '0Evto', 'WE9wusQn8MlIfyrWwIs', '5Y', 'VlQIzx7Gl', '0120-11111-12222', '2020-09-01 06:19:55', 'GC', '@GvTnhlqcYlW');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from customer;
+ c_w_id | c_d_id | c_id | c_discount | c_credit |  c_last  |  c_first  | c_credit_lim | c_balance | c_ytd_payment | c_payment_cnt | c_delivery_cnt |  c_street_1  | c_street_2 |       c_city        | c_state |   c_zip   |     c_phone      |         c_since          | c_middle |    c_data    
+--------+--------+------+------------+----------+----------+-----------+--------------+-----------+---------------+---------------+----------------+--------------+------------+---------------------+---------+-----------+------------------+--------------------------+----------+--------------
+      1 |      1 |    1 |  882711111 | OE       | YGw89hId | BARBARBAR |        50000 |    0.0135 |           -10 |             1 |             53 | kU1gw6cmC?b0 | 0Evto      | WE9wusQn8MlIfyrWwIs | 5Y      | VlQIzx7Gl | 0120-11111-12222 | 2020-09-01 06:19:55      | GC       | @GvTnhlqcYlW
+(1 row)
+
+INSERT INTO customer(c_w_id,c_d_id,c_id,c_discount,c_credit,c_last,c_first,c_credit_lim,c_ytd_payment,c_payment_cnt,c_delivery_cnt,c_street_1,c_street_2,c_city,c_state,c_zip,c_phone,c_since,c_middle,c_data) VALUES (1, 1, 1, 882711111, 'OE', 'YGw89hId', 'BARBARBAR', 50000.00, -10.00, 1, 53, 'kU1gw6cmC?b0', '0Evto', 'WE9wusQn8MlIfyrWwIs', '5Y', 'VlQIzx7Gl', '0120-11111-12222', '2020-09-01 06:19:55', 'GC', '@GvTnhlqcYlW');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from customer;
+ c_w_id | c_d_id | c_id | c_discount | c_credit |  c_last  |  c_first  | c_credit_lim | c_balance | c_ytd_payment | c_payment_cnt | c_delivery_cnt |  c_street_1  | c_street_2 |       c_city        | c_state |   c_zip   |     c_phone      |         c_since          | c_middle |    c_data    
+--------+--------+------+------------+----------+----------+-----------+--------------+-----------+---------------+---------------+----------------+--------------+------------+---------------------+---------+-----------+------------------+--------------------------+----------+--------------
+      1 |      1 |    1 |  882711111 | OE       | YGw89hId | BARBARBAR |        50000 |    0.0135 |           -10 |             1 |             53 | kU1gw6cmC?b0 | 0Evto      | WE9wusQn8MlIfyrWwIs | 5Y      | VlQIzx7Gl | 0120-11111-12222 | 2020-09-01 06:19:55      | GC       | @GvTnhlqcYlW
+(1 row)
+
+INSERT INTO customer(c_w_id,c_d_id,c_id,c_discount,c_credit,c_last,c_first,c_credit_lim,c_balance,c_payment_cnt,c_delivery_cnt,c_street_1,c_street_2,c_city,c_state,c_zip,c_phone,c_since,c_middle,c_data) VALUES (1, 1, 1, 882711111, 'OE', 'YGw89hId', 'BARBARBAR', 50000.00, 0.0135, 1, 53, 'kU1gw6cmC?b0', '0Evto', 'WE9wusQn8MlIfyrWwIs', '5Y', 'VlQIzx7Gl', '0120-11111-12222', '2020-09-01 06:19:55', 'GC', '@GvTnhlqcYlW');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from customer;
+ c_w_id | c_d_id | c_id | c_discount | c_credit |  c_last  |  c_first  | c_credit_lim | c_balance | c_ytd_payment | c_payment_cnt | c_delivery_cnt |  c_street_1  | c_street_2 |       c_city        | c_state |   c_zip   |     c_phone      |         c_since          | c_middle |    c_data    
+--------+--------+------+------------+----------+----------+-----------+--------------+-----------+---------------+---------------+----------------+--------------+------------+---------------------+---------+-----------+------------------+--------------------------+----------+--------------
+      1 |      1 |    1 |  882711111 | OE       | YGw89hId | BARBARBAR |        50000 |    0.0135 |           -10 |             1 |             53 | kU1gw6cmC?b0 | 0Evto      | WE9wusQn8MlIfyrWwIs | 5Y      | VlQIzx7Gl | 0120-11111-12222 | 2020-09-01 06:19:55      | GC       | @GvTnhlqcYlW
+(1 row)
+
+INSERT INTO customer(c_w_id,c_d_id,c_id,c_discount,c_credit,c_last,c_first,c_credit_lim,c_balance,c_ytd_payment,c_delivery_cnt,c_street_1,c_street_2,c_city,c_state,c_zip,c_phone,c_since,c_middle,c_data) VALUES (1, 1, 1, 882711111, 'OE', 'YGw89hId', 'BARBARBAR', 50000.00, 0.0135, -10.00, 53, 'kU1gw6cmC?b0', '0Evto', 'WE9wusQn8MlIfyrWwIs', '5Y', 'VlQIzx7Gl', '0120-11111-12222', '2020-09-01 06:19:55', 'GC', '@GvTnhlqcYlW');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from customer;
+ c_w_id | c_d_id | c_id | c_discount | c_credit |  c_last  |  c_first  | c_credit_lim | c_balance | c_ytd_payment | c_payment_cnt | c_delivery_cnt |  c_street_1  | c_street_2 |       c_city        | c_state |   c_zip   |     c_phone      |         c_since          | c_middle |    c_data    
+--------+--------+------+------------+----------+----------+-----------+--------------+-----------+---------------+---------------+----------------+--------------+------------+---------------------+---------+-----------+------------------+--------------------------+----------+--------------
+      1 |      1 |    1 |  882711111 | OE       | YGw89hId | BARBARBAR |        50000 |    0.0135 |           -10 |             1 |             53 | kU1gw6cmC?b0 | 0Evto      | WE9wusQn8MlIfyrWwIs | 5Y      | VlQIzx7Gl | 0120-11111-12222 | 2020-09-01 06:19:55      | GC       | @GvTnhlqcYlW
+(1 row)
+
+INSERT INTO customer(c_w_id,c_d_id,c_id,c_discount,c_credit,c_last,c_first,c_credit_lim,c_balance,c_ytd_payment,c_payment_cnt,c_street_1,c_street_2,c_city,c_state,c_zip,c_phone,c_since,c_middle,c_data) VALUES (1, 1, 1, 882711111, 'OE', 'YGw89hId', 'BARBARBAR', 50000.00, 0.0135, -10.00, 1, 'kU1gw6cmC?b0', '0Evto', 'WE9wusQn8MlIfyrWwIs', '5Y', 'VlQIzx7Gl', '0120-11111-12222', '2020-09-01 06:19:55', 'GC', '@GvTnhlqcYlW');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from customer;
+ c_w_id | c_d_id | c_id | c_discount | c_credit |  c_last  |  c_first  | c_credit_lim | c_balance | c_ytd_payment | c_payment_cnt | c_delivery_cnt |  c_street_1  | c_street_2 |       c_city        | c_state |   c_zip   |     c_phone      |         c_since          | c_middle |    c_data    
+--------+--------+------+------------+----------+----------+-----------+--------------+-----------+---------------+---------------+----------------+--------------+------------+---------------------+---------+-----------+------------------+--------------------------+----------+--------------
+      1 |      1 |    1 |  882711111 | OE       | YGw89hId | BARBARBAR |        50000 |    0.0135 |           -10 |             1 |             53 | kU1gw6cmC?b0 | 0Evto      | WE9wusQn8MlIfyrWwIs | 5Y      | VlQIzx7Gl | 0120-11111-12222 | 2020-09-01 06:19:55      | GC       | @GvTnhlqcYlW
+(1 row)
+
+INSERT INTO customer(c_w_id,c_d_id,c_id,c_discount,c_credit,c_last,c_first,c_credit_lim,c_balance,c_ytd_payment,c_payment_cnt,c_delivery_cnt,c_street_2,c_city,c_state,c_zip,c_phone,c_since,c_middle,c_data) VALUES (1, 1, 1, 882711111, 'OE', 'YGw89hId', 'BARBARBAR', 50000.00, 0.0135, -10.00, 1, 53, '0Evto', 'WE9wusQn8MlIfyrWwIs', '5Y', 'VlQIzx7Gl', '0120-11111-12222', '2020-09-01 06:19:55', 'GC', '@GvTnhlqcYlW');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from customer;
+ c_w_id | c_d_id | c_id | c_discount | c_credit |  c_last  |  c_first  | c_credit_lim | c_balance | c_ytd_payment | c_payment_cnt | c_delivery_cnt |  c_street_1  | c_street_2 |       c_city        | c_state |   c_zip   |     c_phone      |         c_since          | c_middle |    c_data    
+--------+--------+------+------------+----------+----------+-----------+--------------+-----------+---------------+---------------+----------------+--------------+------------+---------------------+---------+-----------+------------------+--------------------------+----------+--------------
+      1 |      1 |    1 |  882711111 | OE       | YGw89hId | BARBARBAR |        50000 |    0.0135 |           -10 |             1 |             53 | kU1gw6cmC?b0 | 0Evto      | WE9wusQn8MlIfyrWwIs | 5Y      | VlQIzx7Gl | 0120-11111-12222 | 2020-09-01 06:19:55      | GC       | @GvTnhlqcYlW
+(1 row)
+
+INSERT INTO customer(c_w_id,c_d_id,c_id,c_discount,c_credit,c_last,c_first,c_credit_lim,c_balance,c_ytd_payment,c_payment_cnt,c_delivery_cnt,c_street_1,c_city,c_state,c_zip,c_phone,c_since,c_middle,c_data) VALUES (1, 1, 1, 882711111, 'OE', 'YGw89hId', 'BARBARBAR', 50000.00, 0.0135, -10.00, 1, 53, 'kU1gw6cmC?b0', 'WE9wusQn8MlIfyrWwIs', '5Y', 'VlQIzx7Gl', '0120-11111-12222', '2020-09-01 06:19:55', 'GC', '@GvTnhlqcYlW');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from customer;
+ c_w_id | c_d_id | c_id | c_discount | c_credit |  c_last  |  c_first  | c_credit_lim | c_balance | c_ytd_payment | c_payment_cnt | c_delivery_cnt |  c_street_1  | c_street_2 |       c_city        | c_state |   c_zip   |     c_phone      |         c_since          | c_middle |    c_data    
+--------+--------+------+------------+----------+----------+-----------+--------------+-----------+---------------+---------------+----------------+--------------+------------+---------------------+---------+-----------+------------------+--------------------------+----------+--------------
+      1 |      1 |    1 |  882711111 | OE       | YGw89hId | BARBARBAR |        50000 |    0.0135 |           -10 |             1 |             53 | kU1gw6cmC?b0 | 0Evto      | WE9wusQn8MlIfyrWwIs | 5Y      | VlQIzx7Gl | 0120-11111-12222 | 2020-09-01 06:19:55      | GC       | @GvTnhlqcYlW
+(1 row)
+
+INSERT INTO customer(c_w_id,c_d_id,c_id,c_discount,c_credit,c_last,c_first,c_credit_lim,c_balance,c_ytd_payment,c_payment_cnt,c_delivery_cnt,c_street_1,c_street_2,c_state,c_zip,c_phone,c_since,c_middle,c_data) VALUES (1, 1, 1, 882711111, 'OE', 'YGw89hId', 'BARBARBAR', 50000.00, 0.0135, -10.00, 1, 53, 'kU1gw6cmC?b0', '0Evto', '5Y', 'VlQIzx7Gl', '0120-11111-12222', '2020-09-01 06:19:55', 'GC', '@GvTnhlqcYlW');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from customer;
+ c_w_id | c_d_id | c_id | c_discount | c_credit |  c_last  |  c_first  | c_credit_lim | c_balance | c_ytd_payment | c_payment_cnt | c_delivery_cnt |  c_street_1  | c_street_2 |       c_city        | c_state |   c_zip   |     c_phone      |         c_since          | c_middle |    c_data    
+--------+--------+------+------------+----------+----------+-----------+--------------+-----------+---------------+---------------+----------------+--------------+------------+---------------------+---------+-----------+------------------+--------------------------+----------+--------------
+      1 |      1 |    1 |  882711111 | OE       | YGw89hId | BARBARBAR |        50000 |    0.0135 |           -10 |             1 |             53 | kU1gw6cmC?b0 | 0Evto      | WE9wusQn8MlIfyrWwIs | 5Y      | VlQIzx7Gl | 0120-11111-12222 | 2020-09-01 06:19:55      | GC       | @GvTnhlqcYlW
+(1 row)
+
+INSERT INTO customer(c_w_id,c_d_id,c_id,c_discount,c_credit,c_last,c_first,c_credit_lim,c_balance,c_ytd_payment,c_payment_cnt,c_delivery_cnt,c_street_1,c_street_2,c_city,c_zip,c_phone,c_since,c_middle,c_data) VALUES (1, 1, 1, 882711111, 'OE', 'YGw89hId', 'BARBARBAR', 50000.00, 0.0135, -10.00, 1, 53, 'kU1gw6cmC?b0', '0Evto', 'WE9wusQn8MlIfyrWwIs', 'VlQIzx7Gl', '0120-11111-12222', '2020-09-01 06:19:55', 'GC', '@GvTnhlqcYlW');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from customer;
+ c_w_id | c_d_id | c_id | c_discount | c_credit |  c_last  |  c_first  | c_credit_lim | c_balance | c_ytd_payment | c_payment_cnt | c_delivery_cnt |  c_street_1  | c_street_2 |       c_city        | c_state |   c_zip   |     c_phone      |         c_since          | c_middle |    c_data    
+--------+--------+------+------------+----------+----------+-----------+--------------+-----------+---------------+---------------+----------------+--------------+------------+---------------------+---------+-----------+------------------+--------------------------+----------+--------------
+      1 |      1 |    1 |  882711111 | OE       | YGw89hId | BARBARBAR |        50000 |    0.0135 |           -10 |             1 |             53 | kU1gw6cmC?b0 | 0Evto      | WE9wusQn8MlIfyrWwIs | 5Y      | VlQIzx7Gl | 0120-11111-12222 | 2020-09-01 06:19:55      | GC       | @GvTnhlqcYlW
+(1 row)
+
+INSERT INTO customer(c_w_id,c_d_id,c_id,c_discount,c_credit,c_last,c_first,c_credit_lim,c_balance,c_ytd_payment,c_payment_cnt,c_delivery_cnt,c_street_1,c_street_2,c_city,c_state,c_phone,c_since,c_middle,c_data) VALUES (1, 1, 1, 882711111, 'OE', 'YGw89hId', 'BARBARBAR', 50000.00, 0.0135, -10.00, 1, 53, 'kU1gw6cmC?b0', '0Evto', 'WE9wusQn8MlIfyrWwIs', '5Y', '0120-11111-12222', '2020-09-01 06:19:55', 'GC', '@GvTnhlqcYlW');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from customer;
+ c_w_id | c_d_id | c_id | c_discount | c_credit |  c_last  |  c_first  | c_credit_lim | c_balance | c_ytd_payment | c_payment_cnt | c_delivery_cnt |  c_street_1  | c_street_2 |       c_city        | c_state |   c_zip   |     c_phone      |         c_since          | c_middle |    c_data    
+--------+--------+------+------------+----------+----------+-----------+--------------+-----------+---------------+---------------+----------------+--------------+------------+---------------------+---------+-----------+------------------+--------------------------+----------+--------------
+      1 |      1 |    1 |  882711111 | OE       | YGw89hId | BARBARBAR |        50000 |    0.0135 |           -10 |             1 |             53 | kU1gw6cmC?b0 | 0Evto      | WE9wusQn8MlIfyrWwIs | 5Y      | VlQIzx7Gl | 0120-11111-12222 | 2020-09-01 06:19:55      | GC       | @GvTnhlqcYlW
+(1 row)
+
+INSERT INTO customer(c_w_id,c_d_id,c_id,c_discount,c_credit,c_last,c_first,c_credit_lim,c_balance,c_ytd_payment,c_payment_cnt,c_delivery_cnt,c_street_1,c_street_2,c_city,c_state,c_zip,c_since,c_middle,c_data) VALUES (1, 1, 1, 882711111, 'OE', 'YGw89hId', 'BARBARBAR', 50000.00, 0.0135, -10.00, 1, 53, 'kU1gw6cmC?b0', '0Evto', 'WE9wusQn8MlIfyrWwIs', '5Y', 'VlQIzx7Gl', '2020-09-01 06:19:55', 'GC', '@GvTnhlqcYlW');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from customer;
+ c_w_id | c_d_id | c_id | c_discount | c_credit |  c_last  |  c_first  | c_credit_lim | c_balance | c_ytd_payment | c_payment_cnt | c_delivery_cnt |  c_street_1  | c_street_2 |       c_city        | c_state |   c_zip   |     c_phone      |         c_since          | c_middle |    c_data    
+--------+--------+------+------------+----------+----------+-----------+--------------+-----------+---------------+---------------+----------------+--------------+------------+---------------------+---------+-----------+------------------+--------------------------+----------+--------------
+      1 |      1 |    1 |  882711111 | OE       | YGw89hId | BARBARBAR |        50000 |    0.0135 |           -10 |             1 |             53 | kU1gw6cmC?b0 | 0Evto      | WE9wusQn8MlIfyrWwIs | 5Y      | VlQIzx7Gl | 0120-11111-12222 | 2020-09-01 06:19:55      | GC       | @GvTnhlqcYlW
+(1 row)
+
+INSERT INTO customer(c_w_id,c_d_id,c_id,c_discount,c_credit,c_last,c_first,c_credit_lim,c_balance,c_ytd_payment,c_payment_cnt,c_delivery_cnt,c_street_1,c_street_2,c_city,c_state,c_zip,c_phone,c_middle,c_data) VALUES (1, 1, 1, 882711111, 'OE', 'YGw89hId', 'BARBARBAR', 50000.00, 0.0135, -10.00, 1, 53, 'kU1gw6cmC?b0', '0Evto', 'WE9wusQn8MlIfyrWwIs', '5Y', 'VlQIzx7Gl', '0120-11111-12222', 'GC', '@GvTnhlqcYlW');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from customer;
+ c_w_id | c_d_id | c_id | c_discount | c_credit |  c_last  |  c_first  | c_credit_lim | c_balance | c_ytd_payment | c_payment_cnt | c_delivery_cnt |  c_street_1  | c_street_2 |       c_city        | c_state |   c_zip   |     c_phone      |         c_since          | c_middle |    c_data    
+--------+--------+------+------------+----------+----------+-----------+--------------+-----------+---------------+---------------+----------------+--------------+------------+---------------------+---------+-----------+------------------+--------------------------+----------+--------------
+      1 |      1 |    1 |  882711111 | OE       | YGw89hId | BARBARBAR |        50000 |    0.0135 |           -10 |             1 |             53 | kU1gw6cmC?b0 | 0Evto      | WE9wusQn8MlIfyrWwIs | 5Y      | VlQIzx7Gl | 0120-11111-12222 | 2020-09-01 06:19:55      | GC       | @GvTnhlqcYlW
+(1 row)
+
+INSERT INTO customer(c_w_id,c_d_id,c_id,c_discount,c_credit,c_last,c_first,c_credit_lim,c_balance,c_ytd_payment,c_payment_cnt,c_delivery_cnt,c_street_1,c_street_2,c_city,c_state,c_zip,c_phone,c_since,c_data) VALUES (1, 1, 1, 882711111, 'OE', 'YGw89hId', 'BARBARBAR', 50000.00, 0.0135, -10.00, 1, 53, 'kU1gw6cmC?b0', '0Evto', 'WE9wusQn8MlIfyrWwIs', '5Y', 'VlQIzx7Gl', '0120-11111-12222', '2020-09-01 06:19:55', '@GvTnhlqcYlW');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from customer;
+ c_w_id | c_d_id | c_id | c_discount | c_credit |  c_last  |  c_first  | c_credit_lim | c_balance | c_ytd_payment | c_payment_cnt | c_delivery_cnt |  c_street_1  | c_street_2 |       c_city        | c_state |   c_zip   |     c_phone      |         c_since          | c_middle |    c_data    
+--------+--------+------+------------+----------+----------+-----------+--------------+-----------+---------------+---------------+----------------+--------------+------------+---------------------+---------+-----------+------------------+--------------------------+----------+--------------
+      1 |      1 |    1 |  882711111 | OE       | YGw89hId | BARBARBAR |        50000 |    0.0135 |           -10 |             1 |             53 | kU1gw6cmC?b0 | 0Evto      | WE9wusQn8MlIfyrWwIs | 5Y      | VlQIzx7Gl | 0120-11111-12222 | 2020-09-01 06:19:55      | GC       | @GvTnhlqcYlW
+(1 row)
+
+INSERT INTO customer(c_w_id,c_d_id,c_id,c_discount,c_credit,c_last,c_first,c_credit_lim,c_balance,c_ytd_payment,c_payment_cnt,c_delivery_cnt,c_street_1,c_street_2,c_city,c_state,c_zip,c_phone,c_since,c_middle) VALUES (1, 1, 1, 882711111, 'OE', 'YGw89hId', 'BARBARBAR', 50000.00, 0.0135, -10.00, 1, 53, 'kU1gw6cmC?b0', '0Evto', 'WE9wusQn8MlIfyrWwIs', '5Y', 'VlQIzx7Gl', '0120-11111-12222', '2020-09-01 06:19:55', 'GC');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from customer;
+ c_w_id | c_d_id | c_id | c_discount | c_credit |  c_last  |  c_first  | c_credit_lim | c_balance | c_ytd_payment | c_payment_cnt | c_delivery_cnt |  c_street_1  | c_street_2 |       c_city        | c_state |   c_zip   |     c_phone      |         c_since          | c_middle |    c_data    
+--------+--------+------+------------+----------+----------+-----------+--------------+-----------+---------------+---------------+----------------+--------------+------------+---------------------+---------+-----------+------------------+--------------------------+----------+--------------
+      1 |      1 |    1 |  882711111 | OE       | YGw89hId | BARBARBAR |        50000 |    0.0135 |           -10 |             1 |             53 | kU1gw6cmC?b0 | 0Evto      | WE9wusQn8MlIfyrWwIs | 5Y      | VlQIzx7Gl | 0120-11111-12222 | 2020-09-01 06:19:55      | GC       | @GvTnhlqcYlW
+(1 row)
+
+SELECT * from customer_secondary;
+ c_d_id | c_w_id |      c_last      |  c_first  |   c_id    
+--------+--------+------------------+-----------+-----------
+      4 |      1 | bZK8UUzZk6OJQwbi | BARBARPRI | 829611111
+(1 row)
+
+INSERT INTO customer_secondary(c_w_id,c_last,c_first,c_id) VALUES ( 1, 'bZK8UUzZk6OJQwbi','BARBARPRI', 829611111);
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from customer_secondary;
+ c_d_id | c_w_id |      c_last      |  c_first  |   c_id    
+--------+--------+------------------+-----------+-----------
+      4 |      1 | bZK8UUzZk6OJQwbi | BARBARPRI | 829611111
+(1 row)
+
+INSERT INTO customer_secondary(c_d_id,c_last,c_first,c_id) VALUES (4, 'bZK8UUzZk6OJQwbi','BARBARPRI', 829611111);
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from customer_secondary;
+ c_d_id | c_w_id |      c_last      |  c_first  |   c_id    
+--------+--------+------------------+-----------+-----------
+      4 |      1 | bZK8UUzZk6OJQwbi | BARBARPRI | 829611111
+(1 row)
+
+INSERT INTO customer_secondary(c_d_id,c_w_id,c_first,c_id) VALUES (4, 1,'BARBARPRI', 829611111);
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from customer_secondary;
+ c_d_id | c_w_id |      c_last      |  c_first  |   c_id    
+--------+--------+------------------+-----------+-----------
+      4 |      1 | bZK8UUzZk6OJQwbi | BARBARPRI | 829611111
+(1 row)
+
+INSERT INTO customer_secondary(c_d_id,c_w_id,c_last,c_id) VALUES (4, 1, 'bZK8UUzZk6OJQwbi', 829611111);
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from customer_secondary;
+ c_d_id | c_w_id |      c_last      |  c_first  |   c_id    
+--------+--------+------------------+-----------+-----------
+      4 |      1 | bZK8UUzZk6OJQwbi | BARBARPRI | 829611111
+(1 row)
+
+INSERT INTO customer_secondary(c_d_id,c_w_id,c_last,c_first) VALUES (4, 1, 'bZK8UUzZk6OJQwbi','BARBARPRI');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from customer_secondary;
+ c_d_id | c_w_id |      c_last      |  c_first  |   c_id    
+--------+--------+------------------+-----------+-----------
+      4 |      1 | bZK8UUzZk6OJQwbi | BARBARPRI | 829611111
+(1 row)
+
+SELECT * from district;
+ d_w_id | d_id | d_ytd  | d_tax | d_next_o_id |  d_name  | d_street_1 | d_street_2  |   d_city    | d_state |   d_zip   
+--------+------+--------+-------+-------------+----------+------------+-------------+-------------+---------+-----------
+      1 |    1 | 0.1224 | 30000 |        3001 | 7KxYQrnz | 5fg6lud    | IHKgOEqlYdZ | 2Jwyu80wQLC | Tn      | HeUiU8zV2
+(1 row)
+
+INSERT INTO district(d_id,d_ytd,d_tax,d_next_o_id,d_name,d_street_1,d_street_2,d_city,d_state,d_zip) VALUES ( 1, 0.1224, 30000.00, 3001, '7KxYQrnz', '5fg6lud', 'IHKgOEqlYdZ', '2Jwyu80wQLC', 'Tn', 'HeUiU8zV2');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from district;
+ d_w_id | d_id | d_ytd  | d_tax | d_next_o_id |  d_name  | d_street_1 | d_street_2  |   d_city    | d_state |   d_zip   
+--------+------+--------+-------+-------------+----------+------------+-------------+-------------+---------+-----------
+      1 |    1 | 0.1224 | 30000 |        3001 | 7KxYQrnz | 5fg6lud    | IHKgOEqlYdZ | 2Jwyu80wQLC | Tn      | HeUiU8zV2
+(1 row)
+
+INSERT INTO district(d_w_id,d_ytd,d_tax,d_next_o_id,d_name,d_street_1,d_street_2,d_city,d_state,d_zip) VALUES (1, 0.1224, 30000.00, 3001, '7KxYQrnz', '5fg6lud', 'IHKgOEqlYdZ', '2Jwyu80wQLC', 'Tn', 'HeUiU8zV2');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from district;
+ d_w_id | d_id | d_ytd  | d_tax | d_next_o_id |  d_name  | d_street_1 | d_street_2  |   d_city    | d_state |   d_zip   
+--------+------+--------+-------+-------------+----------+------------+-------------+-------------+---------+-----------
+      1 |    1 | 0.1224 | 30000 |        3001 | 7KxYQrnz | 5fg6lud    | IHKgOEqlYdZ | 2Jwyu80wQLC | Tn      | HeUiU8zV2
+(1 row)
+
+INSERT INTO district(d_w_id,d_id,d_tax,d_next_o_id,d_name,d_street_1,d_street_2,d_city,d_state,d_zip) VALUES (1, 1, 30000.00, 3001, '7KxYQrnz', '5fg6lud', 'IHKgOEqlYdZ', '2Jwyu80wQLC', 'Tn', 'HeUiU8zV2');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from district;
+ d_w_id | d_id | d_ytd  | d_tax | d_next_o_id |  d_name  | d_street_1 | d_street_2  |   d_city    | d_state |   d_zip   
+--------+------+--------+-------+-------------+----------+------------+-------------+-------------+---------+-----------
+      1 |    1 | 0.1224 | 30000 |        3001 | 7KxYQrnz | 5fg6lud    | IHKgOEqlYdZ | 2Jwyu80wQLC | Tn      | HeUiU8zV2
+(1 row)
+
+INSERT INTO district(d_w_id,d_id,d_ytd,d_next_o_id,d_name,d_street_1,d_street_2,d_city,d_state,d_zip) VALUES (1, 1, 0.1224, 3001, '7KxYQrnz', '5fg6lud', 'IHKgOEqlYdZ', '2Jwyu80wQLC', 'Tn', 'HeUiU8zV2');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from district;
+ d_w_id | d_id | d_ytd  | d_tax | d_next_o_id |  d_name  | d_street_1 | d_street_2  |   d_city    | d_state |   d_zip   
+--------+------+--------+-------+-------------+----------+------------+-------------+-------------+---------+-----------
+      1 |    1 | 0.1224 | 30000 |        3001 | 7KxYQrnz | 5fg6lud    | IHKgOEqlYdZ | 2Jwyu80wQLC | Tn      | HeUiU8zV2
+(1 row)
+
+INSERT INTO district(d_w_id,d_id,d_ytd,d_tax,d_name,d_street_1,d_street_2,d_city,d_state,d_zip) VALUES (1, 1, 0.1224, 30000.00, '7KxYQrnz', '5fg6lud', 'IHKgOEqlYdZ', '2Jwyu80wQLC', 'Tn', 'HeUiU8zV2');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from district;
+ d_w_id | d_id | d_ytd  | d_tax | d_next_o_id |  d_name  | d_street_1 | d_street_2  |   d_city    | d_state |   d_zip   
+--------+------+--------+-------+-------------+----------+------------+-------------+-------------+---------+-----------
+      1 |    1 | 0.1224 | 30000 |        3001 | 7KxYQrnz | 5fg6lud    | IHKgOEqlYdZ | 2Jwyu80wQLC | Tn      | HeUiU8zV2
+(1 row)
+
+INSERT INTO district(d_w_id,d_id,d_ytd,d_tax,d_next_o_id,d_street_1,d_street_2,d_city,d_state,d_zip) VALUES (1, 1, 0.1224, 30000.00, 3001, '5fg6lud', 'IHKgOEqlYdZ', '2Jwyu80wQLC', 'Tn', 'HeUiU8zV2');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from district;
+ d_w_id | d_id | d_ytd  | d_tax | d_next_o_id |  d_name  | d_street_1 | d_street_2  |   d_city    | d_state |   d_zip   
+--------+------+--------+-------+-------------+----------+------------+-------------+-------------+---------+-----------
+      1 |    1 | 0.1224 | 30000 |        3001 | 7KxYQrnz | 5fg6lud    | IHKgOEqlYdZ | 2Jwyu80wQLC | Tn      | HeUiU8zV2
+(1 row)
+
+INSERT INTO district(d_w_id,d_id,d_ytd,d_tax,d_next_o_id,d_name,d_street_2,d_city,d_state,d_zip) VALUES (1, 1, 0.1224, 30000.00, 3001, '7KxYQrnz', 'IHKgOEqlYdZ', '2Jwyu80wQLC', 'Tn', 'HeUiU8zV2');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from district;
+ d_w_id | d_id | d_ytd  | d_tax | d_next_o_id |  d_name  | d_street_1 | d_street_2  |   d_city    | d_state |   d_zip   
+--------+------+--------+-------+-------------+----------+------------+-------------+-------------+---------+-----------
+      1 |    1 | 0.1224 | 30000 |        3001 | 7KxYQrnz | 5fg6lud    | IHKgOEqlYdZ | 2Jwyu80wQLC | Tn      | HeUiU8zV2
+(1 row)
+
+INSERT INTO district(d_w_id,d_id,d_ytd,d_tax,d_next_o_id,d_name,d_street_1,d_city,d_state,d_zip) VALUES (1, 1, 0.1224, 30000.00, 3001, '7KxYQrnz', '5fg6lud', '2Jwyu80wQLC', 'Tn', 'HeUiU8zV2');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from district;
+ d_w_id | d_id | d_ytd  | d_tax | d_next_o_id |  d_name  | d_street_1 | d_street_2  |   d_city    | d_state |   d_zip   
+--------+------+--------+-------+-------------+----------+------------+-------------+-------------+---------+-----------
+      1 |    1 | 0.1224 | 30000 |        3001 | 7KxYQrnz | 5fg6lud    | IHKgOEqlYdZ | 2Jwyu80wQLC | Tn      | HeUiU8zV2
+(1 row)
+
+INSERT INTO district(d_w_id,d_id,d_ytd,d_tax,d_next_o_id,d_name,d_street_1,d_street_2,d_state,d_zip) VALUES (1, 1, 0.1224, 30000.00, 3001, '7KxYQrnz', '5fg6lud', 'IHKgOEqlYdZ', 'Tn', 'HeUiU8zV2');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from district;
+ d_w_id | d_id | d_ytd  | d_tax | d_next_o_id |  d_name  | d_street_1 | d_street_2  |   d_city    | d_state |   d_zip   
+--------+------+--------+-------+-------------+----------+------------+-------------+-------------+---------+-----------
+      1 |    1 | 0.1224 | 30000 |        3001 | 7KxYQrnz | 5fg6lud    | IHKgOEqlYdZ | 2Jwyu80wQLC | Tn      | HeUiU8zV2
+(1 row)
+
+INSERT INTO district(d_w_id,d_id,d_ytd,d_tax,d_next_o_id,d_name,d_street_1,d_street_2,d_city,d_zip) VALUES (1, 1, 0.1224, 30000.00, 3001, '7KxYQrnz', '5fg6lud', 'IHKgOEqlYdZ', '2Jwyu80wQLC', 'HeUiU8zV2');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from district;
+ d_w_id | d_id | d_ytd  | d_tax | d_next_o_id |  d_name  | d_street_1 | d_street_2  |   d_city    | d_state |   d_zip   
+--------+------+--------+-------+-------------+----------+------------+-------------+-------------+---------+-----------
+      1 |    1 | 0.1224 | 30000 |        3001 | 7KxYQrnz | 5fg6lud    | IHKgOEqlYdZ | 2Jwyu80wQLC | Tn      | HeUiU8zV2
+(1 row)
+
+INSERT INTO district(d_w_id,d_id,d_ytd,d_tax,d_next_o_id,d_name,d_street_1,d_street_2,d_city,d_state) VALUES (1, 1, 0.1224, 30000.00, 3001, '7KxYQrnz', '5fg6lud', 'IHKgOEqlYdZ', '2Jwyu80wQLC', 'Tn');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from district;
+ d_w_id | d_id | d_ytd  | d_tax | d_next_o_id |  d_name  | d_street_1 | d_street_2  |   d_city    | d_state |   d_zip   
+--------+------+--------+-------+-------------+----------+------------+-------------+-------------+---------+-----------
+      1 |    1 | 0.1224 | 30000 |        3001 | 7KxYQrnz | 5fg6lud    | IHKgOEqlYdZ | 2Jwyu80wQLC | Tn      | HeUiU8zV2
+(1 row)
+
+SELECT * from item;
+ i_id |  i_name  | i_price |     i_data     |  i_im_id  
+------+----------+---------+----------------+-----------
+    1 | 7KxYQrnz |  0.1224 | 5fg6lud3tkcnGw | 185311111
+(1 row)
+
+INSERT INTO item(i_name,i_price,i_data,i_im_id) VALUES ( '7KxYQrnz', 0.1224, '5fg6lud3tkcnGw', 185311111);
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from item;
+ i_id |  i_name  | i_price |     i_data     |  i_im_id  
+------+----------+---------+----------------+-----------
+    1 | 7KxYQrnz |  0.1224 | 5fg6lud3tkcnGw | 185311111
+(1 row)
+
+INSERT INTO item(i_id,i_price,i_data,i_im_id) VALUES (1, 0.1224, '5fg6lud3tkcnGw', 185311111);
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from item;
+ i_id |  i_name  | i_price |     i_data     |  i_im_id  
+------+----------+---------+----------------+-----------
+    1 | 7KxYQrnz |  0.1224 | 5fg6lud3tkcnGw | 185311111
+(1 row)
+
+INSERT INTO item(i_id,i_name,i_data,i_im_id) VALUES (1, '7KxYQrnz', '5fg6lud3tkcnGw', 185311111);
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from item;
+ i_id |  i_name  | i_price |     i_data     |  i_im_id  
+------+----------+---------+----------------+-----------
+    1 | 7KxYQrnz |  0.1224 | 5fg6lud3tkcnGw | 185311111
+(1 row)
+
+INSERT INTO item(i_id,i_name,i_price,i_im_id) VALUES (1, '7KxYQrnz', 0.1224, 185311111);
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from item;
+ i_id |  i_name  | i_price |     i_data     |  i_im_id  
+------+----------+---------+----------------+-----------
+    1 | 7KxYQrnz |  0.1224 | 5fg6lud3tkcnGw | 185311111
+(1 row)
+
+INSERT INTO item(i_id,i_name,i_price,i_data) VALUES (1, '7KxYQrnz', 0.1224, '5fg6lud3tkcnGw');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from item;
+ i_id |  i_name  | i_price |     i_data     |  i_im_id  
+------+----------+---------+----------------+-----------
+    1 | 7KxYQrnz |  0.1224 | 5fg6lud3tkcnGw | 185311111
+(1 row)
+
+SELECT * from warehouse;
+ w_id | w_ytd | w_tax  |   w_name   | w_street_1  |     w_street_2     |   w_city    | w_state |   w_zip   
+------+-------+--------+------------+-------------+--------------------+-------------+---------+-----------
+    1 | 0.078 | 300000 | HO73DCcj6s | 67oATAPEmE5 | mM48NK@U7TQTK@Z@ma | sitmvvuwAzB | g5      | 405911111
+(1 row)
+
+INSERT INTO warehouse(w_ytd,w_tax,w_name,w_street_1,w_street_2,w_city,w_state,w_zip) VALUES ( 0.078, 300000.00, 'HO73DCcj6s', '67oATAPEmE5', 'mM48NK@U7TQTK@Z@ma', 'sitmvvuwAzB', 'g5', '405911111');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from warehouse;
+ w_id | w_ytd | w_tax  |   w_name   | w_street_1  |     w_street_2     |   w_city    | w_state |   w_zip   
+------+-------+--------+------------+-------------+--------------------+-------------+---------+-----------
+    1 | 0.078 | 300000 | HO73DCcj6s | 67oATAPEmE5 | mM48NK@U7TQTK@Z@ma | sitmvvuwAzB | g5      | 405911111
+(1 row)
+
+INSERT INTO warehouse(w_id,w_tax,w_name,w_street_1,w_street_2,w_city,w_state,w_zip) VALUES (1, 300000.00, 'HO73DCcj6s', '67oATAPEmE5', 'mM48NK@U7TQTK@Z@ma', 'sitmvvuwAzB', 'g5', '405911111');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from warehouse;
+ w_id | w_ytd | w_tax  |   w_name   | w_street_1  |     w_street_2     |   w_city    | w_state |   w_zip   
+------+-------+--------+------------+-------------+--------------------+-------------+---------+-----------
+    1 | 0.078 | 300000 | HO73DCcj6s | 67oATAPEmE5 | mM48NK@U7TQTK@Z@ma | sitmvvuwAzB | g5      | 405911111
+(1 row)
+
+INSERT INTO warehouse(w_id,w_ytd,w_name,w_street_1,w_street_2,w_city,w_state,w_zip) VALUES (1, 0.078, 'HO73DCcj6s', '67oATAPEmE5', 'mM48NK@U7TQTK@Z@ma', 'sitmvvuwAzB', 'g5', '405911111');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from warehouse;
+ w_id | w_ytd | w_tax  |   w_name   | w_street_1  |     w_street_2     |   w_city    | w_state |   w_zip   
+------+-------+--------+------------+-------------+--------------------+-------------+---------+-----------
+    1 | 0.078 | 300000 | HO73DCcj6s | 67oATAPEmE5 | mM48NK@U7TQTK@Z@ma | sitmvvuwAzB | g5      | 405911111
+(1 row)
+
+INSERT INTO warehouse(w_id,w_ytd,w_tax,w_street_1,w_street_2,w_city,w_state,w_zip) VALUES (1, 0.078, 300000.00, '67oATAPEmE5', 'mM48NK@U7TQTK@Z@ma', 'sitmvvuwAzB', 'g5', '405911111');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from warehouse;
+ w_id | w_ytd | w_tax  |   w_name   | w_street_1  |     w_street_2     |   w_city    | w_state |   w_zip   
+------+-------+--------+------------+-------------+--------------------+-------------+---------+-----------
+    1 | 0.078 | 300000 | HO73DCcj6s | 67oATAPEmE5 | mM48NK@U7TQTK@Z@ma | sitmvvuwAzB | g5      | 405911111
+(1 row)
+
+INSERT INTO warehouse(w_id,w_ytd,w_tax,w_name,w_street_2,w_city,w_state,w_zip) VALUES (1, 0.078, 300000.00, 'HO73DCcj6s', 'mM48NK@U7TQTK@Z@ma', 'sitmvvuwAzB', 'g5', '405911111');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from warehouse;
+ w_id | w_ytd | w_tax  |   w_name   | w_street_1  |     w_street_2     |   w_city    | w_state |   w_zip   
+------+-------+--------+------------+-------------+--------------------+-------------+---------+-----------
+    1 | 0.078 | 300000 | HO73DCcj6s | 67oATAPEmE5 | mM48NK@U7TQTK@Z@ma | sitmvvuwAzB | g5      | 405911111
+(1 row)
+
+INSERT INTO warehouse(w_id,w_ytd,w_tax,w_name,w_street_1,w_city,w_state,w_zip) VALUES (1, 0.078, 300000.00, 'HO73DCcj6s', '67oATAPEmE5', 'sitmvvuwAzB', 'g5', '405911111');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from warehouse;
+ w_id | w_ytd | w_tax  |   w_name   | w_street_1  |     w_street_2     |   w_city    | w_state |   w_zip   
+------+-------+--------+------------+-------------+--------------------+-------------+---------+-----------
+    1 | 0.078 | 300000 | HO73DCcj6s | 67oATAPEmE5 | mM48NK@U7TQTK@Z@ma | sitmvvuwAzB | g5      | 405911111
+(1 row)
+
+INSERT INTO warehouse(w_id,w_ytd,w_tax,w_name,w_street_1,w_street_2,w_state,w_zip) VALUES (1, 0.078, 300000.00, 'HO73DCcj6s', '67oATAPEmE5', 'mM48NK@U7TQTK@Z@ma', 'g5', '405911111');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from warehouse;
+ w_id | w_ytd | w_tax  |   w_name   | w_street_1  |     w_street_2     |   w_city    | w_state |   w_zip   
+------+-------+--------+------------+-------------+--------------------+-------------+---------+-----------
+    1 | 0.078 | 300000 | HO73DCcj6s | 67oATAPEmE5 | mM48NK@U7TQTK@Z@ma | sitmvvuwAzB | g5      | 405911111
+(1 row)
+
+INSERT INTO warehouse(w_id,w_ytd,w_tax,w_name,w_street_1,w_street_2,w_city,w_zip) VALUES (1, 0.078, 300000.00, 'HO73DCcj6s', '67oATAPEmE5', 'mM48NK@U7TQTK@Z@ma', 'sitmvvuwAzB', '405911111');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from warehouse;
+ w_id | w_ytd | w_tax  |   w_name   | w_street_1  |     w_street_2     |   w_city    | w_state |   w_zip   
+------+-------+--------+------------+-------------+--------------------+-------------+---------+-----------
+    1 | 0.078 | 300000 | HO73DCcj6s | 67oATAPEmE5 | mM48NK@U7TQTK@Z@ma | sitmvvuwAzB | g5      | 405911111
+(1 row)
+
+INSERT INTO warehouse(w_id,w_ytd,w_tax,w_name,w_street_1,w_street_2,w_city,w_state) VALUES (1, 0.078, 300000.00, 'HO73DCcj6s', '67oATAPEmE5', 'mM48NK@U7TQTK@Z@ma', 'sitmvvuwAzB', 'g5');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from warehouse;
+ w_id | w_ytd | w_tax  |   w_name   | w_street_1  |     w_street_2     |   w_city    | w_state |   w_zip   
+------+-------+--------+------------+-------------+--------------------+-------------+---------+-----------
+    1 | 0.078 | 300000 | HO73DCcj6s | 67oATAPEmE5 | mM48NK@U7TQTK@Z@ma | sitmvvuwAzB | g5      | 405911111
+(1 row)
+
+SELECT * from nation;
+ n_nationkey |          n_name           | n_regionkey |                                                                        n_comment                                                                         
+-------------+---------------------------+-------------+----------------------------------------------------------------------------------------------------------------------------------------------------------
+          48 | ALGERIA                   |           0 | the bravely busy theodolites will dazzle blithely according to the never silent                                                                         
+(1 row)
+
+INSERT INTO nation(n_name,n_regionkey,n_comment) VALUES ( 'ALGERIA', 0, 'the bravely busy theodolites will dazzle blithely according to the never silent');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from nation;
+ n_nationkey |          n_name           | n_regionkey |                                                                        n_comment                                                                         
+-------------+---------------------------+-------------+----------------------------------------------------------------------------------------------------------------------------------------------------------
+          48 | ALGERIA                   |           0 | the bravely busy theodolites will dazzle blithely according to the never silent                                                                         
+(1 row)
+
+INSERT INTO nation(n_nationkey,n_regionkey,n_comment) VALUES (48, 0, 'the bravely busy theodolites will dazzle blithely according to the never silent');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from nation;
+ n_nationkey |          n_name           | n_regionkey |                                                                        n_comment                                                                         
+-------------+---------------------------+-------------+----------------------------------------------------------------------------------------------------------------------------------------------------------
+          48 | ALGERIA                   |           0 | the bravely busy theodolites will dazzle blithely according to the never silent                                                                         
+(1 row)
+
+INSERT INTO nation(n_nationkey,n_name,n_comment) VALUES (48, 'ALGERIA', 'the bravely busy theodolites will dazzle blithely according to the never silent');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from nation;
+ n_nationkey |          n_name           | n_regionkey |                                                                        n_comment                                                                         
+-------------+---------------------------+-------------+----------------------------------------------------------------------------------------------------------------------------------------------------------
+          48 | ALGERIA                   |           0 | the bravely busy theodolites will dazzle blithely according to the never silent                                                                         
+(1 row)
+
+INSERT INTO nation(n_nationkey,n_name,n_regionkey) VALUES (48, 'ALGERIA', 0);
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from nation;
+ n_nationkey |          n_name           | n_regionkey |                                                                        n_comment                                                                         
+-------------+---------------------------+-------------+----------------------------------------------------------------------------------------------------------------------------------------------------------
+          48 | ALGERIA                   |           0 | the bravely busy theodolites will dazzle blithely according to the never silent                                                                         
+(1 row)
+
+SELECT * from supplier;
+ su_suppkey |          su_name          |                su_address                | su_nationkey |    su_phone     | su_acctbal |                                              su_comment                                               
+------------+---------------------------+------------------------------------------+--------------+-----------------+------------+-------------------------------------------------------------------------------------------------------
+          0 | Supplier#000000000        | UFUqtuYH2qwWrqma@FRKKRsTeZpC5pQiKqk6g    |          103 | 10-520-573-2995 |    7942.04 |  slyly on the sometimes permanent somas -- enticingly daring attai                                   
+(1 row)
+
+INSERT INTO supplier(su_name,su_address,su_nationkey,su_phone,su_acctbal,su_comment) VALUES ( 'Supplier#000000000', 'UFUqtuYH2qwWrqma@FRKKRsTeZpC5pQiKqk6g', 103, '10-520-573-2995', 7942.04, ' slyly on the sometimes permanent somas -- enticingly daring attai');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from supplier;
+ su_suppkey |          su_name          |                su_address                | su_nationkey |    su_phone     | su_acctbal |                                              su_comment                                               
+------------+---------------------------+------------------------------------------+--------------+-----------------+------------+-------------------------------------------------------------------------------------------------------
+          0 | Supplier#000000000        | UFUqtuYH2qwWrqma@FRKKRsTeZpC5pQiKqk6g    |          103 | 10-520-573-2995 |    7942.04 |  slyly on the sometimes permanent somas -- enticingly daring attai                                   
+(1 row)
+
+INSERT INTO supplier(su_suppkey,su_address,su_nationkey,su_phone,su_acctbal,su_comment) VALUES (0, 'UFUqtuYH2qwWrqma@FRKKRsTeZpC5pQiKqk6g', 103, '10-520-573-2995', 7942.04, ' slyly on the sometimes permanent somas -- enticingly daring attai');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from supplier;
+ su_suppkey |          su_name          |                su_address                | su_nationkey |    su_phone     | su_acctbal |                                              su_comment                                               
+------------+---------------------------+------------------------------------------+--------------+-----------------+------------+-------------------------------------------------------------------------------------------------------
+          0 | Supplier#000000000        | UFUqtuYH2qwWrqma@FRKKRsTeZpC5pQiKqk6g    |          103 | 10-520-573-2995 |    7942.04 |  slyly on the sometimes permanent somas -- enticingly daring attai                                   
+(1 row)
+
+INSERT INTO supplier(su_suppkey,su_name,su_nationkey,su_phone,su_acctbal,su_comment) VALUES (0, 'Supplier#000000000', 103, '10-520-573-2995', 7942.04, ' slyly on the sometimes permanent somas -- enticingly daring attai');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from supplier;
+ su_suppkey |          su_name          |                su_address                | su_nationkey |    su_phone     | su_acctbal |                                              su_comment                                               
+------------+---------------------------+------------------------------------------+--------------+-----------------+------------+-------------------------------------------------------------------------------------------------------
+          0 | Supplier#000000000        | UFUqtuYH2qwWrqma@FRKKRsTeZpC5pQiKqk6g    |          103 | 10-520-573-2995 |    7942.04 |  slyly on the sometimes permanent somas -- enticingly daring attai                                   
+(1 row)
+
+INSERT INTO supplier(su_suppkey,su_name,su_address,su_phone,su_acctbal,su_comment) VALUES (0, 'Supplier#000000000', 'UFUqtuYH2qwWrqma@FRKKRsTeZpC5pQiKqk6g', '10-520-573-2995', 7942.04, ' slyly on the sometimes permanent somas -- enticingly daring attai');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from supplier;
+ su_suppkey |          su_name          |                su_address                | su_nationkey |    su_phone     | su_acctbal |                                              su_comment                                               
+------------+---------------------------+------------------------------------------+--------------+-----------------+------------+-------------------------------------------------------------------------------------------------------
+          0 | Supplier#000000000        | UFUqtuYH2qwWrqma@FRKKRsTeZpC5pQiKqk6g    |          103 | 10-520-573-2995 |    7942.04 |  slyly on the sometimes permanent somas -- enticingly daring attai                                   
+(1 row)
+
+INSERT INTO supplier(su_suppkey,su_name,su_address,su_nationkey,su_acctbal,su_comment) VALUES (0, 'Supplier#000000000', 'UFUqtuYH2qwWrqma@FRKKRsTeZpC5pQiKqk6g', 103, 7942.04, ' slyly on the sometimes permanent somas -- enticingly daring attai');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from supplier;
+ su_suppkey |          su_name          |                su_address                | su_nationkey |    su_phone     | su_acctbal |                                              su_comment                                               
+------------+---------------------------+------------------------------------------+--------------+-----------------+------------+-------------------------------------------------------------------------------------------------------
+          0 | Supplier#000000000        | UFUqtuYH2qwWrqma@FRKKRsTeZpC5pQiKqk6g    |          103 | 10-520-573-2995 |    7942.04 |  slyly on the sometimes permanent somas -- enticingly daring attai                                   
+(1 row)
+
+INSERT INTO supplier(su_suppkey,su_name,su_address,su_nationkey,su_phone,su_comment) VALUES (0, 'Supplier#000000000', 'UFUqtuYH2qwWrqma@FRKKRsTeZpC5pQiKqk6g', 103, '10-520-573-2995', ' slyly on the sometimes permanent somas -- enticingly daring attai');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from supplier;
+ su_suppkey |          su_name          |                su_address                | su_nationkey |    su_phone     | su_acctbal |                                              su_comment                                               
+------------+---------------------------+------------------------------------------+--------------+-----------------+------------+-------------------------------------------------------------------------------------------------------
+          0 | Supplier#000000000        | UFUqtuYH2qwWrqma@FRKKRsTeZpC5pQiKqk6g    |          103 | 10-520-573-2995 |    7942.04 |  slyly on the sometimes permanent somas -- enticingly daring attai                                   
+(1 row)
+
+INSERT INTO supplier(su_suppkey,su_name,su_address,su_nationkey,su_phone,su_acctbal) VALUES (0, 'Supplier#000000000', 'UFUqtuYH2qwWrqma@FRKKRsTeZpC5pQiKqk6g', 103, '10-520-573-2995', 7942.04);
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from supplier;
+ su_suppkey |          su_name          |                su_address                | su_nationkey |    su_phone     | su_acctbal |                                              su_comment                                               
+------------+---------------------------+------------------------------------------+--------------+-----------------+------------+-------------------------------------------------------------------------------------------------------
+          0 | Supplier#000000000        | UFUqtuYH2qwWrqma@FRKKRsTeZpC5pQiKqk6g    |          103 | 10-520-573-2995 |    7942.04 |  slyly on the sometimes permanent somas -- enticingly daring attai                                   
+(1 row)
+
+SELECT * from region;
+ r_regionkey |                         r_name                          |                                                                        r_comment                                                                         
+-------------+---------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------
+           0 | AFRICA                                                  |  ? closely enticing attainments around the quietly careful dinos may was idly over the slowly st                                                        
+           1 | AMERICA                                                 | the pearls : doggedly final platelets alongside of the quickly even pinto beans sh                                                                      
+           2 | ASIA                                                    | s try to engage quickly past the regul                                                                                                                  
+           3 | EUROPE                                                  | ss the idly ironic somas ! evenly busy warthogs past the slyly even notornis must print q                                                               
+           4 | MIDDLE EAST                                             | ructions ; quietly sly dolphins besi                                                                                                                    
+(5 rows)
+
+INSERT INTO region(r_name,r_comment) VALUES ( 'AFRICA', ' ? closely enticing attainments around the quietly careful dinos may was idly over the slowly st');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from region;
+ r_regionkey |                         r_name                          |                                                                        r_comment                                                                         
+-------------+---------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------
+           0 | AFRICA                                                  |  ? closely enticing attainments around the quietly careful dinos may was idly over the slowly st                                                        
+           1 | AMERICA                                                 | the pearls : doggedly final platelets alongside of the quickly even pinto beans sh                                                                      
+           2 | ASIA                                                    | s try to engage quickly past the regul                                                                                                                  
+           3 | EUROPE                                                  | ss the idly ironic somas ! evenly busy warthogs past the slyly even notornis must print q                                                               
+           4 | MIDDLE EAST                                             | ructions ; quietly sly dolphins besi                                                                                                                    
+(5 rows)
+
+INSERT INTO region(r_regionkey,r_comment) VALUES (0, ' ? closely enticing attainments around the quietly careful dinos may was idly over the slowly st');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from region;
+ r_regionkey |                         r_name                          |                                                                        r_comment                                                                         
+-------------+---------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------
+           0 | AFRICA                                                  |  ? closely enticing attainments around the quietly careful dinos may was idly over the slowly st                                                        
+           1 | AMERICA                                                 | the pearls : doggedly final platelets alongside of the quickly even pinto beans sh                                                                      
+           2 | ASIA                                                    | s try to engage quickly past the regul                                                                                                                  
+           3 | EUROPE                                                  | ss the idly ironic somas ! evenly busy warthogs past the slyly even notornis must print q                                                               
+           4 | MIDDLE EAST                                             | ructions ; quietly sly dolphins besi                                                                                                                    
+(5 rows)
+
+INSERT INTO region(r_regionkey,r_name) VALUES (0, 'AFRICA');
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * from region;
+ r_regionkey |                         r_name                          |                                                                        r_comment                                                                         
+-------------+---------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------
+           0 | AFRICA                                                  |  ? closely enticing attainments around the quietly careful dinos may was idly over the slowly st                                                        
+           1 | AMERICA                                                 | the pearls : doggedly final platelets alongside of the quickly even pinto beans sh                                                                      
+           2 | ASIA                                                    | s try to engage quickly past the regul                                                                                                                  
+           3 | EUROPE                                                  | ss the idly ironic somas ! evenly busy warthogs past the slyly even notornis must print q                                                               
+           4 | MIDDLE EAST                                             | ructions ; quietly sly dolphins besi                                                                                                                    
+(5 rows)
+
+SELECT * from order_line;
+ ol_w_id | ol_d_id | ol_o_id | ol_number | ol_i_id |      ol_delivery_d       | ol_amount | ol_supply_w_id | ol_quantity |       ol_dist_info       
+---------+---------+---------+-----------+---------+--------------------------+-----------+----------------+-------------+--------------------------
+     974 |       1 |       1 |         1 |   49876 | 2020-09-01 06:19:55      |         0 |              5 |        2.09 | ige                     
+(1 row)
+
+INSERT INTO order_line(ol_w_id,ol_d_id,ol_o_id,ol_number,ol_i_id,ol_amount,ol_supply_w_id,ol_quantity,ol_dist_info) VALUES (1000,1,1,1,49876,0.00,5,2.09,'ige');
+SELECT * from order_line;
+ ol_w_id | ol_d_id | ol_o_id | ol_number | ol_i_id |      ol_delivery_d       | ol_amount | ol_supply_w_id | ol_quantity |       ol_dist_info       
+---------+---------+---------+-----------+---------+--------------------------+-----------+----------------+-------------+--------------------------
+     974 |       1 |       1 |         1 |   49876 | 2020-09-01 06:19:55      |         0 |              5 |        2.09 | ige                     
+    1000 |       1 |       1 |         1 |   49876 |                          |         0 |              5 |        2.09 | ige                     
+(2 rows)
+
+SELECT * from orders;
+ o_w_id | o_d_id | o_id | o_c_id | o_carrier_id | o_ol_cnt | o_all_local |        o_entry_d         
+--------+--------+------+--------+--------------+----------+-------------+--------------------------
+    974 |      1 |    1 |      1 |            8 |        7 |           1 | 2020-09-01 06:19:55     
+(1 row)
+
+INSERT INTO orders(o_w_id,o_d_id,o_id,o_c_id,o_ol_cnt,o_all_local,o_entry_d) VALUES (1000,1,1,1,7,1,'2020-09-01 06:19:55');
+SELECT * from orders;
+ o_w_id | o_d_id | o_id | o_c_id | o_carrier_id | o_ol_cnt | o_all_local |        o_entry_d         
+--------+--------+------+--------+--------------+----------+-------------+--------------------------
+    974 |      1 |    1 |      1 |            8 |        7 |           1 | 2020-09-01 06:19:55     
+   1000 |      1 |    1 |      1 |              |        7 |           1 | 2020-09-01 06:19:55     
+(2 rows)
+
