@@ -25,7 +25,8 @@ create table integer1 (
   ol_w_id int PRIMARY KEY
 ) tablespace tsurugi;
 create table bigint1 (
-  ol_w_id bigint PRIMARY KEY
+  id int PRIMARY KEY,
+  ol_w_id bigint
 ) tablespace tsurugi;
 create table real1 (
   ol_w_id real PRIMARY KEY
@@ -68,6 +69,7 @@ create foreign table integer1 (
   ol_w_id int
 ) SERVER ogawayama;
 create foreign table bigint1 (
+  id int,
   ol_w_id bigint
 ) SERVER ogawayama;
 create foreign table real1 (
@@ -149,161 +151,397 @@ SELECT * FROM integer1;
 ---------
 (0 rows)
 
-INSERT INTO integer1 VALUES (2147483645);
+INSERT INTO integer1 VALUES (2147483644); --max-3
 SELECT * FROM integer1;
   ol_w_id   
 ------------
- 2147483645
+ 2147483644
 (1 row)
 
-INSERT INTO integer1 VALUES (2147483646);
+INSERT INTO integer1 VALUES (2147483645); --max-2
 SELECT * FROM integer1;
   ol_w_id   
 ------------
+ 2147483644
  2147483645
- 2147483646
 (2 rows)
 
-INSERT INTO integer1 VALUES (2147483647);
+INSERT INTO integer1 VALUES (2147483646); --max-1
 SELECT * FROM integer1;
   ol_w_id   
 ------------
+ 2147483644
+ 2147483645
+ 2147483646
+(3 rows)
+
+INSERT INTO integer1 VALUES (2147483647); --max
+SELECT * FROM integer1;
+  ol_w_id   
+------------
+ 2147483644
  2147483645
  2147483646
  2147483647
-(3 rows)
+(4 rows)
 
-INSERT INTO integer1 VALUES (2147483648);
+INSERT INTO integer1 VALUES (2147483648); --max+1
 ERROR:  transaction::execute_statement() failed. (9)
 SELECT * FROM integer1;
   ol_w_id   
 ------------
+ 2147483644
  2147483645
  2147483646
  2147483647
-(3 rows)
+(4 rows)
 
-INSERT INTO integer1 VALUES (2147483649);
+INSERT INTO integer1 VALUES (2147483649); --max+2
 ERROR:  transaction::execute_statement() failed. (9)
 SELECT * FROM integer1;
   ol_w_id   
 ------------
+ 2147483644
  2147483645
  2147483646
  2147483647
-(3 rows)
+(4 rows)
 
-INSERT INTO integer1 VALUES (2147483650);
+INSERT INTO integer1 VALUES (2147483650); --max+3
 ERROR:  transaction::execute_statement() failed. (9)
 SELECT * FROM integer1;
   ol_w_id   
 ------------
+ 2147483644
  2147483645
  2147483646
  2147483647
-(3 rows)
+(4 rows)
+
+INSERT INTO integer1 VALUES (-2147483645); --min+3
+SELECT * FROM integer1;
+   ol_w_id   
+-------------
+ -2147483645
+  2147483644
+  2147483645
+  2147483646
+  2147483647
+(5 rows)
+
+INSERT INTO integer1 VALUES (-2147483646); --min+2
+SELECT * FROM integer1;
+   ol_w_id   
+-------------
+ -2147483646
+ -2147483645
+  2147483644
+  2147483645
+  2147483646
+  2147483647
+(6 rows)
+
+INSERT INTO integer1 VALUES (-2147483647); --min+1
+SELECT * FROM integer1;
+   ol_w_id   
+-------------
+ -2147483647
+ -2147483646
+ -2147483645
+  2147483644
+  2147483645
+  2147483646
+  2147483647
+(7 rows)
+
+INSERT INTO integer1 VALUES (-2147483648); --min
+SELECT * FROM integer1;
+   ol_w_id   
+-------------
+ -2147483648
+ -2147483647
+ -2147483646
+ -2147483645
+  2147483644
+  2147483645
+  2147483646
+  2147483647
+(8 rows)
+
+INSERT INTO integer1 VALUES (-2147483649); --min-1
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * FROM integer1;
+   ol_w_id   
+-------------
+ -2147483648
+ -2147483647
+ -2147483646
+ -2147483645
+  2147483644
+  2147483645
+  2147483646
+  2147483647
+(8 rows)
+
+INSERT INTO integer1 VALUES (-2147483650); --min-2
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * FROM integer1;
+   ol_w_id   
+-------------
+ -2147483648
+ -2147483647
+ -2147483646
+ -2147483645
+  2147483644
+  2147483645
+  2147483646
+  2147483647
+(8 rows)
+
+INSERT INTO integer1 VALUES (-2147483651); --min-3
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * FROM integer1;
+   ol_w_id   
+-------------
+ -2147483648
+ -2147483647
+ -2147483646
+ -2147483645
+  2147483644
+  2147483645
+  2147483646
+  2147483647
+(8 rows)
 
 INSERT INTO integer1 VALUES (1.1);
 SELECT * FROM integer1;
-  ol_w_id   
-------------
-          1
- 2147483645
- 2147483646
- 2147483647
-(4 rows)
+   ol_w_id   
+-------------
+ -2147483648
+ -2147483647
+ -2147483646
+ -2147483645
+           1
+  2147483644
+  2147483645
+  2147483646
+  2147483647
+(9 rows)
 
 INSERT INTO integer1 VALUES (0.1);
 SELECT * FROM integer1;
-  ol_w_id   
-------------
-          0
-          1
- 2147483645
- 2147483646
- 2147483647
-(5 rows)
+   ol_w_id   
+-------------
+ -2147483648
+ -2147483647
+ -2147483646
+ -2147483645
+           0
+           1
+  2147483644
+  2147483645
+  2147483646
+  2147483647
+(10 rows)
 
 --- bigint
 SELECT * FROM bigint1;
- ol_w_id 
----------
+ id | ol_w_id 
+----+---------
 (0 rows)
 
-INSERT INTO bigint1 VALUES (9223372036854775805);
+INSERT INTO bigint1 VALUES (1, 9223372036854775804);  --max-3
 SELECT * FROM bigint1;
-       ol_w_id       
----------------------
- 9223372036854775805
+ id |       ol_w_id       
+----+---------------------
+  1 | 9223372036854775804
 (1 row)
 
-INSERT INTO bigint1 VALUES (9223372036854775806);
+INSERT INTO bigint1 VALUES (2, 9223372036854775805);  --max-2
 SELECT * FROM bigint1;
-       ol_w_id       
----------------------
- 9223372036854775805
- 9223372036854775806
+ id |       ol_w_id       
+----+---------------------
+  1 | 9223372036854775804
+  2 | 9223372036854775805
 (2 rows)
 
-INSERT INTO bigint1 VALUES (9223372036854775807);
+INSERT INTO bigint1 VALUES (3, 9223372036854775806);  --max-1
 SELECT * FROM bigint1;
-       ol_w_id       
----------------------
- 9223372036854775805
- 9223372036854775806
- 9223372036854775807
+ id |       ol_w_id       
+----+---------------------
+  1 | 9223372036854775804
+  2 | 9223372036854775805
+  3 | 9223372036854775806
 (3 rows)
 
-INSERT INTO bigint1 VALUES (9223372036854775808);
-ERROR:  transaction::execute_statement() failed. (9)
+INSERT INTO bigint1 VALUES (4, 9223372036854775807);  --max
 SELECT * FROM bigint1;
-       ol_w_id       
----------------------
- 9223372036854775805
- 9223372036854775806
- 9223372036854775807
-(3 rows)
-
-INSERT INTO bigint1 VALUES (9223372036854775809);
-ERROR:  transaction::execute_statement() failed. (9)
-SELECT * FROM bigint1;
-       ol_w_id       
----------------------
- 9223372036854775805
- 9223372036854775806
- 9223372036854775807
-(3 rows)
-
-INSERT INTO bigint1 VALUES (9223372036854775810);
-ERROR:  transaction::execute_statement() failed. (9)
-SELECT * FROM bigint1;
-       ol_w_id       
----------------------
- 9223372036854775805
- 9223372036854775806
- 9223372036854775807
-(3 rows)
-
-INSERT INTO bigint1 VALUES (1.1);
-SELECT * FROM bigint1;
-       ol_w_id       
----------------------
-                   1
- 9223372036854775805
- 9223372036854775806
- 9223372036854775807
+ id |       ol_w_id       
+----+---------------------
+  1 | 9223372036854775804
+  2 | 9223372036854775805
+  3 | 9223372036854775806
+  4 | 9223372036854775807
 (4 rows)
 
-INSERT INTO bigint1 VALUES (0.1);
+INSERT INTO bigint1 VALUES (5, 9223372036854775808);  --max+1
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * FROM bigint1;
-       ol_w_id       
----------------------
-                   0
-                   1
- 9223372036854775805
- 9223372036854775806
- 9223372036854775807
+ id |       ol_w_id       
+----+---------------------
+  1 | 9223372036854775804
+  2 | 9223372036854775805
+  3 | 9223372036854775806
+  4 | 9223372036854775807
+(4 rows)
+
+INSERT INTO bigint1 VALUES (6, 9223372036854775809);  --max+2
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * FROM bigint1;
+ id |       ol_w_id       
+----+---------------------
+  1 | 9223372036854775804
+  2 | 9223372036854775805
+  3 | 9223372036854775806
+  4 | 9223372036854775807
+(4 rows)
+
+INSERT INTO bigint1 VALUES (7, 9223372036854775810);  --max+3
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * FROM bigint1;
+ id |       ol_w_id       
+----+---------------------
+  1 | 9223372036854775804
+  2 | 9223372036854775805
+  3 | 9223372036854775806
+  4 | 9223372036854775807
+(4 rows)
+
+INSERT INTO bigint1 VALUES (8, -9223372036854775805);  --min+3
+SELECT * FROM bigint1;
+ id |       ol_w_id        
+----+----------------------
+  1 |  9223372036854775804
+  2 |  9223372036854775805
+  3 |  9223372036854775806
+  4 |  9223372036854775807
+  8 | -9223372036854775805
 (5 rows)
+
+INSERT INTO bigint1 VALUES (9, -9223372036854775806);  --min+2
+SELECT * FROM bigint1;
+ id |       ol_w_id        
+----+----------------------
+  1 |  9223372036854775804
+  2 |  9223372036854775805
+  3 |  9223372036854775806
+  4 |  9223372036854775807
+  8 | -9223372036854775805
+  9 | -9223372036854775806
+(6 rows)
+
+INSERT INTO bigint1 VALUES (10, -9223372036854775807);  --min+1
+SELECT * FROM bigint1;
+ id |       ol_w_id        
+----+----------------------
+  1 |  9223372036854775804
+  2 |  9223372036854775805
+  3 |  9223372036854775806
+  4 |  9223372036854775807
+  8 | -9223372036854775805
+  9 | -9223372036854775806
+ 10 | -9223372036854775807
+(7 rows)
+
+INSERT INTO bigint1 VALUES (11, -9223372036854775807-1); --min
+SELECT * FROM bigint1;
+ id |       ol_w_id        
+----+----------------------
+  1 |  9223372036854775804
+  2 |  9223372036854775805
+  3 |  9223372036854775806
+  4 |  9223372036854775807
+  8 | -9223372036854775805
+  9 | -9223372036854775806
+ 10 | -9223372036854775807
+ 11 | -9223372036854775808
+(8 rows)
+
+INSERT INTO bigint1 VALUES (12, -9223372036854775809);  --min-1
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * FROM bigint1;
+ id |       ol_w_id        
+----+----------------------
+  1 |  9223372036854775804
+  2 |  9223372036854775805
+  3 |  9223372036854775806
+  4 |  9223372036854775807
+  8 | -9223372036854775805
+  9 | -9223372036854775806
+ 10 | -9223372036854775807
+ 11 | -9223372036854775808
+(8 rows)
+
+INSERT INTO bigint1 VALUES (13, -9223372036854775810);  --min-2
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * FROM bigint1;
+ id |       ol_w_id        
+----+----------------------
+  1 |  9223372036854775804
+  2 |  9223372036854775805
+  3 |  9223372036854775806
+  4 |  9223372036854775807
+  8 | -9223372036854775805
+  9 | -9223372036854775806
+ 10 | -9223372036854775807
+ 11 | -9223372036854775808
+(8 rows)
+
+INSERT INTO bigint1 VALUES (14, -9223372036854775811);  --min-3
+ERROR:  transaction::execute_statement() failed. (9)
+SELECT * FROM bigint1;
+ id |       ol_w_id        
+----+----------------------
+  1 |  9223372036854775804
+  2 |  9223372036854775805
+  3 |  9223372036854775806
+  4 |  9223372036854775807
+  8 | -9223372036854775805
+  9 | -9223372036854775806
+ 10 | -9223372036854775807
+ 11 | -9223372036854775808
+(8 rows)
+
+INSERT INTO bigint1 VALUES (15, 1.1);
+SELECT * FROM bigint1;
+ id |       ol_w_id        
+----+----------------------
+  1 |  9223372036854775804
+  2 |  9223372036854775805
+  3 |  9223372036854775806
+  4 |  9223372036854775807
+  8 | -9223372036854775805
+  9 | -9223372036854775806
+ 10 | -9223372036854775807
+ 11 | -9223372036854775808
+ 15 |                    1
+(9 rows)
+
+INSERT INTO bigint1 VALUES (16, 0.1);
+SELECT * FROM bigint1;
+ id |       ol_w_id        
+----+----------------------
+  1 |  9223372036854775804
+  2 |  9223372036854775805
+  3 |  9223372036854775806
+  4 |  9223372036854775807
+  8 | -9223372036854775805
+  9 | -9223372036854775806
+ 10 | -9223372036854775807
+ 11 | -9223372036854775808
+ 15 |                    1
+ 16 |                    0
+(10 rows)
 
 --- real
 SELECT * FROM real1;
