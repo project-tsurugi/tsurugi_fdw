@@ -52,7 +52,6 @@ jobs:
           git clean -dfx
           mkdir build
           cd build
-          rm -f CMakeCache.txt
           cmake ..
           cmake --build . --target all --clean-first -- -j8
 
