@@ -67,10 +67,7 @@
 ### tsurugi用のテーブル以外の場合（tablespace tsurugiをつけない場合）
 * [wo_tsurugi.sql](./wo_tsurugi/wo_tsurugi.sql)
 
-## カバレッジレポート
-* [C0カバレッジレポート](./coverage/index.html)
-
-### 生成手順
+## カバレッジレポート生成手順
 * https://www.postgresql.org/docs/12/regress-coverage.html
 
 ## 参考
