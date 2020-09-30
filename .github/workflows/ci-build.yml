@@ -38,16 +38,6 @@ jobs:
           submodules: recursive
           ssh-key: ${{ secrets.SSH_KEY }}
 
-      - id: CMake_Build_ogawayama
-        name: CMake_Build_ogawayama
-        run: |
-          cd postgresql-${{ matrix.postgresql }}/contrib/frontend/third_party/ogawayama
-          git clean -dfx
-          mkdir build
-          cd build
-          cmake -DBUILD_STUB_ONLY=ON -DBUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DFORCE_INSTALL_RPATH=ON -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
-          cmake --build . --target all --clean-first -- -j8
-
       - id: CMake_Build_manager
         name: CMake_Build_manager
         run: |
@@ -58,10 +48,31 @@ jobs:
           rm -f CMakeCache.txt
           cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DFORCE_INSTALL_RPATH=ON -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
           cmake --build . --target install --clean-first -- -j8
+          make
+          make install
+
+      - id: CMake_Build_ogawayama
+        name: CMake_Build_ogawayama
+        run: |
+          cd postgresql-${{ matrix.postgresql }}/contrib/frontend/third_party/ogawayama
+          git clean -dfx
+          mkdir build
+          cd build
+          cmake -G Ninja -DBUILD_STUB_ONLY=ON -DBUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DFORCE_INSTALL_RPATH=ON -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
+          cmake --build . --target all --clean-first -- -j8
+          ninja
+          ninja install
 
       - id: Make_Install
         name: Make_Build
         run: |
           cd postgresql-${{ matrix.postgresql }}/contrib/frontend
+          export LIBRARY_PATH=$LIBRARY_PATH:${GITHUB_WORKSPACE}/.local/lib
+          echo ${LIBRARY_PATH}
           make -j8
           make install
+
+      - id: Cleanup
+        name: Cleanup
+        run: |
+          rm -rf ${GITHUB_WORKSPACE}/.local/
