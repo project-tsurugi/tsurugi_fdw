@@ -45,13 +45,14 @@ jobs:
           cmake -DBUILD_STUB_ONLY=ON -DBUILD_TESTS=OFF ..
           cmake --build . --target all --clean-first -- -j8
 
-      - id: CMake_Build_metadata_manager
-        name: CMake_Build_metadata_manager
+      - id: CMake_Build_manager
+        name: CMake_Build_manager
         run: |
           cd postgresql-${{ matrix.postgresql }}/contrib/frontend/third_party/manager
           git clean -dfx
           mkdir build
           cd build
+          rm -f CMakeCache.txt
           cmake ..
           cmake --build . --target all --clean-first -- -j8
 
