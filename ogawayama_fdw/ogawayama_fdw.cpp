@@ -925,16 +925,21 @@ make_tuple_from_result_set(ResultSetPtr result_set, OgawayamaFdwState* fdw_state
 					}
 					else
 					{
-						HeapTuple heap_tuple = SearchSysCache1(
+						HeapTuple 	heap_tuple;
+						regproc 	typinput;
+						int 		typemod;
+
+						heap_tuple = SearchSysCache1(
 							TYPEOID, ObjectIdGetDatum(fdw_state->column_types[i]));
 						if (!HeapTupleIsValid(heap_tuple))
 						{
-							elog(ERROR, "cache lookup failed for type %u", 
-								fdw_state->column_types[i]);
+							elog(ERROR, "cache lookup failed for type %u",
+								 fdw_state->column_types[i]);
 						}
-						regproc typinput = ((Form_pg_type) GETSTRUCT(heap_tuple))->typinput;
+						typinput = ((Form_pg_type)GETSTRUCT(heap_tuple))->typinput;
+						typemod = ((Form_pg_type)GETSTRUCT(heap_tuple))->typtypmod;
 						ReleaseSysCache(heap_tuple);
-						tuple->tts_values[i] = OidFunctionCall1(typinput, dat);
+						tuple->tts_values[i] = OidFunctionCall3(typinput, dat, ObjectIdGetDatum(InvalidOid), Int32GetDatum(typemod));
 						tuple->tts_isnull[i] = false;
 					}
 				}
