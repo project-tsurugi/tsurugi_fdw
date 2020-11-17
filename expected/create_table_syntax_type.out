@@ -2,6 +2,9 @@ CREATE EXTENSION IF NOT EXISTS ogawayama_fdw;
 NOTICE:  extension "ogawayama_fdw" already exists, skipping
 CREATE SERVER IF NOT EXISTS ogawayama FOREIGN DATA WRAPPER ogawayama_fdw;
 NOTICE:  server "ogawayama" already exists, skipping
+CREATE TABLE no_column (
+) tablespace tsurugi;
+ERROR:  transaction::receive_message() CREATE TABLE failed. (7)
 CREATE TABLE customer_fifth (
   c_credit char(2) PRIMARY KEY
 ) tablespace tsurugi;
@@ -116,6 +119,8 @@ create table japanese_column_name (
 create table one_english_column_name (
   o int PRIMARY KEY
 ) tablespace tsurugi;
+CREATE FOREIGN TABLE no_column (
+) SERVER ogawayama;
 CREATE FOREIGN TABLE customer_fifth (
   c_credit char(2)
 ) SERVER ogawayama;
@@ -220,6 +225,14 @@ create foreign table japanese_column_name (
 create foreign table one_english_column_name (
   o int
 ) SERVER ogawayama;
+SELECT * FROM no_column;
+ERROR:  Transaction::execute_query() failed. (9)
+INSERT INTO no_column VALUES ();
+ERROR:  syntax error at or near ")"
+LINE 1: INSERT INTO no_column VALUES ();
+                                      ^
+SELECT * FROM no_column;
+ERROR:  Transaction::execute_query() failed. (9)
 SELECT * FROM customer_fifth;
  c_credit 
 ----------

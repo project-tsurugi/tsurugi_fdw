@@ -581,34 +581,37 @@ store_pg_data_type(OgawayamaFdwState* fdw_state, List* tlist)
 {
 	ListCell* lc;
 
-	Oid* data_types = (Oid*) palloc(sizeof(Oid) * tlist->length);
-
-	int i = 0;
-	int count = 0;
-	foreach(lc, tlist)
+	if (tlist != NULL)
 	{
-		TargetEntry* entry = (TargetEntry*) lfirst(lc);
-		Node* node = (Node*) entry->expr;
-		if (entry->resjunk == false)
+		Oid *data_types = (Oid *)palloc(sizeof(Oid) * tlist->length);
+
+		int i = 0;
+		int count = 0;
+		foreach (lc, tlist)
 		{
-			count++;
+			TargetEntry *entry = (TargetEntry *)lfirst(lc);
+			Node *node = (Node *)entry->expr;
+			if (entry->resjunk == false)
+			{
+				count++;
+			}
+
+			if (nodeTag(node) == T_Var)
+			{
+				Var *var = (Var *)node;
+				data_types[i] = var->vartype;
+			}
+			else
+			{
+				elog(ERROR, "Unexpected data type in target list. (index: %d, type:%u)",
+					 i, (unsigned int)nodeTag(node));
+			}
+			i++;
 		}
 
-		if (nodeTag(node) == T_Var)
-		{
-			Var* var = (Var*) node;
-			data_types[i] = var->vartype;
-		}
-		else
-		{
-			elog(ERROR, "Unexpected data type in target list. (index: %d, type:%u)",
-				i, (unsigned int) nodeTag(node));
-		}
-		i++;
+		fdw_state->column_types = data_types;
+		fdw_state->number_of_columns = count;
 	}
-
-	fdw_state->column_types = data_types;
-	fdw_state->number_of_columns = count;
 }
 
 /*
