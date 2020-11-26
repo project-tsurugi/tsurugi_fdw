@@ -55,7 +55,7 @@ namespace manager::message
 
             /**
              *  @brief Get a primary error code.
-             *  @return ErrorCode::SUCCESS if Receiver's process is successed.
+             *  @return ErrorCode::SUCCESS if Receiver's process succeeded.
              *  @return ErrorCode::FAILURE otherwize
              */
             ErrorCode get_error_code()
