@@ -171,12 +171,12 @@
 	make tests REGRESS_EXTRA=1
 	```
 
-1. If regression tests failed, drop database "test":
+1. If regression tests succeeded, drop database "contrib_regression_test":
 
 	```
 	psql postgres
 	
-	postgres=# DROP DATABASE test;
+	postgres=# DROP DATABASE contrib_regression_test;
 	``` 
 
 ## Define table
