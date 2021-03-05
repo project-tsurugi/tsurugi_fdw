@@ -44,13 +44,5 @@ else
         include $(top_srcdir)/contrib/contrib-global.mk
 endif
 
-BASIC_TEST_NAME = test.sh
-EXTRA_TEST_NAME = test_extra.sh
-
 tests:
-ifdef REGRESS_EXTRA
-	bash $(BASIC_TEST_NAME)
-	bash $(EXTRA_TEST_NAME) | tee regression_extra.out
-else
-	bash $(BASIC_TEST_NAME)
-endif
+	bash test.sh

@@ -11,9 +11,7 @@ CREATE TABLE customer_fifth (
 CREATE TABLE IF NOT EXISTS customer_fifth (
   c_credit char(2) PRIMARY KEY
 ) tablespace tsurugi;
-NOTICE:  table name "customer_fifth" already exsists, skipping
-NOTICE:  create_table() failed.
-ERROR:  relation "customer_fifth_dummy" already exists
+ERROR:  transaction::receive_message() CREATE TABLE failed. (7)
 CREATE TABLE TCPKEY_UPPER (
 COL0  INTEGER                 CONSTRAINT NN0 NOT NULL,
 COL1  INT                     CONSTRAINT NN1 NOT NULL,
@@ -2471,7 +2469,7 @@ create table tmp2.same_table_name_test (
   ol_o_id int,
   ol_number int
 ) tablespace tsurugi;
-ERROR:  table name "same_table_name_test" already exsists
+ERROR:  transaction::receive_message() CREATE TABLE failed. (7)
 CREATE DATABASE test TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'C' LC_CTYPE = 'en_US.utf8';
 \c test
 -- If same table name is defined in another database,
@@ -2482,7 +2480,7 @@ create table same_table_name_test (
   ol_o_id int,
   ol_number int
 ) tablespace tsurugi;
-ERROR:  table name "same_table_name_test" already exsists
+ERROR:  transaction::receive_message() CREATE TABLE failed. (7)
 CREATE SCHEMA tmp;
 -- If same table name is defined in another schema of another database,
 -- fail to create table.
@@ -2492,7 +2490,7 @@ create table tmp.same_table_name_test (
   ol_o_id int,
   ol_number int
 ) tablespace tsurugi;
-ERROR:  table name "same_table_name_test" already exsists
+ERROR:  transaction::receive_message() CREATE TABLE failed. (7)
 CREATE EXTENSION ogawayama_fdw;
 CREATE SERVER ogawayama FOREIGN DATA WRAPPER ogawayama_fdw;
 -- success to CREATE FOREIGN TABLE in the schema "tmp"
