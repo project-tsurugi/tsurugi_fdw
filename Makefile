@@ -26,7 +26,10 @@ PG_CPPFLAGS = -Iinclude \
               -Ithird_party/ogawayama/stub/include \
               -Ithird_party/manager/metadata-manager/include \
               -Ithird_party/manager/message-broker/include \
-              -std=c++17 -fPIC -Dregister= -O0
+              -std=c++17 -fPIC -Dregister= -O0\
+              -I$(libpq_srcdir)
+              
+SHLIB_LINK_INTERNAL = $(libpq)
 
 SHLIB_LINK = -logawayama-stub -lmanager-metadata -lmanager-message -lboost_filesystem
 

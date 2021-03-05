@@ -22,8 +22,10 @@
 
 #include <unordered_set>
 
+#include "manager/metadata/metadata.h"
+
 /* base index of ordinal position metadata-manager manages */
-const uint64_t ORDINAL_POSITION_BASE_INDEX = 1;
+const manager::metadata::ObjectIdType ORDINAL_POSITION_BASE_INDEX = 1;
 
 class CreateTable {
     public:
@@ -39,29 +41,22 @@ class CreateTable {
          *  @return true if metadata was successfully stored
          *  @return false otherwize
          */
-        bool define_relation( uint64_t* object_id );
+        bool define_relation(manager::metadata::ObjectIdType *object_id);
 
     private:
-        /* DB name metadata-manager manages */
-        const std::string dbname;
         /* List of statements */
         List *stmts;
+        /* DB name metadata-manager manages */
+        const std::string dbname;
         /* Create Table Statement */
         CreateStmt *create_stmt;
         /* Create Index Statement */
         IndexStmt *index_stmt;
 
         /* data types metadata obtained from metadata-manager */
-        std::unique_ptr<manager::metadata::Metadata> datatypes;
+        std::unique_ptr<manager::metadata::DataTypes> datatypes;
         /* table metadata obtained from metadata-manager */
-        std::unique_ptr<manager::metadata::Metadata> tables;
-
-        /**
-         *  @brief  Loads metadata from metadata-manager.
-         *  @return true if metadata was successfully loaded
-         *  @return false otherwize.
-         */
-        bool load_metadata();
+        std::unique_ptr<manager::metadata::Tables> tables;
 
         /**
          *  @brief  Check if given type supported or not by Tsurugi
@@ -83,13 +78,13 @@ class CreateTable {
          *  @return true if metadata was successfully sended
          *  @return false otherwize.
          */
-        bool store_metadata( uint64_t* object_id );
+        bool store_metadata(manager::metadata::ObjectIdType *object_id);
 
         /**
          *  @brief  Get ordinal positions of table's primary key columns in table or column constraints.
          *  @return ordinal positions of table's primary key columns.
          */
-        std::unordered_set<uint64_t> get_ordinal_positions_of_primary_keys();
+        std::unordered_set<manager::metadata::ObjectIdType> get_ordinal_positions_of_primary_keys();
 
         /**
          *  @brief  Reports error message that given types are not supported by Tsurugi.

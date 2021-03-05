@@ -54,8 +54,12 @@ const std::string DBNAME = "Tsurugi";
 
 void remove_metadata(message::Message *message, std::unique_ptr<metadata::Metadata> &objects);
 bool send_message(message::Message *message, std::unique_ptr<metadata::Metadata> &objects);
+#if 0
 static std::string rewrite_query(std::string_view query_string);
 static bool execute_create_table(std::string_view query_string);
+#endif
+
+using namespace manager::metadata;
 
 /**
  *  @brief Calls the function sending metadata to metadata-manager and creates parameters sended to ogawayama.
@@ -66,15 +70,15 @@ bool create_table(List *stmts)
     Assert(stmts != nullptr);
 
     /* The object id stored if new table was successfully created */
-    uint64_t object_id = 0;
+    ObjectIdType object_id = 0;
 
     /* Call the function sending metadata to metadata-manager. */
     CreateTable cmds{stmts, DBNAME};
     bool success = cmds.define_relation( &object_id );
 
     if (success) {
-        message::CreateTableMessage ct_msg{object_id};
-        std::unique_ptr<metadata::Metadata> tables{new metadata::Tables(DBNAME)};
+        message::CreateTableMessage ct_msg{(uint64_t)object_id};
+        std::unique_ptr<metadata::Metadata> tables = std::make_unique<Tables>(DBNAME);
         success = send_message(&ct_msg, tables);
     }
 
@@ -137,12 +141,16 @@ bool send_message(message::Message *message, std::unique_ptr<metadata::Metadata>
  */
 void remove_metadata(message::Message *message, std::unique_ptr<metadata::Metadata> &objects)
 {
-    if (objects->load() == metadata::ErrorCode::OK)
+    ErrorCode error = objects->remove(message->get_object_id());
+    if (error != ErrorCode::OK)
     {
-        objects->remove(message->get_object_id());
+        ereport(ERROR,
+                (errcode(ERRCODE_INTERNAL_ERROR),
+                 errmsg("remove_metadata() failed.")));
     }
 }
 
+#if 0
 /*
  *  @brief:
  */
@@ -248,3 +256,4 @@ static std::string rewrite_query(std::string_view query_string)
 
     return rewrited_query;
 }
+#endif
