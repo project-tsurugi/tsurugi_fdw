@@ -6849,7 +6849,7 @@ SELECT * from test14_48;
 INSERT INTO test14_48 VALUES(1, 1, 1);
 SELECT * from test14_48;
 --PKEY col0 col1 col2 null error 
-INSERT INTO test14_48() VALUES();
+INSERT INTO test14_48(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from test14_48;
 --PKEY col0 null error 
 INSERT INTO test14_48(col1,col2) VALUES(3,3);
@@ -6873,7 +6873,7 @@ SELECT * from test14_49;
 INSERT INTO test14_49 VALUES(1, 1, 1);
 SELECT * from test14_49;
 --PKEY col0 col1 col2 null error 
-INSERT INTO test14_49() VALUES();
+INSERT INTO test14_49(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from test14_49;
 --PKEY col0 null error 
 INSERT INTO test14_49(col1,col2) VALUES(3,3);
@@ -6900,7 +6900,7 @@ SELECT * from test14_50;
 INSERT INTO test14_50 VALUES(1, 1, 1);
 SELECT * from test14_50;
 --PKEY col0 col1 col2 null error 
-INSERT INTO test14_50() VALUES();
+INSERT INTO test14_50(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from test14_50;
 --PKEY col0 null error 
 INSERT INTO test14_50(col1,col2) VALUES(3,3);
@@ -6927,7 +6927,7 @@ SELECT * from test14_51;
 INSERT INTO test14_51 VALUES(1, 1, 1);
 SELECT * from test14_51;
 --PKEY col0 col1 col2 null error 
-INSERT INTO test14_51() VALUES();
+INSERT INTO test14_51(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from test14_51;
 --PKEY col0 null error 
 INSERT INTO test14_51(col1,col2) VALUES(3,3);
@@ -6954,7 +6954,7 @@ SELECT * from test14_52;
 INSERT INTO test14_52 VALUES(1, 1, 1);
 SELECT * from test14_52;
 --PKEY col0 col1 col2 null error 
-INSERT INTO test14_52() VALUES();
+INSERT INTO test14_52(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from test14_52;
 --PKEY col0 null error 
 INSERT INTO test14_52(col1,col2) VALUES(3,3);
@@ -6984,7 +6984,7 @@ SELECT * from test14_53;
 INSERT INTO test14_53 VALUES(1, 1, 1);
 SELECT * from test14_53;
 --PKEY col0 col1 col2 null error 
-INSERT INTO test14_53() VALUES();
+INSERT INTO test14_53(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from test14_53;
 --PKEY col0 null error 
 INSERT INTO test14_53(col1,col2) VALUES(3,3);
@@ -7014,7 +7014,7 @@ SELECT * from test14_54;
 INSERT INTO test14_54 VALUES(1, 1, 1);
 SELECT * from test14_54;
 --PKEY col0 col1 col2 null error 
-INSERT INTO test14_54() VALUES();
+INSERT INTO test14_54(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from test14_54;
 --PKEY col0 null error 
 INSERT INTO test14_54(col1,col2) VALUES(3,3);
@@ -7044,7 +7044,7 @@ SELECT * from test14_55;
 INSERT INTO test14_55 VALUES(1, 1, 1);
 SELECT * from test14_55;
 --PKEY col0 col1 col2 null error 
-INSERT INTO test14_55() VALUES();
+INSERT INTO test14_55(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from test14_55;
 --PKEY col0 null error 
 INSERT INTO test14_55(col1,col2) VALUES(3,3);
@@ -8733,7 +8733,7 @@ SELECT * from bigint_test14_48;
 INSERT INTO bigint_test14_48 VALUES(1, 1, 1);
 SELECT * from bigint_test14_48;
 --PKEY col0 col1 col2 null error 
-INSERT INTO bigint_test14_48() VALUES();
+INSERT INTO bigint_test14_48(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from bigint_test14_48;
 --PKEY col0 null error 
 INSERT INTO bigint_test14_48(col1,col2) VALUES(3,3);
@@ -8757,7 +8757,7 @@ SELECT * from bigint_test14_49;
 INSERT INTO bigint_test14_49 VALUES(1, 1, 1);
 SELECT * from bigint_test14_49;
 --PKEY col0 col1 col2 null error 
-INSERT INTO bigint_test14_49() VALUES();
+INSERT INTO bigint_test14_49(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from bigint_test14_49;
 --PKEY col0 null error 
 INSERT INTO bigint_test14_49(col1,col2) VALUES(3,3);
@@ -8784,7 +8784,7 @@ SELECT * from bigint_test14_50;
 INSERT INTO bigint_test14_50 VALUES(1, 1, 1);
 SELECT * from bigint_test14_50;
 --PKEY col0 col1 col2 null error 
-INSERT INTO bigint_test14_50() VALUES();
+INSERT INTO bigint_test14_50(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from bigint_test14_50;
 --PKEY col0 null error 
 INSERT INTO bigint_test14_50(col1,col2) VALUES(3,3);
@@ -8811,7 +8811,7 @@ SELECT * from bigint_test14_51;
 INSERT INTO bigint_test14_51 VALUES(1, 1, 1);
 SELECT * from bigint_test14_51;
 --PKEY col0 col1 col2 null error 
-INSERT INTO bigint_test14_51() VALUES();
+INSERT INTO bigint_test14_51(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from bigint_test14_51;
 --PKEY col0 null error 
 INSERT INTO bigint_test14_51(col1,col2) VALUES(3,3);
@@ -8838,7 +8838,7 @@ SELECT * from bigint_test14_52;
 INSERT INTO bigint_test14_52 VALUES(1, 1, 1);
 SELECT * from bigint_test14_52;
 --PKEY col0 col1 col2 null error 
-INSERT INTO bigint_test14_52() VALUES();
+INSERT INTO bigint_test14_52(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from bigint_test14_52;
 --PKEY col0 null error 
 INSERT INTO bigint_test14_52(col1,col2) VALUES(3,3);
@@ -8868,7 +8868,7 @@ SELECT * from bigint_test14_53;
 INSERT INTO bigint_test14_53 VALUES(1, 1, 1);
 SELECT * from bigint_test14_53;
 --PKEY col0 col1 col2 null error 
-INSERT INTO bigint_test14_53() VALUES();
+INSERT INTO bigint_test14_53(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from bigint_test14_53;
 --PKEY col0 null error 
 INSERT INTO bigint_test14_53(col1,col2) VALUES(3,3);
@@ -8898,7 +8898,7 @@ SELECT * from bigint_test14_54;
 INSERT INTO bigint_test14_54 VALUES(1, 1, 1);
 SELECT * from bigint_test14_54;
 --PKEY col0 col1 col2 null error 
-INSERT INTO bigint_test14_54() VALUES();
+INSERT INTO bigint_test14_54(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from bigint_test14_54;
 --PKEY col0 null error 
 INSERT INTO bigint_test14_54(col1,col2) VALUES(3,3);
@@ -8928,7 +8928,7 @@ SELECT * from bigint_test14_55;
 INSERT INTO bigint_test14_55 VALUES(1, 1, 1);
 SELECT * from bigint_test14_55;
 --PKEY col0 col1 col2 null error 
-INSERT INTO bigint_test14_55() VALUES();
+INSERT INTO bigint_test14_55(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from bigint_test14_55;
 --PKEY col0 null error 
 INSERT INTO bigint_test14_55(col1,col2) VALUES(3,3);
@@ -10617,7 +10617,7 @@ SELECT * from real_test14_48;
 INSERT INTO real_test14_48 VALUES(1.1, 1.1, 1.1);
 SELECT * from real_test14_48;
 --PKEY col0 col1 col2 null error 
-INSERT INTO real_test14_48() VALUES();
+INSERT INTO real_test14_48(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from real_test14_48;
 --PKEY col0 null error 
 INSERT INTO real_test14_48(col1,col2) VALUES(3.3,3.3);
@@ -10641,7 +10641,7 @@ SELECT * from real_test14_49;
 INSERT INTO real_test14_49 VALUES(1.1, 1.1, 1.1);
 SELECT * from real_test14_49;
 --PKEY col0 col1 col2 null error 
-INSERT INTO real_test14_49() VALUES();
+INSERT INTO real_test14_49(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from real_test14_49;
 --PKEY col0 null error 
 INSERT INTO real_test14_49(col1,col2) VALUES(3.3,3.3);
@@ -10668,7 +10668,7 @@ SELECT * from real_test14_50;
 INSERT INTO real_test14_50 VALUES(1.1, 1.1, 1.1);
 SELECT * from real_test14_50;
 --PKEY col0 col1 col2 null error 
-INSERT INTO real_test14_50() VALUES();
+INSERT INTO real_test14_50(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from real_test14_50;
 --PKEY col0 null error 
 INSERT INTO real_test14_50(col1,col2) VALUES(3.3,3.3);
@@ -10695,7 +10695,7 @@ SELECT * from real_test14_51;
 INSERT INTO real_test14_51 VALUES(1.1, 1.1, 1.1);
 SELECT * from real_test14_51;
 --PKEY col0 col1 col2 null error 
-INSERT INTO real_test14_51() VALUES();
+INSERT INTO real_test14_51(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from real_test14_51;
 --PKEY col0 null error 
 INSERT INTO real_test14_51(col1,col2) VALUES(3.3,3.3);
@@ -10722,7 +10722,7 @@ SELECT * from real_test14_52;
 INSERT INTO real_test14_52 VALUES(1.1, 1.1, 1.1);
 SELECT * from real_test14_52;
 --PKEY col0 col1 col2 null error 
-INSERT INTO real_test14_52() VALUES();
+INSERT INTO real_test14_52(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from real_test14_52;
 --PKEY col0 null error 
 INSERT INTO real_test14_52(col1,col2) VALUES(3.3,3.3);
@@ -10752,7 +10752,7 @@ SELECT * from real_test14_53;
 INSERT INTO real_test14_53 VALUES(1.1, 1.1, 1.1);
 SELECT * from real_test14_53;
 --PKEY col0 col1 col2 null error 
-INSERT INTO real_test14_53() VALUES();
+INSERT INTO real_test14_53(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from real_test14_53;
 --PKEY col0 null error 
 INSERT INTO real_test14_53(col1,col2) VALUES(3.3,3.3);
@@ -10782,7 +10782,7 @@ SELECT * from real_test14_54;
 INSERT INTO real_test14_54 VALUES(1.1, 1.1, 1.1);
 SELECT * from real_test14_54;
 --PKEY col0 col1 col2 null error 
-INSERT INTO real_test14_54() VALUES();
+INSERT INTO real_test14_54(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from real_test14_54;
 --PKEY col0 null error 
 INSERT INTO real_test14_54(col1,col2) VALUES(3.3,3.3);
@@ -10812,7 +10812,7 @@ SELECT * from real_test14_55;
 INSERT INTO real_test14_55 VALUES(1.1, 1.1, 1.1);
 SELECT * from real_test14_55;
 --PKEY col0 col1 col2 null error 
-INSERT INTO real_test14_55() VALUES();
+INSERT INTO real_test14_55(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from real_test14_55;
 --PKEY col0 null error 
 INSERT INTO real_test14_55(col1,col2) VALUES(3.3,3.3);
@@ -12501,7 +12501,7 @@ SELECT * from double_test14_48;
 INSERT INTO double_test14_48 VALUES(1.1, 1.1, 1.1);
 SELECT * from double_test14_48;
 --PKEY col0 col1 col2 null error 
-INSERT INTO double_test14_48() VALUES();
+INSERT INTO double_test14_48(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from double_test14_48;
 --PKEY col0 null error 
 INSERT INTO double_test14_48(col1,col2) VALUES(3.3,3.3);
@@ -12525,7 +12525,7 @@ SELECT * from double_test14_49;
 INSERT INTO double_test14_49 VALUES(1.1, 1.1, 1.1);
 SELECT * from double_test14_49;
 --PKEY col0 col1 col2 null error 
-INSERT INTO double_test14_49() VALUES();
+INSERT INTO double_test14_49(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from double_test14_49;
 --PKEY col0 null error 
 INSERT INTO double_test14_49(col1,col2) VALUES(3.3,3.3);
@@ -12552,7 +12552,7 @@ SELECT * from double_test14_50;
 INSERT INTO double_test14_50 VALUES(1.1, 1.1, 1.1);
 SELECT * from double_test14_50;
 --PKEY col0 col1 col2 null error 
-INSERT INTO double_test14_50() VALUES();
+INSERT INTO double_test14_50(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from double_test14_50;
 --PKEY col0 null error 
 INSERT INTO double_test14_50(col1,col2) VALUES(3.3,3.3);
@@ -12579,7 +12579,7 @@ SELECT * from double_test14_51;
 INSERT INTO double_test14_51 VALUES(1.1, 1.1, 1.1);
 SELECT * from double_test14_51;
 --PKEY col0 col1 col2 null error 
-INSERT INTO double_test14_51() VALUES();
+INSERT INTO double_test14_51(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from double_test14_51;
 --PKEY col0 null error 
 INSERT INTO double_test14_51(col1,col2) VALUES(3.3,3.3);
@@ -12606,7 +12606,7 @@ SELECT * from double_test14_52;
 INSERT INTO double_test14_52 VALUES(1.1, 1.1, 1.1);
 SELECT * from double_test14_52;
 --PKEY col0 col1 col2 null error 
-INSERT INTO double_test14_52() VALUES();
+INSERT INTO double_test14_52(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from double_test14_52;
 --PKEY col0 null error 
 INSERT INTO double_test14_52(col1,col2) VALUES(3.3,3.3);
@@ -12636,7 +12636,7 @@ SELECT * from double_test14_53;
 INSERT INTO double_test14_53 VALUES(1.1, 1.1, 1.1);
 SELECT * from double_test14_53;
 --PKEY col0 col1 col2 null error 
-INSERT INTO double_test14_53() VALUES();
+INSERT INTO double_test14_53(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from double_test14_53;
 --PKEY col0 null error 
 INSERT INTO double_test14_53(col1,col2) VALUES(3.3,3.3);
@@ -12666,7 +12666,7 @@ SELECT * from double_test14_54;
 INSERT INTO double_test14_54 VALUES(1.1, 1.1, 1.1);
 SELECT * from double_test14_54;
 --PKEY col0 col1 col2 null error 
-INSERT INTO double_test14_54() VALUES();
+INSERT INTO double_test14_54(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from double_test14_54;
 --PKEY col0 null error 
 INSERT INTO double_test14_54(col1,col2) VALUES(3.3,3.3);
@@ -12696,7 +12696,7 @@ SELECT * from double_test14_55;
 INSERT INTO double_test14_55 VALUES(1.1, 1.1, 1.1);
 SELECT * from double_test14_55;
 --PKEY col0 col1 col2 null error 
-INSERT INTO double_test14_55() VALUES();
+INSERT INTO double_test14_55(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from double_test14_55;
 --PKEY col0 null error 
 INSERT INTO double_test14_55(col1,col2) VALUES(3.3,3.3);
@@ -14385,7 +14385,7 @@ SELECT * from char_test14_48;
 INSERT INTO char_test14_48 VALUES('1', '1', '1');
 SELECT * from char_test14_48;
 --PKEY col0 col1 col2 null error 
-INSERT INTO char_test14_48() VALUES();
+INSERT INTO char_test14_48(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from char_test14_48;
 --PKEY col0 null error 
 INSERT INTO char_test14_48(col1,col2) VALUES('3','3');
@@ -14409,7 +14409,7 @@ SELECT * from char_test14_49;
 INSERT INTO char_test14_49 VALUES('1', '1', '1');
 SELECT * from char_test14_49;
 --PKEY col0 col1 col2 null error 
-INSERT INTO char_test14_49() VALUES();
+INSERT INTO char_test14_49(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from char_test14_49;
 --PKEY col0 null error 
 INSERT INTO char_test14_49(col1,col2) VALUES('3','3');
@@ -14436,7 +14436,7 @@ SELECT * from char_test14_50;
 INSERT INTO char_test14_50 VALUES('1', '1', '1');
 SELECT * from char_test14_50;
 --PKEY col0 col1 col2 null error 
-INSERT INTO char_test14_50() VALUES();
+INSERT INTO char_test14_50(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from char_test14_50;
 --PKEY col0 null error 
 INSERT INTO char_test14_50(col1,col2) VALUES('3','3');
@@ -14463,7 +14463,7 @@ SELECT * from char_test14_51;
 INSERT INTO char_test14_51 VALUES('1', '1', '1');
 SELECT * from char_test14_51;
 --PKEY col0 col1 col2 null error 
-INSERT INTO char_test14_51() VALUES();
+INSERT INTO char_test14_51(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from char_test14_51;
 --PKEY col0 null error 
 INSERT INTO char_test14_51(col1,col2) VALUES('3','3');
@@ -14490,7 +14490,7 @@ SELECT * from char_test14_52;
 INSERT INTO char_test14_52 VALUES('1', '1', '1');
 SELECT * from char_test14_52;
 --PKEY col0 col1 col2 null error 
-INSERT INTO char_test14_52() VALUES();
+INSERT INTO char_test14_52(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from char_test14_52;
 --PKEY col0 null error 
 INSERT INTO char_test14_52(col1,col2) VALUES('3','3');
@@ -14520,7 +14520,7 @@ SELECT * from char_test14_53;
 INSERT INTO char_test14_53 VALUES('1', '1', '1');
 SELECT * from char_test14_53;
 --PKEY col0 col1 col2 null error 
-INSERT INTO char_test14_53() VALUES();
+INSERT INTO char_test14_53(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from char_test14_53;
 --PKEY col0 null error 
 INSERT INTO char_test14_53(col1,col2) VALUES('3','3');
@@ -14550,7 +14550,7 @@ SELECT * from char_test14_54;
 INSERT INTO char_test14_54 VALUES('1', '1', '1');
 SELECT * from char_test14_54;
 --PKEY col0 col1 col2 null error 
-INSERT INTO char_test14_54() VALUES();
+INSERT INTO char_test14_54(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from char_test14_54;
 --PKEY col0 null error 
 INSERT INTO char_test14_54(col1,col2) VALUES('3','3');
@@ -14580,7 +14580,7 @@ SELECT * from char_test14_55;
 INSERT INTO char_test14_55 VALUES('1', '1', '1');
 SELECT * from char_test14_55;
 --PKEY col0 col1 col2 null error 
-INSERT INTO char_test14_55() VALUES();
+INSERT INTO char_test14_55(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from char_test14_55;
 --PKEY col0 null error 
 INSERT INTO char_test14_55(col1,col2) VALUES('3','3');
@@ -16269,7 +16269,7 @@ SELECT * from varchar_test14_48;
 INSERT INTO varchar_test14_48 VALUES('1', '1', '1');
 SELECT * from varchar_test14_48;
 --PKEY col0 col1 col2 null error 
-INSERT INTO varchar_test14_48() VALUES();
+INSERT INTO varchar_test14_48(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from varchar_test14_48;
 --PKEY col0 null error 
 INSERT INTO varchar_test14_48(col1,col2) VALUES('3','3');
@@ -16293,7 +16293,7 @@ SELECT * from varchar_test14_49;
 INSERT INTO varchar_test14_49 VALUES('1', '1', '1');
 SELECT * from varchar_test14_49;
 --PKEY col0 col1 col2 null error 
-INSERT INTO varchar_test14_49() VALUES();
+INSERT INTO varchar_test14_49(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from varchar_test14_49;
 --PKEY col0 null error 
 INSERT INTO varchar_test14_49(col1,col2) VALUES('3','3');
@@ -16320,7 +16320,7 @@ SELECT * from varchar_test14_50;
 INSERT INTO varchar_test14_50 VALUES('1', '1', '1');
 SELECT * from varchar_test14_50;
 --PKEY col0 col1 col2 null error 
-INSERT INTO varchar_test14_50() VALUES();
+INSERT INTO varchar_test14_50(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from varchar_test14_50;
 --PKEY col0 null error 
 INSERT INTO varchar_test14_50(col1,col2) VALUES('3','3');
@@ -16347,7 +16347,7 @@ SELECT * from varchar_test14_51;
 INSERT INTO varchar_test14_51 VALUES('1', '1', '1');
 SELECT * from varchar_test14_51;
 --PKEY col0 col1 col2 null error 
-INSERT INTO varchar_test14_51() VALUES();
+INSERT INTO varchar_test14_51(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from varchar_test14_51;
 --PKEY col0 null error 
 INSERT INTO varchar_test14_51(col1,col2) VALUES('3','3');
@@ -16374,7 +16374,7 @@ SELECT * from varchar_test14_52;
 INSERT INTO varchar_test14_52 VALUES('1', '1', '1');
 SELECT * from varchar_test14_52;
 --PKEY col0 col1 col2 null error 
-INSERT INTO varchar_test14_52() VALUES();
+INSERT INTO varchar_test14_52(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from varchar_test14_52;
 --PKEY col0 null error 
 INSERT INTO varchar_test14_52(col1,col2) VALUES('3','3');
@@ -16404,7 +16404,7 @@ SELECT * from varchar_test14_53;
 INSERT INTO varchar_test14_53 VALUES('1', '1', '1');
 SELECT * from varchar_test14_53;
 --PKEY col0 col1 col2 null error 
-INSERT INTO varchar_test14_53() VALUES();
+INSERT INTO varchar_test14_53(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from varchar_test14_53;
 --PKEY col0 null error 
 INSERT INTO varchar_test14_53(col1,col2) VALUES('3','3');
@@ -16434,7 +16434,7 @@ SELECT * from varchar_test14_54;
 INSERT INTO varchar_test14_54 VALUES('1', '1', '1');
 SELECT * from varchar_test14_54;
 --PKEY col0 col1 col2 null error 
-INSERT INTO varchar_test14_54() VALUES();
+INSERT INTO varchar_test14_54(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from varchar_test14_54;
 --PKEY col0 null error 
 INSERT INTO varchar_test14_54(col1,col2) VALUES('3','3');
@@ -16464,7 +16464,7 @@ SELECT * from varchar_test14_55;
 INSERT INTO varchar_test14_55 VALUES('1', '1', '1');
 SELECT * from varchar_test14_55;
 --PKEY col0 col1 col2 null error 
-INSERT INTO varchar_test14_55() VALUES();
+INSERT INTO varchar_test14_55(col0, col1, col2) VALUES(NULL, NULL, NULL);
 SELECT * from varchar_test14_55;
 --PKEY col0 null error 
 INSERT INTO varchar_test14_55(col1,col2) VALUES('3','3');
