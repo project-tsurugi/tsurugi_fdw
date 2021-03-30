@@ -702,28 +702,19 @@ CreateTable::store_metadata( ObjectIdType* object_id )
     switch (error)
     {
         case ErrorCode::OK:
-            ret_value = true;
-            return ret_value;
-            break;
-        case ErrorCode::TABLE_NAME_ALREADY_EXISTS:
-            if (create_stmt->if_not_exists)
             {
-                ereport(NOTICE,
-                    (errcode(ERRCODE_DUPLICATE_TABLE),
-                     errmsg("table name \"%s\" already exsists, skipping", relname)));
+                ret_value = true;
+                return ret_value;
             }
-            else{
-                ereport(ERROR,
-                    (errcode(ERRCODE_DUPLICATE_TABLE),
-                     errmsg("table name \"%s\" already exsists", relname)));
-            }
-            return ret_value;
             break;
         default:
-            ereport(ERROR,
-                    (errcode(ERRCODE_INTERNAL_ERROR),
-                     errmsg("Tsurugi could not store table metadata %d", (int)error)));
-            return ret_value;
+            {
+                ereport(ERROR,
+                        (errcode(ERRCODE_INTERNAL_ERROR),
+                         errmsg("Tsurugi could not store table metadata (%d)", (int)error)));
+                return ret_value;
+            }
+            break;
     }
 
 }
