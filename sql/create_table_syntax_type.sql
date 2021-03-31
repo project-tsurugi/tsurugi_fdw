@@ -2321,9 +2321,9 @@ create table tmp2.same_table_name_test (
   ol_number int
 ) tablespace tsurugi;
 
-CREATE DATABASE test TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'C' LC_CTYPE = 'en_US.utf8';
+CREATE DATABASE contrib_regression_test TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'C' LC_CTYPE = 'en_US.utf8';
 
-\c test
+\c contrib_regression_test
 
 -- If same table name is defined in another database,
 -- fail to create table.
@@ -2359,5 +2359,3 @@ CREATE FOREIGN TABLE same_table_name_test (
 SELECT * from same_table_name_test ;
 
 \c postgres
-
-DROP DATABASE test;

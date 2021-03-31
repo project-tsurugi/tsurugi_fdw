@@ -2506,4 +2506,3 @@ SELECT * from same_table_name_test ;
 (0 rows)
 
 \c postgres
-DROP DATABASE test;
