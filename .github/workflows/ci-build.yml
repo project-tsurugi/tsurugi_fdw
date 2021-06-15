@@ -23,6 +23,7 @@ jobs:
         postgresql: [11.1, 12.3]
         container-tag: [ubuntu-18.04, ubuntu-20.04]
 
+
     steps:
       - id: Setup_PostgreSQL
         name: Setup_PostgreSQL
