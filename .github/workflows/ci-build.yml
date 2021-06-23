@@ -59,7 +59,7 @@ jobs:
       - id: Install_shirakami
         name: Install_shirakami
         run: |
-          cd postgresql-${{ matrix.postgresql }}/contrib/frontend/third_party/ogawayama/third_party/sharksfin/third_party/shirakami
+          cd postgresql-${{ matrix.postgresql }}/contrib/frontend/third_party/ogawayama/third_party/jogasaki/third_party/sharksfin/third_party/shirakami
           mkdir -p build
           cd build
           rm -f CMakeCache.txt
@@ -69,7 +69,7 @@ jobs:
       - id: Install_sharksfin
         name: Install_sharksfin
         run: |
-          cd postgresql-${{ matrix.postgresql }}/contrib/frontend/third_party/ogawayama/third_party/ssharksfin
+          cd postgresql-${{ matrix.postgresql }}/contrib/frontend/third_party/ogawayama/third_party/jogasaki/third_party/sharksfin
           mkdir -p build
           cd build
           rm -f CMakeCache.txt
