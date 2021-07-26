@@ -13,7 +13,6 @@ BINARY_DIR=build
 
 SHARKSFIN_IMPLEMENTATION=memory
 
-#For current third_party build@20210726
 CURRENT_DIR=$(pwd)
 
 sudo apt update -y
