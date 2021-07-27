@@ -13,8 +13,6 @@ BINARY_DIR=build
 
 SHARKSFIN_IMPLEMENTATION=memory
 
-CURRENT_DIR=$(pwd)
-
 sudo apt update -y
 #sudo apt install -y \
 #    build-essential \
@@ -291,8 +289,6 @@ ninja install
 cd $TSURUGI_HOME/jogasaki
 git submodule update --init --recursive
 
-##add for error escape 
-
 cd $TSURUGI_HOME/jogasaki/third_party/concurrentqueue
 rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
@@ -336,39 +332,3 @@ cmake -G Ninja \
     ..
 ninja
 ninja install
-
-# ogawayama (included in third_party)
-
-cd $CURRENT_DIR/third_party/ogawayama
-git submodule update --init
-
-rm -rf $BINARY_DIR
-mkdir $BINARY_DIR
-cd $BINARY_DIR
-cmake -G Ninja \
-    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
-    -DFORCE_INSTALL_RPATH=ON \
-    -DBUILD_TESTS=OFF \
-    -DSHARKSFIN_IMPLEMENTATION=$SHARKSFIN_IMPLEMENTATION \
-    -DCMAKE_MODULE_PATH=$INSTALL_PREFIX \
-    ..
-ninja
-ninja install
-
-# manager (included in third_party)
-
-cd $CURRENT_DIR/third_party/manager
-git submodule update --init
-
-rm -rf $BINARY_DIR
-mkdir $BINARY_DIR
-cd $BINARY_DIR
-
-cmake -G 'Unix Makefiles' \
-    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
-    -DFORCE_INSTALL_RPATH=ON \
-    ..
-make
-make install
