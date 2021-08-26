@@ -16,6 +16,7 @@
 #include "commands/tablecmds.h"
 
 #include "create_table.h"
+#include "create_role.h"
 
 #ifndef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
@@ -88,7 +89,11 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
                                        context, params, queryEnv,
                                        dest, completionTag);
             break;
-
+        case T_CreateRoleStmt:
+      	    standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
+                                    dest, completionTag);
+            after_create_role();
+            break;
 		default:
 		    standard_ProcessUtility(pstmt, queryString,
 			    					context, params, queryEnv,
