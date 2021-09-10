@@ -17,6 +17,8 @@
 
 #include "create_table.h"
 #include "create_role.h"
+#include "alter_role.h"
+#include "drop_role.h"
 
 #ifndef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
@@ -92,7 +94,81 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
         case T_CreateRoleStmt:
       	    standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
                                     dest, completionTag);
-            after_create_role(parsetree);
+            after_create_role((CreateRoleStmt*)parsetree);
+            break;
+        case T_DropRoleStmt:
+			/* 
+			 * ドロップの場合、複数のオブジェクトIDを指定できる。
+			 * オブジェクトIDを事前にとって、削除後の処理に渡す方法。
+			 * それに合わせて、関数の引数も変更が必要。
+			 * allocate object_id list.
+			 * オブジェクトの個数分メモリ領域を動的に確保する必要がある。
+			 */
+	        before_drop_role((DropRoleStmt*)parsetree);
+      	    standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
+                                    dest, completionTag);
+			/* 
+			 * メッセージについては、後処理で送信する。
+			 * DROPに失敗したのに、DROPのメッセージを送信していると問題になる可能性があるため。
+			 */
+            after_drop_role((DropRoleStmt*)parsetree);
+
+			/* 
+			 * 動的に確保した領域を削除する必要あり。
+			 * free object_id list.
+			 */
+
+            break;
+        case T_AlterRoleStmt:
+			/* 
+			 * Alterの場合、変更なのでオブジェクトを事前に取得する必要はない、
+			 * 処理前の処理は不要かもしれない。不要であれば削除してください。
+			 */
+            before_alter_role((AlterRoleStmt*)parsetree);
+      	    standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
+                                    dest, completionTag);
+			/* 
+			 * メッセージについては、後処理で送信する。
+			 */
+            after_alter_role((AlterRoleStmt*)parsetree);
+            break;
+        case T_GrantStmt:
+			/* 
+			 * GRANT/REVOKE TABLEについては、外部テーブルからオーナIDとACLの取得方法の検討が必要。
+			 * 現状、以下のように記載しているが、大きく変更の可能性がある。
+			 * まずは、後回しにして、別の個所を進めてください。
+			 */
+			GrantStmt *stmt = (GrantStmt *) parsetree;
+
+			if (stmt->objtype == OBJECT_TABLE){
+				if (stmt->is_grant) /* true = GRANT, false = REVOKE */ 
+		            before_grant_table((GrantStmt*)parsetree);
+				else
+		            before_revoke_table((GrantStmt*)parsetree);
+	      	    standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
+	                                    dest, completionTag);
+				if (stmt->is_grant) /* true = GRANT, false = REVOKE */ 
+		            after_grant_table((GrantStmt*)parsetree);
+				else
+		            after_revoke_table((GrantStmt*)parsetree);
+			}
+			else
+	      	    standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
+	                                    dest, completionTag);
+            break;
+        case T_GrantRoleStmt:
+			GrantRoleStmt *stmt = (GrantRoleStmt *) parsetree;
+			/* 
+			 * GRANT/REVOKE両方ともに変更のため同一の関数としている。
+			 * 現状、内部でstmt->is_grantで分岐することを想定している。
+			 * GRANT/REVOLEに分けたほうが良ければ変更してください。
+			 * 
+			 * ALTERと一緒でROLE自体を削除するわけではないので、直前の処理は不要の可能性あり。
+			 */
+            before_grant_role((GrantRoleStmt*)parsetree);
+      	    standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
+                                    dest, completionTag);
+            after_grant_role((GrantRoleStmt*)parsetree);
             break;
 		default:
 		    standard_ProcessUtility(pstmt, queryString,

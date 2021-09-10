@@ -67,8 +67,7 @@ bool after_create_role(CreateRoleStmt* stmts) {
   uint64_t object_id = 0;
 
   /* Call the function sending metadata to metadata-manager. */
-  CreateRole cmds{stmts, DBNAME};
-  bool success = cmds.check_role(&object_id);
+  bool success = get_roleid_by_rolename(DBNAME,stmts->role,&object_id);
 
   if (success) {
     message::CreateRoleMessage cr_msg{object_id};
@@ -96,7 +95,6 @@ bool send_message(message::Message* message,
   stub::Transaction* transaction;
   error = StubManager::begin(&transaction);
   if (error != ERROR_CODE::OK) {
-    remove_role(message, objects);
     ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
                     errmsg("StubManager::begin() failed.")));
     return ret_value;
@@ -107,7 +105,6 @@ bool send_message(message::Message* message,
   message::Status status = broker.send_message(message);
 
   if (status.get_error_code() != message::ErrorCode::SUCCESS) {
-    remove_role(message, objects);
     ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
                     errmsg("transaction::receive_message() %s failed. (%d)",
                            message->get_message_type_name().c_str(),
@@ -128,15 +125,3 @@ bool send_message(message::Message* message,
   return ret_value;
 }
 
-/*
- *  @brief: Remove the created role when the message sending failed.
- *  @param  (message) [in]  message object.
- *  @param  (objects) [in]  Role object to call funciton.
- */
-void remove_role(message::Message* message,
-                 std::unique_ptr<metadata::Metadata>& objects) {
-  ptree role;
-  if (objects->get(message->get_object_id(), role) == metadata::ErrorCode::OK) {
-    objects->remove(message->get_object_id());
-  }
-}

@@ -14,45 +14,29 @@
  * limitations under the License.
  *
  *	@file	rolecmds.h
- *	@brief  Sends role to metadata-manager.
+ *	@brief  Utility command to operate Role through metadata-manager.
  */
 
 #ifndef ROLECMDS_H
 #define ROLECMDS_H
 
-class CreateRole {
- public:
-  /**
-   * @brief Initialize member variables.
-   * @param [in] CreateRoleStmt of CREATE ROLE statements.
-   * @param [in] dbname of DBNAME.
-   */
-  CreateRole(CreateRoleStmt* stmts, std::string dbname);
+/**
+ *  @brief  get role id from metadata-manager by role name.
+ *  @param  [in] Role name.
+ *  @param  [out] The object id stored if new role was successfully created.
+ *  @return true if role was successfully loaded
+ *  @return false otherwize.
+ */
+bool get_roleid_by_rolename(const std::string dbname, const char* role_name,
+                            uint64_t* object_id);
 
-  /**
-   *  @brief  Check created role object.
-   *  @param  [out] The object id if new role was successfully created.
-   *  @return true if role was created successfully
-   *  @return false otherwize
-   */
-  bool check_role(uint64_t* object_id);
-
- private:
-  /* DB name metadata-manager manages */
-  const std::string dbname;
-  /* Create Role Statement */
-  CreateRoleStmt* create_stmt;
-
-  /* role metadata obtained from metadata-manager */
-  std::unique_ptr<manager::metadata::Metadata> roles;
-
-  /**
-   *  @brief  Get role from metadata-manager.
-   *  @param  [out] The object id if new role was successfully created.
-   *  @return true if role was successfully created
-   *  @return false otherwize.
-   */
-  bool get_role(uint64_t* object_id);
-};
+/**
+ *  @brief: Remove the role object from metadata-manager.
+ *  @param  (dbname)  [in]  DB name metadata-manager manages.
+ *  @param  (object_id) [in]  message object.
+ *  @return true if role was successfully removed
+ *  @return false otherwize.
+ */
+bool remove_role_by_roleid(const std::string dbname, const uint64_t object_id);
 
 #endif  // ROLECMDS_H

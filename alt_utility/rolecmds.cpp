@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  *	@file	rolecmds.cpp
- *	@brief  Sends metadata to metadata-manager.
+ *	@brief  Utility command to operate Role through metadata-manager.
  */
 
 #include <boost/optional.hpp>
@@ -43,28 +43,36 @@ extern "C" {
 #include "rolecmds.h"
 
 /**
- * @brief Initialize member variables.
- * @param [in] CreateRoleStmt of CREATE ROLE statements.
- * @param [in] dbname of DBNAME.
+ *  @brief  Get role id from metadata-manager by role name.
+ *  @param  [in] DB name metadata-manager manages.
+ *  @param  [in] Role name.
+ *  @param  [out] The object id stored if new role was successfully created.
+ *  @return true if role was successfully loaded
+ *  @return false otherwize.
  */
-CreateRole::CreateRole(CreateRoleStmt* stmts, std::string dbname)
-    : create_stmt(stmts), dbname(dbname) {}
-
-/**
- *  @brief  Defines role metadata, syntax check, type check,
- * storing metadata.
- *  @param  [out] The object id stored if new table was successfully created.
- *  @return true if metadata was successfully stored
- *  @return false otherwize
- */
-bool CreateRole::check_role(uint64_t* object_id) {
-  Assert(create_stmt != nullptr);
-
+bool get_roleid_by_rolename(const std::string dbname,
+                            const char* role_name,
+                            uint64_t* object_id) {
   /* return value */
   bool ret_value{false};
+  ptree object;
+  /* Loads role */
+  std::unique_ptr<manager::metadata::Metadata> roles =
+      std::make_unique<Roles>(dbname);
+  ErrorCode error = roles->get(std::string_view(role_name), object);
 
-  /* get role */
-  if (!get_role(object_id)) {
+  if (error == ErrorCode::OK) {
+    boost::optional<ObjectIdType> tmp_role_id =
+        object.get_optional<ObjectIdType>(Roles::ROLE_OID);
+    if (!tmp_role_id) {
+      ereport(ERROR,
+              (errcode(ERRCODE_INTERNAL_ERROR), errmsg("Could not get role.")));
+      return ret_value;
+    }
+    *object_id = tmp_role_id.get();
+  } else {
+    ereport(ERROR,
+            (errcode(ERRCODE_INTERNAL_ERROR), errmsg("Could not get role.")));
     return ret_value;
   }
 
@@ -73,28 +81,28 @@ bool CreateRole::check_role(uint64_t* object_id) {
 }
 
 /**
- *  @brief  get role from metadata-manager.
- *  @param  [out] The object id stored if new role was successfully created.
- *  @return true if metadata was successfully loaded
+ *  @brief: Remove the role object from metadata-manager.
+ *  @param  (dbname)  [in]  DB name metadata-manager manages.
+ *  @param  (object_id) [in]  message object.
+ *  @return true if role was successfully removed
  *  @return false otherwize.
  */
-bool CreateRole::get_role(uint64_t* object_id) {
+bool remove_role_by_roleid(const std::string dbname, const uint64_t object_id) {
   /* return value */
   bool ret_value{false};
   ptree object;
-  /* Loads role */
-  roles = std::make_unique<Roles>(dbname);
-  ErrorCode error = roles->get(std::string_view(create_stmt->role), object);
+
+  std::unique_ptr<manager::metadata::Metadata> roles =
+      std::make_unique<Roles>(dbname);
+  ErrorCode error = roles->get(object_id, object);
 
   if (error == ErrorCode::OK) {
-    boost::optional<ObjectIdType> o_role_id =
-        object.get_optional<ObjectIdType>(Roles::ROLE_OID);
-    if (!o_role_id) {
-      ereport(ERROR,
-              (errcode(ERRCODE_INTERNAL_ERROR), errmsg("Could not get role.")));
+    error = roles->remove(object_id);
+    if (error != ErrorCode::OK) {
+      ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
+                      errmsg("Could not remove role.")));
       return ret_value;
     }
-    *object_id = o_role_id.get();
   } else {
     ereport(ERROR,
             (errcode(ERRCODE_INTERNAL_ERROR), errmsg("Could not get role.")));
