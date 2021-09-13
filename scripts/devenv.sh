@@ -289,6 +289,17 @@ ninja install
 cd $TSURUGI_HOME/jogasaki
 git submodule update --init --recursive
 
+cd $TSURUGI_HOME/jogasaki/third_party/concurrentqueue
+rm -rf $BINARY_DIR
+mkdir $BINARY_DIR
+cd $BINARY_DIR
+cmake \
+    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
+    ..
+cmake --build . --target install --clean-first
+cd $TSURUGI_HOME/jogasaki
+
 rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
 cd $BINARY_DIR
