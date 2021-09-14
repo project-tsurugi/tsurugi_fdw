@@ -48,7 +48,6 @@ git clone git@github.com:project-tsurugi/yugawara.git
 git clone git@github.com:project-tsurugi/jogasaki.git
 git clone git@github.com:project-tsurugi/mizugaki.git
 git clone git@github.com:project-tsurugi/sandbox-performance-tools.git
-
 # manager
 
 cd $TSURUGI_HOME/manager
@@ -58,13 +57,13 @@ rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
 cd $BINARY_DIR
 
-cmake -G 'Unix Makefiles' \
+cmake -G Ninja \
     -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
     -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
     -DFORCE_INSTALL_RPATH=ON \
     ..
-make
-make install
+ninja
+ninja install
 
 # mastree
 
