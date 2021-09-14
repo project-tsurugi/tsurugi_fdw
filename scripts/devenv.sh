@@ -48,6 +48,7 @@ git clone git@github.com:project-tsurugi/yugawara.git
 git clone git@github.com:project-tsurugi/jogasaki.git
 git clone git@github.com:project-tsurugi/mizugaki.git
 git clone git@github.com:project-tsurugi/sandbox-performance-tools.git
+
 # manager
 
 cd $TSURUGI_HOME/manager
