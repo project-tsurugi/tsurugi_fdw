@@ -24,13 +24,13 @@
 extern "C" {
 
 #endif
-bool before_grant_role(GrantStmt* stmts);
+bool before_grant_table(GrantStmt* stmts);
 
-bool after_grant_role(GrantStmt* stmts);
+bool after_grant_table(GrantStmt* stmts);
 
-bool before_revoke_role(GrantStmt* stmts);
+bool before_revoke_table(GrantStmt* stmts);
 
-bool after_revoke_role(GrantStmt* stmts);
+bool after_revoke_table(GrantStmt* stmts);
 
 #ifdef __cplusplus
 }
