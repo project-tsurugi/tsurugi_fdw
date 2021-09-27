@@ -1,90 +1,3 @@
-# 単体テスト
-## テストツール
-[run_test.sh](./run_test.sh)
-
-### 実行方法
-#### 前提条件
-* 次のREADME「How to build frontend」「How to set up for frontend」を実施済みであること。
-	* [frontend README.md](../../README.md)
-* テストを実施したPostgreSQLのバージョン
-	* 11.1
-	* 12.3
-
-#### 実行手順
-1. 次のコードを修正
-
-	```bash
-	# Fix below
-	# PostgreSQL install directory PGHOME
-	PGHOME_FOR_TEST=~/pgsql
-	# connection port number
-	PORT=5432
-	# the cluster's data directory PGDATA
-	PGDATA_FOR_TEST=$PGHOME_FOR_TEST/data
-	# Fix above
-	```
-
-1. 実行
-
-	```bash
-	./run_test.sh
-	```
-
-## テストパターン
-### 制約の直交表
-
-|項番|表制約<br>0=なし<br>1=単主キーあり<br>2=複合主キーあり|列制約NOT NULL<br>0=なし<br>1=あり|列制約PRYMARY KEY<br>0=なし<br>1=あり|
-|---|---|---|---|
-|1 error|0| 0| 0|
-|2|0| 0| 1|
-|3 error|0| 1| 0|
-|4|0| 1| 1|
-|5|1| 0| 0|
-|6 error|1| 0| 1|
-|7|1| 1| 0|
-|8 error|1| 1| 1|
-|9|2| 0| 0|
-|10 error|2| 0| 1|
-|11|2| 1| 0|
-|12 error|2| 1| 1|
-
-#### SQL
-* [otable_of_constr.sql](./otable_of_constr/otable_of_constr.sql)
-
-### 正常系
-* [ch-benchmark-ddl.sql](./ch-benchmark-ddl/ch-benchmark-ddl.sql)
-	* 参考：https://github.com/citusdata/ch-benchmark.git
-* [happy.sql](./happy/happy.sql)
-
-### 異常系
-* [alternative.sql](./alternative/alternative.sql)
-* [unhappy.sql](./unhappy/unhappy.sql)
-* メタデータのロード失敗
-	* ~/.local/tsurugi/metadata/datatypes.jsonのみ所有権をroot:rootに変更
-	* ~/.local/tsurugi/metadata/tables.jsonのみ所有権をroot:rootに変更
-	* ~/.local/tsurugi/metadata/oidのみ所有権をroot:rootに変更
-
-### tsurugi用のテーブル以外の場合（tablespace tsurugiをつけない場合）
-* [wo_tsurugi.sql](./wo_tsurugi/wo_tsurugi.sql)
-
-## カバレッジレポート生成手順
-* https://www.postgresql.org/docs/12/regress-coverage.html
-
-## 参考
-
-### テストパターン数
-|種類|テストケース名|テストパターン数|
-| :--- | :--- | ---: |
-|正常系|otable_of_constr.sql|15|
-|正常系|ch-benchmark-ddl.sql|14|
-|正常系|happy.sql|11|
-|異常系|alternative.sql|89|
-|異常系|unhappy.sql|23|
-|異常系|メタデータのロード失敗|3|
-|正常系|計|40|
-|異常系|計|115|
-||総計|155|
-
 # 機能テスト(結合テスト)
 ## 基本方針
 * CREATE TABLE構文でテーブル定義を行ったあと、INSERT/SELECTを発行することで、正常にテーブル定義が動作したことを確認する。
@@ -117,7 +30,24 @@
 		* [制約の直交表](#制約の直交表)の全テーブルをCREATE TABLE
 		* [制約の直交表](#制約の直交表)の全テーブルに対して、INSERT/SELECT
 		* 「NULL」、「NOT UNIQUEな値」をINSERT
-		
+
+#### 制約の直交表
+
+|項番|表制約<br>0=なし<br>1=単主キーあり<br>2=複合主キーあり|列制約NOT NULL<br>0=なし<br>1=あり|列制約PRYMARY KEY<br>0=なし<br>1=あり|
+|---|---|---|---|
+|1 error|0| 0| 0|
+|2|0| 0| 1|
+|3 error|0| 1| 0|
+|4|0| 1| 1|
+|5|1| 0| 0|
+|6 error|1| 0| 1|
+|7|1| 1| 0|
+|8 error|1| 1| 1|
+|9|2| 0| 0|
+|10 error|2| 0| 1|
+|11|2| 1| 0|
+|12 error|2| 1| 1|
+
 ### INSERT/SELECTに関するテスト
 * テスト確認観点
 	* INSERT/SELECTが正常に動作するか。
@@ -132,13 +62,6 @@
 		* 値の範囲に関する境界値テスト
 	* DELETE
 		* WHERE句を指定し、DELETEが正常に動作するか
-
-### frontend以外のコンポーネント異常テスト
-* テスト確認観点
-	* frontend以外のコンポーネントでエラーが発生した場合、仕様通りの動作となるか。
-* 主なテスト項目
-	* ogawayama-serverが起動していない場合
-	* メタデータのロードが失敗した場合
 
 ## テスト項目一覧
 ### CREATE TABLEに関するテスト
@@ -357,18 +280,7 @@
 				* 存在しないカラム名をWHERE句で検索し、エラーメッセージが出力されることを確認する。
 * SQL
 	* [update_delete.sql](../../sql/update_delete.sql)
-	
-### frontend以外のコンポーネント異常テスト
-* テスト確認観点
-	* frontend以外のコンポーネントでエラーが発生した場合、frontendでエラーメッセージが出力され、Tsurugiでテーブルが定義されない、かつ定義要求したテーブルメタデータがTsurugiで保存されないことを確認する。
-* 内容
-	* ogawayama異常
-		* ogawayama-serverが起動していない状態で、ユーザーがCREATE TABLE構文を入力する。この場合、ogawayamaのstubでエラーが発生する。
-	* metadata-manager異常
-		* 次の操作を行ったあとで、ユーザーがCREATE TABLE構文を入力する。この場合、metadata-managerがメタデータのロードに失敗し、metadata-managerでエラーが発生する。
-			* ~/.local/tsurugi/metadata/datatypes.jsonのみ所有権をroot:rootに変更
-			* ~/.local/tsurugi/metadata/tables.jsonのみ所有権をroot:rootに変更
-			* ~/.local/tsurugi/metadata/oidのみ所有権をroot:rootに変更
-* テストツール
-	* [test_extra.sh](../../test_extra.sh)
 
+## 参考
+### カバレッジレポート生成手順
+* https://www.postgresql.org/docs/12/regress-coverage.html

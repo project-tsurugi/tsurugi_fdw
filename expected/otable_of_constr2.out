@@ -15885,10 +15885,8 @@ SELECT * from test14_48;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO test14_48() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO test14_48() VALUES();
-                              ^
+INSERT INTO test14_48(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from test14_48;
  col0 | col1 | col2 
 ------+------+------
@@ -15955,10 +15953,8 @@ SELECT * from test14_49;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO test14_49() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO test14_49() VALUES();
-                              ^
+INSERT INTO test14_49(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from test14_49;
  col0 | col1 | col2 
 ------+------+------
@@ -16034,10 +16030,8 @@ SELECT * from test14_50;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO test14_50() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO test14_50() VALUES();
-                              ^
+INSERT INTO test14_50(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from test14_50;
  col0 | col1 | col2 
 ------+------+------
@@ -16113,10 +16107,8 @@ SELECT * from test14_51;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO test14_51() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO test14_51() VALUES();
-                              ^
+INSERT INTO test14_51(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from test14_51;
  col0 | col1 | col2 
 ------+------+------
@@ -16192,10 +16184,8 @@ SELECT * from test14_52;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO test14_52() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO test14_52() VALUES();
-                              ^
+INSERT INTO test14_52(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from test14_52;
  col0 | col1 | col2 
 ------+------+------
@@ -16280,10 +16270,8 @@ SELECT * from test14_53;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO test14_53() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO test14_53() VALUES();
-                              ^
+INSERT INTO test14_53(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from test14_53;
  col0 | col1 | col2 
 ------+------+------
@@ -16368,10 +16356,8 @@ SELECT * from test14_54;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO test14_54() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO test14_54() VALUES();
-                              ^
+INSERT INTO test14_54(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from test14_54;
  col0 | col1 | col2 
 ------+------+------
@@ -16456,10 +16442,8 @@ SELECT * from test14_55;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO test14_55() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO test14_55() VALUES();
-                              ^
+INSERT INTO test14_55(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from test14_55;
  col0 | col1 | col2 
 ------+------+------
@@ -20321,10 +20305,8 @@ SELECT * from bigint_test14_48;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO bigint_test14_48() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO bigint_test14_48() VALUES();
-                                     ^
+INSERT INTO bigint_test14_48(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from bigint_test14_48;
  col0 | col1 | col2 
 ------+------+------
@@ -20391,10 +20373,8 @@ SELECT * from bigint_test14_49;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO bigint_test14_49() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO bigint_test14_49() VALUES();
-                                     ^
+INSERT INTO bigint_test14_49(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from bigint_test14_49;
  col0 | col1 | col2 
 ------+------+------
@@ -20470,10 +20450,8 @@ SELECT * from bigint_test14_50;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO bigint_test14_50() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO bigint_test14_50() VALUES();
-                                     ^
+INSERT INTO bigint_test14_50(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from bigint_test14_50;
  col0 | col1 | col2 
 ------+------+------
@@ -20549,10 +20527,8 @@ SELECT * from bigint_test14_51;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO bigint_test14_51() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO bigint_test14_51() VALUES();
-                                     ^
+INSERT INTO bigint_test14_51(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from bigint_test14_51;
  col0 | col1 | col2 
 ------+------+------
@@ -20628,10 +20604,8 @@ SELECT * from bigint_test14_52;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO bigint_test14_52() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO bigint_test14_52() VALUES();
-                                     ^
+INSERT INTO bigint_test14_52(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from bigint_test14_52;
  col0 | col1 | col2 
 ------+------+------
@@ -20716,10 +20690,8 @@ SELECT * from bigint_test14_53;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO bigint_test14_53() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO bigint_test14_53() VALUES();
-                                     ^
+INSERT INTO bigint_test14_53(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from bigint_test14_53;
  col0 | col1 | col2 
 ------+------+------
@@ -20804,10 +20776,8 @@ SELECT * from bigint_test14_54;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO bigint_test14_54() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO bigint_test14_54() VALUES();
-                                     ^
+INSERT INTO bigint_test14_54(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from bigint_test14_54;
  col0 | col1 | col2 
 ------+------+------
@@ -20892,10 +20862,8 @@ SELECT * from bigint_test14_55;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO bigint_test14_55() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO bigint_test14_55() VALUES();
-                                     ^
+INSERT INTO bigint_test14_55(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from bigint_test14_55;
  col0 | col1 | col2 
 ------+------+------
@@ -24757,10 +24725,8 @@ SELECT * from real_test14_48;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO real_test14_48() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO real_test14_48() VALUES();
-                                   ^
+INSERT INTO real_test14_48(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from real_test14_48;
  col0 | col1 | col2 
 ------+------+------
@@ -24827,10 +24793,8 @@ SELECT * from real_test14_49;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO real_test14_49() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO real_test14_49() VALUES();
-                                   ^
+INSERT INTO real_test14_49(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from real_test14_49;
  col0 | col1 | col2 
 ------+------+------
@@ -24906,10 +24870,8 @@ SELECT * from real_test14_50;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO real_test14_50() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO real_test14_50() VALUES();
-                                   ^
+INSERT INTO real_test14_50(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from real_test14_50;
  col0 | col1 | col2 
 ------+------+------
@@ -24985,10 +24947,8 @@ SELECT * from real_test14_51;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO real_test14_51() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO real_test14_51() VALUES();
-                                   ^
+INSERT INTO real_test14_51(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from real_test14_51;
  col0 | col1 | col2 
 ------+------+------
@@ -25064,10 +25024,8 @@ SELECT * from real_test14_52;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO real_test14_52() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO real_test14_52() VALUES();
-                                   ^
+INSERT INTO real_test14_52(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from real_test14_52;
  col0 | col1 | col2 
 ------+------+------
@@ -25152,10 +25110,8 @@ SELECT * from real_test14_53;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO real_test14_53() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO real_test14_53() VALUES();
-                                   ^
+INSERT INTO real_test14_53(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from real_test14_53;
  col0 | col1 | col2 
 ------+------+------
@@ -25240,10 +25196,8 @@ SELECT * from real_test14_54;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO real_test14_54() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO real_test14_54() VALUES();
-                                   ^
+INSERT INTO real_test14_54(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from real_test14_54;
  col0 | col1 | col2 
 ------+------+------
@@ -25328,10 +25282,8 @@ SELECT * from real_test14_55;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO real_test14_55() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO real_test14_55() VALUES();
-                                   ^
+INSERT INTO real_test14_55(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from real_test14_55;
  col0 | col1 | col2 
 ------+------+------
@@ -29193,10 +29145,8 @@ SELECT * from double_test14_48;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO double_test14_48() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO double_test14_48() VALUES();
-                                     ^
+INSERT INTO double_test14_48(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from double_test14_48;
  col0 | col1 | col2 
 ------+------+------
@@ -29263,10 +29213,8 @@ SELECT * from double_test14_49;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO double_test14_49() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO double_test14_49() VALUES();
-                                     ^
+INSERT INTO double_test14_49(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from double_test14_49;
  col0 | col1 | col2 
 ------+------+------
@@ -29342,10 +29290,8 @@ SELECT * from double_test14_50;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO double_test14_50() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO double_test14_50() VALUES();
-                                     ^
+INSERT INTO double_test14_50(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from double_test14_50;
  col0 | col1 | col2 
 ------+------+------
@@ -29421,10 +29367,8 @@ SELECT * from double_test14_51;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO double_test14_51() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO double_test14_51() VALUES();
-                                     ^
+INSERT INTO double_test14_51(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from double_test14_51;
  col0 | col1 | col2 
 ------+------+------
@@ -29500,10 +29444,8 @@ SELECT * from double_test14_52;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO double_test14_52() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO double_test14_52() VALUES();
-                                     ^
+INSERT INTO double_test14_52(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from double_test14_52;
  col0 | col1 | col2 
 ------+------+------
@@ -29588,10 +29530,8 @@ SELECT * from double_test14_53;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO double_test14_53() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO double_test14_53() VALUES();
-                                     ^
+INSERT INTO double_test14_53(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from double_test14_53;
  col0 | col1 | col2 
 ------+------+------
@@ -29676,10 +29616,8 @@ SELECT * from double_test14_54;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO double_test14_54() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO double_test14_54() VALUES();
-                                     ^
+INSERT INTO double_test14_54(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from double_test14_54;
  col0 | col1 | col2 
 ------+------+------
@@ -29764,10 +29702,8 @@ SELECT * from double_test14_55;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO double_test14_55() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO double_test14_55() VALUES();
-                                     ^
+INSERT INTO double_test14_55(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from double_test14_55;
  col0 | col1 | col2 
 ------+------+------
@@ -33629,10 +33565,8 @@ SELECT * from char_test14_48;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO char_test14_48() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO char_test14_48() VALUES();
-                                   ^
+INSERT INTO char_test14_48(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from char_test14_48;
     col0    |    col1    |    col2    
 ------------+------------+------------
@@ -33699,10 +33633,8 @@ SELECT * from char_test14_49;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO char_test14_49() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO char_test14_49() VALUES();
-                                   ^
+INSERT INTO char_test14_49(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from char_test14_49;
     col0    |    col1    |    col2    
 ------------+------------+------------
@@ -33778,10 +33710,8 @@ SELECT * from char_test14_50;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO char_test14_50() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO char_test14_50() VALUES();
-                                   ^
+INSERT INTO char_test14_50(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from char_test14_50;
     col0    |    col1    |    col2    
 ------------+------------+------------
@@ -33857,10 +33787,8 @@ SELECT * from char_test14_51;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO char_test14_51() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO char_test14_51() VALUES();
-                                   ^
+INSERT INTO char_test14_51(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from char_test14_51;
     col0    |    col1    |    col2    
 ------------+------------+------------
@@ -33936,10 +33864,8 @@ SELECT * from char_test14_52;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO char_test14_52() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO char_test14_52() VALUES();
-                                   ^
+INSERT INTO char_test14_52(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from char_test14_52;
     col0    |    col1    |    col2    
 ------------+------------+------------
@@ -34024,10 +33950,8 @@ SELECT * from char_test14_53;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO char_test14_53() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO char_test14_53() VALUES();
-                                   ^
+INSERT INTO char_test14_53(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from char_test14_53;
     col0    |    col1    |    col2    
 ------------+------------+------------
@@ -34112,10 +34036,8 @@ SELECT * from char_test14_54;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO char_test14_54() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO char_test14_54() VALUES();
-                                   ^
+INSERT INTO char_test14_54(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from char_test14_54;
     col0    |    col1    |    col2    
 ------------+------------+------------
@@ -34200,10 +34122,8 @@ SELECT * from char_test14_55;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO char_test14_55() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO char_test14_55() VALUES();
-                                   ^
+INSERT INTO char_test14_55(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from char_test14_55;
     col0    |    col1    |    col2    
 ------------+------------+------------
@@ -38065,10 +37985,8 @@ SELECT * from varchar_test14_48;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO varchar_test14_48() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO varchar_test14_48() VALUES();
-                                      ^
+INSERT INTO varchar_test14_48(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from varchar_test14_48;
  col0 | col1 | col2 
 ------+------+------
@@ -38135,10 +38053,8 @@ SELECT * from varchar_test14_49;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO varchar_test14_49() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO varchar_test14_49() VALUES();
-                                      ^
+INSERT INTO varchar_test14_49(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from varchar_test14_49;
  col0 | col1 | col2 
 ------+------+------
@@ -38214,10 +38130,8 @@ SELECT * from varchar_test14_50;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO varchar_test14_50() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO varchar_test14_50() VALUES();
-                                      ^
+INSERT INTO varchar_test14_50(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from varchar_test14_50;
  col0 | col1 | col2 
 ------+------+------
@@ -38293,10 +38207,8 @@ SELECT * from varchar_test14_51;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO varchar_test14_51() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO varchar_test14_51() VALUES();
-                                      ^
+INSERT INTO varchar_test14_51(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from varchar_test14_51;
  col0 | col1 | col2 
 ------+------+------
@@ -38372,10 +38284,8 @@ SELECT * from varchar_test14_52;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO varchar_test14_52() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO varchar_test14_52() VALUES();
-                                      ^
+INSERT INTO varchar_test14_52(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from varchar_test14_52;
  col0 | col1 | col2 
 ------+------+------
@@ -38460,10 +38370,8 @@ SELECT * from varchar_test14_53;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO varchar_test14_53() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO varchar_test14_53() VALUES();
-                                      ^
+INSERT INTO varchar_test14_53(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from varchar_test14_53;
  col0 | col1 | col2 
 ------+------+------
@@ -38548,10 +38456,8 @@ SELECT * from varchar_test14_54;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO varchar_test14_54() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO varchar_test14_54() VALUES();
-                                      ^
+INSERT INTO varchar_test14_54(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from varchar_test14_54;
  col0 | col1 | col2 
 ------+------+------
@@ -38636,10 +38542,8 @@ SELECT * from varchar_test14_55;
 (1 row)
 
 --PKEY col0 col1 col2 null error 
-INSERT INTO varchar_test14_55() VALUES();
-ERROR:  syntax error at or near ")"
-LINE 1: INSERT INTO varchar_test14_55() VALUES();
-                                      ^
+INSERT INTO varchar_test14_55(col0, col1, col2) VALUES(NULL, NULL, NULL);
+ERROR:  transaction::execute_statement() failed. (9)
 SELECT * from varchar_test14_55;
  col0 | col1 | col2 
 ------+------+------

@@ -76,7 +76,7 @@ CreateTable::CreateTable(List *stmts, std::string dbname) : stmts(stmts), dbname
  *  @return false otherwize
  */
 bool
-CreateTable::define_relation( uint64_t* object_id )
+CreateTable::define_relation( ObjectIdType* object_id )
 {
     Assert(create_stmt != nullptr);
 
@@ -84,9 +84,14 @@ CreateTable::define_relation( uint64_t* object_id )
     bool ret_value{false};
 
     /* load metadata */
-    if (!load_metadata())
+    if (datatypes == nullptr)
     {
-        return ret_value;
+        datatypes = std::make_unique<DataTypes>(dbname);
+    }
+
+    if (tables == nullptr)
+    {
+        tables = std::make_unique<Tables>(dbname);
     }
 
     /* check if given syntax supported or not by Tsurugi */
@@ -104,43 +109,6 @@ CreateTable::define_relation( uint64_t* object_id )
     /* send metadata to metadata manager */
     if (!store_metadata( object_id ))
     {
-        return ret_value;
-    }
-
-    ret_value = true;
-    return ret_value;
-}
-
-/**
- *  @brief  Loads metadata from metadata-manager.
- *  @return true if metadata was successfully loaded
- *  @return false otherwize.
- */
-bool
-CreateTable::load_metadata()
-{
-    /* return value */
-    bool ret_value{false};
-
-    /* Loads data type metadata */
-    datatypes = std::make_unique<DataTypes>(dbname);
-
-    if (datatypes->load() != ErrorCode::OK)
-    {
-        ereport(ERROR,
-            (errcode(ERRCODE_INTERNAL_ERROR),
-             errmsg("Tsurugi could not load data type metadata")));
-        return ret_value;
-    }
-
-    /* Loads table metadata */
-    tables = std::make_unique<Tables>(dbname);
-
-    if (tables->load() != ErrorCode::OK)
-    {
-        ereport(ERROR,
-            (errcode(ERRCODE_INTERNAL_ERROR),
-             errmsg("Tsurugi could not load table metadata")));
         return ret_value;
     }
 
@@ -497,7 +465,7 @@ CreateTable::is_syntax_supported()
  *  @return false otherwize.
  */
 bool
-CreateTable::store_metadata( uint64_t* object_id )
+CreateTable::store_metadata( ObjectIdType* object_id )
 {
 
     bool ret_value{false};
@@ -526,11 +494,11 @@ CreateTable::store_metadata( uint64_t* object_id )
     ptree primary_keys;
 
     /* get ordinal positions of primary keys in table or column constraints */
-    std::unordered_set<uint64_t> op_pkeys = get_ordinal_positions_of_primary_keys();
+    std::unordered_set<ObjectIdType> op_pkeys = get_ordinal_positions_of_primary_keys();
 
     /* for columns metadata */
     ptree columns;
-    uint64_t ordinal_position = ORDINAL_POSITION_BASE_INDEX;
+    ObjectIdType ordinal_position = ORDINAL_POSITION_BASE_INDEX;
 
     List *table_elts = create_stmt->tableElts;
     ListCell *l;
@@ -544,7 +512,7 @@ CreateTable::store_metadata( uint64_t* object_id )
         ptree column;
 
         /* put ordinalPosition metadata */
-        column.put<uint64_t>(Tables::Column::ORDINAL_POSITION, ordinal_position);
+        column.put<ObjectIdType>(Tables::Column::ORDINAL_POSITION, ordinal_position);
 
         /* put column name metadata */
         column.put(Tables::Column::NAME, colDef->colname);
@@ -560,7 +528,7 @@ CreateTable::store_metadata( uint64_t* object_id )
         else
         {
             ptree primary_key;
-            primary_key.put<uint64_t>("", ordinal_position);
+            primary_key.put<ObjectIdType>("", ordinal_position);
             primary_keys.push_back(std::make_pair("", primary_key));
 
             column.put<int>(Tables::Column::DIRECTION, static_cast<int>(Tables::Column::Direction::ASCENDANT));
@@ -636,6 +604,8 @@ CreateTable::store_metadata( uint64_t* object_id )
                         /* put false if given type is char */
                         column.put<bool>(Tables::Column::VARYING, false);
                         break;
+                    default:
+                        break;
                 }
 
                 /* put data type lengths metadata if given type is varchar or char */
@@ -643,6 +613,7 @@ CreateTable::store_metadata( uint64_t* object_id )
                 {
                     case DataTypes::DataTypesId::VARCHAR:
                     case DataTypes::DataTypesId::CHAR:
+                    {
                         /*
                          * if "typmods" is NIL then the actual typmod is expected to
                          * be prespecified in typemod, otherwise typemod is unused.
@@ -672,7 +643,7 @@ CreateTable::store_metadata( uint64_t* object_id )
                                          * get data type lengths from typmods of TypeName structure.
                                          * The given data type length must be constant integer value.
                                          */
-                                        datalengths.put<uint64_t>("", ac->val.val.ival);
+                                        datalengths.put<ObjectIdType>("", ac->val.val.ival);
                                     }
                                     else
                                     {
@@ -697,9 +668,12 @@ CreateTable::store_metadata( uint64_t* object_id )
                         else if (typemod >= 0)
                         {
                             /* put a data type length metadata */
-                            column.put<uint64_t>(Tables::Column::DATA_LENGTH, typemod);
+                            column.put<ObjectIdType>(Tables::Column::DATA_LENGTH, typemod);
                         }
-
+                        break;
+                    }
+                    default:
+                        break;
                 }
 
             }
@@ -728,28 +702,19 @@ CreateTable::store_metadata( uint64_t* object_id )
     switch (error)
     {
         case ErrorCode::OK:
-            ret_value = true;
-            return ret_value;
-            break;
-        case ErrorCode::TABLE_NAME_ALREADY_EXISTS:
-            if (create_stmt->if_not_exists)
             {
-                ereport(NOTICE,
-                    (errcode(ERRCODE_DUPLICATE_TABLE),
-                     errmsg("table name \"%s\" already exsists, skipping", relname)));
+                ret_value = true;
+                return ret_value;
             }
-            else{
-                ereport(ERROR,
-                    (errcode(ERRCODE_DUPLICATE_TABLE),
-                     errmsg("table name \"%s\" already exsists", relname)));
-            }
-            return ret_value;
             break;
         default:
-            ereport(ERROR,
-                (errcode(ERRCODE_INTERNAL_ERROR),
-                 errmsg("Tsurugi could not store table metadata")));
-            return ret_value;
+            {
+                ereport(ERROR,
+                        (errcode(ERRCODE_INTERNAL_ERROR),
+                         errmsg("Tsurugi could not store table metadata (%d)", (int)error)));
+                return ret_value;
+            }
+            break;
     }
 
 }
@@ -758,10 +723,10 @@ CreateTable::store_metadata( uint64_t* object_id )
  *  @brief  Get ordinal positions of table's primary key columns in table or column constraints.
  *  @return ordinal positions of table's primary key columns.
  */
-std::unordered_set<uint64_t>
+std::unordered_set<ObjectIdType>
 CreateTable::get_ordinal_positions_of_primary_keys()
 {
-    std::unordered_set<uint64_t> op_pkeys;
+    std::unordered_set<ObjectIdType> op_pkeys;
 
     /* true if table constraints include primary key constraint */
     bool has_table_pkey = false;
@@ -771,7 +736,7 @@ CreateTable::get_ordinal_positions_of_primary_keys()
     {
         has_table_pkey = true;
 
-        uint64_t ordinal_position = ORDINAL_POSITION_BASE_INDEX;
+        ObjectIdType ordinal_position = ORDINAL_POSITION_BASE_INDEX;
 
         List *table_elts = create_stmt->tableElts;
         ListCell *lte;
@@ -802,7 +767,7 @@ CreateTable::get_ordinal_positions_of_primary_keys()
      */
     if (!has_table_pkey)
     {
-        uint64_t ordinal_position = ORDINAL_POSITION_BASE_INDEX;
+        ObjectIdType ordinal_position = ORDINAL_POSITION_BASE_INDEX;
 
         List *table_elts = create_stmt->tableElts;
         ListCell *l;
