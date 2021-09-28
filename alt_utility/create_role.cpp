@@ -16,16 +16,6 @@
  *	@file	create_role.cpp
  *	@brief  Dispatch the create-role command to ogawayama.
  */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-#include "postgres.h"
-#include "nodes/parsenodes.h"
-#ifdef __cplusplus
-}
-#endif
-
 #include <regex>
 #include <string>
 #include <string_view>
@@ -42,6 +32,17 @@ extern "C" {
 #else
 #include "mock/metadata/roles.h"
 #include "mock/message/message.h"
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "postgres.h"
+#include "nodes/parsenodes.h"
+
+#ifdef __cplusplus
+}
 #endif
 
 using namespace boost::property_tree;
