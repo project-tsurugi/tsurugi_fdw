@@ -86,19 +86,21 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 	pstate = make_parsestate(NULL);
 	pstate->p_sourcetext = queryString;
 
-	switch (nodeTag(parsetree))
-	{
-        case T_CreateStmt:
-            tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
-                                       context, params, queryEnv,
-                                       dest, completionTag);
-            break;
-        case T_CreateRoleStmt:
-      	    standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
-                                    dest, completionTag);
-            after_create_role((CreateRoleStmt*)parsetree);
-            break;
-        case T_DropRoleStmt:
+	switch (nodeTag(parsetree)) 
+  {
+    case T_CreateStmt: 
+      tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
+                                 context, params, queryEnv,
+                                 dest, completionTag);
+      break;
+
+    case T_CreateRoleStmt:
+      standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
+                              dest, completionTag);
+      after_create_role((CreateRoleStmt*)parsetree);
+      break;
+
+    case T_DropRoleStmt:
 			/* 
 			 * ドロップの場合、複数のオブジェクトIDを指定できる。
 			 * オブジェクトIDを事前にとって、削除後の処理に渡す方法。
@@ -106,61 +108,76 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 			 * allocate object_id list.
 			 * オブジェクトの個数分メモリ領域を動的に確保する必要がある。
 			 */
-	        before_drop_role((DropRoleStmt*)parsetree);
-      	    standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
-                                    dest, completionTag);
+      before_drop_role((DropRoleStmt*)parsetree);
+      standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
+                              dest, completionTag);
 			/* 
 			 * メッセージについては、後処理で送信する。
 			 * DROPに失敗したのに、DROPのメッセージを送信していると問題になる可能性があるため。
 			 */
-            after_drop_role((DropRoleStmt*)parsetree);
+      after_drop_role((DropRoleStmt*)parsetree);
 
 			/* 
 			 * 動的に確保した領域を削除する必要あり。
 			 * free object_id list.
 			 */
+      break;
 
-            break;
-        case T_AlterRoleStmt:
+    case T_AlterRoleStmt:
 			/* 
 			 * Alterの場合、変更なのでオブジェクトを事前に取得する必要はない、
 			 * 処理前の処理は不要かもしれない。不要であれば削除してください。
 			 */
-            before_alter_role((AlterRoleStmt*)parsetree);
-      	    standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
-                                    dest, completionTag);
+      before_alter_role((AlterRoleStmt*)parsetree);
+      standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
+                              dest, completionTag);
 			/* 
 			 * メッセージについては、後処理で送信する。
 			 */
-            after_alter_role((AlterRoleStmt*)parsetree);
-            break;
-        case T_GrantStmt:
+      after_alter_role((AlterRoleStmt*)parsetree);
+      break;
+
+    case T_GrantStmt: {
 			/* 
 			 * GRANT/REVOKE TABLEについては、外部テーブルからオーナIDとACLの取得方法の検討が必要。
 			 * 現状、以下のように記載しているが、大きく変更の可能性がある。
 			 * まずは、後回しにして、別の個所を進めてください。
 			 */
-			{
 			struct GrantStmt *tmpstmt = (GrantStmt *) parsetree;
 
 			if (tmpstmt->objtype == OBJECT_TABLE){
-				if (tmpstmt->is_grant) /* true = GRANT, false = REVOKE */ 
-		            before_grant_table((GrantStmt*)parsetree);
-				else
-		            before_revoke_table((GrantStmt*)parsetree);
-	      	    standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
-	                                    dest, completionTag);
-				if (tmpstmt->is_grant) /* true = GRANT, false = REVOKE */ 
-		            after_grant_table((GrantStmt*)parsetree);
-				else
-		            after_revoke_table((GrantStmt*)parsetree);
-			}
-			else
-	      	    standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
-	                                    dest, completionTag);
-			}
-            break;
-        case T_GrantRoleStmt:
+        /* true = GRANT, false = REVOKE */
+				if (tmpstmt->is_grant) 
+        {
+		      before_grant_table((GrantStmt*)parsetree);
+        } 
+        else 
+        {
+		      before_revoke_table((GrantStmt*)parsetree);
+        }
+
+        standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
+                                dest, completionTag);
+
+        /* true = GRANT, false = REVOKE */ 
+				if (tmpstmt->is_grant) 
+        {
+          after_grant_table((GrantStmt*)parsetree);
+        } 
+        else 
+        {
+          after_revoke_table((GrantStmt*)parsetree);
+        }
+			} 
+      else 
+      {
+        standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
+                                dest, completionTag);
+      }
+      break;
+	  }
+
+    case T_GrantRoleStmt:
 			/* 
 			 * GRANT/REVOKE両方ともに変更のため同一の関数としている。
 			 * 現状、内部でstmt->is_grantで分岐することを想定している。
@@ -168,15 +185,16 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 			 * 
 			 * ALTERと一緒でROLE自体を削除するわけではないので、直前の処理は不要の可能性あり。
 			 */
-            before_grant_role((GrantRoleStmt*)parsetree);
-      	    standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
-                                    dest, completionTag);
-            after_grant_role((GrantRoleStmt*)parsetree);
-            break;
+      before_grant_role((GrantRoleStmt*)parsetree);
+      standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
+                              dest, completionTag);
+      after_grant_role((GrantRoleStmt*)parsetree);
+      break;
+
 		default:
-		    standard_ProcessUtility(pstmt, queryString,
-			    					context, params, queryEnv,
-				    				dest, completionTag);
+      standard_ProcessUtility(pstmt, queryString,
+			              					context, params, queryEnv,
+				    		          		dest, completionTag);
 			break;
 	}
 
@@ -234,10 +252,10 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
 
 							CreateStmt *create_stmt = ((CreateStmt *)stmt);
 
-                            if (create_stmt->tablespacename != NULL
-                                && !strcmp(create_stmt->tablespacename, TSURUGI_TABLESPACE_NAME)) {
+              if (create_stmt->tablespacename != NULL
+                  && !strcmp(create_stmt->tablespacename, TSURUGI_TABLESPACE_NAME)) {
 								success = create_table(stmts);
-                                if (!success) {
+                if (!success) {
 									if (create_stmt->if_not_exists)
 									{
 										elog(NOTICE, "create_table() failed.");
@@ -246,18 +264,17 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
 									{
 										elog(ERROR, "create_table() failed.");
 									}
-
-                                }
-                                strcat(create_stmt->relation->relname, "_dummy");
-                            }
-                            /* Create the table itself */
-                            address = DefineRelation((CreateStmt *) stmt,
-                                                        RELKIND_RELATION,
-                                                        InvalidOid, NULL,
-                                                        queryString);
-                            EventTriggerCollectSimpleCommand(address,
-                                                                secondaryObject,
-                                                                stmt);
+                }
+                strcat(create_stmt->relation->relname, "_dummy");
+              }
+            /* Create the table itself */
+            address = DefineRelation((CreateStmt *) stmt,
+                                        RELKIND_RELATION,
+                                        InvalidOid, NULL,
+                                        queryString);
+            EventTriggerCollectSimpleCommand(address,
+                                                secondaryObject,
+                                                stmt);
 							/*
 							 * Let NewRelationCreateToastTable decide if this
 							 * one needs a secondary relation too.

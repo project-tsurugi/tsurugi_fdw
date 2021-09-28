@@ -22,7 +22,11 @@
 #include <string>
 
 #include "manager/metadata/metadata.h"
+#if 0
 #include "manager/metadata/roles.h"
+#else
+#include "mock/metadata/roles.h"
+#endif
 
 using namespace manager::metadata;
 using namespace boost::property_tree;
