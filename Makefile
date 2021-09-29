@@ -6,6 +6,7 @@ OBJS = common/init.o common/stub_manager.o \
         alt_planner/alt_planner.o \
         alt_utility/tablecmds.o alt_utility/create_table.o \
 				alt_utility/rolecmds.o alt_utility/create_role.o \
+				alt_utility/mock/metadata/roles.o \
 				alt_utility/alt_utility.o \
         $(WIN32RES)
 
