@@ -26,7 +26,10 @@ PG_CPPFLAGS = -Iinclude \
               -Ithird_party/ogawayama/stub/include \
               -Ithird_party/manager/metadata-manager/include \
               -Ithird_party/manager/message-broker/include \
-              -std=c++17 -fPIC -Dregister= -O0
+              -std=c++17 -fPIC -Dregister= -O0\
+              -I$(libpq_srcdir)
+              
+SHLIB_LINK_INTERNAL = $(libpq)
 
 SHLIB_LINK = -logawayama-stub -lmanager-metadata -lmanager-message -lboost_filesystem
 
@@ -41,13 +44,5 @@ else
         include $(top_srcdir)/contrib/contrib-global.mk
 endif
 
-BASIC_TEST_NAME = test.sh
-EXTRA_TEST_NAME = test_extra.sh
-
 tests:
-ifdef REGRESS_EXTRA
-	bash $(BASIC_TEST_NAME)
-	bash $(EXTRA_TEST_NAME) | tee regression_extra.out
-else
-	bash $(BASIC_TEST_NAME)
-endif
+	bash test.sh

@@ -4,11 +4,11 @@ on: [push, pull_request]
 
 jobs:
   Build:
-    name: Build with PosgreSQL ${{ matrix.postgresql }}
+    name: Build with PosgreSQL ${{ matrix.postgresql }} ( ${{ matrix.container-tag }} ) 
     runs-on: [self-hosted, docker]
     timeout-minutes: 30
     container:
-      image:  ghcr.io/project-tsurugi/oltp-sandbox:latest
+      image:  ghcr.io/project-tsurugi/oltp-sandbox:${{ matrix.container-tag }}
       credentials:
         username: ${{ github.repository_owner }}
         password: ${{ secrets.GHCR_PAT }}
@@ -18,8 +18,10 @@ jobs:
     env:
       BUILD_TYPE: ''
     strategy:
+      fail-fast: false
       matrix:
         postgresql: [11.1, 12.3]
+        container-tag: [ubuntu-18.04, ubuntu-20.04]
 
     steps:
       - id: Setup_PostgreSQL
@@ -54,6 +56,26 @@ jobs:
           make
           make install
 
+      - id: Install_shirakami
+        name: Install_shirakami
+        run: |
+          cd postgresql-${{ matrix.postgresql }}/contrib/frontend/third_party/ogawayama/third_party/jogasaki/third_party/sharksfin/third_party/shirakami
+          mkdir -p build
+          cd build
+          rm -f CMakeCache.txt
+          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
+          cmake --build . --target install --clean-first -- -j8
+
+      - id: Install_sharksfin
+        name: Install_sharksfin
+        run: |
+          cd postgresql-${{ matrix.postgresql }}/contrib/frontend/third_party/ogawayama/third_party/jogasaki/third_party/sharksfin
+          mkdir -p build
+          cd build
+          rm -f CMakeCache.txt
+          cmake -DCMAKE_BUILD_TYPE=Debug -DFORCE_INSTALL_RPATH=ON -DBUILD_TESTS=OFF -DBUILD_DOCUMENTS=OFF -DBUILD_EXAMPLES=OFF -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
+          cmake --build . --target install --clean-first -- -j8
+
       - id: CMake_Build_ogawayama
         name: CMake_Build_ogawayama
         run: |
@@ -62,9 +84,7 @@ jobs:
           mkdir build
           cd build
           cmake -G Ninja -DBUILD_STUB_ONLY=ON -DBUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DFORCE_INSTALL_RPATH=ON -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
-          cmake --build . --target all --clean-first -- -j8
-          ninja
-          ninja install
+          cmake --build . --target install --clean-first -- -j8
 
       - id: Make_Install
         name: Make_Build
