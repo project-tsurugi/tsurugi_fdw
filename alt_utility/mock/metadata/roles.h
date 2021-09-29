@@ -46,13 +46,16 @@ class Roles : public Metadata {
   Roles(const Roles&) = delete;
   Roles& operator=(const Roles&) = delete;
 
-  ErrorCode init() override;
+  ErrorCode init();
   ErrorCode get(const ObjectIdType object_id,
-                boost::property_tree::ptree& object) override;
+                boost::property_tree::ptree& object);
   ErrorCode get(std::string_view object_name,
-                boost::property_tree::ptree& object) override;
+                boost::property_tree::ptree& object);
+  ErrorCode get_all(std::vector<boost::property_tree::ptree>& container) {
+    return ErrorCode::OK;
+  }
 
-  ErrorCode add(boost::property_tree::ptree& object) override {
+  ErrorCode add(boost::property_tree::ptree& object) {
     return ErrorCode::OK;
   }
   ErrorCode add(boost::property_tree::ptree& object, ObjectIdType* object_id) override {
@@ -62,9 +65,24 @@ class Roles : public Metadata {
   ErrorCode remove(const ObjectIdType object_id) override {
     return ErrorCode::OK;
   }
-  ErrorCode remove(const char* object_name, ObjectIdType* object_id) override {
+  ErrorCode remove(std::string_view object_name, ObjectIdType* object_id) {
     return ErrorCode::OK;
-  }
+  };
+
+  protected:
+    std::string_view table_name() const override {
+      return std::string{"roles"};
+    };
+    const std::string root_node() const override {
+      return std::string{"root"};
+    };
+    ObjectIdType generate_object_id() const override {
+      return 1;
+    };
+    ErrorCode fill_parameters(boost::property_tree::ptree& object) override {
+      return ErrorCode::OK;
+    };
+
 };  // class Roles
 
 }  // namespace manager::metadata

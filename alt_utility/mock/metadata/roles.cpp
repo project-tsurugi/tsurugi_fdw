@@ -78,7 +78,7 @@ ErrorCode Roles::get(const ObjectIdType object_id,
   create_object(object);
 
   boost::optional<int64_t> role_object_id = object.get_optional<int64_t>(ROLE_OID);
-  if (role_object_id != object_id) {
+  if (role_object_id.get() != object_id) {
     return ErrorCode::ID_NOT_FOUND;
   }
 
