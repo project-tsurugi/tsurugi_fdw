@@ -7,13 +7,13 @@
  *-------------------------------------------------------------------------
  */
 
-#include "access/reloptions.h"
-#include "catalog/objectaddress.h"
-#include "catalog/pg_class_d.h"
-#include "commands/event_trigger.h"
-#include "commands/tablecmds.h"
 #include "postgres.h"
 #include "tcop/utility.h"
+#include "catalog/objectaddress.h"
+#include "catalog/pg_class_d.h"
+#include "access/reloptions.h"
+#include "commands/event_trigger.h"
+#include "commands/tablecmds.h"
 
 #include "alter_role.h"
 #include "create_role.h"
@@ -146,22 +146,16 @@ void tsurugi_ProcessUtility(PlannedStmt* pstmt, const char* queryString,
        * ROLEと同じように後処理でメッセージを送信する。
        */
       {
-        GrantStmt* tmpstmt = (GrantStmt*)parsetree;
-
-        if (tmpstmt->objtype == OBJECT_TABLE) {
-          if (tmpstmt->is_grant) /* true = GRANT, false = REVOKE */
-            before_grant_table((GrantStmt*)parsetree);
-          else
-            before_revoke_table((GrantStmt*)parsetree);
+        GrantStmt* stmts = (GrantStmt*)parsetree;
+		/*ACL_TARGET_OBJECTかつ、OBJECT_TABLE以外の時は通常の動作のみ*/
+        if (stmts->targtype == ACL_TARGET_OBJECT && stmts->objtype == OBJECT_TABLE) {
           standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
                                   dest, completionTag);
-          if (tmpstmt->is_grant) /* true = GRANT, false = REVOKE */
-            after_grant_table((GrantStmt*)parsetree);
-          else
-            after_revoke_table((GrantStmt*)parsetree);
-        } else
+          after_grant_revoke_table((GrantStmt*)parsetree);
+        } else{
           standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
                                   dest, completionTag);
+		}
       }
       break;
     case T_GrantRoleStmt:

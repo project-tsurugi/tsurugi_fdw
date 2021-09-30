@@ -28,7 +28,13 @@
 #include "manager/message/message_broker.h"
 #include "manager/message/status.h"
 #include "manager/metadata/metadata.h"
+
+#if 0
 #include "manager/metadata/roles.h"
+#else
+#include "mock/message/message.h"
+#include "mock/metadata/roles.h"
+#endif
 
 using namespace boost::property_tree;
 using namespace manager;
@@ -37,21 +43,22 @@ using namespace ogawayama;
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "nodes/parsenodes.h"
 #include "postgres.h"
+
+#include "nodes/parsenodes.h"
 #ifdef __cplusplus
 }
 #endif
 
-#include "role_manager_cmds.h"
+#include "role_managercmds.h"
 
 #include "drop_role.h"
 
 /* DB name metadata-manager manages */
 const std::string DBNAME = "Tsurugi";
 
-bool send_message(message::Message* message,
-                  std::unique_ptr<metadata::Metadata>& objects);
+static bool send_message(message::Message* message,
+                         std::unique_ptr<metadata::Metadata>& objects);
 
 /**
  *  @brief Call the function to get the IDs of DROP ROLE.
@@ -67,7 +74,7 @@ bool before_drop_role(const DropRoleStmt* stmts, uint64_t objectIdList[]) {
   bool success = false;
 
   foreach (item, stmts->roles) {
-    RoleSpec* rolspec = lfirst(item);
+    RoleSpec* rolspec = (RoleSpec*)lfirst(item);
     char* role;
     uint64_t object_id;
 
@@ -88,9 +95,11 @@ bool before_drop_role(const DropRoleStmt* stmts, uint64_t objectIdList[]) {
 }
 
 /**
- *  @brief Calls the function to confirm IDs and send IDs of droped role to ogawayama.
+ *  @brief Calls the function to confirm IDs and send IDs of droped role to
+ * ogawayama.
  *  @param [in] stmts of statements.
- *  @param [in] objectIdList Object IDs of ROLE that is the target of DROP ROLE statements.
+ *  @param [in] objectIdList Object IDs of ROLE that is the target of DROP ROLE
+ * statements.
  *  @return true if operation was successful, false otherwize.
  */
 bool after_drop_role(const DropRoleStmt* stmts, const uint64_t objectIdList[]) {
@@ -129,8 +138,8 @@ bool after_drop_role(const DropRoleStmt* stmts, const uint64_t objectIdList[]) {
  *  @param [in] objects Role object to call funciton.
  *  @return true if operation was successful, false otherwize.
  */
-bool send_message(message::Message* message,
-                  std::unique_ptr<metadata::Metadata>& objects) {
+static bool send_message(message::Message* message,
+                         std::unique_ptr<metadata::Metadata>& objects) {
   Assert(message != nullptr);
 
   bool ret_value = false;

@@ -25,17 +25,87 @@
 
 #include "manager/message/message.h"
 
-namespace manager::message
-{
-    const std::string MESSAGE_TYPE_NAME_CREATE_ROLE = "CREATE_ROLE";
+namespace manager::message {
+const std::string MESSAGE_TYPE_NAME_CREATE_ROLE = "CREATE_ROLE";
+const std::string MESSAGE_TYPE_NANE_DROP_ROLE = "DROP ROLE";
+const std::string MESSAGE_TYPE_NANE_ALTER_ROLE = "ALTER ROLE";
+const std::string MESSAGE_TYPE_NANE_GRANT_ROLE = "GRANT ROLE";
+const std::string MESSAGE_TYPE_NANE_REVOKE_ROLE = "REVOKE ROLE";
+const std::string MESSAGE_TYPE_NANE_GRANT_TABLE = "GRANT TABLE ";
+const std::string MESSAGE_TYPE_NANE_REVOKE_TABLE = "REVOKE TABLE ";
 
-    class CreateRoleMessage : public Message
-    {
-      public:
-        CreateRoleMessage(uint64_t object_id)
-          :Message{MessageId::CREATE_TABLE, object_id, MESSAGE_TYPE_NAME_CREATE_ROLE} {}
-    };
+class CreateRoleMessage : public Message {
+ public:
+  CreateRoleMessage(uint64_t object_id)
+      : Message{MessageId::CREATE_TABLE, object_id,
+                MESSAGE_TYPE_NAME_CREATE_ROLE} {}
+};
 
-}; // namespace manager::message
+class DropRoleMessage : public Message {
+ public:
+  /**
+   * @brief C'tor. Initialize member variables.
+   * @param [in] object_id object ID that will be added, updated, or deleted.
+   */
+  DropRoleMessage(uint64_t object_id)
+      : Message{MessageId::CREATE_TABLE, object_id, MESSAGE_TYPE_NANE_DROP_ROLE} {}
+};
 
-#endif // MESSAGE_H
+class AlterRoleMessage : public Message {
+ public:
+  /**
+   * @brief C'tor. Initialize member variables.
+   * @param [in] object_id object ID that will be added, updated, or deleted.
+   */
+  AlterRoleMessage(uint64_t object_id)
+      : Message{MessageId::CREATE_TABLE, object_id,
+                MESSAGE_TYPE_NANE_ALTER_ROLE} {}
+};
+
+class GrantRoleMessage : public Message {
+ public:
+  /**
+   * @brief C'tor. Initialize member variables.
+   * @param [in] object_id object ID that will be added, updated, or deleted.
+   */
+  GrantRoleMessage(uint64_t object_id)
+      : Message{MessageId::CREATE_TABLE, object_id,
+                MESSAGE_TYPE_NANE_GRANT_ROLE} {}
+};
+
+class RevokeRoleMessage : public Message {
+ public:
+  /**
+   * @brief C'tor. Initialize member variables.
+   * @param [in] object_id object ID that will be added, updated, or deleted.
+   */
+  RevokeRoleMessage(uint64_t object_id)
+      : Message{MessageId::CREATE_TABLE, object_id,
+                MESSAGE_TYPE_NANE_REVOKE_ROLE} {}
+};
+
+class GrantTableMessage : public Message {
+ public:
+  /**
+   * @brief C'tor. Initialize member variables.
+   * @param [in] object_id object ID that will be added, updated, or deleted.
+   */
+  GrantTableMessage(uint64_t object_id)
+      : Message{MessageId::CREATE_TABLE, object_id,
+                MESSAGE_TYPE_NANE_GRANT_TABLE} {}
+};
+
+class RevokeTableMessage : public Message {
+ public:
+  /**
+   * @brief C'tor. Initialize member variables.
+   * @param [in] object_id object ID that will be added, updated, or deleted.
+   */
+  RevokeTableMessage(uint64_t object_id)
+      : Message{MessageId::CREATE_TABLE, object_id,
+                MESSAGE_TYPE_NANE_REVOKE_TABLE} {}
+};
+
+};  // namespace manager::message
+
+#endif  // MESSAGE_H

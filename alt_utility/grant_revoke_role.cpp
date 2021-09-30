@@ -28,7 +28,12 @@
 #include "manager/message/message_broker.h"
 #include "manager/message/status.h"
 #include "manager/metadata/metadata.h"
+#if 0
 #include "manager/metadata/roles.h"
+#else
+#include "mock/metadata/roles.h"
+#include "mock/message/message.h"
+#endif
 
 using namespace boost::property_tree;
 using namespace manager;
@@ -37,20 +42,21 @@ using namespace ogawayama;
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "nodes/parsenodes.h"
 #include "postgres.h"
+
+#include "nodes/parsenodes.h"
 #ifdef __cplusplus
 }
 #endif
 
-#include "role_manager_cmds.h"
+#include "role_managercmds.h"
 
 #include "grant_revoke_role.h"
 
 /* DB name metadata-manager manages */
 const std::string DBNAME = "Tsurugi";
 
-bool send_message(message::Message* message,
+static bool send_message(message::Message* message,
                   std::unique_ptr<metadata::Metadata>& objects);
 
 /**
@@ -112,7 +118,7 @@ bool after_grant_revoke_role(const GrantRoleStmt* stmts) {
  *  @param [in] objects Role object to call funciton.
  *  @return true if operation was successful, false otherwize.
  */
-bool send_message(message::Message* message,
+static bool send_message(message::Message* message,
                   std::unique_ptr<metadata::Metadata>& objects) {
   Assert(message != nullptr);
 

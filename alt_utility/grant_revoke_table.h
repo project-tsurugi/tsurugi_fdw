@@ -24,13 +24,8 @@
 extern "C" {
 
 #endif
-bool before_grant_table(GrantStmt* stmts);
 
-bool after_grant_table(GrantStmt* stmts);
-
-bool before_revoke_table(GrantStmt* stmts);
-
-bool after_revoke_table(GrantStmt* stmts);
+bool after_grant_revoke_table(GrantStmt* stmts);
 
 #ifdef __cplusplus
 }

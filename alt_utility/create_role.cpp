@@ -49,7 +49,7 @@ using namespace boost::property_tree;
 using namespace manager;
 using namespace ogawayama;
 
-#include "rolecmds.h"
+#include "role_managercmds.h"
 #include "create_role.h"
 
 /* DB name metadata-manager manages */

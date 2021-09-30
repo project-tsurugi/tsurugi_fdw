@@ -13,30 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	role_managercmds.h
- *	@brief  Utility command to operate Role through metadata-manager.
+ *	@file	table_managercmds.h
+ *	@brief  Utility command to operate Table through metadata-manager.
  */
 
-#ifndef ROLEMANAGERCMDS_H
-#define ROLEMANAGERCMDS_H
+#ifndef TABLEMANAGERCMDS_H
+#define TABLEMANAGERCMDS_H
 
 /**
- *  @brief  Get role id from metadata-manager by role name.
+ *  @brief  get table id from metadata-manager by table name.
  *  @param  [in] dbname DB name metadata-manager manages.
- *  @param  [in] role_name Role name.
+ *  @param  [in] table_name Table name.
  *  @param  [out] object_id The object id getted if role was successfully
  * getted.
  *  @return true if role was successfully loaded, false otherwize.
  */
-bool get_roleid_by_rolename(const std::string dbname, const char* role_name,
+bool get_tableid_by_tablename(const std::string dbname, const char* table_name,
                             uint64_t* object_id);
-
-/**
- *  @brief  Confirm role id from metadata-manager.
- *  @param  [in] dbname DB name metadata-manager manages.
- *  @param  [in] object_id Role id.
- *  @return True if the role exists, false if it does not.
- */
-bool confirm_roleid(const std::string dbname, const uint64_t object_id);
-
-#endif  // ROLEMANAGERCMDS_H
+                            
+#endif  // TABLEMANAGERCMDS_H
