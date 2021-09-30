@@ -8,12 +8,13 @@
  */
 
 #include "postgres.h"
-#include "tcop/utility.h"
+
+#include "access/reloptions.h"
 #include "catalog/objectaddress.h"
 #include "catalog/pg_class_d.h"
-#include "access/reloptions.h"
 #include "commands/event_trigger.h"
 #include "commands/tablecmds.h"
+#include "tcop/utility.h"
 
 #include "alter_role.h"
 #include "create_role.h"
@@ -147,15 +148,17 @@ void tsurugi_ProcessUtility(PlannedStmt* pstmt, const char* queryString,
        */
       {
         GrantStmt* stmts = (GrantStmt*)parsetree;
-		/*ACL_TARGET_OBJECTかつ、OBJECT_TABLE以外の時は通常の動作のみ*/
-        if (stmts->targtype == ACL_TARGET_OBJECT && stmts->objtype == OBJECT_TABLE) {
+        /*ACL_TARGET_OBJECTかつ、OBJECT_TABLE以外の時は通常の動作のみ*/
+        if (stmts->targtype == ACL_TARGET_OBJECT &&
+            stmts->objtype == OBJECT_TABLE) {
           standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
                                   dest, completionTag);
-          after_grant_revoke_table((GrantStmt*)parsetree);
-        } else{
+          if (!after_grant_revoke_table((GrantStmt*)parsetree))
+            elog(ERROR, "failed after_grant_revoke_table() function.");
+        } else {
           standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
                                   dest, completionTag);
-		}
+        }
       }
       break;
     case T_GrantRoleStmt:
