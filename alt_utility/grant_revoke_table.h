@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	grant_table.h
+ *	@file	grant_revoke_table.h
  *	@brief  Dispatch the grant-table,revoke-table command to ogawayama.
  */
 
-#ifndef GRANT_TABLE_H
-#define GRANT_TABLE_H
+#ifndef GRANT_REVOKE_TABLE_H
+#define GRANT_REVOKE_TABLE_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,4 +36,4 @@ bool after_revoke_table(GrantStmt* stmts);
 }
 #endif
 
-#endif  // GRANT_TABLE_H
+#endif  // GRANT_REVOKE_TABLE_H

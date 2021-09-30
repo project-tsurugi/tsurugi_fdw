@@ -13,23 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	grant_role.h
+ *	@file	grant_revoke_role.h
  *	@brief  Dispatch the grant-role,revoke-role command to ogawayama.
  */
 
-#ifndef GRANT_ROLE_H
-#define GRANT_ROLE_H
+#ifndef GRANT_REVOKE_ROLE_H
+#define GRANT_REVOKE_ROLE_H
 
 #ifdef __cplusplus
 extern "C" {
 
 #endif
-bool before_grant_role(GrantRoleStmt* stmts);
 
-bool after_grant_role(GrantRoleStmt* stmts);
+bool after_grant_revoke_role(GrantRoleStmt* stmts);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // GRANT_ROLE_H
+#endif  // GRANT_REVOKE_ROLE_H
