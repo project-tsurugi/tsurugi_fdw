@@ -22,7 +22,11 @@
 #include <string>
 
 #include "manager/metadata/metadata.h"
+#if 0
 #include "manager/metadata/roles.h"
+#else
+#include "mock/metadata/roles.h"
+#endif
 
 using namespace manager::metadata;
 using namespace boost::property_tree;
@@ -44,17 +48,16 @@ extern "C" {
 
 /**
  *  @brief  Get role id from metadata-manager by role name.
- *  @param  [in] DB name metadata-manager manages.
- *  @param  [in] Role name.
- *  @param  [out] The object id stored if new role was successfully created.
- *  @return true if role was successfully loaded
- *  @return false otherwize.
+ *  @param  [in] dbname DB name metadata-manager manages.
+ *  @param  [in] role_name Role name.
+ *  @param  [out] object_id The object id stored if new role was successfully
+ * created.
+ *  @return true if role was successfully loaded, false otherwize.
  */
-bool get_roleid_by_rolename(const std::string dbname,
-                            const char* role_name,
+bool get_roleid_by_rolename(const std::string dbname, const char* role_name,
                             uint64_t* object_id) {
   /* return value */
-  bool ret_value{false};
+  bool ret_value = false;
   ptree object;
   /* Loads role */
   std::unique_ptr<manager::metadata::Metadata> roles =
@@ -81,15 +84,38 @@ bool get_roleid_by_rolename(const std::string dbname,
 }
 
 /**
+ *  @brief  Confirm role id from metadata-manager.
+ *  @param  [in] dbname DB name metadata-manager manages.
+ *  @param  [in] object_id Role id.
+ *  @return True if the role exists, false if it does not.
+ */
+bool confirm_roleid(const std::string dbname, const uint64_t object_id) {
+  /* return value */
+  bool ret_value = false;
+  ptree object;
+  /* Loads role */
+  std::unique_ptr<manager::metadata::Metadata> roles =
+      std::make_unique<Roles>(dbname);
+  ErrorCode error = roles->get(object_id, object);
+
+  if (error != ErrorCode::OK) {
+    return ret_value;
+  }
+
+  ret_value = true;
+  return ret_value;
+}
+
+/**
  *  @brief: Remove the role object from metadata-manager.
- *  @param  (dbname)  [in]  DB name metadata-manager manages.
- *  @param  (object_id) [in]  message object.
+ *  @param  [in] dbname DB name metadata-manager manages.
+ *  @param  [in] object_id message object.
  *  @return true if role was successfully removed
  *  @return false otherwize.
  */
 bool remove_role_by_roleid(const std::string dbname, const uint64_t object_id) {
   /* return value */
-  bool ret_value{false};
+  bool ret_value = false;
   ptree object;
 
   std::unique_ptr<manager::metadata::Metadata> roles =

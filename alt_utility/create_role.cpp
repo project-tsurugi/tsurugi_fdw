@@ -16,45 +16,46 @@
  *	@file	create_role.cpp
  *	@brief  Dispatch the create-role command to ogawayama.
  */
-
 #include <regex>
 #include <string>
 #include <string_view>
 
 #include "ogawayama/stub/api.h"
 #include "stub_manager.h"
-
 #include "manager/message/message.h"
 #include "manager/message/message_broker.h"
 #include "manager/message/status.h"
 #include "manager/metadata/metadata.h"
+
 #if 0
 #include "manager/metadata/roles.h"
-#else 
-#include "stub/roles.h"
+#else
+#include "mock/metadata/roles.h"
+#include "mock/message/message.h"
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "postgres.h"
+#include "nodes/parsenodes.h"
+
+#ifdef __cplusplus
+}
 #endif
 
 using namespace boost::property_tree;
 using namespace manager;
 using namespace ogawayama;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-#include "nodes/parsenodes.h"
-#include "postgres.h"
-#ifdef __cplusplus
-}
-#endif
-
-#include "role_manager_cmds.h"
-
+#include "rolecmds.h"
 #include "create_role.h"
 
 /* DB name metadata-manager manages */
 const std::string DBNAME = "Tsurugi";
 
-bool send_message(message::Message* message,
+static bool send_message(message::Message* message,
                   std::unique_ptr<metadata::Metadata>& objects);
 
 /**
@@ -86,7 +87,7 @@ bool after_create_role(const CreateRoleStmt* stmts) {
  *  @param [in] objects Role object to call funciton.
  *  @return true if operation was successful, false otherwize.
  */
-bool send_message(message::Message* message,
+static bool send_message(message::Message* message,
                   std::unique_ptr<metadata::Metadata>& objects) {
   Assert(message != nullptr);
 
@@ -101,7 +102,6 @@ bool send_message(message::Message* message,
                     errmsg("StubManager::begin() failed.")));
     return ret_value;
   }
-
   message::MessageBroker broker;
   message->set_receiver(transaction);
   message::Status status = broker.send_message(message);
@@ -126,4 +126,3 @@ bool send_message(message::Message* message,
 
   return ret_value;
 }
-

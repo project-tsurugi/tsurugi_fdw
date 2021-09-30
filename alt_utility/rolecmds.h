@@ -17,8 +17,8 @@
  *	@brief  Utility command to operate Role through metadata-manager.
  */
 
-#ifndef ROLECMDS_H
-#define ROLECMDS_H
+#ifndef ROLEMANAGERCMDS_H
+#define ROLEMANAGERCMDS_H
 
 /**
  *  @brief  get role id from metadata-manager by role name.
@@ -31,6 +31,15 @@ bool get_roleid_by_rolename(const std::string dbname, const char* role_name,
                             uint64_t* object_id);
 
 /**
+ *  @brief  Confirm role id from metadata-manager.
+ *  @param  [in] dbname DB name metadata-manager manages.
+ *  @param  [in] object_id Role id.
+ *  @return true if role was successfully loaded
+ *  @return false otherwize.
+ */
+bool confirm_roleid(const std::string dbname, const uint64_t object_id);
+
+/**
  *  @brief: Remove the role object from metadata-manager.
  *  @param  (dbname)  [in]  DB name metadata-manager manages.
  *  @param  (object_id) [in]  message object.
@@ -39,4 +48,4 @@ bool get_roleid_by_rolename(const std::string dbname, const char* role_name,
  */
 bool remove_role_by_roleid(const std::string dbname, const uint64_t object_id);
 
-#endif  // ROLECMDS_H
+#endif  // ROLEMANAGERCMDS_H
