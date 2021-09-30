@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	create_role.cpp
- *	@brief  Dispatch the create-role command to ogawayama.
+ *	@file	drop_role.cpp
+ *	@brief  Dispatch the drop-role command to ogawayama.
  */
 
 #include <regex>
@@ -28,11 +28,7 @@
 #include "manager/message/message_broker.h"
 #include "manager/message/status.h"
 #include "manager/metadata/metadata.h"
-#if 0
 #include "manager/metadata/roles.h"
-#else 
-#include "stub/roles.h"
-#endif
 
 using namespace boost::property_tree;
 using namespace manager;
@@ -49,7 +45,7 @@ extern "C" {
 
 #include "role_manager_cmds.h"
 
-#include "create_role.h"
+#include "drop_role.h"
 
 /* DB name metadata-manager manages */
 const std::string DBNAME = "Tsurugi";
@@ -58,26 +54,73 @@ bool send_message(message::Message* message,
                   std::unique_ptr<metadata::Metadata>& objects);
 
 /**
- *  @brief Calls the function to get ID and send created role ID to ogawayama.
- *  @param [in] stmts of statements.
+ *  @brief Call the function to get the IDs of DROP ROLE.
+ *  @param [in] stmts DROP ROLE statements.
+ *  @param [out] objectIdList Get object IDs of ROLE that is the target
+ * of DROP ROLE statements.
  *  @return true if operation was successful, false otherwize.
  */
-bool after_create_role(const CreateRoleStmt* stmts) {
+bool before_drop_role(const DropRoleStmt* stmts, uint64_t objectIdList[]) {
   Assert(stmts != nullptr);
+  ListCell* item;
+  int listArrayNum = 0;
+  bool success = false;
 
-  /* The object id stored if new table was successfully created */
-  uint64_t object_id = 0;
+  foreach (item, stmts->roles) {
+    RoleSpec* rolspec = lfirst(item);
+    char* role;
+    uint64_t object_id;
 
-  /* Call the function sending metadata to metadata-manager. */
-  bool success = get_roleid_by_rolename(DBNAME,stmts->role,&object_id);
-
-  if (success) {
-    message::CreateRoleMessage cr_msg{object_id};
-    std::unique_ptr<metadata::Metadata> roles{new metadata::Roles(DBNAME)};
-    success = send_message(&cr_msg, roles);
+    if (rolspec->roletype != ROLESPEC_CSTRING)
+      ereport(ERROR,
+              (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+               errmsg("cannot use special role specifier in DROP ROLE")));
+    role = rolspec->rolename;
+    success = get_roleid_by_rolename(DBNAME, role, &object_id);
+    if (!success) {
+      /* Failed getting role id.*/
+      return success;
+    }
+    objectIdList[listArrayNum++] = object_id;
   }
 
   return success;
+}
+
+/**
+ *  @brief Calls the function to confirm IDs and send IDs of droped role to ogawayama.
+ *  @param [in] stmts of statements.
+ *  @param [in] objectIdList Object IDs of ROLE that is the target of DROP ROLE statements.
+ *  @return true if operation was successful, false otherwize.
+ */
+bool after_drop_role(const DropRoleStmt* stmts, const uint64_t objectIdList[]) {
+  Assert(stmts != nullptr);
+
+  bool send_message_success = true;
+  bool ret_value = false;
+
+  /* Confirm that all ROLEs are dropped. */
+  for (int listArrayNum = 0; listArrayNum < stmts->roles->length;
+       listArrayNum++) {
+    if (confirm_roleid(DBNAME, objectIdList[listArrayNum])) {
+      ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
+                      errmsg("canceled to send message because DROP ROLE "
+                             "statements failed.")));
+      return ret_value;
+    }
+  }
+
+  for (int listArrayNum = 0; listArrayNum < stmts->roles->length;
+       listArrayNum++) {
+    message::DropRoleMessage cr_msg{objectIdList[listArrayNum++]};
+    std::unique_ptr<metadata::Metadata> roles{new metadata::Roles(DBNAME)};
+    if (!send_message(&cr_msg, roles)) {
+      send_message_success = false;
+    }
+  }
+
+  ret_value = send_message_success;
+  return ret_value;
 }
 
 /**
@@ -126,4 +169,3 @@ bool send_message(message::Message* message,
 
   return ret_value;
 }
-

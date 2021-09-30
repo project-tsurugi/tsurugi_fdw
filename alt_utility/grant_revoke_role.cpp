@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	create_role.cpp
- *	@brief  Dispatch the create-role command to ogawayama.
+ *	@file	grant_revoke_role.cpp
+ *	@brief  Dispatch the grant/revoke-role command to ogawayama.
  */
 
 #include <regex>
@@ -28,11 +28,7 @@
 #include "manager/message/message_broker.h"
 #include "manager/message/status.h"
 #include "manager/metadata/metadata.h"
-#if 0
 #include "manager/metadata/roles.h"
-#else 
-#include "stub/roles.h"
-#endif
 
 using namespace boost::property_tree;
 using namespace manager;
@@ -49,7 +45,7 @@ extern "C" {
 
 #include "role_manager_cmds.h"
 
-#include "create_role.h"
+#include "grant_revoke_role.h"
 
 /* DB name metadata-manager manages */
 const std::string DBNAME = "Tsurugi";
@@ -58,26 +54,56 @@ bool send_message(message::Message* message,
                   std::unique_ptr<metadata::Metadata>& objects);
 
 /**
- *  @brief Calls the function to get ID and send created role ID to ogawayama.
- *  @param [in] stmts of statements.
+ *  @brief Calls the function sending metadata of created role parameters sended
+ * to ogawayama.
+ *  @param stmts [in] DROP ROLE statements.
+ *  @param objectIdList [out] Get the object ID of the ROLE that is the target
+ * of DROP ROLE statements.
  *  @return true if operation was successful, false otherwize.
  */
-bool after_create_role(const CreateRoleStmt* stmts) {
+bool after_grant_revoke_role(const GrantRoleStmt* stmts) {
   Assert(stmts != nullptr);
+  ListCell* item;
+  std::vector<uint64_t> objectIds;
+  bool send_message_success = true;
+  bool ret_value = false;
 
-  /* The object id stored if new table was successfully created */
-  uint64_t object_id = 0;
+  /* Get granted role IDs.*/
+  foreach (item, stmts->granted_roles) {
+    AccessPriv* priv = (AccessPriv*)lfirst(item);
+    char* rolename = priv->priv_name;
+    uint64_t object_id;
 
-  /* Call the function sending metadata to metadata-manager. */
-  bool success = get_roleid_by_rolename(DBNAME,stmts->role,&object_id);
-
-  if (success) {
-    message::CreateRoleMessage cr_msg{object_id};
-    std::unique_ptr<metadata::Metadata> roles{new metadata::Roles(DBNAME)};
-    success = send_message(&cr_msg, roles);
+    if (rolename == NULL || priv->cols != NIL)
+      ereport(ERROR,
+              (errcode(ERRCODE_INVALID_GRANT_OPERATION),
+               errmsg("column names cannot be included in GRANT/REVOKE ROLE")));
+    if (get_roleid_by_rolename(DBNAME, rolename, &object_id)) {
+      objectIds.push_back(object_id);
+    } else {
+      /* Failed getting role id.*/
+      return ret_value;
+    }
   }
 
-  return success;
+  /* Send message containing granted role ID.*/
+  for (uint64_t object_id : objectIds) {
+    if (stmts->is_grant) {
+      message::GrantRoleMessage cr_msg{object_id};
+      std::unique_ptr<metadata::Metadata> roles{new metadata::Roles(DBNAME)};
+      if (!send_message(&cr_msg, roles)) {
+        send_message_success = false;
+      }
+    } else {
+      message::RevokeRoleMessage cr_msg{object_id};
+      std::unique_ptr<metadata::Metadata> roles{new metadata::Roles(DBNAME)};
+      if (!send_message(&cr_msg, roles)) {
+        send_message_success = false;
+      }
+    }
+  }
+  ret_value = send_message_success;
+  return ret_value;
 }
 
 /**
@@ -126,4 +152,3 @@ bool send_message(message::Message* message,
 
   return ret_value;
 }
-

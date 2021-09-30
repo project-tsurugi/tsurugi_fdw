@@ -24,7 +24,6 @@
 extern "C" {
 
 #endif
-bool before_alter_role(AlterRoleStmt* stmts);
 
 bool after_alter_role(AlterRoleStmt* stmts);
 

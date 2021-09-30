@@ -25,7 +25,7 @@ extern "C" {
 
 #endif
 
-bool after_create_role(CreateRoleStmt* stmts);
+bool after_create_role(const CreateRoleStmt* stmts);
 
 #ifdef __cplusplus
 }

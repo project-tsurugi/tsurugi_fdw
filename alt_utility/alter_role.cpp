@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	create_role.cpp
- *	@brief  Dispatch the create-role command to ogawayama.
+ *	@file	alter_role.cpp
+ *	@brief  Dispatch the alter-role command to ogawayama.
  */
 
 #include <regex>
@@ -28,11 +28,7 @@
 #include "manager/message/message_broker.h"
 #include "manager/message/status.h"
 #include "manager/metadata/metadata.h"
-#if 0
 #include "manager/metadata/roles.h"
-#else 
-#include "stub/roles.h"
-#endif
 
 using namespace boost::property_tree;
 using namespace manager;
@@ -49,7 +45,7 @@ extern "C" {
 
 #include "role_manager_cmds.h"
 
-#include "create_role.h"
+#include "alter_role.h"
 
 /* DB name metadata-manager manages */
 const std::string DBNAME = "Tsurugi";
@@ -58,21 +54,21 @@ bool send_message(message::Message* message,
                   std::unique_ptr<metadata::Metadata>& objects);
 
 /**
- *  @brief Calls the function to get ID and send created role ID to ogawayama.
+ *  @brief Calls the function to get role ID and send alter role ID to ogawayama.
  *  @param [in] stmts of statements.
  *  @return true if operation was successful, false otherwize.
  */
-bool after_create_role(const CreateRoleStmt* stmts) {
+bool after_alter_role(const AlterRoleStmt* stmts) {
   Assert(stmts != nullptr);
 
   /* The object id stored if new table was successfully created */
   uint64_t object_id = 0;
 
   /* Call the function sending metadata to metadata-manager. */
-  bool success = get_roleid_by_rolename(DBNAME,stmts->role,&object_id);
+  bool success = get_roleid_by_rolename(DBNAME,stmts->role->rolename,&object_id);
 
   if (success) {
-    message::CreateRoleMessage cr_msg{object_id};
+    message::AlterRoleMessage cr_msg{object_id};
     std::unique_ptr<metadata::Metadata> roles{new metadata::Roles(DBNAME)};
     success = send_message(&cr_msg, roles);
   }
