@@ -31,18 +31,30 @@ class Receiver;
 const std::string MESSAGE_TYPE_NANE_CREATE_TABLE = "CREATE TABLE";
 const std::string MESSAGE_TYPE_NANE_BEGIN_DDL = "BEGIN DDL";
 const std::string MESSAGE_TYPE_NANE_END_DDL = "END DDL";
+const std::string MESSAGE_TYPE_NANE_CREATE_ROLE = "CREATE ROLE";
+const std::string MESSAGE_TYPE_NANE_DROP_ROLE = "DROP ROLE";
+const std::string MESSAGE_TYPE_NANE_ALTER_ROLE = "ALTER ROLE";
+const std::string MESSAGE_TYPE_NANE_GRANT_ROLE = "GRANT ROLE";
+const std::string MESSAGE_TYPE_NANE_REVOKE_ROLE = "REVOKE ROLE";
+const std::string MESSAGE_TYPE_NANE_GRANT_TABLE = "GRANT TABLE";
+const std::string MESSAGE_TYPE_NANE_REVOKE_TABLE = "REVOKE TABLE";
 
 /**
  * @enum MessageId
  * @brief message type ID that is an uniquely determined statement ID inputted by user.
  */
 enum class MessageId : int {
-  /**
-   *  @brief CREATE TABLE statement.
-   */
-  CREATE_TABLE = 0,
+  CREATE_TABLE = 0,  //!< @brief CREATE TABLE statement.
   BEGIN_DDL,         //!< @brief BEGIN DDL statement.
-  END_DDL            //!< @brief END DDL statement.
+  END_DDL,           //!< @brief END DDL statement.
+  CREATE_ROLE,       //!< @brief CREATE ROLE statement.
+  DROP_ROLE,         //!< @brief DROP ROLE statement.
+  ALTER_ROLE,        //!< @brief ALTER ROLE statement.
+  GRANT_ROLE,        //!< @brief GRANT ROLE statement.
+  REVOKE_ROLE,       //!< @brief REVOKE ROLE statement.
+  GRANT_TABLE,       //!< @brief GRANT TABLE statement.
+  REVOKE_TABLE       //!< @brief REVOKE TABLE statement.
+
 };
 
 class Message {
@@ -63,8 +75,7 @@ class Message {
   void set_receiver(Receiver* receiver_) { receivers.push_back(receiver_); };
 
   /**
-   * @brief Get message type ID that is an uniquely determined statement ID
-   * inputted by user.
+   * @brief Get message type ID that is an uniquely determined statement ID inputted by user.
    * @return message type ID.
    */
   MessageId get_id() { return id; };
@@ -127,6 +138,72 @@ class EndDDLMessage : public Message {
                 MESSAGE_TYPE_NANE_END_DDL} {}
 };
 
+class CreateRoleMessage : public Message {
+ public:
+  /**
+   * @brief C'tor. Initialize member variables.
+   * @param [in] object_id object ID that will be added, updated, or deleted.
+   */
+  CreateRoleMessage(uint64_t object_id)
+      : Message{MessageId::CREATE_ROLE, object_id,
+                MESSAGE_TYPE_NANE_CREATE_ROLE} {}
+};
+
+class DropRoleMessage : public Message {
+  DropRoleMessage(uint64_t object_id)
+      : Message{MessageId::DROP_ROLE, object_id,
+                MESSAGE_TYPE_NANE_DROP_ROLE} {}
+};
+
+class AlterRoleMessage : public Message {
+  AlterRoleMessage(uint64_t object_id)
+      : Message{MessageId::ALTER_ROLE, object_id,
+                MESSAGE_TYPE_NANE_ALTER_ROLE} {}
+};
+
+class GrantRoleMessage : public Message {
+ public:
+  /**
+   * @brief C'tor. Initialize member variables.
+   * @param [in] object_id object ID that will be added, updated, or deleted.
+   */
+  GrantRoleMessage(uint64_t object_id)
+      : Message{MessageId::GRANT_ROLE, object_id,
+                MESSAGE_TYPE_NANE_GRANT_ROLE} {}
+};
+
+class RevokeRoleMessage : public Message {
+ public:
+  /**
+   * @brief C'tor. Initialize member variables.
+   * @param [in] object_id object ID that will be added, updated, or deleted.
+   */
+  RevokeRoleMessage(uint64_t object_id)
+      : Message{MessageId::REVOKE_ROLE, object_id,
+                MESSAGE_TYPE_NANE_REVOKE_ROLE} {}
+};
+
+class GrantTableMessage : public Message {
+ public:
+  /**
+   * @brief C'tor. Initialize member variables.
+   * @param [in] object_id object ID that will be added, updated, or deleted.
+   */
+  GrantTableMessage(uint64_t object_id)
+      : Message{MessageId::GRANT_TABLE, object_id,
+                MESSAGE_TYPE_NANE_GRANT_TABLE} {}
+};
+
+class RevokeTableMessage : public Message {
+ public:
+  /**
+   * @brief C'tor. Initialize member variables.
+   * @param [in] object_id object ID that will be added, updated, or deleted.
+   */
+  RevokeTableMessage(uint64_t object_id)
+      : Message{MessageId::REVOKE_TABLE, object_id,
+                MESSAGE_TYPE_NANE_REVOKE_TABLE} {}
+};
 
 };  // namespace manager::message
 
