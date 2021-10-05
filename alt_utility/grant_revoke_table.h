@@ -25,7 +25,7 @@ extern "C" {
 
 #endif
 
-bool after_grant_revoke_table(GrantStmt* stmts);
+bool after_grant_revoke_table(const GrantStmt* stmts);
 
 #ifdef __cplusplus
 }

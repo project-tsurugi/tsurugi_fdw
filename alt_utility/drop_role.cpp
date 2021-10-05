@@ -29,7 +29,7 @@
 #include "manager/message/status.h"
 #include "manager/metadata/metadata.h"
 
-#if 0
+#if 1
 #include "manager/metadata/roles.h"
 #else
 #include "mock/message/message.h"

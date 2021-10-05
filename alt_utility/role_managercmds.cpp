@@ -22,7 +22,7 @@
 #include <string>
 
 #include "manager/metadata/metadata.h"
-#if 0
+#if 1
 #include "manager/metadata/roles.h"
 #else
 #include "mock/metadata/roles.h"

@@ -25,7 +25,7 @@ extern "C" {
 
 #endif
 
-bool after_grant_revoke_role(GrantRoleStmt* stmts);
+bool after_grant_revoke_role(const GrantRoleStmt* stmts);
 
 #ifdef __cplusplus
 }

@@ -30,13 +30,6 @@
 #include "manager/metadata/metadata.h"
 #include "manager/metadata/tables.h"
 
-#include "mock/message/message.h"
-
-
-using namespace boost::property_tree;
-using namespace manager;
-using namespace ogawayama;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -46,6 +39,10 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
+
+using namespace boost::property_tree;
+using namespace manager;
+using namespace ogawayama;
 
 #include "table_managercmds.h"
 

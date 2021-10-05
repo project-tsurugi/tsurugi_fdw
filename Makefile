@@ -9,7 +9,6 @@ OBJS = common/init.o common/stub_manager.o \
 				alt_utility/drop_role.o alt_utility/alter_role.o \
 				alt_utility/grant_revoke_role.o alt_utility/grant_revoke_table.o \
                                 alt_utility/table_managercmds.o \
-				alt_utility/mock/metadata/roles.o \
 				alt_utility/alt_utility.o \
         $(WIN32RES)
 

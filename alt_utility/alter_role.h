@@ -25,7 +25,7 @@ extern "C" {
 
 #endif
 
-bool after_alter_role(AlterRoleStmt* stmts);
+bool after_alter_role(const AlterRoleStmt* stmts);
 
 #ifdef __cplusplus
 }
