@@ -125,11 +125,11 @@
 1. Define TABLESPACE
 	* Create a directory for TABLESPACE.
 		```
-		$ mkdir -p <PostgreSQL install directory>/data/tsurugi
+		$ mkdir -p <PostgreSQL install directory>/tsurugi
 		```
 	* Execute **CREATE TABLESPACE** command
 		```sql
-		CREATE TABLESPACE tsurugi LOCATION '<PostgreSQL install directory>/data/tsurugi';
+		CREATE TABLESPACE tsurugi LOCATION '<PostgreSQL install directory>/tsurugi';
 		```
 	* Check with the meta-command(\db)
 		```
@@ -139,7 +139,7 @@
 		------------+----------+-----------------------------------
 		 pg_default | postgres |
 		 pg_global  | postgres |
-		 tsurugi    | postgres | /home/postgres/local/pgsql/data/tsurugi
+		 tsurugi    | postgres | /home/postgres/local/pgsql/tsurugi
 		```
 
 ## Regression tests
