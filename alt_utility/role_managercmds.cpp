@@ -22,10 +22,11 @@
 #include <string>
 
 #include "manager/metadata/metadata.h"
-#if 1
-#include "manager/metadata/roles.h"
-#else
+
+#ifdef USEROLEMOCK
 #include "mock/metadata/roles.h"
+#else
+#include "manager/metadata/roles.h"
 #endif
 
 using namespace manager::metadata;
@@ -35,11 +36,6 @@ using namespace boost::property_tree;
 extern "C" {
 #endif
 #include "postgres.h"
-
-#include "catalog/pg_class.h"
-#include "nodes/nodes.h"
-#include "nodes/parsenodes.h"
-#include "nodes/value.h"
 #ifdef __cplusplus
 }
 #endif
@@ -105,4 +101,3 @@ bool confirm_roleid(const std::string dbname, const uint64_t object_id) {
   ret_value = true;
   return ret_value;
 }
-

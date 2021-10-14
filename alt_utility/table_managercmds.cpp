@@ -31,11 +31,6 @@ using namespace boost::property_tree;
 extern "C" {
 #endif
 #include "postgres.h"
-
-#include "catalog/pg_class.h"
-#include "nodes/nodes.h"
-#include "nodes/parsenodes.h"
-#include "nodes/value.h"
 #ifdef __cplusplus
 }
 #endif

@@ -19,6 +19,7 @@
 #include <regex>
 #include <string>
 #include <string_view>
+#include <iostream>
 
 #include "ogawayama/stub/api.h"
 #include "stub_manager.h"
@@ -27,11 +28,10 @@
 #include "manager/message/status.h"
 #include "manager/metadata/metadata.h"
 
-#if 1
-#include "manager/metadata/roles.h"
-#else
+#ifdef USE_ROLE_MOCK
 #include "mock/metadata/roles.h"
-#include "mock/message/message.h"
+#else
+#include "manager/metadata/roles.h"
 #endif
 
 #ifdef __cplusplus
@@ -49,7 +49,7 @@ using namespace boost::property_tree;
 using namespace manager;
 using namespace ogawayama;
 
-#include "role_managercmds.h"
+#include "syscashecmds.h"
 #include "create_role.h"
 
 /* DB name metadata-manager manages */
@@ -70,7 +70,7 @@ bool after_create_role(const CreateRoleStmt* stmts) {
   uint64_t object_id = 0;
 
   /* Call the function sending metadata to metadata-manager. */
-  bool success = get_roleid_by_rolename(DBNAME,stmts->role,&object_id);
+  bool success = get_roleid_by_rolename_from_syscashe(stmts->role,&object_id);
 
   if (success) {
     message::CreateRoleMessage cr_msg{object_id};

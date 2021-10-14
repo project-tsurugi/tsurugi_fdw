@@ -29,12 +29,12 @@
 #include "manager/message/status.h"
 #include "manager/metadata/metadata.h"
 
-#if 1
-#include "manager/metadata/roles.h"
-#else
+#ifdef USE_ROLE_MOCK
 #include "mock/metadata/roles.h"
-#include "mock/message/message.h"
+#else
+#include "manager/metadata/roles.h"
 #endif
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,7 +46,6 @@ extern "C" {
 }
 #endif
 
-using namespace boost::property_tree;
 using namespace manager;
 using namespace ogawayama;
 
