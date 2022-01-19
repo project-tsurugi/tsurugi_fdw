@@ -47,24 +47,24 @@ extern "C" {
  * @brief C'tors. Initialize member variables.
  * @param [in] List of statements.
  */
-CreateTable::CreateTable(List *stmts, std::string dbname) : stmts(stmts), dbname(dbname)
+CreateTable::CreateTable(List *stmts, std::string dbname) : stmts_(stmts), dbname_(dbname)
 {
-    create_stmt = nullptr;
-    index_stmt = nullptr;
+    create_stmt_ = nullptr;
+    index_stmt_ = nullptr;
 
     ListCell *l;
 
-    foreach(l, stmts)
+    foreach(l, stmts_)
     {
         Node *stmt = (Node *) lfirst(l);
 
         if (IsA(stmt, CreateStmt))
         {
-            create_stmt = (CreateStmt *)stmt;
+            create_stmt_ = (CreateStmt *)stmt;
         }
         else if (IsA(stmt, IndexStmt))
         {
-            index_stmt = (IndexStmt *)stmt;
+            index_stmt_ = (IndexStmt *)stmt;
         }
     }
 }
@@ -78,20 +78,20 @@ CreateTable::CreateTable(List *stmts, std::string dbname) : stmts(stmts), dbname
 bool
 CreateTable::define_relation( ObjectIdType* object_id )
 {
-    Assert(create_stmt != nullptr);
+    Assert(create_stmt_ != nullptr);
 
     /* return value */
     bool ret_value{false};
 
     /* load metadata */
-    if (datatypes == nullptr)
+    if (datatypes_ == nullptr)
     {
-        datatypes = std::make_unique<DataTypes>(dbname);
+        datatypes_ = std::make_unique<DataTypes>(dbname_);
     }
 
-    if (tables == nullptr)
+    if (tables_ == nullptr)
     {
-        tables = std::make_unique<Tables>(dbname);
+        tables_ = std::make_unique<Tables>(dbname_);
     }
 
     /* check if given syntax supported or not by Tsurugi */
@@ -127,7 +127,7 @@ CreateTable::is_type_supported()
     /* return value */
     bool ret_value{true};
 
-    List *table_elts = create_stmt->tableElts;
+    List *table_elts = create_stmt_->tableElts;
     ListCell *l;
 
     /*
@@ -170,7 +170,7 @@ CreateTable::is_type_supported()
                      * ErrorCode::OK if the given type name is suppoted by Tsurugi,
                      * otherwize error code is returned.
                      */
-                    ErrorCode err = datatypes->get(DataTypes::PG_DATA_TYPE_QUALIFIED_NAME, type_name, datatype);
+                    ErrorCode err = datatypes_->get(DataTypes::PG_DATA_TYPE_QUALIFIED_NAME, type_name, datatype);
                     if (err == ErrorCode::OK)
                     {
                         is_supported = true;
@@ -194,7 +194,7 @@ CreateTable::is_type_supported()
                  * ErrorCode::OK if the given type is suppoted by Tsurugi,
                  * otherwize error code is returned.
                  */
-                ErrorCode err = datatypes->get(DataTypes::PG_DATA_TYPE, type_oid_str, datatype);
+                ErrorCode err = datatypes_->get(DataTypes::PG_DATA_TYPE, type_oid_str, datatype);
                 /* If the given type is not suppoted, append the list of type oids not supported*/
                 if (err != ErrorCode::OK)
                 {
@@ -242,10 +242,10 @@ CreateTable::is_syntax_supported()
     bool ret_value{false};
     ListCell *l;
 
-    List *table_elts = create_stmt->tableElts;
+    List *table_elts = create_stmt_->tableElts;
 
     /* Check members of CreateStmt structure. */
-    if (create_stmt->inhRelations != NIL)
+    if (create_stmt_->inhRelations != NIL)
     {
         ereport(ERROR,
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -253,7 +253,7 @@ CreateTable::is_syntax_supported()
         return ret_value;
     }
 
-    if (create_stmt->partbound != nullptr)
+    if (create_stmt_->partbound != nullptr)
     {
         ereport(ERROR,
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -261,7 +261,7 @@ CreateTable::is_syntax_supported()
         return ret_value;
     }
 
-    if (create_stmt->partspec != nullptr)
+    if (create_stmt_->partspec != nullptr)
     {
         ereport(ERROR,
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -269,7 +269,7 @@ CreateTable::is_syntax_supported()
         return ret_value;
     }
 
-    if (create_stmt->ofTypename != nullptr)
+    if (create_stmt_->ofTypename != nullptr)
     {
         ereport(ERROR,
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -277,7 +277,7 @@ CreateTable::is_syntax_supported()
         return ret_value;
     }
 
-    if (create_stmt->options != NIL)
+    if (create_stmt_->options != NIL)
     {
         ereport(ERROR,
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -285,7 +285,7 @@ CreateTable::is_syntax_supported()
         return ret_value;
     }
 
-    if (create_stmt->oncommit != ONCOMMIT_NOOP)
+    if (create_stmt_->oncommit != ONCOMMIT_NOOP)
     {
         ereport(ERROR,
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -294,7 +294,7 @@ CreateTable::is_syntax_supported()
     }
 
 #if PG_VERSION_NUM >= 120000
-    if (create_stmt->accessMethod != nullptr)
+    if (create_stmt_->accessMethod != nullptr)
     {
         ereport(ERROR,
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -353,7 +353,7 @@ CreateTable::is_syntax_supported()
         column_names.insert(colname);
     }
 
-    List *table_constraints = create_stmt->constraints;
+    List *table_constraints = create_stmt_->constraints;
 
     /* Check table constraints */
     foreach(l, table_constraints)
@@ -370,15 +370,15 @@ CreateTable::is_syntax_supported()
     }
 
     /* Check members of IndexStmt structure */
-    if (index_stmt != nullptr)
+    if (index_stmt_ != nullptr)
     {
-        if (index_stmt->unique && !(index_stmt->primary))
+        if (index_stmt_->unique && !(index_stmt_->primary))
         {
             show_table_constraint_syntax_error_msg("Tsurugi does not support UNIQUE table constraint");
             return ret_value;
         }
 
-        if (index_stmt->tableSpace != nullptr)
+        if (index_stmt_->tableSpace != nullptr)
         {
             ereport(ERROR,
                     (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -386,7 +386,7 @@ CreateTable::is_syntax_supported()
             return ret_value;
         }
 
-        if (index_stmt->indexIncludingParams != NIL)
+        if (index_stmt_->indexIncludingParams != NIL)
         {
             ereport(ERROR,
                     (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -394,7 +394,7 @@ CreateTable::is_syntax_supported()
             return ret_value;
         }
 
-        if (index_stmt->options != NIL)
+        if (index_stmt_->options != NIL)
         {
             ereport(ERROR,
                     (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -402,13 +402,13 @@ CreateTable::is_syntax_supported()
             return ret_value;
         }
 
-        if (index_stmt->excludeOpNames != nullptr)
+        if (index_stmt_->excludeOpNames != nullptr)
         {
             show_table_constraint_syntax_error_msg("Tsurugi does not support EXCLUDE table constraint");
             return ret_value;
         }
 
-        if (index_stmt->deferrable)
+        if (index_stmt_->deferrable)
         {
             ereport(ERROR,
                     (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -416,7 +416,7 @@ CreateTable::is_syntax_supported()
             return ret_value;
         }
 
-        if (index_stmt->initdeferred)
+        if (index_stmt_->initdeferred)
         {
             ereport(ERROR,
                     (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -427,7 +427,7 @@ CreateTable::is_syntax_supported()
     }
 
     /* If statememts except CreateStmt and IndexStmt are given, report error messages. */
-    foreach(l, stmts)
+    foreach(l, stmts_)
     {
         Node *stmt = (Node *) lfirst(l);
 
@@ -445,7 +445,7 @@ CreateTable::is_syntax_supported()
      * If statements to create temprary or unlogged table are given,
      * report error messages.
      */
-    RangeVar *relation = (RangeVar *)create_stmt->relation;
+    RangeVar *relation = (RangeVar *)create_stmt_->relation;
     if (relation != nullptr && relation->relpersistence != RELPERSISTENCE_PERMANENT)
     {
         ereport(ERROR,
@@ -473,7 +473,7 @@ CreateTable::store_metadata( ObjectIdType* object_id )
     /* table metadata of newly created table */
     ptree new_table;
 
-    RangeVar *relation = (RangeVar *)create_stmt->relation;
+    RangeVar *relation = (RangeVar *)create_stmt_->relation;
 
     /* table name used later */
     char *relname = nullptr;
@@ -500,7 +500,7 @@ CreateTable::store_metadata( ObjectIdType* object_id )
     ptree columns;
     ObjectIdType ordinal_position = ORDINAL_POSITION_BASE_INDEX;
 
-    List *table_elts = create_stmt->tableElts;
+    List *table_elts = create_stmt_->tableElts;
     ListCell *l;
 
     /* for each columns */
@@ -559,7 +559,7 @@ CreateTable::store_metadata( ObjectIdType* object_id )
                 ptree datatype;
 
                 /* get dataTypeId from metadata-manager */
-                err = datatypes->get(DataTypes::PG_DATA_TYPE_QUALIFIED_NAME, type_name, datatype);
+                err = datatypes_->get(DataTypes::PG_DATA_TYPE_QUALIFIED_NAME, type_name, datatype);
                 if (err == ErrorCode::OK)
                 {
                     data_type_id = datatype.get_optional<ObjectIdType>(DataTypes::ID);
@@ -573,7 +573,7 @@ CreateTable::store_metadata( ObjectIdType* object_id )
                 std::string type_oid_str = std::to_string(colDef_type_name->typeOid);
 
                 /* get dataTypeId from metadata-manager */
-                ErrorCode err = datatypes->get(DataTypes::PG_DATA_TYPE, type_oid_str, datatype);
+                ErrorCode err = datatypes_->get(DataTypes::PG_DATA_TYPE, type_oid_str, datatype);
                 if (err == ErrorCode::OK)
                 {
                     data_type_id = datatype.get_optional<ObjectIdType>(DataTypes::ID);
@@ -697,7 +697,7 @@ CreateTable::store_metadata( ObjectIdType* object_id )
 
     ErrorCode error = ErrorCode::UNKNOWN;
 
-    error = tables->add(new_table, object_id);
+    error = tables_->add(new_table, object_id);
 
     switch (error)
     {
@@ -732,16 +732,16 @@ CreateTable::get_ordinal_positions_of_primary_keys()
     bool has_table_pkey = false;
 
     /* Check if table constraints include primary key constraint */
-    if (index_stmt != nullptr && index_stmt->primary)
+    if (index_stmt_ != nullptr && index_stmt_->primary)
     {
         has_table_pkey = true;
 
         ObjectIdType ordinal_position = ORDINAL_POSITION_BASE_INDEX;
 
-        List *table_elts = create_stmt->tableElts;
+        List *table_elts = create_stmt_->tableElts;
         ListCell *lte;
 
-        List *index_params = index_stmt->indexParams;
+        List *index_params = index_stmt_->indexParams;
         ListCell *lip;
 
         foreach(lte, table_elts)
@@ -769,7 +769,7 @@ CreateTable::get_ordinal_positions_of_primary_keys()
     {
         ObjectIdType ordinal_position = ORDINAL_POSITION_BASE_INDEX;
 
-        List *table_elts = create_stmt->tableElts;
+        List *table_elts = create_stmt_->tableElts;
         ListCell *l;
 
         foreach(l, table_elts)

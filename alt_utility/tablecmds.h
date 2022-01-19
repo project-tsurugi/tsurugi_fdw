@@ -33,7 +33,7 @@ class CreateTable {
          * @brief C'tors. Initialize member variables.
          * @param [in] List of statements.
          */
-        CreateTable(List *stmts, std::string dbname);
+        CreateTable(List *stmts_, std::string dbname_);
 
         /**
          *  @brief  Defines relation include loading metadata, syntax check, type check, storing metadata.
@@ -45,18 +45,18 @@ class CreateTable {
 
     private:
         /* List of statements */
-        List *stmts;
+        List *stmts_;
         /* DB name metadata-manager manages */
-        const std::string dbname;
+        const std::string dbname_;
         /* Create Table Statement */
-        CreateStmt *create_stmt;
+        CreateStmt *create_stmt_;
         /* Create Index Statement */
-        IndexStmt *index_stmt;
+        IndexStmt *index_stmt_;
 
         /* data types metadata obtained from metadata-manager */
-        std::unique_ptr<manager::metadata::DataTypes> datatypes;
+        std::unique_ptr<manager::metadata::DataTypes> datatypes_;
         /* table metadata obtained from metadata-manager */
-        std::unique_ptr<manager::metadata::Tables> tables;
+        std::unique_ptr<manager::metadata::Tables> tables_;
 
         /**
          *  @brief  Check if given type supported or not by Tsurugi
