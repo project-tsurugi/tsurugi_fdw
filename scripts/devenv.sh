@@ -98,6 +98,8 @@ build() {
 }
 
 build_module() {
+  [[ $OPT_CLEAN == 1 ]] && return
+
   local parent_dir=$(pwd)
   local module="$1"
 
