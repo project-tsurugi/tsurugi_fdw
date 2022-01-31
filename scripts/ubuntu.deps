@@ -18,11 +18,11 @@ libbz2-dev
 libgflags-dev
 libgoogle-glog-dev
 libicu-dev
-libleveldb-dev
 liblz4-1
 libmsgpack-dev
 libnuma-dev
 libpq-dev
+libprotobuf-dev
 librocksdb-dev
 libsnappy1v5
 libspdlog-dev
@@ -30,7 +30,9 @@ libtbb-dev
 libzstd1
 m4
 ninja-build
-openjdk-8-jdk
+openjdk-11-jdk
 pkg-config
+protobuf-c-compiler
+protobuf-compiler
 uuid-dev
 zlib1g-dev
