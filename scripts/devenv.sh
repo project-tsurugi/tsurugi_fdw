@@ -18,6 +18,8 @@ set -eo pipefail
 }
 
 package_install() {
+  [[ $OPT_CLEAN == 1 ]] && return
+
   echo -e "\nInstall the required packages for project."
 
   sudo apt update -y
@@ -29,6 +31,8 @@ package_install() {
 get_source_file() {
   local parent_dir=$(pwd)
   local module="$1"
+
+  [[ $OPT_CLEAN == 1 ]] && return
 
   if [[ -z $module ]]; then
     get_source_file 'manager'
@@ -45,8 +49,18 @@ get_source_file() {
   fi
   shift
 
+  if [[ $OPT_CLEAN == 1 ]]; then
+    echo -e "[$module] Cleaned."
+    rm -rf  $TSURUGI_HOME/$module
+    return
+  fi
+
   echo -e "\nGet the $module component from GitHub."
   
+  if [[ $OPT_FORCE == 1 ]]; then
+    rm -rf  $TSURUGI_HOME/$module
+  fi
+
   if [[ -d $TSURUGI_HOME/$module ]]; then
     # Get (pull) the component from GitHub.
     cd $TSURUGI_HOME/$module
@@ -86,6 +100,8 @@ build() {
 build_module() {
   local parent_dir=$(pwd)
   local module="$1"
+
+  [[ $OPT_CLEAN == 1 ]] && return
 
   if [[ -z $module ]]; then
     build_module 'manager'
@@ -281,7 +297,7 @@ build_module() {
 
   # GNU Bison
   'bison')
-    if [[ ! -d $TSURUGI_HOME/bison-3.5.1 ]]; then
+    if [[ (! -d $TSURUGI_HOME/bison-3.5.1) || $OPT_FORCE == 1 ]]; then
       cd $TSURUGI_HOME
       curl http://ftp.jaist.ac.jp/pub/GNU/bison/bison-3.5.1.tar.gz | tar zxv
 
@@ -306,6 +322,29 @@ usage_exit() {
   exit $1
 }
 
+option_check() {
+  while getopts fch-: opt; do
+    if [[ $opt == "-" ]]; then
+      opt=$(echo ${OPTARG})
+    fi
+
+    case "$opt" in
+    f | force)
+      OPT_FORCE=1
+      ;;
+    c | crean)
+      OPT_CLEAN=1
+      ;;
+    h | help)
+      usage_exit 0
+      ;;
+    *)
+      usage_exit 1
+      ;;
+    esac
+  done  
+}
+
 script_main() {
   echo -e "\nBuild script started.\n"
 
@@ -324,4 +363,5 @@ script_main() {
   echo -e "\nBuild script finished."
 }
 
+option_check $*
 script_main
