@@ -6,6 +6,7 @@ set -eo pipefail
 
 TSURUGI_HOME=$HOME/project-tsurugi
 INSTALL_PREFIX=$HOME/.local
+SCRIPT_PATH=$(cd $(dirname $0); pwd)
 
 #BUILD_TYPE=Release
 BUILD_TYPE=RelWithDebInfo
@@ -14,7 +15,7 @@ BINARY_DIR=build
 SHARKSFIN_IMPLEMENTATION=memory
 
 sudo apt update -y
-sudo apt install -y $(cat scripts/ubuntu.deps)
+sudo apt install -y $(cat $SCRIPT_PATH/ubuntu.deps)
 
 if [ ! -d $TSURUGI_HOME ]; then
   mkdir -p $TSURUGI_HOME
@@ -80,6 +81,8 @@ if [ ! -d $BINARY_DIR ]; then
       -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
       -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
       -DFORCE_INSTALL_RPATH=ON \
+      -DBUILD_TESTS=OFF \
+      -DBUILD_DOCUMENTS=OFF \
       ..
   ninja
   ninja install
@@ -100,6 +103,8 @@ if [ ! -d $BINARY_DIR ]; then
       -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
       -DFORCE_INSTALL_RPATH=ON \
       -DBUILD_TESTS=OFF \
+      -DBUILD_DOCUMENTS=OFF \
+      -DBUILD_EXAMPLES=OFF \
       ..
   ninja
   ninja install
@@ -120,6 +125,7 @@ if [ ! -d $BINARY_DIR ]; then
       -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
       -DFORCE_INSTALL_RPATH=ON \
       -DBUILD_TESTS=ON \
+      -DBUILD_DOCUMENTS=OFF \
       ..
   ninja
   ninja install
@@ -140,7 +146,9 @@ if [ ! -d $BINARY_DIR ]; then
       -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
       -DFORCE_INSTALL_RPATH=ON \
       -DBUILD_TESTS=OFF \
-      -DBUILD_KVS=OFF \
+      -DBUILD_SHIRAKAMI=OFF \
+      -DBUILD_DOCUMENTS=OFF \
+      -DBUILD_EXAMPLES=OFF \
       ..
   ninja
   ninja install
@@ -183,6 +191,7 @@ if [ ! -d $BINARY_DIR ]; then
       -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
       -DFORCE_INSTALL_RPATH=ON \
       -DBUILD_TESTS=OFF \
+      -DBUILD_DOCUMENTS=OFF \
       ..
   ninja
   ninja install
@@ -225,6 +234,7 @@ if [ ! -d $BINARY_DIR ]; then
       -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
       -DFORCE_INSTALL_RPATH=ON \
       -DBUILD_TESTS=OFF \
+      -DBUILD_DOCUMENTS=OFF \
       ..
   #cmake --build . --target install --clean-first
   ninja
@@ -236,7 +246,6 @@ cd $TSURUGI_HOME/
 
 echo -e "\nbison started."
 if [ ! -d bison-3.5.1 ]; then
-  rm -rf bison-3.5.1
   curl http://ftp.jaist.ac.jp/pub/GNU/bison/bison-3.5.1.tar.gz | tar zxv
   cd bison-3.5.1
   ./configure --prefix=$INSTALL_PREFIX
@@ -257,6 +266,8 @@ if [ ! -d $BINARY_DIR ]; then
       -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
       -DFORCE_INSTALL_RPATH=ON \
       -DBUILD_TESTS=OFF \
+      -DBUILD_DOCUMENTS=OFF \
+      -DBUILD_EXAMPLES=OFF \
       ..
   #cmake --build . --target install --clean-first
   ninja
@@ -277,9 +288,9 @@ if [ ! -d $BINARY_DIR ]; then
   cmake -G Ninja \
       -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
       -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
-      -DFORCE_INSTALL_RPATH=ON \
       -DBUILD_TESTS=OFF \
       -DBUILD_DOCUMENTS=OFF \
+      -DBUILD_EXAMPLES=OFF \
       ..
   #cmake --build . --target install --clean-first
   ninja
@@ -320,7 +331,8 @@ if [ ! -d $BINARY_DIR ]; then
       -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
       -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
       -DBUILD_TESTS=OFF \
-      -DBUILD_DOCUMENT=OFF \
+      -DBUILD_DOCUMENT=OFF  \
+      -DBUILD_EXAMPLES=OFF \
       -DSHARKSFIN_IMPLEMENTATION=$SHARKSFIN_IMPLEMENTATION \
       ..
   ninja
@@ -342,7 +354,8 @@ if [ ! -d $BINARY_DIR ]; then
       -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
       -DFORCE_INSTALL_RPATH=ON \
       -DBUILD_TESTS=OFF \
-      -DINSTALL_EXAMPLES=OFF \
+      -DBUILD_DOCUMENTS=OFF \
+      -DBUILD_EXAMPLES=OFF \
       -DSHARKSFIN_IMPLEMENTATION=$SHARKSFIN_IMPLEMENTATION \
       ..
   #cmake --build . --target install --clean-first
@@ -362,10 +375,10 @@ cmake -G Ninja \
     -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
     -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
     -DCMAKE_MODULE_PATH=$INSTALL_PREFIX \
-    -DCMAKE_PREFIX_PATH=$TSURUGI_HOME/tateyama/build/ \
+    -DCMAKE_PREFIX_PATH=$TSURUGI_HOME/tateyama/build \
     -DFORCE_INSTALL_RPATH=ON \
     -DBUILD_TESTS=OFF \
-    -DINSTALL_EXAMPLES=OFF \
+    -DBUILD_EXAMPLES=OFF \
     -DSHARKSFIN_IMPLEMENTATION=$SHARKSFIN_IMPLEMENTATION \
     ..
 ninja
