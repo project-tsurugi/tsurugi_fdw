@@ -17,6 +17,7 @@ set -eo pipefail
   SHARKSFIN_IMPLEMENTATION=memory
 }
 
+# Install the required packages for project.
 package_install() {
   [[ $OPT_CLEAN == 1 ]] && return
 
@@ -28,7 +29,8 @@ package_install() {
   sudo apt autoremove -y
 }
 
-get_source_file() {
+# Get (clone/pull) the component from GitHub.
+get_module() {
   local module="$1"
   shift
 
@@ -53,12 +55,36 @@ get_source_file() {
       git clone git@github.com:project-tsurugi/$module.git $TSURUGI_HOME/$module
       cd $TSURUGI_HOME/$module
     fi
-
-    # Update the submodule from GitHub.
-    git submodule update --init $*
   )
 }
 
+# Update the submodule from GitHub.
+get_submodule() {
+  if [[ ! -d third_party ]]; then
+    return
+  fi
+
+  local modules
+  modules+=($(cd third_party; ls -d */))
+
+  local module
+  local pids
+  for module in ${modules[@]}; do
+    module=$(echo $module | sed -e "s/\/$//")
+    echo -e "\nGet the $module subcomponent from GitHub."
+    (git submodule update --init third_party/$module) &
+    pids+=($!)
+  done
+
+  for pid in ${pids[@]}; do
+    wait $pid
+    if [ $? -ne 0 ]; then
+      exit 1
+    fi
+  done
+}
+
+# Build the component.
 build() {
   echo -e "\nBuild the $(basename $1) component."
   (
@@ -80,13 +106,18 @@ build() {
   )
 }
 
+# Controller to build the component.
 build_module() {
   [[ $OPT_CLEAN == 1 ]] && return
 
   local parent_dir=$(pwd)
   local module="$1"
 
-  [[ -d "$module" ]] && cd $module
+  if [[ -d "$module" ]]; then
+    cd $module
+    # Get submodules.
+    get_submodule
+  fi
 
   case "$module" in
   # tsurugi::ogawayama
@@ -311,6 +342,7 @@ build_module() {
   cd $parent_dir
 }
 
+# Display the usage instructions.
 usage_exit() {
   echo -e "Usage:\n  $0 [options]\n" 1>&2
   echo  "Options:" 1>&2
@@ -321,6 +353,7 @@ usage_exit() {
   exit $1
 }
 
+# Check the options.
 option_check() {
   while getopts fch-: opt; do
     if [[ $opt == "-" ]]; then
@@ -344,6 +377,7 @@ option_check() {
   done  
 }
 
+# Main processing of the script.
 script_main() {
   echo -e "\nBuild script started.\n"
 
@@ -354,7 +388,7 @@ script_main() {
   package_install
 
   # Get the source file.
-  get_source_file 'ogawayama' --recursive
+  get_module 'ogawayama'
 
   # Build the components.
   build_module 'ogawayama'
