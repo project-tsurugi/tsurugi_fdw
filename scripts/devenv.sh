@@ -29,24 +29,7 @@ package_install() {
 }
 
 get_source_file() {
-  local parent_dir=$(pwd)
   local module="$1"
-
-  [[ $OPT_CLEAN == 1 ]] && return
-
-  if [[ -z $module ]]; then
-    get_source_file 'manager'
-    get_source_file 'shakujo'
-    get_source_file 'shirakami'
-    get_source_file 'sharksfin' third_party/googletest
-    get_source_file 'takatori' --recursive
-    get_source_file 'yugawara' --recursive
-    get_source_file 'mizugaki' --recursive
-    get_source_file 'sandbox-performance-tools'
-    get_source_file 'jogasaki' --recursive
-    get_source_file 'ogawayama'
-    return
-  fi
   shift
 
   if [[ $OPT_CLEAN == 1 ]]; then
@@ -56,45 +39,45 @@ get_source_file() {
   fi
 
   echo -e "\nGet the $module component from GitHub."
-  
-  if [[ $OPT_FORCE == 1 ]]; then
-    rm -rf  $TSURUGI_HOME/$module
-  fi
+  (
+    if [[ $OPT_FORCE == 1 ]]; then
+      rm -rf  $TSURUGI_HOME/$module
+    fi
 
-  if [[ -d $TSURUGI_HOME/$module ]]; then
-    # Get (pull) the component from GitHub.
-    cd $TSURUGI_HOME/$module
-    git pull
-  else
-    # Get (clone) the component from GitHub.
-    git clone git@github.com:project-tsurugi/$module.git $TSURUGI_HOME/$module
-    cd $TSURUGI_HOME/$module
-  fi
+    if [[ -d $TSURUGI_HOME/$module ]]; then
+      # Get (pull) the component from GitHub.
+      cd $TSURUGI_HOME/$module
+      git pull
+    else
+      # Get (clone) the component from GitHub.
+      git clone git@github.com:project-tsurugi/$module.git $TSURUGI_HOME/$module
+      cd $TSURUGI_HOME/$module
+    fi
 
-  # Update the submodule from GitHub.
-  git submodule update --init $*
-
-  cd $parent_dir
+    # Update the submodule from GitHub.
+    git submodule update --init $*
+  )
 }
 
 build() {
-  local parent_dir=$(pwd)
-  local build_path=$TSURUGI_HOME/$1/$BINARY_DIR
-
   echo -e "\nBuild the $(basename $1) component."
+  (
+    local install=0
 
-  mkdir -p $build_path
-  cd $build_path
+    if [[ ! -d $BINARY_DIR ]]; then
+      install=1
+      mkdir -p $BINARY_DIR
+    fi
+    cd $BINARY_DIR
 
-  cmake -G Ninja $* ..
+    cmake -G Ninja $* ..
 
-  ninja | tee .ninja_tee
-  if [[ $(cat .ninja_tee) != 'ninja: no work to do.' ]]; then
-    ninja install
-  fi
-  rm -rf .ninja_tee > /dev/null 2>&1
-
-  cd $parent_dir
+    ninja | tee .ninja_tee
+    if [[ ($install == 1) || ($(cat .ninja_tee) != 'ninja: no work to do.') ]]; then
+      ninja install
+    fi
+    rm -rf .ninja_tee > /dev/null 2>&1
+  )
 }
 
 build_module() {
@@ -103,23 +86,30 @@ build_module() {
   local parent_dir=$(pwd)
   local module="$1"
 
-  [[ $OPT_CLEAN == 1 ]] && return
-
-  if [[ -z $module ]]; then
-    build_module 'manager'
-    build_module 'shakujo'
-    build_module 'shirakami'
-    build_module 'sharksfin'
-    build_module 'takatori'
-    build_module 'yugawara'
-    build_module 'mizugaki'
-    build_module 'sandbox-performance-tools'
-    build_module 'jogasaki'
-    build_module 'ogawayama'
-    return
-  fi
+  [[ -d "$module" ]] && cd $module
 
   case "$module" in
+  # tsurugi::ogawayama
+  'ogawayama')
+    # Building submodules.
+    (
+      cd third_party
+      build_module 'manager'
+      build_module 'jogasaki'
+    )
+
+    # Build the ogawayama.
+    build $module \
+      -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+      -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
+      -DCMAKE_MODULE_PATH=$INSTALL_PREFIX \
+      -DCMAKE_PREFIX_PATH=$TSURUGI_HOME/tateyama/build \
+      -DFORCE_INSTALL_RPATH=ON \
+      -DBUILD_TESTS=OFF \
+      -DBUILD_EXAMPLES=OFF \
+      -DSHARKSFIN_IMPLEMENTATION=$SHARKSFIN_IMPLEMENTATION
+    ;;
+
   # tsurugi::manager
   'manager')
     # Build the manager.
@@ -129,6 +119,70 @@ build_module() {
       -DFORCE_INSTALL_RPATH=ON \
       -DBUILD_TESTS=OFF \
       -DBUILD_DOCUMENTS=OFF
+    ;;
+
+  # tsurugi::jogasaki
+  'jogasaki')
+    # Building submodules.
+    (
+      cd third_party
+      build_module 'concurrentqueue'
+      build_module 'mizugaki'
+      build_module 'performance-tools'
+      build_module 'sharksfin'
+      build_module 'tateyama'
+    )
+
+    # Build the jogasaki.
+    build $module \
+      -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+      -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
+      -DFORCE_INSTALL_RPATH=ON \
+      -DBUILD_TESTS=OFF \
+      -DBUILD_DOCUMENTS=OFF \
+      -DBUILD_EXAMPLES=OFF \
+      -DSHARKSFIN_IMPLEMENTATION=$SHARKSFIN_IMPLEMENTATION
+    ;;
+
+  # moodycamel::ConcurrentQueue
+  'concurrentqueue')
+    # Build the concurrentqueue.
+    build $module \
+      -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+      -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX
+    ;;
+
+  # tsurugi::mizugaki
+  'mizugaki')
+    # Building submodules.
+    (
+      cd third_party
+      build_module 'bison'
+      build_module 'shakujo'
+      build_module 'yugawara'
+    )
+
+    # Build the mizugaki.
+    build $module \
+      -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+      -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
+      -DFORCE_INSTALL_RPATH=ON \
+      -DBUILD_TESTS=OFF \
+      -DBUILD_DOCUMENTS=OFF \
+      -DBUILD_EXAMPLES=OFF
+    ;;
+
+  # GNU Bison
+  'bison')
+    if [[ (! -d $TSURUGI_HOME/bison-3.5.1) || $OPT_FORCE == 1 ]]; then
+      cd $TSURUGI_HOME
+      curl http://ftp.jaist.ac.jp/pub/GNU/bison/bison-3.5.1.tar.gz | tar zxv
+
+      cd bison-3.5.1
+      ./configure --prefix=$INSTALL_PREFIX
+      make -j4
+      make install
+    fi
     ;;
 
   # tsurugi::shakujo
@@ -143,60 +197,14 @@ build_module() {
       -DBUILD_EXAMPLES=OFF
     ;;
 
-  # tsurugi::shirakami
-  'shirakami')
-    # Build the shirakami.
-    build $module \
-      -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-      -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
-      -DFORCE_INSTALL_RPATH=ON \
-      -DBUILD_TESTS=ON \
-      -DBUILD_DOCUMENTS=OFF
-#      -DBUILD_TESTS=OFF \
-    ;;
-
-  # tsurugi::sharksfin
-  'sharksfin')
-    # Build the sharksfin.
-    build $module \
-      -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-      -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
-      -DFORCE_INSTALL_RPATH=ON \
-      -DBUILD_TESTS=OFF \
-      -DBUILD_DOCUMENTS=OFF \
-      -DBUILD_EXAMPLES=OFF \
-      -DBUILD_SHIRAKAMI=OFF
-    ;;
-
-  # tsurugi::takatori
-  'takatori')
-    # fpdecimal (Sub module for takatori)
-    build_module 'takatori/third_party/fpdecimal'
-
-    # Build the takatori.
-    build $module \
-      -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-      -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
-      -DFORCE_INSTALL_RPATH=ON \
-      -DBUILD_TESTS=OFF \
-      -DBUILD_DOCUMENTS=OFF
-    ;;
-
-  # tsurugi::decimal
-  'takatori/third_party/fpdecimal')
-    # Build the decimal.
-    build $module \
-      -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-      -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
-      -DFORCE_INSTALL_RPATH=ON \
-      -DBUILD_TESTS=OFF \
-      -DBUILD_DOCUMENTS=OFF
-    ;;
-
   # tsurugi::yugawara
   'yugawara')
-    # hopscotch-map (Sub modules for yugawara)
-    build_module 'yugawara/third_party/hopscotch-map'
+    # Building submodules.
+    (
+      cd third_party
+      build_module 'hopscotch-map'
+      build_module 'takatori'
+    )
 
     # Build the yugawara.
     build $module \
@@ -208,7 +216,7 @@ build_module() {
     ;;
 
   # Tessil::hopscotch-map
-  'yugawara/third_party/hopscotch-map')
+  'hopscotch-map')
     # Build the hopscotch-map.
     build $module \
       -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
@@ -218,23 +226,36 @@ build_module() {
       -DBUILD_DOCUMENTS=OFF
     ;;
 
-  # tsurugi::mizugaki
-  'mizugaki')
-    # bison (Sub modules for mizugaki)
-    build_module 'bison'
+  # tsurugi::takatori
+  'takatori')
+    # Building submodules.
+    (
+      cd third_party
+      build_module 'fpdecimal'
+    )
 
-    # Build the mizugaki.
+    # Build the takatori.
     build $module \
       -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
       -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
       -DFORCE_INSTALL_RPATH=ON \
       -DBUILD_TESTS=OFF \
-      -DBUILD_DOCUMENTS=OFF \
-      -DBUILD_EXAMPLES=OFF
+      -DBUILD_DOCUMENTS=OFF
+    ;;
+
+  # tsurugi::decimal
+  'fpdecimal')
+    # Build the decimal.
+    build $module \
+      -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+      -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
+      -DFORCE_INSTALL_RPATH=ON \
+      -DBUILD_TESTS=OFF \
+      -DBUILD_DOCUMENTS=OFF
     ;;
 
   # tsurugi::sandbox-performance-tools
-  'sandbox-performance-tools')
+  'performance-tools')
     # Build the sandbox-performance-tools.
     build $module \
       -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
@@ -244,15 +265,15 @@ build_module() {
       -DBUILD_EXAMPLES=OFF
     ;;
 
-  # tsurugi::jogasaki
-  'jogasaki')
-    # moodycamel::ConcurrentQueue (Sub module for jogasaki)
-    build_module 'jogasaki/third_party/concurrentqueue'
+  # tsurugi::sharksfin
+  'sharksfin')
+    # Building submodules.
+    (
+      cd third_party
+      build_module 'shirakami'
+    )
 
-    # tateyama (Sub modules for jogasaki)
-    build_module 'jogasaki/third_party/tateyama'
-
-    # Build the jogasaki.
+    # Build the sharksfin.
     build $module \
       -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
       -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
@@ -260,19 +281,22 @@ build_module() {
       -DBUILD_TESTS=OFF \
       -DBUILD_DOCUMENTS=OFF \
       -DBUILD_EXAMPLES=OFF \
-      -DSHARKSFIN_IMPLEMENTATION=$SHARKSFIN_IMPLEMENTATION
+      -DBUILD_SHIRAKAMI=OFF
     ;;
 
-  # moodycamel::ConcurrentQueue
-  'jogasaki/third_party/concurrentqueue')
-    # Build the concurrentqueue.
+  # tsurugi::shirakami
+  'shirakami')
+    # Build the shirakami.
     build $module \
       -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-      -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX
+      -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
+      -DFORCE_INSTALL_RPATH=ON \
+      -DBUILD_TESTS=ON \
+      -DBUILD_DOCUMENTS=OFF
     ;;
 
   # tsurugi::tateyama
-  'jogasaki/third_party/tateyama')
+  'tateyama')
     # Build the tateyama.
     build $module \
       -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
@@ -281,33 +305,6 @@ build_module() {
       -DBUILD_DOCUMENT=OFF  \
       -DBUILD_EXAMPLES=OFF \
       -DSHARKSFIN_IMPLEMENTATION=$SHARKSFIN_IMPLEMENTATION
-    ;;
-
-  # tsurugi::ogawayama
-  'ogawayama')
-    # Build the ogawayama.
-    build $module \
-      -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-      -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
-      -DCMAKE_MODULE_PATH=$INSTALL_PREFIX \
-      -DCMAKE_PREFIX_PATH=$TSURUGI_HOME/tateyama/build \
-      -DFORCE_INSTALL_RPATH=ON \
-      -DBUILD_TESTS=OFF \
-      -DBUILD_EXAMPLES=OFF \
-      -DSHARKSFIN_IMPLEMENTATION=$SHARKSFIN_IMPLEMENTATION
-    ;;
-
-  # GNU Bison
-  'bison')
-    if [[ (! -d $TSURUGI_HOME/bison-3.5.1) || $OPT_FORCE == 1 ]]; then
-      cd $TSURUGI_HOME
-      curl http://ftp.jaist.ac.jp/pub/GNU/bison/bison-3.5.1.tar.gz | tar zxv
-
-      cd bison-3.5.1
-      ./configure --prefix=$INSTALL_PREFIX
-      make -j4
-      make install
-    fi
     ;;
   esac
 
@@ -357,10 +354,10 @@ script_main() {
   package_install
 
   # Get the source file.
-  get_source_file
+  get_source_file 'ogawayama' --recursive
 
   # Build the components.
-  build_module
+  build_module 'ogawayama'
 
   echo -e "\nBuild script finished."
 }
