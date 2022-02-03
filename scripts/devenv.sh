@@ -2,6 +2,8 @@
 
 # This script sets up a development environment for this project.
 
+set -eo pipefail
+
 # Grobal variable
 {
   TSURUGI_HOME=$HOME/project-tsurugi
@@ -29,7 +31,7 @@ package_install() {
 }
 
 # Get (clone/pull) the component from GitHub.
-get_module() {
+get_module_source() {
   local module="$1"
   shift
 
@@ -58,7 +60,7 @@ get_module() {
 }
 
 # Update the submodule from GitHub.
-get_submodule() {
+get_submodule_source() {
   if [[ ! -d third_party ]]; then
     return
   fi
@@ -120,28 +122,35 @@ build_module() {
 
   echo -e "\nStart the build process of the $module component."
 
-  if [[ -f $ALREADY_BUILD_MODULES/$module ]]; then
-    echo " --> Skip"
+  if [[ -f "$ALREADY_BUILD_MODULES/$module" ]]; then
+    echo " --> Already built."
     return
   fi
 
   if [[ -d "$module" ]]; then
     cd $module
     # Get submodules.
-    get_submodule
+    get_submodule_source
+
+    # Building submodules.
+    if [[ -d 'third_party' ]]; then
+      (
+        cd third_party
+
+        local submodules
+        submodules+=($(ls -d */ | sed -e "s/\/$//"))
+
+        local submodule
+        for submodule in ${submodules[@]}; do
+          build_module "$submodule"
+        done
+      )
+    fi
   fi
 
   case "$module" in
   # tsurugi::ogawayama
   'ogawayama')
-    # Building submodules.
-    (
-      cd third_party
-      build_module 'manager'
-      build_module 'jogasaki'
-    )
-
-    # Build the ogawayama.
     build $module \
       -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
       -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
@@ -155,7 +164,6 @@ build_module() {
 
   # tsurugi::manager
   'manager')
-    # Build the manager.
     build $module \
       -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
       -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
@@ -166,17 +174,6 @@ build_module() {
 
   # tsurugi::jogasaki
   'jogasaki')
-    # Building submodules.
-    (
-      cd third_party
-      build_module 'concurrentqueue'
-      build_module 'mizugaki'
-      build_module 'performance-tools'
-      build_module 'sharksfin'
-      build_module 'tateyama'
-    )
-
-    # Build the jogasaki.
     build $module \
       -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
       -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
@@ -189,7 +186,6 @@ build_module() {
 
   # moodycamel::ConcurrentQueue
   'concurrentqueue')
-    # Build the concurrentqueue.
     build $module \
       -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
       -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX
@@ -197,16 +193,6 @@ build_module() {
 
   # tsurugi::mizugaki
   'mizugaki')
-    # Building submodules.
-    (
-      cd third_party
-      build_module 'bison'
-      build_module 'hopscotch-map'
-      build_module 'shakujo'
-      build_module 'yugawara'
-    )
-
-    # Build the mizugaki.
     build $module \
       -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
       -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
@@ -231,7 +217,6 @@ build_module() {
 
   # Tessil::hopscotch-map
   'hopscotch-map')
-    # Build the hopscotch-map.
     build $module \
       -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
       -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
@@ -242,7 +227,6 @@ build_module() {
 
   # tsurugi::shakujo
   'shakujo')
-    # Build the shakujo.
     build $module \
       -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
       -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
@@ -254,14 +238,6 @@ build_module() {
 
   # tsurugi::yugawara
   'yugawara')
-    # Building submodules.
-    (
-      cd third_party
-      build_module 'hopscotch-map'
-      build_module 'takatori'
-    )
-
-    # Build the yugawara.
     build $module \
       -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
       -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
@@ -272,13 +248,6 @@ build_module() {
 
   # tsurugi::takatori
   'takatori')
-    # Building submodules.
-    (
-      cd third_party
-      build_module 'fpdecimal'
-    )
-
-    # Build the takatori.
     build $module \
       -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
       -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
@@ -289,7 +258,6 @@ build_module() {
 
   # tsurugi::decimal
   'fpdecimal')
-    # Build the decimal.
     build $module \
       -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
       -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
@@ -300,7 +268,6 @@ build_module() {
 
   # tsurugi::sandbox-performance-tools
   'performance-tools' | 'sandbox-performance-tools')
-    # Build the sandbox-performance-tools.
     build $module \
       -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
       -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
@@ -311,13 +278,6 @@ build_module() {
 
   # tsurugi::sharksfin
   'sharksfin')
-    # Building submodules.
-    (
-      cd third_party
-      build_module 'shirakami'
-    )
-
-    # Build the sharksfin.
     build $module \
       -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
       -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
@@ -330,13 +290,6 @@ build_module() {
 
   # tsurugi::shirakami
   'shirakami')
-    # Building submodules.
-    (
-      cd third_party
-      build_module 'hopscotch-map'
-    )
-
-    # Build the shirakami.
     build $module \
       -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
       -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
@@ -347,14 +300,6 @@ build_module() {
 
   # tsurugi::tateyama
   'tateyama')
-    # Building submodules.
-    (
-      cd third_party
-      build_module 'concurrentqueue'
-      build_module 'takatori'
-    )
-
-    # Build the tateyama.
     build $module \
       -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
       -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
@@ -362,6 +307,9 @@ build_module() {
       -DBUILD_DOCUMENT=OFF  \
       -DBUILD_EXAMPLES=OFF \
       -DSHARKSFIN_IMPLEMENTATION=$SHARKSFIN_IMPLEMENTATION
+    ;;
+  *)
+    echo " --> Not build."
     ;;
   esac
 
@@ -384,6 +332,8 @@ usage_exit() {
 
 # Check the options.
 option_check() {
+  set +e
+
   local options
   options=$(getopt -o cft:h -l clean,force,target:,help -- "$@")
   [[ $? == 0 ]] || usage_exit 1
@@ -410,6 +360,8 @@ option_check() {
     esac
     shift
   done
+
+  set -e
 }
 
 # Main processing of the script.
@@ -427,7 +379,7 @@ script_main() {
   package_install
 
   # Get the source file.
-  get_module $BUILD_MODULE
+  get_module_source $BUILD_MODULE
 
   # Build the components.
   build_module $BUILD_MODULE
@@ -440,5 +392,4 @@ script_main() {
 BUILD_MODULE='ogawayama'
 option_check $*
 
-set -eo pipefail
 script_main
