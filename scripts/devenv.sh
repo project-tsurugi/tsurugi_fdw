@@ -193,6 +193,9 @@ build_module() {
 
   # tsurugi::mizugaki
   'mizugaki')
+    # Building submodules.
+    build_module 'bison'
+
     build $module \
       -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
       -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
