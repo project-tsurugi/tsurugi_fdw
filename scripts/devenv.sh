@@ -2,12 +2,11 @@
 
 # This script sets up a development environment for this project.
 
-set -eo pipefail
-
 # Grobal variable
 {
   TSURUGI_HOME=$HOME/project-tsurugi
   INSTALL_PREFIX=$HOME/.local
+  ALREADY_BUILD_MODULES=$TSURUGI_HOME/.build_modules
   SCRIPT_PATH=$(cd $(dirname $0); pwd)
 
   #BUILD_TYPE=Release
@@ -35,7 +34,7 @@ get_module() {
   shift
 
   if [[ $OPT_CLEAN == 1 ]]; then
-    echo -e "[$module] Cleaned."
+    echo "[$module] Cleaned."
     rm -rf  $TSURUGI_HOME/$module
     return
   fi
@@ -69,11 +68,14 @@ get_submodule() {
 
   local module
   local pids
+
+  pods=()
   for module in ${modules[@]}; do
     module=$(echo $module | sed -e "s/\/$//")
-    echo -e "\nGet the $module subcomponent from GitHub."
+    echo "Get the $module subcomponent from GitHub."
     (git submodule update --init third_party/$module) &
     pids+=($!)
+    sleep 0.5
   done
 
   for pid in ${pids[@]}; do
@@ -86,7 +88,9 @@ get_submodule() {
 
 # Build the component.
 build() {
-  echo -e "\nBuild the $(basename $1) component."
+  local module="$1"
+
+  echo -e "\nBuild the $(basename $module) component."
   (
     local install=0
 
@@ -104,6 +108,7 @@ build() {
     fi
     rm -rf .ninja_tee > /dev/null 2>&1
   )
+  touch $ALREADY_BUILD_MODULES/$module
 }
 
 # Controller to build the component.
@@ -112,6 +117,13 @@ build_module() {
 
   local parent_dir=$(pwd)
   local module="$1"
+
+  echo -e "\nStart the build process of the $module component."
+
+  if [[ -f $ALREADY_BUILD_MODULES/$module ]]; then
+    echo " --> Skip"
+    return
+  fi
 
   if [[ -d "$module" ]]; then
     cd $module
@@ -189,6 +201,7 @@ build_module() {
     (
       cd third_party
       build_module 'bison'
+      build_module 'hopscotch-map'
       build_module 'shakujo'
       build_module 'yugawara'
     )
@@ -216,6 +229,17 @@ build_module() {
     fi
     ;;
 
+  # Tessil::hopscotch-map
+  'hopscotch-map')
+    # Build the hopscotch-map.
+    build $module \
+      -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+      -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
+      -DFORCE_INSTALL_RPATH=ON \
+      -DBUILD_TESTS=OFF \
+      -DBUILD_DOCUMENTS=OFF
+    ;;
+
   # tsurugi::shakujo
   'shakujo')
     # Build the shakujo.
@@ -238,17 +262,6 @@ build_module() {
     )
 
     # Build the yugawara.
-    build $module \
-      -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-      -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
-      -DFORCE_INSTALL_RPATH=ON \
-      -DBUILD_TESTS=OFF \
-      -DBUILD_DOCUMENTS=OFF
-    ;;
-
-  # Tessil::hopscotch-map
-  'hopscotch-map')
-    # Build the hopscotch-map.
     build $module \
       -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
       -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
@@ -286,7 +299,7 @@ build_module() {
     ;;
 
   # tsurugi::sandbox-performance-tools
-  'performance-tools')
+  'performance-tools' | 'sandbox-performance-tools')
     # Build the sandbox-performance-tools.
     build $module \
       -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
@@ -317,6 +330,12 @@ build_module() {
 
   # tsurugi::shirakami
   'shirakami')
+    # Building submodules.
+    (
+      cd third_party
+      build_module 'hopscotch-map'
+    )
+
     # Build the shirakami.
     build $module \
       -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
@@ -328,6 +347,13 @@ build_module() {
 
   # tsurugi::tateyama
   'tateyama')
+    # Building submodules.
+    (
+      cd third_party
+      build_module 'concurrentqueue'
+      build_module 'takatori'
+    )
+
     # Build the tateyama.
     build $module \
       -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
@@ -344,57 +370,75 @@ build_module() {
 
 # Display the usage instructions.
 usage_exit() {
+  local format='  %-24s  %s\n'
+
   echo -e "Usage:\n  $0 [options]\n" 1>&2
   echo  "Options:" 1>&2
-  echo "  -f, --force    Forces the build to run." 1>&2
-  echo "  -c, --clean    Clean the project directory." 1>&2
-  echo "  -h, --help     Displays help." 1>&2
+  printf "$format" '-c, --clean' 'Clean the project directory.' 1>&2
+  printf "$format" '-f, --force' 'Forces the build to run.' 1>&2
+  printf "$format" '-t, --target <component>' 'Build the specified component.' 1>&2
+  printf "$format" '-h, --help' 'Displays help.' 1>&2
   echo 1>&2
   exit $1
 }
 
 # Check the options.
 option_check() {
-  while getopts fch-: opt; do
-    if [[ $opt == "-" ]]; then
-      opt=$(echo ${OPTARG})
-    fi
+  local options
+  options=$(getopt -o cft:h -l clean,force,target:,help -- "$@")
+  [[ $? == 0 ]] || usage_exit 1
 
-    case "$opt" in
-    f | force)
-      OPT_FORCE=1
-      ;;
-    c | crean)
+  eval set -- "$options"
+  while [[ "$1" != "--" ]]; do
+    case "$1" in
+    '-c' | '--clean')
       OPT_CLEAN=1
       ;;
-    h | help)
+    '-f' | '--force')
+      OPT_FORCE=1
+      ;;
+    '-t' | '--target')
+      shift
+      BUILD_MODULE="$1"
+      ;;
+    '-h' | '--help')
       usage_exit 0
       ;;
     *)
       usage_exit 1
       ;;
     esac
-  done  
+    shift
+  done
 }
 
 # Main processing of the script.
 script_main() {
-  echo -e "\nBuild script started.\n"
+  echo "Build script started."
 
   mkdir -p $TSURUGI_HOME
+
+  rm -rf $ALREADY_BUILD_MODULES
+  mkdir -p $ALREADY_BUILD_MODULES
+
   cd $TSURUGI_HOME
 
   # Install the required packages.
   package_install
 
   # Get the source file.
-  get_module 'ogawayama'
+  get_module $BUILD_MODULE
 
   # Build the components.
-  build_module 'ogawayama'
+  build_module $BUILD_MODULE
+
+  rm -rf $ALREADY_BUILD_MODULES
 
   echo -e "\nBuild script finished."
 }
 
+BUILD_MODULE='ogawayama'
 option_check $*
+
+set -eo pipefail
 script_main
