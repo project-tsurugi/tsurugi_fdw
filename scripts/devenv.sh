@@ -104,11 +104,8 @@ build() {
 
     cmake -G Ninja $* ..
 
-    ninja | tee .ninja_tee
-    if [[ ($install == 1) || ($(cat .ninja_tee) != 'ninja: no work to do.') ]]; then
-      ninja install
-    fi
-    rm -rf .ninja_tee > /dev/null 2>&1
+    ninja
+    ninja install
   )
   touch $ALREADY_BUILD_MODULES/$module
 }
