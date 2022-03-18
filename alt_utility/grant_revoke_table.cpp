@@ -75,9 +75,6 @@ bool after_grant_revoke_table(const GrantStmt* stmts) {
 
     if (get_tableid_by_tablename(DBNAME, relvar->relname, &object_id)) {
       objectIds.push_back(object_id);
-    } else {
-      /* Failed getting role id.*/
-      return ret_value;
     }
   }
 

@@ -56,17 +56,16 @@ bool get_tableid_by_tablename(const std::string dbname, const char* table_name,
   ErrorCode error = tables->get(std::string_view(table_name), object);
 
   if (error == ErrorCode::OK) {
-    boost::optional<ObjectIdType> tmp_role_id =
+    boost::optional<ObjectIdType> tmp_table_id =
         object.get_optional<ObjectIdType>(Tables::ID);
-    if (!tmp_role_id) {
+    if (!tmp_table_id) {
       ereport(ERROR,
               (errcode(ERRCODE_INTERNAL_ERROR), errmsg("Could not get table.")));
       return ret_value;
     }
-    *object_id = tmp_role_id.get();
+    *object_id = tmp_table_id.get();
   } else {
-    ereport(ERROR,
-            (errcode(ERRCODE_INTERNAL_ERROR), errmsg("Could not get table.")));
+    /* Not found metadata of talbe.*/
     return ret_value;
   }
 
