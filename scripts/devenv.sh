@@ -4,242 +4,184 @@
 
 set -eo pipefail
 
-TSURUGI_HOME=$HOME/project-tsurugi
+TSURUGI_HOME=$HOME/project-tsurugi-boot
+BOOTSTRAP_HOME=$TSURUGI_HOME/tateyama-bootstrap
 INSTALL_PREFIX=$HOME/.local
 
-#BUILD_TYPE=Release
 BUILD_TYPE=RelWithDebInfo
 BINARY_DIR=build
 
 SHARKSFIN_IMPLEMENTATION=memory
 
 sudo apt update -y
-#sudo apt install -y \
-#    build-essential \
-#    cmake \
-#    doxygen \
-#    git \
-#    libboost-filesystem-dev \
-#    libboost-serialization-dev \
-#    libboost-system-dev \
-#    libgflags-dev \
-#    libgoogle-glog-dev \
-#    libleveldb-dev \
-#    libmsgpack-dev \
-#    ninja-build \
-#    openjdk-8-jdk \
-#    pkg-config \
-#    uuid-dev \
-#    libboost-thread-dev
 sudo apt install -y $(cat scripts/ubuntu.deps)
+
+cd third_party/manager
+git checkout master
+git pull
+cd ../ogawayama
+git checkout wip/message_receiver
+git pull
 
 mkdir -p $TSURUGI_HOME
 cd $TSURUGI_HOME
-git clone git@github.com:project-tsurugi/manager.git
-#git clone git@github.com:project-tsurugi/masstree-beta.git
-#git clone git@github.com:project-tsurugi/kvs_charkey.git
-git clone git@github.com:project-tsurugi/shakujo.git
-git clone git@github.com:project-tsurugi/shirakami.git
-git clone git@github.com:project-tsurugi/sharksfin.git
-#git clone git@github.com:project-tsurugi/umikongo.git
-git clone git@github.com:project-tsurugi/ogawayama.git
-git clone git@github.com:project-tsurugi/takatori.git
-git clone git@github.com:project-tsurugi/yugawara.git
-git clone git@github.com:project-tsurugi/jogasaki.git
-git clone git@github.com:project-tsurugi/mizugaki.git
-git clone git@github.com:project-tsurugi/sandbox-performance-tools.git
 
-# manager
+if [[ -d $TSURUGI_HOME/tateyama-bootstrap ]]; then
+  cd $TSURUGI_HOME
+else
+  git clone git@github.com:project-tsurugi/tateyama-bootstrap.git
+fi
 
-cd $TSURUGI_HOME/manager
-git submodule update --init
+if [[ -d $TSURUGI_HOME/ogawayama ]]; then
+  cd $TSURUGI_HOME
+else
+  git clone -b wip/message_receiver git@github.com:project-tsurugi/ogawayama.git
+fi
 
-rm -rf $BINARY_DIR
-mkdir $BINARY_DIR
-cd $BINARY_DIR
-
-cmake -G Ninja \
-    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
-    -DFORCE_INSTALL_RPATH=ON \
-    ..
-ninja
-ninja install
-
-# mastree
-
-#cd $TSURUGI_HOME/masstree-beta
-#git submodule update --init
-
-#./bootstrap.sh
-#./configure
-#make
-#make install
-
-# kvs_charkey
-
-#cd $TSURUGI_HOME/kvs_charkey
-#git submodule update --init
-#
-#rm -rf $BINARY_DIR
-#mkdir $BINARY_DIR
-#cd $BINARY_DIR
-
-#cmake -G Ninja \
-#    -DFORCE_INSTALL_RPATH=ON \
-#    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
-#    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-#    ..
-#ninja
-#ninja install
-
-# shakujo
-
-cd $TSURUGI_HOME/shakujo
-git submodule update --init
-
-rm -rf $BINARY_DIR
-mkdir $BINARY_DIR
-cd $BINARY_DIR
-cmake -G Ninja \
-    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
-    -DFORCE_INSTALL_RPATH=ON \
-    -DBUILD_TESTS=OFF \
-    ..
-ninja
-ninja install
-
-# shirakami
-
-cd $TSURUGI_HOME/shirakami/
-git submodule update --init 
-
-rm -rf $BINARY_DIR
-mkdir $BINARY_DIR
-cd $BINARY_DIR
-cmake -G Ninja \
-    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
-    -DFORCE_INSTALL_RPATH=ON \
-    -DBUILD_TESTS=ON \
-    ..
-ninja
-ninja install
-
-# sharksfin
-
-cd $TSURUGI_HOME/sharksfin
-git submodule update --init third_party/googletest
-
-rm -rf $BINARY_DIR
-mkdir $BINARY_DIR
-cd $BINARY_DIR
-cmake -G Ninja \
-    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
-    -DFORCE_INSTALL_RPATH=ON \
-    -DBUILD_TESTS=OFF \
-    -DBUILD_KVS=OFF \
-    ..
-ninja
-ninja install
-
-## umikongo
-#
-#cd $TSURUGI_HOME/umikongo
-#git submodule update --init third_party/googletest
-#
-#rm -rf $BINARY_DIR
-#mkdir $BINARY_DIR
-#cd $BINARY_DIR
-#cmake -G Ninja \
-#    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-#    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
-#    -DFORCE_INSTALL_RPATH=ON \
-#    -DFIXED_PAYLOAD_SIZE=ON \
-#    -DBUILD_TESTS=OFF \
-#    -DSHARKSFIN_IMPLEMENTATION=$SHARKSFIN_IMPLEMENTATION \
-#    ..
-#ninja
-#ninja install
-
-# takatori
-
-cd $TSURUGI_HOME/takatori
+# tateyama-bootstrap
+cd $BOOTSTRAP_HOME
 git submodule update --init --recursive
 
-# fpdecimal(Sub module)
-cd $TSURUGI_HOME/takatori/third_party/fpdecimal
+# Install_limestone
+echo -e "***************************************"
+echo -e "********** Install_limestone **********"
+echo -e "***************************************"
+cd $BOOTSTRAP_HOME/third_party/jogasaki/third_party/tateyama/third_party/limestone
 rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
 cd $BINARY_DIR
-
 cmake -G Ninja \
     -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
     -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
-    -DFORCE_INSTALL_RPATH=ON \
+    ..
+ninja
+ninja install
+
+# Install_shirakami
+echo -e "***************************************"
+echo -e "********** Install_shirakami **********"
+echo -e "***************************************"
+cd $BOOTSTRAP_HOME/third_party/jogasaki/third_party/sharksfin/third_party/shirakami
+rm -rf $BINARY_DIR
+mkdir $BINARY_DIR
+cd $BINARY_DIR
+cmake -G Ninja \
+    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+    -DENABLE_SANITIZER=ON \
+    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
+    ..
+ninja
+ninja install
+
+# Install_sharksfin
+echo -e "***************************************"
+echo -e "********** Install_sharksfin **********"
+echo -e "***************************************"
+cd $BOOTSTRAP_HOME/third_party/jogasaki/third_party/sharksfin
+rm -rf $BINARY_DIR
+mkdir $BINARY_DIR
+cd $BINARY_DIR
+cmake -G Ninja \
+    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
     -DBUILD_TESTS=OFF \
     -DBUILD_DOCUMENTS=OFF \
+    -DBUILD_EXAMPLES=OFF \
+    -DFORCE_INSTALL_RPATH=ON \
+    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
     ..
-#cmake --build . --target install --clean-first
 ninja
 ninja install
 
-cd $TSURUGI_HOME/takatori
+# Install_fpdecimal
+echo -e "***************************************"
+echo -e "********** Install_fpdecimal **********"
+echo -e "***************************************"
+cd $BOOTSTRAP_HOME/third_party/jogasaki/third_party/mizugaki/third_party/yugawara/third_party/takatori/third_party/fpdecimal
 rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
 cd $BINARY_DIR
 cmake -G Ninja \
     -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
-    -DFORCE_INSTALL_RPATH=ON \
-    -DBUILD_TESTS=OFF \
-    ..
-#cmake --build . --target install --clean-first
-ninja
-ninja install
-
-# yugawara
-
-cd $TSURUGI_HOME/yugawara
-git submodule update --init --recursive
-
-# hopscotch-map(Sub module)
-cd $TSURUGI_HOME/yugawara/third_party/hopscotch-map
-rm -rf $BINARY_DIR
-mkdir $BINARY_DIR
-cd $BINARY_DIR
-
-cmake -G Ninja \
-    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
-    -DFORCE_INSTALL_RPATH=ON \
     -DBUILD_TESTS=OFF \
     -DBUILD_DOCUMENTS=OFF \
+    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
     ..
-#cmake --build . --target install --clean-first
 ninja
 ninja install
 
-cd $TSURUGI_HOME/yugawara
-
+# Install_takatori
+echo -e "**************************************"
+echo -e "********** Install_takatori **********"
+echo -e "**************************************"
+cd $BOOTSTRAP_HOME/third_party/jogasaki/third_party/mizugaki/third_party/yugawara/third_party/takatori
 rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
 cd $BINARY_DIR
 cmake -G Ninja \
     -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
-    -DFORCE_INSTALL_RPATH=ON \
     -DBUILD_TESTS=OFF \
+    -DBUILD_DOCUMENTS=OFF \
+    -DFORCE_INSTALL_RPATH=ON \
+    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
     ..
-#cmake --build . --target install --clean-first
 ninja
 ninja install
 
-# mizugaki
+# Install_hopscotch-map
+echo -e "*******************************************"
+echo -e "********** Install_hopscotch-map **********"
+echo -e "*******************************************"
+cd $BOOTSTRAP_HOME/third_party/jogasaki/third_party/mizugaki/third_party/hopscotch-map
+rm -rf ../../build-hopscotch-map
+mkdir -p ../../build-hopscotch-map
+cd ../../build-hopscotch-map
+cmake -G Ninja \
+    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
+    ../third_party/hopscotch-map
+ninja
+ninja install
+
+# Install_yugawara
+echo -e "**************************************"
+echo -e "********** Install_yugawara **********"
+echo -e "**************************************"
+cd $BOOTSTRAP_HOME/third_party/jogasaki/third_party/mizugaki/third_party/yugawara
+rm -rf $BINARY_DIR
+mkdir $BINARY_DIR
+cd $BINARY_DIR
+cmake -G Ninja \
+    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+    -DBUILD_TESTS=OFF \
+    -DBUILD_DOCUMENTS=OFF \
+    -DFORCE_INSTALL_RPATH=ON \
+    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
+    ..
+ninja
+ninja install
+
+# Install_shakujo
+echo -e "*************************************"
+echo -e "********** Install_shakujo **********"
+echo -e "*************************************"
+cd $BOOTSTRAP_HOME/third_party/jogasaki/third_party/mizugaki/third_party/shakujo
+rm -rf $BINARY_DIR
+mkdir $BINARY_DIR
+cd $BINARY_DIR
+cmake -G Ninja \
+    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+    -DBUILD_TESTS=OFF \
+    -DBUILD_DOCUMENTS=OFF \
+    -DBUILD_EXAMPLES=OFF \
+    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
+    ..
+ninja
+ninja install
+
+# Install_bison
+echo -e "***********************************"
+echo -e "********** Install_bison **********"
+echo -e "***********************************"
 cd $TSURUGI_HOME/
-
 rm -rf bison-3.5.1
 curl http://ftp.jaist.ac.jp/pub/GNU/bison/bison-3.5.1.tar.gz | tar zxv
 cd bison-3.5.1
@@ -247,88 +189,151 @@ cd bison-3.5.1
 make -j4
 make install
 
-cd $TSURUGI_HOME/mizugaki
-
-git submodule update --init --recursive
-
+# Install_mizugaki
+echo -e "**************************************"
+echo -e "********** Install_mizugaki **********"
+echo -e "**************************************"
+cd $BOOTSTRAP_HOME/third_party/jogasaki/third_party/mizugaki
 rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
 cd $BINARY_DIR
 cmake -G Ninja \
     -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
-    -DFORCE_INSTALL_RPATH=ON \
-    -DBUILD_TESTS=OFF \
-    ..
-#cmake --build . --target install --clean-first
-ninja
-ninja install
-
-# sandbox-performance-tools
-
-cd $TSURUGI_HOME/sandbox-performance-tools
-git submodule update --init
-
-rm -rf $BINARY_DIR
-mkdir $BINARY_DIR
-cd $BINARY_DIR
-
-cmake -G Ninja \
-    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
-    -DFORCE_INSTALL_RPATH=ON \
     -DBUILD_TESTS=OFF \
     -DBUILD_DOCUMENTS=OFF \
+    -DFORCE_INSTALL_RPATH=ON \
+    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
+    -DCMAKE_PREFIX_PATH=$INSTALL_PREFIX \
     ..
-#cmake --build . --target install --clean-first
 ninja
 ninja install
 
-# jogasaki
-
-cd $TSURUGI_HOME/jogasaki
-git submodule update --init --recursive
-
-cd $TSURUGI_HOME/jogasaki/third_party/concurrentqueue
+# Install_performance_tools
+echo -e "***********************************************"
+echo -e "********** Install_performance_tools **********"
+echo -e "***********************************************"
+cd $BOOTSTRAP_HOME/third_party/jogasaki/third_party/performance-tools
 rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
 cd $BINARY_DIR
-cmake \
+cmake -G Ninja \
     -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+    -DBUILD_TESTS=OFF \
+    -DBUILD_DOCUMENTS=OFF \
+    -DBUILD_EXAMPLES=OFF \
     -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
     ..
-cmake --build . --target install --clean-first
-cd $TSURUGI_HOME/jogasaki
+ninja
+ninja install
 
+# Install_moodycamel_concurrentqueue
+echo -e "********************************************************"
+echo -e "********** Install_moodycamel_concurrentqueue **********"
+echo -e "********************************************************"
+cd $BOOTSTRAP_HOME/third_party/jogasaki/third_party/concurrentqueue
 rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
 cd $BINARY_DIR
 cmake -G Ninja \
     -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
     -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
-    -DFORCE_INSTALL_RPATH=ON \
-    -DBUILD_TESTS=OFF \
-    -DSHARKSFIN_IMPLEMENTATION=$SHARKSFIN_IMPLEMENTATION \
     ..
-#cmake --build . --target install --clean-first
 ninja
 ninja install
 
-# ogawayama
+# Install_tateyama
+echo -e "**************************************"
+echo -e "********** Install_tateyama **********"
+echo -e "**************************************"
+cd $BOOTSTRAP_HOME/third_party/jogasaki/third_party/tateyama
+rm -rf $BINARY_DIR
+mkdir $BINARY_DIR
+cd $BINARY_DIR
+cmake -G Ninja \
+    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+    -DSHARKSFIN_IMPLEMENTATION=$SHARKSFIN_IMPLEMENTATION \
+    -DBUILD_TESTS=OFF \
+    -DBUILD_DOCUMENTS=OFF \
+    -DFORCE_INSTALL_RPATH=ON \
+    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
+    -DCMAKE_PREFIX_PATH=$INSTALL_PREFIX \
+    ..
+ninja
+ninja install
 
+# Install_jogasaki
+echo -e "**************************************"
+echo -e "********** Install_jogasaki **********"
+echo -e "**************************************"
+cd $BOOTSTRAP_HOME/third_party/jogasaki
+rm -rf $BINARY_DIR
+mkdir $BINARY_DIR
+cd $BINARY_DIR
+cmake -G Ninja \
+    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+    -DSHARKSFIN_IMPLEMENTATION=$SHARKSFIN_IMPLEMENTATION \
+    -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+    -DFORCE_INSTALL_RPATH=ON \
+    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
+    -DCMAKE_PREFIX_PATH=$INSTALL_PREFIX \
+    ..
+ninja
+ninja install
+
+# Install_manager
+echo -e "*************************************"
+echo -e "********** Install_manager **********"
+echo -e "*************************************"
+cd $BOOTSTRAP_HOME/third_party/ogawayama/third_party/manager
+rm -rf $BINARY_DIR
+mkdir $BINARY_DIR
+cd $BINARY_DIR
+cmake -G Ninja \
+    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+    -DFORCE_INSTALL_RPATH=ON \
+    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
+    ..
+ninja
+ninja install
+
+# Install_ogawayama
+echo -e "***************************************"
+echo -e "********** Install_ogawayama **********"
+echo -e "***************************************"
 cd $TSURUGI_HOME/ogawayama
-git submodule update --init 
-
+git submodule update --init
+### cd $BOOTSTRAP_HOME/third_party/ogawayama
 rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
 cd $BINARY_DIR
 cmake -G Ninja \
     -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
-    -DFORCE_INSTALL_RPATH=ON \
-    -DBUILD_TESTS=OFF \
     -DSHARKSFIN_IMPLEMENTATION=$SHARKSFIN_IMPLEMENTATION \
+    -DFORCE_INSTALL_RPATH=ON \
+    -DCMAKE_PREFIX_PATH=$INSTALL_PREFIX \
+    -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
     -DCMAKE_MODULE_PATH=$INSTALL_PREFIX \
+    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
+    ..
+ninja
+ninja install
+
+# CMake_Build
+echo -e "*********************************"
+echo -e "********** CMake_Build **********"
+echo -e "*********************************"
+cd $BOOTSTRAP_HOME
+rm -rf $BINARY_DIR
+mkdir $BINARY_DIR
+cd $BINARY_DIR
+cmake -G Ninja \
+    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+    -DSHARKSFIN_IMPLEMENTATION=$SHARKSFIN_IMPLEMENTATION \
+    -DOGAWAYAMA=ON \
+    -DFORCE_INSTALL_RPATH=ON \
+    -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
+    -DCMAKE_PREFIX_PATH=$INSTALL_PREFIX \
     ..
 ninja
 ninja install
