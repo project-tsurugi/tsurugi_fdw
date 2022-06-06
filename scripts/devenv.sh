@@ -16,13 +16,6 @@ SHARKSFIN_IMPLEMENTATION=memory
 sudo apt update -y
 sudo apt install -y $(cat scripts/ubuntu.deps)
 
-cd third_party/manager
-git checkout master
-git pull
-cd ../ogawayama
-git checkout wip/message_receiver
-git pull
-
 mkdir -p $TSURUGI_HOME
 cd $TSURUGI_HOME
 
