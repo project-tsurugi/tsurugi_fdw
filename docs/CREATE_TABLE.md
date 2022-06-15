@@ -1,9 +1,10 @@
 # PostgreSQLからのテーブル定義
 2020.04.01 NEC
+2022.06.17 NEC
 
 ## 概要
 
-* 本文書では、V1におけるPostgreSQLからNEDO DBにテーブルを定義する手順について説明する。
+* 本文書では、PostgreSQLからTsurugiのOLTPにテーブルを定義する手順について説明する。
 * 本文書はpsqlまたはPL/pgSQLからテーブルを定義することを想定している。
 
 ## 事前準備
@@ -85,7 +86,7 @@ psqlから以下の手順でFDWを利用可能にする。。
 	* DML文は外部テーブルを指定して実行する
 		```sql
 		SELECT * FROM table1;
-		INSERT INTO table1 VALUES (100);
+		INSERT INTO table1 (column1) VALUES (100);
 		```
 
 以上
