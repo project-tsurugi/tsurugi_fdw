@@ -39,7 +39,7 @@ git submodule update --init --recursive
 echo -e "***************************************"
 echo -e "********** Install_limestone **********"
 echo -e "***************************************"
-cd $BOOTSTRAP_HOME/third_party/jogasaki/third_party/tateyama/third_party/limestone
+cd $BOOTSTRAP_HOME/third_party/jogasaki/third_party/tateyama/third_party/sharksfin/third_party/shirakami/third_party/limestone
 rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
 cd $BINARY_DIR
@@ -54,7 +54,7 @@ ninja install
 echo -e "***************************************"
 echo -e "********** Install_shirakami **********"
 echo -e "***************************************"
-cd $BOOTSTRAP_HOME/third_party/jogasaki/third_party/sharksfin/third_party/shirakami
+cd $BOOTSTRAP_HOME/third_party/jogasaki/third_party/tateyama/third_party/sharksfin/third_party/shirakami
 rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
 cd $BINARY_DIR
@@ -70,7 +70,7 @@ ninja install
 echo -e "***************************************"
 echo -e "********** Install_sharksfin **********"
 echo -e "***************************************"
-cd $BOOTSTRAP_HOME/third_party/jogasaki/third_party/sharksfin
+cd $BOOTSTRAP_HOME/third_party/jogasaki/third_party/tateyama/third_party/sharksfin
 rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
 cd $BINARY_DIR
@@ -111,7 +111,7 @@ rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
 cd $BINARY_DIR
 cmake -G Ninja \
-    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+    -DCMAKE_BUILD_TYPE=Debug \
     -DBUILD_TESTS=OFF \
     -DBUILD_DOCUMENTS=OFF \
     -DFORCE_INSTALL_RPATH=ON \
@@ -284,6 +284,7 @@ cd $BINARY_DIR
 cmake -G Ninja \
     -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
     -DFORCE_INSTALL_RPATH=ON \
+    -DDATA_STORAGE=json \
     -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
     ..
 ninja
