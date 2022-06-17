@@ -4,14 +4,14 @@
 
 set -eo pipefail
 
-TSURUGI_HOME=$HOME/project-tsurugi-boot
-BOOTSTRAP_HOME=$TSURUGI_HOME/tateyama-bootstrap
+TSURUGI_HOME=$HOME/project-tsurugi
+JOGASAKI_HOME=$TSURUGI_HOME/jogasaki
 INSTALL_PREFIX=$HOME/.local
 
 BUILD_TYPE=RelWithDebInfo
 BINARY_DIR=build
 
-SHARKSFIN_IMPLEMENTATION=memory
+SHARKSFIN_IMPLEMENTATION=shirakami
 
 sudo apt update -y
 sudo apt install -y $(cat scripts/ubuntu.deps)
@@ -19,10 +19,10 @@ sudo apt install -y $(cat scripts/ubuntu.deps)
 mkdir -p $TSURUGI_HOME
 cd $TSURUGI_HOME
 
-if [[ -d $TSURUGI_HOME/tateyama-bootstrap ]]; then
+if [[ -d $TSURUGI_HOME/jogasaki ]]; then
   cd $TSURUGI_HOME
 else
-  git clone git@github.com:project-tsurugi/tateyama-bootstrap.git
+  git clone git@github.com:project-tsurugi/jogasaki.git
 fi
 
 if [[ -d $TSURUGI_HOME/manager ]]; then
@@ -37,15 +37,23 @@ else
   git clone git@github.com:project-tsurugi/ogawayama.git
 fi
 
-# tateyama-bootstrap
-cd $BOOTSTRAP_HOME
+if [[ -d $TSURUGI_HOME/tateyama-bootstrap ]]; then
+  cd $TSURUGI_HOME
+else
+  git clone git@github.com:project-tsurugi/tateyama-bootstrap.git
+fi
+
+###
+### Build for git@github.com:project-tsurugi/jogasaki.git
+###
+cd $JOGASAKI_HOME
 git submodule update --init --recursive
 
 # Install_limestone
 echo -e "***************************************"
 echo -e "********** Install_limestone **********"
 echo -e "***************************************"
-cd $BOOTSTRAP_HOME/third_party/jogasaki/third_party/tateyama/third_party/sharksfin/third_party/shirakami/third_party/limestone
+cd $JOGASAKI_HOME/third_party/tateyama/third_party/sharksfin/third_party/shirakami/third_party/limestone
 rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
 cd $BINARY_DIR
@@ -60,7 +68,7 @@ ninja install
 echo -e "***************************************"
 echo -e "********** Install_shirakami **********"
 echo -e "***************************************"
-cd $BOOTSTRAP_HOME/third_party/jogasaki/third_party/tateyama/third_party/sharksfin/third_party/shirakami
+cd $JOGASAKI_HOME/third_party/tateyama/third_party/sharksfin/third_party/shirakami
 rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
 cd $BINARY_DIR
@@ -76,7 +84,7 @@ ninja install
 echo -e "***************************************"
 echo -e "********** Install_sharksfin **********"
 echo -e "***************************************"
-cd $BOOTSTRAP_HOME/third_party/jogasaki/third_party/tateyama/third_party/sharksfin
+cd $JOGASAKI_HOME/third_party/tateyama/third_party/sharksfin
 rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
 cd $BINARY_DIR
@@ -95,7 +103,7 @@ ninja install
 echo -e "***************************************"
 echo -e "********** Install_fpdecimal **********"
 echo -e "***************************************"
-cd $BOOTSTRAP_HOME/third_party/jogasaki/third_party/mizugaki/third_party/yugawara/third_party/takatori/third_party/fpdecimal
+cd $JOGASAKI_HOME/third_party/mizugaki/third_party/yugawara/third_party/takatori/third_party/fpdecimal
 rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
 cd $BINARY_DIR
@@ -112,7 +120,7 @@ ninja install
 echo -e "**************************************"
 echo -e "********** Install_takatori **********"
 echo -e "**************************************"
-cd $BOOTSTRAP_HOME/third_party/jogasaki/third_party/mizugaki/third_party/yugawara/third_party/takatori
+cd $JOGASAKI_HOME/third_party/mizugaki/third_party/yugawara/third_party/takatori
 rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
 cd $BINARY_DIR
@@ -130,7 +138,7 @@ ninja install
 echo -e "*******************************************"
 echo -e "********** Install_hopscotch-map **********"
 echo -e "*******************************************"
-cd $BOOTSTRAP_HOME/third_party/jogasaki/third_party/mizugaki/third_party/hopscotch-map
+cd $JOGASAKI_HOME/third_party/mizugaki/third_party/hopscotch-map
 rm -rf ../../build-hopscotch-map
 mkdir -p ../../build-hopscotch-map
 cd ../../build-hopscotch-map
@@ -144,7 +152,7 @@ ninja install
 echo -e "**************************************"
 echo -e "********** Install_yugawara **********"
 echo -e "**************************************"
-cd $BOOTSTRAP_HOME/third_party/jogasaki/third_party/mizugaki/third_party/yugawara
+cd $JOGASAKI_HOME/third_party/mizugaki/third_party/yugawara
 rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
 cd $BINARY_DIR
@@ -162,7 +170,7 @@ ninja install
 echo -e "*************************************"
 echo -e "********** Install_shakujo **********"
 echo -e "*************************************"
-cd $BOOTSTRAP_HOME/third_party/jogasaki/third_party/mizugaki/third_party/shakujo
+cd $JOGASAKI_HOME/third_party/mizugaki/third_party/shakujo
 rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
 cd $BINARY_DIR
@@ -192,7 +200,7 @@ make install
 echo -e "**************************************"
 echo -e "********** Install_mizugaki **********"
 echo -e "**************************************"
-cd $BOOTSTRAP_HOME/third_party/jogasaki/third_party/mizugaki
+cd $JOGASAKI_HOME/third_party/mizugaki
 rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
 cd $BINARY_DIR
@@ -211,7 +219,7 @@ ninja install
 echo -e "***********************************************"
 echo -e "********** Install_performance_tools **********"
 echo -e "***********************************************"
-cd $BOOTSTRAP_HOME/third_party/jogasaki/third_party/performance-tools
+cd $JOGASAKI_HOME/third_party/performance-tools
 rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
 cd $BINARY_DIR
@@ -229,7 +237,7 @@ ninja install
 echo -e "********************************************************"
 echo -e "********** Install_moodycamel_concurrentqueue **********"
 echo -e "********************************************************"
-cd $BOOTSTRAP_HOME/third_party/jogasaki/third_party/concurrentqueue
+cd $JOGASAKI_HOME/third_party/concurrentqueue
 rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
 cd $BINARY_DIR
@@ -244,7 +252,7 @@ ninja install
 echo -e "**************************************"
 echo -e "********** Install_tateyama **********"
 echo -e "**************************************"
-cd $BOOTSTRAP_HOME/third_party/jogasaki/third_party/tateyama
+cd $JOGASAKI_HOME/third_party/tateyama
 rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
 cd $BINARY_DIR
@@ -264,7 +272,7 @@ ninja install
 echo -e "**************************************"
 echo -e "********** Install_jogasaki **********"
 echo -e "**************************************"
-cd $BOOTSTRAP_HOME/third_party/jogasaki
+cd $JOGASAKI_HOME
 rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
 cd $BINARY_DIR
@@ -279,13 +287,16 @@ cmake -G Ninja \
 ninja
 ninja install
 
+###
+### Build for git@github.com:project-tsurugi/manager.git
+###
+cd $TSURUGI_HOME/manager
+git submodule update --init --recursive
+
 # Install_manager
 echo -e "*************************************"
 echo -e "********** Install_manager **********"
 echo -e "*************************************"
-cd $TSURUGI_HOME/manager
-git submodule update --init --recursive
-### cd $BOOTSTRAP_HOME/third_party/ogawayama/third_party/manager
 rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
 cd $BINARY_DIR
@@ -298,13 +309,16 @@ cmake -G Ninja \
 ninja
 ninja install
 
+###
+### Build for git@github.com:project-tsurugi/ogawayama.git
+###
+cd $TSURUGI_HOME/ogawayama
+git submodule update --init --recursive
+
 # Install_ogawayama
 echo -e "***************************************"
 echo -e "********** Install_ogawayama **********"
 echo -e "***************************************"
-cd $TSURUGI_HOME/ogawayama
-git submodule update --init
-### cd $BOOTSTRAP_HOME/third_party/ogawayama
 rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
 cd $BINARY_DIR
@@ -320,11 +334,16 @@ cmake -G Ninja \
 ninja
 ninja install
 
-# CMake_Build
-echo -e "*********************************"
-echo -e "********** CMake_Build **********"
-echo -e "*********************************"
-cd $BOOTSTRAP_HOME
+###
+### Build for git@github.com:project-tsurugi/tateyama-bootstrap.git
+###
+cd $TSURUGI_HOME/tateyama-bootstrap
+git submodule update --init --recursive
+
+# Install_tateyama-bootstrap
+echo -e "************************************************"
+echo -e "********** Install_tateyama-bootstrap **********"
+echo -e "************************************************"
 rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
 cd $BINARY_DIR
