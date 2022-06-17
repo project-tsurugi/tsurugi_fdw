@@ -25,10 +25,16 @@ else
   git clone git@github.com:project-tsurugi/tateyama-bootstrap.git
 fi
 
+if [[ -d $TSURUGI_HOME/manager ]]; then
+  cd $TSURUGI_HOME
+else
+  git clone git@github.com:project-tsurugi/manager.git
+fi
+
 if [[ -d $TSURUGI_HOME/ogawayama ]]; then
   cd $TSURUGI_HOME
 else
-  git clone -b wip/message_receiver git@github.com:project-tsurugi/ogawayama.git
+  git clone git@github.com:project-tsurugi/ogawayama.git
 fi
 
 # tateyama-bootstrap
@@ -277,7 +283,9 @@ ninja install
 echo -e "*************************************"
 echo -e "********** Install_manager **********"
 echo -e "*************************************"
-cd $BOOTSTRAP_HOME/third_party/ogawayama/third_party/manager
+cd $TSURUGI_HOME/manager
+git submodule update --init --recursive
+### cd $BOOTSTRAP_HOME/third_party/ogawayama/third_party/manager
 rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
 cd $BINARY_DIR

@@ -74,12 +74,25 @@ bool create_table(List *stmts)
 
     /* Call the function sending metadata to metadata-manager. */
     CreateTable cmds{stmts, DBNAME};
+    std::unique_ptr<metadata::Metadata> tables = std::make_unique<Tables>(DBNAME);
     bool success = cmds.define_relation( &object_id );
 
     if (success) {
+        /* BEGIN_DDL message to ogawayama */
+        message::BeginDDLMessage bd_msg{(uint64_t)object_id};
+        success = send_message(&bd_msg, tables);
+    }
+
+    if (success) {
+        /* CREATE_TABLE message to ogawayama */
         message::CreateTableMessage ct_msg{(uint64_t)object_id};
-        std::unique_ptr<metadata::Metadata> tables = std::make_unique<Tables>(DBNAME);
         success = send_message(&ct_msg, tables);
+    }
+
+    if (success) {
+        /* END_DDL message to ogawayama */
+        message::EndDDLMessage ed_msg{(uint64_t)object_id};
+        success = send_message(&ed_msg, tables);
     }
 
     return success;
