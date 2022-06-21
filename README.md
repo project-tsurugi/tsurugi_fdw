@@ -211,7 +211,7 @@
 
 	```sql
 	SELECT * FROM table1;
-	INSERT INTO table1 VALUES (100);
+	INSERT INTO table1 (column1) VALUES (100);
 	```
 1. If you want to stop ogawayama-server, use
 	```
