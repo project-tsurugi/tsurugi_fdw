@@ -218,6 +218,8 @@
 	SELECT * FROM table1;
 	INSERT INTO table1 (column1) VALUES (100);
 	```
+	Notes: In the current version, specify the column name in the INSERT statement.
+
 1. If you want to stop ogawayama-server, use
 	```
 	oltp shutdown

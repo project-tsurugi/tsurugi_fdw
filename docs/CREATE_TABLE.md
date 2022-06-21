@@ -88,5 +88,6 @@ psqlから以下の手順でFDWを利用可能にする。。
 		SELECT * FROM table1;
 		INSERT INTO table1 (column1) VALUES (100);
 		```
+		Notes: 現行バージョンではINSERT文でcolumn名を指定してください。
 
 以上
