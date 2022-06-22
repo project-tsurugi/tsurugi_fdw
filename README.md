@@ -175,6 +175,7 @@
 	```
 	make tests REGRESS_EXTRA=1
 	```
+	Notes: In the current version, the regression test fails due to restrictions on the INSERT statement.
 
 1. If regression tests succeeded, drop database "contrib_regression":
 

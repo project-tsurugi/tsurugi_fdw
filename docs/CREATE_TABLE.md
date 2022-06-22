@@ -1,5 +1,5 @@
 # PostgreSQLからのテーブル定義
-2020.04.01 NEC
+2020.04.01 NEC  
 2022.06.17 NEC
 
 ## 概要
@@ -88,6 +88,6 @@ psqlから以下の手順でFDWを利用可能にする。。
 		SELECT * FROM table1;
 		INSERT INTO table1 (column1) VALUES (100);
 		```
-		Notes: 現行バージョンではINSERT文でcolumn名を指定してください。
+		Notes: 現行バージョンではINSERT文の中でcolumn名を指定してください。
 
 以上
