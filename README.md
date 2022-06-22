@@ -221,7 +221,7 @@
 	```
 	Notes: In the current version, specify the column name in the INSERT statement.
 
-1. If you want to stop ogawayama-server, use
+1. If you want to stop oltp, use
 	```
 	oltp shutdown
 	```
