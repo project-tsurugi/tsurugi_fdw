@@ -177,12 +177,12 @@
 	```
 	Notes: In the current version, the regression test fails due to restrictions on the INSERT statement.
 
-1. If regression tests succeeded, drop database "contrib_regression":
+1. If regression tests succeeded, drop database "contrib_regression_test":
 
 	```
 	psql postgres
 	
-	postgres=# DROP DATABASE contrib_regression;
+	postgres=# DROP DATABASE contrib_regression_test;
 	``` 
 
 ## Define table
