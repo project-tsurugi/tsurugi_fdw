@@ -79,6 +79,9 @@ bool create_table(List *stmts)
     /* BEGIN_DDL message to ogawayama */
     message::BeginDDLMessage bd_msg{0};
     bool success = send_message(&bd_msg, tables);
+    if (false == success) {
+        return success;
+    }
 
     /* CREATE_TABLE message to ogawayama */
     if (success) {
