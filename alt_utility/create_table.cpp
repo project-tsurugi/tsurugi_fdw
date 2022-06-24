@@ -84,19 +84,15 @@ bool create_table(List *stmts)
     }
 
     /* CREATE_TABLE message to ogawayama */
-    if (success) {
-        success = cmds.define_relation( &object_id );
-    }
+    success = cmds.define_relation( &object_id );
     if (success) {
         message::CreateTableMessage ct_msg{(uint64_t)object_id};
         success = send_message(&ct_msg, tables);
     }
 
     /* END_DDL message to ogawayama */
-    if (success) {
-        message::EndDDLMessage ed_msg{0};
-        success = send_message(&ed_msg, tables);
-    }
+    message::EndDDLMessage ed_msg{0};
+    success = send_message(&ed_msg, tables);
 
     return success;
 }
