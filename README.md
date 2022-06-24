@@ -23,8 +23,8 @@
 1. Build and Install PostgreSQL.
 
 	```sh
-	curl -sL https://ftp.postgresql.org/pub/source/v12.3/postgresql-12.3.tar.bz2 | tar -xj
-	cd postgresql-12.3
+	curl -sL https://ftp.postgresql.org/pub/source/v12.4/postgresql-12.4.tar.bz2 | tar -xj
+	cd postgresql-12.4
 	./configure --prefix=$HOME/pgsql
 	make
 	make install
@@ -92,6 +92,11 @@
 1. Restart PostgreSQL.
 	```
 	pg_ctl restart
+	```
+
+1. Define metadata tables and load initial metadata.
+	```
+	psql postgres < "<*frontend clone directory*>/third_party/manager/sql/ddl.sql"
 	```
 
 1. Install frontend extension
@@ -170,6 +175,7 @@
 	```
 	make tests REGRESS_EXTRA=1
 	```
+	Notes: In the current version, the regression test fails due to restrictions on the INSERT statement.
 
 1. If regression tests succeeded, drop database "contrib_regression_test":
 
@@ -181,9 +187,9 @@
 
 ## Define table
 
-1. Start ogawayama-server
+1. Start oltp
 	```
-	ogawayama-server &
+	oltp start
 	```
 
 1. Define table
@@ -213,7 +219,9 @@
 	SELECT * FROM table1;
 	INSERT INTO table1 (column1) VALUES (100);
 	```
-1. If you want to stop ogawayama-server, use
+	Notes: In the current version, specify the column name in the INSERT statement.
+
+1. If you want to stop oltp, use
 	```
-	ogawayama-cli -terminate
+	oltp shutdown
 	```

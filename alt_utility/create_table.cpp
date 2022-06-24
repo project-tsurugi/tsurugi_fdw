@@ -74,13 +74,25 @@ bool create_table(List *stmts)
 
     /* Call the function sending metadata to metadata-manager. */
     CreateTable cmds{stmts, DBNAME};
-    bool success = cmds.define_relation( &object_id );
+    std::unique_ptr<metadata::Metadata> tables = std::make_unique<Tables>(DBNAME);
 
+    /* BEGIN_DDL message to ogawayama */
+    message::BeginDDLMessage bd_msg{0};
+    bool success = send_message(&bd_msg, tables);
+    if (false == success) {
+        return success;
+    }
+
+    /* CREATE_TABLE message to ogawayama */
+    success = cmds.define_relation( &object_id );
     if (success) {
         message::CreateTableMessage ct_msg{(uint64_t)object_id};
-        std::unique_ptr<metadata::Metadata> tables = std::make_unique<Tables>(DBNAME);
         success = send_message(&ct_msg, tables);
     }
+
+    /* END_DDL message to ogawayama */
+    message::EndDDLMessage ed_msg{0};
+    success = send_message(&ed_msg, tables);
 
     return success;
 }
@@ -97,19 +109,19 @@ bool send_message(message::Message *message, std::unique_ptr<metadata::Metadata>
     ERROR_CODE error = ERROR_CODE::UNKNOWN;
 
     /* sends message to ogawayama */
-    stub::Transaction* transaction;
-    error = StubManager::begin(&transaction);
+    stub::Connection* connection;
+    error = StubManager::get_connection(&connection);
     if (error != ERROR_CODE::OK)
     {
         remove_metadata(message, objects);
         ereport(ERROR,
                 (errcode(ERRCODE_INTERNAL_ERROR),
-                 errmsg("StubManager::begin() failed.")));
+                 errmsg("StubManager::get_connection() failed.")));
         return ret_value;
     }
 
     message::MessageBroker broker;
-    message->set_receiver(transaction);
+    message->set_receiver(connection);
     message::Status status = broker.send_message(message);
 
     if (status.get_error_code() != message::ErrorCode::SUCCESS)
@@ -117,19 +129,11 @@ bool send_message(message::Message *message, std::unique_ptr<metadata::Metadata>
         remove_metadata(message, objects);
         ereport(ERROR,
                 (errcode(ERRCODE_INTERNAL_ERROR),
-                 errmsg("transaction::receive_message() %s failed. (%d)",
+                 errmsg("connection::receive_message() %s failed. (%d)",
                 message->get_message_type_name().c_str(), (int)status.get_sub_error_code())));
 
         return ret_value;
     }
-
-    error = transaction->commit();
-    if (error != ERROR_CODE::OK)
-    {
-        elog(ERROR, "transaction::commit() failed. (%d)", (int) error);
-        return ret_value;
-    }
-    StubManager::end();
 
     ret_value = true;
 

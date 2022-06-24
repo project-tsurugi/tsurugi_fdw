@@ -4,7 +4,7 @@
 LOCAL=$HOME/.local
 # Fix above
 
-${LOCAL}/bin/ogawayama-cli -terminate
-${LOCAL}/bin/ogawayama-server -remove_shm > ogawayama-server.out 2>&1 & 
+${LOCAL}/bin/oltp shutdown
+${LOCAL}/bin/oltp start
 
 make installcheck
