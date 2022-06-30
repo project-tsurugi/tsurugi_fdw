@@ -1,8 +1,6 @@
 [submodule "third_party/manager"]
 	path = third_party/manager
 	url = git@github.com:project-tsurugi/manager.git
-	branch = master
 [submodule "third_party/ogawayama"]
 	path = third_party/ogawayama
 	url = git@github.com:project-tsurugi/ogawayama.git
-	branch = master
