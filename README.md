@@ -1,4 +1,4 @@
-# frontend for ogawayama (PostgreSQL add-on)
+# frontend for Ogawayama (PostgreSQL add-on)
 
 ## Requirements
 * C++ Compiler `>= C++17`
@@ -153,7 +153,7 @@
 1. Define TABLESPACE
 	* Create a directory for TABLESPACE.
 		```sh
-		mkdir -p <PostgreSQL install directory>/data/tsurugi
+		mkdir -p <PostgreSQL install directory>/tsurugi
 		```
 		* The above directory is an example of execution, and the location is arbitrary.
 	* Execute **CREATE TABLESPACE** command
