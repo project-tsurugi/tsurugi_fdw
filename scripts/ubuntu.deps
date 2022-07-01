@@ -23,6 +23,7 @@ liblz4-1
 libmsgpack-dev
 libnuma-dev
 libpq-dev
+libprotobuf-dev
 librocksdb-dev
 libsnappy1v5
 libspdlog-dev
@@ -32,5 +33,7 @@ m4
 ninja-build
 openjdk-8-jdk
 pkg-config
+protobuf-c-compiler
+protobuf-compiler
 uuid-dev
 zlib1g-dev

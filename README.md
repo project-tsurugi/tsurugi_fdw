@@ -11,13 +11,13 @@
 	Install required packages for building PostgreSQL.  
 
 	```sh
-	sudo apt -y install libreadline-dev zlib1g-dev
+	sudo apt -y install libreadline-dev zlib1g-dev curl
 	```
 
 	Install required packages for building ogawayama_fdw.
 
 	```sh
-	sudo apt -y install make gcc g++
+	sudo apt -y install make gcc g++ git
 	```
 
 1. Build and Install PostgreSQL.
@@ -41,7 +41,7 @@
 	The \<PostgreSQL install directory>/bin into your PATH. Strictly speaking, this is not necessary, but it will make the use of PostgreSQL much more convenient.  
 	To do this, add the following to your shell start-up file, such as ~/.bash_profile (or /etc/profile, if you want it to affect all users):
 	```
-	PATH=/usr/local/pgsql/bin:$PATH
+	PATH=<PostgreSQL install directory>/bin:$PATH
 	export PATH
 	```
 
