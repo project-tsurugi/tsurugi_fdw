@@ -11,13 +11,13 @@
 	Install required packages for building PostgreSQL.  
 
 	```sh
-	sudo apt -y install libreadline-dev zlib1g-dev
+	sudo apt -y install libreadline-dev zlib1g-dev curl
 	```
 
 	Install required packages for building ogawayama_fdw.
 
 	```sh
-	sudo apt -y install make gcc g++
+	sudo apt -y install make gcc g++ git
 	```
 
 1. Build and Install PostgreSQL.
@@ -29,8 +29,23 @@
 	make
 	make install
 	```
+	* Specify the PostgreSQL install directory to "--prefix". In the above example, $HOME/pgsql is specified.
+	* Hereafter, this directory is defined as **\<PostgreSQL install directory>**.
 
-1.  Clone frontend.
+    Specify the shared library search path for the PostgreSQL.  
+    The method to set the shared library search path varies between platforms, but the most widely-used method is to set the environment variable LD_LIBRARY_PATH like so: In Bourne shells (sh, ksh, bash, zsh):
+	```
+	LD_LIBRARY_PATH=<PostgreSQL install directory>/lib
+	export LD_LIBRARY_PATH
+	```
+	The \<PostgreSQL install directory>/bin into your PATH. Strictly speaking, this is not necessary, but it will make the use of PostgreSQL much more convenient.  
+	To do this, add the following to your shell start-up file, such as ~/.bash_profile (or /etc/profile, if you want it to affect all users):
+	```
+	PATH=<PostgreSQL install directory>/bin:$PATH
+	export PATH
+	```
+
+2.  Clone frontend.
 
 	Clone fronend to "contrib" directory in PostgreSQL.
 
@@ -40,11 +55,13 @@
 	cd frontend
 	git submodule update --init
 	```
+	* Hereafter, this directory is defined as **\<frontend clone directory>**.
 
 1. Build and Install tsurugi.
 
-	Install tsurugi in default tsurugi install directory $HOME/.local.  
-	By changing INSTALL_PREFIX=$HOME/.local in the script, you can change install directory.  
+	The default tsurugi install directory will be installed in \$HOME/.local.  
+	By changing INSTALL_PREFIX=$HOME/.local in the script, you can change install directory.
+	* Hereafter, this directory is defined as **\<tsurugi install directory>**.
 
 	```sh
 	./scripts/devenv.sh
@@ -76,27 +93,33 @@
 ## How to set up for frontend
 
 1. Update the shared library search path for metadata-manager and ogawayama.  
-	The method to set the shared library search path varies between platforms, but the most widely-used method is to set the environment variable LD_LIBRARY_PATH like so: In Bourne shells (sh, ksh, bash, zsh):
 	```
 	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<tsurugi install directory>/lib
 	export LD_LIBRARY_PATH
+	```
+
+1. Create PostgreSQL server.
+
+	```sh
+	mkdir <PostgreSQL install directory>/data
+	initdb -D <PostgreSQL install directory>/data
 	```
 
 1. Update **shared_preload_libraries** parameter in postgresql.conf as below.
 	```
 	shared_preload_libraries = 'ogawayama_fdw'
 	```
-	* postgresql.conf exists in "<*PostgreSQL install directory*>/data/".
+	* postgresql.conf exists in **\<PostgreSQL install directory>/data/**.
 
 		
-1. Restart PostgreSQL.
-	```
-	pg_ctl restart
+1. Start PostgreSQL.
+	```sh
+	pg_ctl -D <PostgreSQL install directory>/data/ start
 	```
 
 1. Define metadata tables and load initial metadata.
-	```
-	psql postgres < "<*frontend clone directory*>/third_party/manager/sql/ddl.sql"
+	```sh
+	psql postgres < <frontend clone directory>/third_party/manager/sql/ddl.sql
 	```
 
 1. Install frontend extension
@@ -129,16 +152,17 @@
 
 1. Define TABLESPACE
 	* Create a directory for TABLESPACE.
+		```sh
+		mkdir -p <PostgreSQL install directory>/tsurugi
 		```
-		$ mkdir -p <PostgreSQL install directory>/tsurugi
-		```
+		* The above directory is an example of execution, and the location is arbitrary.
 	* Execute **CREATE TABLESPACE** command
 		```sql
 		CREATE TABLESPACE tsurugi LOCATION '<PostgreSQL install directory>/tsurugi';
 		```
 	* Check with the meta-command(\db)
 		```
-		k-postgres=# \db
+		postgres=# \db
                    List of tablespaces
 			Name    |  Owner   |             Location
 		------------+----------+-----------------------------------
@@ -172,7 +196,7 @@
 	Or in case when run extra tests with basic tests,  
 	execute the following command:
 	
-	```
+	```sh
 	make tests REGRESS_EXTRA=1
 	```
 	Notes: In the current version, the regression test fails due to restrictions on the INSERT statement.
@@ -188,7 +212,7 @@
 ## Define table
 
 1. Start oltp
-	```
+	```sh
 	oltp start
 	```
 
@@ -222,6 +246,6 @@
 	Notes: In the current version, specify the column name in the INSERT statement.
 
 1. If you want to stop oltp, use
-	```
+	```sh
 	oltp shutdown
 	```
