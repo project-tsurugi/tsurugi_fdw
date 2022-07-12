@@ -3,6 +3,9 @@
 ## Requirements
 * C++ Compiler `>= C++17`
 * Source code of PostgreSQL `>=12.4`
+* Access to installed dependent modules:
+  * manager
+  * ogawayama
 
 ## How to build frontend
 
@@ -63,7 +66,7 @@
 	By changing INSTALL_PREFIX=$HOME/.local in the script, you can change install directory.
 	* Hereafter, this directory is defined as **\<tsurugi install directory>**.
 
-        See the README of each component.
+        See the README of each module.
 	
 1.  Build and Install ogawayama_fdw.
 
@@ -170,6 +173,9 @@
 		```
 
 ## Regression tests
+
+Notes: In the current version, the regression test fails due to Issues #63.
+
 ### Structure
 
 * **expected/** test results expectations
