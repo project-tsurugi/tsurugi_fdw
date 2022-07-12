@@ -2,7 +2,7 @@
 
 ## Requirements
 * C++ Compiler `>= C++17`
-* Source code of PostgreSQL `>=11.1`
+* Source code of PostgreSQL `>=12.4`
 
 ## How to build frontend
 
@@ -63,9 +63,7 @@
 	By changing INSTALL_PREFIX=$HOME/.local in the script, you can change install directory.
 	* Hereafter, this directory is defined as **\<tsurugi install directory>**.
 
-	```sh
-	./scripts/devenv.sh
-	```
+        See the README of each components.
 	
 1.  Build and Install ogawayama_fdw.
 
