@@ -63,7 +63,7 @@
 	By changing INSTALL_PREFIX=$HOME/.local in the script, you can change install directory.
 	* Hereafter, this directory is defined as **\<tsurugi install directory>**.
 
-        See the README of each components.
+        See the README of each component.
 	
 1.  Build and Install ogawayama_fdw.
 
