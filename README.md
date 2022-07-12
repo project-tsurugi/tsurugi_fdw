@@ -174,7 +174,7 @@
 
 ## Regression tests
 
-Notes: In the current version, the regression test fails due to Issues #63.
+Notes: In the current version, the regression test fails due to [Issues#63](https://github.com/project-tsurugi/frontend/issues/63).
 
 ### Structure
 
