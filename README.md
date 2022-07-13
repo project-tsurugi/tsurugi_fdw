@@ -247,3 +247,70 @@
 	```sh
 	oltp shutdown
 	```
+
+## PostgreSQLおよびfrontendのログ出力方法
+
+1. postgresql.confを編集する
+
+	- 修正前
+
+		```
+		# This is used when logging to stderr:
+		#logging_collector = off          	# Enable capturing of stderr and csvlog
+		
+		<中略>	
+		
+		#log_min_messages = warning             # values in order of decreasing detail:
+							#   debug5
+							#   debug4
+							#   debug3
+							#   debug2
+							#   debug1
+							#   info
+							#   notice
+							#   warning
+							#   error
+							#   log
+							#   fatal
+							#   panic		
+
+		```
+
+	- 修正後
+
+		`loggin_collector`を`on`に、`log_min_messages`は目的に合わせて適切な値を選択する。  
+    		コメント開始記号("#")を削除する。
+		
+
+		```
+		# This is used when logging to stderr:
+		logging_collector = on          	# Enable capturing of stderr and csvlog
+		
+		<中略>	
+		
+		log_min_messages = notice         	# values in order of decreasing detail:
+							#   debug5
+							#   debug4
+							#   debug3
+							#   debug2
+							#   debug1
+							#   info
+							#   notice
+							#   warning
+							#   error
+							#   log
+							#   fatal
+							#   panic		
+		
+		```
+2. PostgreSQLを再起動する
+
+	```
+	pg_ctl restart
+	```
+
+3. ログが出力されることを確認する
+
+	```
+	ls <PostgreSQL install directory>/data/log
+	```
