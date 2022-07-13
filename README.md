@@ -252,6 +252,8 @@
 
 1. postgresql.confを編集する
 
+	`<PostgreSQL install directory>/data/postgresql.conf`
+
 	- 修正前
 
 		```
