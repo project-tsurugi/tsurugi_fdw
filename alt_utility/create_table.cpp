@@ -92,11 +92,74 @@ bool create_table(List *stmts)
 
     /* END_DDL message to ogawayama */
     message::EndDDLMessage ed_msg{0};
-    success = send_message(&ed_msg, tables);
+    success &= send_message(&ed_msg, tables);
 
     return success;
 }
 
+/**
+ *  @brief Calls the function sending metadata to metadata-manager and drops parameters sended to ogawayama.
+ *  @param [in] Table name to remove.
+ */
+bool drop_table(DropStmt *drop, char *relname)
+{
+    Assert(drop != nullptr);
+    bool success = false;
+
+    if (drop->behavior == DROP_CASCADE) {
+        ereport(ERROR,
+                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                 errmsg("Tsurugi does not support CASCADE clause")));
+        return success;
+    }
+
+    /* Get the object ID of the table to be deleted */
+    ptree remove_table;
+    std::unique_ptr<metadata::Metadata> tables = std::make_unique<Tables>(DBNAME);
+    ErrorCode error = tables->get(relname, remove_table);
+    if (error == ErrorCode::NAME_NOT_FOUND && drop->missing_ok) {
+        success = true;
+        return success;
+    } else if (error != ErrorCode::OK) {
+        ereport(ERROR,
+                (errcode(ERRCODE_INTERNAL_ERROR),
+                 errmsg("drop_table() get metadata failed.")));
+        return success;
+    }
+    boost::optional<ObjectIdType> remove_table_id = remove_table.get_optional<ObjectIdType>(Tables::ID);
+    ObjectIdType object_id = remove_table_id.get();
+
+    /* BEGIN_DDL message to ogawayama */
+    message::BeginDDLMessage bd_msg{0};
+    success = send_message(&bd_msg, tables);
+    if (false == success) {
+        return success;
+    }
+
+    /* DROP_TABLE message to ogawayama */
+    message::DropTableMessage dt_msg{(uint64_t)object_id};
+    success = send_message(&dt_msg, tables);
+
+    /* END_DDL message to ogawayama */
+    message::EndDDLMessage ed_msg{0};
+    success &= send_message(&ed_msg, tables);
+    if (false == success) {
+        return success;
+    }
+
+    /* remobe metadata */
+    error = tables->remove(object_id);
+    if (error != ErrorCode::OK)
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_INTERNAL_ERROR),
+                 errmsg("drop_table() remove metadata failed.")));
+        success = false;
+        return success;
+    }
+
+    return success;
+}
 
 /*
  *  @brief:
@@ -145,6 +208,10 @@ bool send_message(message::Message *message, std::unique_ptr<metadata::Metadata>
  */
 void remove_metadata(message::Message *message, std::unique_ptr<metadata::Metadata> &objects)
 {
+    if (!message->get_object_id()) {
+        return;
+    }
+
     ErrorCode error = objects->remove(message->get_object_id());
     if (error != ErrorCode::OK)
     {

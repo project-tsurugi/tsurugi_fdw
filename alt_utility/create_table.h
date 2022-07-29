@@ -26,6 +26,7 @@ extern "C" {
 #endif
 
 bool create_table(List *stmts);
+bool drop_table(DropStmt *drop, char *relname);
 
 #ifdef __cplusplus
 }
