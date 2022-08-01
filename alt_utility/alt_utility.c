@@ -271,6 +271,7 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
                     foreach(cell, drop->objects)
                     {
                         RangeVar rel;
+                        int nameLen, prefixLen;
                         List *names = (List *) lfirst(cell);
 
                         switch (list_length(names))
@@ -279,9 +280,12 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
                                 rel.relname = strVal(linitial(names));
                                 break;
                             case 2:
+                                rel.schemaname = strVal(linitial(names));
                                 rel.relname = strVal(lsecond(names));
                                 break;
                             case 3:
+                                rel.catalogname = strVal(linitial(names));
+                                rel.schemaname = strVal(lsecond(names));
                                 rel.relname = strVal(lthird(names));
                                 break;
                             default:
@@ -289,8 +293,8 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
                                 break;
                         }
 
-                        int nameLen = strlen(rel.relname);
-                        int prefixLen = strlen(TSURUGI_TABLE_PREFIX);
+                        nameLen = strlen(rel.relname);
+                        prefixLen = strlen(TSURUGI_TABLE_PREFIX);
                         if (nameLen > prefixLen) {
                             int index = nameLen - prefixLen;
                             if (0 == strncmp(&rel.relname[index], TSURUGI_TABLE_PREFIX, prefixLen)) {
@@ -304,7 +308,6 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
                             }
                         }
                     }
-
                     RemoveRelations(drop);
 
                     /* no commands stashed for DROP */

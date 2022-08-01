@@ -117,13 +117,14 @@ bool drop_table(DropStmt *drop, char *relname)
     ptree remove_table;
     std::unique_ptr<metadata::Metadata> tables = std::make_unique<Tables>(DBNAME);
     ErrorCode error = tables->get(relname, remove_table);
-    if (error == ErrorCode::NAME_NOT_FOUND && drop->missing_ok) {
-        success = true;
-        return success;
-    } else if (error != ErrorCode::OK) {
-        ereport(ERROR,
-                (errcode(ERRCODE_INTERNAL_ERROR),
-                 errmsg("drop_table() get metadata failed.")));
+    if (error != ErrorCode::OK) {
+        if (error == ErrorCode::NAME_NOT_FOUND && drop->missing_ok) {
+            success = true;
+        } else {
+            ereport(ERROR,
+                    (errcode(ERRCODE_INTERNAL_ERROR),
+                     errmsg("drop_table() get metadata failed.")));
+        }
         return success;
     }
     boost::optional<ObjectIdType> remove_table_id = remove_table.get_optional<ObjectIdType>(Tables::ID);
