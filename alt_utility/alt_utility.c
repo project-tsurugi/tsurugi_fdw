@@ -16,6 +16,7 @@
 #include "commands/tablecmds.h"
 
 #include "create_table.h"
+#include "drop_table.h"
 
 #ifndef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
