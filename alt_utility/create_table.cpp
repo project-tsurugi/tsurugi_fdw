@@ -22,7 +22,6 @@
 #include <string_view>
 
 #include "ogawayama/stub/api.h"
-#include "stub_manager.h"
 
 #include "manager/message/message.h"
 #include "manager/message/message_broker.h"
@@ -32,8 +31,9 @@
 #include "manager/metadata/tables.h"
 
 using namespace boost::property_tree;
-using namespace manager;
 using namespace ogawayama;
+using namespace manager;
+using namespace manager::metadata;
 
 #ifdef __cplusplus
 extern "C"
@@ -45,21 +45,15 @@ extern "C"
 }
 #endif
 
+#include "stub_manager.h"
 #include "tablecmds.h"
-
 #include "create_table.h"
 
 /* DB name metadata-manager manages */
 const std::string DBNAME = "Tsurugi";
 
 void remove_metadata(message::Message *message, std::unique_ptr<metadata::Metadata> &objects);
-bool send_message(message::Message *message, std::unique_ptr<metadata::Metadata> &objects);
-#if 0
-static std::string rewrite_query(std::string_view query_string);
-static bool execute_create_table(std::string_view query_string);
-#endif
-
-using namespace manager::metadata;
+bool send_message(message::Message* message);
 
 /**
  *  @brief Calls the function sending metadata to metadata-manager and creates parameters sended to ogawayama.
@@ -69,75 +63,92 @@ bool create_table(List *stmts)
 {
     Assert(stmts != nullptr);
 
-    /* The object id stored if new table was successfully created */
-    ObjectIdType object_id = 0;
+    bool ret_value{false};
 
-    /* Call the function sending metadata to metadata-manager. */
     CreateTable cmds{stmts, DBNAME};
-    std::unique_ptr<metadata::Metadata> tables = std::make_unique<Tables>(DBNAME);
 
-    /* BEGIN_DDL message to ogawayama */
-    message::BeginDDLMessage bd_msg{0};
-    bool success = send_message(&bd_msg, tables);
-    if (false == success) {
-        return success;
+    // Credate Messages.
+    message::BeginDDLMessage begin_msg{0};
+    message::EndDDLMessage end_msg{0};
+
+    // Define a table.
+    ObjectIdType object_id = 0;
+    bool success = cmds.define_relation(&object_id);
+    if (!success) {
+      ereport(ERROR,
+              (errcode(ERRCODE_INTERNAL_ERROR), 
+              errmsg("CreateTable::define_relation() failed.")));
+      return  ret_value;
     }
 
-    /* CREATE_TABLE message to ogawayama */
-    success = cmds.define_relation( &object_id );
-    if (success) {
-        message::CreateTableMessage ct_msg{(uint64_t)object_id};
-        success = send_message(&ct_msg, tables);
-    }
-
-    /* END_DDL message to ogawayama */
-    message::EndDDLMessage ed_msg{0};
-    success = send_message(&ed_msg, tables);
-
-    return success;
-}
-
-
-/*
- *  @brief:
- */
-bool send_message(message::Message *message, std::unique_ptr<metadata::Metadata> &objects)
-{
-    Assert(message != nullptr);
-
-    bool ret_value = false;
-    ERROR_CODE error = ERROR_CODE::UNKNOWN;
-
-    /* sends message to ogawayama */
-    stub::Connection* connection;
-    error = StubManager::get_connection(&connection);
-    if (error != ERROR_CODE::OK)
-    {
-        remove_metadata(message, objects);
+    // Send message to Ogawayama.
+    success = send_message(&begin_msg);
+    if (!success) {
         ereport(ERROR,
-                (errcode(ERRCODE_INTERNAL_ERROR),
-                 errmsg("StubManager::get_connection() failed.")));
+                (errcode(ERRCODE_INTERNAL_ERROR), 
+                errmsg("send_message() failed. (BeginDDLMessage)")));
         return ret_value;
     }
 
-    message::MessageBroker broker;
-    message->set_receiver(connection);
-    message::Status status = broker.send_message(message);
-
-    if (status.get_error_code() != message::ErrorCode::SUCCESS)
-    {
-        remove_metadata(message, objects);
+    std::unique_ptr<metadata::Metadata> tables = std::make_unique<Tables>(DBNAME);
+    message::CreateTableMessage create_msg{(uint64_t) object_id};
+    success = send_message(&create_msg);
+    if (!success) {
+        remove_metadata(&create_msg, tables);
+        send_message(&end_msg);
         ereport(ERROR,
-                (errcode(ERRCODE_INTERNAL_ERROR),
-                 errmsg("connection::receive_message() %s failed. (%d)",
-                message->get_message_type_name().c_str(), (int)status.get_sub_error_code())));
+                (errcode(ERRCODE_INTERNAL_ERROR), 
+                errmsg("send_message() failed. (CreateTableMessage)")));
+        return ret_value;
+    }
 
+    success = send_message(&end_msg);
+    if (!success) {
+        remove_metadata(&create_msg, tables);
+        ereport(ERROR,
+                (errcode(ERRCODE_INTERNAL_ERROR), 
+                errmsg("send_message() failed. (EndDDLMessage)")));
         return ret_value;
     }
 
     ret_value = true;
 
     return ret_value;
+}
+
+/*
+ *  @brief:
+ */
+bool send_message(message::Message* message)
+{
+  Assert(message != nullptr);
+
+  bool ret_value = false;
+  ERROR_CODE error = ERROR_CODE::UNKNOWN;
+
+  /* sends message to ogawayama */
+  stub::Connection* connection;
+  error = StubManager::get_connection(&connection);
+  if (error != ERROR_CODE::OK) {
+    elog(NOTICE, "StubManager::get_connection() failed.");
+    return ret_value;
+  }
+
+  message::MessageBroker broker;
+  message->set_receiver(connection);
+  message::Status status = broker.send_message(message);
+
+  if (status.get_error_code() != message::ErrorCode::SUCCESS) {
+    ereport(WARNING,
+            (errcode(ERRCODE_INTERNAL_ERROR),
+              errmsg("connection::receive_message() %s failed. (%d)",
+            message->get_message_type_name().c_str(), (int)status.get_sub_error_code())));
+    return ret_value;
+  }
+
+  ret_value = true;
+
+  return ret_value;
 }
 
 /*
@@ -145,119 +156,11 @@ bool send_message(message::Message *message, std::unique_ptr<metadata::Metadata>
  */
 void remove_metadata(message::Message *message, std::unique_ptr<metadata::Metadata> &objects)
 {
-    ErrorCode error = objects->remove(message->get_object_id());
-    if (error != ErrorCode::OK)
-    {
-        ereport(ERROR,
-                (errcode(ERRCODE_INTERNAL_ERROR),
-                 errmsg("remove_metadata() failed.")));
-    }
+  ErrorCode error = objects->remove(message->get_object_id());
+  if (error != ErrorCode::OK) {
+    ereport(WARNING,
+            (errcode(ERRCODE_INTERNAL_ERROR),
+              errmsg("remove metadata() failed. (error: %d) (oid: %d)", 
+              (int)error, (int)message->get_object_id())));
+  }
 }
-
-#if 0
-/*
- *  @brief:
- */
-bool create_table(const char* query_string)
-{
-    Assert(query_string != nullptr);
-
-    std::string query{query_string};
-
-    bool success = execute_create_table(query);
-    if (!success)
-    {
-        elog(ERROR, "execute_create_table() failed.");
-    }
-
-    return success;
-}
-
-/*
- *  @brief:
- */
-bool execute_create_table(std::string_view query_string)
-{
-    bool ret_value = false;
-    ERROR_CODE error = ERROR_CODE::UNKNOWN;
-
-    const std::string rewrited_query = rewrite_query(query_string);
-
-    // dispatch create_table query.
-    stub::Transaction* transaction;
-    error = StubManager::begin(&transaction);
-    if (error != ERROR_CODE::OK)
-    {
-        std::cerr << "begin() failed." << std::endl;
-        return ret_value;
-    }
-
-    elog(DEBUG2, "rewrited query string : \"%s\"", rewrited_query.c_str());
-    error = transaction->execute_create_table(rewrited_query);
-    if (error != ERROR_CODE::OK)
-    {
-        elog(ERROR, "transaction::execute_create_table() failed. (%d)", (int) error);
-        return ret_value;
-    }
-
-    error = transaction->commit();
-    if (error != ERROR_CODE::OK)
-    {
-        elog(ERROR, "transaction::commit() failed. (%d)", (int) error);
-        return ret_value;
-    }
-    StubManager::end();
-
-    ret_value = true;
-
-    return ret_value;
-}
-
-/*
- *  @brief:
- */
-static std::string rewrite_query(std::string_view query_string)
-{
-    std::string rewrited_query{query_string};
-
-    std::unique_ptr<metadata::Metadata> datatypes{new metadata::DataTypes("NEDO DB")};
-
-    metadata::ErrorCode error = datatypes->load();
-    if (error != metadata::ErrorCode::OK) {
-        std::cout << "DataTypes::load() error." << std::endl;
-    }
-
-    // trim a terminal semi-column.
-    if (rewrited_query.back() == ';' ) {
-        rewrited_query.pop_back();
-    }
-
-    ptree datatype;
-
-    while ((error = datatypes->next(datatype)) == metadata::ErrorCode::OK) {
-        boost::optional<std::string> pg_type_name =
-            datatype.get_optional<std::string>(metadata::DataTypes::PG_DATA_TYPE_NAME);
-        boost::optional<std::string> og_type_name =
-            datatype.get_optional<std::string>(metadata::DataTypes::NAME);
-        if (!pg_type_name.get().empty() && !og_type_name.get().empty()) {
-            try {
-                rewrited_query = std::regex_replace(
-                    rewrited_query,
-                    std::regex("(\\s)(" + pg_type_name.get() + ")([\\s,)])", std::regex_constants::icase),
-                    "$1" + og_type_name.get() + "$3");
-            } catch (std::regex_error e) {
-                std::cout << "regex_replace() error. " << e.what() << std::endl;
-            }
-        }
-    }
-
-    try {
-        rewrited_query = std::regex_replace(
-            rewrited_query, std::regex("\\sTABLESPACE\\sTsurugi", std::regex_constants::icase), "");
-    } catch (std::regex_error e) {
-        std::cout << "regex_replace() error. " << e.what() << std::endl;
-    }
-
-    return rewrited_query;
-}
-#endif
