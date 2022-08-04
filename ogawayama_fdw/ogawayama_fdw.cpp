@@ -318,6 +318,19 @@ ogawayamaEndForeignScan(ForeignScanState* node)
 	/* close cursor */
 	fdw_info_.result_set = nullptr;
 
+	ERROR_CODE error;
+
+	if (fdw_info_.transaction != nullptr)
+	{
+		elog(DEBUG2, "transaction::commit() start.");
+		error = fdw_info_.transaction->commit();
+		elog(DEBUG2, "transaction::commit() done.");
+		if (error != ERROR_CODE::OK)
+		{
+			elog(ERROR, "transaction::commit() failed. (%d)", (int) error);
+		}
+	}
+
 	StubManager::end();
 	fdw_info_.transaction = nullptr;
 	fdw_info_.xact_level--;
@@ -407,6 +420,19 @@ static void
 ogawayamaEndDirectModify(ForeignScanState* node)
 {
 	elog(DEBUG2, "ogawayamaEndDirectModify() started.");
+
+	ERROR_CODE error;
+
+	if (fdw_info_.transaction != nullptr)
+	{
+		elog(DEBUG2, "transaction::commit() start.");
+		error = fdw_info_.transaction->commit();
+		elog(DEBUG2, "transaction::commit() done.");
+		if (error != ERROR_CODE::OK)
+		{
+			elog(ERROR, "transaction::commit() failed. (%d)", (int) error);
+		}
+	}
 
 	StubManager::end();
 	fdw_info_.transaction = nullptr;
