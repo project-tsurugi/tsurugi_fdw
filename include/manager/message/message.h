@@ -150,12 +150,22 @@ class CreateRoleMessage : public Message {
 };
 
 class DropRoleMessage : public Message {
+ public:
+  /**
+   * @brief C'tor. Initialize member variables.
+   * @param [in] object_id object ID that will be added, updated, or deleted.
+   */
   DropRoleMessage(uint64_t object_id)
       : Message{MessageId::DROP_ROLE, object_id,
                 MESSAGE_TYPE_NANE_DROP_ROLE} {}
 };
 
 class AlterRoleMessage : public Message {
+ public:
+  /**
+   * @brief C'tor. Initialize member variables.
+   * @param [in] object_id object ID that will be added, updated, or deleted.
+   */
   AlterRoleMessage(uint64_t object_id)
       : Message{MessageId::ALTER_ROLE, object_id,
                 MESSAGE_TYPE_NANE_ALTER_ROLE} {}
