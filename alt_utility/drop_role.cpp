@@ -50,7 +50,7 @@ extern "C" {
 #endif
 
 #include "role_managercmds.h"
-#include "syscashecmds.h"
+#include "syscachecmds.h"
 
 #include "drop_role.h"
 
@@ -83,7 +83,7 @@ bool before_drop_role(const DropRoleStmt* stmts, uint64_t objectIdList[]) {
               (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
                errmsg("cannot use special role specifier in DROP ROLE")));
     role = rolspec->rolename;
-    success = get_roleid_by_rolename_from_syscashe(role, &object_id);
+    success = get_roleid_by_rolename_from_syscache(role, &object_id);
     if (!success) {
       /* Failed getting role id.*/
       return success;
@@ -111,7 +111,7 @@ bool after_drop_role(const DropRoleStmt* stmts, const uint64_t objectIdList[]) {
   /* Confirm that all ROLEs are dropped. */
   for (int listArrayNum = 0; listArrayNum < stmts->roles->length;
        listArrayNum++) {
-    if (confirm_roleid_from_syscashe(objectIdList[listArrayNum])) {
+    if (confirm_roleid_from_syscache(objectIdList[listArrayNum])) {
       ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
                       errmsg("canceled to send message because DROP ROLE "
                              "statements failed.")));

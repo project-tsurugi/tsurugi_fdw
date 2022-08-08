@@ -49,7 +49,7 @@ using namespace boost::property_tree;
 using namespace manager;
 using namespace ogawayama;
 
-#include "syscashecmds.h"
+#include "syscachecmds.h"
 #include "create_role.h"
 
 /* DB name metadata-manager manages */
@@ -70,7 +70,7 @@ bool after_create_role(const CreateRoleStmt* stmts) {
   uint64_t object_id = 0;
 
   /* Call the function sending metadata to metadata-manager. */
-  bool success = get_roleid_by_rolename_from_syscashe(stmts->role,&object_id);
+  bool success = get_roleid_by_rolename_from_syscache(stmts->role,&object_id);
 
   if (success) {
     message::CreateRoleMessage cr_msg{object_id};

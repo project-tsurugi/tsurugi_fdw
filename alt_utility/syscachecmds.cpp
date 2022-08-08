@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	syscashecmds.cpp
+ *	@file	syscachecmds.cpp
  *	@brief  Utility command to operate through SysCache.
  */
 
@@ -33,7 +33,7 @@ extern "C" {
 }
 #endif
 
-#include "syscashecmds.h"
+#include "syscachecmds.h"
 
 /**
  *  @brief  Get role id by role name from SysCache.
@@ -42,7 +42,7 @@ extern "C" {
  * getted.
  *  @return true if role was successfully loaded, false otherwize.
  */
-bool get_roleid_by_rolename_from_syscashe(const char* role_name,
+bool get_roleid_by_rolename_from_syscache(const char* role_name,
                                           uint64_t* object_id) {
   /* return value */
   bool ret_value = false;
@@ -68,7 +68,7 @@ bool get_roleid_by_rolename_from_syscashe(const char* role_name,
  *  @param  [in] object_id Role id.
  *  @return True if the role exists, false if it does not.
  */
-bool confirm_roleid_from_syscashe(const uint64_t object_id) {
+bool confirm_roleid_from_syscache(const uint64_t object_id) {
   /* return value */
   bool ret_value = false;
   HeapTuple tuple;

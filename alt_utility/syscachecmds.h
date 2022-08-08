@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	syscashecmds.h
+ *	@file	syscachecmds.h
  *	@brief  Utility command to operate through SysCache.
  */
 
-#ifndef SYSCASHECMDS_H
-#define SYSCASHECMDS_H
+#ifndef SYSCACHECMDS_H
+#define SYSCACHECMDS_H
 
 /**
  *  @brief  Get role id from metadata-manager by role name.
@@ -28,7 +28,7 @@
  * getted.
  *  @return true if role was successfully loaded, false otherwize.
  */
-bool get_roleid_by_rolename_from_syscashe(const char* role_name,
+bool get_roleid_by_rolename_from_syscache(const char* role_name,
                             uint64_t* object_id);
 
 /**
@@ -37,6 +37,6 @@ bool get_roleid_by_rolename_from_syscashe(const char* role_name,
  *  @param  [in] object_id Role id.
  *  @return True if the role exists, false if it does not.
  */
-bool confirm_roleid_from_syscashe(const uint64_t object_id);
+bool confirm_roleid_from_syscache(const uint64_t object_id);
 
-#endif  // SYSCASHECMDS_H
+#endif  // SYSCACHECMDS_H
