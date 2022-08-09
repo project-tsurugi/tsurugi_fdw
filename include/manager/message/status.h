@@ -17,73 +17,56 @@
  *	@brief  error code of message-broker
  */
 
-#ifndef STATUS_H
-#define STATUS_H
+#pragma once
 
-namespace manager::message
-{
+namespace manager::message {
+/**
+ *  @enum ErrorCode
+ *  @brief a primary error code.
+ */
+enum class ErrorCode : int {
+  SUCCESS = 0,
+  FAILURE
+};
 
-    /**
-     *  @enum ErrorCode
-     *  @brief a primary error code.
-     */
-    enum class ErrorCode : int
-    {
-        /**
-         *  @brief Success.
-         */
-        SUCCESS = 0,
+class Status {
+  public:
+  /**
+   * @brief C'tor. Initialize member variables.
+   * @param [in] error_code a primary error code managed by message-broker.
+   * @param [in] sub_error_code a secondary error code
+   * that is an integer value of error code managed by receiver.
+   */
+  Status(ErrorCode error_code, int sub_error_code) :
+    error_code_(error_code), sub_error_code_(sub_error_code) {}
 
-        /**
-         *  @brief Failure.
-         */
-        FAILURE
-    };
+  /**
+   *  @brief Get a primary error code.
+   *  @return ErrorCode::SUCCESS if Receiver's process succeeded.
+   *  @return ErrorCode::FAILURE otherwise
+   */
+  ErrorCode get_error_code() {
+    return error_code_;
+  }
 
-    class Status
-    {
-        public:
+  /**
+   *  @brief Get a secondary error code.
+   *  @return an integer value of error code managed by other component.
+   */
+  int get_sub_error_code() {
+    return sub_error_code_;
+  }
 
-            /**
-             * @brief C'tor. Initialize member variables.
-             * @param [in] error_code a primary error code managed by message-broker.
-             * @param [in] sub_error_code a secondary error code
-             * that is an integer value of error code managed by receiver.
-             */
-            Status(ErrorCode error_code, int sub_error_code) :
-                error_code(error_code),sub_error_code(sub_error_code){}
+  private:
+  /**
+   * @brief a primary error code managed by message-broker.
+   */
+  ErrorCode error_code_;
 
-            /**
-             *  @brief Get a primary error code.
-             *  @return ErrorCode::SUCCESS if Receiver's process succeeded.
-             *  @return ErrorCode::FAILURE otherwize
-             */
-            ErrorCode get_error_code()
-            {
-                return error_code;
-            }
-
-            /**
-             *  @brief Get a secondary error code.
-             *  @return an integer value of error code managed by other component.
-             */
-            int get_sub_error_code()
-            {
-                return sub_error_code;
-            }
-
-        private:
-            /**
-             * @brief a primary error code managed by message-broker.
-             */
-            ErrorCode error_code;
-
-            /**
-             * @brief a secondary error code
-             * that is an integer value of error code managed by receiver.
-             */
-            int sub_error_code;
-    };
+  /**
+   * @brief a secondary error code
+   * that is an integer value of error code managed by receiver.
+   */
+  int sub_error_code_;
+};
 } // namespace manager::message
-
-#endif // STATUS_H

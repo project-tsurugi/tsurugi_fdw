@@ -17,30 +17,38 @@
  *	@brief  the receiver class that handle message
  */
 
-#ifndef RECEIVER_H
-#define RECEIVER_H
+#pragma once
 
 #include "manager/message/status.h"
 #include "manager/message/message.h"
+#include "manager/metadata/metadata.h"
 
-namespace manager::message
-{
-    class Message;
+using namespace manager;
 
-    class Receiver
-    {
-        public:
-            /**
-             * @brief Derived class of this Receiver class will receive
-             * an instance of Message class
-             * and will get MessageId using message->get_id() method.
-             * @param [in] message an instance of Message class that Receiver will receive.
-             * @return an instance of Status class.
-             * A primary error code and a secondary error code must be set.
-             */
-            virtual Status receive_message(Message *message) = 0;
-    };
+namespace manager::message {
+class Receiver {
+  public:
+  /**
+   * @brief Derived class of this Receiver class will receive
+   * an instance of Message class
+   * @return an instance of Status class.
+   * A primary error code and a secondary error code must be set.
+   */
+  virtual Status receive_begin_ddl(uint64_t mode) = 0;
+  virtual Status receive_end_ddl() = 0;
+
+  virtual Status receive_create_table(metadata::ObjectIdType object_id) { return Status(ErrorCode::SUCCESS, 0); }
+  virtual Status receive_alter_table(metadata::ObjectIdType object_id) { return Status(ErrorCode::SUCCESS, 0); }
+  virtual Status receive_drop_table(metadata::ObjectIdType object_id) { return Status(ErrorCode::SUCCESS, 0); }
+
+  virtual Status receive_create_role(metadata::ObjectIdType object_id) { return Status(ErrorCode::SUCCESS, 0); }
+  virtual Status receive_alter_role(metadata::ObjectIdType object_id) { return Status(ErrorCode::SUCCESS, 0); }
+  virtual Status receive_drop_role(metadata::ObjectIdType object_id) { return Status(ErrorCode::SUCCESS, 0); }
+
+  virtual Status receive_grant_role(metadata::ObjectIdType object_id) { return Status(ErrorCode::SUCCESS, 0); }
+  virtual Status receive_revoke_role(metadata::ObjectIdType object_id) { return Status(ErrorCode::SUCCESS, 0); }
+  virtual Status receive_grant_table(metadata::ObjectIdType object_id) { return Status(ErrorCode::SUCCESS, 0); }
+  virtual Status receive_revoke_table(metadata::ObjectIdType object_id) { return Status(ErrorCode::SUCCESS, 0); }
+};
 
 }; // namespace manager::message
-
-#endif // RECEIVER_H

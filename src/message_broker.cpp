@@ -20,31 +20,20 @@
 
 #include "manager/message/message_broker.h"
 
-namespace manager::message
-{
-
-
-    /**
-     * @brief MessageBroker sends a message to all receivers.
-     * @param [in] message an instance of Message class that Receiver will receive.
-     * @return both primary error code and secondary error code
-     * are ErrorCode::SUCCESS
-     * if all receivers' process is successfully completed.
-     * @return an instance of Status class otherwize.
-     * A primary error code and a secondary error code must be set.
-     */
-    Status MessageBroker::send_message(Message *message)
-    {
-        Status ret_val{ErrorCode::SUCCESS, (int)ErrorCode::SUCCESS};
-        for (Receiver *receiver : message->get_receivers())
-        {
-            Status status = receiver->receive_message(message);
-            if (status.get_error_code() == ErrorCode::FAILURE)
-            {
-                return status;
-            }
-        }
-        return ret_val;
-    }
+namespace manager::message {
+  /**
+   * @brief MessageBroker sends a message to all receivers.
+   * @param [in] message an instance of Message class that Receiver will receive.
+   * @return both primary error code and secondary error code
+   * are ErrorCode::SUCCESS
+   * if all receivers' process is successfully completed.
+   * @return an instance of Status class otherwize.
+   * A primary error code and a secondary error code must be set.
+   */
+  Status MessageBroker::send_message(Message* msg) {
+    Status status{ErrorCode::SUCCESS, (int) ErrorCode::SUCCESS};
+    status = msg->execute();
+    return status;
+  }
 
 }; // namespace manager::message

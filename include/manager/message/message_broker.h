@@ -15,33 +15,30 @@
  *
  *	@file	message_broker.h
  *	@brief  the message broker class sends message
- *          to all receivers of message
+ *          to all receivers of message.
  */
 
-#ifndef MESSAGE_BROKER_H
-#define MESSAGE_BROKER_H
+#pragma once
 
 #include "manager/message/status.h"
 #include "manager/message/message.h"
 #include "manager/message/receiver.h"
 
-namespace manager::message
-{
+namespace manager::message {
 
-    class MessageBroker {
-        public:
-            /**
-             * @brief MessageBroker sends a message to all receivers.
-             * @param [in] message an instance of Message class that Receiver will receive.
-             * @return both primary error code and secondary error code
-             * are ErrorCode::SUCCESS
-             * if all receivers' process is successfully completed.
-             * @return an instance of Status class otherwize.
-             * A primary error code and a secondary error code must be set.
-             */
-            Status send_message(Message *message);
-    };
+class MessageBroker {
+ public:
+  /**
+   * @brief MessageBroker sends a message to all receivers.
+   * @param [in] message an instance of Message class that Receiver will receive.
+   * @return both primary error code and secondary error code
+   * are ErrorCode::SUCCESS
+   * if all receivers' process is successfully completed.
+   * @return an instance of Status class otherwize.
+   * A primary error code and a secondary error code must be set.
+   */
+  static Status send_message(Message* msg);
+};
 
 }; // namespace manager::message
 
-#endif // MESSAGE_BROKER_H
