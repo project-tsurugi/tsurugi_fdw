@@ -15,8 +15,8 @@
 add_executable(manager_example main.cpp oltp_receiver.cpp worker.cpp)
 
 target_link_libraries(manager_example
-    manager-metadata
-    manager-message
+    metadata
+    message
 )
 
 target_include_directories(manager_example
