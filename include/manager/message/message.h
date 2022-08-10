@@ -22,21 +22,23 @@
 #include <string>
 #include <vector>
 #include <typeinfo>
+#include <iostream>
 
 #include "manager/metadata/metadata.h"
 #include "manager/message/receiver.h"
 
-namespace manager::message {
+using namespace manager;
 
+namespace manager::message {
 class Message {
  public:
-  static constexpr uint64_t NONE = 0;
+  static constexpr int64_t NONE = -1;
   /**
    * @brief C'tor. Initialize member variables.
    * @param [in] id message type ID that is an uniquely determined statement ID inputted by user.
    * @note  the meaning of each parameter(param1/param2) is described in the derived class.
    */
-  Message(uint64_t param1 = NONE, uint64_t param2 = NONE)
+  Message(int64_t param1 = NONE, int64_t param2 = NONE)
       : param1_(param1), param2_(param2) {}
 
   /**
@@ -48,16 +50,16 @@ class Message {
    * @brief Get all receivers_ that will receive messages.
    * @return all receivers_.
    */
-  std::vector<Receiver*> get_receivers() { return receivers_; };
+  std::vector<Receiver*> receivers() { return receivers_; };
 
-  uint64_t param1() { return param1_; }
-  uint64_t param2() { return param2_; }
+  int64_t param1() const { return param1_; }
+  int64_t param2() const { return param2_; }
   const char* string() { return typeid(*this).name(); }
   virtual Status execute() = 0;
 
  protected:
-  uint64_t param1_;
-  uint64_t param2_;
+  int64_t param1_;
+  int64_t param2_;
   std::vector<Receiver*> receivers_;  //!< @brief receivers that will receive message ex) OLTP_Receiver, OLAP_Receiver.
 };
 
@@ -66,17 +68,21 @@ class Message {
  */
 class BeginDDL : public Message {
  public:
-  static constexpr uint64_t DEFAULT_MODE = 0;
+  enum class EXECUTION_MODE : int64_t {
+    DEFAULT = 0,
+    EXCLUDE,
+  };
   /**
    * @brief C'tor. Initialize member variables.
    * @param [in] param1 DDL execution mode.
    */
-  BeginDDL(uint64_t mode = DEFAULT_MODE) : Message{mode} {}
+  BeginDDL(EXECUTION_MODE mode = EXECUTION_MODE::DEFAULT) 
+    : Message{static_cast<int64_t> (mode)} {}
 
   Status execute() {
     Status ret_value{ErrorCode::SUCCESS, (int) ErrorCode::SUCCESS};
 
-    for (Receiver* receiver : this->get_receivers()) {
+    for (auto receiver : this->receivers()) {
       Status status = receiver->receive_begin_ddl(this->param1());
       if (status.get_error_code() == ErrorCode::FAILURE) {
         return status;
@@ -99,7 +105,7 @@ class EndDDL : public Message {
   Status execute() {
     Status ret_value{ErrorCode::SUCCESS, (int) ErrorCode::SUCCESS};
 
-    for (Receiver* receiver : this->get_receivers()) {
+    for (Receiver* receiver : this->receivers()) {
       Status status = receiver->receive_end_ddl();
       if (status.get_error_code() == ErrorCode::FAILURE) {
         return status;
@@ -123,7 +129,7 @@ class CreateTable : public Message {
   Status execute() {
     Status ret_value{ErrorCode::SUCCESS, (int) ErrorCode::SUCCESS};
 
-    for (Receiver* receiver : this->get_receivers()) {
+    for (Receiver* receiver : this->receivers()) {
       Status status = receiver->receive_create_table(this->param1());
       if (status.get_error_code() == ErrorCode::FAILURE) {
         return status;
@@ -147,7 +153,7 @@ class CreateRole : public Message {
   Status execute() {
     Status ret_value{ErrorCode::SUCCESS, (int) ErrorCode::SUCCESS};
 
-    for (Receiver* receiver : this->get_receivers()) {
+    for (Receiver* receiver : this->receivers()) {
       Status status = receiver->receive_create_role(this->param1());
       if (status.get_error_code() == ErrorCode::FAILURE) {
         return status;
@@ -166,7 +172,7 @@ class AlterRole : public Message {
   Status execute() {
     Status ret_value{ErrorCode::SUCCESS, (int) ErrorCode::SUCCESS};
 
-    for (Receiver* receiver : this->get_receivers()) {
+    for (Receiver* receiver : this->receivers()) {
       Status status = receiver->receive_alter_role(this->param1());
       if (status.get_error_code() == ErrorCode::FAILURE) {
         return status;
@@ -185,7 +191,7 @@ class DropRole : public Message {
   Status execute() {
     Status ret_value{ErrorCode::SUCCESS, (int) ErrorCode::SUCCESS};
 
-    for (Receiver* receiver : this->get_receivers()) {
+    for (Receiver* receiver : this->receivers()) {
       Status status = receiver->receive_drop_role(this->param1());
       if (status.get_error_code() == ErrorCode::FAILURE) {
         return status;
@@ -209,7 +215,7 @@ class GrantRole : public Message {
   Status execute() {
     Status ret_value{ErrorCode::SUCCESS, (int) ErrorCode::SUCCESS};
 
-    for (Receiver* receiver : this->get_receivers()) {
+    for (Receiver* receiver : this->receivers()) {
       Status status = receiver->receive_grant_role(this->param1());
       if (status.get_error_code() == ErrorCode::FAILURE) {
         return status;
@@ -233,7 +239,7 @@ class RevokeRole : public Message {
   Status execute() {
     Status ret_value{ErrorCode::SUCCESS, (int) ErrorCode::SUCCESS};
 
-    for (Receiver* receiver : this->get_receivers()) {
+    for (Receiver* receiver : this->receivers()) {
       Status status = receiver->receive_revoke_role(this->param1());
       if (status.get_error_code() == ErrorCode::FAILURE) {
         return status;
@@ -257,7 +263,7 @@ class GrantTable :  public Message {
   Status execute() {
     Status ret_value{ErrorCode::SUCCESS, (int) ErrorCode::SUCCESS};
 
-    for (Receiver* receiver : this->get_receivers()) {
+    for (Receiver* receiver : this->receivers()) {
       Status status = receiver->receive_grant_table(this->param1());
       if (status.get_error_code() == ErrorCode::FAILURE) {
         return status;
@@ -281,7 +287,7 @@ class RevokeTable : public Message {
   Status execute() {
     Status ret_value{ErrorCode::SUCCESS, (int) ErrorCode::SUCCESS};
 
-    for (Receiver* receiver : this->get_receivers()) {
+    for (Receiver* receiver : this->receivers()) {
       Status status = receiver->receive_revoke_table(this->param1());
       if (status.get_error_code() == ErrorCode::FAILURE) {
         return status;

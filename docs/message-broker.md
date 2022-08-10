@@ -1,6 +1,6 @@
 # Message Broker ドキュメント
 
-2022.08.09 NEC
+2022.08.10 NEC
 
 ## 目的
 
@@ -21,12 +21,12 @@ sequenceDiagram
 
 ## 概要
 
-送信者はMessage派生クラス（CreateTableクラスなど）に以下の情報を設定する。メッセージパラメータ（param1, param2）はメッセージの種類によって意味合いが異なる。送信者はMessageBrokerにMessageオブジェクトの送信を依頼する。
+メッセージ送信者はMessage派生クラス（CreateTableクラスなど）に以下の情報を設定する。メッセージパラメータ（param1, param2）はメッセージの種類によって意味合いが異なる。メッセージ送信者はMessageBrokerにMessageオブジェクトの送信を依頼する。
 
 - 宛先情報 ※Receiver派生クラス（Dest1など）
 - メッセージパラメータ（param1, param2）
 
-Message Brokerは受け取ったMessageオブジェクトの種類ごとにオーバーライドされたメソッド（receive_create_tableなど）を呼び出す。
+Message Brokerは受け取ったMessageオブジェクトをメッセージ受信者に渡し、メッセージの種類ごとに（オーバーライドされた）メソッドが呼び出される（receive_create_tableなど）。
 
 （クラス図）
 
@@ -94,20 +94,20 @@ message_broker.h
 status.h
 ```
 
-## 受信者の実装
+## メッセージ受信者の実装
 
-受信者は、Receiverクラスに記載されている仮想関数のうち処理対象とする仮想関数について派生クラス上でオーバーライドし、必要な処理を記述する。
+メッセージ受信者は、Receiverクラスに記載されている仮想関数のうち、処理対象とする仮想関数についてオーバーライドし、必要な処理を記述する。なお、BEGIN_DDL/END_DDLのオーバライドは必須とする。
 
 Receiver.h
 
 ```c++
 class Receiver {
 public:
-  virtual bool receive_begin_ddl(uint64_t mode) = 0;
-  virtual bool receive_end_ddl() = 0;
-  virtual bool receive_create_table(uint64_t oid) { return true; }
-  virtual bool receive_alter_table(uint64_t oid) { return true; }
-  virtual bool receive_drop_table(uint64_t oid) { return true; }
+  virtual Status receive_begin_ddl(int64_t mode) = 0;
+  virtual Status receive_end_ddl() = 0;
+  virtual Status receive_create_table(int64_t oid) { return status; }
+  virtual Status receive_alter_table(int64_t oid) { return status; }
+  virtual Status receive_drop_table(int64_t oid) { return status; }
 }
 
 ```
@@ -117,13 +117,11 @@ DerivedReceiver.h
 ```c++
 class DerivedReceiver : public Receiver {
 public:
-  bool receive_begin_ddl(uint64_t mode) { ... }
-  bool receive_end_ddl(uint64_t oid) { ... }
-  bool receive_drop_table(uint64_t oid) { ... }
+  Status receive_begin_ddl(int64_t mode) { ... }
+  Status receive_end_ddl(int64_t oid) { ... }
+  Status receive_drop_table(int64_t oid) { ... }
 }
 
 ```
-
-※一部仕様を簡略化して記述
 
 以上

@@ -17,9 +17,11 @@ add_library(message-interface INTERFACE)
 target_include_directories(message-interface
     INTERFACE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../metadata-manager/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/manager>
 )
 
 install_custom(message-interface ${export_name})
 
 add_subdirectory(src)
+add_subdirectory(example)
