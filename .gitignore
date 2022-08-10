@@ -6,9 +6,6 @@
 *.gcno
 *.gcda
 
-# third_party
-third_party/
-
 # VS Code
 .vscode/*
 *.code-workspace
