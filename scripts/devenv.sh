@@ -283,6 +283,7 @@ cmake -G Ninja \
     -DFORCE_INSTALL_RPATH=ON \
     -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
     -DCMAKE_PREFIX_PATH=$INSTALL_PREFIX \
+    -DCMAKE_CXX_FLAGS="-w" \
     ..
 ninja
 ninja install
