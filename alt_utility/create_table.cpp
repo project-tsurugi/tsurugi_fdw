@@ -33,7 +33,6 @@
 using namespace boost::property_tree;
 using namespace ogawayama;
 using namespace manager;
-using namespace manager::metadata;
 
 #ifdef __cplusplus
 extern "C"
@@ -52,7 +51,7 @@ extern "C"
 /* DB name metadata-manager manages */
 const std::string DBNAME = "Tsurugi";
 
-void remove_metadata(message::Message *message, std::unique_ptr<metadata::Metadata> &objects);
+bool remove_metadata(std::unique_ptr<metadata::Metadata> &object, metadata::ObjectIdType);
 bool send_message(message::Message* message);
 
 /**
@@ -61,88 +60,67 @@ bool send_message(message::Message* message);
  */
 bool create_table(List *stmts)
 {
-    Assert(stmts != nullptr);
+  Assert(stmts != nullptr);
 
-    bool ret_value{false};
+  bool ret_value{false};
 
-    CreateTable cmds{stmts, DBNAME};
+  CreateTable cmds{stmts, DBNAME};
 
-    // Credate Messages.
-    message::BeginDDLMessage begin_msg{0};
-    message::EndDDLMessage end_msg{0};
-
-    // Define a table.
-    ObjectIdType object_id = 0;
-    bool success = cmds.define_relation(&object_id);
-    if (!success) {
-      ereport(ERROR,
-              (errcode(ERRCODE_INTERNAL_ERROR), 
-              errmsg("CreateTable::define_relation() failed.")));
-      return  ret_value;
-    }
-
-    // Send message to Ogawayama.
-    success = send_message(&begin_msg);
-    if (!success) {
-        ereport(ERROR,
-                (errcode(ERRCODE_INTERNAL_ERROR), 
-                errmsg("send_message() failed. (BeginDDLMessage)")));
-        return ret_value;
-    }
-
-    std::unique_ptr<metadata::Metadata> tables = std::make_unique<Tables>(DBNAME);
-    message::CreateTableMessage create_msg{(uint64_t) object_id};
-    success = send_message(&create_msg);
-    if (!success) {
-        remove_metadata(&create_msg, tables);
-        send_message(&end_msg);
-        ereport(ERROR,
-                (errcode(ERRCODE_INTERNAL_ERROR), 
-                errmsg("send_message() failed. (CreateTableMessage)")));
-        return ret_value;
-    }
-
-    success = send_message(&end_msg);
-    if (!success) {
-        remove_metadata(&create_msg, tables);
-        ereport(ERROR,
-                (errcode(ERRCODE_INTERNAL_ERROR), 
-                errmsg("send_message() failed. (EndDDLMessage)")));
-        return ret_value;
-    }
-
-    ret_value = true;
-
-    return ret_value;
-}
-
-/*
- *  @brief:
- */
-bool send_message(message::Message* message)
-{
-  Assert(message != nullptr);
-
-  bool ret_value = false;
-  ERROR_CODE error = ERROR_CODE::UNKNOWN;
+  // Create metadata of table.
+  metadata::ObjectIdType object_id = 0;
+  bool success = cmds.define_relation(&object_id);
+  if (!success) {
+    ereport(ERROR,
+            (errcode(ERRCODE_INTERNAL_ERROR), 
+            errmsg("CreateTable::define_relation() failed.")));
+    return  ret_value;
+  }
 
   /* sends message to ogawayama */
   stub::Connection* connection;
-  error = StubManager::get_connection(&connection);
+  stub::ErrorCode error = StubManager::get_connection(&connection);
   if (error != ERROR_CODE::OK) {
     elog(NOTICE, "StubManager::get_connection() failed.");
     return ret_value;
   }
 
-  message::MessageBroker broker;
-  message->set_receiver(connection);
-  message::Status status = broker.send_message(message);
+  message::BeginDDL begin_ddl{};
+  begin_ddl.set_receiver(connection);
 
-  if (status.get_error_code() != message::ErrorCode::SUCCESS) {
-    ereport(WARNING,
-            (errcode(ERRCODE_INTERNAL_ERROR),
-              errmsg("connection::receive_message() %s failed. (%d)",
-            message->get_message_type_name().c_str(), (int)status.get_sub_error_code())));
+  message::CreateTable create_table{object_id};
+  create_table.set_receiver(connection);
+
+  message::EndDDL end_ddl{};
+  end_ddl.set_receiver(connection);
+
+  std::unique_ptr<metadata::Metadata> tables = std::make_unique<metadata::Tables>(DBNAME);
+
+  success = send_message(&begin_ddl);
+  if (!success) {
+    remove_metadata(tables, object_id);
+    send_message(&end_ddl);
+    ereport(ERROR,
+            (errcode(ERRCODE_INTERNAL_ERROR), 
+            errmsg("send_message() failed. (BeginDDLMessage)")));
+    return ret_value;
+  }
+
+  success = send_message(&create_table);
+  if (!success) {
+    remove_metadata(tables, object_id);
+    send_message(&end_ddl);
+    ereport(ERROR,
+            (errcode(ERRCODE_INTERNAL_ERROR), 
+            errmsg("send_message() failed. (CreateTableMessage)")));
+    return ret_value;
+  }
+
+  success = send_message(&end_ddl);
+  if (!success) {
+    remove_metadata(tables, object_id);
+    ereport(ERROR,
+            (errcode(ERRCODE_INTERNAL_ERROR), 
+            errmsg("send_message() failed. (EndDDLMessage)")));
     return ret_value;
   }
 
@@ -154,13 +132,48 @@ bool send_message(message::Message* message)
 /*
  *  @brief:
  */
-void remove_metadata(message::Message *message, std::unique_ptr<metadata::Metadata> &objects)
+bool send_message(message::Message* message)
 {
-  ErrorCode error = objects->remove(message->get_object_id());
-  if (error != ErrorCode::OK) {
+  Assert(message != nullptr);
+
+  bool ret_value = false;
+
+  message::Status status = message::MessageBroker::send_message(message); 
+  if (status.get_error_code() != message::ErrorCode::SUCCESS) {
     ereport(WARNING,
             (errcode(ERRCODE_INTERNAL_ERROR),
-              errmsg("remove metadata() failed. (error: %d) (oid: %d)", 
-              (int)error, (int)message->get_object_id())));
+            errmsg("Execute DDL failed. (%s) (%d)",
+            message->string(), status.get_sub_error_code())));
+    return ret_value;
   }
+
+  ret_value = true;
+
+  return ret_value;
+}
+
+/*
+ *  @brief:
+ */
+bool remove_metadata(std::unique_ptr<metadata::Metadata> &objects, metadata::ObjectIdType object_id)
+{
+  bool ret_value = false;
+  ptree data;
+
+  metadata::ErrorCode error = objects->get(object_id, data);
+
+  if (error == metadata::ErrorCode::OK) {
+    error = objects->remove(object_id);
+    if (error != metadata::ErrorCode::OK) {
+      ereport(WARNING,
+              (errcode(ERRCODE_INTERNAL_ERROR),
+              errmsg("remove metadata() failed. (code: %u) (oid: %d)", 
+              error, object_id)));
+      return ret_value;
+    }
+  }
+
+  ret_value = true;
+
+  return ret_value;
 }
