@@ -167,8 +167,8 @@ bool remove_metadata(std::unique_ptr<metadata::Metadata> &objects, metadata::Obj
     if (error != metadata::ErrorCode::OK) {
       ereport(WARNING,
               (errcode(ERRCODE_INTERNAL_ERROR),
-              errmsg("remove metadata() failed. (code: %u) (oid: %d)", 
-              error, object_id)));
+              errmsg("remove metadata() failed. (code: %d) (oid: %d)", 
+              (int) error, (int) object_id)));
       return ret_value;
     }
   }
