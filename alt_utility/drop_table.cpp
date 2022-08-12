@@ -148,6 +148,10 @@ bool send_drop_message(message::Message *message, std::unique_ptr<metadata::Meta
 
     if (status.get_error_code() != message::ErrorCode::SUCCESS)
     {
+        if (message->get_id() == manager::message::MessageId::DROP_TABLE) {
+            message::EndDDLMessage ed_msg{0};
+            send_drop_message(&ed_msg, objects);
+        }
         ereport(ERROR,
                 (errcode(ERRCODE_INTERNAL_ERROR),
                  errmsg("connection::receive_message() %s failed. (%d)",

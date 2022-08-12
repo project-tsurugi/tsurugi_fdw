@@ -126,6 +126,10 @@ bool send_message(message::Message *message, std::unique_ptr<metadata::Metadata>
     if (status.get_error_code() != message::ErrorCode::SUCCESS)
     {
         remove_metadata(message, objects);
+        if (message->get_id() == manager::message::MessageId::CREATE_TABLE) {
+            message::EndDDLMessage ed_msg{0};
+            send_message(&ed_msg, objects);
+        }
         ereport(ERROR,
                 (errcode(ERRCODE_INTERNAL_ERROR),
                  errmsg("connection::receive_message() %s failed. (%d)",
