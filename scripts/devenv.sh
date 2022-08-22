@@ -28,13 +28,13 @@ fi
 if [[ -d $TSURUGI_HOME/manager ]]; then
   cd $TSURUGI_HOME
 else
-  git clone -b feature/TableManagement git@github.com:project-tsurugi/manager.git
+  git clone git@github.com:project-tsurugi/manager.git
 fi
 
 if [[ -d $TSURUGI_HOME/ogawayama ]]; then
   cd $TSURUGI_HOME
 else
-  git clone -b feature/TableManagement git@github.com:project-tsurugi/ogawayama.git
+  git clone git@github.com:project-tsurugi/ogawayama.git
 fi
 
 if [[ -d $TSURUGI_HOME/tateyama-bootstrap ]]; then
