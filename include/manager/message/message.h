@@ -38,6 +38,7 @@ const std::string MESSAGE_TYPE_NANE_GRANT_ROLE = "GRANT ROLE";
 const std::string MESSAGE_TYPE_NANE_REVOKE_ROLE = "REVOKE ROLE";
 const std::string MESSAGE_TYPE_NANE_GRANT_TABLE = "GRANT TABLE";
 const std::string MESSAGE_TYPE_NANE_REVOKE_TABLE = "REVOKE TABLE";
+const std::string MESSAGE_TYPE_NANE_DROP_TABLE = "DROP TABLE";
 
 /**
  * @enum MessageId
@@ -53,7 +54,8 @@ enum class MessageId : int {
   GRANT_ROLE,        //!< @brief GRANT ROLE statement.
   REVOKE_ROLE,       //!< @brief REVOKE ROLE statement.
   GRANT_TABLE,       //!< @brief GRANT TABLE statement.
-  REVOKE_TABLE       //!< @brief REVOKE TABLE statement.
+  REVOKE_TABLE,      //!< @brief REVOKE TABLE statement.
+  DROP_TABLE         //!< @brief DROP TABLE statement.
 
 };
 
@@ -213,6 +215,17 @@ class RevokeTableMessage : public Message {
   RevokeTableMessage(uint64_t object_id)
       : Message{MessageId::REVOKE_TABLE, object_id,
                 MESSAGE_TYPE_NANE_REVOKE_TABLE} {}
+};
+
+class DropTableMessage : public Message {
+ public:
+  /**
+   * @brief C'tor. Initialize member variables.
+   * @param [in] object_id object ID that will be added, updated, or deleted.
+   */
+  DropTableMessage(uint64_t object_id)
+      : Message{MessageId::DROP_TABLE, object_id,
+                MESSAGE_TYPE_NANE_DROP_TABLE} {}
 };
 
 };  // namespace manager::message
