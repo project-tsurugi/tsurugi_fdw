@@ -33,7 +33,7 @@ namespace manager::message {
    */
   Status MessageBroker::send_message(Message* msg) {
     Status status{ErrorCode::SUCCESS, (int) ErrorCode::SUCCESS};
-    status = msg->send();
+    status = msg->send_to_receivers();
     return status;
   }
 

@@ -60,7 +60,7 @@ class Message {
    * @brief
    * @return
    */
-  Status send(void) {
+  Status send_to_receivers(void) {
     Status ret_value{ErrorCode::SUCCESS, (int) ErrorCode::SUCCESS};
 
     for (auto receiver : this->receivers()) {
@@ -85,7 +85,7 @@ class Message {
    * @return  
    */
   virtual Status send_message(
-    const Receiver& receiver, int64_t param1, int64_t param2) const = 0;
+    const Receiver& receiver, const int64_t param1, const int64_t param2) const = 0;
 
 };
 
@@ -111,7 +111,7 @@ class BeginDDL : public Message {
    * @param [in] DDL execution mode.
    * @return
    */
-  Status send_message(const Receiver& receiver, uint64_t mode, uint64_t) const {
+  Status send_message(const Receiver& receiver, const int64_t mode, const int64_t) const {
     return receiver.receive_begin_ddl(mode);
   }
 };
@@ -131,7 +131,7 @@ class EndDDL : public Message {
    * @param [in] receiver ref of Receiver class.
    * @return
    */
-  Status send_message(Receiver& receiver, uint64_t, uint64_t) const {
+  Status send_message(const Receiver& receiver, const int64_t, const int64_t) const {
     return receiver.receive_end_ddl();
   }
 };
@@ -151,7 +151,7 @@ class CreateTable : public Message {
    * @param [in] receiver ref of Receiver class.
    * @return
    */
-  Status send_message(Receiver& receiver, uint64_t object_id, uint64_t) const {
+  Status send_message(const Receiver& receiver, const int64_t object_id, const int64_t) const {
     return receiver.receive_create_table(object_id);
   }
 };
@@ -171,7 +171,7 @@ class DropTable : public Message {
    * @param [in] receiver ref of Receiver class.
    * @return
    */
-  Status send_message(Receiver& receiver, uint64_t object_id, uint64_t) const {
+  Status send_message(const Receiver& receiver, const int64_t object_id, const int64_t) const {
     return receiver.receive_drop_table(object_id);
   }
 };
@@ -191,7 +191,7 @@ class CreateRole : public Message {
    * @param [in] receiver ref of Receiver class.
    * @return
    */
-  Status send_message(Receiver& receiver, uint64_t object_id, uint64_t) const {
+  Status send_message(const Receiver& receiver, const int64_t object_id, const int64_t) const {
     return receiver.receive_create_role(object_id);
   }
 };
@@ -206,7 +206,7 @@ class AlterRole : public Message {
    * @param [in] receiver ref of Receiver class.
    * @return
    */
-  Status send_message(Receiver& receiver, uint64_t object_id, uint64_t) const {
+  Status send_message(const Receiver& receiver, const int64_t object_id, const int64_t) const {
     return receiver.receive_alter_role(object_id);
   }
 };
@@ -221,7 +221,7 @@ class DropRole : public Message {
    * @param [in] receiver ref of Receiver class.
    * @return
    */
-  Status send_message(Receiver& receiver, uint64_t object_id, uint64_t) const {
+  Status send_message(const Receiver& receiver, const int64_t object_id, const int64_t) const {
     return receiver.receive_drop_role(object_id);
   }
 };
@@ -241,7 +241,7 @@ class GrantRole : public Message {
    * @param [in] receiver ref of Receiver class.
    * @return
    */
-  Status send_message(Receiver& receiver, uint64_t object_id, uint64_t) const {
+  Status send_message(const Receiver& receiver, const int64_t object_id, const int64_t) const {
     return receiver.receive_grant_role(object_id);
   }
 };
@@ -261,7 +261,7 @@ class RevokeRole : public Message {
    * @param [in] receiver ref of Receiver class.
    * @return
    */
-  Status send_message(Receiver& receiver, uint64_t object_id, uint64_t) const {
+  Status send_message(const Receiver& receiver, const int64_t object_id, const int64_t) const {
     return receiver.receive_revoke_role(object_id);
   }
 };
@@ -281,7 +281,7 @@ class GrantTable :  public Message {
    * @param [in] receiver ref of Receiver class.
    * @return
    */
-  Status send_message(Receiver& receiver, uint64_t object_id, uint64_t) const {
+  Status send_message(const Receiver& receiver, const int64_t object_id, const int64_t) const {
     return receiver.receive_grant_table(object_id);
   }
 };
@@ -301,7 +301,7 @@ class RevokeTable : public Message {
    * @param [in] receiver ref of Receiver class.
    * @return
    */
-  Status send_message(Receiver& receiver, uint64_t object_id, uint64_t) const {
+  Status send_message(const Receiver& receiver, const int64_t object_id, const int64_t) const {
     return receiver.receive_revoke_table(object_id);
   }
 };
