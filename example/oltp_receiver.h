@@ -29,8 +29,12 @@ using namespace manager;
 class OltpReceiver : public message::Receiver {
  public:
   OltpReceiver() {}
-  message::Status receive_begin_ddl(int64_t mode) { return message::Status(message::ErrorCode::SUCCESS, 0); }
-  message::Status receive_end_ddl() { return message::Status(message::ErrorCode::SUCCESS, 0); }
+  message::Status receive_begin_ddl(int64_t mode) const { 
+    return message::Status(message::ErrorCode::SUCCESS, 0); 
+  }
+  message::Status receive_end_ddl() const { 
+    return message::Status(message::ErrorCode::SUCCESS, 0); 
+  }
 
-  message::Status receive_create_table(metadata::ObjectIdType object_id);
+  message::Status receive_create_table(metadata::ObjectIdType object_id) const ;
 };

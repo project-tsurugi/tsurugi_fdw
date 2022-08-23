@@ -23,12 +23,12 @@
 
 using namespace manager;
 
-message::Status OltpReceiver::receive_create_table(ObjectIdType object_id) 
+message::Status OltpReceiver::receive_create_table(const metadata::ObjectIdType object_id) const 
 {
   message::Status ret_val{message::ErrorCode::SUCCESS, (int) metadata::ErrorCode::OK};
 
   Worker worker;
-  manager::metadata::ErrorCode ret_val_read = worker.read_table_metadata(object_id);
+  metadata::ErrorCode ret_val_read = worker.read_table_metadata(object_id);
   if (ret_val_read != manager::metadata::ErrorCode::OK) {
       message::Status failure{message::ErrorCode::FAILURE, (int) ret_val_read};
       return failure;
