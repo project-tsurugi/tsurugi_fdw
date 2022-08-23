@@ -24,12 +24,12 @@
 #include <iostream>
 
 #include "manager/metadata/metadata.h"
-#include "manager/message/receiver.h"
-#include "manager/message/status.h"
+#include "frontend/message/receiver.h"
+#include "frontend/message/status.h"
 
 using namespace manager;
 
-namespace manager::message {
+namespace frontend::message {
 class Message {
  public:
   static constexpr int64_t NONE = -1;
@@ -64,7 +64,9 @@ class Message {
     Status ret_value{ErrorCode::SUCCESS, (int) ErrorCode::SUCCESS};
 
     for (auto receiver : this->receivers()) {
+      std::cout << "send message to receiver." << " msg: " << this->string() << std::endl;
       Status status = send_message(*receiver, this->param1(), this->param2());
+      std::cout << "return from receiver." << " msg: " << this->string() << std::endl;
       if (status.get_error_code() == ErrorCode::FAILURE) {
         return status;
       }
@@ -89,4 +91,4 @@ class Message {
 
 };
 
-};  // namespace manager::message
+};  // namespace frontend::message

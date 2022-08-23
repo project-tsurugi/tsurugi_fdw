@@ -23,9 +23,15 @@
 
 #include "ogawayama/stub/api.h"
 
-#include "manager/message/message.h"
+#if 0
+#include "frontend/message/ddl_message.h"
+#include "frontend/message/message_broker.h"
+#include "frontend/message/status.h"
+#else
+#include "manager/message/ddl_message.h"
 #include "manager/message/message_broker.h"
 #include "manager/message/status.h"
+#endif
 #include "manager/metadata/datatypes.h"
 #include "manager/metadata/metadata.h"
 #include "manager/metadata/tables.h"
@@ -33,6 +39,7 @@
 using namespace boost::property_tree;
 using namespace ogawayama;
 using namespace manager;
+//using namespace frontend;
 
 #ifdef __cplusplus
 extern "C"
@@ -52,7 +59,7 @@ extern "C"
 const std::string DBNAME = "Tsurugi";
 
 bool remove_metadata(std::unique_ptr<metadata::Metadata> &object, metadata::ObjectIdType);
-bool send_message(message::Message* message);
+bool send_message(manager::message::Message* message);
 
 /**
  *  @brief Calls the function sending metadata to metadata-manager and creates parameters sended to ogawayama.
@@ -84,21 +91,20 @@ bool create_table(List *stmts)
     return ret_value;
   }
 
-  message::BeginDDL begin_ddl{};
+  manager::message::BeginDDL begin_ddl{};
   begin_ddl.set_receiver(connection);
 
-  message::CreateTable create_table{object_id};
+  manager::message::CreateTable create_table{object_id};
   create_table.set_receiver(connection);
 
-  message::EndDDL end_ddl{};
+  manager::message::EndDDL end_ddl{};
   end_ddl.set_receiver(connection);
 
-                (errcode(ERRCODE_INTERNAL_ERROR),
+  std::unique_ptr<metadata::Metadata> tables = std::make_unique<metadata::Tables>(DBNAME);
 
   success = send_message(&begin_ddl);
   if (!success) {
     remove_metadata(tables, object_id);
-    send_message(&end_ddl);
     ereport(ERROR,
             (errcode(ERRCODE_INTERNAL_ERROR), 
             errmsg("send_message() failed. (BeginDDLMessage)")));
@@ -132,14 +138,14 @@ bool create_table(List *stmts)
 /*
  *  @brief:
  */
-bool send_message(message::Message* message)
+bool send_message(manager::message::Message* message)
 {
   Assert(message != nullptr);
 
   bool ret_value = false;
 
-  message::Status status = message::MessageBroker::send_message(message); 
-  if (status.get_error_code() != message::ErrorCode::SUCCESS) {
+  manager::message::Status status = manager::message::MessageBroker::send_message(message); 
+  if (status.get_error_code() != manager::message::ErrorCode::SUCCESS) {
     ereport(WARNING,
             (errcode(ERRCODE_INTERNAL_ERROR),
             errmsg("Execute DDL failed. (%s) (%d)",

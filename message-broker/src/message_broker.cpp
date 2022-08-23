@@ -18,10 +18,11 @@
  *          to all receivers of message
  */
 
-#include "manager/message/message.h"
-#include "manager/message/message_broker.h"
+#include "frontend/message/message.h"
+#include "frontend/message/message_broker.h"
+#include "frontend/message/status.h"
 
-namespace manager::message {
+namespace frontend::message {
   /**
    * @brief MessageBroker sends a message to all receivers.
    * @param [in] message an instance of Message class that Receiver will receive.
@@ -31,10 +32,10 @@ namespace manager::message {
    * @return an instance of Status class otherwize.
    * A primary error code and a secondary error code must be set.
    */
-  Status MessageBroker::send_message(Message* msg) {
-    Status status{ErrorCode::SUCCESS, (int) ErrorCode::SUCCESS};
+  Status MessageBroker::send_message(message::Message* msg) {
+    Status status{ErrorCode::SUCCESS, 0};
     status = msg->send_to_receivers();
     return status;
   }
 
-}; // namespace manager::message
+}; // namespace frontend::message

@@ -24,9 +24,15 @@
 #include "ogawayama/stub/api.h"
 #include "stub_manager.h"
 
-#include "manager/message/message.h"
+#if 0
+#include "frontend/message/ddl_message.h"
+#include "frontend/message/message_broker.h"
+#include "frontend/message/status.h"
+#else
+#include "manager/message/ddl_message.h"
 #include "manager/message/message_broker.h"
 #include "manager/message/status.h"
+#endif
 #include "manager/metadata/datatypes.h"
 #include "manager/metadata/metadata.h"
 #include "manager/metadata/tables.h"
@@ -89,22 +95,39 @@ bool drop_table(DropStmt *drop, char *relname)
     boost::optional<ObjectIdType> remove_table_id = remove_table.get_optional<ObjectIdType>(Tables::ID);
     ObjectIdType object_id = remove_table_id.get();
 
+    message::BeginDDL begin_ddl{};
+    message::EndDDL end_ddl{};
+
     /* BEGIN_DDL message to ogawayama */
-    message::BeginDDLMessage bd_msg{0};
-    success = send_drop_message(&bd_msg, tables);
+//    message::BeginDDLMessage bd_msg{0};
+    success = send_drop_message(&begin_ddl, tables);
     if (false == success) {
-        return success;
+      ereport(ERROR,
+              (errcode(ERRCODE_INTERNAL_ERROR), 
+              errmsg("send_message() failed. (BEGIN_DDL)")));
+      return success;
     }
 
     /* DROP_TABLE message to ogawayama */
-    message::DropTableMessage dt_msg{(uint64_t)object_id};
-    success = send_drop_message(&dt_msg, tables);
+//    message::DropTableMessage dt_msg{(uint64_t)object_id};
+    message::DropTable drop_table{object_id};
+    success = send_drop_message(&drop_table, tables);
+    if (!success) {
+      send_drop_message(&end_ddl, tables);
+      ereport(ERROR,
+              (errcode(ERRCODE_INTERNAL_ERROR), 
+              errmsg("send_message() failed. (DROP_TABLE)")));
+      return success;
+    }
 
     /* END_DDL message to ogawayama */
-    message::EndDDLMessage ed_msg{0};
-    success &= send_drop_message(&ed_msg, tables);
+//    message::EndDDLMessage ed_msg{0};
+    success &= send_drop_message(&end_ddl, tables);
     if (false == success) {
-        return success;
+      ereport(ERROR,
+              (errcode(ERRCODE_INTERNAL_ERROR), 
+              errmsg("send_message() failed. (END_DDL)")));
+      return success;
     }
 
     /* remobe metadata */
@@ -145,15 +168,6 @@ bool send_drop_message(message::Message *message, std::unique_ptr<metadata::Meta
     message::Status status = broker.send_message(message);
 
     if (status.get_error_code() != message::ErrorCode::SUCCESS) {
-        if (message->get_id() == manager::message::MessageId::DROP_TABLE) {
-            message::EndDDLMessage ed_msg{0};
-            send_drop_message(&ed_msg, objects);
-        }
-        ereport(ERROR,
-                (errcode(ERRCODE_INTERNAL_ERROR),
-                 errmsg("connection::receive_message() %s failed. (%d)",
-                message->get_message_type_name().c_str(), (int)status.get_sub_error_code())));
-
         return ret_value;
     }
 

@@ -20,11 +20,11 @@
 
 #pragma once
 
-#include "manager/message/status.h"
-#include "manager/message/message.h"
-#include "manager/message/receiver.h"
+#include "frontend/message/status.h"
+#include "frontend/message/message.h"
+#include "frontend/message/receiver.h"
 
-namespace manager::message {
+namespace frontend::message {
 
 class MessageBroker {
  public:

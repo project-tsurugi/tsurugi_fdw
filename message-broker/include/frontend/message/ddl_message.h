@@ -18,14 +18,14 @@
  */
 #pragma once
 
-#include "manager/message/message.h"
-#include "manager/message/receiver.h"
-#include "manager/message/status.h"
+#include "frontend/message/message.h"
+#include "frontend/message/receiver.h"
+#include "frontend/message/status.h"
 #include "manager/metadata/metadata.h"
 
 using namespace manager;
 
-namespace manager::message {
+namespace frontend::message {
 /**
  * @brief BEGIN DDL message.
  */

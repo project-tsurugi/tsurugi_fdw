@@ -18,7 +18,7 @@
  */
 #pragma once
 
-namespace manager::message {
+namespace frontend::message {
 /**
  *  @enum ErrorCode
  *  @brief a primary error code.
@@ -56,6 +56,14 @@ class Status {
     return sub_error_code_;
   }
 
+  ErrorCode error_code() {
+    return error_code_;
+  }
+
+  int sub_error_code() {
+    return sub_error_code_;
+  }
+
   private:
   /**
    * @brief a primary error code managed by message-broker.
@@ -68,4 +76,4 @@ class Status {
    */
   int sub_error_code_;
 };
-} // namespace manager::message
+} // namespace frontend::message

@@ -18,12 +18,12 @@
  */
 #pragma once
 
-#include "manager/message/status.h"
+#include "frontend/message/status.h"
 #include "manager/metadata/metadata.h"
 
 using namespace manager;
 
-namespace manager::message {
+namespace frontend::message {
 class Receiver {
  public:
   /**
