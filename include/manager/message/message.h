@@ -55,12 +55,38 @@ class Message {
   int64_t param1() const { return param1_; }
   int64_t param2() const { return param2_; }
   const char* string() { return typeid(*this).name(); }
-  virtual Status execute() = 0;
+
+  /**
+   * @brief
+   * @return
+   */
+  Status send(void) {
+    Status ret_value{ErrorCode::SUCCESS, (int) ErrorCode::SUCCESS};
+
+    for (auto receiver : this->receivers()) {
+      Status status = send_message(*receiver, this->param1(), this->param2());
+      if (status.get_error_code() == ErrorCode::FAILURE) {
+        return status;
+      }
+    }
+    return ret_value;    
+  }
 
  protected:
   int64_t param1_;
   int64_t param2_;
   std::vector<Receiver*> receivers_;  //!< @brief receivers that will receive message ex) OLTP_Receiver, OLAP_Receiver.
+
+  /**
+   * @brief 
+   * @param [in] receiver ref of Receiver class.
+   * @param [in] param1 1st parameter of message.
+   * @param [in] param2 2nd parameter of message.
+   * @return  
+   */
+  virtual Status send_message(
+    const Receiver& receiver, int64_t param1, int64_t param2) const = 0;
+
 };
 
 /**
@@ -79,16 +105,14 @@ class BeginDDL : public Message {
   BeginDDL(EXECUTION_MODE mode = EXECUTION_MODE::DEFAULT) 
     : Message{static_cast<int64_t> (mode)} {}
 
-  Status execute() {
-    Status ret_value{ErrorCode::SUCCESS, (int) ErrorCode::SUCCESS};
-
-    for (auto receiver : this->receivers()) {
-      Status status = receiver->receive_begin_ddl(this->param1());
-      if (status.get_error_code() == ErrorCode::FAILURE) {
-        return status;
-      }
-    }
-    return ret_value;
+  /**
+   * @brief
+   * @param [in] ref of Receiver class.
+   * @param [in] DDL execution mode.
+   * @return
+   */
+  Status send_message(const Receiver& receiver, uint64_t mode, uint64_t) const {
+    return receiver.receive_begin_ddl(mode);
   }
 };
 
@@ -102,16 +126,13 @@ class EndDDL : public Message {
    */
   EndDDL() : Message{} {}
 
-  Status execute() {
-    Status ret_value{ErrorCode::SUCCESS, (int) ErrorCode::SUCCESS};
-
-    for (Receiver* receiver : this->receivers()) {
-      Status status = receiver->receive_end_ddl();
-      if (status.get_error_code() == ErrorCode::FAILURE) {
-        return status;
-      }
-    }
-    return ret_value;
+  /**
+   * @brief
+   * @param [in] receiver ref of Receiver class.
+   * @return
+   */
+  Status send_message(Receiver& receiver, uint64_t, uint64_t) const {
+    return receiver.receive_end_ddl();
   }
 };
 
@@ -125,17 +146,33 @@ class CreateTable : public Message {
    * @param [in] object_id object ID that will be added, updated, or deleted.
    */
   CreateTable(metadata::ObjectIdType object_id) : Message{object_id} {}
+  /**
+   * @brief
+   * @param [in] receiver ref of Receiver class.
+   * @return
+   */
+  Status send_message(Receiver& receiver, uint64_t object_id, uint64_t) const {
+    return receiver.receive_create_table(object_id);
+  }
+};
 
-  Status execute() {
-    Status ret_value{ErrorCode::SUCCESS, (int) ErrorCode::SUCCESS};
-
-    for (Receiver* receiver : this->receivers()) {
-      Status status = receiver->receive_create_table(this->param1());
-      if (status.get_error_code() == ErrorCode::FAILURE) {
-        return status;
-      }
-    }
-    return ret_value;
+/**
+ * @brief DROP TABLE message.
+ */
+class DropTable : public Message {
+ public:
+  /**
+   * @brief C'tor. Initialize member variables.
+   * @param [in] object_id object ID that will be added, updated, or deleted.
+   */
+  DropTable(metadata::ObjectIdType object_id) : Message{object_id} {}
+  /**
+   * @brief
+   * @param [in] receiver ref of Receiver class.
+   * @return
+   */
+  Status send_message(Receiver& receiver, uint64_t object_id, uint64_t) const {
+    return receiver.receive_drop_table(object_id);
   }
 };
 
@@ -149,17 +186,13 @@ class CreateRole : public Message {
    * @param [in] object_id object ID that will be added, updated, or deleted.
    */
   CreateRole(metadata::ObjectIdType object_id) : Message{object_id} {}
-
-  Status execute() {
-    Status ret_value{ErrorCode::SUCCESS, (int) ErrorCode::SUCCESS};
-
-    for (Receiver* receiver : this->receivers()) {
-      Status status = receiver->receive_create_role(this->param1());
-      if (status.get_error_code() == ErrorCode::FAILURE) {
-        return status;
-      }
-    }
-    return ret_value;
+  /**
+   * @brief
+   * @param [in] receiver ref of Receiver class.
+   * @return
+   */
+  Status send_message(Receiver& receiver, uint64_t object_id, uint64_t) const {
+    return receiver.receive_create_role(object_id);
   }
 };
 
@@ -168,17 +201,13 @@ class CreateRole : public Message {
  */
 class AlterRole : public Message {
   AlterRole(metadata::ObjectIdType object_id) : Message{object_id} {}
-
-  Status execute() {
-    Status ret_value{ErrorCode::SUCCESS, (int) ErrorCode::SUCCESS};
-
-    for (Receiver* receiver : this->receivers()) {
-      Status status = receiver->receive_alter_role(this->param1());
-      if (status.get_error_code() == ErrorCode::FAILURE) {
-        return status;
-      }
-    }
-    return ret_value;
+  /**
+   * @brief
+   * @param [in] receiver ref of Receiver class.
+   * @return
+   */
+  Status send_message(Receiver& receiver, uint64_t object_id, uint64_t) const {
+    return receiver.receive_alter_role(object_id);
   }
 };
 
@@ -187,17 +216,13 @@ class AlterRole : public Message {
  */
 class DropRole : public Message {
   DropRole(metadata::ObjectIdType object_id) : Message{object_id} {}
-
-  Status execute() {
-    Status ret_value{ErrorCode::SUCCESS, (int) ErrorCode::SUCCESS};
-
-    for (Receiver* receiver : this->receivers()) {
-      Status status = receiver->receive_drop_role(this->param1());
-      if (status.get_error_code() == ErrorCode::FAILURE) {
-        return status;
-      }
-    }
-    return ret_value;
+  /**
+   * @brief
+   * @param [in] receiver ref of Receiver class.
+   * @return
+   */
+  Status send_message(Receiver& receiver, uint64_t object_id, uint64_t) const {
+    return receiver.receive_drop_role(object_id);
   }
 };
 
@@ -211,17 +236,13 @@ class GrantRole : public Message {
    * @param [in] object_id object ID that will be added, updated, or deleted.
    */
   GrantRole(metadata::ObjectIdType object_id) : Message{object_id} {}
-
-  Status execute() {
-    Status ret_value{ErrorCode::SUCCESS, (int) ErrorCode::SUCCESS};
-
-    for (Receiver* receiver : this->receivers()) {
-      Status status = receiver->receive_grant_role(this->param1());
-      if (status.get_error_code() == ErrorCode::FAILURE) {
-        return status;
-      }
-    }
-    return ret_value;
+  /**
+   * @brief
+   * @param [in] receiver ref of Receiver class.
+   * @return
+   */
+  Status send_message(Receiver& receiver, uint64_t object_id, uint64_t) const {
+    return receiver.receive_grant_role(object_id);
   }
 };
 
@@ -235,17 +256,13 @@ class RevokeRole : public Message {
    * @param [in] object_id object ID that will be added, updated, or deleted.
    */
   RevokeRole(metadata::ObjectIdType object_id) : Message{object_id} {}
-
-  Status execute() {
-    Status ret_value{ErrorCode::SUCCESS, (int) ErrorCode::SUCCESS};
-
-    for (Receiver* receiver : this->receivers()) {
-      Status status = receiver->receive_revoke_role(this->param1());
-      if (status.get_error_code() == ErrorCode::FAILURE) {
-        return status;
-      }
-    }
-    return ret_value;
+  /**
+   * @brief
+   * @param [in] receiver ref of Receiver class.
+   * @return
+   */
+  Status send_message(Receiver& receiver, uint64_t object_id, uint64_t) const {
+    return receiver.receive_revoke_role(object_id);
   }
 };
 
@@ -259,17 +276,13 @@ class GrantTable :  public Message {
    * @param [in] object_id object ID that will be added, updated, or deleted.
    */
   GrantTable(metadata::ObjectIdType object_id) : Message{object_id} {}
-
-  Status execute() {
-    Status ret_value{ErrorCode::SUCCESS, (int) ErrorCode::SUCCESS};
-
-    for (Receiver* receiver : this->receivers()) {
-      Status status = receiver->receive_grant_table(this->param1());
-      if (status.get_error_code() == ErrorCode::FAILURE) {
-        return status;
-      }
-    }
-    return ret_value;
+  /**
+   * @brief
+   * @param [in] receiver ref of Receiver class.
+   * @return
+   */
+  Status send_message(Receiver& receiver, uint64_t object_id, uint64_t) const {
+    return receiver.receive_grant_table(object_id);
   }
 };
 
@@ -283,17 +296,13 @@ class RevokeTable : public Message {
    * @param [in] object_id object ID that will be added, updated, or deleted.
    */
   RevokeTable(metadata::ObjectIdType object_id) : Message{object_id} {}
-
-  Status execute() {
-    Status ret_value{ErrorCode::SUCCESS, (int) ErrorCode::SUCCESS};
-
-    for (Receiver* receiver : this->receivers()) {
-      Status status = receiver->receive_revoke_table(this->param1());
-      if (status.get_error_code() == ErrorCode::FAILURE) {
-        return status;
-      }
-    }
-    return ret_value;
+  /**
+   * @brief
+   * @param [in] receiver ref of Receiver class.
+   * @return
+   */
+  Status send_message(Receiver& receiver, uint64_t object_id, uint64_t) const {
+    return receiver.receive_revoke_table(object_id);
   }
 };
 

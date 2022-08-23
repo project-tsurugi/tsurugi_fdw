@@ -18,6 +18,7 @@
  *          to all receivers of message
  */
 
+#include "manager/message/message.h"
 #include "manager/message/message_broker.h"
 
 namespace manager::message {
@@ -32,7 +33,7 @@ namespace manager::message {
    */
   Status MessageBroker::send_message(Message* msg) {
     Status status{ErrorCode::SUCCESS, (int) ErrorCode::SUCCESS};
-    status = msg->execute();
+    status = msg->send();
     return status;
   }
 
