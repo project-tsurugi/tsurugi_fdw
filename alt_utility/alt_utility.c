@@ -16,6 +16,7 @@
 #include "commands/tablecmds.h"
 
 #include "create_table.h"
+#include "drop_table.h"
 
 #ifndef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
@@ -52,6 +53,7 @@ static void tsurugi_ProcessUtilitySlow(ParseState *pstate,
 				                       char *completionTag);
 
 const char *TSURUGI_TABLESPACE_NAME = "tsurugi";
+const char *TSURUGI_TABLE_SUFFIX = "_tsurugi";
 
 /*
  *  @brief:
@@ -87,6 +89,21 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
             tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
                                        context, params, queryEnv,
                                        dest, completionTag);
+            break;
+
+        case T_DropStmt:
+            {
+                DropStmt   *stmt = (DropStmt *) parsetree;
+
+                if (stmt->removeType == OBJECT_TABLE)
+                    tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
+                                       context, params, queryEnv,
+                                       dest, completionTag);
+                else
+                    standard_ProcessUtility(pstmt, queryString,
+                                            context, params, queryEnv,
+                                            dest, completionTag);
+            }
             break;
 
 		default:
@@ -164,7 +181,7 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
 									}
 
                                 }
-                                strcat(create_stmt->relation->relname, "_dummy");
+                                strcat(create_stmt->relation->relname, TSURUGI_TABLE_SUFFIX);
                             }
                             /* Create the table itself */
                             address = DefineRelation((CreateStmt *) stmt,
@@ -247,6 +264,57 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
 					commandCollected = true;
 				}
 				break;
+
+            case T_DropStmt:
+                {
+                    DropStmt *drop = (DropStmt *) parsetree;
+                    ListCell *cell;
+                    foreach(cell, drop->objects)
+                    {
+                        RangeVar rel;
+                        int nameLen, suffixLen;
+                        List *names = (List *) lfirst(cell);
+
+                        switch (list_length(names))
+                        {
+                            case 1:
+                                rel.relname = strVal(linitial(names));
+                                break;
+                            case 2:
+                                rel.schemaname = strVal(linitial(names));
+                                rel.relname = strVal(lsecond(names));
+                                break;
+                            case 3:
+                                rel.catalogname = strVal(linitial(names));
+                                rel.schemaname = strVal(lsecond(names));
+                                rel.relname = strVal(lthird(names));
+                                break;
+                            default:
+                                elog(ERROR, "improper relation name (too many dotted names).");
+                                break;
+                        }
+
+                        nameLen = strlen(rel.relname);
+                        suffixLen = strlen(TSURUGI_TABLE_SUFFIX);
+                        if (nameLen > suffixLen) {
+                            int index = nameLen - suffixLen;
+                            if (0 == strncmp(&rel.relname[index], TSURUGI_TABLE_SUFFIX, suffixLen)) {
+                                char relname[64];
+                                strncpy(relname, rel.relname, nameLen);
+                                relname[index] = '\0';
+                                success = drop_table(drop, relname);
+                                if (!success) {
+                                    elog(ERROR, "drop_table() failed.");
+                                }
+                            }
+                        }
+                    }
+                    RemoveRelations(drop);
+
+                    /* no commands stashed for DROP */
+                    commandCollected = true;
+                }
+                break;
 
             default:
 				elog(ERROR, "unrecognized node type: %d",

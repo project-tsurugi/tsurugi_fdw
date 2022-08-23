@@ -92,11 +92,10 @@ bool create_table(List *stmts)
 
     /* END_DDL message to ogawayama */
     message::EndDDLMessage ed_msg{0};
-    success = send_message(&ed_msg, tables);
+    success &= send_message(&ed_msg, tables);
 
     return success;
 }
-
 
 /*
  *  @brief:
@@ -111,8 +110,7 @@ bool send_message(message::Message *message, std::unique_ptr<metadata::Metadata>
     /* sends message to ogawayama */
     stub::Connection* connection;
     error = StubManager::get_connection(&connection);
-    if (error != ERROR_CODE::OK)
-    {
+    if (error != ERROR_CODE::OK) {
         remove_metadata(message, objects);
         ereport(ERROR,
                 (errcode(ERRCODE_INTERNAL_ERROR),
@@ -124,9 +122,12 @@ bool send_message(message::Message *message, std::unique_ptr<metadata::Metadata>
     message->set_receiver(connection);
     message::Status status = broker.send_message(message);
 
-    if (status.get_error_code() != message::ErrorCode::SUCCESS)
-    {
+    if (status.get_error_code() != message::ErrorCode::SUCCESS) {
         remove_metadata(message, objects);
+        if (message->get_id() == manager::message::MessageId::CREATE_TABLE) {
+            message::EndDDLMessage ed_msg{0};
+            send_message(&ed_msg, objects);
+        }
         ereport(ERROR,
                 (errcode(ERRCODE_INTERNAL_ERROR),
                  errmsg("connection::receive_message() %s failed. (%d)",
@@ -145,9 +146,12 @@ bool send_message(message::Message *message, std::unique_ptr<metadata::Metadata>
  */
 void remove_metadata(message::Message *message, std::unique_ptr<metadata::Metadata> &objects)
 {
+    if (!message->get_object_id()) {
+        return;
+    }
+
     ErrorCode error = objects->remove(message->get_object_id());
-    if (error != ErrorCode::OK)
-    {
+    if (error != ErrorCode::OK) {
         ereport(ERROR,
                 (errcode(ERRCODE_INTERNAL_ERROR),
                  errmsg("remove_metadata() failed.")));
@@ -165,8 +169,7 @@ bool create_table(const char* query_string)
     std::string query{query_string};
 
     bool success = execute_create_table(query);
-    if (!success)
-    {
+    if (!success) {
         elog(ERROR, "execute_create_table() failed.");
     }
 
@@ -186,23 +189,20 @@ bool execute_create_table(std::string_view query_string)
     // dispatch create_table query.
     stub::Transaction* transaction;
     error = StubManager::begin(&transaction);
-    if (error != ERROR_CODE::OK)
-    {
+    if (error != ERROR_CODE::OK) {
         std::cerr << "begin() failed." << std::endl;
         return ret_value;
     }
 
     elog(DEBUG2, "rewrited query string : \"%s\"", rewrited_query.c_str());
     error = transaction->execute_create_table(rewrited_query);
-    if (error != ERROR_CODE::OK)
-    {
+    if (error != ERROR_CODE::OK) {
         elog(ERROR, "transaction::execute_create_table() failed. (%d)", (int) error);
         return ret_value;
     }
 
     error = transaction->commit();
-    if (error != ERROR_CODE::OK)
-    {
+    if (error != ERROR_CODE::OK) {
         elog(ERROR, "transaction::commit() failed. (%d)", (int) error);
         return ret_value;
     }

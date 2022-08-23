@@ -99,22 +99,20 @@ cmake -G Ninja \
 ninja
 ninja install
 
-# Install_fpdecimal
+# Install_mpdecimal
 echo -e "***************************************"
-echo -e "********** Install_fpdecimal **********"
+echo -e "********** Install_mpdecimal **********"
 echo -e "***************************************"
-cd $JOGASAKI_HOME/third_party/mizugaki/third_party/yugawara/third_party/takatori/third_party/fpdecimal
-rm -rf $BINARY_DIR
-mkdir $BINARY_DIR
-cd $BINARY_DIR
-cmake -G Ninja \
-    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-    -DBUILD_TESTS=OFF \
-    -DBUILD_DOCUMENTS=OFF \
-    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
-    ..
-ninja
-ninja install
+cd $TSURUGI_HOME/
+rm -rf mpdecimal-2.5.1
+wget https://www.bytereef.org/software/mpdecimal/releases/mpdecimal-2.5.1.tar.gz -e https_proxy=http://proxygate2.nic.nec.co.jp:8080/ --no-check-certificate
+tar zxf mpdecimal-2.5.1.tar.gz
+rm mpdecimal-2.5.1.tar.gz
+
+cd mpdecimal-2.5.1/
+./configure --prefix=$INSTALL_PREFIX
+make
+make install
 
 # Install_takatori
 echo -e "**************************************"
@@ -283,6 +281,7 @@ cmake -G Ninja \
     -DFORCE_INSTALL_RPATH=ON \
     -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
     -DCMAKE_PREFIX_PATH=$INSTALL_PREFIX \
+    -DCMAKE_CXX_FLAGS="-w" \
     ..
 ninja
 ninja install

@@ -1,6 +1,7 @@
 # PostgreSQLからのテーブル定義
 2020.04.01 NEC  
-2022.06.17 NEC
+2022.06.17 NEC  
+2022.08.22 NEC
 
 ## 概要
 
@@ -68,8 +69,8 @@ psqlから以下の手順でFDWを利用可能にする。。
 			```sql
 			CREATE TABLE table1 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
 			```
-	* PostgreSQLには指定したテーブル名に"_dummy"が付加されたテーブル名で定義される
-		* e.g. "table1_dummy"
+	* PostgreSQLには指定したテーブル名に"_tsurugi"が付加されたテーブル名で定義される
+		* e.g. "table1_tsurugi"
 
 1. 外部テーブルの定義
 	* CREATE FOREIGN TABLE文を実行する
