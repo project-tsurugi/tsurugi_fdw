@@ -16,7 +16,6 @@
  *	@file	status.h
  *	@brief  error code of message-broker
  */
-
 #pragma once
 
 namespace manager::message {

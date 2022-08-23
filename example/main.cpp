@@ -18,7 +18,7 @@
  */
 
 #include <iostream>
-#include "manager/message/message.h"
+#include "manager/message/ddl_message.h"
 #include "manager/message/message_broker.h"
 #include "oltp_receiver.h"
 
