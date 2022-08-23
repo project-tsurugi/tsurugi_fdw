@@ -93,7 +93,7 @@ bool create_table(List *stmts)
   message::EndDDL end_ddl{};
   end_ddl.set_receiver(connection);
 
-  std::unique_ptr<metadata::Metadata> tables = std::make_unique<metadata::Tables>(DBNAME);
+                (errcode(ERRCODE_INTERNAL_ERROR),
 
   success = send_message(&begin_ddl);
   if (!success) {
