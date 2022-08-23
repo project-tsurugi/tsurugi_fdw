@@ -26,7 +26,7 @@ using namespace manager;
 
 namespace manager::message {
 class Receiver {
-  public:
+ public:
   /**
    * @brief Derived class of this Receiver class will receive
    * an instance of Message class
@@ -36,6 +36,7 @@ class Receiver {
   virtual Status receive_begin_ddl(const int64_t mode) const = 0;
   virtual Status receive_end_ddl() const = 0;
 
+  // Table object DDL
   virtual Status receive_create_table(const metadata::ObjectIdType object_id) const { 
     return Status(ErrorCode::SUCCESS, 0); 
   }
@@ -46,6 +47,7 @@ class Receiver {
     return Status(ErrorCode::SUCCESS, 0); 
   }
 
+  // Role object DDL
   virtual Status receive_create_role(const metadata::ObjectIdType object_id) const { 
     return Status(ErrorCode::SUCCESS, 0); 
   }
@@ -56,6 +58,7 @@ class Receiver {
     return Status(ErrorCode::SUCCESS, 0); 
   }
 
+  // Grant/Revoke
   virtual Status receive_grant_role(const metadata::ObjectIdType object_id) const { 
     return Status(ErrorCode::SUCCESS, 0); 
   }
