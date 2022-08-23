@@ -16,7 +16,6 @@
  *	@file	receiver.h
  *	@brief  the receiver class that handle message
  */
-
 #pragma once
 
 #include "manager/message/status.h"
@@ -68,7 +67,7 @@ class Receiver {
   virtual Status receive_grant_table(const metadata::ObjectIdType object_id) const { 
     return Status(ErrorCode::SUCCESS, 0); 
   }
-  virtual Status receive_revoke_table(metadata::ObjectIdType object_id) const { 
+  virtual Status receive_revoke_table(const metadata::ObjectIdType object_id) const { 
     return Status(ErrorCode::SUCCESS, 0); 
   }
 };
