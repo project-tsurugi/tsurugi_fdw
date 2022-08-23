@@ -53,7 +53,7 @@ static void tsurugi_ProcessUtilitySlow(ParseState *pstate,
 				                       char *completionTag);
 
 const char *TSURUGI_TABLESPACE_NAME = "tsurugi";
-const char *TSURUGI_TABLE_PREFIX = "_tsurugi";
+const char *TSURUGI_TABLE_SUFFIX = "_tsurugi";
 
 /*
  *  @brief:
@@ -181,7 +181,7 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
 									}
 
                                 }
-                                strcat(create_stmt->relation->relname, TSURUGI_TABLE_PREFIX);
+                                strcat(create_stmt->relation->relname, TSURUGI_TABLE_SUFFIX);
                             }
                             /* Create the table itself */
                             address = DefineRelation((CreateStmt *) stmt,
@@ -272,7 +272,7 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
                     foreach(cell, drop->objects)
                     {
                         RangeVar rel;
-                        int nameLen, prefixLen;
+                        int nameLen, suffixLen;
                         List *names = (List *) lfirst(cell);
 
                         switch (list_length(names))
@@ -295,10 +295,10 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
                         }
 
                         nameLen = strlen(rel.relname);
-                        prefixLen = strlen(TSURUGI_TABLE_PREFIX);
-                        if (nameLen > prefixLen) {
-                            int index = nameLen - prefixLen;
-                            if (0 == strncmp(&rel.relname[index], TSURUGI_TABLE_PREFIX, prefixLen)) {
+                        suffixLen = strlen(TSURUGI_TABLE_SUFFIX);
+                        if (nameLen > suffixLen) {
+                            int index = nameLen - suffixLen;
+                            if (0 == strncmp(&rel.relname[index], TSURUGI_TABLE_SUFFIX, suffixLen)) {
                                 char relname[64];
                                 strncpy(relname, rel.relname, nameLen);
                                 relname[index] = '\0';

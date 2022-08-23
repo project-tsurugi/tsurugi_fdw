@@ -109,8 +109,7 @@ bool drop_table(DropStmt *drop, char *relname)
 
     /* remobe metadata */
     error = tables->remove(object_id);
-    if (error != ErrorCode::OK)
-    {
+    if (error != ErrorCode::OK) {
         ereport(ERROR,
                 (errcode(ERRCODE_INTERNAL_ERROR),
                  errmsg("drop_table() remove metadata failed.")));
@@ -134,8 +133,7 @@ bool send_drop_message(message::Message *message, std::unique_ptr<metadata::Meta
     /* sends message to ogawayama */
     stub::Connection* connection;
     error = StubManager::get_connection(&connection);
-    if (error != ERROR_CODE::OK)
-    {
+    if (error != ERROR_CODE::OK) {
         ereport(ERROR,
                 (errcode(ERRCODE_INTERNAL_ERROR),
                  errmsg("StubManager::get_connection() failed.")));
@@ -146,8 +144,7 @@ bool send_drop_message(message::Message *message, std::unique_ptr<metadata::Meta
     message->set_receiver(connection);
     message::Status status = broker.send_message(message);
 
-    if (status.get_error_code() != message::ErrorCode::SUCCESS)
-    {
+    if (status.get_error_code() != message::ErrorCode::SUCCESS) {
         if (message->get_id() == manager::message::MessageId::DROP_TABLE) {
             message::EndDDLMessage ed_msg{0};
             send_drop_message(&ed_msg, objects);
