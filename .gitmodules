@@ -5,3 +5,6 @@
 	path = third_party/manager
 	url = git@github.com:project-tsurugi/manager.git
 	branch = master
+[submodule "third_party/metadata-manager"]
+	path = third_party/metadata-manager
+	url = git@github.com:project-tsurugi/metadata-manager.git
