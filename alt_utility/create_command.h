@@ -42,7 +42,7 @@ class CreateCommand : public DDLCommand{
    */
   virtual bool generate_metadata(boost::property_tree::ptree& metadata) = 0;
 
-  CreateStmt* create_stmt() {create_stmt_;}
+  CreateStmt* create_stmt() const { return create_stmt_;}
 
  private:
   CreateStmt* create_stmt_; // qeury tree

@@ -49,6 +49,6 @@ class CreateTable : public CreateCommand {
  private:
   bool create_column_metadata(ColumnDef* colDef, 
                               int64_t ordinal_position, 
-                              property_tree::ptree& column);
-  bool put_data_lengths(List* typmods, property_tree::ptree& datalengths);
+                              boost::property_tree::ptree& column);
+  bool put_data_lengths(List* typmods, boost::property_tree::ptree& datalengths);
 };
