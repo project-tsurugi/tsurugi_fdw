@@ -15,8 +15,8 @@
 #include "commands/event_trigger.h"
 #include "commands/tablecmds.h"
 
-#include "create_table.h"
-#include "drop_table.h"
+#include "create_table_executor.h"
+#include "drop_table_executor.h"
 
 #ifndef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
@@ -165,32 +165,32 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
 							Datum		toast_options;
 							static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 
-							CreateStmt *create_stmt = ((CreateStmt *)stmt);
-
-                            if (create_stmt->tablespacename != NULL
-                                && !strcmp(create_stmt->tablespacename, TSURUGI_TABLESPACE_NAME)) {
-								success = create_table(stmts);
-                                if (!success) {
-									if (create_stmt->if_not_exists)
-									{
+							CreateStmt *create_stmt = ((CreateStmt *) stmt);
+              if (create_stmt->tablespacename != NULL
+                  && !strcmp(create_stmt->tablespacename, TSURUGI_TABLESPACE_NAME)) 
+              {
+								success = create_table(create_stmt);
+                if (!success) 
+                {
+									if (create_stmt->if_not_exists) 
+                  {
 										elog(NOTICE, "create_table() failed.");
-									}
-									else
+									} 
+                  else
 									{
 										elog(ERROR, "create_table() failed.");
 									}
-
-                                }
-                                strcat(create_stmt->relation->relname, TSURUGI_TABLE_SUFFIX);
-                            }
-                            /* Create the table itself */
-                            address = DefineRelation((CreateStmt *) stmt,
-                                                        RELKIND_RELATION,
-                                                        InvalidOid, NULL,
-                                                        queryString);
-                            EventTriggerCollectSimpleCommand(address,
-                                                                secondaryObject,
-                                                                stmt);
+                }
+                strcat(create_stmt->relation->relname, TSURUGI_TABLE_SUFFIX);
+              }
+              /* Create the table itself */
+              address = DefineRelation((CreateStmt *) stmt,
+                                          RELKIND_RELATION,
+                                          InvalidOid, NULL,
+                                          queryString);
+              EventTriggerCollectSimpleCommand(address,
+                                                  secondaryObject,
+                                                  stmt);
 							/*
 							 * Let NewRelationCreateToastTable decide if this
 							 * one needs a secondary relation too.

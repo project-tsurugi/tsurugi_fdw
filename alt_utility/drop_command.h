@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 tsurugi project.
+ * Copyright 2019-2020 tsurugi project.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	drop_table.h
- *	@brief  Dispatch the create-table command to ogawayama.
+ *	@file	  ddl_metadata.h
+ *	@brief  DDL metadata operations.
  */
+#pragma once
 
-#ifndef DROP_TABLE_H
-#define DROP_TABLE_H
+#include <boost/property_tree/ptree.hpp>
+#include "DDL_command.h"
 
 #ifdef __cplusplus
-extern "C" {
-
+extern "C"
+{
 #endif
-
-bool drop_table(DropStmt *drop, char *relname);
-
+#include "postgres.h"
+#include "nodes/parsenodes.h"
 #ifdef __cplusplus
 }
 #endif
 
-#endif // DROP_TABLE_H
+class DropCommand : public DDLCommand {
+ public:
+  DropCommand(DropStmt* drop_stmt) : drop_stmt_{drop_stmt} {}
+
+  DropStmt* drop_stmt() {drop_stmt_;}
+
+ private:
+  DropStmt* drop_stmt_; // qeury tree
+};

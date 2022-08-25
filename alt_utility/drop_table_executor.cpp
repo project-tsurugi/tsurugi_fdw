@@ -13,14 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	create_table.cpp
- *	@brief  Dispatch the create-table command to ogawayama.
+ *	@file	  drop_table.cpp
+ *	@brief  Dispatch drop-message to ogawayama.
  */
-
-#include <regex>
-#include <string>
-#include <string_view>
-
 #include "ogawayama/stub/api.h"
 #include "stub_manager.h"
 
@@ -37,10 +32,6 @@
 #include "manager/metadata/metadata.h"
 #include "manager/metadata/tables.h"
 
-using namespace boost::property_tree;
-using namespace manager;
-using namespace ogawayama;
-
 #ifdef __cplusplus
 extern "C"
 {
@@ -52,15 +43,16 @@ extern "C"
 #endif
 
 #include "tablecmds.h"
-
-#include "drop_table.h"
+#include "send_message.h"
+#include "drop_table_executor.h"
 
 /* DB name metadata-manager manages */
 const std::string DBNAME = "Tsurugi";
 
-bool send_drop_message(message::Message *message, std::unique_ptr<metadata::Metadata> &objects);
-
+using namespace boost;
+using namespace manager;
 using namespace manager::metadata;
+using namespace ogawayama;
 
 /**
  *  @brief Calls the function sending metadata to metadata-manager and drops parameters sended to ogawayama.
@@ -79,9 +71,9 @@ bool drop_table(DropStmt *drop, char *relname)
     }
 
     /* Get the object ID of the table to be deleted */
-    ptree remove_table;
+    property_tree::ptree remove_table;
     std::unique_ptr<metadata::Metadata> tables = std::make_unique<Tables>(DBNAME);
-    ErrorCode error = tables->get(relname, remove_table);
+    metadata::ErrorCode error = tables->get(relname, remove_table);
     if (error != ErrorCode::OK) {
         if (error == ErrorCode::NAME_NOT_FOUND && drop->missing_ok) {
             success = true;
@@ -92,45 +84,22 @@ bool drop_table(DropStmt *drop, char *relname)
         }
         return success;
     }
-    boost::optional<ObjectIdType> remove_table_id = remove_table.get_optional<ObjectIdType>(Tables::ID);
+    boost::optional<ObjectIdType> remove_table_id = 
+        remove_table.get_optional<ObjectIdType>(Tables::ID);
     ObjectIdType object_id = remove_table_id.get();
 
-    message::BeginDDL begin_ddl{};
-    message::EndDDL end_ddl{};
-
-    /* BEGIN_DDL message to ogawayama */
-//    message::BeginDDLMessage bd_msg{0};
-    success = send_drop_message(&begin_ddl, tables);
-    if (false == success) {
-      ereport(ERROR,
-              (errcode(ERRCODE_INTERNAL_ERROR), 
-              errmsg("send_message() failed. (BEGIN_DDL)")));
-      return success;
-    }
-
     /* DROP_TABLE message to ogawayama */
-//    message::DropTableMessage dt_msg{(uint64_t)object_id};
-    message::DropTable drop_table{object_id};
-    success = send_drop_message(&drop_table, tables);
+    message::DropTable drop_table_message{object_id};
+    success = send_message(drop_table_message);
     if (!success) {
-      send_drop_message(&end_ddl, tables);
       ereport(ERROR,
               (errcode(ERRCODE_INTERNAL_ERROR), 
               errmsg("send_message() failed. (DROP_TABLE)")));
       return success;
     }
 
-    /* END_DDL message to ogawayama */
-//    message::EndDDLMessage ed_msg{0};
-    success &= send_drop_message(&end_ddl, tables);
-    if (false == success) {
-      ereport(ERROR,
-              (errcode(ERRCODE_INTERNAL_ERROR), 
-              errmsg("send_message() failed. (END_DDL)")));
-      return success;
-    }
-
     /* remobe metadata */
+    // ToDo: Fix process order.
     error = tables->remove(object_id);
     if (error != ErrorCode::OK) {
         ereport(ERROR,
@@ -141,37 +110,4 @@ bool drop_table(DropStmt *drop, char *relname)
     }
 
     return success;
-}
-
-/*
- *  @brief:
- */
-bool send_drop_message(message::Message *message, std::unique_ptr<metadata::Metadata> &objects)
-{
-    Assert(message != nullptr);
-
-    bool ret_value = false;
-    ERROR_CODE error = ERROR_CODE::UNKNOWN;
-
-    /* sends message to ogawayama */
-    stub::Connection* connection;
-    error = StubManager::get_connection(&connection);
-    if (error != ERROR_CODE::OK) {
-        ereport(ERROR,
-                (errcode(ERRCODE_INTERNAL_ERROR),
-                 errmsg("StubManager::get_connection() failed.")));
-        return ret_value;
-    }
-
-    message::MessageBroker broker;
-    message->set_receiver(connection);
-    message::Status status = broker.send_message(message);
-
-    if (status.get_error_code() != message::ErrorCode::SUCCESS) {
-        return ret_value;
-    }
-
-    ret_value = true;
-
-    return ret_value;
 }

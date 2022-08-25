@@ -13,22 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	create_table.h
- *	@brief  Dispatch the create-table command to ogawayama.
+ *	@file	  table_metadata.h
+ *	@brief  TABLE metadata operations.
  */
+#pragma once
 
-#ifndef CREATE_TABLE_H
-#define CREATE_TABLE_H
+#include <boost/property_tree/ptree.hpp>
+#include "create_command.h"
 
-#ifdef __cplusplus
-extern "C" {
+class CreateTable : public CreateCommand {
+ public:
+  CreateTable(CreateStmt* create_stmt) : CreateCommand(create_stmt) {}
 
-#endif
+  /**
+   *  @brief  Check if given syntax supported or not by Tsurugi
+   *  @return true if supported
+   *  @return false otherwise.
+   */
+  bool validate_syntax();
 
-bool create_table(List *stmts);
+  /**
+   *  @brief  Check if given syntax supported or not by Tsurugi
+   *  @return true if supported
+   *  @return false otherwise.
+   */
+  bool validate_data_type();
 
-#ifdef __cplusplus
-}
-#endif
+  /**
+   *  @brief  Create table metadata from query tree.
+   *  @return true if supported
+   *  @return false otherwise.
+   */
+  bool generate_metadata(boost::property_tree::ptree& metadata);
 
-#endif // CREATE_TABLE_H
+ private:
+  bool create_column_metadata(ColumnDef* colDef, 
+                              int64_t ordinal_position, 
+                              property_tree::ptree& column);
+  bool put_data_lengths(List* typmods, property_tree::ptree& datalengths);
+};

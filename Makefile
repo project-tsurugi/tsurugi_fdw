@@ -5,7 +5,6 @@ OBJS = common/init.o common/stub_manager.o \
         ogawayama_fdw/ogawayama_fdw.o \
         alt_planner/alt_planner.o \
         alt_utility/tablecmds.o alt_utility/create_table.o alt_utility/drop_table.o alt_utility/alt_utility.o \
-				message-broker/src/message_broker.o \
         $(WIN32RES)
 
 EXTENSION = ogawayama_fdw
@@ -27,7 +26,6 @@ PG_CPPFLAGS = -Iinclude \
               -Ithird_party/ogawayama/stub/include \
               -Ithird_party/manager/metadata-manager/include \
               -Ithird_party/manager/message-broker/include \
-              -Imessage-broker/include \
               -std=c++17 -fPIC -Dregister= -O0\
               -I$(libpq_srcdir)
               
