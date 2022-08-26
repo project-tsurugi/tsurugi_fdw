@@ -42,7 +42,6 @@ extern "C"
 }
 #endif
 
-#include "tablecmds.h"
 #include "send_message.h"
 #include "drop_table_executor.h"
 

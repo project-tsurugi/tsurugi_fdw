@@ -19,7 +19,7 @@
 #pragma once
 
 #include <boost/property_tree/ptree.hpp>
-#include "DDL_command.h"
+#include "command/ddl_command.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -31,12 +31,19 @@ extern "C"
 }
 #endif
 
-class DropCommand : public DDLCommand {
+class CreateCommand : public DDLCommand{
  public:
-  DropCommand(DropStmt* drop_stmt) : drop_stmt_{drop_stmt} {}
+  CreateCommand(CreateStmt* create_stmt) : create_stmt_{create_stmt} {}
 
-  DropStmt* drop_stmt() {drop_stmt_;}
+  /**
+   *  @brief  Create metadata from query tree.
+   *  @return true if supported
+   *  @return false otherwise.
+   */
+  virtual bool generate_metadata(boost::property_tree::ptree& metadata) = 0;
+
+  CreateStmt* create_stmt() const { return create_stmt_;}
 
  private:
-  DropStmt* drop_stmt_; // qeury tree
+  CreateStmt* create_stmt_; // qeury tree
 };

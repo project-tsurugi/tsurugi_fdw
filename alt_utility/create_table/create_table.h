@@ -19,7 +19,7 @@
 #pragma once
 
 #include <boost/property_tree/ptree.hpp>
-#include "create_command.h"
+#include "command/create_command.h"
 
 class CreateTable : public CreateCommand {
  public:
@@ -30,21 +30,21 @@ class CreateTable : public CreateCommand {
    *  @return true if supported
    *  @return false otherwise.
    */
-  bool validate_syntax();
+  virtual bool validate_syntax();
 
   /**
    *  @brief  Check if given syntax supported or not by Tsurugi
    *  @return true if supported
    *  @return false otherwise.
    */
-  bool validate_data_type();
+  virtual bool validate_data_type();
 
   /**
    *  @brief  Create table metadata from query tree.
    *  @return true if supported
    *  @return false otherwise.
    */
-  bool generate_metadata(boost::property_tree::ptree& metadata);
+  virtual bool generate_metadata(boost::property_tree::ptree& metadata);
 
  private:
   bool create_column_metadata(ColumnDef* colDef, 

@@ -13,21 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	create_table.h
- *	@brief  Dispatch the create-table command to ogawayama.
+ *	@file	  ddl_metadata.h
+ *	@brief  DDL metadata operations.
  */
 #pragma once
 
+#include <boost/property_tree/ptree.hpp>
+#include "command/ddl_command.h"
+
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
-
+#include "postgres.h"
 #include "nodes/parsenodes.h"
-
-bool create_table(CreateStmt* stmt);
-
 #ifdef __cplusplus
 }
 #endif
 
+class IndexCommand : public DDLCommand{
+ public:
+  IndexCommand(IndexStmt* index_stmt) : index_stmt_{index_stmt} {}
 
+  IndexStmt* index_stmt() const { return index_stmt_;}
+  
+  /**
+   *  @brief  Create metadata from query tree.
+   *  @return true if supported
+   *  @return false otherwise.
+   */
+  virtual bool generate_metadata(boost::property_tree::ptree& metadata) = 0;
+
+ private:
+  IndexStmt* index_stmt_; // qeury tree
+};

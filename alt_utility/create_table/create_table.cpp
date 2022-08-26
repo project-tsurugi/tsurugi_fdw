@@ -16,6 +16,8 @@
  *	@file	  table_metadata.h
  *	@brief  TABLE metadata operations.
  */
+#include "create_table.h"
+
 #include <unordered_set>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/optional.hpp>
@@ -23,7 +25,6 @@
 #include "manager/metadata/datatypes.h"
 #include "manager/metadata/tables.h"
 #include "manager/metadata/error_code.h"
-#include "create_table.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -53,7 +54,7 @@ bool CreateTable::validate_syntax()
   assert(create_stmt() != nullptr);
 
   CreateStmt* create_stmt = this->create_stmt();
-  bool ret_value{false};
+  bool result{false};
   List* table_elts = create_stmt->tableElts;
 
   /* Check members of CreateStmt structure. */
@@ -61,42 +62,42 @@ bool CreateTable::validate_syntax()
       ereport(ERROR,
               (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                 errmsg("Tsurugi does not support INHERITS clause")));
-      return ret_value;
+      return result;
   }
 
   if (create_stmt->partbound != nullptr) {
       ereport(ERROR,
               (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                 errmsg("Tsurugi does not support FOR VALUES clause")));
-      return ret_value;
+      return result;
   }
 
   if (create_stmt->partspec != nullptr) {
       ereport(ERROR,
               (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                 errmsg("Tsurugi does not support PARTITION BY clause")));
-      return ret_value;
+      return result;
   }
 
   if (create_stmt->ofTypename != nullptr) {
       ereport(ERROR,
               (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                 errmsg("Tsurugi does not support OF typename clause")));
-      return ret_value;
+      return result;
   }
 
   if (create_stmt->options != NIL) {
       ereport(ERROR,
               (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                 errmsg("Tsurugi does not support WITH clause")));
-      return ret_value;
+      return result;
   }
 
   if (create_stmt->oncommit != ONCOMMIT_NOOP) {
       ereport(ERROR,
               (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                 errmsg("Tsurugi does not support ON COMMIT clause")));
-      return ret_value;
+      return result;
   }
 
 #if PG_VERSION_NUM >= 120000
@@ -104,7 +105,7 @@ bool CreateTable::validate_syntax()
       ereport(ERROR,
               (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                 errmsg("Tsurugi does not support USING clause")));
-      return ret_value;
+      return result;
   }
 #endif
 
@@ -114,40 +115,40 @@ bool CreateTable::validate_syntax()
   /* Check members of each column */
   ListCell* l;
   foreach(l, table_elts) {
-    ColumnDef *colDef = (ColumnDef *)lfirst(l);
-    List *colDef_constraints = colDef->constraints;
+    ColumnDef *column_def = (ColumnDef *)lfirst(l);
+    List *column_def_constraints = column_def->constraints;
 
     /* Check column constraints */
-    if (colDef_constraints != NIL) {
+    if (column_def_constraints != NIL) {
       ListCell   *l;
-      foreach(l, colDef_constraints) {
+      foreach(l, column_def_constraints) {
         Constraint *constr = (Constraint *) lfirst(l);
         if (constr->contype != CONSTR_NOTNULL && constr->contype != CONSTR_PRIMARY) {
           ereport(ERROR,
               (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                 errmsg("Tsurugi supports only NOT NULL and PRIMARY KEY in column constraint")));
-          return ret_value;
+          return result;
         }
       }
     }
 
     /* If COLLATE clause, LIKE clause, DEFAULT constrint, or other syntax, collOid is valid. */
-    if ((colDef->collClause != nullptr) | OidIsValid(colDef->collOid)) {
+    if ((column_def->collClause != nullptr) | OidIsValid(column_def->collOid)) {
       ereport(ERROR,
               (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                 errmsg("Tsurugi does not support COLLATE clause")));
-      return ret_value;
+      return result;
     }
 
     /* Check for duplicates */
-    std::string colname = std::string(colDef->colname);
+    std::string colname = std::string(column_def->colname);
     if (column_names.find(colname) != column_names.end()) {
       ereport(ERROR,
               (errcode(ERRCODE_DUPLICATE_COLUMN),
                 errmsg("column \"%s\" specified more than once",
                       colname.c_str()),
                 errdetail("Tsurugi does not support this syntax")));
-      return ret_value;
+      return result;
     }
     column_names.insert(colname);
   }
@@ -161,7 +162,7 @@ bool CreateTable::validate_syntax()
         ereport(ERROR,
             (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
               errmsg("Tsurugi supports only PRIMARY KEY in table constraint")));
-        return ret_value;
+        return result;
     }
   }
 #if 0
@@ -169,47 +170,47 @@ bool CreateTable::validate_syntax()
   if (index_stmt != nullptr) {
     if (index_stmt->unique && !(index_stmt->primary)) {
         show_table_constraint_syntax_error_msg("Tsurugi does not support UNIQUE table constraint");
-        return ret_value;
+        return result;
     }
 
     if (index_stmt->tableSpace != nullptr) {
         ereport(ERROR,
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                   errmsg("Tsurugi does not support USING INDEX TABLESPACE clause")));
-        return ret_value;
+        return result;
     }
 
     if (index_stmt->indexIncludingParams != NIL) {
         ereport(ERROR,
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                   errmsg("Tsurugi does not support INCLUDE clause")));
-        return ret_value;
+        return result;
     }
 
     if (index_stmt->options != NIL) {
         ereport(ERROR,
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                   errmsg("Tsurugi does not support WITH clause")));
-        return ret_value;
+        return result;
     }
 
     if (index_stmt->excludeOpNames != nullptr) {
         show_table_constraint_syntax_error_msg("Tsurugi does not support EXCLUDE table constraint");
-        return ret_value;
+        return result;
     }
 
     if (index_stmt->deferrable) {
         ereport(ERROR,
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                   errmsg("Tsurugi does not support DEFERRABLE")));
-        return ret_value;
+        return result;
     }
 
     if (index_stmt->initdeferred) {
         ereport(ERROR,
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                   errmsg("Tsurugi does not support INITIALLY DEFERRED")));
-        return ret_value;
+        return result;
     }
   }
 #endif
@@ -224,7 +225,7 @@ bool CreateTable::validate_syntax()
           (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
             errmsg("Tsurugi supports only PRIMARY KEY in table constraint"),
             errdetail("Tsurugi does not support FOREIGN KEY table constraint")));
-      return ret_value;
+      return result;
     }
   }
 #endif
@@ -237,12 +238,12 @@ bool CreateTable::validate_syntax()
     ereport(ERROR,
         (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
           errmsg("Tsurugi supports only regular table")));
-    return ret_value;
+    return result;
   }
 
-  ret_value = true;
+  result = true;
 
-  return ret_value;
+  return result;
 }
 
   /**
@@ -254,7 +255,7 @@ bool CreateTable::validate_data_type()
 {
   assert(create_stmt() != nullptr);
 
-  bool ret_value{true};
+  bool result{true};
   CreateStmt* create_stmt = this->create_stmt();
   List *table_elts = create_stmt->tableElts;
   ListCell *l;
@@ -273,11 +274,11 @@ bool CreateTable::validate_data_type()
 
   /* Check type of each column */
   foreach(l, table_elts) {
-    ColumnDef *colDef = (ColumnDef *)lfirst(l);
-    TypeName *colDef_type_name = colDef->typeName;
+    ColumnDef *column_def = (ColumnDef *)lfirst(l);
+    TypeName *column_def_type_name = column_def->typeName;
 
-    if (colDef_type_name != nullptr) {
-      List *type_names = colDef_type_name->names;
+    if (column_def_type_name != nullptr) {
+      List *type_names = column_def_type_name->names;
 
       /*
         * If "names" is NIL then the actual type OID is given by typeOid,
@@ -306,13 +307,13 @@ bool CreateTable::validate_data_type()
         /* If the given type name is not suppoted, append the list of type names not supported*/
         if (!is_supported) {
             type_names_not_supported = lappend(type_names_not_supported,type_names);
-            ret_value = false;
+            result = false;
         }
       }
 
-      if (OidIsValid(colDef_type_name->typeOid)) {
+      if (OidIsValid(column_def_type_name->typeOid)) {
         property_tree::ptree datatype;
-        std::string type_oid_str = std::to_string(colDef_type_name->typeOid);
+        std::string type_oid_str = std::to_string(column_def_type_name->typeOid);
 
         /*
           * ErrorCode::OK if the given type is suppoted by Tsurugi,
@@ -322,20 +323,20 @@ bool CreateTable::validate_data_type()
               metadata::DataTypes::PG_DATA_TYPE, type_oid_str, datatype);
         /* If the given type is not suppoted, append the list of type oids not supported*/
         if (err != metadata::ErrorCode::OK) {
-            type_oid_not_supported.push_back(colDef_type_name->typeOid);
-            ret_value = false;
+            type_oid_not_supported.push_back(column_def_type_name->typeOid);
+            result = false;
         }
       }
     } else {
       /* If invalid syntax is given, report error messages. */
       show_syntax_error_msg("type name of column is not specified");
-      ret_value = false;
-      return ret_value;
+      result = false;
+      return result;
     }
   }
 
   /* If given type is not supported, report error messages. */
-  if (!ret_value) {
+  if (!result) {
     if (type_names_not_supported != NIL) {
         show_type_error_msg(type_names_not_supported);
     }
@@ -344,7 +345,7 @@ bool CreateTable::validate_data_type()
     }
   }
 
-  return ret_value;
+  return result;
 }
 
 /**
@@ -355,7 +356,7 @@ bool CreateTable::generate_metadata(property_tree::ptree& table)
 {
   assert(create_stmt() != nullptr);
 
-  bool ret_value{false};
+  bool result{false};
   CreateStmt* create_stmt = this->create_stmt();
   RangeVar* relation = (RangeVar*) create_stmt->relation;
 
@@ -366,7 +367,7 @@ bool CreateTable::generate_metadata(property_tree::ptree& table)
       table.put(metadata::Tables::NAME, relation->relname);
   } else {
       show_syntax_error_msg("table name is not specified");
-      return ret_value;
+      return result;
   }
 
   //
@@ -375,10 +376,35 @@ bool CreateTable::generate_metadata(property_tree::ptree& table)
   property_tree::ptree primary_keys;
 
   /* get ordinal positions of primary keys in table or column constraints */
-  #if 0
-  std::unordered_set<metadata::ObjectIdType> op_pkeys = 
-      get_ordinal_positions_of_primary_keys(create_stmt, index_stmt);
-  #endif
+  std::unordered_set<metadata::ObjectIdType> op_pkeys;
+
+  /* Primary Key */
+  metadata::ObjectIdType ordinal_position = ORDINAL_POSITION_BASE_INDEX;
+
+  List* table_elts = create_stmt->tableElts;
+  ListCell* l;
+
+  foreach(l, table_elts)
+  {
+      ColumnDef *column_def = (ColumnDef *) lfirst(l);
+
+      List *column_def_constraints = column_def->constraints;
+      if (column_def_constraints != NIL)
+      {
+          ListCell   *l;
+          foreach(l, column_def_constraints)
+          {
+              Constraint *constr = (Constraint *) lfirst(l);
+
+              /* Get oridinal positions of column constraints' primary key columns */
+              if (constr->contype == CONSTR_PRIMARY)
+              {
+                  op_pkeys.insert(ordinal_position);
+              }
+          }
+      }
+      ordinal_position++;
+  }
 
   /* put primary key metadata */
   table.add_child(metadata::Tables::PRIMARY_KEY_NODE, primary_keys);
@@ -387,48 +413,47 @@ bool CreateTable::generate_metadata(property_tree::ptree& table)
   // columns metadata
   //
   property_tree::ptree columns;
-  int64_t ordinal_position = ORDINAL_POSITION_BASE_INDEX;
+  ordinal_position = ORDINAL_POSITION_BASE_INDEX;
 
   /* for each columns */
-  List* table_elts = create_stmt->tableElts;
-  ListCell* l;
+  table_elts = create_stmt->tableElts;
   foreach(l, table_elts) {
-    ColumnDef* colDef = (ColumnDef *) lfirst(l);
+    ColumnDef* column_def = (ColumnDef *) lfirst(l);
     property_tree::ptree column;
-    bool success = create_column_metadata(colDef, ordinal_position, column);
+    bool success = create_column_metadata(column_def, ordinal_position, column);
     if (!success) {
-      return ret_value;
+      return result;
     }
     columns.push_back(std::make_pair("", column));
     ordinal_position++;
   }
   table.add_child(metadata::Tables::COLUMNS_NODE, columns);
 
-  ret_value = true;
+  result = true;
 
-  return ret_value;
+  return result;
 }
 
 /**
  * @brief
- * @param colDef [in] column query tree.
+ * @param column_def [in] column query tree.
  * @param ordinal_position [in] column ordinal position
  * @param column [out] column metadata
  */
-bool CreateTable::create_column_metadata(ColumnDef* colDef, 
+bool CreateTable::create_column_metadata(ColumnDef* column_def, 
                                           int64_t ordinal_position, 
                                           property_tree::ptree& column)
 {
-  assert(colDef != nullptr);
+  assert(column_def != nullptr);
 
-  bool ret_value = false;
+  bool result = false;
   auto datatypes = std::make_unique<metadata::DataTypes>("tsurugi");
 
   /* ordinalPosition  */
   column.put<int64_t>(metadata::Tables::Column::ORDINAL_POSITION, ordinal_position);
 
   /* column name */
-  column.put(metadata::Tables::Column::NAME, colDef->colname);
+  column.put(metadata::Tables::Column::NAME, column_def->colname);
 
 #if 0
   /*
@@ -446,19 +471,19 @@ bool CreateTable::create_column_metadata(ColumnDef* colDef,
 #endif
 
   // nullable
-  column.put<bool>(metadata::Tables::Column::NULLABLE, !colDef->is_not_null);
+  column.put<bool>(metadata::Tables::Column::NULLABLE, !column_def->is_not_null);
 
-  TypeName *colDef_type_name = colDef->typeName;
+  TypeName *column_def_type_name = column_def->typeName;
 
   //
   // column data type
   //
-  if (colDef_type_name == nullptr) {
+  if (column_def_type_name == nullptr) {
     show_syntax_error_msg("type name of the column is not specified");
-    return ret_value;
+    return result;
   }
 
-  List *type_names = colDef_type_name->names;
+  List *type_names = column_def_type_name->names;
   boost::optional<metadata::ObjectIdType> data_type_id;
 
   /*
@@ -482,9 +507,9 @@ bool CreateTable::create_column_metadata(ColumnDef* colDef,
   }
 
   // data type ID
-  if (OidIsValid(colDef_type_name->typeOid)) {
+  if (OidIsValid(column_def_type_name->typeOid)) {
       property_tree::ptree datatype;
-      std::string type_oid_str = std::to_string(colDef_type_name->typeOid);
+      std::string type_oid_str = std::to_string(column_def_type_name->typeOid);
 
       metadata::ErrorCode err = datatypes->get(
           metadata::DataTypes::PG_DATA_TYPE, type_oid_str, datatype);
@@ -496,7 +521,7 @@ bool CreateTable::create_column_metadata(ColumnDef* colDef,
     ereport(ERROR,
         (errcode(ERRCODE_INTERNAL_ERROR),
           errmsg("Tsurugi could not found data type ids")));
-    return ret_value;
+    return result;
   } 
   metadata::ObjectIdType id = data_type_id.get();
   column.put<metadata::ObjectIdType>(metadata::Tables::Column::DATA_TYPE_ID, id);
@@ -524,16 +549,16 @@ bool CreateTable::create_column_metadata(ColumnDef* colDef,
          * if "typmods" is NIL then the actual typmod is expected to
          * be prespecified in typemod, otherwise typemod is unused.
          */
-        List *typmods = colDef_type_name->typmods;
+        List *typmods = column_def_type_name->typmods;
 
         /* typemod includes varlena header */
-        int typemod = (int)colDef_type_name->typemod - VARHDRSZ;
+        int typemod = (int)column_def_type_name->typemod - VARHDRSZ;
         if (typmods != NIL) {
           /* for data type lengths metadata */
           property_tree::ptree datalengths;
           bool success = put_data_lengths(typmods, datalengths);
           if (!success) {
-            return ret_value;
+            return result;
           }
           /* put data type lengths metadata */
           if (!datalengths.data().empty()) {
@@ -550,14 +575,17 @@ bool CreateTable::create_column_metadata(ColumnDef* colDef,
         /* other data type */
         break;
   }
-  ret_value = true;
 
-  return ret_value;
+  
+
+  result = true;
+
+  return result;
 }
 
 bool CreateTable::put_data_lengths(List* typmods, property_tree::ptree& datalengths)
 {
-  bool ret_value = false;
+  bool result = false;
 
   ListCell *l;
   foreach(l, typmods) {
@@ -572,16 +600,16 @@ bool CreateTable::put_data_lengths(List* typmods, property_tree::ptree& dataleng
           datalengths.put<metadata::ObjectIdType>("", ac->val.val.ival);
       } else {
           show_syntax_error_msg("can use only integer value in data length");
-          return ret_value;
+          return result;
       }
     } else {
       show_syntax_error_msg("can use only constant value in data length");
-      return ret_value;
+      return result;
     }
   }
-  ret_value = true;
+  result = true;
 
-  return ret_value;
+  return result;
 }
 
 /**
@@ -589,7 +617,8 @@ bool CreateTable::put_data_lengths(List* typmods, property_tree::ptree& dataleng
  *  @return ordinal positions of table's primary key columns.
  */
 std::unordered_set<metadata::ObjectIdType>
-get_ordinal_positions_of_primary_keys(CreateStmt* create_stmt, IndexStmt* index_stmt)
+get_ordinal_positions_of_primary_keys(CreateStmt* create_stmt, 
+                                      IndexStmt* index_stmt)
 {
     std::unordered_set<metadata::ObjectIdType> op_pkeys;
 
@@ -614,10 +643,10 @@ get_ordinal_positions_of_primary_keys(CreateStmt* create_stmt, IndexStmt* index_
             foreach(lip, index_params)
             {
                 IndexElem *index_elem = (IndexElem *) lfirst(lip);
-                ColumnDef *colDef = (ColumnDef *) lfirst(lte);
+                ColumnDef *column_def = (ColumnDef *) lfirst(lte);
 
                 /* Get oridinal positions of table constraints' primary key columns */
-                if (strcmp(index_elem->name, colDef->colname) == 0)
+                if (strcmp(index_elem->name, column_def->colname) == 0)
                 {
                     op_pkeys.insert(ordinal_position);
                 }
@@ -638,14 +667,14 @@ get_ordinal_positions_of_primary_keys(CreateStmt* create_stmt, IndexStmt* index_
 
         foreach(l, table_elts)
         {
-            ColumnDef *colDef = (ColumnDef *) lfirst(l);
+            ColumnDef *column_def = (ColumnDef *) lfirst(l);
 
-            List *colDef_constraints = colDef->constraints;
+            List *column_def_constraints = column_def->constraints;
 
-            if (colDef_constraints != NIL)
+            if (column_def_constraints != NIL)
             {
                 ListCell   *l;
-                foreach(l, colDef_constraints)
+                foreach(l, column_def_constraints)
                 {
                     Constraint *constr = (Constraint *)lfirst(l);
 
@@ -661,17 +690,4 @@ get_ordinal_positions_of_primary_keys(CreateStmt* create_stmt, IndexStmt* index_
     }
 
     return op_pkeys;
-}
-
-/**
- *  @brief  Reports error message that given table constraint is not supported by Tsurugi.
- *  @param  [in] The primary message.
- */
-void
-show_table_constraint_syntax_error_msg(const char *error_message)
-{
-    ereport(ERROR,
-        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-         errmsg("%s",error_message),
-         errdetail("Tsurugi supports only PRIMARY KEY in table constraint")));
 }

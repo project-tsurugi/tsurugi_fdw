@@ -21,35 +21,17 @@
 #include <boost/property_tree/ptree.hpp>
 
 #include "ogawayama/stub/api.h"
-
-#if 0
-#include "frontend/message/ddl_message.h"
-#include "frontend/message/message_broker.h"
-#include "frontend/message/status.h"
-#else
 #include "manager/message/ddl_message.h"
 #include "manager/message/broker.h"
 #include "manager/message/status.h"
-#endif
-
 #include "manager/metadata/datatypes.h"
 #include "manager/metadata/metadata.h"
 #include "manager/metadata/tables.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-#include "postgres.h"
-#include "nodes/parsenodes.h"
-#ifdef __cplusplus
-}
-#endif
-
-#include "create_table_executor.h"
 #include "stub_manager.h"
 #include "create_table.h"
 #include "send_message.h"
+#include "create_table_executor.h"
 
 using namespace boost;
 using namespace ogawayama;
@@ -70,7 +52,7 @@ bool remove_metadata(
  *  @brief Calls the function sending metadata to metadata-manager and creates parameters sended to ogawayama.
  *  @param [in] List of statements.
  */
-bool create_table(CreateStmt* create_stmt)
+bool execute_create_table(CreateStmt* create_stmt)
 {
   Assert(create_stmt != nullptr);
 
