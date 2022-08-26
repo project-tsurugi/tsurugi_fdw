@@ -4,7 +4,8 @@ MODULE_big = ogawayama_fdw
 OBJS = common/init.o common/stub_manager.o \
         ogawayama_fdw/ogawayama_fdw.o \
         alt_planner/alt_planner.o \
-				alt_utility/alt_utility.o \
+				alt_utility/alt_utility.o alt_utility/send_message.o \
+				alt_utility/create_stmt.o alt_utility/index_stmt.o \
         alt_utility/create_table_executor.o alt_utility/create_table.o \
 				alt_utility/drop_table_executor.o \
         $(WIN32RES)
@@ -26,8 +27,8 @@ PGFILEDESC = "ogawayama_fdw - foregin data wrapper for ogawayama-server"
 
 PG_CPPFLAGS = -Iinclude \
               -Ithird_party/ogawayama/stub/include \
-              -Ithird_party/manager/metadata-manager/include \
-              -Ithird_party/manager/message-broker/include \
+              -Ithird_party/metadata-manager/include \
+              -Ithird_party/message-manager/include \
               -std=c++17 -fPIC -Dregister= -O0\
               -I$(libpq_srcdir)
               

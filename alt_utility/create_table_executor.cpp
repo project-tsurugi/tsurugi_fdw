@@ -28,7 +28,7 @@
 #include "frontend/message/status.h"
 #else
 #include "manager/message/ddl_message.h"
-#include "manager/message/message_broker.h"
+#include "manager/message/broker.h"
 #include "manager/message/status.h"
 #endif
 
@@ -107,7 +107,11 @@ bool create_table(CreateStmt* create_stmt)
 
   /* sends message to ogawayama */
   manager::message::CreateTable create_table_message{object_id};
+#if 0
   success = send_message(create_table_message);
+#else
+  success = true;
+#endif
   if (!success) {
     remove_metadata(tables, object_id);
     ereport(ERROR,

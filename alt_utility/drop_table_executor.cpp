@@ -25,7 +25,7 @@
 #include "frontend/message/status.h"
 #else
 #include "manager/message/ddl_message.h"
-#include "manager/message/message_broker.h"
+#include "manager/message/broker.h"
 #include "manager/message/status.h"
 #endif
 #include "manager/metadata/datatypes.h"

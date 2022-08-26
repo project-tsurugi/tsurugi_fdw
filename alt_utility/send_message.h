@@ -22,8 +22,9 @@
 
 /**
  * @brief Send messages to ogawayama.
- * @param message [in] DDL message.
+ * @param messages [in] message list without BeginDDL and EndDDL.
  * @return true if success.
  * @return false otherwise.
  */
 bool send_message(manager::message::Message& message);
+

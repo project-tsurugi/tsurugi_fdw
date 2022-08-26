@@ -20,7 +20,7 @@
 #include "stub_manager.h"
 #include "manager/message/ddl_message.h"
 #include "manager/message/status.h"
-#include "manager/message/message_broker.h"
+#include "manager/message/broker.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -34,16 +34,11 @@ extern "C"
 #endif
 
 using namespace ogawayama;
+using namespace manager;
 
 /**
  * @brief Send messages to ogawayama.
  * @param messages [in] message list without BeginDDL and EndDDL.
- * @return true if success.
- * @return false otherwise.
- */
-/**
- * @brief Send messages to ogawayama.
- * @param message [in] DDL message.
  * @return true if success.
  * @return false otherwise.
  */
@@ -57,7 +52,7 @@ bool send_message(message::Message& message)
   if (error != ERROR_CODE::OK) {
     ereport(NOTICE,
             (errcode(ERRCODE_INTERNAL_ERROR),
-            errmsg("StubManager::get_connection() failed. (code: %d)"), (int) error));
+            errmsg("StubManager::get_connection() failed. (code: %d)", (int) error)));
     return ret_value;
   }
 
@@ -68,32 +63,32 @@ bool send_message(message::Message& message)
   end_ddl.set_receiver(connection);
   message.set_receiver(connection);
 
-  message::Status status = message::MessageBroker::send_message(&begin_ddl);
+  message::Status status = message::Broker::send_message(&begin_ddl);
   if (status.get_error_code() == message::ErrorCode::FAILURE) {
     ereport(NOTICE,
             (errcode(ERRCODE_INTERNAL_ERROR),
-            errmsg("MessageBroker::send_message() failed. (msg: %s, code: %d)"), 
-            begin_ddl.string(), status.get_sub_error_code()));
+            errmsg("Broker::send_message() failed. (msg: %s, code: %d)", 
+            begin_ddl.string(), status.get_sub_error_code())));
     return ret_value;
   }
 
-  status = message::MessageBroker::send_message(&message);
+  status = message::Broker::send_message(&message);
   if (status.get_error_code() == message::ErrorCode::FAILURE) {
     ereport(NOTICE,
             (errcode(ERRCODE_INTERNAL_ERROR),
-            errmsg("MessageBroker::send_message() failed. (msg: %s, code: %d)"), 
-            end_ddl.string(), status.get_sub_error_code()));
+            errmsg("Broker::send_message() failed. (msg: %s, code: %d)", 
+            end_ddl.string(), status.get_sub_error_code())));
     // ToDo: Add rollback process.
-    message::MessageBroker::send_message(&end_ddl);
+    message::Broker::send_message(&end_ddl);
     return ret_value;
   }
 
-  status = message::MessageBroker::send_message(&end_ddl);
+  status = message::Broker::send_message(&end_ddl);
   if (status.get_error_code() == message::ErrorCode::FAILURE) {
     ereport(NOTICE,
             (errcode(ERRCODE_INTERNAL_ERROR),
-            errmsg("MessageBroker::send_message() failed. (msg: %s, code: %d)"), 
-            end_ddl.string(), status.get_sub_error_code()));
+            errmsg("Broker::send_message() failed. (msg: %s, code: %d)", 
+            end_ddl.string(), status.get_sub_error_code())));
     return ret_value;
   }
 
