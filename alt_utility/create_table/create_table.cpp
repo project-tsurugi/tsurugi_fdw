@@ -51,7 +51,7 @@ const metadata::ObjectIdType ORDINAL_POSITION_BASE_INDEX = 1;
  * 
  */
 std::vector<int64_t> get_primary_key(
-    CreateStmt* create_stmt, const std::vector<Column>& columns)
+    CreateStmt* create_stmt, const std::vector<metadata::Column>& columns)
 {
 	std::vector<int64_t> primary_keys;
 
@@ -68,7 +68,7 @@ std::vector<int64_t> get_primary_key(
 				Constraint* constr = (Constraint*) lfirst(lc);
 				/* Get oridinal positions of column constraints' primary key columns */
 				if (constr->contype == CONSTR_PRIMARY) {
-					for (Column column : columns) {
+					for (metadata::Column column : columns) {
 						if (column.name == column_def->colname) {
 							primary_keys.emplace_back(column.ordinal_position);
 						}
@@ -380,7 +380,7 @@ bool CreateTable::generate_metadata(property_tree::ptree& table)
   assert(create_stmt() != nullptr);
 
   bool result{false};
-  Table table_;
+  metadata::Table table_;
   CreateStmt* create_stmt = this->create_stmt();
   RangeVar* relation = (RangeVar*) create_stmt->relation;
 
@@ -400,7 +400,7 @@ bool CreateTable::generate_metadata(property_tree::ptree& table)
   // columns metadata
   //
   property_tree::ptree columns;
-  std::vector<Column> columns_;
+  std::vector<metadata::Column> columns_;
   int64_t ordinal_position = ORDINAL_POSITION_BASE_INDEX;
 
   /* for each columns */
@@ -410,7 +410,7 @@ bool CreateTable::generate_metadata(property_tree::ptree& table)
     if (IsA(listptr, ColumnDef)) {
       ColumnDef* column_def = (ColumnDef *) lfirst(listptr);
       property_tree::ptree column;
-      Column column_;
+      metadata::Column column_;
 
       bool success = create_column_metadata(column_def, ordinal_position, column, column_);
       if (!success) {
@@ -450,7 +450,7 @@ bool CreateTable::generate_metadata(property_tree::ptree& table)
 bool CreateTable::create_column_metadata(ColumnDef* column_def, 
                                           int64_t ordinal_position, 
                                           property_tree::ptree& column,
-                                          Column& column_)
+                                          metadata::Column& column_)
 {
   assert(column_def != nullptr);
 

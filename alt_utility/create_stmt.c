@@ -1,3 +1,21 @@
+/*
+ * Copyright 2019-2020 tsurugi project.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *	@file	create_table.h
+ *	@brief  Dispatch the create-table command to ogawayama.
+ */
 #include "create_stmt.h"
 
 #include "postgres.h"
@@ -50,8 +68,8 @@ void execute_create_stmt(PlannedStmt *pstmt,
         }
         else if (IsA(stmt, IndexStmt))
         {
-          	Node	   *parsetree = pstmt->utilityStmt;
-   					IndexStmt  *index_stmt = (IndexStmt *) parsetree;
+          	Node *parsetree = pstmt->utilityStmt;
+			IndexStmt *index_stmt = (IndexStmt *) parsetree;
             execute_create_index(index_stmt);
         }
         else if (IsA(stmt, CreateForeignTableStmt))
@@ -76,7 +94,7 @@ void execute_create_stmt(PlannedStmt *pstmt,
         }
     }
 
-    send_create_table_message(object_id);
+//    send_create_table_message(object_id);
 }
 
 /**
@@ -89,7 +107,6 @@ int64_t do_create_stmt(PlannedStmt *pstmt,
                       CreateStmt *create_stmt)
 {
     int64_t object_id = 0;
-    ObjectAddress address;
 
     if (create_stmt->tablespacename != NULL
         && !strcmp(create_stmt->tablespacename, TSURUGI_TABLESPACE_NAME))
@@ -109,15 +126,9 @@ int64_t do_create_stmt(PlannedStmt *pstmt,
         strcat(create_stmt->relation->relname, TSURUGI_TABLE_SUFFIX);
     }
     /* Create the table itself */
-    address = DefineRelation((CreateStmt *) create_stmt,
-                              RELKIND_RELATION,
-                              InvalidOid, NULL,
-                              queryString);
-    /*
-      * Let NewRelationCreateToastTable decide if this
-      * one needs a secondary relation too.
-      */
-    CommandCounterIncrement();
-
+    DefineRelation((CreateStmt *) create_stmt,
+					RELKIND_RELATION,
+					InvalidOid, NULL,
+					queryString);
     return object_id;
 }

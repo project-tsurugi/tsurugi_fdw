@@ -33,6 +33,14 @@
 #include "send_message.h"
 #include "create_table_executor.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "postgres.h"
+#ifdef __cplusplus
+}
+#endif
+
 using namespace boost;
 using namespace ogawayama;
 using namespace manager;

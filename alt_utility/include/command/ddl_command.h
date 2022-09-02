@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	  ddl_metadata.h
+ *	@file	ddl_metadata.h
  *	@brief  DDL metadata operations.
  */
 #pragma once
 
-#include <boost/property_tree/ptree.hpp>
-
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 #include "postgres.h"
 #include "nodes/parsenodes.h"
@@ -87,4 +84,7 @@ class DDLCommand {
         (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
         errmsg("Tsurugi does not support type oid %s", type_oid_str.str().c_str())));
   }
+
+ private:
+  Node* node_ = nullptr;
 };

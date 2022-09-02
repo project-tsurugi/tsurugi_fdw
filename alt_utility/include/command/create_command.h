@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	  ddl_metadata.h
- *	@brief  DDL metadata operations.
+ *	@file	create_command.h
+ *	@brief  For creation commands in DDL.
  */
 #pragma once
 

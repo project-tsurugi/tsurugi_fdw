@@ -21,36 +21,7 @@
 #include <unordered_set>
 #include <boost/property_tree/ptree.hpp>
 #include "command/create_command.h"
-
-struct Column {
-	Column() {}
-  int64_t       format_version;
-  int64_t       generation;
-  int64_t       id;
-  int64_t       table_id;
-  std::string   name;
-  int64_t       ordinal_position;
-  int64_t       data_type_id;
-  std::string   data_length;
-  int64_t       varing;
-  bool          nullable;
-  std::string   default_expr;
-  int64_t       direction;
-};
-
-struct Table {
-	Table() {}
-  int64_t       format_version;
-  int64_t       generation;
-  int64_t      	id;
-  std::string   namespace_name;
-  std::string   name;
-  int64_t       owner_role_id;
-  std::string   acl;
-  int64_t       tuples;
-  std::vector<int64_t>	primary_keys;
-  std::vector<Column>	columns;
-};
+#include "manager/metadata/tables.h"
 
 class CreateTable : public CreateCommand {
  public:
@@ -82,7 +53,7 @@ class CreateTable : public CreateCommand {
   bool create_column_metadata(ColumnDef* column_def, 
                               int64_t ordinal_position, 
                               boost::property_tree::ptree& column,
-                              Column& column_);
+                              manager::metadata::Column& column_);
   bool put_data_lengths(List* typmods, boost::property_tree::ptree& datalengths);
 
 };

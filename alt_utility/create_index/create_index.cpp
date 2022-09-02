@@ -1,12 +1,27 @@
-#include "create_index.h"
+/*
+ * Copyright 2019-2022 tsurugi project.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *	@file	create_table.h
+ *	@brief  Dispatch the create-table command to ogawayama.
+ */
+#include <memory>
 #include <vector>
-#include <unordered_set>
-#include <boost/operators.hpp>
-#include <boost/foreach.hpp>
+#include "create_index.h"
 #include "manager/metadata/tables.h"
 
 using namespace manager;
-using namespace boost;
 
 /* base index of ordinal position metadata-manager manages */
 const metadata::ObjectIdType ORDINAL_POSITION_BASE_INDEX = 1;
@@ -26,23 +41,16 @@ std::vector<int64_t> get_primary_keys(IndexStmt* index_stmt)
 			Node* stmt = (Node*) lfirst(listptr);
 			if (IsA(stmt, IndexElem)) {
 				IndexElem* elem = (IndexElem*) stmt;
-				property_tree::ptree table;
+				metadata::Table table;
 				metadata::ErrorCode error = tables->get(index_stmt->relation->relname, table);
 				if (error != metadata::ErrorCode::OK) {
 					elog(NOTICE, "Table not found. (error:%d) (name:%s)", 
 						(int) error, index_stmt->relation->relname);
 					return primary_keys;
 				}
-				property_tree::ptree columns;
-				table.get_child(metadata::Tables::COLUMNS_NODE, columns);
-				BOOST_FOREACH(const property_tree::ptree::value_type& child, columns) {
-					const property_tree::ptree& column = child.second;
-					auto column_name = 
-						column.get_optional<std::string>(metadata::Tables::Column::NAME);
-					if (column_name.get() == elem->name) {
-						auto ordinal_position = 
-							column.get_optional<int64_t>(metadata::Tables::Column::ORDINAL_POSITION);
-						primary_keys.emplace_back(ordinal_position.get());
+				for (const metadata::Column& column : table.columns) {
+					if (column.name == elem->name) {
+						primary_keys.emplace_back(column.ordinal_position);
 					}
 				}
 			}
@@ -124,6 +132,7 @@ bool CreateIndex::validate_data_type()
   return true;
 }
 
+#if 0
 /**
  *  @brief  Create metadata from query tree.
  *  @return true if supported
@@ -150,19 +159,19 @@ bool CreateIndex::generate_metadata(boost::property_tree::ptree& table)
 
   	return true;
 }
-
+#endif
 /**
  *  @brief  Create table metadata from query tree.
  *  @return true if supported
  *  @return false otherwise.
  */
-bool CreateIndex::generate_table_metadata(Table& table)
+bool CreateIndex::generate_table_metadata(manager::metadata::Table& table)
 {
 	IndexStmt* index_stmt = this->index_stmt();
 
 	table.primary_keys = get_primary_keys(index_stmt);
 	for (int64_t ordinal_position : table.primary_keys) {
-		for (Column& column : table.columns) {
+		for (metadata::Column& column : table.columns) {
 			if (column.ordinal_position == ordinal_position) {
 				column.direction = 
 					static_cast<int64_t>(metadata::Tables::Column::Direction::DEFAULT);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 tsurugi project.
+ * Copyright 2019-2022 tsurugi project.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,6 @@
  */
 #pragma once
 
-#include "command/ddl_command.h"
-
 #ifdef __cplusplus
 extern "C"
 {
@@ -29,6 +27,8 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
+
+#include "command/ddl_command.h"
 
 class IndexCommand : public DDLCommand{
  public:
@@ -41,7 +41,7 @@ class IndexCommand : public DDLCommand{
    *  @return true if supported
    *  @return false otherwise.
    */
-  virtual bool generate_metadata(boost::property_tree::ptree& metadata) = 0;
+//  virtual bool generate_metadata(boost::property_tree::ptree& metadata) = 0;
 
  private:
   IndexStmt* index_stmt_; // qeury tree
