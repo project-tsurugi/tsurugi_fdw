@@ -1,19 +1,18 @@
 #include <boost/property_tree/ptree.hpp>
 #include "create_index.h"
-
+#include "create_table.h"
 #include "create_index_executor.h"
 
 using namespace boost;
 
 void execute_create_index(IndexStmt* index_stmt)
 {
-  CreateIndex create_index(index_stmt);
+	Table table;
 
-  property_tree::ptree metadata;
-  bool success = create_index.generate_metadata(metadata);
-  if (!success) {
-    ereport(NOTICE,
-      (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-          errmsg("Tsurugi does not support USING INDEX TABLESPACE clause")));
-  }
+	CreateIndex create_index(index_stmt);
+
+	create_index.generate_table_metadata(table);
+
+	property_tree::ptree metadata;
+	create_index.generate_metadata(metadata);
 }

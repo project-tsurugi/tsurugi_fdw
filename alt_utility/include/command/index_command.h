@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	  ddl_metadata.h
- *	@brief  DDL metadata operations.
+ *	@file	index_command.h
+ *	@brief  index statement operations.
  */
 #pragma once
 
-#include <boost/property_tree/ptree.hpp>
 #include "command/ddl_command.h"
 
 #ifdef __cplusplus

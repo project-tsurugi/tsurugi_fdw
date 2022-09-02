@@ -11,39 +11,42 @@
 #include "commands/defrem.h"
 #include "commands/event_trigger.h"
 
-#include "create_table/create_table_executor.h"
-#include "create_index/create_index_executor.h"
+#include "create_table_executor.h"
+#include "create_index_executor.h"
 
 static const char *TSURUGI_TABLESPACE_NAME = "tsurugi";
 static const char *TSURUGI_TABLE_SUFFIX = "_tsurugi";
 
-void do_create_stmt(PlannedStmt *pstmt,
-                    const char *queryString,
-                    Node *stmt);
+int64_t do_create_stmt(PlannedStmt *pstmt,
+                      const char *queryString,
+                      CreateStmt *create_stmt);
 
+/**
+ * 
+ * 
+ * 
+ */
 void execute_create_stmt(PlannedStmt *pstmt,
                           const char *queryString,
                           ParamListInfo params,
                           List *stmts)
 {
     ListCell  *l;
-//    bool		  needCleanup;
-//    bool		  commandCollected = false;
     ObjectAddress address;
     ObjectAddress secondaryObject = InvalidObjectAddress;
+    int64_t  object_id = -1;
 
     /* ... and do it */
     foreach(l, stmts)
     {
         Node *stmt = (Node *) lfirst(l);
-
         if (IsA(stmt, CreateStmt))
         {
             /* relation is an object looks like bellow.
               table, foreign table, partition table, TOAST table, 
               index, partioned index, 
               view, materialized-view, complex type, */
-            do_create_stmt(pstmt, queryString, stmt);
+            object_id = do_create_stmt(pstmt, queryString, (CreateStmt *) stmt);
         }
         else if (IsA(stmt, IndexStmt))
         {
@@ -66,39 +69,14 @@ void execute_create_stmt(PlannedStmt *pstmt,
         }
         else
         {
-            /*
-              * Recurse for anything else.  Note the recursive
-              * call will stash the objects so created into our
-              * event trigger context.
-              */
-            PlannedStmt *wrapper;
-
-            wrapper = makeNode(PlannedStmt);
-            wrapper->commandType = CMD_UTILITY;
-            wrapper->canSetTag = false;
-            wrapper->utilityStmt = stmt;
-            wrapper->stmt_location = pstmt->stmt_location;
-            wrapper->stmt_len = pstmt->stmt_len;
-
-            ProcessUtility(wrapper,
-                            queryString,
-                            PROCESS_UTILITY_SUBCOMMAND,
-                            params,
-                            NULL,
-                            None_Receiver,
-                            NULL);
+            ereport(ERROR,
+                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                  errmsg("Tsurugi supports only PRIMARY KEY constraint in table constraint"),
+                  errdetail("Tsurugi does not support FOREIGN KEY table constraint")));
         }
-
-        /* Need CCI between commands */
-        if (lnext(l) != NULL)
-          CommandCounterIncrement();
     }
 
-    /*
-      * The multiple commands generated here are stashed
-      * individually, so disable collection below.
-      */
-//    commandCollected = true;
+    send_create_table_message(object_id);
 }
 
 /**
@@ -106,27 +84,18 @@ void execute_create_stmt(PlannedStmt *pstmt,
  * 
  * 
  */
-void do_create_stmt(PlannedStmt *pstmt,
-                    const char *queryString,
-                    Node *stmt)
+int64_t do_create_stmt(PlannedStmt *pstmt,
+                      const char *queryString,
+                      CreateStmt *create_stmt)
 {
-    bool success;
+    int64_t object_id = 0;
     ObjectAddress address;
-    ObjectAddress secondaryObject = InvalidObjectAddress;
 
-    /* relation is an object looks like bellow.
-      table, foreign table, partition table, TOAST table, 
-      index, partioned index, 
-      view, materialized-view, complex type, */
-    Datum		toast_options;
-    static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
-
-    CreateStmt *create_stmt = ((CreateStmt *) stmt);
     if (create_stmt->tablespacename != NULL
-        && !strcmp(create_stmt->tablespacename, TSURUGI_TABLESPACE_NAME)) 
+        && !strcmp(create_stmt->tablespacename, TSURUGI_TABLESPACE_NAME))
     {
-        success = execute_create_table(create_stmt);
-        if (!success) 
+        object_id = execute_create_table(create_stmt);
+        if (object_id == -1) 
         {
             if (create_stmt->if_not_exists) 
             {
@@ -140,33 +109,15 @@ void do_create_stmt(PlannedStmt *pstmt,
         strcat(create_stmt->relation->relname, TSURUGI_TABLE_SUFFIX);
     }
     /* Create the table itself */
-    address = DefineRelation((CreateStmt *) stmt,
+    address = DefineRelation((CreateStmt *) create_stmt,
                               RELKIND_RELATION,
                               InvalidOid, NULL,
                               queryString);
-    EventTriggerCollectSimpleCommand(address,
-                                      secondaryObject,
-                                      stmt);
     /*
       * Let NewRelationCreateToastTable decide if this
       * one needs a secondary relation too.
       */
     CommandCounterIncrement();
 
-    /*
-      * parse and validate reloptions for the toast
-      * table
-      */
-    toast_options = transformRelOptions((Datum) 0,
-                                        ((CreateStmt *) stmt)->options,
-                                        "toast",
-                                        validnsps,
-                                        true,
-                                        false);
-    (void) heap_reloptions(RELKIND_TOASTVALUE,
-                            toast_options,
-                            true);
-
-    NewRelationCreateToastTable(address.objectId,
-                                toast_options);
+    return object_id;
 }

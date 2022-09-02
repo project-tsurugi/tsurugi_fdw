@@ -26,6 +26,7 @@ endif
 PGFILEDESC = "ogawayama_fdw - foregin data wrapper for ogawayama-server"
 
 PG_CPPFLAGS = -Icommon/include \
+			  -Ialt_utility/include \
               -Ithird_party/ogawayama/stub/include \
               -Ithird_party/metadata-manager/include \
               -Ithird_party/message-manager/include \

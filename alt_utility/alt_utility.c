@@ -16,7 +16,7 @@
 #include "commands/tablecmds.h"
 
 #include "create_stmt.h"
-#include "drop_table/drop_table_executor.h"
+#include "drop_table_executor.h"
 
 #ifndef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
@@ -237,8 +237,8 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
 
       if (isCompleteQuery)
       {
-        EventTriggerSQLDrop(parsetree);
-        EventTriggerDDLCommandEnd(parsetree);
+			EventTriggerSQLDrop(parsetree);
+			EventTriggerDDLCommandEnd(parsetree);
       }
     }
     PG_CATCH();

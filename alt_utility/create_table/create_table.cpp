@@ -45,6 +45,44 @@ using namespace manager;
 const metadata::ObjectIdType ORDINAL_POSITION_BASE_INDEX = 1;
 
 /**
+ * @brief seek ordinal positions of primary keys in table or column constraints.
+ * 
+ * 
+ * 
+ */
+std::vector<int64_t> get_primary_key(
+    CreateStmt* create_stmt, const std::vector<Column>& columns)
+{
+	std::vector<int64_t> primary_keys;
+
+	List* table_elts = create_stmt->tableElts;
+	ListCell* listptr;
+	foreach(listptr, table_elts) {
+		// Seek primary-key in column constraints.
+		Assert(IsA(lfirst(listptr), ColumnDef));
+		ColumnDef* column_def = (ColumnDef *) lfirst(listptr);
+		List* column_def_constraints = column_def->constraints;
+		if (column_def_constraints != NIL) {
+			ListCell* lc;
+			foreach(lc, column_def_constraints) {
+				Constraint* constr = (Constraint*) lfirst(lc);
+				/* Get oridinal positions of column constraints' primary key columns */
+				if (constr->contype == CONSTR_PRIMARY) {
+					for (Column column : columns) {
+						if (column.name == column_def->colname) {
+							primary_keys.emplace_back(column.ordinal_position);
+						}
+					}
+				}
+				break;
+			}
+		}
+	}
+
+	return primary_keys;
+}
+
+/**
  *  @brief  Check if given syntax supported or not by Tsurugi
  *  @return true if supported
  *  @return false otherwise.
@@ -214,22 +252,7 @@ bool CreateTable::validate_syntax()
     }
   }
 #endif
-
-#if 0
-  /* If statememts except CreateStmt and IndexStmt are given, report error messages. */
-  foreach(l, stmts) {
-    Node *stmt = (Node *) lfirst(l);
-
-    if (!IsA(stmt, CreateStmt) && !IsA(stmt, IndexStmt)) {
-      ereport(ERROR,
-          (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-            errmsg("Tsurugi supports only PRIMARY KEY in table constraint"),
-            errdetail("Tsurugi does not support FOREIGN KEY table constraint")));
-      return result;
-    }
-  }
-#endif
-  /*
+  /**
     * If statements to create temprary or unlogged table are given,
     * report error messages.
     */
@@ -280,7 +303,7 @@ bool CreateTable::validate_data_type()
     if (column_def_type_name != nullptr) {
       List *type_names = column_def_type_name->names;
 
-      /*
+      /**
         * If "names" is NIL then the actual type OID is given by typeOid,
         * otherwise typeOid is unused.
         */
@@ -336,7 +359,7 @@ bool CreateTable::validate_data_type()
   }
 
   /* If given type is not supported, report error messages. */
-  if (!result) {
+  if (result != true) {
     if (type_names_not_supported != NIL) {
         show_type_error_msg(type_names_not_supported);
     }
@@ -357,82 +380,66 @@ bool CreateTable::generate_metadata(property_tree::ptree& table)
   assert(create_stmt() != nullptr);
 
   bool result{false};
+  Table table_;
   CreateStmt* create_stmt = this->create_stmt();
   RangeVar* relation = (RangeVar*) create_stmt->relation;
 
   //
   // table metadata
   //
+  // table name
   if (relation != nullptr && relation->relname != nullptr) {
       table.put(metadata::Tables::NAME, relation->relname);
+      table_.name = relation->relname;
   } else {
       show_syntax_error_msg("table name is not specified");
       return result;
   }
 
   //
-  // primary keys metadata
-  //
-  property_tree::ptree primary_keys;
-
-  /* get ordinal positions of primary keys in table or column constraints */
-  std::unordered_set<metadata::ObjectIdType> op_pkeys;
-
-  /* Primary Key */
-  metadata::ObjectIdType ordinal_position = ORDINAL_POSITION_BASE_INDEX;
-
-  List* table_elts = create_stmt->tableElts;
-  ListCell* l;
-
-  foreach(l, table_elts)
-  {
-      ColumnDef *column_def = (ColumnDef *) lfirst(l);
-
-      List *column_def_constraints = column_def->constraints;
-      if (column_def_constraints != NIL)
-      {
-          ListCell   *l;
-          foreach(l, column_def_constraints)
-          {
-              Constraint *constr = (Constraint *) lfirst(l);
-
-              /* Get oridinal positions of column constraints' primary key columns */
-              if (constr->contype == CONSTR_PRIMARY)
-              {
-                  op_pkeys.insert(ordinal_position);
-              }
-          }
-      }
-      ordinal_position++;
-  }
-
-  /* put primary key metadata */
-  table.add_child(metadata::Tables::PRIMARY_KEY_NODE, primary_keys);
-
-  //
   // columns metadata
   //
   property_tree::ptree columns;
-  ordinal_position = ORDINAL_POSITION_BASE_INDEX;
+  std::vector<Column> columns_;
+  int64_t ordinal_position = ORDINAL_POSITION_BASE_INDEX;
 
   /* for each columns */
-  table_elts = create_stmt->tableElts;
-  foreach(l, table_elts) {
-    ColumnDef* column_def = (ColumnDef *) lfirst(l);
-    property_tree::ptree column;
-    bool success = create_column_metadata(column_def, ordinal_position, column);
-    if (!success) {
-      return result;
+  List* table_elts = create_stmt->tableElts;
+  ListCell* listptr;
+  foreach(listptr, table_elts) {
+    if (IsA(listptr, ColumnDef)) {
+      ColumnDef* column_def = (ColumnDef *) lfirst(listptr);
+      property_tree::ptree column;
+      Column column_;
+
+      bool success = create_column_metadata(column_def, ordinal_position, column, column_);
+      if (!success) {
+        return result;
+      }
+      columns.push_back(std::make_pair("", column));
+      columns_.emplace_back(column_);
+      ordinal_position++;
     }
-    columns.push_back(std::make_pair("", column));
-    ordinal_position++;
   }
   table.add_child(metadata::Tables::COLUMNS_NODE, columns);
 
+  //
+  // primary keys
+  //
+  table_.primary_keys = get_primary_key(create_stmt, columns_);
+  if (table_.primary_keys.size() > 0) {
+	property_tree::ptree primary_key;
+	for (auto ordinal_position : table_.primary_keys) {
+		primary_key.put<int64_t>("", ordinal_position);
+		primary_key.push_back(std::make_pair("", primary_key));
+	}
+	table.add_child(metadata::Tables::PRIMARY_KEY_NODE, primary_key);
+  }
   result = true;
 
   return result;
 }
+
 
 /**
  * @brief
@@ -442,7 +449,8 @@ bool CreateTable::generate_metadata(property_tree::ptree& table)
  */
 bool CreateTable::create_column_metadata(ColumnDef* column_def, 
                                           int64_t ordinal_position, 
-                                          property_tree::ptree& column)
+                                          property_tree::ptree& column,
+                                          Column& column_)
 {
   assert(column_def != nullptr);
 
@@ -451,9 +459,11 @@ bool CreateTable::create_column_metadata(ColumnDef* column_def,
 
   /* ordinalPosition  */
   column.put<int64_t>(metadata::Tables::Column::ORDINAL_POSITION, ordinal_position);
+  column_.ordinal_position = ordinal_position;
 
   /* column name */
   column.put(metadata::Tables::Column::NAME, column_def->colname);
+  column_.name = column_def->colname;
 
 #if 0
   /*
@@ -472,6 +482,7 @@ bool CreateTable::create_column_metadata(ColumnDef* column_def,
 
   // nullable
   column.put<bool>(metadata::Tables::Column::NULLABLE, !column_def->is_not_null);
+  column_.nullable = !(column_def->is_not_null);
 
   TypeName *column_def_type_name = column_def->typeName;
 
@@ -610,84 +621,4 @@ bool CreateTable::put_data_lengths(List* typmods, property_tree::ptree& dataleng
   result = true;
 
   return result;
-}
-
-/**
- *  @brief  Get ordinal positions of table's primary key columns in table or column constraints.
- *  @return ordinal positions of table's primary key columns.
- */
-std::unordered_set<metadata::ObjectIdType>
-get_ordinal_positions_of_primary_keys(CreateStmt* create_stmt, 
-                                      IndexStmt* index_stmt)
-{
-    std::unordered_set<metadata::ObjectIdType> op_pkeys;
-
-    /* true if table constraints include primary key constraint */
-    bool has_table_pkey = false;
-
-    /* Check if table constraints include primary key constraint */
-    if (index_stmt != nullptr && index_stmt->primary)
-    {
-        has_table_pkey = true;
-
-        metadata::ObjectIdType ordinal_position = ORDINAL_POSITION_BASE_INDEX;
-
-        List *table_elts = create_stmt->tableElts;
-        ListCell *lte;
-
-        List *index_params = index_stmt->indexParams;
-        ListCell *lip;
-
-        foreach(lte, table_elts)
-        {
-            foreach(lip, index_params)
-            {
-                IndexElem *index_elem = (IndexElem *) lfirst(lip);
-                ColumnDef *column_def = (ColumnDef *) lfirst(lte);
-
-                /* Get oridinal positions of table constraints' primary key columns */
-                if (strcmp(index_elem->name, column_def->colname) == 0)
-                {
-                    op_pkeys.insert(ordinal_position);
-                }
-            }
-            ordinal_position++;
-        }
-    }
-
-    /*
-     * If table constraints does not include primary key constraint,
-     * check if column constraints include primary key constraint.
-     */
-    if (!has_table_pkey) {
-        metadata::ObjectIdType ordinal_position = ORDINAL_POSITION_BASE_INDEX;
-
-        List* table_elts = create_stmt->tableElts;
-        ListCell* l;
-
-        foreach(l, table_elts)
-        {
-            ColumnDef *column_def = (ColumnDef *) lfirst(l);
-
-            List *column_def_constraints = column_def->constraints;
-
-            if (column_def_constraints != NIL)
-            {
-                ListCell   *l;
-                foreach(l, column_def_constraints)
-                {
-                    Constraint *constr = (Constraint *)lfirst(l);
-
-                    /* Get oridinal positions of column constraints' primary key columns */
-                    if (constr->contype == CONSTR_PRIMARY)
-                    {
-                        op_pkeys.insert(ordinal_position);
-                    }
-                }
-            }
-            ordinal_position++;
-        }
-    }
-
-    return op_pkeys;
 }

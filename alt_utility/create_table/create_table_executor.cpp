@@ -52,21 +52,21 @@ bool remove_metadata(
  *  @brief Calls the function sending metadata to metadata-manager and creates parameters sended to ogawayama.
  *  @param [in] List of statements.
  */
-bool execute_create_table(CreateStmt* create_stmt)
+int64_t execute_create_table(CreateStmt* create_stmt)
 {
   Assert(create_stmt != nullptr);
 
-  bool ret_value{false};
+  metadata::ObjectIdType object_id = metadata::INVALID_OBJECT_ID;
   CreateTable create_table{create_stmt};
 
   /* check if given syntax supported or not by Tsurugi */
   if (!create_table.validate_syntax()) {
-      return ret_value;
+      return object_id;
   }
 
   /* check if given type supported or not by Tsurugi */
   if (!create_table.validate_data_type()) {
-      return ret_value;
+      return object_id;
   }
 
   property_tree::ptree table;
@@ -75,11 +75,11 @@ bool execute_create_table(CreateStmt* create_stmt)
     ereport(ERROR,
             (errcode(ERRCODE_INTERNAL_ERROR), 
             errmsg("CreateTable::generate_metadata() failed.")));
-    return  ret_value;
+    return  object_id;
   }
 
   std::unique_ptr<metadata::Metadata> tables = std::make_unique<metadata::Tables>(DBNAME);
-  metadata::ObjectIdType object_id = store_metadata(tables, table);
+  object_id = store_metadata(tables, table);
   if (object_id == metadata::INVALID_OBJECT_ID) {
     ereport(ERROR,
             (errcode(ERRCODE_INTERNAL_ERROR),
@@ -87,24 +87,7 @@ bool execute_create_table(CreateStmt* create_stmt)
     return object_id;
   }
 
-  /* sends message to ogawayama */
-  manager::message::CreateTable create_table_message{object_id};
-#if 0
-  success = send_message(create_table_message);
-#else
-  success = true;
-#endif
-  if (!success) {
-    remove_metadata(tables, object_id);
-    ereport(ERROR,
-            (errcode(ERRCODE_INTERNAL_ERROR), 
-            errmsg("send_message() failed. (CreateTable Message)")));
-    return ret_value;
-  }
-
-  ret_value = true;
-
-  return ret_value;
+  return object_id;
 }
 
 /**
@@ -155,4 +138,27 @@ bool remove_metadata(
   ret_value = true;
 
   return ret_value;
+}
+
+bool send_create_table_message(int64_t object_id)
+{
+  bool result = false;
+
+  /* sends message to ogawayama */
+  manager::message::CreateTable create_table_message{object_id};
+#if 0
+  bool success = send_message(create_table_message);
+#else
+  bool success = true;
+#endif
+  if (!success) {
+//    remove_metadata(tables, object_id);
+    ereport(ERROR,
+            (errcode(ERRCODE_INTERNAL_ERROR), 
+            errmsg("send_message() failed. (CreateTable Message)")));
+    return result;
+  }
+  result = true;
+
+  return result;  
 }
