@@ -87,7 +87,7 @@ std::vector<int64_t> get_primary_key(
  *  @return true if supported
  *  @return false otherwise.
  */
-bool CreateTable::validate_syntax()
+bool CreateTable::validate_syntax() const
 {
   assert(create_stmt() != nullptr);
 
@@ -274,7 +274,7 @@ bool CreateTable::validate_syntax()
    *  @return true if supported
    *  @return false otherwise.
    */
-bool CreateTable::validate_data_type()
+bool CreateTable::validate_data_type() const
 {
   assert(create_stmt() != nullptr);
 

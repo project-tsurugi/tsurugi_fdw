@@ -32,14 +32,14 @@ class CreateTable : public CreateCommand {
    *  @return true if supported
    *  @return false otherwise.
    */
-  virtual bool validate_syntax();
+  virtual bool validate_syntax() const;
 
   /**
    *  @brief  Check if given syntax supported or not by Tsurugi
    *  @return true if supported
    *  @return false otherwise.
    */
-  virtual bool validate_data_type();
+  virtual bool validate_data_type() const;
 
   /**
    *  @brief  Create table metadata from query tree.

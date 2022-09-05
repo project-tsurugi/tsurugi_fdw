@@ -26,13 +26,40 @@ using namespace manager;
 /* base index of ordinal position metadata-manager manages */
 const metadata::ObjectIdType ORDINAL_POSITION_BASE_INDEX = 1;
 
+metadata::Tables::Column::Direction get_sort_by_dir(SortByDir direction)
+{
+	metadata::Tables::Column::Direction result = metadata::Tables::Column::Direction::DEFAULT;
+	switch (direction)
+	{
+		case SortByDir::SORTBY_DEFAULT: {
+			result = metadata::Tables::Column::Direction::DEFAULT;
+			break;
+		}
+		case SortByDir::SORTBY_ASC: {
+			result = metadata::Tables::Column::Direction::ASCENDANT;
+			break;
+		}
+		case SortByDir::SORTBY_DESC: {
+			result = metadata::Tables::Column::Direction::DESCENDANT;
+			break;
+		}
+		default: {
+			// case SortByDir::SORTBY_USING:
+//			result = metadata::Table::Column::Direction::UNSUPPORTED;
+			break;
+		}
+	}
+
+	return result;
+}
+
 /**
  * 
  * 
  */
-std::vector<int64_t> get_primary_keys(IndexStmt* index_stmt)
+bool get_primary_keys_and_direction(IndexStmt* index_stmt, metadata::Table& table)
 {
-	std::vector<int64_t> primary_keys;
+	bool result = false;
 	auto tables = std::make_unique<metadata::Tables>("tsurugi");
 
 	ListCell* listptr;
@@ -42,22 +69,50 @@ std::vector<int64_t> get_primary_keys(IndexStmt* index_stmt)
 			if (IsA(stmt, IndexElem)) {
 				IndexElem* elem = (IndexElem*) stmt;
 				metadata::Table table;
-				metadata::ErrorCode error = tables->get(index_stmt->relation->relname, table);
+				auto error = tables->get(index_stmt->relation->relname, table);
 				if (error != metadata::ErrorCode::OK) {
 					elog(NOTICE, "Table not found. (error:%d) (name:%s)", 
 						(int) error, index_stmt->relation->relname);
-					return primary_keys;
+					return result;
 				}
-				for (const metadata::Column& column : table.columns) {
+				for (metadata::Column& column : table.columns) {
 					if (column.name == elem->name) {
-						primary_keys.emplace_back(column.ordinal_position);
+						table.primary_keys.emplace_back(column.ordinal_position);
+						metadata::Tables::Column::Direction direction = get_sort_by_dir(elem->ordering);
+						if (direction == metadata::Tables::Column::Direction::DEFAULT ) {
+							return result;
+						} 
+						column.direction = static_cast<int64_t>(direction);
 					}
 				}
 			}
 		}
 	}
+	result = true;
 	
-	return primary_keys;
+	return result;
+}
+
+/**
+ * @brief  	Create table metadata from query tree.
+ * @return 	true if success, otherwise fault.
+ * @note	Add metadata of Primary-keys and Direction.
+ */
+manager::metadata::ErrorCode 
+CreateIndex::generate_table_metadata(manager::metadata::Table table) const
+{
+	auto result = metadata::ErrorCode::UNKNOWN;
+	IndexStmt* index_stmt = this->index_stmt();
+	std::vector<int64_t> primary_keys;
+
+	bool success = get_primary_keys_and_direction(index_stmt, table);
+	if (!success) {
+		result = metadata::ErrorCode::NOT_FOUND;
+		return result;
+	}
+	result = metadata::ErrorCode::OK;;
+
+  	return result;
 }
 
 /**
@@ -65,7 +120,7 @@ std::vector<int64_t> get_primary_keys(IndexStmt* index_stmt)
  *  @return true if supported
  *  @return false otherwise.
  */
-bool CreateIndex::validate_syntax()
+bool CreateIndex::validate_syntax() const
 {
   bool result = false;
   IndexStmt* index_stmt = this->index_stmt();
@@ -127,7 +182,7 @@ bool CreateIndex::validate_syntax()
  *  @return true if supported
  *  @return false otherwise.
  */
-bool CreateIndex::validate_data_type()
+bool CreateIndex::validate_data_type() const
 {
   return true;
 }
@@ -160,24 +215,3 @@ bool CreateIndex::generate_metadata(boost::property_tree::ptree& table)
   	return true;
 }
 #endif
-/**
- *  @brief  Create table metadata from query tree.
- *  @return true if supported
- *  @return false otherwise.
- */
-bool CreateIndex::generate_table_metadata(manager::metadata::Table& table)
-{
-	IndexStmt* index_stmt = this->index_stmt();
-
-	table.primary_keys = get_primary_keys(index_stmt);
-	for (int64_t ordinal_position : table.primary_keys) {
-		for (metadata::Column& column : table.columns) {
-			if (column.ordinal_position == ordinal_position) {
-				column.direction = 
-					static_cast<int64_t>(metadata::Tables::Column::Direction::DEFAULT);
-			}
-		}
-	}
-
-  	return true;
-}

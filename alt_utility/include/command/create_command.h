@@ -33,17 +33,18 @@ extern "C"
 
 class CreateCommand : public DDLCommand{
  public:
-  CreateCommand(CreateStmt* create_stmt) : create_stmt_{create_stmt} {}
+	CreateCommand(CreateStmt* create_stmt) 
+		: DDLCommand((Node*) create_stmt) {}
 
-  /**
-   *  @brief  Create metadata from query tree.
-   *  @return true if supported
-   *  @return false otherwise.
-   */
-  virtual bool generate_metadata(boost::property_tree::ptree& metadata) = 0;
+	/**
+	 *  @brief  Create metadata from query tree.
+	 *  @return true if supported
+	 *  @return false otherwise.
+	 */
+	virtual bool generate_metadata(boost::property_tree::ptree& metadata) = 0;
 
-  CreateStmt* create_stmt() const { return create_stmt_;}
-
- private:
-  CreateStmt* create_stmt_; // qeury tree
+	CreateStmt* create_stmt() const { 
+		Node* node = this->statement();
+		return IsA(node, CreateStmt) ? (CreateStmt*) node : nullptr;
+	}
 };

@@ -16,6 +16,7 @@
  *	@file	create_table.h
  *	@brief  Dispatch the create-table command to ogawayama.
  */
+#include <memory>
 #include "manager/metadata/tables.h"
 #include "create_index.h"
 #include "create_index_executor.h"
@@ -26,6 +27,14 @@ void execute_create_index(IndexStmt* index_stmt)
 {
 	CreateIndex create_index(index_stmt);
 
+	// Primary Keys
+	auto tables = std::make_unique<metadata::Tables>("tsurugi");
 	metadata::Table table;
-	create_index.generate_table_metadata(table);
+	auto error = tables->get(create_index.get_table_name(), table);
+	if (error != metadata::ErrorCode::OK) {
+		return;
+	}
+	if (table.primary_keys.size() == 0) {
+		create_index.generate_table_metadata(table);
+	}
 }

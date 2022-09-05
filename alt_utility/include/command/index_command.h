@@ -32,17 +32,18 @@ extern "C"
 
 class IndexCommand : public DDLCommand{
  public:
-  IndexCommand(IndexStmt* index_stmt) : index_stmt_{index_stmt} {}
+	IndexCommand(IndexStmt* index_stmt) 
+		: DDLCommand((Node*) index_stmt) {}
 
-  IndexStmt* index_stmt() const { return index_stmt_;}
-  
-  /**
-   *  @brief  Create metadata from query tree.
-   *  @return true if supported
-   *  @return false otherwise.
-   */
-//  virtual bool generate_metadata(boost::property_tree::ptree& metadata) = 0;
+	IndexStmt* index_stmt() const { 
+		Node* node = this->statement();
+		return IsA(node, IndexStmt) ? (IndexStmt*) node : nullptr;
+	}
 
- private:
-  IndexStmt* index_stmt_; // qeury tree
+	/**
+	 *  @brief  Create metadata from query tree.
+	 *  @return true if supported
+	 *  @return false otherwise.
+	 */
+	//  virtual bool generate_metadata(boost::property_tree::ptree& metadata) = 0;
 };
