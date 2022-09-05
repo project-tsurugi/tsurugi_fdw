@@ -53,6 +53,7 @@ void execute_create_stmt(PlannedStmt *pstmt,
     ObjectAddress address;
     ObjectAddress secondaryObject = InvalidObjectAddress;
     int64_t  object_id = -1;
+	bool success;
 
     /* ... and do it */
     foreach(l, stmts)
@@ -68,9 +69,7 @@ void execute_create_stmt(PlannedStmt *pstmt,
         }
         else if (IsA(stmt, IndexStmt))
         {
-          	Node *parsetree = pstmt->utilityStmt;
-			IndexStmt *index_stmt = (IndexStmt *) parsetree;
-            execute_create_index(index_stmt);
+            execute_create_index((IndexStmt*) stmt);
         }
         else if (IsA(stmt, CreateForeignTableStmt))
         {
@@ -88,13 +87,15 @@ void execute_create_stmt(PlannedStmt *pstmt,
         else
         {
             ereport(ERROR,
-                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                  errmsg("Tsurugi supports only PRIMARY KEY constraint in table constraint"),
-                  errdetail("Tsurugi does not support FOREIGN KEY table constraint")));
+                	(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                  	errmsg("Tsurugi supports only PRIMARY KEY constraint in table constraint"),
+                  	errdetail("Tsurugi does not support FOREIGN KEY table constraint")));
         }
     }
-
-//    send_create_table_message(object_id);
+    success = send_create_table_message(object_id);
+	if (!success) {
+		remove_table_metadata(object_id);
+	}
 }
 
 /**

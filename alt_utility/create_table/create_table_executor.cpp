@@ -48,75 +48,85 @@ using namespace manager;
 /* DB name metadata-manager manages */
 const std::string DBNAME = "Tsurugi";
 
-manager::metadata::ObjectIdType store_metadata(
-    std::unique_ptr<metadata::Metadata>& objects, 
-    const property_tree::ptree& object);
-
-bool remove_metadata(
-    std::unique_ptr<metadata::Metadata>& objects, 
-    const metadata::ObjectIdType object_id);
-
 /**
  *  @brief Calls the function sending metadata to metadata-manager and creates parameters sended to ogawayama.
  *  @param [in] List of statements.
  */
 int64_t execute_create_table(CreateStmt* create_stmt)
 {
-  Assert(create_stmt != nullptr);
+	Assert(create_stmt != nullptr);
 
-  metadata::ObjectIdType object_id = metadata::INVALID_OBJECT_ID;
-  CreateTable create_table{create_stmt};
+	metadata::ObjectIdType object_id = metadata::INVALID_OBJECT_ID;
+	CreateTable create_table{create_stmt};
 
-  /* check if given syntax supported or not by Tsurugi */
-  if (!create_table.validate_syntax()) {
-      return object_id;
-  }
+	/* check if given syntax supported or not by Tsurugi */
+	if (!create_table.validate_syntax()) {
+		return object_id;
+	}
 
-  /* check if given type supported or not by Tsurugi */
-  if (!create_table.validate_data_type()) {
-      return object_id;
-  }
+	/* check if given type supported or not by Tsurugi */
+	if (!create_table.validate_data_type()) {
+		return object_id;
+	}
 
-  property_tree::ptree table;
-  bool success = create_table.generate_metadata(table);
-  if (!success) {
-    ereport(ERROR,
-            (errcode(ERRCODE_INTERNAL_ERROR), 
-            errmsg("CreateTable::generate_metadata() failed.")));
-    return  object_id;
-  }
+	property_tree::ptree table;
+	bool success = create_table.generate_metadata(table);
+	if (!success) {
+	ereport(ERROR,
+			(errcode(ERRCODE_INTERNAL_ERROR), 
+			errmsg("CreateTable::generate_metadata() failed.")));
+	return  object_id;
+	}
 
-  std::unique_ptr<metadata::Metadata> tables = std::make_unique<metadata::Tables>(DBNAME);
-  object_id = store_metadata(tables, table);
-  if (object_id == metadata::INVALID_OBJECT_ID) {
-    ereport(ERROR,
-            (errcode(ERRCODE_INTERNAL_ERROR),
-            errmsg("Tsurugi could not store table metadata.")));
-    return object_id;
-  }
-
-  return object_id;
+	std::unique_ptr<metadata::Metadata> tables = std::make_unique<metadata::Tables>(DBNAME);
+#if 0
+	metadata::ErrorCode error = tables->add(table, &object_id);
+	if (error != metadata::ErrorCode::OK ) {
+		if (error == metadata::ErrorCode::TABLE_NAME_ALREADY_EXISTS) {
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+					errmsg("The table is already exists. (name: %s)",
+					(char*) create_table.get_table_name())));
+		} else {
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("Tsurugi could not add metadata to metadata-manager. (error: %d)", 
+					(int) error)));
+			return object_id;
+		}
+	}
+#endif
+	return object_id;
 }
 
 /**
- * @brief   Store metadata to metadata-manager.
- * @param
- * @return
+ * @brief	Send create-table message to OLTP.
+ * 
  */
-metadata::ObjectIdType store_metadata(
-    std::unique_ptr<metadata::Metadata>& objects, 
-    const property_tree::ptree& object)
+bool send_create_table_message(const int64_t object_id)
 {
-  metadata::ObjectIdType object_id = metadata::INVALID_OBJECT_ID;
-  metadata::ErrorCode error = objects->add(object, &object_id);
-  if (error != metadata::ErrorCode::OK ) {
-    ereport(ERROR,
-            (errcode(ERRCODE_INTERNAL_ERROR),
-              errmsg("Tsurugi could not add metadata to metadata-manager. (error: %d)", 
-              (int) error)));
-    return object_id;
-  }
-  return object_id;
+	bool result = false;
+
+	if (object_id == metadata::INVALID_OBJECT_ID) {
+		return result;
+	}
+
+	/* sends message to ogawayama */
+	manager::message::CreateTable create_table_message{object_id};
+#if 0
+	bool success = send_message(create_table_message);
+#else
+	bool success = true;
+#endif
+	if (!success) {
+	ereport(ERROR,
+			(errcode(ERRCODE_INTERNAL_ERROR), 
+			errmsg("send_message() failed. (CreateTable Message)")));
+	return result;
+	}
+	result = true;
+
+	return result;  
 }
 
 /**
@@ -124,20 +134,18 @@ metadata::ObjectIdType store_metadata(
  * @param
  * @return
  */
-bool remove_metadata(
-    std::unique_ptr<metadata::Metadata>& objects, 
-    const metadata::ObjectIdType object_id)
+bool remove_table_metadata(const int64_t object_id)
 {
   bool ret_value = false;
   property_tree::ptree data;
+  auto tables = std::make_unique<metadata::Tables>(DBNAME);
 
-  metadata::ErrorCode error = objects->get(object_id, data);  // ToDo: add exists() method.
-  if (error == metadata::ErrorCode::OK) {
-    error = objects->remove(object_id);
+  if (tables->exists(object_id)) {
+    metadata::ErrorCode error = tables->remove(object_id);
     if (error != metadata::ErrorCode::OK) {
       ereport(WARNING,
               (errcode(ERRCODE_INTERNAL_ERROR),
-              errmsg("remove metadata() failed. (error: %d) (oid: %d)", 
+              errmsg("remove table metadata() failed. (error: %d) (oid: %d)", 
               (int) error, (int) object_id)));
       return ret_value;
     }
@@ -146,27 +154,4 @@ bool remove_metadata(
   ret_value = true;
 
   return ret_value;
-}
-
-bool send_create_table_message(int64_t object_id)
-{
-  bool result = false;
-
-  /* sends message to ogawayama */
-  manager::message::CreateTable create_table_message{object_id};
-#if 0
-  bool success = send_message(create_table_message);
-#else
-  bool success = true;
-#endif
-  if (!success) {
-//    remove_metadata(tables, object_id);
-    ereport(ERROR,
-            (errcode(ERRCODE_INTERNAL_ERROR), 
-            errmsg("send_message() failed. (CreateTable Message)")));
-    return result;
-  }
-  result = true;
-
-  return result;  
 }

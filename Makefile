@@ -1,9 +1,10 @@
 # contrib/frontend/ogawayama_fdw/Makefile
 
 MODULE_big = ogawayama_fdw
-OBJS = common/init.o common/stub_manager.o common/send_message.o \
+OBJS = common/init.o common/stub_manager.o \
         ogawayama_fdw/ogawayama_fdw.o \
         alt_planner/alt_planner.o \
+		alt_utility/send_message.o \
         alt_utility/alt_utility.o alt_utility/create_stmt.o \
         alt_utility/create_table/create_table_executor.o alt_utility/create_table/create_table.o \
         alt_utility/create_index/create_index_executor.o alt_utility/create_index/create_index.o \

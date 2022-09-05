@@ -25,35 +25,41 @@
 
 class CreateTable : public CreateCommand {
  public:
-  CreateTable(CreateStmt* create_stmt) : CreateCommand(create_stmt) {}
+	CreateTable(CreateStmt* create_stmt) : CreateCommand(create_stmt) {}
 
-  /**
-   *  @brief  Check if given syntax supported or not by Tsurugi
-   *  @return true if supported
-   *  @return false otherwise.
-   */
-  virtual bool validate_syntax() const;
+	/**
+	 *  @brief  Check if given syntax supported or not by Tsurugi
+	 *  @return true if supported
+	 *  @return false otherwise.
+	 */
+	virtual bool validate_syntax() const;
 
-  /**
-   *  @brief  Check if given syntax supported or not by Tsurugi
-   *  @return true if supported
-   *  @return false otherwise.
-   */
-  virtual bool validate_data_type() const;
+	/**
+	 *  @brief  Check if given syntax supported or not by Tsurugi
+	 *  @return true if supported
+	 *  @return false otherwise.
+	 */
+	virtual bool validate_data_type() const;
 
-  /**
-   *  @brief  Create table metadata from query tree.
-   *  @return true if supported
-   *  @return false otherwise.
-   */
-  virtual bool generate_metadata(boost::property_tree::ptree& metadata);
+	/**
+	 *  @brief  Create table metadata from query tree.
+	 *  @return true if supported
+	 *  @return false otherwise.
+	 */
+	virtual bool generate_metadata(boost::property_tree::ptree& metadata);
+
+	static constexpr const char* DEFAULT_DB_NAME = "tsurugi";
+	const char* get_table_name() const {
+		return table_.name.data();
+	};
 
  private:
+	bool create_column_metadata(ColumnDef* column_def, 
+								int64_t ordinal_position, 
+								boost::property_tree::ptree& column,
+								manager::metadata::Column& column_);
 
-  bool create_column_metadata(ColumnDef* column_def, 
-                              int64_t ordinal_position, 
-                              boost::property_tree::ptree& column,
-                              manager::metadata::Column& column_);
-  bool put_data_lengths(List* typmods, boost::property_tree::ptree& datalengths);
+	bool put_data_lengths(List* typmods, boost::property_tree::ptree& datalengths);
 
+	manager::metadata::Table table_;
 };

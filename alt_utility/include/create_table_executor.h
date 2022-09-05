@@ -25,7 +25,8 @@ extern "C" {
 #include "nodes/parsenodes.h"
 
 int64_t execute_create_table(CreateStmt* stmt);
-bool send_create_table_message(int64_t object_id);
+bool send_create_table_message(const int64_t object_id);
+bool remove_table_metadata(const int64_t object_id);
 
 #ifdef __cplusplus
 }

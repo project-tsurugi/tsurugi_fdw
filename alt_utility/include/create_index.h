@@ -36,8 +36,9 @@ class CreateIndex : public IndexCommand {
 	/**
 	 * @brief 
 	 */
-	std::string_view get_table_name(void) const {
+	const char* get_table_name(void) const {
 		IndexStmt* index_stmt = this->index_stmt();
+		assert(index_stmt != nullptr);
 		return index_stmt->relation->relname;
 	}
 

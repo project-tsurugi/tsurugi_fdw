@@ -26,7 +26,7 @@ using namespace manager;
 /* base index of ordinal position metadata-manager manages */
 const metadata::ObjectIdType ORDINAL_POSITION_BASE_INDEX = 1;
 
-metadata::Column::Direction get_sort_by_dir(SortByDir direction)
+metadata::Column::Direction get_direction(SortByDir direction)
 {
 	metadata::Column::Direction result = metadata::Column::Direction::UNSUPPORTED;
 	switch (direction)
@@ -78,7 +78,7 @@ bool get_primary_keys_and_direction(IndexStmt* index_stmt, metadata::Table& tabl
 					if (column.name == elem->name) {
 						table.primary_keys.emplace_back(column.ordinal_position);
 						metadata::Column::Direction direction 
-								= get_sort_by_dir(elem->ordering);
+								= get_direction(elem->ordering);
 						if (direction == metadata::Column::Direction::UNSUPPORTED) {
 							return result;
 						} 

@@ -33,10 +33,10 @@ extern "C"
 
 class DropCommand : public DDLCommand {
  public:
-  DropCommand(DropStmt* drop_stmt) : drop_stmt_{drop_stmt} {}
+  	DropCommand(DropStmt* drop_stmt) : DDLCommand{(Node*) drop_stmt} {}
 
-  DropStmt* drop_stmt() {drop_stmt_;}
-
- private:
-  DropStmt* drop_stmt_; // qeury tree
+	DropStmt* create_stmt() const { 
+		Node* node = this->statement();
+		return IsA(node, CreateStmt) ? (DropStmt*) node : nullptr;
+	}
 };
