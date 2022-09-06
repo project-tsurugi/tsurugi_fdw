@@ -69,8 +69,12 @@ int64_t execute_create_table(CreateStmt* create_stmt)
 		return object_id;
 	}
 
+#if 0
 	property_tree::ptree table;
-	bool success = create_table.generate_metadata(table);
+#else
+	metadata::Table table;
+#endif
+	bool success = create_table.generate_metadata2(table);
 	if (!success) {
 	ereport(ERROR,
 			(errcode(ERRCODE_INTERNAL_ERROR), 
@@ -78,11 +82,10 @@ int64_t execute_create_table(CreateStmt* create_stmt)
 	return  object_id;
 	}
 
-	std::unique_ptr<metadata::Metadata> tables = std::make_unique<metadata::Tables>(DBNAME);
-#if 0
+	auto tables = std::make_unique<metadata::Tables>(DBNAME);
 	metadata::ErrorCode error = tables->add(table, &object_id);
 	if (error != metadata::ErrorCode::OK ) {
-		if (error == metadata::ErrorCode::TABLE_NAME_ALREADY_EXISTS) {
+		if (error == metadata::ErrorCode::ALREADY_EXISTS) {
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 					errmsg("The table is already exists. (name: %s)",
@@ -90,12 +93,11 @@ int64_t execute_create_table(CreateStmt* create_stmt)
 		} else {
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
-					errmsg("Tsurugi could not add metadata to metadata-manager. (error: %d)", 
-					(int) error)));
+					errmsg("Tsurugi could not add metadata to " \
+					"metadata-manager. (error: %d)", (int) error)));
 			return object_id;
 		}
 	}
-#endif
 	return object_id;
 }
 

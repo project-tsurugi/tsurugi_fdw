@@ -33,7 +33,7 @@
 #include "create_index_executor.h"
 
 static const char *TSURUGI_TABLESPACE_NAME = "tsurugi";
-static const char *TSURUGI_TABLE_SUFFIX = "_tsurugi";
+//static const char *TSURUGI_TABLE_SUFFIX = "_tsurugi";
 
 int64_t do_create_stmt(PlannedStmt *pstmt,
                       const char *queryString,
@@ -69,7 +69,7 @@ void execute_create_stmt(PlannedStmt *pstmt,
         }
         else if (IsA(stmt, IndexStmt))
         {
-            execute_create_index((IndexStmt*) stmt);
+            object_id = execute_create_index((IndexStmt*) stmt);
         }
         else if (IsA(stmt, CreateForeignTableStmt))
         {
@@ -124,12 +124,7 @@ int64_t do_create_stmt(PlannedStmt *pstmt,
                 elog(ERROR, "create_table() failed.");
             }
         }
-        strcat(create_stmt->relation->relname, TSURUGI_TABLE_SUFFIX);
     }
-    /* Create the table itself */
-    DefineRelation((CreateStmt *) create_stmt,
-					RELKIND_RELATION,
-					InvalidOid, NULL,
-					queryString);
+
     return object_id;
 }

@@ -31,7 +31,7 @@ class CreateIndex : public IndexCommand {
 	virtual bool validate_data_type() const;
 //	virtual bool generate_metadata(boost::property_tree::ptree& metadata) const;
 	manager::metadata::ErrorCode 
-	generate_table_metadata(manager::metadata::Table table) const;
+	generate_table_metadata(manager::metadata::Table& table) const;
 
 	/**
 	 * @brief 

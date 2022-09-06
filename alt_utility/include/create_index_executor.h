@@ -24,7 +24,7 @@ extern "C" {
 #include "postgres.h"
 #include "nodes/parsenodes.h"
 
-void execute_create_index(IndexStmt* index_stmt);
+int64_t execute_create_index(IndexStmt* index_stmt);
 
 #ifdef __cplusplus
 }

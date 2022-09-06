@@ -23,8 +23,11 @@
 
 using namespace manager;
 
-void execute_create_index(IndexStmt* index_stmt)
+int64_t execute_create_index(IndexStmt* index_stmt)
 {
+	assert(index_stmt != nullptr);
+
+	metadata::ObjectIdType object_id = metadata::INVALID_OBJECT_ID;
 	CreateIndex create_index(index_stmt);
 
 	// Primary Keys
@@ -32,9 +35,33 @@ void execute_create_index(IndexStmt* index_stmt)
 	metadata::Table table;
 	auto error = tables->get(create_index.get_table_name(), table);
 	if (error != metadata::ErrorCode::OK) {
-		return;
+		ereport(NOTICE,
+				errmsg("Table not found. (name: %s)", 
+				create_index.get_table_name()));
+		return object_id;
 	}
+	object_id = table.id;
+
 	if (table.primary_keys.size() == 0) {
-		create_index.generate_table_metadata(table);
+		// Primary keys specified in table constraints.
+		auto error = create_index.generate_table_metadata(table);
+		if (error != metadata::ErrorCode::OK) {
+			ereport(NOTICE,	errmsg("Primary keys not found."));
+			return object_id;
+		}
+		error = tables->remove(table.id);
+		if (error != metadata::ErrorCode::OK) {
+			ereport(NOTICE,	
+					errmsg("Remove a table metadata failed. (name: %s) (error:%d)",
+					table.name.data(), (int) error));
+		}
+		error = tables->add(table, &object_id);
+		if (error != metadata::ErrorCode::OK) {
+			ereport(NOTICE,	
+					errmsg("Add a table metadata failed. (name: %s) (error:%d)",
+					table.name.data(), (int) error));
+		}
 	}
+
+	return object_id;
 }

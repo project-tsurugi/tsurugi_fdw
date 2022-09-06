@@ -26,43 +26,17 @@ using namespace manager;
 /* base index of ordinal position metadata-manager manages */
 const metadata::ObjectIdType ORDINAL_POSITION_BASE_INDEX = 1;
 
-metadata::Column::Direction get_direction(SortByDir direction)
-{
-	metadata::Column::Direction result = metadata::Column::Direction::UNSUPPORTED;
-	switch (direction)
-	{
-		case SortByDir::SORTBY_DEFAULT: {
-			result = metadata::Column::Direction::DEFAULT;
-			break;
-		}
-		case SortByDir::SORTBY_ASC: {
-			result = metadata::Column::Direction::ASCENDANT;
-		}
-		case SortByDir::SORTBY_DESC: {
-			result = metadata::Column::Direction::DESCENDANT;
-			break;
-		}
-		default: {
-			// case SortByDir::SORTBY_USING:
-			result = metadata::Column::Direction::UNSUPPORTED;
-			break;
-		}
-	}
-
-	return result;
-}
-
 /**
  * 
  * 
  */
-bool get_primary_keys_and_direction(IndexStmt* index_stmt, metadata::Table& table)
+bool get_primary_keys(IndexStmt* index_stmt, std::vector<int64_t>& primary_keys)
 {
 	bool result = false;
 	auto tables = std::make_unique<metadata::Tables>("tsurugi");
 
-	ListCell* listptr;
 	if (index_stmt->primary) {
+		ListCell* listptr;
 		foreach(listptr, index_stmt->indexParams) {
 			Node* stmt = (Node*) lfirst(listptr);
 			if (IsA(stmt, IndexElem)) {
@@ -74,15 +48,9 @@ bool get_primary_keys_and_direction(IndexStmt* index_stmt, metadata::Table& tabl
 						(int) error, index_stmt->relation->relname);
 					return result;
 				}
-				for (metadata::Column& column : table.columns) {
+				for (const metadata::Column& column : table.columns) {
 					if (column.name == elem->name) {
-						table.primary_keys.emplace_back(column.ordinal_position);
-						metadata::Column::Direction direction 
-								= get_direction(elem->ordering);
-						if (direction == metadata::Column::Direction::UNSUPPORTED) {
-							return result;
-						} 
-						column.direction = static_cast<int64_t>(direction);
+						primary_keys.emplace_back(column.ordinal_position);
 					}
 				}
 			}
@@ -96,23 +64,19 @@ bool get_primary_keys_and_direction(IndexStmt* index_stmt, metadata::Table& tabl
 /**
  * @brief  	Create table metadata from query tree.
  * @return 	true if success, otherwise fault.
- * @note	Add metadata of Primary-keys and Direction.
+ * @note	Add metadata of Primary-keys.
  */
 manager::metadata::ErrorCode 
-CreateIndex::generate_table_metadata(manager::metadata::Table table) const
+CreateIndex::generate_table_metadata(manager::metadata::Table& table) const
 {
-	auto result = metadata::ErrorCode::UNKNOWN;
 	IndexStmt* index_stmt = this->index_stmt();
-	std::vector<int64_t> primary_keys;
 
-	bool success = get_primary_keys_and_direction(index_stmt, table);
+	bool success = get_primary_keys(index_stmt, table.primary_keys);
 	if (!success) {
-		result = metadata::ErrorCode::NOT_FOUND;
-		return result;
+		return metadata::ErrorCode::NOT_FOUND;
 	}
-	result = metadata::ErrorCode::OK;;
 
-  	return result;
+	return metadata::ErrorCode::OK;
 }
 
 /**

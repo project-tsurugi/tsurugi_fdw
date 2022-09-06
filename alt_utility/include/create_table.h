@@ -27,30 +27,18 @@ class CreateTable : public CreateCommand {
  public:
 	CreateTable(CreateStmt* create_stmt) : CreateCommand(create_stmt) {}
 
-	/**
-	 *  @brief  Check if given syntax supported or not by Tsurugi
-	 *  @return true if supported
-	 *  @return false otherwise.
-	 */
 	virtual bool validate_syntax() const;
-
-	/**
-	 *  @brief  Check if given syntax supported or not by Tsurugi
-	 *  @return true if supported
-	 *  @return false otherwise.
-	 */
 	virtual bool validate_data_type() const;
-
-	/**
-	 *  @brief  Create table metadata from query tree.
-	 *  @return true if supported
-	 *  @return false otherwise.
-	 */
-	virtual bool generate_metadata(boost::property_tree::ptree& metadata);
+	virtual bool generate_metadata(boost::property_tree::ptree& metadata) {
+		return false;
+	}
+	bool generate_metadata2(manager::metadata::Table& object);
 
 	static constexpr const char* DEFAULT_DB_NAME = "tsurugi";
-	const char* get_table_name() const {
-		return table_.name.data();
+	const char* get_table_name() {
+		manager::metadata::Table table;
+		this->generate_metadata2(table);
+		return table.name.data();
 	};
 
  private:
@@ -60,6 +48,4 @@ class CreateTable : public CreateCommand {
 								manager::metadata::Column& column_);
 
 	bool put_data_lengths(List* typmods, boost::property_tree::ptree& datalengths);
-
-	manager::metadata::Table table_;
 };
