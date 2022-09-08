@@ -35,8 +35,8 @@ class DropCommand : public DDLCommand {
  public:
   	DropCommand(DropStmt* drop_stmt) : DDLCommand{(Node*) drop_stmt} {}
 
-	DropStmt* create_stmt() const { 
+	DropStmt* drop_stmt() const { 
 		Node* node = this->statement();
-		return IsA(node, CreateStmt) ? (DropStmt*) node : nullptr;
+		return IsA(node, DropStmt) ? (DropStmt*) node : nullptr;
 	}
 };

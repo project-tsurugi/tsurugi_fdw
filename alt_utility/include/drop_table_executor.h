@@ -26,7 +26,7 @@ extern "C" {
 
 #include "nodes/parsenodes.h"
 
-bool drop_table(DropStmt *drop, char *relname);
+bool execute_drop_table(DropStmt *drop, const char *relname);
 
 #ifdef __cplusplus
 }
