@@ -1,4 +1,4 @@
-# frontend for Ogawayama (PostgreSQL add-on)
+# frontend for Tsurugi (PostgreSQL add-on)
 
 ## Requirements
 * C++ Compiler `>= C++17`
