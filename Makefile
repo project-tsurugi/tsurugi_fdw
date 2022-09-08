@@ -36,7 +36,7 @@ PG_CPPFLAGS = -Icommon/include \
               
 SHLIB_LINK_INTERNAL = $(libpq)
 
-SHLIB_LINK = -logawayama-stub -lmanager-metadata -lmanager-message -lboost_filesystem
+SHLIB_LINK = -logawayama-stub -lmetadata-manager -lmessage-manager -lboost_filesystem
 
 ifdef USE_PGXS
         PG_CONFIG = pg_config
