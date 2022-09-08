@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 tsurugi project.
+ * Copyright 2019-2022 tsurugi project.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,14 @@
  *	@file	create_table.h
  *	@brief  Dispatch the create-table command to ogawayama.
  */
+#pragma once
 
-#ifndef CREATE_TABLE_H
-#define CREATE_TABLE_H
+#include "postgres.h"
+#include "nodes/plannodes.h"
+#include "nodes/params.h"
+#include "nodes/pg_list.h"
 
-#ifdef __cplusplus
-extern "C" {
-
-#endif
-
-bool create_table(List *stmts);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif // CREATE_TABLE_H
+void execute_create_stmt(PlannedStmt* pstmt,
+                          const char* queryString,
+                          ParamListInfo params,
+                          List* stmts);

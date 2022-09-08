@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 tsurugi project.
+ * Copyright 2019-2022 tsurugi project.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	drop_table.h
+ *	@file	create_table.h
  *	@brief  Dispatch the create-table command to ogawayama.
  */
-
-#ifndef DROP_TABLE_H
-#define DROP_TABLE_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
-
 #endif
+#include "postgres.h"
+#include "nodes/parsenodes.h"
 
-bool drop_table(DropStmt *drop, char *relname);
+int64_t execute_create_table(CreateStmt* stmt);
+bool send_create_table_message(const int64_t object_id);
+bool remove_table_metadata(const int64_t object_id);
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif // DROP_TABLE_H

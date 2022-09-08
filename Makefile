@@ -4,7 +4,11 @@ MODULE_big = ogawayama_fdw
 OBJS = common/init.o common/stub_manager.o \
         ogawayama_fdw/ogawayama_fdw.o \
         alt_planner/alt_planner.o \
-        alt_utility/tablecmds.o alt_utility/create_table.o alt_utility/drop_table.o alt_utility/alt_utility.o \
+		alt_utility/send_message.o \
+        alt_utility/alt_utility.o alt_utility/create_stmt.o \
+        alt_utility/create_table/create_table_executor.o alt_utility/create_table/create_table.o \
+        alt_utility/create_index/create_index_executor.o alt_utility/create_index/create_index.o \
+        alt_utility/drop_table/drop_table_executor.o \
         $(WIN32RES)
 
 EXTENSION = ogawayama_fdw
@@ -22,16 +26,17 @@ endif
 
 PGFILEDESC = "ogawayama_fdw - foregin data wrapper for ogawayama-server"
 
-PG_CPPFLAGS = -Iinclude \
+PG_CPPFLAGS = -Icommon/include \
+			  -Ialt_utility/include \
               -Ithird_party/ogawayama/stub/include \
-              -Ithird_party/manager/metadata-manager/include \
-              -Ithird_party/manager/message-broker/include \
+              -Ithird_party/metadata-manager/include \
+              -Ithird_party/message-manager/include \
               -std=c++17 -fPIC -Dregister= -O0\
               -I$(libpq_srcdir)
               
 SHLIB_LINK_INTERNAL = $(libpq)
 
-SHLIB_LINK = -logawayama-stub -lmanager-metadata -lmanager-message -lboost_filesystem
+SHLIB_LINK = -logawayama-stub -lmetadata-manager -lmessage-manager -lboost_filesystem
 
 ifdef USE_PGXS
         PG_CONFIG = pg_config
