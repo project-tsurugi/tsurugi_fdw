@@ -138,10 +138,15 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 }
 
 /**
- * @brief
- * 
- * 
- * 
+ * @brief 	
+ * @param	psatte
+ * @param	pstmt
+ * @param	queryString
+ * @param	context
+ * @param	params
+ * @param	queryEnv
+ * @param	dest
+ * @param	completionTag
  */
 static void
 tsurugi_ProcessUtilitySlow(ParseState *pstate,
@@ -153,14 +158,13 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
 				           DestReceiver *dest,
 				           char *completionTag)
 {
-    Node	   *parsetree = pstmt->utilityStmt;
-    bool		isTopLevel = (context == PROCESS_UTILITY_TOPLEVEL);
-    bool		isCompleteQuery = (context <= PROCESS_UTILITY_QUERY);
-    bool		needCleanup;
-    bool		commandCollected = false;
+    Node	*parsetree = pstmt->utilityStmt;
+    bool	isTopLevel = (context == PROCESS_UTILITY_TOPLEVEL);
+    bool	isCompleteQuery = (context <= PROCESS_UTILITY_QUERY);
+    bool	needCleanup;
+    bool	commandCollected = false;
     ObjectAddress address;
     ObjectAddress secondaryObject = InvalidObjectAddress;
-    bool    success;
 
     /* All event trigger calls are done only when isCompleteQuery is true */
     needCleanup = isCompleteQuery && EventTriggerBeginCompleteQuery();
@@ -194,7 +198,7 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
 			{
 				DropStmt *drop = (DropStmt *) parsetree;
 				execute_drop_stmt(drop);
-				
+
 				/* no commands stashed for DROP */
 				commandCollected = true;
 				break;

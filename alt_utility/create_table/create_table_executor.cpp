@@ -121,10 +121,10 @@ bool send_create_table_message(const int64_t object_id)
 	bool success = true;
 #endif
 	if (!success) {
-	ereport(ERROR,
-			(errcode(ERRCODE_INTERNAL_ERROR), 
-			errmsg("send_message() failed. (CreateTable Message)")));
-	return result;
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR), 
+				errmsg("send_message() failed. (CreateTable Message)")));
+		return result;
 	}
 	result = true;
 
