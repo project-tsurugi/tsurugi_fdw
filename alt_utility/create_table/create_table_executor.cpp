@@ -115,7 +115,7 @@ bool send_create_table_message(const int64_t object_id)
 
 	/* sends message to ogawayama */
 	manager::message::CreateTable create_table_message{object_id};
-#if 0
+#if 1
 	bool success = send_message(create_table_message);
 #else
 	bool success = true;
@@ -138,8 +138,7 @@ bool send_create_table_message(const int64_t object_id)
  */
 bool remove_table_metadata(const int64_t object_id)
 {
-  bool ret_value = false;
-  property_tree::ptree data;
+  bool result{false};
   auto tables = std::make_unique<metadata::Tables>(DBNAME);
 
   if (tables->exists(object_id)) {
@@ -149,11 +148,10 @@ bool remove_table_metadata(const int64_t object_id)
               (errcode(ERRCODE_INTERNAL_ERROR),
               errmsg("remove table metadata() failed. (error: %d) (oid: %d)", 
               (int) error, (int) object_id)));
-      return ret_value;
+      return result;
     }
   }
+  result = true;
 
-  ret_value = true;
-
-  return ret_value;
+  return result;
 }
