@@ -34,6 +34,7 @@
 #include "commands/tablecmds.h"
 
 #include "create_stmt.h"
+#include "drop_stmt.h"
 #include "drop_table_executor.h"
 
 #ifndef PG_MODULE_MAGIC
@@ -137,10 +138,15 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 }
 
 /**
- * @brief
- * 
- * 
- * 
+ * @brief 	
+ * @param	psatte
+ * @param	pstmt
+ * @param	queryString
+ * @param	context
+ * @param	params
+ * @param	queryEnv
+ * @param	dest
+ * @param	completionTag
  */
 static void
 tsurugi_ProcessUtilitySlow(ParseState *pstate,
@@ -152,99 +158,57 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
 				           DestReceiver *dest,
 				           char *completionTag)
 {
-    Node	   *parsetree = pstmt->utilityStmt;
-    bool		isTopLevel = (context == PROCESS_UTILITY_TOPLEVEL);
-    bool		isCompleteQuery = (context <= PROCESS_UTILITY_QUERY);
-    bool		needCleanup;
-    bool		commandCollected = false;
+    Node	*parsetree = pstmt->utilityStmt;
+    bool	isTopLevel = (context == PROCESS_UTILITY_TOPLEVEL);
+    bool	isCompleteQuery = (context <= PROCESS_UTILITY_QUERY);
+    bool	needCleanup;
+    bool	commandCollected = false;
     ObjectAddress address;
     ObjectAddress secondaryObject = InvalidObjectAddress;
-    bool    success;
 
     /* All event trigger calls are done only when isCompleteQuery is true */
     needCleanup = isCompleteQuery && EventTriggerBeginCompleteQuery();
 
     /* PG_TRY block is to ensure we call EventTriggerEndCompleteQuery */
     PG_TRY();
-      {
-          if (isCompleteQuery)
-            EventTriggerDDLCommandStart(parsetree);
+	{
+		if (isCompleteQuery)
+		EventTriggerDDLCommandStart(parsetree);
 
-          switch (nodeTag(parsetree))
-          {
-              case T_CreateStmt:
-                  {
-                      Node	    *parsetree = pstmt->utilityStmt;    
-                      List      *stmts;
-                   
-                      /* Run parse analysis ... */
-                      stmts = transformCreateStmt((CreateStmt *) parsetree,
-                                                  queryString);
-                      execute_create_stmt(pstmt, queryString, params, stmts);
-                  }
-                  break;
+		switch (nodeTag(parsetree))
+		{
+			case T_CreateStmt:
+			{
+				Node	    *parsetree = pstmt->utilityStmt;    
+				List      *stmts;
 
-              case T_IndexStmt:	/* CREATE INDEX */
-                  {
-                  }
-                  break;
+				/* Run parse analysis ... */
+				stmts = transformCreateStmt((CreateStmt *) parsetree,
+											queryString);
+				execute_create_stmt(pstmt, queryString, params, stmts);
+				break;
+			}
 
-              case T_DropStmt:
-                  {
-                      DropStmt *drop = (DropStmt *) parsetree;
-                      ListCell *cell;
-                      foreach(cell, drop->objects)
-                      {
-                          RangeVar rel;
-                          int nameLen, suffixLen;
-                          List *names = (List *) lfirst(cell);
+			case T_IndexStmt:	/* CREATE INDEX */
+			{
+				break;
+			}
 
-                          switch (list_length(names))
-                          {
-                              case 1:
-                                  rel.relname = strVal(linitial(names));
-                                  break;
-                              case 2:
-                                  rel.schemaname = strVal(linitial(names));
-                                  rel.relname = strVal(lsecond(names));
-                                  break;
-                              case 3:
-                                  rel.catalogname = strVal(linitial(names));
-                                  rel.schemaname = strVal(lsecond(names));
-                                  rel.relname = strVal(lthird(names));
-                                  break;
-                              default:
-                                  elog(ERROR, "improper relation name (too many dotted names).");
-                                  break;
-                          }
+			case T_DropStmt:
+			{
+				DropStmt *drop = (DropStmt *) parsetree;
+				execute_drop_stmt(drop);
 
-                          nameLen = strlen(rel.relname);
-                          suffixLen = strlen(TSURUGI_TABLE_SUFFIX);
-                          if (nameLen > suffixLen) {
-                              int index = nameLen - suffixLen;
-                              if (0 == strncmp(&rel.relname[index], TSURUGI_TABLE_SUFFIX, suffixLen)) {
-                                  char relname[64];
-                                  strncpy(relname, rel.relname, nameLen);
-                                  relname[index] = '\0';
-                                  success = drop_table(drop, relname);
-                                  if (!success) {
-                                      elog(ERROR, "drop_table() failed.");
-                                  }
-                              }
-                          }
-                      }
-                      RemoveRelations(drop);
+				/* no commands stashed for DROP */
+				commandCollected = true;
+				break;
+			}
 
-                      /* no commands stashed for DROP */
-                      commandCollected = true;
-                  }
-                  break;
-
-              default:
-                  elog(ERROR, "unrecognized node type: %d",
-                    (int) nodeTag(parsetree));
-                  break;
-          }
+			default:
+				elog(ERROR, "unrecognized node type: %d",
+				(int) nodeTag(parsetree));
+				break;
+		}
       /*
       * Remember the object so that ddl_command_end event triggers have
       * access to it.

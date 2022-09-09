@@ -19,15 +19,7 @@
 #include "ogawayama/stub/api.h"
 #include "stub_manager.h"
 
-#if 0
-#include "frontend/message/ddl_message.h"
-#include "frontend/message/message_broker.h"
-#include "frontend/message/status.h"
-#else
 #include "manager/message/ddl_message.h"
-#include "manager/message/broker.h"
-#include "manager/message/status.h"
-#endif
 #include "manager/metadata/datatypes.h"
 #include "manager/metadata/metadata.h"
 #include "manager/metadata/tables.h"
@@ -44,6 +36,7 @@ extern "C"
 
 #include "send_message.h"
 #include "drop_table_executor.h"
+#include "drop_table.h"
 
 /* DB name metadata-manager manages */
 const std::string DBNAME = "Tsurugi";
@@ -57,56 +50,60 @@ using namespace ogawayama;
  *  @brief Calls the function sending metadata to metadata-manager and drops parameters sended to ogawayama.
  *  @param [in] Table name to remove.
  */
-bool drop_table(DropStmt *drop, char *relname)
+bool execute_drop_table(DropStmt* drop_stmt, const char* relname)
 {
-    Assert(drop != nullptr);
-    bool success = false;
+    Assert(drop_stmt != nullptr);
+	bool result{false};
+	DropTable drop_table(drop_stmt);
 
-    if (drop->behavior == DROP_CASCADE) {
-        ereport(ERROR,
-                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                 errmsg("Tsurugi does not support CASCADE clause")));
-        return success;
-    }
+	bool success = drop_table.validate_syntax();
+	if (!success) {
+		return result;
+	}
+
+	success = drop_table.validate_data_type();
+	if (!success) {
+		return result;
+	}
 
     /* Get the object ID of the table to be deleted */
-    property_tree::ptree remove_table;
-    std::unique_ptr<metadata::Metadata> tables = std::make_unique<Tables>(DBNAME);
-    metadata::ErrorCode error = tables->get(relname, remove_table);
+	Table table;
+    auto tables = std::make_unique<Tables>(DBNAME);
+    metadata::ErrorCode error = tables->get(relname, table);
     if (error != ErrorCode::OK) {
-        if (error == ErrorCode::NAME_NOT_FOUND && drop->missing_ok) {
-            success = true;
+        if (error == ErrorCode::NAME_NOT_FOUND && drop_stmt->missing_ok) {
+            result = true;
         } else {
             ereport(ERROR,
                     (errcode(ERRCODE_INTERNAL_ERROR),
                      errmsg("drop_table() get metadata failed.")));
         }
-        return success;
+        return result;
     }
-    boost::optional<ObjectIdType> remove_table_id = 
-        remove_table.get_optional<ObjectIdType>(Tables::ID);
-    ObjectIdType object_id = remove_table_id.get();
 
     /* DROP_TABLE message to ogawayama */
-    message::DropTable drop_table_message{object_id};
+    message::DropTable drop_table_message{table.id};
+#if 1
     success = send_message(drop_table_message);
+#else
+	success = true;
+#endif
     if (!success) {
       ereport(ERROR,
               (errcode(ERRCODE_INTERNAL_ERROR), 
               errmsg("send_message() failed. (DROP_TABLE)")));
-      return success;
+      return result;
     }
 
     /* remobe metadata */
-    // ToDo: Fix process order.
-    error = tables->remove(object_id);
+    error = tables->remove(table.id);
     if (error != ErrorCode::OK) {
         ereport(ERROR,
                 (errcode(ERRCODE_INTERNAL_ERROR),
                  errmsg("drop_table() remove metadata failed.")));
-        success = false;
-        return success;
+        return result;
     }
+	result = true;
 
-    return success;
+    return result;
 }

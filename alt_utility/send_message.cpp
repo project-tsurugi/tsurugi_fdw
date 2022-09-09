@@ -44,7 +44,7 @@ bool send_message(message::Message& message)
 {
   bool ret_value = false;
 
-  // Get receiver.
+  // Get a receiver.
   stub::Connection* connection;
   stub::ErrorCode error = StubManager::get_connection(&connection);
   if (error != ERROR_CODE::OK) {
@@ -69,6 +69,9 @@ bool send_message(message::Message& message)
             begin_ddl.string(), status.get_sub_error_code())));
     return ret_value;
   }
+  ereport(INFO,
+  		errmsg("Send message to ogawayama. (message: %s)", 
+		begin_ddl.string()));
 
   status = message::Broker::send_message(&message);
   if (status.get_error_code() == message::ErrorCode::FAILURE) {
@@ -80,6 +83,9 @@ bool send_message(message::Message& message)
     message::Broker::send_message(&end_ddl);
     return ret_value;
   }
+  ereport(INFO,
+  		errmsg("Send message to ogawayama. (message: %s)", 
+		message.string()));
 
   status = message::Broker::send_message(&end_ddl);
   if (status.get_error_code() == message::ErrorCode::FAILURE) {
@@ -89,6 +95,9 @@ bool send_message(message::Message& message)
             end_ddl.string(), status.get_sub_error_code())));
     return ret_value;
   }
+  ereport(INFO,
+  		errmsg("Send message to ogawayama. (message: %s)", 
+		end_ddl.string()));
 
   ret_value = true;
 
