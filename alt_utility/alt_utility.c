@@ -33,6 +33,7 @@
 #include "commands/event_trigger.h"
 #include "commands/tablecmds.h"
 
+#include <string.h>
 #include "create_stmt.h"
 #include "drop_stmt.h"
 #include "drop_table_executor.h"
@@ -106,32 +107,76 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 	switch (nodeTag(parsetree))
 	{
         case T_CreateStmt:
+		{
+			CreateStmt* create_stmt = (CreateStmt*) pstmt->utilityStmt;
+			if (create_stmt->tablespacename != NULL && 
+					!strcmp(create_stmt->tablespacename, TSURUGI_TABLESPACE_NAME))
+			{
+				tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
+										context, params, queryEnv,
+										dest, completionTag);
+			}
+			else
+			{
+				standard_ProcessUtility(pstmt, queryString,
+										context, params, queryEnv,
+										dest, completionTag);
+			}
+            break;
+		}
         case T_IndexStmt: 
-            tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
-                                       context, params, queryEnv,
-                                       dest, completionTag);
+		{
+			IndexStmt* index_stmt = (IndexStmt*) pstmt->utilityStmt;
+			if (index_stmt->tableSpace != NULL && 
+					!strcmp(index_stmt->tableSpace, TSURUGI_TABLESPACE_NAME))
+			{
+				tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
+										context, params, queryEnv,
+										dest, completionTag);
+			}
+			else
+			{
+				standard_ProcessUtility(pstmt, queryString,
+										context, params, queryEnv,
+										dest, completionTag);
+			}
             break;
-
+		}
         case T_DropStmt:
-            {
-                DropStmt   *stmt = (DropStmt *) parsetree;
-
-                if (stmt->removeType == OBJECT_TABLE)
-                    tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
-                                       context, params, queryEnv,
-                                       dest, completionTag);
-                else
-                    standard_ProcessUtility(pstmt, queryString,
-                                            context, params, queryEnv,
-                                            dest, completionTag);
-            }
-            break;
-
+		{
+			RangeVar rel;
+			DropStmt *drop_stmt = (DropStmt *) parsetree;
+			if (drop_stmt->removeType == OBJECT_TABLE) {
+				bool in_tsurugi = true;
+				ListCell *listptr;
+				foreach(listptr, drop_stmt->objects) {
+					List *names = (List *) lfirst(listptr);
+					get_relname(names, &rel);
+					if (!table_exists_in_tsurugi(rel.relname)) {
+						in_tsurugi = false;
+					}
+				}
+				if (in_tsurugi) {
+					tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
+											context, params, queryEnv,
+											dest, completionTag);
+				}
+				else
+				{
+					standard_ProcessUtility(pstmt, queryString,
+											context, params, queryEnv,
+											dest, completionTag);
+				}
+			}
+			break;
+		}
 		default:
+		{
 		    standard_ProcessUtility(pstmt, queryString,
 			    					context, params, queryEnv,
 				    				dest, completionTag);
 			break;
+		}
 	}
 
 	free_parsestate(pstate);
@@ -179,7 +224,7 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
 		{
 			case T_CreateStmt:
 			{
-				Node	    *parsetree = pstmt->utilityStmt;    
+				Node	  *parsetree = pstmt->utilityStmt;    
 				List      *stmts;
 
 				/* Run parse analysis ... */

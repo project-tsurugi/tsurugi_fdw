@@ -32,9 +32,6 @@
 #include "create_table_executor.h"
 #include "create_index_executor.h"
 
-static const char *TSURUGI_TABLESPACE_NAME = "tsurugi";
-//static const char *TSURUGI_TABLE_SUFFIX = "_tsurugi";
-
 int64_t do_create_stmt(PlannedStmt *pstmt,
                       const char *queryString,
                       CreateStmt *create_stmt);
@@ -109,22 +106,18 @@ int64_t do_create_stmt(PlannedStmt *pstmt,
 {
     int64_t object_id = 0;
 
-    if (create_stmt->tablespacename != NULL
-        && !strcmp(create_stmt->tablespacename, TSURUGI_TABLESPACE_NAME))
-    {
-        object_id = execute_create_table(create_stmt);
-        if (object_id == -1) 
-        {
-            if (create_stmt->if_not_exists) 
-            {
-                elog(NOTICE, "create_table() failed.");
-            } 
-            else
-            {
-                elog(ERROR, "create_table() failed.");
-            }
-        }
-    }
+	object_id = execute_create_table(create_stmt);
+	if (object_id == -1) 
+	{
+		if (create_stmt->if_not_exists) 
+		{
+			elog(NOTICE, "create_table() failed.");
+		} 
+		else
+		{
+			elog(ERROR, "create_table() failed.");
+		}
+	}
 
     return object_id;
 }

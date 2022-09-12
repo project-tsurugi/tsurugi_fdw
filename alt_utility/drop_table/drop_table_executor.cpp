@@ -47,6 +47,17 @@ using namespace manager::metadata;
 using namespace ogawayama;
 
 /**
+ * @brief
+ * @param
+ * 
+ */
+bool table_exists_in_tsurugi(const char *relname)
+{
+    auto tables = std::make_unique<Tables>(DBNAME);
+	return (tables->exists(relname)) ? true : false;
+}
+
+/**
  *  @brief Calls the function sending metadata to metadata-manager and drops parameters sended to ogawayama.
  *  @param [in] Table name to remove.
  */
