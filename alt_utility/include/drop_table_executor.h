@@ -27,6 +27,7 @@ extern "C" {
 #include "nodes/parsenodes.h"
 
 bool execute_drop_table(DropStmt *drop, const char *relname);
+bool table_exists_in_tsurugi(const char *relname);
 
 #ifdef __cplusplus
 }
