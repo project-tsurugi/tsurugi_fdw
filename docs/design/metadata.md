@@ -128,14 +128,14 @@ PostgreSQLは、テーブルとその他に列を持つもの、あるいはテ�
 | 1.| id 				| -		|
 | 2.| name				| -		|
 | 3.| namespace			| -		|
-| 3.| owner_id			| -		|
-| 3.| access_method		| -		|
-| 3.| acl				| -		|
-| 4.| number_of_columns			| -		|
-| 5.| number_of_key_columns		| -		|
-| 6.| is_unique			| -		|
-| 7.| is_primary		| -		|
-| 8.| key				| -		|
+| 4.| owner_id			| -		|
+| 5.| access_method		| -		|
+| 6.| acl				| -		|
+| 7.| number_of_columns			| インデックス内の列数		|
+| 8.| number_of_key_columns		| include列を除いた列数		|
+| 9.| is_unique			| -		|
+|10.| is_primary		| -		|
+|11.| key				| -		|
 
 将来的に追加される可能性のある属性。
 
