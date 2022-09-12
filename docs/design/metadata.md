@@ -136,6 +136,7 @@ PostgreSQLは、テーブルとその他に列を持つもの、あるいはテ�
 | 9.| is_unique			| -		|
 |10.| is_primary		| -		|
 |11.| key				| -		|
+|12.| option			| ASC/DESC, NULLS_LAST/FIRST		|
 
 将来的に追加される可能性のある属性。
 
