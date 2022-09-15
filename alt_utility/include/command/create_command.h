@@ -18,8 +18,9 @@
  */
 #pragma once
 
-#include <boost/property_tree/ptree.hpp>
+// #include <boost/property_tree/ptree.hpp>
 #include "command/ddl_command.h"
+#include "manager/metadata/metadata.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -31,20 +32,30 @@ extern "C"
 }
 #endif
 
+/**
+ * @brief	The class for CREATE commands. (e.g. CREATE TABLE, CREATE INDEX, etc.)
+ */
 class CreateCommand : public DDLCommand{
  public:
 	CreateCommand(CreateStmt* create_stmt) 
 		: DDLCommand((Node*) create_stmt) {}
 
-	/**
-	 *  @brief  Create metadata from query tree.
-	 *  @return true if supported
-	 *  @return false otherwise.
-	 */
-	virtual bool generate_metadata(boost::property_tree::ptree& metadata) = 0;
-
-	CreateStmt* create_stmt() const { 
+	virtual CreateStmt* create_stmt() const { 
 		Node* node = this->statement();
 		return IsA(node, CreateStmt) ? (CreateStmt*) node : nullptr;
 	}
+
+	/**
+	 *  @brief  Generate metadata from query tree.
+	 *  @return true if supported
+	 *  @return false otherwise.
+	 */
+#if 0
+	virtual bool generate_metadata(boost::property_tree::ptree& metadata) const = 0;
+#endif
+	virtual bool generate_metadata(manager::metadata::Object& object) const = 0;
+
+	CreateCommand() = delete;
+	CreateCommand(const CreateCommand&) = delete;
+  	DDLCommand& operator=(const CreateCommand&) = delete;
 };

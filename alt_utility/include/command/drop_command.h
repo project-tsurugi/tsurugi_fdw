@@ -35,8 +35,15 @@ class DropCommand : public DDLCommand {
  public:
   	DropCommand(DropStmt* drop_stmt) : DDLCommand{(Node*) drop_stmt} {}
 
+	/**
+	 * @brief
+	 */
 	DropStmt* drop_stmt() const { 
 		Node* node = this->statement();
 		return IsA(node, DropStmt) ? (DropStmt*) node : nullptr;
 	}
+
+	DropCommand() = delete;
+	DropCommand(const DropCommand&) = delete;
+  	DDLCommand& operator=(const DropCommand&) = delete;
 };

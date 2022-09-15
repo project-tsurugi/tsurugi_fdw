@@ -25,10 +25,17 @@ using namespace manager;
 
 int64_t execute_create_index(IndexStmt* index_stmt)
 {
-	assert(index_stmt != nullptr);
+	assert(index_stmt != NULL);
 
-	metadata::ObjectIdType object_id = metadata::INVALID_OBJECT_ID;
-	CreateIndex create_index(index_stmt);
+	metadata::ObjectId object_id = metadata::INVALID_OBJECT_ID;
+//	auto indexes = std::make_unique<metadata::Indexes>("tsurugi");
+	CreateIndex create_index{index_stmt};
+	
+	bool success = create_index.validate_syntax();
+	success = create_index.validate_data_type();
+	metadata::Index index;
+	success = create_index.generate_metadata(index);
+//	metadata::ErrorCode error = indexes->add(index, &object_id);
 
 	// Primary Keys
 	auto tables = std::make_unique<metadata::Tables>("tsurugi");
@@ -62,6 +69,6 @@ int64_t execute_create_index(IndexStmt* index_stmt)
 					table.name.data(), (int) error));
 		}
 	}
-
+	
 	return object_id;
 }
