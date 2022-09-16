@@ -20,9 +20,9 @@
 #include "drop_table_executor.h"
 
 /**
- * 
- * 
- * 
+ * @brief	Extract table name to drop.
+ * @param	names [in] namespace list.
+ * @param	rel [out] structre for storing table name.
  */
 void get_relname(List *names, RangeVar *rel)
 {
@@ -58,8 +58,8 @@ void get_relname(List *names, RangeVar *rel)
 }
 
 /**
- * 
- * 
+ * @brief 	Drop statment processing.
+ * @param	drop_stmt [in] Pointer of drop statement structure.
  */
 void execute_drop_stmt(DropStmt *drop_stmt)
 {
