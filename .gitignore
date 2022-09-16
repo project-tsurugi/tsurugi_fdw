@@ -9,3 +9,7 @@
 # VS Code
 .vscode/*
 *.code-workspace
+
+# tests
+results/*
+regression.*
