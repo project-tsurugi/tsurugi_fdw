@@ -25,16 +25,23 @@ else
   git clone git@github.com:project-tsurugi/jogasaki.git
 fi
 
-if [[ -d $TSURUGI_HOME/manager ]]; then
+if [[ -d $TSURUGI_HOME/metadata-manager ]]; then
   cd $TSURUGI_HOME
 else
-  git clone git@github.com:project-tsurugi/manager.git
+  git clone git@github.com:project-tsurugi/metadata-manager.git
+fi
+
+if [[ -d $TSURUGI_HOME/message-manager ]]; then
+  cd $TSURUGI_HOME
+else
+  git clone git@github.com:project-tsurugi/message-manager.git
 fi
 
 if [[ -d $TSURUGI_HOME/ogawayama ]]; then
   cd $TSURUGI_HOME
 else
-  git clone git@github.com:project-tsurugi/ogawayama.git
+#  git clone git@github.com:project-tsurugi/ogawayama.git
+  git clone git@github.com:koh-okada/ogawayama.git
 fi
 
 if [[ -d $TSURUGI_HOME/tateyama-bootstrap ]]; then
@@ -287,14 +294,14 @@ ninja
 ninja install
 
 ###
-### Build for git@github.com:project-tsurugi/manager.git
+### Build for git@github.com:project-tsurugi/metadata-manager.git
 ###
-cd $TSURUGI_HOME/manager
+cd $TSURUGI_HOME/metadata-manager
 git submodule update --init --recursive
 
-# Install_manager
+# Install metadata-manager
 echo -e "*************************************"
-echo -e "********** Install_manager **********"
+echo -e "***** Install metadata-manager ******"
 echo -e "*************************************"
 rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
@@ -303,6 +310,27 @@ cmake -G Ninja \
     -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
     -DFORCE_INSTALL_RPATH=ON \
     -DDATA_STORAGE=json \
+    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
+    ..
+ninja
+ninja install
+
+###
+### Build for git@github.com:project-tsurugi/message-manager.git
+###
+cd $TSURUGI_HOME/message-manager
+git submodule update --init --recursive
+
+# Install_manager
+echo -e "*************************************"
+echo -e "****** Install message-manager ******"
+echo -e "*************************************"
+rm -rf $BINARY_DIR
+mkdir $BINARY_DIR
+cd $BINARY_DIR
+cmake -G Ninja \
+    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+    -DFORCE_INSTALL_RPATH=ON \
     -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
     ..
 ninja
