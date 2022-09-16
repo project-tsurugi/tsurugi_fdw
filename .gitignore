@@ -9,7 +9,6 @@
 # VS Code
 .vscode/*
 *.code-workspace
-results/test_create_table.out
 
 # tests
 results/*
