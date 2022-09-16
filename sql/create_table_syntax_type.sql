@@ -230,11 +230,11 @@ col14 varchar(1000)           ,
 col15 varchar(1000)           ,
 col16 character varying(1000)
 ) SERVER ogawayama;
-
+/* workaround
 create foreign table japanese_column_name (
   カラム int
 ) SERVER ogawayama;
-
+*/
 create foreign table one_english_column_name (
   o int
 ) SERVER ogawayama;
