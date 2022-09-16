@@ -124,6 +124,7 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 			}
             break;
 		}
+
         case T_IndexStmt: 
 		{
 			IndexStmt* index_stmt = (IndexStmt*) pstmt->utilityStmt;
@@ -142,34 +143,35 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 			}
             break;
 		}
+
         case T_DropStmt:
 		{
 			RangeVar rel;
 			DropStmt *drop_stmt = (DropStmt *) parsetree;
 			if (drop_stmt->removeType == OBJECT_TABLE) {
-				bool in_tsurugi = true;
+				bool in_tsurugi = false;
 				ListCell *listptr;
 				foreach(listptr, drop_stmt->objects) {
 					List *names = (List *) lfirst(listptr);
 					get_relname(names, &rel);
-					if (!table_exists_in_tsurugi(rel.relname)) {
-						in_tsurugi = false;
+					if (table_exists_in_tsurugi(rel.relname)) {
+						in_tsurugi = true;
+						break;
 					}
 				}
 				if (in_tsurugi) {
 					tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
 											context, params, queryEnv,
 											dest, completionTag);
-				}
-				else
-				{
-					standard_ProcessUtility(pstmt, queryString,
-											context, params, queryEnv,
-											dest, completionTag);
+					break;
 				}
 			}
+			standard_ProcessUtility(pstmt, queryString,
+						context, params, queryEnv,
+						dest, completionTag);
 			break;
 		}
+
 		default:
 		{
 		    standard_ProcessUtility(pstmt, queryString,
