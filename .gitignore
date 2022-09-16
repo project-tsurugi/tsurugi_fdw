@@ -2,6 +2,11 @@
 *.o
 *.so
 
+# test
+results/*
+regression.diffs
+regression.out
+
 # coverage report
 *.gcno
 *.gcda
