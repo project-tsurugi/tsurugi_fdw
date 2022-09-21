@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	syscachecmds.h
- *	@brief  Utility command to operate through SysCache.
+ *	@file	role_managercmds.h
+ *	@brief  Utility command to operate Role through metadata-manager.
  */
 
-#ifndef SYSCACHECMDS_H
-#define SYSCACHECMDS_H
+#ifndef ROLEMANAGERCMDS_H
+#define ROLEMANAGERCMDS_H
+
+#include "manager/metadata/metadata.h"
 
 /**
  *  @brief  Get role id from metadata-manager by role name.
@@ -28,8 +30,8 @@
  * getted.
  *  @return true if role was successfully loaded, false otherwize.
  */
-bool get_roleid_by_rolename_from_syscache(const char* role_name,
-                            uint64_t* object_id);
+bool get_roleid_by_rolename(const std::string dbname, const char* role_name,
+                            manager::metadata::ObjectId* object_id);
 
 /**
  *  @brief  Confirm role id from metadata-manager.
@@ -37,6 +39,6 @@ bool get_roleid_by_rolename_from_syscache(const char* role_name,
  *  @param  [in] object_id Role id.
  *  @return True if the role exists, false if it does not.
  */
-bool confirm_roleid_from_syscache(const uint64_t object_id);
+bool confirm_roleid(const std::string dbname, const manager::metadata::ObjectId object_id);
 
-#endif  // SYSCACHECMDS_H
+#endif  // ROLEMANAGERCMDS_H

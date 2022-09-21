@@ -13,22 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	table_managercmds.h
- *	@brief  Utility command to operate Table through metadata-manager.
+ *	@file	syscachecmds.h
+ *	@brief  Utility command to operate through SysCache.
  */
 
-#ifndef TABLEMANAGERCMDS_H
-#define TABLEMANAGERCMDS_H
+#ifndef SYSCACHECMDS_H
+#define SYSCACHECMDS_H
 
 /**
- *  @brief  get table id from metadata-manager by table name.
+ *  @brief  Get role id from metadata-manager by role name.
  *  @param  [in] dbname DB name metadata-manager manages.
- *  @param  [in] table_name Table name.
+ *  @param  [in] role_name Role name.
  *  @param  [out] object_id The object id getted if role was successfully
  * getted.
  *  @return true if role was successfully loaded, false otherwize.
  */
-bool get_tableid_by_tablename(const std::string dbname, const char* table_name,
-                            uint64_t* object_id);
-                            
-#endif  // TABLEMANAGERCMDS_H
+bool get_roleid_by_rolename_from_syscache(const char* role_name,
+                            				int64_t* object_id);
+
+/**
+ *  @brief  Confirm role id from metadata-manager.
+ *  @param  [in] dbname DB name metadata-manager manages.
+ *  @param  [in] object_id Role id.
+ *  @return True if the role exists, false if it does not.
+ */
+bool confirm_roleid_from_syscache(const int64_t object_id);
+
+#endif  // SYSCACHECMDS_H

@@ -46,7 +46,7 @@ extern "C" {
  *  @return true if role was successfully loaded, false otherwize.
  */
 bool get_tableid_by_tablename(const std::string dbname, const char* table_name,
-                            uint64_t* object_id) {
+                            manager::metadata::ObjectId* object_id) {
   /* return value */
   bool ret_value = false;
   ptree object;

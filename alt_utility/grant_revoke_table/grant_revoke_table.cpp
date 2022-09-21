@@ -13,34 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	create_role.cpp
- *	@brief  Dispatch the create-role command to ogawayama.
+ *	@file	grant_revoke_table.cpp
+ *	@brief  Dispatch the grant/revoke-table command to ogawayama.
  */
+
 #include <regex>
 #include <string>
 #include <string_view>
-#include <iostream>
 
 #include "ogawayama/stub/api.h"
 #include "stub_manager.h"
-#include "manager/message/message.h"
-#include "manager/message/message_broker.h"
+
+#include "manager/message/ddl_message.h"
+#include "manager/message/broker.h"
 #include "manager/message/status.h"
 #include "manager/metadata/metadata.h"
-
-#ifdef USE_ROLE_MOCK
-#include "mock/metadata/roles.h"
-#else
-#include "manager/metadata/roles.h"
-#endif
+#include "manager/metadata/tables.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 #include "postgres.h"
-#include "nodes/parsenodes.h"
 
+#include "nodes/parsenodes.h"
 #ifdef __cplusplus
 }
 #endif
@@ -49,51 +44,74 @@ using namespace boost::property_tree;
 using namespace manager;
 using namespace ogawayama;
 
-#include "syscachecmds.h"
-#include "create_role.h"
+#include "table_managercmds.h"
+
+#include "grant_revoke_table.h"
 
 /* DB name metadata-manager manages */
 const std::string DBNAME = "Tsurugi";
 
 static bool send_message(message::Message* message,
-                  std::unique_ptr<metadata::Metadata>& objects);
+                         std::unique_ptr<metadata::Metadata>& objects);
 
 /**
- *  @brief Calls the function to get ID and send created role ID to ogawayama.
- *  @param [in] stmts of statements.
+ *  @brief Calls the function sending metadata of created role parameters sended
+ * to ogawayama.
+ *  @param stmts [in] DROP ROLE statements.
+ *  @param objectIdList [out] Get the object ID of the ROLE that is the target
+ * of DROP ROLE statements.
  *  @return true if operation was successful, false otherwize.
  */
-bool after_create_role(const CreateRoleStmt* stmts) {
+bool after_grant_revoke_table(const GrantStmt* stmts) {
   Assert(stmts != nullptr);
+  ListCell* item;
+  std::vector<metadata::ObjectId> objectIds;
+  bool send_message_success = true;
+  bool ret_value = false;
 
-  /* The object id stored if new table was successfully created */
-  uint64_t object_id = 0;
+  foreach (item, stmts->objects) {
+    RangeVar* relvar = (RangeVar*) lfirst(item);
+    metadata::ObjectId object_id;
 
-  /* Call the function sending metadata to metadata-manager. */
-  bool success = get_roleid_by_rolename_from_syscache(stmts->role,&object_id);
-
-  if (success) {
-    message::CreateRoleMessage cr_msg{object_id};
-    std::unique_ptr<metadata::Metadata> roles{new metadata::Roles(DBNAME)};
-    success = send_message(&cr_msg, roles);
+    if (get_tableid_by_tablename(DBNAME, relvar->relname, &object_id)) {
+      objectIds.push_back(object_id);
+    }
   }
 
-  return success;
+  /* Send message containing target table ID.*/
+  for (auto object_id : objectIds) {
+    if (stmts->is_grant) {
+      message::GrantTable grant_table{object_id};
+      std::unique_ptr<metadata::Metadata> tables{new metadata::Tables(DBNAME)};
+      if (!send_message(&grant_table, tables)) {
+        send_message_success = false;
+      }
+    } else {
+      message::RevokeTable revoke_table{object_id};
+      std::unique_ptr<metadata::Metadata> tables{new metadata::Tables(DBNAME)};
+      if (!send_message(&revoke_table, tables)) {
+        send_message_success = false;
+      }
+    }
+  }
+
+  ret_value = send_message_success;
+  return ret_value;
 }
 
 /**
  *  @brief Calls the function to send Message to ogawayama.
  *  @param [in] message Message object to be sent.
- *  @param [in] objects Role object to call funciton.
+ *  @param [in] objects Table object to call funciton.
  *  @return true if operation was successful, false otherwize.
  */
 static bool send_message(message::Message* message,
-                  std::unique_ptr<metadata::Metadata>& objects) {
+                         std::unique_ptr<metadata::Metadata>& objects) {
   Assert(message != nullptr);
 
   bool ret_value = false;
   ERROR_CODE error = ERROR_CODE::UNKNOWN;
-
+#if 0
   /* sends message to ogawayama */
   stub::Transaction* transaction;
   error = StubManager::begin(&transaction);
@@ -102,6 +120,7 @@ static bool send_message(message::Message* message,
                     errmsg("StubManager::begin() failed.")));
     return ret_value;
   }
+
   message::MessageBroker broker;
   message->set_receiver(transaction);
   message::Status status = broker.send_message(message);
@@ -121,7 +140,7 @@ static bool send_message(message::Message* message,
     return ret_value;
   }
   StubManager::end();
-
+#endif
   ret_value = true;
 
   return ret_value;

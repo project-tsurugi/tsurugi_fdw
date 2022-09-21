@@ -38,6 +38,11 @@
 #include "create_stmt.h"
 #include "drop_stmt.h"
 #include "drop_table_executor.h"
+#include "create_role/create_role.h"
+#include "drop_role/drop_role.h"
+#include "alter_role/alter_role.h"
+#include "grant_revoke_role/grant_revoke_role.h"
+#include "grant_revoke_table/grant_revoke_table.h"
 
 #ifndef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
@@ -124,134 +129,56 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 			}
             break;
 		}
+
 		case T_CreateRoleStmt:
+		{
 			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
 									dest, completionTag);
-			if (!after_create_role((CreateRoleStmt*)parsetree))
-				elog(ERROR, "failed after_create_role() function.");
-			break;
-
-		case T_DropRoleStmt: {
-			uint64_t* objectIdList;
-			bool befor_function_success = false;
-			DropRoleStmt* tmpDropStmt = (DropRoleStmt*)parsetree;
-			objectIdList = malloc(sizeof(uint64_t) * tmpDropStmt->roles->length);
-  			/*
-			 * mallocに失敗した場合、エラーメッセージを表示して終了。
-			 */
-			if (objectIdList == NULL) {
-				elog(ERROR,
-					"abort DROP ROLE statement because malloc function failed.");
-				break;
-			}
-
-			befor_function_success =
-				before_drop_role((DropRoleStmt*)parsetree, objectIdList);
-			if (!befor_function_success) {
-				elog(ERROR, "failed before_drop_role() function.");
-			}
-					/*
-					* 前処理で失敗した場合も、PostgreSQLの処理をスキップしない。
-					* PostgreSQLでのエラーメッセージが出力されなくなるため。
-					*/
-			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
-									dest, completionTag);
-
-			/*
-			* メッセージは、後処理で送信する。
-			* DROPに失敗したのに、DROPのメッセージを送信していると問題になる可能性があるため。
-			* 前処理で失敗した場合は、オブジェクトIDを取得できていないため、後処理をスキップ。
-			*/
-			if (befor_function_success) {
-				if (!after_drop_role((DropRoleStmt*)parsetree, objectIdList))
-				elog(ERROR, "failed after_drop_role() function.");
-			}
-			/*
-			* 動的に確保した領域を削除する。
-			*/
-			free(objectIdList);
-			} break;
-
-    case T_AlterRoleStmt:
-			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
-									dest, completionTag);
-			/*
-			* メッセージは、後処理で送信する。
-			*/
-			if (!after_alter_role((AlterRoleStmt*)parsetree))
-				elog(ERROR, "failed after_alter_role() function.");
-			break;
-
-    case T_GrantStmt:
-			/*
-			* GRANT/REVOKE
-			* TABLEについては、外部テーブルにPostgreSQLの機能で権限を付与する。
-			* そのため、GRANT/REVOKE
-			* ROLEと同じように後処理でメッセージを送信する。
-			*/
+			if (!after_create_role((CreateRoleStmt*)parsetree)) 
 			{
-				GrantStmt* stmts = (GrantStmt*)parsetree;
-				/*ACL_TARGET_OBJECTかつ、OBJECT_TABLE以外の時は通常の動作のみ*/
-				if (stmts->targtype == ACL_TARGET_OBJECT &&
-					stmts->objtype == OBJECT_TABLE) {
-				standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
-										dest, completionTag);
-				if (!after_grant_revoke_table((GrantStmt*)parsetree))
-					elog(ERROR, "failed after_grant_revoke_table() function.");
-				} else {
-				standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
-										dest, completionTag);
-				}
+				elog(ERROR, "failed after_create_role() function.");
 			}
 			break;
-
-    case T_GrantRoleStmt: {
-			/*
-			* GRANT/REVOKE両方ともに変更のため同一の関数としている。
-			* 内部でstmt->is_grantで送信するメッセージを変更する。
-			*/
-			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
-									dest, completionTag);
-			if (!after_grant_revoke_role((GrantRoleStmt*)parsetree))
-				elog(ERROR, "failed after_grant_revoke_role() function.");
+		}
+		case T_IndexStmt: 
+		{
+			IndexStmt* index_stmt = (IndexStmt*) pstmt->utilityStmt;
+			if (index_stmt->tableSpace != NULL && 
+					!strcmp(index_stmt->tableSpace, TSURUGI_TABLESPACE_NAME))
+			{
+				tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
+										context, params, queryEnv,
+										dest, completionTag);
+			}
+			else
+			{
+				standard_ProcessUtility(pstmt, queryString,
+										context, params, queryEnv,
+										dest, completionTag);
+			}
 			break;
+		}
 
-
-				case T_IndexStmt: 
-				{
-					IndexStmt* index_stmt = (IndexStmt*) pstmt->utilityStmt;
-					if (index_stmt->tableSpace != NULL && 
-							!strcmp(index_stmt->tableSpace, TSURUGI_TABLESPACE_NAME))
-					{
-						tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
-												context, params, queryEnv,
-												dest, completionTag);
-					}
-					else
-					{
-						standard_ProcessUtility(pstmt, queryString,
-												context, params, queryEnv,
-												dest, completionTag);
-					}
-					break;
-				}
-	}
         case T_DropStmt:
 		{
 			RangeVar rel;
 			DropStmt *drop_stmt = (DropStmt *) parsetree;
-			if (drop_stmt->removeType == OBJECT_TABLE) {
+			if (drop_stmt->removeType == OBJECT_TABLE) 
+			{
 				bool in_tsurugi = false;
 				ListCell *listptr;
-				foreach(listptr, drop_stmt->objects) {
+				foreach(listptr, drop_stmt->objects) 
+				{
 					List *names = (List *) lfirst(listptr);
 					get_relname(names, &rel);
-					if (table_exists_in_tsurugi(rel.relname)) {
+					if (table_exists_in_tsurugi(rel.relname)) 
+					{
 						in_tsurugi = true;
 						break;
 					}
 				}
-				if (in_tsurugi) {
+				if (in_tsurugi) 
+				{
 					tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
 											context, params, queryEnv,
 											dest, completionTag);
@@ -261,6 +188,108 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 			standard_ProcessUtility(pstmt, queryString,
 						context, params, queryEnv,
 						dest, completionTag);
+			break;
+		}
+
+		case T_DropRoleStmt: 
+		{
+			int64_t* objectIdList;
+			bool befor_function_success = false;
+			DropRoleStmt* tmpDropStmt = (DropRoleStmt*) parsetree;
+			objectIdList = malloc(sizeof(int64_t) * tmpDropStmt->roles->length);
+			if (objectIdList == NULL) 
+			{
+				/*
+				 * mallocに失敗した場合、エラーメッセージを表示して終了。
+				 */
+				elog(ERROR,
+					"abort DROP ROLE statement because malloc function failed.");
+				break;
+			}
+
+			befor_function_success =
+				before_drop_role((DropRoleStmt*) parsetree, objectIdList);
+			if (!befor_function_success) 
+			{
+				elog(ERROR, "failed before_drop_role() function.");
+			}
+			/*
+ 			 * 前処理で失敗した場合も、PostgreSQLの処理をスキップしない。
+			 * PostgreSQLでのエラーメッセージが出力されなくなるため。
+			 */
+			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
+									dest, completionTag);
+
+			/*
+			 * メッセージは、後処理で送信する。
+			 * DROPに失敗したのに、DROPのメッセージを送信していると問題になる可能性があるため。
+			 * 前処理で失敗した場合は、オブジェクトIDを取得できていないため、後処理をスキップ。
+			 */
+			if (befor_function_success) 
+			{
+				if (!after_drop_role((DropRoleStmt*)parsetree, objectIdList))
+				elog(ERROR, "failed after_drop_role() function.");
+			}
+			/*
+			* 動的に確保した領域を削除する。
+			*/
+			free(objectIdList);
+			break;
+		}	
+
+		case T_AlterRoleStmt:
+		{
+			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
+									dest, completionTag);
+			/*
+			* メッセージは、後処理で送信する。
+			*/
+			if (!after_alter_role((AlterRoleStmt*)parsetree))
+				elog(ERROR, "failed after_alter_role() function.");
+			break;
+		}
+
+		case T_GrantStmt:
+		{
+			/*
+			* GRANT/REVOKE
+			* TABLEについては、外部テーブルにPostgreSQLの機能で権限を付与する。
+			* そのため、GRANT/REVOKE
+			* ROLEと同じように後処理でメッセージを送信する。
+			*/
+			GrantStmt* stmts = (GrantStmt*) parsetree;
+
+			/*ACL_TARGET_OBJECTかつ、OBJECT_TABLE以外の時は通常の動作のみ*/
+			if (stmts->targtype == ACL_TARGET_OBJECT &&
+				stmts->objtype == OBJECT_TABLE) 
+			{
+				standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
+										dest, completionTag);
+				if (!after_grant_revoke_table((GrantStmt*)parsetree))
+				{
+					elog(ERROR, "failed after_grant_revoke_table() function.");
+				}
+			} 
+			else 
+			{
+				standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
+										dest, completionTag);
+			}
+			break;
+		}
+
+		case T_GrantRoleStmt: 
+		{
+			/*
+			 * GRANT/REVOKE両方ともに変更のため同一の関数としている。
+			 * 内部でstmt->is_grantで送信するメッセージを変更する。
+			 */
+			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
+									dest, completionTag);
+			if (!after_grant_revoke_role((GrantRoleStmt*)parsetree))
+			{
+				elog(ERROR, "failed after_grant_revoke_role() function.");
+			}
 			break;
 		}
 

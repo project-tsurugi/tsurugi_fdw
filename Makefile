@@ -4,15 +4,14 @@ MODULE_big = ogawayama_fdw
 OBJS = common/init.o common/stub_manager.o \
         ogawayama_fdw/ogawayama_fdw.o \
         alt_planner/alt_planner.o \
-        alt_utility/tablecmds.o alt_utility/create_table.o \
 		alt_utility/send_message.o \
         alt_utility/alt_utility.o alt_utility/create_stmt.o alt_utility/drop_stmt.o \
         alt_utility/create_table/create_table_executor.o alt_utility/create_table/create_table.o \
         alt_utility/create_index/create_index_executor.o alt_utility/create_index/create_index.o \
         alt_utility/drop_table/drop_table_executor.o \
 		alt_utility/role_managercmds.o \
-		alt_utility/create_role.o alt_utility/drop_role.o alt_utility/alter_role.o \
-		alt_utility/grant_revoke_role.o alt_utility/grant_revoke_table.o \
+		alt_utility/create_role/create_role.o alt_utility/drop_role/drop_role.o alt_utility/alter_role/alter_role.o \
+		alt_utility/grant_revoke_role/grant_revoke_role.o alt_utility/grant_revoke_table/grant_revoke_table.o \
 		alt_utility/syscachecmds.o \
 		alt_utility/table_managercmds.o \
         $(WIN32RES)

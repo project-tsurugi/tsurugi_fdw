@@ -24,9 +24,9 @@
 extern "C" {
 
 #endif
-bool before_drop_role(const DropRoleStmt* stmts, uint64_t objectIdList[]);
+bool before_drop_role(const DropRoleStmt* stmts, int64_t objectIdList[]);
 
-bool after_drop_role(const DropRoleStmt* stmts, const uint64_t objectIdList[]);
+bool after_drop_role(const DropRoleStmt* stmts, const int64_t objectIdList[]);
 
 #ifdef __cplusplus
 }

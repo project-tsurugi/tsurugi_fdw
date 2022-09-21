@@ -30,7 +30,7 @@
 #endif
 
 using namespace manager::metadata;
-using namespace boost::property_tree;
+using ptree = boost::property_tree::ptree;
 
 #ifdef __cplusplus
 extern "C" {
@@ -51,7 +51,7 @@ extern "C" {
  *  @return true if role was successfully loaded, false otherwize.
  */
 bool get_roleid_by_rolename(const std::string dbname, const char* role_name,
-                            uint64_t* object_id) {
+                            manager::metadata::ObjectId* object_id) {
   /* return value */
   bool ret_value = false;
   ptree object;
@@ -85,19 +85,18 @@ bool get_roleid_by_rolename(const std::string dbname, const char* role_name,
  *  @param  [in] object_id Role id.
  *  @return True if the role exists, false if it does not.
  */
-bool confirm_roleid(const std::string dbname, const uint64_t object_id) {
-  /* return value */
-  bool ret_value = false;
+bool confirm_roleid(const std::string dbname, const manager::metadata::ObjectId object_id) {
+  bool result = false;
   ptree object;
-  /* Loads role */
   std::unique_ptr<manager::metadata::Metadata> roles =
       std::make_unique<Roles>(dbname);
+
+  /* Loads role */
   ErrorCode error = roles->get(object_id, object);
-
   if (error != ErrorCode::OK) {
-    return ret_value;
+    return result;
   }
+  result = true;
 
-  ret_value = true;
-  return ret_value;
+  return result;
 }

@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	alter_role.cpp
- *	@brief  Dispatch the alter-role command to ogawayama.
+ *	@file	create_role.cpp
+ *	@brief  Dispatch the create-role command to ogawayama.
  */
-
 #include <regex>
 #include <string>
 #include <string_view>
+#include <iostream>
 
 #include "ogawayama/stub/api.h"
 #include "stub_manager.h"
-
-#include "manager/message/message.h"
-#include "manager/message/message_broker.h"
+#include "manager/message/ddl_message.h"
+#include "manager/message/broker.h"
 #include "manager/message/status.h"
 #include "manager/metadata/metadata.h"
 
@@ -35,23 +34,23 @@
 #include "manager/metadata/roles.h"
 #endif
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "postgres.h"
 
+#include "postgres.h"
 #include "nodes/parsenodes.h"
+
 #ifdef __cplusplus
 }
 #endif
 
+using namespace boost::property_tree;
 using namespace manager;
 using namespace ogawayama;
 
-#include "role_managercmds.h"
-
-#include "alter_role.h"
+#include "syscachecmds.h"
+#include "create_role.h"
 
 /* DB name metadata-manager manages */
 const std::string DBNAME = "Tsurugi";
@@ -60,21 +59,21 @@ static bool send_message(message::Message* message,
                   std::unique_ptr<metadata::Metadata>& objects);
 
 /**
- *  @brief Calls the function to get role ID and send alter role ID to ogawayama.
+ *  @brief Calls the function to get ID and send created role ID to ogawayama.
  *  @param [in] stmts of statements.
  *  @return true if operation was successful, false otherwize.
  */
-bool after_alter_role(const AlterRoleStmt* stmts) {
+bool after_create_role(const CreateRoleStmt* stmts) {
   Assert(stmts != nullptr);
 
   /* The object id stored if new table was successfully created */
-  uint64_t object_id = 0;
+  metadata::ObjectId object_id = 0;
 
   /* Call the function sending metadata to metadata-manager. */
-  bool success = get_roleid_by_rolename(DBNAME,stmts->role->rolename,&object_id);
+  bool success = get_roleid_by_rolename_from_syscache(stmts->role, &object_id);
 
   if (success) {
-    message::AlterRoleMessage cr_msg{object_id};
+    message::CreateRole cr_msg{object_id};
     std::unique_ptr<metadata::Metadata> roles{new metadata::Roles(DBNAME)};
     success = send_message(&cr_msg, roles);
   }
@@ -94,7 +93,7 @@ static bool send_message(message::Message* message,
 
   bool ret_value = false;
   ERROR_CODE error = ERROR_CODE::UNKNOWN;
-
+#if 0
   /* sends message to ogawayama */
   stub::Transaction* transaction;
   error = StubManager::begin(&transaction);
@@ -103,7 +102,6 @@ static bool send_message(message::Message* message,
                     errmsg("StubManager::begin() failed.")));
     return ret_value;
   }
-
   message::MessageBroker broker;
   message->set_receiver(transaction);
   message::Status status = broker.send_message(message);
@@ -123,9 +121,8 @@ static bool send_message(message::Message* message,
     return ret_value;
   }
   StubManager::end();
-
+#endif
   ret_value = true;
 
   return ret_value;
 }
-

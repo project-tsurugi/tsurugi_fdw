@@ -19,6 +19,7 @@
 
 #include <iostream>
 #include <string>
+#include "manager/metadata/metadata.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,6 +36,8 @@ extern "C" {
 
 #include "syscachecmds.h"
 
+using namespace manager;
+
 /**
  *  @brief  Get role id by role name from SysCache.
  *  @param  [in] role_name Role name.
@@ -43,7 +46,7 @@ extern "C" {
  *  @return true if role was successfully loaded, false otherwize.
  */
 bool get_roleid_by_rolename_from_syscache(const char* role_name,
-                                          uint64_t* object_id) {
+                                          manager::metadata::ObjectId* object_id) {
   /* return value */
   bool ret_value = false;
   HeapTuple tuple;
@@ -56,7 +59,7 @@ bool get_roleid_by_rolename_from_syscache(const char* role_name,
     return ret_value;
   }
   authform = (Form_pg_authid) GETSTRUCT(tuple);
-  *object_id = authform->oid;
+  *object_id = static_cast<metadata::ObjectId>(authform->oid);
 
   ReleaseSysCache(tuple);
   ret_value = true;
