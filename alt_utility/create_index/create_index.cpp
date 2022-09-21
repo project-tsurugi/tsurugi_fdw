@@ -171,7 +171,7 @@ bool CreateIndex::generate_metadata(manager::metadata::Object& object) const
 	
 	index.access_method = 
 			std::underlying_type_t<metadata::Index::AccessMethod>
-			(metadata::Index::AccessMethod::TSURGI_DEFAULT_METHOD);
+			(metadata::Index::AccessMethod::MASS_TREE_METHOD);
 	index.name 			= index_stmt->idxname;
 	index.is_primary 	= index_stmt->primary;
 	index.is_unique 	= index_stmt->unique;
@@ -197,7 +197,7 @@ bool CreateIndex::generate_metadata(manager::metadata::Object& object) const
 			}
 		}
 	}
-	index.number_of_key_indexes = index.keys.size();
+	index.number_of_key_columns = index.keys.size();
 
 	// Generaete included keys.
 	foreach(listptr, index_stmt->indexIncludingParams) {
