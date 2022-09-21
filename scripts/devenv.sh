@@ -25,16 +25,23 @@ else
   git clone git@github.com:project-tsurugi/jogasaki.git
 fi
 
-if [[ -d $TSURUGI_HOME/manager ]]; then
+if [[ -d $TSURUGI_HOME/metadata-manager ]]; then
   cd $TSURUGI_HOME
 else
-  git clone git@github.com:project-tsurugi/manager.git
+  git clone git@github.com:project-tsurugi/metadata-manager.git
+fi
+
+if [[ -d $TSURUGI_HOME/message-manager ]]; then
+  cd $TSURUGI_HOME
+else
+  git clone git@github.com:project-tsurugi/message-manager.git
 fi
 
 if [[ -d $TSURUGI_HOME/ogawayama ]]; then
   cd $TSURUGI_HOME
 else
-  git clone git@github.com:project-tsurugi/ogawayama.git
+#  git clone git@github.com:project-tsurugi/ogawayama.git
+  git clone git@github.com:koh-okada/ogawayama.git
 fi
 
 if [[ -d $TSURUGI_HOME/tateyama-bootstrap ]]; then
@@ -99,22 +106,20 @@ cmake -G Ninja \
 ninja
 ninja install
 
-# Install_fpdecimal
+# Install_mpdecimal
 echo -e "***************************************"
-echo -e "********** Install_fpdecimal **********"
+echo -e "********** Install_mpdecimal **********"
 echo -e "***************************************"
-cd $JOGASAKI_HOME/third_party/mizugaki/third_party/yugawara/third_party/takatori/third_party/fpdecimal
-rm -rf $BINARY_DIR
-mkdir $BINARY_DIR
-cd $BINARY_DIR
-cmake -G Ninja \
-    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-    -DBUILD_TESTS=OFF \
-    -DBUILD_DOCUMENTS=OFF \
-    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
-    ..
-ninja
-ninja install
+cd $TSURUGI_HOME/
+rm -rf mpdecimal-2.5.1
+wget https://www.bytereef.org/software/mpdecimal/releases/mpdecimal-2.5.1.tar.gz -e https_proxy=http://proxygate2.nic.nec.co.jp:8080/ --no-check-certificate
+tar zxf mpdecimal-2.5.1.tar.gz
+rm mpdecimal-2.5.1.tar.gz
+
+cd mpdecimal-2.5.1/
+./configure --prefix=$INSTALL_PREFIX
+make
+make install
 
 # Install_takatori
 echo -e "**************************************"
@@ -283,19 +288,20 @@ cmake -G Ninja \
     -DFORCE_INSTALL_RPATH=ON \
     -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
     -DCMAKE_PREFIX_PATH=$INSTALL_PREFIX \
+    -DCMAKE_CXX_FLAGS="-w" \
     ..
 ninja
 ninja install
 
 ###
-### Build for git@github.com:project-tsurugi/manager.git
+### Build for git@github.com:project-tsurugi/metadata-manager.git
 ###
-cd $TSURUGI_HOME/manager
+cd $TSURUGI_HOME/metadata-manager
 git submodule update --init --recursive
 
-# Install_manager
+# Install metadata-manager
 echo -e "*************************************"
-echo -e "********** Install_manager **********"
+echo -e "***** Install metadata-manager ******"
 echo -e "*************************************"
 rm -rf $BINARY_DIR
 mkdir $BINARY_DIR
@@ -304,6 +310,27 @@ cmake -G Ninja \
     -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
     -DFORCE_INSTALL_RPATH=ON \
     -DDATA_STORAGE=json \
+    -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
+    ..
+ninja
+ninja install
+
+###
+### Build for git@github.com:project-tsurugi/message-manager.git
+###
+cd $TSURUGI_HOME/message-manager
+git submodule update --init --recursive
+
+# Install_manager
+echo -e "*************************************"
+echo -e "****** Install message-manager ******"
+echo -e "*************************************"
+rm -rf $BINARY_DIR
+mkdir $BINARY_DIR
+cd $BINARY_DIR
+cmake -G Ninja \
+    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+    -DFORCE_INSTALL_RPATH=ON \
     -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
     ..
 ninja

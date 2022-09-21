@@ -501,7 +501,7 @@ col6 varchar(20) NOT NULL
 
 --test1 all error
 SELECT * from test1;
-INSERT INTO test1 VALUES (1,1000,3.24,-2.27,'A','ABCDEFABCDEF');
+INSERT INTO test1 (col1,col2,col3,col4,col5,col6) VALUES (1,1000,3.24,-2.27,'A','ABCDEFABCDEF');
 SELECT * from test1;
 INSERT INTO test1 (col6) VALUES ('ABCDEFABCDEF');
 SELECT * from test1;
@@ -509,7 +509,7 @@ SELECT * from test1;
 --test2_1
 SELECT * from test2_1;
 --ok
-INSERT INTO test2_1 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+INSERT INTO test2_1 (col1,col2,col3,col4,col5,col6) VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test2_1;
 --PKEY col1 null error
 INSERT INTO test2_1 (col2,col3,col4,col5,col6) VALUES (1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
@@ -524,7 +524,7 @@ SELECT * from test2_1;
 --test2_2
 SELECT * from test2_2;
 --ok
-INSERT INTO test2_2 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+INSERT INTO test2_2 (col1,col2,col3,col4,col5,col6) VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test2_2;
 --PKEY col2 null error
 INSERT INTO test2_2 (col1,col3,col4,col5,col6) VALUES (1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
@@ -539,7 +539,7 @@ SELECT * from test2_2;
 --test2_3
 SELECT * from test2_3;
 --ok
-INSERT INTO test2_3 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+INSERT INTO test2_3 (col1,col2,col3,col4,col5,col6) VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test2_3;
 --PKEY col3 null error
 INSERT INTO test2_3 (col1,col2,col4,col5,col6) VALUES (1,1000,-2.27,'ABC','ABCDEFABCDEF');
@@ -554,7 +554,7 @@ SELECT * from test2_3;
 --test2_4
 SELECT * from test2_4;
 --ok
-INSERT INTO test2_4 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+INSERT INTO test2_4 (col1,col2,col3,col4,col5,col6) VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test2_4;
 --PKEY col4 null error
 INSERT INTO test2_4 (col1,col2,col3,col5,col6) VALUES (1,1000,3.24,'ABC','ABCDEFABCDEF');
@@ -569,7 +569,7 @@ SELECT * from test2_4;
 --test2_5
 SELECT * from test2_5;
 --ok
-INSERT INTO test2_5 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+INSERT INTO test2_5 (col1,col2,col3,col4,col5,col6) VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test2_5;
 --PKEY col5 null error
 INSERT INTO test2_5 (col1,col2,col3,col4,col6) VALUES (1,1000,3.24,-2.27,'ABCDEFABCDEF');
@@ -584,7 +584,7 @@ SELECT * from test2_5;
 --test2_6
 SELECT * from test2_6;
 --ok
-INSERT INTO test2_6 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+INSERT INTO test2_6 (col1,col2,col3,col4,col5,col6) VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test2_6;
 --PKEY col6 null error
 INSERT INTO test2_6 (col1,col2,col3,col4,col5) VALUES (1,1000,3.24,-2.27,'ABC');
@@ -597,7 +597,7 @@ INSERT INTO test2_6 (col1, col4, col6) VALUES (1,-2.27,'ABCDEFABCDEFG');
 SELECT * from test2_6;
 
 --test3 all error
-INSERT INTO test3 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+INSERT INTO test3 (col1,col2,col3,col4,col5,col6) VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test3;
 INSERT INTO test3 (col2) VALUES (1);
 SELECT * from test3;
@@ -605,7 +605,7 @@ SELECT * from test3;
 --test4_1
 SELECT * from test4_1;
 --ok
-INSERT INTO test4_1 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+INSERT INTO test4_1 (col1,col2,col3,col4,col5,col6) VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test4_1;
 --NOT NULL constraint null error
 INSERT INTO test4_1 (col1) VALUES (3);
@@ -614,16 +614,16 @@ SELECT * from test4_1;
 INSERT INTO test4_1 (col3) VALUES (3.24);
 SELECT * from test4_1;
 --PKEY col1 not unique error
-INSERT INTO test4_1 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+INSERT INTO test4_1 (col1,col2,col3,col4,col5,col6) VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test4_1;
 --ok
-INSERT INTO test4_1 VALUES (2,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+INSERT INTO test4_1 (col1,col2,col3,col4,col5,col6) VALUES (2,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test4_1;
 
 --test4_2
 SELECT * from test4_2;
 --ok
-INSERT INTO test4_2 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+INSERT INTO test4_2 (col1,col2,col3,col4,col5,col6) VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test4_2;
 --PKEY col4 null error
 INSERT INTO test4_2 (col1,col2,col3,col5,col6) VALUES (1,1000,3.24,'ABC','ABCDEFABCDEF');
@@ -632,16 +632,16 @@ SELECT * from test4_2;
 INSERT INTO test4_2 (col2,col3,col4,col5,col6) VALUES (1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test4_2;
 --PKEY col4 not unique error
-INSERT INTO test4_2 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+INSERT INTO test4_2 (col1,col2,col3,col4,col5,col6) VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test4_2;
 --ok
-INSERT INTO test4_2 VALUES (2,1000,3.24,-3.24,'ABC','ABCDEFABCDEF');
+INSERT INTO test4_2 (col1,col2,col3,col4,col5,col6) VALUES (2,1000,3.24,-3.24,'ABC','ABCDEFABCDEF');
 SELECT * from test4_2;
 
 --test4_3
 SELECT * from test4_3;
 --ok
-INSERT INTO test4_3 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+INSERT INTO test4_3 (col1,col2,col3,col4,col5,col6) VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test4_3;
 --PKEY col4 null error
 INSERT INTO test4_3 (col1) VALUES (1);
@@ -659,7 +659,7 @@ SELECT * from test4_3;
 --test4_4
 SELECT * from test4_4;
 --ok
-INSERT INTO test4_4 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+INSERT INTO test4_4 (col1,col2,col3,col4,col5,col6) VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test4_4;
 --PKEY col4 null error
 INSERT INTO test4_4 (col5) VALUES ('ABC');
@@ -677,7 +677,7 @@ SELECT * from test4_4;
 --test5
 SELECT * from test5;
 --ok
-INSERT INTO test5 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+INSERT INTO test5 (col1,col2,col3,col4,col5,col6) VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test5;
 --PKEY col5 null error
 INSERT INTO test5 (col1,col2,col3,col4,col6) VALUES (1,1000,3.24,-2.27,'ABCDEFABCDEF');
@@ -695,7 +695,7 @@ SELECT * from test6;
 --test7_1
 SELECT * from test7_1;
 --ok
-INSERT INTO test7_1 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+INSERT INTO test7_1 (col1,col2,col3,col4,col5,col6) VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test7_1;
 -- NOT NULL constraint null error
 INSERT INTO test7_1 (col1,col2,col3,col4,col5) VALUES (1,1000,3.24,-2.27,'ABC');
@@ -704,16 +704,16 @@ SELECT * from test7_1;
 INSERT INTO test7_1 (col1,col3,col4,col5,col6) VALUES (1,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test7_1;
 --PKEY col2 not unique error
-INSERT INTO test7_1 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+INSERT INTO test7_1 (col1,col2,col3,col4,col5,col6) VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test7_1;
 --ok
-INSERT INTO test7_1 VALUES (1,1001,3.24,-2.27,'ABC','ABCDEFABCDEF');
+INSERT INTO test7_1 (col1,col2,col3,col4,col5,col6) VALUES (1,1001,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test7_1;
 
 --test7_2
 SELECT * from test7_2;
 --ok
-INSERT INTO test7_2 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+INSERT INTO test7_2 (col1,col2,col3,col4,col5,col6) VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test7_2;
 -- NOT NULL constraint null error
 INSERT INTO test7_2 (col2) VALUES (1000);
@@ -731,7 +731,7 @@ SELECT * from test7_2;
 --test7_3
 SELECT * from test7_3;
 --ok
-INSERT INTO test7_3 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+INSERT INTO test7_3 (col1,col2,col3,col4,col5,col6) VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test7_3;
 -- NOT NULL constraint null error
 INSERT INTO test7_3 (col3) VALUES (3.24);
@@ -753,7 +753,7 @@ SELECT * from test8_2;
 --test9
 SELECT * from test9;
 --ok
-INSERT INTO test9 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+INSERT INTO test9 (col1,col2,col3,col4,col5,col6) VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test9;
 --PKEY (col1,col2,col3,col5) null error
 INSERT INTO test9 (col1,col2,col3) VALUES (2,1000,3.24);
@@ -771,7 +771,7 @@ SELECT * from test10;
 --test11_1
 SELECT * from test11_1;
 --ok
-INSERT INTO test11_1 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+INSERT INTO test11_1 (col1,col2,col3,col4,col5,col6) VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test11_1;
 --NOT NULL constraint null error
 INSERT INTO test11_1 (col1,col2,col3,col5,col6) VALUES (3,1000,3.24,'ABC','ABCDEFABCDEF');
@@ -779,16 +779,16 @@ INSERT INTO test11_1 (col1,col2,col3,col5,col6) VALUES (3,1000,3.24,'ABC','ABCDE
 INSERT INTO test11_1 (col1,col3,col4,col5,col6) VALUES (1,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test11_1;
 --PKEY (col1,col2,col3,col5,col6) not unique error
-INSERT INTO test11_1 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+INSERT INTO test11_1 (col1,col2,col3,col4,col5,col6) VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test11_1;
 --ok
-INSERT INTO test11_1 VALUES (2,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+INSERT INTO test11_1 (col1,col2,col3,col4,col5,col6) VALUES (2,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test11_1;
 
 --test11_2
 SELECT * from test11_2;
 --ok
-INSERT INTO test11_2 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+INSERT INTO test11_2 (col1,col2,col3,col4,col5,col6) VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test11_2;
 --NOT NULL constraint null error
 INSERT INTO test11_2 (col1,col2,col3,col5) VALUES (3,1000,3.24,'ABC');
@@ -805,7 +805,7 @@ SELECT * from test11_2;
 --test11_3
 SELECT * from test11_3;
 --ok
-INSERT INTO test11_3 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+INSERT INTO test11_3 (col1,col2,col3,col4,col5,col6) VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test11_3;
 --NOT NULL constraint null error
 INSERT INTO test11_3 (col1,col2,col3,col5,col6) VALUES (3,1000,3.24,'ABC','ABCDEFABCDEF');
@@ -813,10 +813,10 @@ INSERT INTO test11_3 (col1,col2,col3,col5,col6) VALUES (3,1000,3.24,'ABC','ABCDE
 INSERT INTO test11_3 (col1,col2,col3,col4,col5) VALUES (1,1001,3.24,-2.27,'ABC');
 SELECT * from test11_3;
 --PKEY (col1,col2,col3,col5,col6) not unique error
-INSERT INTO test11_3 VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+INSERT INTO test11_3 (col1,col2,col3,col4,col5,col6) VALUES (1,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test11_3;
 --ok
-INSERT INTO test11_3 VALUES (2,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
+INSERT INTO test11_3 (col1,col2,col3,col4,col5,col6) VALUES (2,1000,3.24,-2.27,'ABC','ABCDEFABCDEF');
 SELECT * from test11_3;
 
 --test12 error

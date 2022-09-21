@@ -1,19 +1,4 @@
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-#include "postgres.h"
-#include "utils/elog.h"
-#include "storage/proc.h"
-
-#ifdef PG_MODULE_MAGIC
-PG_MODULE_MAGIC;
-#endif
-
-#ifdef __cplusplus
-}
-#endif 
-
 #include <iostream>
 #include <string>
 #include <string_view>
@@ -28,6 +13,22 @@ using namespace ogawayama;
 #if 0
 extern PGDLLIMPORT PGPROC *MyProc;
 #endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "postgres.h"
+#include "utils/elog.h"
+#include "storage/proc.h"
+
+#ifdef PG_MODULE_MAGIC
+PG_MODULE_MAGIC;
+#endif
+
+#ifdef __cplusplus
+}
+#endif 
 
 StubPtr StubManager::stub_ = nullptr;
 ConnectionPtr StubManager::connection_ = nullptr;

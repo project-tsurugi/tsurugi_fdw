@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 tsurugi project.
+ * Copyright 2022 tsurugi project.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	create_table.h
+ *	@file	drop_table.h
  *	@brief  Dispatch the create-table command to ogawayama.
  */
 
-#ifndef CREATE_TABLE_H
-#define CREATE_TABLE_H
+#ifndef DROP_TABLE_H
+#define DROP_TABLE_H
 
 #ifdef __cplusplus
 extern "C" {
-
 #endif
 
-bool create_table(List *stmts);
+#include "nodes/parsenodes.h"
+
+bool execute_drop_table(DropStmt *drop, const char *relname);
+bool table_exists_in_tsurugi(const char *relname);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // CREATE_TABLE_H
+#endif // DROP_TABLE_H

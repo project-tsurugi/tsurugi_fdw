@@ -1,5 +1,4 @@
-#ifndef STUB_MANAGER_H_
-#define STUB_MANAGER_H_
+#pragma once
 
 #include <string>
 #include <string_view>
@@ -22,5 +21,3 @@ private:
 
 	static ERROR_CODE get_stub(ogawayama::stub::Stub** stub);
 };
-
-#endif // STUB_MANAGER_H_

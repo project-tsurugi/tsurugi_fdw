@@ -1,4 +1,4 @@
-# frontend for Ogawayama (PostgreSQL add-on)
+# frontend for Tsurugi (PostgreSQL add-on)
 
 ## Requirements
 * C++ Compiler `>= C++17`
@@ -227,8 +227,8 @@ Notes: In the current version, the regression test fails due to [Issues#63](http
 			```sql
 			CREATE TABLE table1 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
 			```
-	* A new relation named "<*table_name*>_dummy" will be created in the current PostgreSQL database.
-		* e.g. "table1_dummy"
+	* A new relation named "<*table_name*>_tsurugi" will be created in the current PostgreSQL database.
+		* e.g. "table1_tsurugi"
 
 1. Define foreign table
 	* Execute **CREATE FOREIGN TABLE** command

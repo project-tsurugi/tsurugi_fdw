@@ -16,6 +16,12 @@
  *	@file	ogawayama_fdw.cpp
  *	@brief 	Foreign Data Wrapper for Ogawayama.
  */
+#include <string>
+#include <memory>
+#include "ogawayama/stub/error_code.h"
+#include "ogawayama/stub/api.h"
+#include "stub_manager.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -39,12 +45,6 @@ PG_MODULE_MAGIC;
 #ifdef __cplusplus
 }
 #endif
-
-#include <string>
-#include <memory>
-#include "ogawayama/stub/error_code.h"
-#include "ogawayama/stub/api.h"
-#include "stub_manager.h"
 
 using namespace ogawayama;
 

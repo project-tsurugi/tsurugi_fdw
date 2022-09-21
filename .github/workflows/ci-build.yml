@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        postgresql: [11.1, 12.3]
+        postgresql: [12.3]
         container-tag: [ubuntu-20.04]
 
     steps:
@@ -43,10 +43,23 @@ jobs:
           submodules: recursive
           token: ${{ secrets.GHA_PAT }}
 
-      - id: CMake_Build_manager
-        name: CMake_Build_manager
+      - id: CMake_Build_metadata-manager
+        name: CMake_Build_metadata-manager
         run: |
-          cd postgresql-${{ matrix.postgresql }}/contrib/frontend/third_party/manager
+          cd postgresql-${{ matrix.postgresql }}/contrib/frontend/third_party/metadata-manager
+          git clean -dfx
+          mkdir build
+          cd build
+          rm -f CMakeCache.txt
+          cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DFORCE_INSTALL_RPATH=ON -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
+          cmake --build . --target install --clean-first -- -j8
+          make
+          make install
+
+      - id: CMake_Build_message-manager
+        name: CMake_Build_message-manager
+        run: |
+          cd postgresql-${{ matrix.postgresql }}/contrib/frontend/third_party/message-manager
           git clean -dfx
           mkdir build
           cd build
