@@ -12,6 +12,9 @@ class DropTable : public DropCommand {
  public:
 	DropTable(DropStmt* drop_stmt) : DropCommand(drop_stmt) {}
 
+	/**
+	 * @brief
+	 */
 	virtual bool validate_syntax() const {
 		DropStmt* drop_stmt = this->drop_stmt();
 		assert(drop_stmt != nullptr);
@@ -28,6 +31,13 @@ class DropTable : public DropCommand {
 		return result;
 	}
 
+	/**
+	 * @brief
+	 */
 	virtual bool validate_data_type() const { return true; }
+
+	DropTable() = delete;
+	DropTable(const DropTable&) = delete;
+  	DropTable& operator=(const DropTable&) = delete;
 };
 

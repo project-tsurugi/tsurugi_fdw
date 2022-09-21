@@ -74,7 +74,7 @@ int64_t execute_create_table(CreateStmt* create_stmt)
 #else
 	metadata::Table table;
 #endif
-	bool success = create_table.generate_metadata2(table);
+	bool success = create_table.generate_metadata(table);
 	if (!success) {
 	ereport(ERROR,
 			(errcode(ERRCODE_INTERNAL_ERROR), 

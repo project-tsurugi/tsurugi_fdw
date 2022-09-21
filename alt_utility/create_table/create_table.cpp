@@ -41,9 +41,6 @@ extern "C" {
 using boost::property_tree::ptree;
 using namespace manager;
 
-/* base index of ordinal position metadata-manager manages */
-const metadata::ObjectIdType ORDINAL_POSITION_BASE_INDEX = 1;
-
 /**
  * @brief seek ordinal positions of primary keys in table or column constraints.
  * 
@@ -204,55 +201,7 @@ bool CreateTable::validate_syntax() const
         return result;
     }
   }
-#if 0
-  /* Check members of IndexStmt structure */
-  if (index_stmt != nullptr) {
-    if (index_stmt->unique && !(index_stmt->primary)) {
-        show_table_constraint_syntax_error_msg("Tsurugi does not support UNIQUE table constraint");
-        return result;
-    }
 
-    if (index_stmt->tableSpace != nullptr) {
-        ereport(ERROR,
-                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                  errmsg("Tsurugi does not support USING INDEX TABLESPACE clause")));
-        return result;
-    }
-
-    if (index_stmt->indexIncludingParams != NIL) {
-        ereport(ERROR,
-                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                  errmsg("Tsurugi does not support INCLUDE clause")));
-        return result;
-    }
-
-    if (index_stmt->options != NIL) {
-        ereport(ERROR,
-                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                  errmsg("Tsurugi does not support WITH clause")));
-        return result;
-    }
-
-    if (index_stmt->excludeOpNames != nullptr) {
-        show_table_constraint_syntax_error_msg("Tsurugi does not support EXCLUDE table constraint");
-        return result;
-    }
-
-    if (index_stmt->deferrable) {
-        ereport(ERROR,
-                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                  errmsg("Tsurugi does not support DEFERRABLE")));
-        return result;
-    }
-
-    if (index_stmt->initdeferred) {
-        ereport(ERROR,
-                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                  errmsg("Tsurugi does not support INITIALLY DEFERRED")));
-        return result;
-    }
-  }
-#endif
   /**
     * If statements to create temprary or unlogged table are given,
     * report error messages.
@@ -299,10 +248,10 @@ bool CreateTable::validate_data_type() const
   /* Check type of each column */
   foreach(l, table_elts) {
     ColumnDef *column_def = (ColumnDef *)lfirst(l);
-    TypeName *column_def_type_name = column_def->typeName;
+    TypeName *column_type = column_def->typeName;
 
-    if (column_def_type_name != nullptr) {
-      List *type_names = column_def_type_name->names;
+    if (column_type != nullptr) {
+      List *type_names = column_type->names;
 
       /**
         * If "names" is NIL then the actual type OID is given by typeOid,
@@ -335,9 +284,9 @@ bool CreateTable::validate_data_type() const
         }
       }
 
-      if (OidIsValid(column_def_type_name->typeOid)) {
+      if (OidIsValid(column_type->typeOid)) {
         ptree datatype;
-        std::string type_oid_str = std::to_string(column_def_type_name->typeOid);
+        std::string type_oid_str = std::to_string(column_type->typeOid);
 
         /*
           * ErrorCode::OK if the given type is suppoted by Tsurugi,
@@ -347,7 +296,7 @@ bool CreateTable::validate_data_type() const
               metadata::DataTypes::PG_DATA_TYPE, type_oid_str, datatype);
         /* If the given type is not suppoted, append the list of type oids not supported*/
         if (err != metadata::ErrorCode::OK) {
-            type_oid_not_supported.push_back(column_def_type_name->typeOid);
+            type_oid_not_supported.push_back(column_type->typeOid);
             result = false;
         }
       }
@@ -377,13 +326,14 @@ bool CreateTable::validate_data_type() const
  * @param	table_tree	
  * @return	true if success.
  */
-bool CreateTable::generate_metadata2(manager::metadata::Table& table)
+bool CreateTable::generate_metadata(manager::metadata::Object& object) const
 {
 	const CreateStmt* create_stmt = this->create_stmt();
-	assert(create_stmt != nullptr);
+	assert(create_stmt != NULL);
+	auto& table = static_cast<metadata::Table&>(object);
 
 	bool result{false};
-	ptree table_tree;
+//	ptree table_tree;
 
 	//
 	// table metadata
@@ -391,14 +341,12 @@ bool CreateTable::generate_metadata2(manager::metadata::Table& table)
 	// table name
 	RangeVar* relation = (RangeVar*) create_stmt->relation;
 	if (relation != nullptr && relation->relname != nullptr) {
-		table_tree.put(metadata::Tables::NAME, relation->relname);
 		table.name = relation->relname;
 	} else {
 		show_syntax_error_msg("table name is not specified");
 		return result;
 	}
 	// tuples
-	table_tree.put(metadata::Tables::TUPLES, 0);
 	table.tuples = 0;
 
 	//
@@ -409,83 +357,61 @@ bool CreateTable::generate_metadata2(manager::metadata::Table& table)
 	/* for each columns */
 	List* table_elts = create_stmt->tableElts;
 	ListCell* listptr;
-	int64_t ordinal_position = ORDINAL_POSITION_BASE_INDEX;
+	int64_t ordinal_position = metadata::Column::ORDINAL_POSITION_BASE_INDEX;
 	foreach(listptr, table_elts) {
 		Node* node = (Node *) lfirst(listptr);
 		if (IsA(node, ColumnDef)) {
 			ColumnDef* column_def = (ColumnDef*) node;
-			ptree column_tree;
 			metadata::Column column;
 
-			bool success = create_column_metadata(column_def, 
+			bool success = generate_column_metadata(column_def, 
 													ordinal_position, 
-													column_tree, 
 													column);
 			if (!success) {
 				return result;
 			}
-			columns_node.push_back(std::make_pair("", column_tree));
 			table.columns.emplace_back(column);
 			ordinal_position++;
 		}
 	}
-	table_tree.add_child(metadata::Tables::COLUMNS_NODE, columns_node);
-
-	//
-	// primary keys
-	//
-	table.primary_keys = get_primary_key(create_stmt, table.columns);
-	if (table.primary_keys.size() > 0) {
-		ptree primary_key;
-		for (auto ordinal_position : table.primary_keys) {
-			primary_key.put<int64_t>("", ordinal_position);
-			primary_key.push_back(std::make_pair("", primary_key));
-		}
-		table_tree.add_child(metadata::Tables::PRIMARY_KEY_NODE, primary_key);
-	}
-
 	result = true;
 
 	return result;
 }
 
 /**
- * @brief
- * @param column_def [in] column query tree.
- * @param ordinal_position [in] column ordinal position
- * @param column [out] column metadata
+ * @brief	Generate column metadata from ColumnDef.
+ * @param 	column_def [in] column query tree.
+ * @param 	ordinal_position [in] column ordinal position
+ * @param 	column [out] column metadata
  */
-bool CreateTable::create_column_metadata(ColumnDef* column_def, 
-                                          int64_t ordinal_position, 
-                                          ptree& column_tree,
-                                          metadata::Column& column)
+bool CreateTable::generate_column_metadata(ColumnDef* column_def, 
+							int64_t ordinal_position, 
+							metadata::Column& column) const
 {
-	assert(column_def != nullptr);
+	assert(column_def != NULL);
 
 	bool result = false;
 	auto datatypes = std::make_unique<metadata::DataTypes>("tsurugi");
 
 	/* ordinalPosition  */
-	column_tree.put<int64_t>(metadata::Tables::Column::ORDINAL_POSITION, ordinal_position);
 	column.ordinal_position = ordinal_position;
 
 	/* column name */
-	column_tree.put(metadata::Tables::Column::NAME, column_def->colname);
 	column.name = column_def->colname;
 
 	// nullable
-	column_tree.put<bool>(metadata::Tables::Column::NULLABLE, !column_def->is_not_null);
 	column.nullable = !(column_def->is_not_null);
 
 	//
 	// column data type
 	//
-	TypeName *column_def_type_name = column_def->typeName;
-	if (column_def_type_name == nullptr) {
-		show_syntax_error_msg("type name of the column is not specified");
+	TypeName* column_type = column_def->typeName;
+	if (column_type == NULL) {
+		this->show_syntax_error_msg("type name of the column is not specified");
 		return result;
 	}
-	List *type_names = column_def_type_name->names;
+	List *type_names = column_type->names;
 	boost::optional<metadata::ObjectIdType> data_type_id;
 
 	/*
@@ -508,13 +434,13 @@ bool CreateTable::create_column_metadata(ColumnDef* column_def,
 		}
 	}
 
-	// data type ID
-	if (OidIsValid(column_def_type_name->typeOid)) {
+	// Get data type ID
+	if (OidIsValid(column_type->typeOid)) {
 		ptree datatype;
-		std::string type_oid_str = std::to_string(column_def_type_name->typeOid);
-		metadata::ErrorCode err = datatypes->get(
+		std::string type_oid_str = std::to_string(column_type->typeOid);
+		metadata::ErrorCode error = datatypes->get(
 			metadata::DataTypes::PG_DATA_TYPE, type_oid_str, datatype);
-		if (err == metadata::ErrorCode::OK) {
+		if (error != metadata::ErrorCode::OK) {
 			data_type_id = datatype.get_optional<metadata::ObjectIdType>(metadata::DataTypes::ID);
 		}
 	}
@@ -524,28 +450,26 @@ bool CreateTable::create_column_metadata(ColumnDef* column_def,
 				errmsg("Tsurugi could not found data type ids")));
 		return result;
 	} 
-	metadata::ObjectIdType id = data_type_id.get();
-	column_tree.put<metadata::ObjectIdType>(metadata::Tables::Column::DATA_TYPE_ID, id);
+	metadata::ObjectId id = data_type_id.get();
 	column.data_type_id = id;
 
 	/* put varying metadata if given type is varchar or char */
 	switch (static_cast<metadata::DataTypes::DataTypesId>(id)) {
 		case metadata:: DataTypes::DataTypesId::VARCHAR: {
 			/* put true if given type is varchar */
-			column_tree.put<bool>(metadata::Tables::Column::VARYING, true);
 			column.varying = true;
 			break;
 		}
 		case metadata::DataTypes::DataTypesId::CHAR: {
 			/* put false if given type is char */
-			column_tree.put<bool>(metadata::Tables::Column::VARYING, false);
 			column.varying = false;
 			break;
 		}
-		default:
+		default: {
 			/* other data type */
 			column.varying = false;
 			break;
+		}
 	}
 
 	/* put data type lengths metadata if given type is varchar or char */
@@ -553,35 +477,27 @@ bool CreateTable::create_column_metadata(ColumnDef* column_def,
 		case metadata::DataTypes::DataTypesId::VARCHAR:
 		case metadata::DataTypes::DataTypesId::CHAR: {
 			/*
-				* if "typmods" is NIL then the actual typmod is expected to
-				* be prespecified in typemod, otherwise typemod is unused.
-				*/
-			List *typmods = column_def_type_name->typmods;
+			 * if "typmods" is NIL then the actual typmod is expected to
+			 * be prespecified in typemod, otherwise typemod is unused.
+			 */
+			List* typmods = column_type->typmods;
 			/* typemod includes varlena header */
-			int64_t typemod = (int64_t) column_def_type_name->typemod - VARHDRSZ;
+			int64_t typemod = (int64_t) column_type->typemod - VARHDRSZ;
 			if (typmods != NIL) {
 				/* for data type lengths metadata */
-				ptree data_lengths;
-				bool success = put_data_lengths(typmods, data_lengths);
+				bool success = get_data_lengths(typmods, column.data_lengths);
 				if (!success) {
-				return result;
-				}
-				/* put data type lengths metadata */
-				if (!data_lengths.data().empty()) {
-					column_tree.add_child(metadata::Tables::Column::DATA_LENGTH, data_lengths);
-					column.data_length = 99;
+					return result;
 				}
 			} else if (typemod >= 0) {
 				/* if typmod is -1, typmod is NULL VALUE*/
 				/* put a data type length metadata */
-				column_tree.put<metadata::ObjectIdType>(metadata::Tables::Column::DATA_LENGTH, typemod);
-				column.data_length = typemod;
+				column.data_lengths.emplace_back(typemod);
 			}
 			break;
 		}
 		default: {
 			/* other data type */
-			column.data_length = 0;
 			break;
 		}
 	}  
@@ -590,29 +506,32 @@ bool CreateTable::create_column_metadata(ColumnDef* column_def,
 	return result;
 }
 
-bool CreateTable::put_data_lengths(List* typmods, ptree& datalengths)
+/**
+ * @brief	Get column data lengths.
+ */
+bool CreateTable::get_data_lengths(List* typmods, std::vector<int64_t>& datalengths) const
 {
-	bool result = false;
+	bool result{false};
 
-	ListCell *l;
-	foreach(l, typmods) {
-	Node* tm = (Node*) lfirst(l);
-	if (IsA(tm, A_Const)) {
-		A_Const* ac = (A_Const*) tm;
-		if (IsA(&ac->val, Integer)) {
-			/*
-			* get data type lengths from typmods of TypeName structure.
-			* The given data type length must be constant integer value.
-			*/
-			datalengths.put<metadata::ObjectIdType>("", ac->val.val.ival);
+	ListCell *listptr;
+	foreach(listptr, typmods) {
+		Node* node = (Node*) lfirst(listptr);
+		if (IsA(node, A_Const)) {
+			A_Const* a_const = (A_Const*) node;
+			if (IsA(&a_const->val, Integer)) {
+				/*
+				* get data type lengths from typmods of TypeName structure.
+				* The given data type length must be constant integer value.
+				*/
+				datalengths.emplace_back(a_const->val.val.ival);
+			} else {
+				this->show_syntax_error_msg("can use only integer value in data length");
+				return result;
+			}
 		} else {
-			show_syntax_error_msg("can use only integer value in data length");
+			this->show_syntax_error_msg("can use only constant value in data length");
 			return result;
 		}
-	} else {
-		show_syntax_error_msg("can use only constant value in data length");
-		return result;
-	}
 	}
 	result = true;
 

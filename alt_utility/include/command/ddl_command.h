@@ -27,6 +27,9 @@ extern "C" {
 }
 #endif
 
+/**
+ * @brief	The most low level base class of DDL commands.
+ */
 class DDLCommand {
  public:
 	DDLCommand(Node* node) : node_(node) {}
@@ -46,7 +49,11 @@ class DDLCommand {
 	 */
 	virtual bool validate_data_type() const = 0;
 
-	protected:
+	DDLCommand() = delete;
+	DDLCommand(const DDLCommand&) = delete;
+  	DDLCommand& operator=(const DDLCommand&) = delete;
+
+ protected:
 	/**
 	 *  @brief  Reports error message that given syntax is not supported by Tsurugi.
 	 *  @param  [in] The primary message.

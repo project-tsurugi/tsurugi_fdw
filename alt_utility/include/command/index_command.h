@@ -28,22 +28,22 @@ extern "C"
 }
 #endif
 
-#include "command/ddl_command.h"
+#include "command/create_command.h"
 
-class IndexCommand : public DDLCommand{
+class IndexCommand : public CreateCommand {
  public:
 	IndexCommand(IndexStmt* index_stmt) 
-		: DDLCommand((Node*) index_stmt) {}
+		: CreateCommand((CreateStmt*) index_stmt) {}
 
-	IndexStmt* index_stmt() const { 
+	/**
+	 * @brief
+	 */
+	virtual IndexStmt* index_stmt() const { 
 		Node* node = this->statement();
 		return IsA(node, IndexStmt) ? (IndexStmt*) node : nullptr;
 	}
 
-	/**
-	 *  @brief  Create metadata from query tree.
-	 *  @return true if supported
-	 *  @return false otherwise.
-	 */
-	//  virtual bool generate_metadata(boost::property_tree::ptree& metadata) = 0;
+	IndexCommand() = delete;
+	IndexCommand(const IndexCommand&) = delete;
+  	IndexCommand& operator=(const IndexCommand&) = delete;
 };

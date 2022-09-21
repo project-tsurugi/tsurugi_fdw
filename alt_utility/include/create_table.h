@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	  table_metadata.h
- *	@brief  TABLE metadata operations.
+ *	@file	create_table.h
+ *	@brief  Generate table metadata from create statement.
  */
 #pragma once
 #include <vector>
@@ -27,25 +27,25 @@ class CreateTable : public CreateCommand {
  public:
 	CreateTable(CreateStmt* create_stmt) : CreateCommand(create_stmt) {}
 
-	virtual bool validate_syntax() const;
-	virtual bool validate_data_type() const;
-	virtual bool generate_metadata(boost::property_tree::ptree& metadata) {
-		return false;
-	}
-	bool generate_metadata2(manager::metadata::Table& object);
-
-	static constexpr const char* DEFAULT_DB_NAME = "tsurugi";
-	const char* get_table_name() {
+	virtual bool validate_syntax() const override;
+	virtual bool validate_data_type() const override;
+	virtual bool generate_metadata(manager::metadata::Object& object) const override;
+	/**
+	 * @brief
+	 */
+	const char* get_table_name() const {
 		manager::metadata::Table table;
-		this->generate_metadata2(table);
+		this->generate_metadata(table);
 		return table.name.data();
 	};
 
- private:
-	bool create_column_metadata(ColumnDef* column_def, 
-								int64_t ordinal_position, 
-								boost::property_tree::ptree& column,
-								manager::metadata::Column& column_);
+	CreateTable() = delete;
+	CreateTable(const CreateTable&) = delete;
+  	CreateTable& operator=(const CreateTable&) = delete;
 
-	bool put_data_lengths(List* typmods, boost::property_tree::ptree& datalengths);
+ private:
+	bool generate_column_metadata(ColumnDef* column_def, 
+								int64_t ordinal_position, 
+								manager::metadata::Column& column) const;
+	bool get_data_lengths(List* typmods, std::vector<int64_t>& datalengths) const;
 };
