@@ -46,6 +46,7 @@ class CreateTable : public CreateCommand {
  private:
 	bool generate_column_metadata(ColumnDef* column_def, 
 								int64_t ordinal_position, 
+								TupleDesc descriptor,
 								manager::metadata::Column& column) const;
 	bool get_data_lengths(List* typmods, std::vector<int64_t>& datalengths) const;
 };

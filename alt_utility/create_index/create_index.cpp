@@ -221,6 +221,56 @@ bool CreateIndex::generate_metadata(manager::metadata::Object& object) const
 }
 
 /**
+ *  @brief  Generate constraint metadata from query tree.
+ *  @return true if success.
+ *  @return false otherwise.
+ */
+bool CreateIndex::generate_constraint_metadata(manager::metadata::Object& object) const
+{
+	bool result{false};
+	IndexStmt* index_stmt{this->index_stmt()};
+	Assert(index_stmt != NULL);
+	auto& constraint = static_cast<metadata::Constraint&>(object);
+	auto tables = std::make_unique<metadata::Tables>("tsurugi");
+
+	if (index_stmt->primary || index_stmt->unique) {
+		/* put constraint name metadata */
+		constraint.name = index_stmt->idxname;
+		/* put constraint type metadata */
+		if (index_stmt->primary) {
+			constraint.type = static_cast<int64_t>(metadata::Constraint::CONSTRAINT::PRIMARY_KEY);
+		} else if (index_stmt->unique) {
+			constraint.type = static_cast<int64_t>(metadata::Constraint::CONSTRAINT::UNIQUE);
+		}
+		metadata::Table table;
+		tables->get(index_stmt->relation->relname, table);
+		/* put constraint columns and columns_id metadata */
+		ListCell* listptr;
+		foreach(listptr, index_stmt->indexParams) {
+			Node* node = (Node*) lfirst(listptr);
+			if (IsA(node, IndexElem)) {
+				IndexElem* elem = (IndexElem*) node;
+				for (const auto& column : table.columns) {
+					if (column.name == elem->name) {
+						constraint.columns.emplace_back(column.ordinal_position);
+						constraint.columns_id.emplace_back(column.id);
+					}
+				}
+			}
+		}
+		/* put constraint index_id metadata */
+		for (const auto& index : table.indexes) {
+			if (index.name == index_stmt->idxname) {
+				constraint.index_id = index.id;
+			}
+		}
+	}
+	result = true;
+
+	return result;
+}
+
+/**
  * @brief	Get ordinal position of primary keys.
  * @param 	index_stmt		Pointer of index statement.
  * @param	primary_keys	Reference of vector for storing key position.

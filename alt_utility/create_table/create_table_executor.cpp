@@ -28,18 +28,19 @@
 #include "manager/metadata/metadata.h"
 #include "manager/metadata/tables.h"
 
-#include "stub_manager.h"
-#include "create_table.h"
-#include "send_message.h"
-#include "create_table_executor.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 #include "postgres.h"
+#include "tcop/utility.h"
 #ifdef __cplusplus
 }
 #endif
+
+#include "stub_manager.h"
+#include "create_table.h"
+#include "send_message.h"
+#include "create_table_executor.h"
 
 using namespace boost;
 using namespace ogawayama;

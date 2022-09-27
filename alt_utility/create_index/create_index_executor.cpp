@@ -37,6 +37,9 @@ int64_t execute_create_index(IndexStmt* index_stmt)
 	success = create_index.generate_metadata(index);
 //	metadata::ErrorCode error = indexes->add(index, &object_id);
 
+	metadata::Constraint constraint;
+	success = create_index.generate_constraint_metadata(constraint);
+
 	// Primary Keys
 	auto tables = std::make_unique<metadata::Tables>("tsurugi");
 	metadata::Table table;
