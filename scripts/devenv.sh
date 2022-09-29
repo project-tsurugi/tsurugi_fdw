@@ -28,7 +28,7 @@ fi
 if [[ -d $TSURUGI_HOME/metadata-manager ]]; then
   cd $TSURUGI_HOME
 else
-  git clone git@github.com:project-tsurugi/metadata-manager.git
+  git clone -b dev/constraint_metadata git@github.com:project-tsurugi/metadata-manager.git
 fi
 
 if [[ -d $TSURUGI_HOME/message-manager ]]; then
@@ -309,7 +309,7 @@ cd $BINARY_DIR
 cmake -G Ninja \
     -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
     -DFORCE_INSTALL_RPATH=ON \
-    -DDATA_STORAGE=json \
+    -DDATA_STORAGE=postgresql \
     -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
     ..
 ninja

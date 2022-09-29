@@ -171,7 +171,7 @@ bool CreateIndex::generate_metadata(manager::metadata::Object& object) const
 	
 	index.access_method = 
 			std::underlying_type_t<metadata::Index::AccessMethod>
-			(metadata::Index::AccessMethod::TSURGI_DEFAULT_METHOD);
+			(metadata::Index::AccessMethod::MASS_TREE_METHOD);
 	index.name 			= index_stmt->idxname;
 	index.is_primary 	= index_stmt->primary;
 	index.is_unique 	= index_stmt->unique;
@@ -197,7 +197,7 @@ bool CreateIndex::generate_metadata(manager::metadata::Object& object) const
 			}
 		}
 	}
-	index.number_of_key_indexes = index.keys.size();
+	index.number_of_key_columns = index.keys.size();
 
 	// Generaete included keys.
 	foreach(listptr, index_stmt->indexIncludingParams) {
@@ -238,9 +238,9 @@ bool CreateIndex::generate_constraint_metadata(manager::metadata::Object& object
 		constraint.name = index_stmt->idxname;
 		/* put constraint type metadata */
 		if (index_stmt->primary) {
-			constraint.type = static_cast<int64_t>(metadata::Constraint::CONSTRAINT::PRIMARY_KEY);
+			constraint.type = metadata::Constraint::ConstraintType::PRIMARY_KEY;
 		} else if (index_stmt->unique) {
-			constraint.type = static_cast<int64_t>(metadata::Constraint::CONSTRAINT::UNIQUE);
+			constraint.type = metadata::Constraint::ConstraintType::UNIQUE;
 		}
 		metadata::Table table;
 		tables->get(index_stmt->relation->relname, table);
