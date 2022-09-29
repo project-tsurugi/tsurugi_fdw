@@ -161,11 +161,40 @@ bool CreateTable::validate_syntax() const
       ListCell   *l;
       foreach(l, column_def_constraints) {
         Constraint *constr = (Constraint *) lfirst(l);
-        if (constr->contype != CONSTR_NOTNULL && constr->contype != CONSTR_PRIMARY) {
-          ereport(ERROR,
-              (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                errmsg("Tsurugi supports only NOT NULL and PRIMARY KEY in column constraint")));
-          return result;
+        switch (constr->contype)
+        {
+            case CONSTR_IDENTITY:
+                ereport(ERROR,
+                    (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("Tsurugi does not support IDENTITY in column constraint")));
+                return result;
+            case CONSTR_GENERATED:
+                ereport(ERROR,
+                    (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("Tsurugi does not support GENERATED in column constraint")));
+                return result;
+            case CONSTR_ATTR_DEFERRABLE:
+                ereport(ERROR,
+                    (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("Tsurugi does not support DEFERRABLE in column constraint")));
+                return result;
+            case CONSTR_ATTR_NOT_DEFERRABLE:
+                ereport(ERROR,
+                    (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("Tsurugi does not support NOT DEFERRABLE in column constraint")));
+                return result;
+            case CONSTR_ATTR_DEFERRED:
+                ereport(ERROR,
+                    (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("Tsurugi does not support INITIALLY DEFERRED in column constraint")));
+                return result;
+            case CONSTR_ATTR_IMMEDIATE:
+                ereport(ERROR,
+                    (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("Tsurugi does not support INITIALLY IMMEDIATE in column constraint")));
+                return result;
+            default:
+                break;
         }
       }
     }
@@ -189,19 +218,6 @@ bool CreateTable::validate_syntax() const
       return result;
     }
     column_names.insert(colname);
-  }
-
-  List *table_constraints = create_stmt->constraints;
-
-  /* Check table constraints */
-  foreach(l, table_constraints) {
-    Constraint* constr = (Constraint*) lfirst(l);
-    if (constr->contype != CONSTR_PRIMARY) {
-        ereport(ERROR,
-            (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-              errmsg("Tsurugi supports only PRIMARY KEY in table constraint")));
-        return result;
-    }
   }
 
   /**
