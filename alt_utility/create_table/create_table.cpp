@@ -537,41 +537,6 @@ bool CreateTable::generate_column_metadata(ColumnDef* column_def,
 			break;
 		}
 	}  
-
-	// column constraints
-	// CONSTR_PRIMARY and CONSTR_UNIQUE get column constraints information from IndexStmt.
-	if (column_def->constraints != NIL) {
-		List* column_constraints = column_def->constraints;
-		ListCell* listptr;
-		foreach(listptr, column_constraints) {
-			Constraint* constr = (Constraint*) lfirst(listptr);
-			if (constr->contype == CONSTR_CHECK || constr->contype == CONSTR_FOREIGN) {
-				metadata::Constraint constraint;
-				/* put constraint name metadata */
-				if (constr->conname != NULL) {
-					constraint.name = constr->conname;
-				}
-				/* put constraint columns metadata */
-				constraint.columns.emplace_back(column.ordinal_position);
-				constraint.columns_id.emplace_back(column.id);
-				/* put constraint metadata */
-				switch (constr->contype) {
-					case CONSTR_CHECK:
-						/* put constraint type metadata */
-						constraint.type = metadata::Constraint::ConstraintType::CHECK;
-						// todo 
-						break;
-					case CONSTR_FOREIGN:
-						/* put constraint type metadata */
-						constraint.type = metadata::Constraint::ConstraintType::FOREIGN_KEY;
-						// todo 
-						break;
-					default:
-						break;
-				}
-			}
-		}
-	}
 	result = true;
 
 	return result;
@@ -605,6 +570,112 @@ bool CreateTable::get_data_lengths(List* typmods, std::vector<int64_t>& dataleng
 		}
 	}
 	result = true;
+
+	return result;
+}
+
+/**
+ * @brief	Get constraint information except CONSTR_PRIMARY and CONSTR_UNIQUE.
+ *			They get their constraint information from IndexStmt.
+ * @param 	constr [in] column query tree.
+ * @param 	table [in] table metadata.
+ * @param 	column_def [in] column query tree.
+ * @param 	constraint [out] constraint metadata.
+ * @return 	true if success, otherwise fault.
+ */
+bool CreateTable::get_constraint_metadata(Constraint* constr, 
+							metadata::Table& table, 
+							ColumnDef* column_def,
+							metadata::Constraint& constraint) const
+{
+	bool result{false};
+
+	if (constr->contype == CONSTR_CHECK || constr->contype == CONSTR_FOREIGN) {
+
+		/* put constraint name metadata */
+		if (constr->conname != NULL) {
+			constraint.name = constr->conname;
+		}
+
+		/* put constraint columns metadata and columns_id metadata */
+		if (column_def != NULL) {
+			for (const auto& column : table.columns) {
+				if (column.name == column_def->colname) {
+					constraint.columns.emplace_back(column.ordinal_position);
+					// Temporary until table->update is implemented.
+					constraint.columns_id.emplace_back(column.id + table.columns.size());
+				}
+			}
+		}
+
+		/* put constraint metadata */
+		switch (constr->contype) {
+			case CONSTR_CHECK:
+				/* put constraint type metadata */
+				constraint.type = metadata::Constraint::ConstraintType::CHECK;
+				// todo 
+				constraint.expression = "todo";
+				break;
+			case CONSTR_FOREIGN:
+				/* put constraint type metadata */
+				constraint.type = metadata::Constraint::ConstraintType::FOREIGN_KEY;
+				// todo 
+				break;
+			default:
+				break;
+		}
+
+		result = true;
+	}
+	return result;
+}
+
+/**
+ * @brief  	Create constraint metadata from query tree.
+ * @param 	table [in] table metadata.
+ * @return 	true if success, otherwise fault.
+ * @note	Add metadata of CONSTR_CHECK and CONSTR_FOREIGN.
+ */
+metadata::ErrorCode 
+CreateTable::generate_constraint_metadata(metadata::Table& table) const
+{
+	const CreateStmt* create_stmt = this->create_stmt();
+	assert(create_stmt != NULL);
+	metadata::ErrorCode result = metadata::ErrorCode::NOT_FOUND;
+
+	ListCell* listptr;
+	/* for table columns */
+	List* table_constraints = create_stmt->constraints;
+	foreach(listptr, table_constraints) {
+		Constraint* constr = (Constraint*) lfirst(listptr);
+		metadata::Constraint constraint;
+		bool success = get_constraint_metadata(constr, table, NULL, constraint);
+		if (success) {
+			table.constraints.emplace_back(constraint);
+			result = metadata::ErrorCode::OK;
+		}
+	}
+
+	/* for each columns */
+	List* table_elts = create_stmt->tableElts;
+	foreach(listptr, table_elts) {
+		Node* node = (Node *) lfirst(listptr);
+		if (IsA(node, ColumnDef)) {
+			// for column constraints
+			ColumnDef* column_def = (ColumnDef*) node;
+			List* column_constraints = column_def->constraints;
+			ListCell* listptr;
+			foreach(listptr, column_constraints) {
+				Constraint* constr = (Constraint*) lfirst(listptr);
+				metadata::Constraint constraint;
+				bool success = get_constraint_metadata(constr, table, column_def, constraint);
+				if (success) {
+					table.constraints.emplace_back(constraint);
+					result = metadata::ErrorCode::OK;
+				}
+			}
+		}
+	}
 
 	return result;
 }

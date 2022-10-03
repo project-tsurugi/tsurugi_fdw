@@ -34,12 +34,50 @@ int64_t execute_create_index(IndexStmt* index_stmt)
 	bool success = create_index.validate_syntax();
 	success = create_index.validate_data_type();
 	metadata::Index index;
-	success = create_index.generate_metadata(index);
+//	success = create_index.generate_metadata(index);
 //	metadata::ErrorCode error = indexes->add(index, &object_id);
 
-	metadata::Constraint constraint;
-	success = create_index.generate_constraint_metadata(constraint);
+//	metadata::Constraint constraint;
+//	success = create_index.generate_constraint_metadata(constraint);
+	auto tables = std::make_unique<metadata::Tables>("tsurugi");
 
+	// Constraint metadata
+	metadata::Table table_constraint;
+//	auto error = tables->get(object_id, table_constraint);
+	auto error = tables->get(create_index.get_table_name(), table_constraint);
+	if (error != metadata::ErrorCode::OK) {
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				errmsg("The table is not found when registing constraints. (name: %s) (error:%d)",
+				(char*) create_index.get_table_name(), (int) error)));
+		return object_id;
+	}
+	object_id = table_constraint.id;
+	error = create_index.generate_constraint_metadata(table_constraint);
+	if (error != metadata::ErrorCode::NOT_FOUND) {
+		if (error != metadata::ErrorCode::OK) {
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("CreateIndex::generate_constraint_metadata() failed.")));
+			return object_id;
+		}
+		error = tables->remove(table_constraint.id);
+		if (error != metadata::ErrorCode::OK) {
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("Remove a table metadata failed when registing constraints. " \
+					"(name: %s) (error:%d)", table_constraint.name.data(), (int) error)));
+		}
+		error = tables->add(table_constraint, &object_id);
+		if (error != metadata::ErrorCode::OK) {
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("Add a table metadata failed when registing constraints. " \
+					"(name: %s) (error:%d)", table_constraint.name.data(), (int) error)));
+		}
+	}
+
+#if 0
 	// Primary Keys
 	auto tables = std::make_unique<metadata::Tables>("tsurugi");
 	metadata::Table table;
@@ -72,6 +110,7 @@ int64_t execute_create_index(IndexStmt* index_stmt)
 					table.name.data(), (int) error));
 		}
 	}
-	
+#endif
+
 	return object_id;
 }
