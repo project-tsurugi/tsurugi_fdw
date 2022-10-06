@@ -27,6 +27,7 @@
 #include "manager/metadata/datatypes.h"
 #include "manager/metadata/metadata.h"
 #include "manager/metadata/tables.h"
+#include "manager/metadata/metadata_factory.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -83,7 +84,7 @@ int64_t execute_create_table(CreateStmt* create_stmt)
 	return  object_id;
 	}
 
-	auto tables = std::make_unique<metadata::Tables>(DBNAME);
+	auto tables = metadata::get_table_metadata(DBNAME);
 	metadata::ErrorCode error = tables->add(table, &object_id);
 	if (error != metadata::ErrorCode::OK ) {
 		if (error == metadata::ErrorCode::ALREADY_EXISTS) {

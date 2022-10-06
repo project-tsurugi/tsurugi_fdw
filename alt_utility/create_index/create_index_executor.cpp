@@ -18,29 +18,38 @@
  */
 #include <memory>
 #include "manager/metadata/tables.h"
+#include "manager/metadata/index.h"
+#include "manager/metadata/indexes.h"
+#include "manager/metadata/metadata_factory.h"
 #include "create_index.h"
 #include "create_index_executor.h"
 
 using namespace manager;
 
+/**
+ * @brief	Create index metadata from index statement.
+ * @param	index_stmt	[in] Query tree of index statement.
+ * @return	object ID of index metadata.
+ */
 int64_t execute_create_index(IndexStmt* index_stmt)
 {
 	assert(index_stmt != NULL);
 
 	metadata::ObjectId object_id = metadata::INVALID_OBJECT_ID;
-//	auto indexes = std::make_unique<metadata::Indexes>("tsurugi");
-	CreateIndex create_index{index_stmt};
-	
-	bool success = create_index.validate_syntax();
+    auto indexes = metadata::get_index_metadata("tsurugi");
+    CreateIndex create_index{index_stmt};
+
+    bool success = create_index.validate_syntax();
 	success = create_index.validate_data_type();
 	metadata::Index index;
-//	success = create_index.generate_metadata(index);
-//	metadata::ErrorCode error = indexes->add(index, &object_id);
+	success = create_index.generate_metadata(index);
+	metadata::ErrorCode error = indexes->add(index, &object_id);
 
 //	metadata::Constraint constraint;
 //	success = create_index.generate_constraint_metadata(constraint);
 	auto tables = std::make_unique<metadata::Tables>("tsurugi");
 
+#if 0
 	// Constraint metadata
 	metadata::Table table_constraint;
 //	auto error = tables->get(object_id, table_constraint);
@@ -76,7 +85,7 @@ int64_t execute_create_index(IndexStmt* index_stmt)
 					"(name: %s) (error:%d)", table_constraint.name.data(), (int) error)));
 		}
 	}
-
+#endif
 #if 0
 	// Primary Keys
 	auto tables = std::make_unique<metadata::Tables>("tsurugi");

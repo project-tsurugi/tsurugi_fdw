@@ -23,6 +23,7 @@
 #include "manager/metadata/datatypes.h"
 #include "manager/metadata/metadata.h"
 #include "manager/metadata/tables.h"
+#include "manager/metadata/metadata_factory.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -53,8 +54,8 @@ using namespace ogawayama;
  */
 bool table_exists_in_tsurugi(const char *relname)
 {
-    auto tables = std::make_unique<Tables>(DBNAME);
-	return (tables->exists(relname)) ? true : false;
+  	auto tables = metadata::get_table_metadata(DBNAME);
+  	return (tables->exists(relname)) ? true : false;
 }
 
 /**
@@ -79,9 +80,9 @@ bool execute_drop_table(DropStmt* drop_stmt, const char* relname)
 
     /* Get the object ID of the table to be deleted */
 	Table table;
-    auto tables = std::make_unique<Tables>(DBNAME);
+    auto tables = get_table_metadata(DBNAME);
     metadata::ErrorCode error = tables->get(relname, table);
-    if (error != ErrorCode::OK) {
+	if (error != ErrorCode::OK) {
         if (error == ErrorCode::NAME_NOT_FOUND && drop_stmt->missing_ok) {
             result = true;
         } else {
