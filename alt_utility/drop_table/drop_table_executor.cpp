@@ -38,6 +38,7 @@ extern "C"
 #include "send_message.h"
 #include "drop_table_executor.h"
 #include "drop_table.h"
+#include "manager/metadata/metadata.h"
 
 /* DB name metadata-manager manages */
 const std::string DBNAME = "Tsurugi";
@@ -54,8 +55,8 @@ using namespace ogawayama;
  */
 bool table_exists_in_tsurugi(const char *relname)
 {
-  	auto tables = metadata::get_table_metadata(DBNAME);
-  	return (tables->exists(relname)) ? true : false;
+  	auto tables = get_table_metadata(DBNAME);
+  	return tables->exists(relname);
 }
 
 /**
