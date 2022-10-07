@@ -225,28 +225,25 @@ bool CreateIndex::generate_metadata(manager::metadata::Object& object) const
  *  @return true if success.
  *  @return false otherwise.
  */
-metadata::ErrorCode 
-CreateIndex::generate_constraint_metadata(metadata::Table& table) const
+bool CreateIndex::generate_constraint_metadata(manager::metadata::Object& object) const
 {
+	bool result{false};
 	IndexStmt* index_stmt{this->index_stmt()};
 	Assert(index_stmt != NULL);
-	metadata::ErrorCode result = metadata::ErrorCode::NOT_FOUND;
+	auto& constraint = static_cast<metadata::Constraint&>(object);
+	auto tables = std::make_unique<metadata::Tables>("tsurugi");
 
 	if (index_stmt->primary || index_stmt->unique) {
-		metadata::Constraint constraint;
-
 		/* put constraint name metadata */
-		if (index_stmt->idxname != NULL) {
-			constraint.name = index_stmt->idxname;
-		}
-
+		constraint.name = index_stmt->idxname;
 		/* put constraint type metadata */
 		if (index_stmt->primary) {
 			constraint.type = metadata::Constraint::ConstraintType::PRIMARY_KEY;
 		} else if (index_stmt->unique) {
 			constraint.type = metadata::Constraint::ConstraintType::UNIQUE;
 		}
-
+		metadata::Table table;
+		tables->get(index_stmt->relation->relname, table);
 		/* put constraint columns and columns_id metadata */
 		ListCell* listptr;
 		foreach(listptr, index_stmt->indexParams) {
@@ -256,32 +253,28 @@ CreateIndex::generate_constraint_metadata(metadata::Table& table) const
 				for (const auto& column : table.columns) {
 					if (column.name == elem->name) {
 						constraint.columns.emplace_back(column.ordinal_position);
-						// Temporary until table->update is implemented.
-						constraint.columns_id.emplace_back(column.id + table.columns.size());
+						constraint.columns_id.emplace_back(column.id);
 					}
 				}
 			}
 		}
-
 		/* put constraint index_id metadata */
 		for (const auto& index : table.indexes) {
 			if (index.name == index_stmt->idxname) {
 				constraint.index_id = index.id;
 			}
 		}
-
-		table.constraints.emplace_back(constraint);
-		result = metadata::ErrorCode::OK;
 	}
+	result = true;
 
 	return result;
 }
 
 /**
- * @brief  	Create constraint metadata from query tree.
- * @param 	table [in] table metadata.
- * @return 	true if success, otherwise fault.
- * @note	Add metadata of CONSTR_CHECK and CONSTR_FOREIGN.
+ * @brief	Get ordinal position of primary keys.
+ * @param 	index_stmt		Pointer of index statement.
+ * @param	primary_keys	Reference of vector for storing key position.
+ * @return	true if success.
  */
 bool get_primary_keys(IndexStmt* index_stmt, std::vector<int64_t>& primary_keys)
 {

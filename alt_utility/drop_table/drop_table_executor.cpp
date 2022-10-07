@@ -94,7 +94,7 @@ bool execute_drop_table(DropStmt* drop_stmt, const char* relname)
 
     /* DROP_TABLE message to ogawayama */
     message::DropTable drop_table_message{table.id};
-#if 0
+#if 1
     success = send_message(drop_table_message);
 #else
 	success = true;

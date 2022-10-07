@@ -30,7 +30,6 @@ class CreateTable : public CreateCommand {
 	virtual bool validate_syntax() const override;
 	virtual bool validate_data_type() const override;
 	virtual bool generate_metadata(manager::metadata::Object& object) const override;
-	manager::metadata::ErrorCode generate_constraint_metadata(manager::metadata::Table& table) const;
 	/**
 	 * @brief
 	 */
@@ -50,8 +49,4 @@ class CreateTable : public CreateCommand {
 								TupleDesc descriptor,
 								manager::metadata::Column& column) const;
 	bool get_data_lengths(List* typmods, std::vector<int64_t>& datalengths) const;
-	bool get_constraint_metadata(Constraint* constr, 
-								manager::metadata::Table& table, 
-								ColumnDef* column_def,
-								manager::metadata::Constraint& constraint) const;
 };

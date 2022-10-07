@@ -99,42 +99,6 @@ int64_t execute_create_table(CreateStmt* create_stmt)
 			return object_id;
 		}
 	}
-
-	// Constraint metadata
-	metadata::Table table_constraint;
-	error = tables->get(object_id, table_constraint);
-	if (error != metadata::ErrorCode::OK) {
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				errmsg("The table is not found when registing constraints. (name: %s)",
-				(char*) create_table.get_table_name())));
-		return object_id;
-	}
-	object_id = table_constraint.id;
-	error = create_table.generate_constraint_metadata(table_constraint);
-	if (error != metadata::ErrorCode::NOT_FOUND) {
-		if (error != metadata::ErrorCode::OK) {
-			ereport(ERROR,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-					errmsg("CreateTable::generate_constraint_metadata() failed.")));
-			return object_id;
-		}
-		error = tables->remove(table_constraint.id);
-		if (error != metadata::ErrorCode::OK) {
-			ereport(ERROR,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-					errmsg("Remove a table metadata failed when registing constraints. " \
-					"(name: %s) (error:%d)", table_constraint.name.data(), (int) error)));
-		}
-		error = tables->add(table_constraint, &object_id);
-		if (error != metadata::ErrorCode::OK) {
-			ereport(ERROR,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-					errmsg("Add a table metadata failed when registing constraints. " \
-					"(name: %s) (error:%d)", table_constraint.name.data(), (int) error)));
-		}
-	}
-
 	return object_id;
 }
 
@@ -152,7 +116,7 @@ bool send_create_table_message(const int64_t object_id)
 
 	/* sends message to ogawayama */
 	manager::message::CreateTable create_table_message{object_id};
-#if 0
+#if 1
 	bool success = send_message(create_table_message);
 #else
 	bool success = true;
