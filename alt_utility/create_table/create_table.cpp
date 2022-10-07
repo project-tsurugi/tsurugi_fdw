@@ -542,12 +542,12 @@ bool CreateTable::generate_column_metadata(ColumnDef* column_def,
 				switch (constr->contype) {
 					case CONSTR_CHECK:
 						/* put constraint type metadata */
-						constraint.type = metadata::Constraint::ConstraintType::CHECK;
+						constraint.type = static_cast<int64_t>(metadata::Constraint::CONSTRAINT::CHECK);
 						// todo 
 						break;
 					case CONSTR_FOREIGN:
 						/* put constraint type metadata */
-						constraint.type = metadata::Constraint::ConstraintType::FOREIGN_KEY;
+						constraint.type = static_cast<int64_t>(metadata::Constraint::CONSTRAINT::FOREIGN_KEY);
 						// todo 
 						break;
 					default:
