@@ -63,15 +63,11 @@ int64_t execute_create_index(IndexStmt* index_stmt)
 				index.name.c_str(), (int) error)));
 	}
 
-#if 0
-//	metadata::Constraint constraint;
-//	success = create_index.generate_constraint_metadata(constraint);
-	auto tables = std::make_unique<metadata::Tables>("tsurugi");
-
+#if 1
 	// Constraint metadata
+	auto tables = metadata::get_table_metadata("tsurugi");
 	metadata::Table table_constraint;
-//	auto error = tables->get(object_id, table_constraint);
-	auto error = tables->get(create_index.get_table_name(), table_constraint);
+	error = tables->get(create_index.get_table_name(), table_constraint);
 	if (error != metadata::ErrorCode::OK) {
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
