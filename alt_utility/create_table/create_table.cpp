@@ -16,6 +16,8 @@
  *	@file	  table_metadata.h
  *	@brief  TABLE metadata operations.
  */
+#include "create_table.h"
+
 #include <unordered_set>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/optional.hpp>
@@ -28,17 +30,13 @@
 extern "C" {
 #endif
 #include "postgres.h"
-#include "catalog/heap.h"
 #include "catalog/pg_class.h"
 #include "nodes/nodes.h"
 #include "nodes/parsenodes.h"
 #include "nodes/value.h"
-#include "utils/ruleutils.h"
 #ifdef __cplusplus
 }
 #endif
-
-#include "create_table.h"
 
 using boost::property_tree::ptree;
 using namespace manager;
@@ -360,7 +358,6 @@ bool CreateTable::generate_metadata(manager::metadata::Object& object) const
 	List* table_elts = create_stmt->tableElts;
 	ListCell* listptr;
 	int64_t ordinal_position = metadata::Column::ORDINAL_POSITION_BASE_INDEX;
-	TupleDesc descriptor = BuildDescForRelation(table_elts);
 	foreach(listptr, table_elts) {
 		Node* node = (Node *) lfirst(listptr);
 		if (IsA(node, ColumnDef)) {
@@ -369,7 +366,6 @@ bool CreateTable::generate_metadata(manager::metadata::Object& object) const
 
 			bool success = generate_column_metadata(column_def, 
 													ordinal_position, 
-													descriptor,
 													column);
 			if (!success) {
 				return result;
@@ -387,12 +383,10 @@ bool CreateTable::generate_metadata(manager::metadata::Object& object) const
  * @brief	Generate column metadata from ColumnDef.
  * @param 	column_def [in] column query tree.
  * @param 	ordinal_position [in] column ordinal position
- * @param 	descriptor [in] tuple descriptor
  * @param 	column [out] column metadata
  */
 bool CreateTable::generate_column_metadata(ColumnDef* column_def, 
 							int64_t ordinal_position, 
-							TupleDesc descriptor,
 							metadata::Column& column) const
 {
 	assert(column_def != NULL);
@@ -408,20 +402,6 @@ bool CreateTable::generate_column_metadata(ColumnDef* column_def,
 
 	// nullable
 	column.nullable = !(column_def->is_not_null);
-
-	// default_expr
-	if (column_def->raw_default != NULL) {
-		char* adsrc;
-		ParseState* pstate = make_parsestate(NULL);
-		Form_pg_attribute atp = TupleDescAttr(descriptor, ordinal_position - 1);
-		Node *expr_cooked = cookDefault(pstate, column_def->raw_default,
-										atp->atttypid, atp->atttypmod,
-										NameStr(atp->attname), 0);
-		adsrc = deparse_expression(expr_cooked, NIL, false, false);
-		if (adsrc) {
-			column.default_expr = adsrc;
-		}
-	}
 
 	//
 	// column data type
@@ -521,41 +501,6 @@ bool CreateTable::generate_column_metadata(ColumnDef* column_def,
 			break;
 		}
 	}  
-
-	// column constraints
-	// CONSTR_PRIMARY and CONSTR_UNIQUE get column constraints information from IndexStmt.
-	if (column_def->constraints != NIL) {
-		List* column_constraints = column_def->constraints;
-		ListCell* listptr;
-		foreach(listptr, column_constraints) {
-			Constraint* constr = (Constraint*) lfirst(listptr);
-			if (constr->contype == CONSTR_CHECK || constr->contype == CONSTR_FOREIGN) {
-				metadata::Constraint constraint;
-				/* put constraint name metadata */
-				if (constr->conname != NULL) {
-					constraint.name = constr->conname;
-				}
-				/* put constraint columns metadata */
-				constraint.columns.emplace_back(column.ordinal_position);
-				constraint.columns_id.emplace_back(column.id);
-				/* put constraint metadata */
-				switch (constr->contype) {
-					case CONSTR_CHECK:
-						/* put constraint type metadata */
-						constraint.type = static_cast<int64_t>(metadata::Constraint::CONSTRAINT::CHECK);
-						// todo 
-						break;
-					case CONSTR_FOREIGN:
-						/* put constraint type metadata */
-						constraint.type = static_cast<int64_t>(metadata::Constraint::CONSTRAINT::FOREIGN_KEY);
-						// todo 
-						break;
-					default:
-						break;
-				}
-			}
-		}
-	}
 	result = true;
 
 	return result;
