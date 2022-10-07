@@ -27,19 +27,21 @@
 #include "manager/metadata/datatypes.h"
 #include "manager/metadata/metadata.h"
 #include "manager/metadata/tables.h"
-
-#include "stub_manager.h"
-#include "create_table.h"
-#include "send_message.h"
-#include "create_table_executor.h"
+#include "manager/metadata/metadata_factory.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 #include "postgres.h"
+#include "tcop/utility.h"
 #ifdef __cplusplus
 }
 #endif
+
+#include "stub_manager.h"
+#include "create_table.h"
+#include "send_message.h"
+#include "create_table_executor.h"
 
 using namespace boost;
 using namespace ogawayama;
@@ -76,13 +78,13 @@ int64_t execute_create_table(CreateStmt* create_stmt)
 #endif
 	bool success = create_table.generate_metadata(table);
 	if (!success) {
-	ereport(ERROR,
-			(errcode(ERRCODE_INTERNAL_ERROR), 
-			errmsg("CreateTable::generate_metadata() failed.")));
-	return  object_id;
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR), 
+				errmsg("CreateTable::generate_metadata() failed.")));
+		return  object_id;
 	}
 
-	auto tables = std::make_unique<metadata::Tables>(DBNAME);
+	auto tables = metadata::get_table_metadata(DBNAME);
 	metadata::ErrorCode error = tables->add(table, &object_id);
 	if (error != metadata::ErrorCode::OK ) {
 		if (error == metadata::ErrorCode::ALREADY_EXISTS) {
@@ -98,6 +100,42 @@ int64_t execute_create_table(CreateStmt* create_stmt)
 			return object_id;
 		}
 	}
+
+	// Constraint metadata
+	metadata::Table table_constraint;
+	error = tables->get(object_id, table_constraint);
+	if (error != metadata::ErrorCode::OK) {
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				errmsg("The table is not found when registing constraints. (name: %s)",
+				(char*) create_table.get_table_name())));
+		return object_id;
+	}
+	object_id = table_constraint.id;
+	error = create_table.generate_constraint_metadata(table_constraint);
+	if (error != metadata::ErrorCode::NOT_FOUND) {
+		if (error != metadata::ErrorCode::OK) {
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("CreateTable::generate_constraint_metadata() failed.")));
+			return object_id;
+		}
+		error = tables->remove(table_constraint.id);
+		if (error != metadata::ErrorCode::OK) {
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("Remove a table metadata failed when registing constraints. " \
+					"(name: %s) (error:%d)", table_constraint.name.data(), (int) error)));
+		}
+		error = tables->add(table_constraint, &object_id);
+		if (error != metadata::ErrorCode::OK) {
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("Add a table metadata failed when registing constraints. " \
+					"(name: %s) (error:%d)", table_constraint.name.data(), (int) error)));
+		}
+	}
+
 	return object_id;
 }
 

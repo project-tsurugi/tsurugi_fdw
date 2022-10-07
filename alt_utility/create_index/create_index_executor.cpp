@@ -18,25 +18,93 @@
  */
 #include <memory>
 #include "manager/metadata/tables.h"
+#include "manager/metadata/index.h"
+#include "manager/metadata/indexes.h"
+#include "manager/metadata/metadata_factory.h"
 #include "create_index.h"
 #include "create_index_executor.h"
 
 using namespace manager;
+using manager::metadata::ObjectId;
+using manager::metadata::ErrorCode;
 
+/**
+ * @brief	Create index metadata from index statement.
+ * @param	index_stmt	[in] Query tree of index statement.
+ * @return	object ID of index metadata.
+ */
 int64_t execute_create_index(IndexStmt* index_stmt)
 {
 	assert(index_stmt != NULL);
 
-	metadata::ObjectId object_id = metadata::INVALID_OBJECT_ID;
-//	auto indexes = std::make_unique<metadata::Indexes>("tsurugi");
-	CreateIndex create_index{index_stmt};
-	
-	bool success = create_index.validate_syntax();
-	success = create_index.validate_data_type();
-	metadata::Index index;
-	success = create_index.generate_metadata(index);
-//	metadata::ErrorCode error = indexes->add(index, &object_id);
+	ObjectId object_id = metadata::INVALID_OBJECT_ID;
+    auto indexes = metadata::get_index_metadata("tsurugi");
+    CreateIndex create_index{index_stmt};
 
+    create_index.validate_syntax();
+	create_index.validate_data_type();
+
+	metadata::Index index;
+	bool success = create_index.generate_metadata(index);
+	if (!success) {
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				errmsg("Create Table command failed to create indexes." \
+				" (name: %s)",
+				(const char*) create_index.get_table_name())));
+	}
+	ErrorCode error = indexes->add(index, &object_id);
+	if (error != ErrorCode::OK) {
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				errmsg("Create Table command failed to create indexes. " \
+				"(table name: %s) (index name: %s) (error:%d)",
+				(const char*) create_index.get_table_name(), 
+				index.name.c_str(), (int) error)));
+	}
+
+#if 0
+//	metadata::Constraint constraint;
+//	success = create_index.generate_constraint_metadata(constraint);
+	auto tables = std::make_unique<metadata::Tables>("tsurugi");
+
+	// Constraint metadata
+	metadata::Table table_constraint;
+//	auto error = tables->get(object_id, table_constraint);
+	auto error = tables->get(create_index.get_table_name(), table_constraint);
+	if (error != metadata::ErrorCode::OK) {
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				errmsg("The table is not found when registing constraints. (name: %s) (error:%d)",
+				(char*) create_index.get_table_name(), (int) error)));
+		return object_id;
+	}
+	object_id = table_constraint.id;
+	error = create_index.generate_constraint_metadata(table_constraint);
+	if (error != metadata::ErrorCode::NOT_FOUND) {
+		if (error != metadata::ErrorCode::OK) {
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("CreateIndex::generate_constraint_metadata() failed.")));
+			return object_id;
+		}
+		error = tables->remove(table_constraint.id);
+		if (error != metadata::ErrorCode::OK) {
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("Remove a table metadata failed when registing constraints. " \
+					"(name: %s) (error:%d)", table_constraint.name.data(), (int) error)));
+		}
+		error = tables->add(table_constraint, &object_id);
+		if (error != metadata::ErrorCode::OK) {
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("Add a table metadata failed when registing constraints. " \
+					"(name: %s) (error:%d)", table_constraint.name.data(), (int) error)));
+		}
+	}
+#endif
+#if 0
 	// Primary Keys
 	auto tables = std::make_unique<metadata::Tables>("tsurugi");
 	metadata::Table table;
@@ -69,6 +137,7 @@ int64_t execute_create_index(IndexStmt* index_stmt)
 					table.name.data(), (int) error));
 		}
 	}
-	
+#endif
+
 	return object_id;
 }

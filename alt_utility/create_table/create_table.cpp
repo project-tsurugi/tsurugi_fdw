@@ -16,8 +16,6 @@
  *	@file	  table_metadata.h
  *	@brief  TABLE metadata operations.
  */
-#include "create_table.h"
-
 #include <unordered_set>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/optional.hpp>
@@ -30,13 +28,17 @@
 extern "C" {
 #endif
 #include "postgres.h"
+#include "catalog/heap.h"
 #include "catalog/pg_class.h"
 #include "nodes/nodes.h"
 #include "nodes/parsenodes.h"
 #include "nodes/value.h"
+#include "utils/ruleutils.h"
 #ifdef __cplusplus
 }
 #endif
+
+#include "create_table.h"
 
 using boost::property_tree::ptree;
 using namespace manager;
@@ -159,11 +161,40 @@ bool CreateTable::validate_syntax() const
       ListCell   *l;
       foreach(l, column_def_constraints) {
         Constraint *constr = (Constraint *) lfirst(l);
-        if (constr->contype != CONSTR_NOTNULL && constr->contype != CONSTR_PRIMARY) {
-          ereport(ERROR,
-              (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                errmsg("Tsurugi supports only NOT NULL and PRIMARY KEY in column constraint")));
-          return result;
+        switch (constr->contype)
+        {
+            case CONSTR_IDENTITY:
+                ereport(ERROR,
+                    (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("Tsurugi does not support IDENTITY in column constraint")));
+                return result;
+            case CONSTR_GENERATED:
+                ereport(ERROR,
+                    (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("Tsurugi does not support GENERATED in column constraint")));
+                return result;
+            case CONSTR_ATTR_DEFERRABLE:
+                ereport(ERROR,
+                    (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("Tsurugi does not support DEFERRABLE in column constraint")));
+                return result;
+            case CONSTR_ATTR_NOT_DEFERRABLE:
+                ereport(ERROR,
+                    (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("Tsurugi does not support NOT DEFERRABLE in column constraint")));
+                return result;
+            case CONSTR_ATTR_DEFERRED:
+                ereport(ERROR,
+                    (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("Tsurugi does not support INITIALLY DEFERRED in column constraint")));
+                return result;
+            case CONSTR_ATTR_IMMEDIATE:
+                ereport(ERROR,
+                    (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("Tsurugi does not support INITIALLY IMMEDIATE in column constraint")));
+                return result;
+            default:
+                break;
         }
       }
     }
@@ -187,19 +218,6 @@ bool CreateTable::validate_syntax() const
       return result;
     }
     column_names.insert(colname);
-  }
-
-  List *table_constraints = create_stmt->constraints;
-
-  /* Check table constraints */
-  foreach(l, table_constraints) {
-    Constraint* constr = (Constraint*) lfirst(l);
-    if (constr->contype != CONSTR_PRIMARY) {
-        ereport(ERROR,
-            (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-              errmsg("Tsurugi supports only PRIMARY KEY in table constraint")));
-        return result;
-    }
   }
 
   /**
@@ -358,6 +376,7 @@ bool CreateTable::generate_metadata(manager::metadata::Object& object) const
 	List* table_elts = create_stmt->tableElts;
 	ListCell* listptr;
 	int64_t ordinal_position = metadata::Column::ORDINAL_POSITION_BASE_INDEX;
+	TupleDesc descriptor = BuildDescForRelation(table_elts);
 	foreach(listptr, table_elts) {
 		Node* node = (Node *) lfirst(listptr);
 		if (IsA(node, ColumnDef)) {
@@ -366,6 +385,7 @@ bool CreateTable::generate_metadata(manager::metadata::Object& object) const
 
 			bool success = generate_column_metadata(column_def, 
 													ordinal_position, 
+													descriptor,
 													column);
 			if (!success) {
 				return result;
@@ -383,10 +403,12 @@ bool CreateTable::generate_metadata(manager::metadata::Object& object) const
  * @brief	Generate column metadata from ColumnDef.
  * @param 	column_def [in] column query tree.
  * @param 	ordinal_position [in] column ordinal position
+ * @param 	descriptor [in] tuple descriptor
  * @param 	column [out] column metadata
  */
 bool CreateTable::generate_column_metadata(ColumnDef* column_def, 
 							int64_t ordinal_position, 
+							TupleDesc descriptor,
 							metadata::Column& column) const
 {
 	assert(column_def != NULL);
@@ -402,6 +424,20 @@ bool CreateTable::generate_column_metadata(ColumnDef* column_def,
 
 	// nullable
 	column.nullable = !(column_def->is_not_null);
+
+	// default_expr
+	if (column_def->raw_default != NULL) {
+		char* adsrc;
+		ParseState* pstate = make_parsestate(NULL);
+		Form_pg_attribute atp = TupleDescAttr(descriptor, ordinal_position - 1);
+		Node *expr_cooked = cookDefault(pstate, column_def->raw_default,
+										atp->atttypid, atp->atttypmod,
+										NameStr(atp->attname), 0);
+		adsrc = deparse_expression(expr_cooked, NIL, false, false);
+		if (adsrc) {
+			column.default_expr = adsrc;
+		}
+	}
 
 	//
 	// column data type
@@ -534,6 +570,112 @@ bool CreateTable::get_data_lengths(List* typmods, std::vector<int64_t>& dataleng
 		}
 	}
 	result = true;
+
+	return result;
+}
+
+/**
+ * @brief	Get constraint information except CONSTR_PRIMARY and CONSTR_UNIQUE.
+ *			They get their constraint information from IndexStmt.
+ * @param 	constr [in] column query tree.
+ * @param 	table [in] table metadata.
+ * @param 	column_def [in] column query tree.
+ * @param 	constraint [out] constraint metadata.
+ * @return 	true if success, otherwise fault.
+ */
+bool CreateTable::get_constraint_metadata(Constraint* constr, 
+							metadata::Table& table, 
+							ColumnDef* column_def,
+							metadata::Constraint& constraint) const
+{
+	bool result{false};
+
+	if (constr->contype == CONSTR_CHECK || constr->contype == CONSTR_FOREIGN) {
+
+		/* put constraint name metadata */
+		if (constr->conname != NULL) {
+			constraint.name = constr->conname;
+		}
+
+		/* put constraint columns metadata and columns_id metadata */
+		if (column_def != NULL) {
+			for (const auto& column : table.columns) {
+				if (column.name == column_def->colname) {
+					constraint.columns.emplace_back(column.ordinal_position);
+					// Temporary until table->update is implemented.
+					constraint.columns_id.emplace_back(column.id + table.columns.size());
+				}
+			}
+		}
+
+		/* put constraint metadata */
+		switch (constr->contype) {
+			case CONSTR_CHECK:
+				/* put constraint type metadata */
+				constraint.type = metadata::Constraint::ConstraintType::CHECK;
+				// todo 
+				constraint.expression = "todo";
+				break;
+			case CONSTR_FOREIGN:
+				/* put constraint type metadata */
+				constraint.type = metadata::Constraint::ConstraintType::FOREIGN_KEY;
+				// todo 
+				break;
+			default:
+				break;
+		}
+
+		result = true;
+	}
+	return result;
+}
+
+/**
+ * @brief  	Create constraint metadata from query tree.
+ * @param 	table [in] table metadata.
+ * @return 	true if success, otherwise fault.
+ * @note	Add metadata of CONSTR_CHECK and CONSTR_FOREIGN.
+ */
+metadata::ErrorCode 
+CreateTable::generate_constraint_metadata(metadata::Table& table) const
+{
+	const CreateStmt* create_stmt = this->create_stmt();
+	assert(create_stmt != NULL);
+	metadata::ErrorCode result = metadata::ErrorCode::NOT_FOUND;
+
+	ListCell* listptr;
+	/* for table columns */
+	List* table_constraints = create_stmt->constraints;
+	foreach(listptr, table_constraints) {
+		Constraint* constr = (Constraint*) lfirst(listptr);
+		metadata::Constraint constraint;
+		bool success = get_constraint_metadata(constr, table, NULL, constraint);
+		if (success) {
+			table.constraints.emplace_back(constraint);
+			result = metadata::ErrorCode::OK;
+		}
+	}
+
+	/* for each columns */
+	List* table_elts = create_stmt->tableElts;
+	foreach(listptr, table_elts) {
+		Node* node = (Node *) lfirst(listptr);
+		if (IsA(node, ColumnDef)) {
+			// for column constraints
+			ColumnDef* column_def = (ColumnDef*) node;
+			List* column_constraints = column_def->constraints;
+			ListCell* listptr;
+			foreach(listptr, column_constraints) {
+				Constraint* constr = (Constraint*) lfirst(listptr);
+				metadata::Constraint constraint;
+				bool success = get_constraint_metadata(constr, table, column_def, constraint);
+				if (success) {
+					table.constraints.emplace_back(constraint);
+					result = metadata::ErrorCode::OK;
+				}
+			}
+		}
+	}
 
 	return result;
 }
