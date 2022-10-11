@@ -44,6 +44,7 @@ int64_t execute_create_index(IndexStmt* index_stmt)
     create_index.validate_syntax();
 	create_index.validate_data_type();
 
+#if 0
 	metadata::Index index;
 	bool success = create_index.generate_metadata(index);
 	if (!success) {
@@ -62,6 +63,7 @@ int64_t execute_create_index(IndexStmt* index_stmt)
 				(const char*) create_index.get_table_name(), 
 				index.name.c_str(), (int) error)));
 	}
+#endif
 
 #if 0
 //	metadata::Constraint constraint;
@@ -104,11 +106,11 @@ int64_t execute_create_index(IndexStmt* index_stmt)
 		}
 	}
 #endif
-#if 0
+#if 1
 	// Primary Keys
-	auto tables = std::make_unique<metadata::Tables>("tsurugi");
+	auto tables = metadata::get_table_metadata("tsurugi");
 	metadata::Table table;
-	auto error = tables->get(create_index.get_table_name(), table);
+	ErrorCode error = tables->get(create_index.get_table_name(), table);
 	if (error != metadata::ErrorCode::OK) {
 		ereport(NOTICE,
 				errmsg("Table not found. (name: %s)", 
