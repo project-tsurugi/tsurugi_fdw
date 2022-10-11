@@ -229,6 +229,7 @@ CreateIndex::generate_constraint_metadata(metadata::Table& table) const
 
 	if (index_stmt->primary || index_stmt->unique) {
 		metadata::Constraint constraint;
+		std::string column_name;
 
 		/* put constraint name metadata */
 		if (index_stmt->idxname != NULL) {
@@ -253,16 +254,38 @@ CreateIndex::generate_constraint_metadata(metadata::Table& table) const
 						constraint.columns.emplace_back(column.ordinal_position);
 						// Temporary until table->update is implemented.
 						constraint.columns_id.emplace_back(column.id + table.columns.size());
+						column_name += '_' + column.name;
 					}
 				}
 			}
 		}
 
 		/* put constraint index_id metadata */
-		for (const auto& index : table.indexes) {
-			if (index.name == index_stmt->idxname) {
-				constraint.index_id = index.id;
+		std::string index_name;
+		if (index_stmt->idxname != nullptr) {
+			index_name = index_stmt->idxname;
+		} else {
+			// default index names.
+			if (index_stmt->primary) {
+				index_name = table.name + std::string("_pkey");
+			} else {
+				index_name = std::string(table.name + column_name + "_key");
 			}
+		}
+
+		auto indexes = metadata::get_index_metadata("tsurugi");
+		metadata::Index index;
+		auto error = indexes->get(index_name, index);
+		if (error != metadata::ErrorCode::OK) {
+			elog(NOTICE, "Index not found. (error:%d) (name:%s)", 
+				(int) error, index_stmt->relation->relname);
+			return result;
+		}
+		if (index_name == index.name) {
+			constraint.index_id = index.id;
+		} else {
+			elog(NOTICE, "Index not found. (index name:%s)", index_name.data());
+			return result;
 		}
 
 		table.constraints.emplace_back(constraint);
