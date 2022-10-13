@@ -166,7 +166,7 @@ bool CreateIndex::generate_metadata(manager::metadata::Object& object) const
         	tables->get(index_stmt->relation->relname, table);
         	for (const auto& column : table.columns) {
           		if (column.name == elem->name) {
-            		index.keys.emplace_back(column.ordinal_position);
+            		index.keys.emplace_back(column.column_number);
             		index.keys_id.emplace_back(column.id);
 					column_name += '_' + column.name;
             		int64_t direction = get_direction(elem);
@@ -189,7 +189,7 @@ bool CreateIndex::generate_metadata(manager::metadata::Object& object) const
 			tables->get(index_stmt->relation->relname, table);
 			for (const auto& column : table.columns) {
 				if (column.name == elem->name) {
-					index.keys.emplace_back(column.ordinal_position);
+					index.keys.emplace_back(column.column_number);
 					index.keys_id.emplace_back(column.id);
 					column_name += '_' + column.name;
 					// Included keys does NOT have direction.
@@ -251,9 +251,8 @@ CreateIndex::generate_constraint_metadata(metadata::Table& table) const
 				IndexElem* elem = (IndexElem*) node;
 				for (const auto& column : table.columns) {
 					if (column.name == elem->name) {
-						constraint.columns.emplace_back(column.ordinal_position);
-						// Temporary until table->update is implemented.
-						constraint.columns_id.emplace_back(column.id + table.columns.size());
+						constraint.columns.emplace_back(column.column_number);
+						constraint.columns_id.emplace_back(column.id);
 						column_name += '_' + column.name;
 					}
 				}
@@ -321,7 +320,7 @@ bool get_primary_keys(IndexStmt* index_stmt, std::vector<int64_t>& primary_keys)
 				}
 				for (const auto& column : table.columns) {
 					if (column.name == elem->name) {
-						primary_keys.emplace_back(column.ordinal_position);
+						primary_keys.emplace_back(column.column_number);
 					}
 				}
 			}
@@ -332,6 +331,7 @@ bool get_primary_keys(IndexStmt* index_stmt, std::vector<int64_t>& primary_keys)
 	return result;
 }
 
+#if 0
 /**
  * @brief  	Create table metadata from query tree.
  * @return 	true if success, otherwise fault.
@@ -349,3 +349,4 @@ CreateIndex::generate_table_metadata(manager::metadata::Table& table) const
 
 	return metadata::ErrorCode::OK;
 }
+#endif

@@ -70,7 +70,7 @@ std::vector<int64_t> get_primary_key(
 				if (constr->contype == CONSTR_PRIMARY) {
 					for (metadata::Column column : columns) {
 						if (column.name == column_def->colname) {
-							primary_keys.emplace_back(column.ordinal_position);
+							primary_keys.emplace_back(column.column_number);
 							break;
 						}
 					}
@@ -365,7 +365,7 @@ bool CreateTable::generate_metadata(manager::metadata::Object& object) const
 		return result;
 	}
 	// tuples
-	table.tuples = 0;
+	table.number_of_tuples = 0;
 
 	//
 	// columns metadata
@@ -417,13 +417,13 @@ bool CreateTable::generate_column_metadata(ColumnDef* column_def,
 	auto datatypes = std::make_unique<metadata::DataTypes>("tsurugi");
 
 	/* ordinalPosition  */
-	column.ordinal_position = ordinal_position;
+	column.column_number = ordinal_position;
 
 	/* column name */
 	column.name = column_def->colname;
 
 	// nullable
-	column.nullable = !(column_def->is_not_null);
+	column.is_not_null = column_def->is_not_null;
 
 	// default_expr
 	if (column_def->raw_default != NULL) {
@@ -435,7 +435,7 @@ bool CreateTable::generate_column_metadata(ColumnDef* column_def,
 										NameStr(atp->attname), 0);
 		adsrc = deparse_expression(expr_cooked, NIL, false, false);
 		if (adsrc) {
-			column.default_expr = adsrc;
+			column.default_expression = adsrc;
 		}
 	}
 
@@ -521,14 +521,14 @@ bool CreateTable::generate_column_metadata(ColumnDef* column_def,
 			int64_t typemod = (int64_t) column_type->typemod - VARHDRSZ;
 			if (typmods != NIL) {
 				/* for data type lengths metadata */
-				bool success = get_data_lengths(typmods, column.data_lengths);
+				bool success = get_data_lengths(typmods, column.data_length);
 				if (!success) {
 					return result;
 				}
 			} else if (typemod >= 0) {
 				/* if typmod is -1, typmod is NULL VALUE*/
 				/* put a data type length metadata */
-				column.data_lengths.emplace_back(typemod);
+				column.data_length.emplace_back(typemod);
 			}
 			break;
 		}
@@ -601,9 +601,8 @@ bool CreateTable::get_constraint_metadata(Constraint* constr,
 		if (column_def != NULL) {
 			for (const auto& column : table.columns) {
 				if (column.name == column_def->colname) {
-					constraint.columns.emplace_back(column.ordinal_position);
-					// Temporary until table->update is implemented.
-					constraint.columns_id.emplace_back(column.id + table.columns.size());
+					constraint.columns.emplace_back(column.column_number);
+					constraint.columns_id.emplace_back(column.id);
 				}
 			}
 		}
