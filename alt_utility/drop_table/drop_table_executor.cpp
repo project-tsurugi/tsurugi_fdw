@@ -108,12 +108,67 @@ bool execute_drop_table(DropStmt* drop_stmt, const char* relname)
       return result;
     }
 
-    /* remobe metadata */
+	/* remove index metadata */
+#if 1
+	auto indexes = metadata::get_index_metadata(DBNAME);
+	std::vector<boost::property_tree::ptree> index_elements = {};
+	error = indexes->get_all(index_elements);
+    if (error != ErrorCode::OK) {
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("drop_table() get remove all index metadata failed. (error:%d)",
+				 (int) error)));
+		return result;
+	}
+	if (index_elements.size() != 0) {
+		for (size_t i=0; i<index_elements.size(); i++) {
+			auto index_table_id = index_elements[i].get_optional<ObjectIdType>(metadata::Index::TABLE_ID);
+			if (table.id == index_table_id.get()) {
+				auto remove_id = index_elements[i].get_optional<ObjectIdType>(metadata::Index::ID);
+				error = indexes->remove(remove_id.get());
+			    if (error != ErrorCode::OK) {
+					ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+							 errmsg("drop_table() remove index metadata failed. (error:%d)",
+							 (int) error)));
+					return result;
+				}
+			}
+		}
+	}
+#else
+	auto indexes = metadata::get_index_metadata(DBNAME);
+	std::vector<metadata::Index> index_elements = {};
+	error = indexes->get_all(index_elements);
+    if (error != ErrorCode::OK) {
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("drop_table() get remove all index metadata failed. (error:%d)",
+				 (int) error)));
+		return result;
+	}
+	if (index_elements.size() != 0) {
+		for (size_t i=0; i<index_elements.size(); i++) {
+			if (table.id == index_elements[i].table_id) {
+				error = indexes->remove(index_elements[i].id);
+			    if (error != ErrorCode::OK) {
+					ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+							 errmsg("drop_table() remove index metadata failed. (error:%d)",
+							 (int) error)));
+					return result;
+				}
+			}
+		}
+	}
+#endif
+
+    /* remove metadata */
     error = tables->remove(table.id);
     if (error != ErrorCode::OK) {
         ereport(ERROR,
                 (errcode(ERRCODE_INTERNAL_ERROR),
-                 errmsg("drop_table() remove metadata failed.")));
+                 errmsg("drop_table() remove table metadata failed.")));
         return result;
     }
 	result = true;
