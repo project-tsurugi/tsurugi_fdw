@@ -54,4 +54,10 @@ class CreateTable : public CreateCommand {
 								manager::metadata::Table& table, 
 								ColumnDef* column_def,
 								manager::metadata::Constraint& constraint) const;
+	char* get_check_expression(Node* expr) const;
+	bool get_expr_recurse(Node* expr, StringInfoData* buf) const;
+	bool get_column_ref(ColumnRef* cref, StringInfoData* buf) const;
+	bool get_a_const(Value *value, StringInfoData* buf) const;
+	bool get_aexpr_op(A_Expr* a, StringInfoData* buf) const;
+	bool get_bool_expr(BoolExpr* a, StringInfoData* buf) const;
 };
