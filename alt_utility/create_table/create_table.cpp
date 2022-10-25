@@ -575,8 +575,7 @@ bool CreateTable::get_data_lengths(List* typmods, std::vector<int64_t>& dataleng
 }
 
 /**
- * @brief	Get constraint information except CONSTR_PRIMARY and CONSTR_UNIQUE.
- *			They get their constraint information from IndexStmt.
+ * @brief	Get check constraint information.
  * @param 	constr [in] column query tree.
  * @param 	table [in] table metadata.
  * @param 	column_def [in] column query tree.
@@ -590,7 +589,7 @@ bool CreateTable::get_constraint_metadata(Constraint* constr,
 {
 	bool result{false};
 
-	if (constr->contype == CONSTR_CHECK || constr->contype == CONSTR_FOREIGN) {
+	if (constr->contype == CONSTR_CHECK) {
 
 		/* put constraint name metadata */
 		if (constr->conname != NULL) {
@@ -607,39 +606,28 @@ bool CreateTable::get_constraint_metadata(Constraint* constr,
 			}
 		}
 
-		/* put constraint metadata */
-		switch (constr->contype) {
-			case CONSTR_CHECK:
-				/* put constraint type metadata */
-				constraint.type = metadata::Constraint::ConstraintType::CHECK;
+		/* put constraint type metadata */
+		constraint.type = metadata::Constraint::ConstraintType::CHECK;
 
-				/* put constraint expression metadata */
-				char* adsrc;
-				adsrc = get_check_expression(constr->raw_expr);
-				if (!adsrc) {
-					return result;
-				}
-				constraint.expression = adsrc;
-				break;
-			case CONSTR_FOREIGN:
-				/* put constraint type metadata */
-				constraint.type = metadata::Constraint::ConstraintType::FOREIGN_KEY;
-				// todo 
-				break;
-			default:
-				break;
+		/* put constraint expression metadata */
+		char* adsrc;
+		adsrc = get_check_expression(constr->raw_expr);
+		if (!adsrc) {
+			return result;
 		}
+		constraint.expression = adsrc;
 
 		result = true;
 	}
+
 	return result;
 }
 
 /**
  * @brief  	Create constraint metadata from query tree.
  * @param 	table [in] table metadata.
- * @return 	true if success, otherwise fault.
- * @note	Add metadata of CONSTR_CHECK and CONSTR_FOREIGN.
+ * @return 	OK if success, otherwise fault.
+ * @note	Add metadata of CONSTR_CHECK.
  */
 metadata::ErrorCode 
 CreateTable::generate_constraint_metadata(metadata::Table& table) const
@@ -648,10 +636,9 @@ CreateTable::generate_constraint_metadata(metadata::Table& table) const
 	assert(create_stmt != NULL);
 	metadata::ErrorCode result = metadata::ErrorCode::NOT_FOUND;
 
-	ListCell* listptr;
 	/* for table columns */
-	List* table_constraints = create_stmt->constraints;
-	foreach(listptr, table_constraints) {
+	ListCell* listptr;
+	foreach(listptr, create_stmt->constraints) {
 		Constraint* constr = (Constraint*) lfirst(listptr);
 		metadata::Constraint constraint;
 		bool success = get_constraint_metadata(constr, table, NULL, constraint);

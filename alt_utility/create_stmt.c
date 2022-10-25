@@ -31,6 +31,7 @@
 
 #include "create_table_executor.h"
 #include "create_index_executor.h"
+#include "alter_table_executor.h"
 
 int64_t do_create_stmt(PlannedStmt *pstmt,
                       const char *queryString,
@@ -67,6 +68,10 @@ void execute_create_stmt(PlannedStmt *pstmt,
         else if (IsA(stmt, IndexStmt))
         {
             object_id = execute_create_index((IndexStmt*) stmt);
+        }
+        else if (IsA(stmt, AlterTableStmt))
+        {
+            object_id = execute_alter_table((AlterTableStmt*) stmt);
         }
         else if (IsA(stmt, CreateForeignTableStmt))
         {

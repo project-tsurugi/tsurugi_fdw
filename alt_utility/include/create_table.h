@@ -35,9 +35,9 @@ class CreateTable : public CreateCommand {
 	 * @brief
 	 */
 	const char* get_table_name() const {
-		manager::metadata::Table table;
-		this->generate_metadata(table);
-		return table.name.data();
+		CreateStmt* create_stmt = this->create_stmt();
+		Assert(create_stmt != NULL);
+		return create_stmt->relation->relname;
 	};
 
 	CreateTable() = delete;
