@@ -4,7 +4,8 @@
 * C++ Compiler `>= C++17`
 * Source code of PostgreSQL `>=12.4`
 * Access to installed dependent modules:
-  * manager
+  * metadata-manager
+  * message-manager
   * ogawayama
 
 ## How to build frontend
@@ -93,7 +94,7 @@
 
 ## How to set up for frontend
 
-1. Update the shared library search path for metadata-manager and ogawayama.  
+1. Update the shared library search path for metadata-manager, message-manager and ogawayama.  
 	```
 	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<tsurugi install directory>/lib
 	export LD_LIBRARY_PATH
@@ -120,7 +121,7 @@
 
 1. Define metadata tables and load initial metadata.
 	```sh
-	psql postgres < <frontend clone directory>/third_party/manager/sql/ddl.sql
+	psql postgres < <frontend clone directory>/third_party/metadata-manager/sql/ddl.sql
 	```
 
 1. Install frontend extension
@@ -174,8 +175,6 @@
 
 ## Regression tests
 
-Notes: In the current version, the regression test fails due to [Issues#63](https://github.com/project-tsurugi/frontend/issues/63).
-
 ### Structure
 
 * **expected/** test results expectations
@@ -227,8 +226,6 @@ Notes: In the current version, the regression test fails due to [Issues#63](http
 			```sql
 			CREATE TABLE table1 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
 			```
-	* A new relation named "<*table_name*>_tsurugi" will be created in the current PostgreSQL database.
-		* e.g. "table1_tsurugi"
 
 1. Define foreign table
 	* Execute **CREATE FOREIGN TABLE** command
