@@ -84,7 +84,7 @@ int64_t execute_create_table(CreateStmt* create_stmt)
 		return  object_id;
 	}
 
-	auto tables = metadata::get_table_metadata(DBNAME);
+	auto tables = metadata::get_tables_ptr(DBNAME);
 	metadata::ErrorCode error = tables->add(table, &object_id);
 	if (error != metadata::ErrorCode::OK ) {
 		if (error == metadata::ErrorCode::ALREADY_EXISTS) {

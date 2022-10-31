@@ -143,7 +143,7 @@ bool CreateIndex::generate_metadata(manager::metadata::Object& object) const
 	IndexStmt* index_stmt{this->index_stmt()};
 	Assert(index_stmt != NULL);
 	auto& index = static_cast<metadata::Index&>(object);
-    auto tables = metadata::get_table_metadata("tsurugi");
+    auto tables = metadata::get_tables_ptr("tsurugi");
 
     metadata::Table table;
     tables->get(this->get_table_name(), table);
@@ -272,7 +272,7 @@ CreateIndex::generate_constraint_metadata(metadata::Table& table) const
 			}
 		}
 
-		auto indexes = metadata::get_index_metadata("tsurugi");
+		auto indexes = metadata::get_indexes_ptr("tsurugi");
 		metadata::Index index;
 		auto error = indexes->get(index_name, index);
 		if (error != metadata::ErrorCode::OK) {
@@ -303,7 +303,7 @@ CreateIndex::generate_constraint_metadata(metadata::Table& table) const
 bool get_primary_keys(IndexStmt* index_stmt, std::vector<int64_t>& primary_keys)
 {
 	bool result = false;
-    auto tables = metadata::get_table_metadata("tsurugi");
+    auto tables = metadata::get_tables_ptr("tsurugi");
 
         if (index_stmt->primary) {
 		ListCell* listptr;
