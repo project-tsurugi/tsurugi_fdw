@@ -1,9 +1,20 @@
-/*-------------------------------------------------------------------------
+/*
+ * Copyright 2019-2020 tsurugi project.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  *
  * alt_planner.c
  * 		V0版プランナフック(for PostgreSQL 11.x and 12.x)
- *
- *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
@@ -21,9 +32,7 @@
 #include "parser/parse_coerce.h"
 #include "utils/rel.h"
 
-
 /* 持ちまわししたい情報を一括管理できる構造体 */
-
 typedef struct AltPlannerInfo
 {
 	Query	*parse;
@@ -39,7 +48,6 @@ typedef struct AltPlannerInfo
 
 	/* 入力されたクエリに関係のあるOIDのリスト */
 	List	*oidlist;
-
 } AltPlannerInfo;
 
 /* "table_open" was "heap_open" before v12 */
@@ -55,18 +63,17 @@ PG_MODULE_MAGIC;
 /* planner_hook function */
 PlannedStmt *alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams);
 
-bool is_only_foreign_table( AltPlannerInfo *root, List *rtable );
-AltPlannerInfo *init_altplannerinfo( Query *parse );
-ForeignScan *create_foreign_scan( AltPlannerInfo *root ); /* ForeignScanプランノードの初期化 */
-ModifyTable *create_modify_table( AltPlannerInfo *root, ForeignScan *scan ); /* ModifyTableプランノードの初期化 */
-void is_valid_targetentry( ForeignScan *scan, AltPlannerInfo *root ); /* fdw_scan_tlsitとtargetlistの貼り付け(JOIN, Aggrefのみ) */
-PlannedStmt *create_planned_stmt( AltPlannerInfo *root, Plan *plan );
-void preprocess_targetlist2( Query *parse, ForeignScan *scan );
-static List *expand_targetlist( List *tlist, int command_type, Index result_relation, Relation rel );
+bool is_only_foreign_table(AltPlannerInfo *root, List *rtable);
+AltPlannerInfo *init_altplannerinfo(Query *parse);
+ForeignScan *create_foreign_scan(AltPlannerInfo *root); /* ForeignScanプランノードの初期化 */
+ModifyTable *create_modify_table(AltPlannerInfo *root, ForeignScan *scan); /* ModifyTableプランノードの初期化 */
+void is_valid_targetentry(ForeignScan *scan, AltPlannerInfo *root); /* fdw_scan_tlsitとtargetlistの貼り付け(JOIN, Aggrefのみ) */
+PlannedStmt *create_planned_stmt(AltPlannerInfo *root, Plan *plan);
+void preprocess_targetlist2(Query *parse, ForeignScan *scan);
+static List *expand_targetlist(List *tlist, int command_type, Index result_relation, Relation rel);
+bool include_foreign_table(AltPlannerInfo *root, List *rtable);
 
-bool include_foreign_tables(AltPlannerInfo *root, List *rtable);
-
-/************************************************************
+/*
  * alt_planner
  * 今回追加するプランナ(V0)
  *
@@ -77,9 +84,9 @@ bool include_foreign_tables(AltPlannerInfo *root, List *rtable);
  *
  * ■output
  * PlannedStmt stmt          ... プランツリーを含むPlannedStmt構造体
- ************************************************************/
+ */
 struct PlannedStmt *
-alt_planner( Query *parse2, int cursorOptions, ParamListInfo boundParams )
+alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 {
 	/* 変数宣言 */
 	Query *parse = copyObject(parse2);
@@ -94,77 +101,68 @@ alt_planner( Query *parse2, int cursorOptions, ParamListInfo boundParams )
 	 * 操作対象のSQLコマンドかどうかに応じて処理を行う
 	 * SQL文に含まれるオブジェクトがすべて同一サーバ上のRangeTblEntryであることを確認
 	 */
-	if ( root->parse->rtable == NULL || !include_foreign_tables( root, root->parse->rtable))
+	if (root->parse->rtable == NULL || !include_foreign_table(root, root->parse->rtable))
 	{
-		return standard_planner( parse2, cursorOptions, boundParams );
+		return standard_planner(parse2, cursorOptions, boundParams);
 	}
 
 	/*
 	 * 集積関数の処理が存在するかを確認
 	 */
-	if ( parse->hasAggs )
+	if (parse->hasAggs)
 	{
 		root->hasaggref = true;
 	}
 
-
 	/*
 	 * コマンドに応じた処理を実施
 	 */
-
-	switch ( parse->commandType )
+	switch (parse->commandType)
 	{
-	case CMD_SELECT:
-
-		/* v0版では暗黙のJOINはサポート対象外ですが一応*/
-		if (root->oidlist != NULL && root->oidlist->length > 1 && !root->hasjoin )
+		case CMD_SELECT:
 		{
-			root->hasjoin = true;
-			elog( NOTICE, "暗黙のJOINは対象外です(今は通しますが。)" );
+			/* v0版では暗黙のJOINはサポート対象外ですが一応*/
+			if (root->oidlist != NULL && root->oidlist->length > 1 && !root->hasjoin)
+			{
+				root->hasjoin = true;
+				elog(NOTICE, "暗黙のJOINは対象外です(今は通しますが。)");
+			}
+			scan = create_foreign_scan(root);
+			plan = (Plan *) scan;
+			break;
 		}
-
-		scan = create_foreign_scan( root );
-
-		plan = (Plan *) scan;
-
-		break;
-
-	case CMD_INSERT:
-	case CMD_UPDATE:
-	case CMD_DELETE:
-
-		/* PostgreSQL独自文法として、UPDATE文とDELETE文にFROM句が付く場合があります。 */
-		/* 	この場合、root->oidlistに2以上の数値が計上されることになるため、
-			このような文法は多分将来的にエラーとします。 */
-		if (root->oidlist != NULL && root->oidlist->length > 1 && 
-			(parse->commandType == CMD_DELETE || parse->commandType == CMD_UPDATE))
+		case CMD_INSERT:
+		case CMD_UPDATE:
+		case CMD_DELETE:
 		{
-			elog(NOTICE, "PostgreSQL独自文法です。(UPDATEもしくはDELETEでのFROM句の使用)");
+			/* PostgreSQL独自文法として、UPDATE文とDELETE文にFROM句が付く場合があります。 */
+			/* 	この場合、root->oidlistに2以上の数値が計上されることになるため、
+				このような文法は多分将来的にエラーとします。 */
+			if (root->oidlist != NULL && root->oidlist->length > 1 && 
+				(parse->commandType == CMD_DELETE || parse->commandType == CMD_UPDATE))
+			{
+				elog(NOTICE, "PostgreSQL独自文法です。(UPDATEもしくはDELETEでのFROM句の使用)");
+			}
+
+			scan = create_foreign_scan(root);
+			modify = create_modify_table(root, scan);
+			plan = (Plan *) modify;
+			break;
 		}
-
-		scan = create_foreign_scan( root );
-		modify = create_modify_table( root, scan );
-
-		plan = (Plan *) modify;
-
-		break;
-
-	default:
-		return standard_planner( parse2, cursorOptions, boundParams );
+		default:
+		{
+			return standard_planner(parse2, cursorOptions, boundParams);
+		}
 	}
 
 	/* PlannedStmtの生成 */
-
-	stmt = create_planned_stmt( root, plan );
+	stmt = create_planned_stmt(root, plan);
 
 	/* 最終的に生成したPlannedStmtを返却する */
 	return stmt;
-
 }
 
-
-
-/************************************************************
+/*
  * init_altplannerinfo
  * alt_plannerの実行中に保持しておきたい情報を初期化する
  *
@@ -176,12 +174,11 @@ alt_planner( Query *parse2, int cursorOptions, ParamListInfo boundParams )
  * AltPlannerInfo *root ... パースツリー(のコピー)や、外部サーバのOID等、
  *                          alt_planner実行中に使いまわしたい情報を収めた構造体を
  *                          初期化したもの。
- ************************************************************/
-
+ */
 AltPlannerInfo
-*init_altplannerinfo( Query *parse )
+*init_altplannerinfo(Query *parse)
 {
-	AltPlannerInfo *root = (AltPlannerInfo *) palloc0( sizeof( AltPlannerInfo ) );
+	AltPlannerInfo *root = (AltPlannerInfo *) palloc0(sizeof(AltPlannerInfo));
 	root->parse		=	parse;
 	root->hasjoin	=	false;
 	root->hasaggref	=	false;
@@ -191,9 +188,7 @@ AltPlannerInfo
 	return root;
 }
 
-
-
-/************************************************************
+/*
  * is_only_foreign_table
  * 同じ外部サーバ上に存在するリレーション同士のクエリであるか、
  * また、後々PlannedStmt->relationOidsに追加するため、oidlistを
@@ -211,151 +206,57 @@ AltPlannerInfo
  * bool                 ... alt_plannerでの処理対象であればtrueを、
  *                          対象外であればfalseを返却する。
  *                          現時点では、SQLに含まれる表がすべて外部表であればtrueとなる。
- ************************************************************/
-
+ */
 bool
-is_only_foreign_table( AltPlannerInfo *root, List *rtable )
+is_only_foreign_table(AltPlannerInfo *root, List *rtable)
 {
 	ListCell	*rtable_list_cell;
 	Oid			currentserverid;
 
-	foreach( rtable_list_cell, rtable )
+	foreach(rtable_list_cell, rtable)
 	{
 		/* 取り出し用にRangeTblEntryを宣言 */
 		RangeTblEntry	*range_table_entry;
 
 		/* RangeTblEntryを取り出し */
-		range_table_entry = lfirst_node( RangeTblEntry, rtable_list_cell );
-
-		switch ((int) range_table_entry->rtekind )
-		{
-		case RTE_RELATION:
-			/* 外部表の場合は、外部サーバのOidを取得する。全てのリレーションで同一外部サーバをアクセスしているかを判定する */
-			if ( range_table_entry->relkind == 'f' )
-			{
-				/* 現在チェックしているRTEの外部サーバのOIDを獲得 */
-				currentserverid = GetForeignServerIdByRelId( range_table_entry->relid );
-
-				/* OIDをoidlistに追加 */
-				root->oidlist = lappend_oid( root->oidlist, range_table_entry->relid );
-
-
-				/* 異なるサーバ上のオブジェクトが混在していないかをチェック */
-				if ( root->serverid == 0 )
-				{
-					root->serverid = currentserverid;
-					break;
-				}
-				else if ( root->serverid != currentserverid )
-				{
-					elog( NOTICE, "異なる種類のサーバが混在しています" );
-					return false;
-				}
-			}
-
-			/* リレーションが外部表以外の場合は処理対象外とする */
-			else
-			{
-				return false;
-			}
-
-			break;
-
-		case RTE_SUBQUERY:
-
-			/* 純粋なSUBQUERY以外除外する(VIEWなどは除外する) */
-			if ( range_table_entry->relkind != 0 || range_table_entry->subquery == 0 )
-			{
-				return false;
-			}
-			else
-			{
-				/* サブクエリ内のRTEをis_only_foreign_tableにかける(再帰) */
-				Query	*subquery = range_table_entry->subquery;
-
-				if ( is_only_foreign_table( root, subquery->rtable ) )
-				{
-					break;
-				}
-				else
-				{
-					return false;
-				}
-
-			}
-			break;
-
-		case RTE_JOIN:
-
-			/* JOIN句を明示的に使用した場合、JOINであることを示すRTEが作られる。
-			   ただし、実質的にほぼ空なハズなので、特にこれと言った処理はしない。
-			*/
-
-			if( !root->hasjoin )
-			{
-				root->hasjoin = true;
-			}
-
-			break;
-
-		/* 以下、処理対象外とします。 */
-		case RTE_CTE:
-		case RTE_FUNCTION:
-		case RTE_TABLEFUNC:
-		case RTE_VALUES:
-		case RTE_NAMEDTUPLESTORE:
-			return false;
-			break;
-		}
-
-	} /* foreach終了 */
-
-	/* 最後まで抜けることができればOK */
-	return true;
-}
-
-bool
-include_foreign_tables(AltPlannerInfo *root, List *rtable)
-{
-	ListCell	*rtable_list_cell;
-	Oid			currentserverid;
-	bool included = false;
-
-	foreach( rtable_list_cell, rtable )
-	{
-		RangeTblEntry	*range_table_entry;
-		range_table_entry = lfirst_node( RangeTblEntry, rtable_list_cell );
+		range_table_entry = lfirst_node(RangeTblEntry, rtable_list_cell);
 
 		switch ((int) range_table_entry->rtekind)
 		{
 			case RTE_RELATION:
 			{
-				/*	外部表の場合は、外部サーバのOidを取得する。全てのリレーションで
+				/* 	外部表の場合は、外部サーバのOidを取得する。全てのリレーションで
 					同一外部サーバをアクセスしているかを判定する */
-				if ( range_table_entry->relkind == 'f' )
+				if (range_table_entry->relkind == 'f')
 				{
-					included = true;
 					/* 現在チェックしているRTEの外部サーバのOIDを獲得 */
-					currentserverid = GetForeignServerIdByRelId( range_table_entry->relid );
+					currentserverid = GetForeignServerIdByRelId(range_table_entry->relid);
 
 					/* OIDをoidlistに追加 */
-					root->oidlist = lappend_oid( root->oidlist, range_table_entry->relid );
+					root->oidlist = lappend_oid(root->oidlist, range_table_entry->relid);
+
 
 					/* 異なるサーバ上のオブジェクトが混在していないかをチェック */
-					if ( root->serverid == 0 )
+					if (root->serverid == 0)
 					{
 						root->serverid = currentserverid;
 						break;
 					}
-					else if ( root->serverid != currentserverid )
+					else if (root->serverid != currentserverid)
 					{
-						elog( NOTICE, "異なる種類のサーバが混在しています" );
+						elog(NOTICE, "異なる種類のサーバが混在しています");
 						return false;
 					}
 				}
+
+				/* リレーションが外部表以外の場合は処理対象外とする */
+				else
+				{
+					return false;
+				}
+
 				break;
 			}
-
 			case RTE_SUBQUERY:
 			{
 				/* 純粋なSUBQUERY以外除外する(VIEWなどは除外する) */
@@ -368,7 +269,105 @@ include_foreign_tables(AltPlannerInfo *root, List *rtable)
 					/* サブクエリ内のRTEをis_only_foreign_tableにかける(再帰) */
 					Query	*subquery = range_table_entry->subquery;
 
-					if (include_foreign_tables(root, subquery->rtable))
+					if (is_only_foreign_table(root, subquery->rtable))
+					{
+						break;
+					}
+					else
+					{
+						return false;
+					}
+
+				}
+				break;
+			}
+			case RTE_JOIN:
+			{
+				/* JOIN句を明示的に使用した場合、JOINであることを示すRTEが作られる。
+				ただし、実質的にほぼ空なハズなので、特にこれと言った処理はしない。
+				*/
+
+				if(!root->hasjoin)
+				{
+					root->hasjoin = true;
+				}
+
+				break;
+			}
+			/* 以下、処理対象外とします。 */
+			case RTE_CTE:
+			case RTE_FUNCTION:
+			case RTE_TABLEFUNC:
+			case RTE_VALUES:
+			case RTE_NAMEDTUPLESTORE:
+			{
+				return false;
+				break;
+			}
+		}
+	} /* foreach終了 */
+
+	/* 最後まで抜けることができればOK */
+	return true;
+}
+
+/*
+ *
+ */
+bool
+include_foreign_table(AltPlannerInfo *root, List *rtable)
+{
+	ListCell	*rtable_list_cell;
+	Oid			currentserverid;
+	bool included = false;
+
+	foreach(rtable_list_cell, rtable)
+	{
+		RangeTblEntry	*range_table_entry;
+		range_table_entry = lfirst_node(RangeTblEntry, rtable_list_cell);
+
+		switch ((int) range_table_entry->rtekind)
+		{
+			case RTE_RELATION:
+			{
+				/*	外部表の場合は、外部サーバのOidを取得する。全てのリレーションで
+					同一外部サーバをアクセスしているかを判定する */
+				if (range_table_entry->relkind == 'f')
+				{
+					included = true;
+					/* 現在チェックしているRTEの外部サーバのOIDを獲得 */
+					currentserverid = GetForeignServerIdByRelId(range_table_entry->relid);
+
+					/* OIDをoidlistに追加 */
+					root->oidlist = lappend_oid(root->oidlist, range_table_entry->relid);
+
+					/* 異なるサーバ上のオブジェクトが混在していないかをチェック */
+					if (root->serverid == 0)
+					{
+						root->serverid = currentserverid;
+						break;
+					}
+					else if (root->serverid != currentserverid)
+					{
+						elog(NOTICE, "異なる種類のサーバが混在しています");
+						return false;
+					}
+				}
+				break;
+			}
+			case RTE_SUBQUERY:
+			{
+				/* 純粋なSUBQUERY以外除外する(VIEWなどは除外する) */
+				if (range_table_entry->relkind != 0 || range_table_entry->subquery == 0)
+				{
+					return false;
+				}
+				else
+				{
+					/* サブクエリ内のRTEをis_only_foreign_tableにかける(再帰) */
+					Query	*subquery = range_table_entry->subquery;
+
+					if (include_foreign_table(root, subquery->rtable))
 					{
 						included = true;
 						break;
@@ -376,13 +375,12 @@ include_foreign_tables(AltPlannerInfo *root, List *rtable)
 				}
 				break;
 			}
-
 			case RTE_JOIN:
 			{
 				/* JOIN句を明示的に使用した場合、JOINであることを示すRTEが作られる。
 				ただし、実質的にほぼ空なハズなので、特にこれと言った処理はしない。
 				*/
-				if( !root->hasjoin )
+				if(!root->hasjoin)
 				{
 					root->hasjoin = true;
 				}
@@ -402,7 +400,7 @@ include_foreign_tables(AltPlannerInfo *root, List *rtable)
 	return included;
 }
 
-/************************************************************
+/*
  * create_foreign_scan
  * ForeignScan構造体を生成する
  * SQLコマンドによって異なるtargetlist, fdw_scan_tlistについては、
@@ -415,16 +413,15 @@ include_foreign_tables(AltPlannerInfo *root, List *rtable)
  * ■output
  * ForeignScan *fnode   ... 作成したForeignScanプランノード。
  *                          単純なSELECT文を実行した場合と同等の内容となるよう各値を設定している。
- ************************************************************/
-
+ */
 ForeignScan *
-create_foreign_scan( AltPlannerInfo *root )
+create_foreign_scan(AltPlannerInfo *root)
 {
 	Bitmapset  *fs_relids = NULL;
 
 	/* 初期化 */
 	ForeignScan *fnode;
-	fnode = makeNode( ForeignScan );
+	fnode = makeNode(ForeignScan);
 
 	fnode->scan.plan.targetlist = 0;
 	fnode->scan.plan.qual = 0;
@@ -443,18 +440,16 @@ create_foreign_scan( AltPlannerInfo *root )
 	/* fs_relidsの設定 */
 	/* 単一表のSCANと見なすため、fs_relidsは1が入っているBitmapsetとします */
 
-	fs_relids = bms_add_member( fs_relids, 1 );
+	fs_relids = bms_add_member(fs_relids, 1);
 	fnode->fs_relids = fs_relids;
 
 	/* scan.plan.targetlistおよびfdw_scan_tlistの設定 */
-	is_valid_targetentry( fnode, root );
+	is_valid_targetentry(fnode, root);
 
 	return fnode;
 }
 
-
-
-/************************************************************
+/*
  * create_modify_table
  * ModifyTable構造体を生成する
  *
@@ -467,21 +462,17 @@ create_foreign_scan( AltPlannerInfo *root )
  * ■output
  * ModifyTable *modify  ... INSERT, DELETE, UPDATE文で必要となるModifyTableプランノード。
  *                          ExecutorでDirectModifyに入るように各項目を設定している。
- ************************************************************/
-
+ */
 ModifyTable *
-create_modify_table( AltPlannerInfo *root, ForeignScan *scan )
+create_modify_table(AltPlannerInfo *root, ForeignScan *scan)
 {
-	ModifyTable *modify = makeNode( ModifyTable );
+	ModifyTable *modify = makeNode(ModifyTable);
 	List *fdwPrivLists = NIL;
 	Bitmapset  *direct_modify_plans = NULL;
 
-
 	/* ForeignScanプランノードのList化 */
 	List *subplan = NIL;
-
-	subplan = lappend( subplan, scan );
-
+	subplan = lappend(subplan, scan);
 
 	/* 初期化 */
 	modify->plan.lefttree = NULL;
@@ -515,26 +506,18 @@ create_modify_table( AltPlannerInfo *root, ForeignScan *scan )
 	modify->exclRelRTI = 0;
 	modify->exclRelTlist = NIL;
 
-
-
 	/* modify->fdwPrivListsの指定。実質内容のないT_List */
-	fdwPrivLists = lappend( fdwPrivLists, 0 );
-
+	fdwPrivLists = lappend(fdwPrivLists, 0);
 	modify->fdwPrivLists = fdwPrivLists;
 
-
 	/* modify->fdwDirectModifyPlansの指定。Bitmapsetを追加。 */
-	direct_modify_plans = bms_add_member( direct_modify_plans, 0 );
-
+	direct_modify_plans = bms_add_member(direct_modify_plans, 0);
 	modify->fdwDirectModifyPlans = direct_modify_plans;
-
 
 	return modify;
 }
 
-
-
-/************************************************************
+/*
  * is_valid_targetentry
  * SELECT, DELETE用 (今のところ問題が起きないのはVarとAggrefのみ)
  * INSERT, UPDATE用 (他の関数に処理を移す)
@@ -547,10 +530,9 @@ create_modify_table( AltPlannerInfo *root, ForeignScan *scan )
  * ■output
  * --
  *
- ************************************************************/
-
+ */
 void
-is_valid_targetentry( ForeignScan *scan, AltPlannerInfo *root )
+is_valid_targetentry(ForeignScan *scan, AltPlannerInfo *root)
 {
 	List *pte = root->parse->targetList;
 	ListCell *l;
@@ -567,54 +549,56 @@ is_valid_targetentry( ForeignScan *scan, AltPlannerInfo *root )
 	/* 入力されたTargetEntryをチェック */
 
 	int attno = 1;
-	foreach( l, pte )
+	foreach(l, pte)
 	{
-		TargetEntry *te = (TargetEntry *) lfirst( l );
+		TargetEntry *te = (TargetEntry *) lfirst(l);
 		Node *node = (Node *) te->expr;
 
-		switch ( nodeTag( node ) )
-			{
+		switch (nodeTag(node))
+		{
 			case T_Var:
+			{
 				var = (Var *) node;
 
 				/* ForeignScan->fdw_scan_tlist用 */
-				newfste = makeTargetEntry( (Expr *) node,
+				newfste = makeTargetEntry((Expr *) node,
 								    attno,
 								    NULL,
-								    te->resjunk );
+								    te->resjunk);
 
-				scan->fdw_scan_tlist = lappend( scan->fdw_scan_tlist, newfste );
+				scan->fdw_scan_tlist = lappend(scan->fdw_scan_tlist, newfste);
 
 
 				/* ForeignScan->targetlist用 */
-				newvar = makeVar( var->varno,
+				newvar = makeVar(var->varno,
 						       attno,
 						       var->vartype,
 						       var->vartypmod,
 						       var->varcollid,
-						       0 );
+						       0);
 
 				newvar->varno = INDEX_VAR;
 				newvar->varoattno = var->varoattno;
 				newvar->location = var->location;
 
-				newte = makeTargetEntry( (Expr *) newvar,
+				newte = makeTargetEntry((Expr *) newvar,
 				 				  attno,
 								  te->resname,
-								  te->resjunk );
+								  te->resjunk);
 
 				newte->resorigtbl = te->resorigtbl;
 				newte->resorigcol = te->resorigcol;
 				newte->ressortgroupref = 0;
 
-				scan->scan.plan.targetlist = lappend( scan->scan.plan.targetlist, newte );
+				scan->scan.plan.targetlist = lappend(scan->scan.plan.targetlist, newte);
 				break;
-
+			}
 			case T_Aggref:
+			{
 				aggref = (Aggref *) node;
 
 			       	/* もしaggref->aggtypeがbigint, smallintである場合、integerに変更(V0) */
-	                        if ( aggref->aggtype == INT2OID || aggref->aggtype == INT8OID)
+	                        if (aggref->aggtype == INT2OID || aggref->aggtype == INT8OID)
 			        {
 					aggref->aggtype = INT4OID;
 
@@ -622,34 +606,34 @@ is_valid_targetentry( ForeignScan *scan, AltPlannerInfo *root )
 
 
 				/* ForeignScan->targetlist用 */
-				newvar = makeVar( INDEX_VAR,
+				newvar = makeVar(INDEX_VAR,
 								  attno,
 								  aggref->aggtype,
 								  -1,
 								  InvalidOid,
-								  0 );
+								  0);
 
-				newte = makeTargetEntry( (Expr *) newvar,
+				newte = makeTargetEntry((Expr *) newvar,
 										 attno,
 										 te->resname,
-										 te->resjunk );
+										 te->resjunk);
 
 				newte->ressortgroupref = 0;
 
-				scan->scan.plan.targetlist = lappend( scan->scan.plan.targetlist, newte );
+				scan->scan.plan.targetlist = lappend(scan->scan.plan.targetlist, newte);
 
 
 				/* ForeignScan->fdw_scan_tlist用 */
-				newfste = makeTargetEntry( (Expr *) node,
+				newfste = makeTargetEntry((Expr *) node,
 										   attno,
 										   NULL,
-										   false );
+										   false);
 
 
-				scan->fdw_scan_tlist = lappend( scan->fdw_scan_tlist, newfste );
+				scan->fdw_scan_tlist = lappend(scan->fdw_scan_tlist, newfste);
 
 				break;
-
+			}
 			/* 以下、処理しません */
 			case T_Const:
 			case T_Param:
@@ -668,26 +652,25 @@ is_valid_targetentry( ForeignScan *scan, AltPlannerInfo *root )
 			case T_ArrayExpr:
 			case T_List:
 			default:
-				if ( root->parse->commandType == CMD_SELECT )
+			{
+				if (root->parse->commandType == CMD_SELECT)
 				{
-					elog( NOTICE, "サポート対象外のTargetEntryが含まれているようです。" );
+					elog(NOTICE, "サポート対象外のTargetEntryが含まれているようです。");
 				}
 				break;
 			}
+		}
 		attno++;
 	}
 
 	/* INSERTとUPDATEの場合 */
-	if ( root->parse->commandType == CMD_INSERT || root->parse->commandType == CMD_UPDATE )
+	if (root->parse->commandType == CMD_INSERT || root->parse->commandType == CMD_UPDATE)
 	{
-		preprocess_targetlist2( root->parse, scan );
+		preprocess_targetlist2(root->parse, scan);
 	}
-
 }
 
-
-
-/************************************************************
+/*
  * create_planned_stmt
  * 入力された情報からPlannedStmtを作成する
  *
@@ -700,12 +683,11 @@ is_valid_targetentry( ForeignScan *scan, AltPlannerInfo *root )
  *
  * ■output
  * PlannedStmt *stmt    ... alt_plannerから返却する構造体。
- ************************************************************/
-
+ */
 PlannedStmt *
-create_planned_stmt( AltPlannerInfo *root, Plan *plan )
+create_planned_stmt(AltPlannerInfo *root, Plan *plan)
 {
-	PlannedStmt *stmt = makeNode( PlannedStmt );
+	PlannedStmt *stmt = makeNode(PlannedStmt);
 	Query *parse = root->parse;
 
 	/* 初期化 */
@@ -735,24 +717,20 @@ create_planned_stmt( AltPlannerInfo *root, Plan *plan )
 	stmt->stmt_location = parse->stmt_location;
 	stmt->stmt_len = parse->stmt_len;
 
-
 	/* ModifyTableに特有の処理 */
-	if ( nodeTag( plan ) == T_ModifyTable )
+	if (nodeTag(plan) == T_ModifyTable)
 	{
 		/* resultRelationsを作成 */
 		List *resultRelations = NIL;
 
-		resultRelations = lappend_int( resultRelations, parse->resultRelation );
+		resultRelations = lappend_int(resultRelations, parse->resultRelation);
 		stmt->resultRelations = resultRelations;
 	}
 
 	return stmt;
-
 }
 
-
-
-/************************************************************
+/*
  * preprocess_targetlist
  * INSERTとUPDATEのための処理(preptlist.cと同名の別関数)
  *
@@ -761,39 +739,37 @@ create_planned_stmt( AltPlannerInfo *root, Plan *plan )
  *                       クエリツリー内部のtargetList, resultRelationなどを使用する。
  * ForeignScan *scan ... この関数を実行した結果、生成されるTargetEntryのリストを
  *                       紐づける関数。
- ************************************************************/
+ */
 void
-preprocess_targetlist2( Query *parse, ForeignScan *scan )
+preprocess_targetlist2(Query *parse, ForeignScan *scan)
 {
 	RangeTblEntry	*target_rte = NULL;
 	Relation		target_relation = NULL;
 	List			*tlist;
 
 	/* RangeTblEntryのリストから、Update対象のRangeTblEntryを取得 */
-	target_rte = rt_fetch( parse->resultRelation, parse->rtable );
+	target_rte = rt_fetch(parse->resultRelation, parse->rtable);
 
 	/* 更新対象のリレーションのヒープを開く */
-	target_relation = table_open( target_rte->relid, NoLock );
+	target_relation = table_open(target_rte->relid, NoLock);
 
 	/* targetListを追加する。 */
 	tlist = parse->targetList;
-	tlist = expand_targetlist( tlist, parse->commandType, parse->resultRelation, target_relation );
+	tlist = expand_targetlist(tlist, parse->commandType, 
+							parse->resultRelation, target_relation);
 
 	scan->scan.plan.targetlist = tlist;
 
-	if ( target_relation )
-		table_close( target_relation, NoLock );
+	if (target_relation)
+		table_close(target_relation, NoLock);
 
 }
 
-
-
-/*****************************************************************************
+/*
  *
  *		TARGETLIST EXPANSION (preptlist.cから移植しました。)
  *
- *****************************************************************************/
-
+ */
 /*
  * expand_targetlist
  *	  Given a target list as generated by the parser and a result relation,
