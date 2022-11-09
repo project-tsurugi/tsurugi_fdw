@@ -64,7 +64,7 @@ PlannedStmt *create_planned_stmt( AltPlannerInfo *root, Plan *plan );
 void preprocess_targetlist2( Query *parse, ForeignScan *scan );
 static List *expand_targetlist( List *tlist, int command_type, Index result_relation, Relation rel );
 
-
+bool include_foreign_tables(AltPlannerInfo *root, List *rtable);
 
 /************************************************************
  * alt_planner
@@ -90,12 +90,11 @@ alt_planner( Query *parse2, int cursorOptions, ParamListInfo boundParams )
 	PlannedStmt *stmt;
 	ModifyTable *modify;
 
-
 	/*
 	 * 操作対象のSQLコマンドかどうかに応じて処理を行う
 	 * SQL文に含まれるオブジェクトがすべて同一サーバ上のRangeTblEntryであることを確認
 	 */
-	if ( root->parse->rtable == NULL || !is_only_foreign_table( root, root->parse->rtable ) )
+	if ( root->parse->rtable == NULL || !include_foreign_tables( root, root->parse->rtable))
 	{
 		return standard_planner( parse2, cursorOptions, boundParams );
 	}
@@ -118,7 +117,7 @@ alt_planner( Query *parse2, int cursorOptions, ParamListInfo boundParams )
 	case CMD_SELECT:
 
 		/* v0版では暗黙のJOINはサポート対象外ですが一応*/
-		if ( root->oidlist->length > 1 && !root->hasjoin )
+		if (root->oidlist != NULL && root->oidlist->length > 1 && !root->hasjoin )
 		{
 			root->hasjoin = true;
 			elog( NOTICE, "暗黙のJOINは対象外です(今は通しますが。)" );
@@ -135,8 +134,10 @@ alt_planner( Query *parse2, int cursorOptions, ParamListInfo boundParams )
 	case CMD_DELETE:
 
 		/* PostgreSQL独自文法として、UPDATE文とDELETE文にFROM句が付く場合があります。 */
-		/* この場合、root->oidlistに2以上の数値が計上されることになるため、このような文法は多分将来的にエラーとします。 */
-		if(root->oidlist->length > 1 && (parse->commandType == CMD_DELETE || parse->commandType == CMD_UPDATE))
+		/* 	この場合、root->oidlistに2以上の数値が計上されることになるため、
+			このような文法は多分将来的にエラーとします。 */
+		if (root->oidlist != NULL && root->oidlist->length > 1 && 
+			(parse->commandType == CMD_DELETE || parse->commandType == CMD_UPDATE))
 		{
 			elog(NOTICE, "PostgreSQL独自文法です。(UPDATEもしくはDELETEでのFROM句の使用)");
 		}
@@ -226,9 +227,7 @@ is_only_foreign_table( AltPlannerInfo *root, List *rtable )
 		/* RangeTblEntryを取り出し */
 		range_table_entry = lfirst_node( RangeTblEntry, rtable_list_cell );
 
-		/* チェック */
-
-		switch ( range_table_entry->rtekind )
+		switch ((int) range_table_entry->rtekind )
 		{
 		case RTE_RELATION:
 			/* 外部表の場合は、外部サーバのOidを取得する。全てのリレーションで同一外部サーバをアクセスしているかを判定する */
@@ -265,7 +264,7 @@ is_only_foreign_table( AltPlannerInfo *root, List *rtable )
 		case RTE_SUBQUERY:
 
 			/* 純粋なSUBQUERY以外除外する(VIEWなどは除外する) */
-			if ( range_table_entry->relkind != 0 || range_table_entry->subquery==0 )
+			if ( range_table_entry->relkind != 0 || range_table_entry->subquery == 0 )
 			{
 				return false;
 			}
@@ -315,7 +314,93 @@ is_only_foreign_table( AltPlannerInfo *root, List *rtable )
 	return true;
 }
 
+bool
+include_foreign_tables(AltPlannerInfo *root, List *rtable)
+{
+	ListCell	*rtable_list_cell;
+	Oid			currentserverid;
+	bool included = false;
 
+	foreach( rtable_list_cell, rtable )
+	{
+		RangeTblEntry	*range_table_entry;
+		range_table_entry = lfirst_node( RangeTblEntry, rtable_list_cell );
+
+		switch ((int) range_table_entry->rtekind)
+		{
+			case RTE_RELATION:
+			{
+				/*	外部表の場合は、外部サーバのOidを取得する。全てのリレーションで
+					同一外部サーバをアクセスしているかを判定する */
+				if ( range_table_entry->relkind == 'f' )
+				{
+					included = true;
+					/* 現在チェックしているRTEの外部サーバのOIDを獲得 */
+					currentserverid = GetForeignServerIdByRelId( range_table_entry->relid );
+
+					/* OIDをoidlistに追加 */
+					root->oidlist = lappend_oid( root->oidlist, range_table_entry->relid );
+
+					/* 異なるサーバ上のオブジェクトが混在していないかをチェック */
+					if ( root->serverid == 0 )
+					{
+						root->serverid = currentserverid;
+						break;
+					}
+					else if ( root->serverid != currentserverid )
+					{
+						elog( NOTICE, "異なる種類のサーバが混在しています" );
+						return false;
+					}
+				}
+				break;
+			}
+
+			case RTE_SUBQUERY:
+			{
+				/* 純粋なSUBQUERY以外除外する(VIEWなどは除外する) */
+				if (range_table_entry->relkind != 0 || range_table_entry->subquery == 0)
+				{
+					return false;
+				}
+				else
+				{
+					/* サブクエリ内のRTEをis_only_foreign_tableにかける(再帰) */
+					Query	*subquery = range_table_entry->subquery;
+
+					if (include_foreign_tables(root, subquery->rtable))
+					{
+						included = true;
+						break;
+					}
+				}
+				break;
+			}
+
+			case RTE_JOIN:
+			{
+				/* JOIN句を明示的に使用した場合、JOINであることを示すRTEが作られる。
+				ただし、実質的にほぼ空なハズなので、特にこれと言った処理はしない。
+				*/
+				if( !root->hasjoin )
+				{
+					root->hasjoin = true;
+				}
+				break;
+			}
+			/* 以下、処理対象外とします。 */
+			case RTE_CTE:
+			case RTE_FUNCTION:
+			case RTE_TABLEFUNC:
+			case RTE_VALUES:
+			case RTE_NAMEDTUPLESTORE:
+				return false;
+				break;
+		}
+	} /* foreach終了 */
+
+	return included;
+}
 
 /************************************************************
  * create_foreign_scan
