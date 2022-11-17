@@ -404,6 +404,17 @@ ogawayamaIterateDirectModify(ForeignScanState* node)
 	elog(DEBUG2, "transaction::execute_statement() done.");
 	if (error != ERROR_CODE::OK) 
     {
+		ERROR_CODE err;
+		if (fdw_info_.transaction != nullptr)
+		{
+			elog(DEBUG2, "transaction::commit() start.");
+			err = fdw_info_.transaction->commit();
+			elog(DEBUG2, "transaction::commit() done.");
+			if (err != ERROR_CODE::OK)
+			{
+				elog(ERROR, "transaction::commit() failed. (%d)", (int) err);
+			}
+		}
 		elog(ERROR, "transaction::execute_statement() failed. (%d)", (int) error);	
 	}
 	
@@ -667,6 +678,17 @@ create_cursor(ForeignScanState* node)
 	elog(DEBUG2, "transaction::execute_query() done.");
 	if (error != ERROR_CODE::OK)
 	{
+		ERROR_CODE err;
+		if (fdw_info_.transaction != nullptr)
+		{
+			elog(DEBUG2, "transaction::commit() start.");
+			err = fdw_info_.transaction->commit();
+			elog(DEBUG2, "transaction::commit() done.");
+			if (err != ERROR_CODE::OK)
+			{
+				elog(ERROR, "transaction::commit() failed. (%d)", (int) err);
+			}
+		}
 		elog(ERROR, "Transaction::execute_query() failed. (%d)", (int) error);
 		fdw_info_.result_set = nullptr;
 		fdw_info_.transaction->rollback();
