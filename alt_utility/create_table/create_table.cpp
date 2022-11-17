@@ -525,6 +525,11 @@ bool CreateTable::generate_column_metadata(ColumnDef* column_def,
 				if (!success) {
 					return result;
 				}
+				/* for data type length metadata */
+				success = get_data_length(typmods, column.data_length);
+				if (!success) {
+					return result;
+				}
 			} else if (typemod >= 0) {
 				/* if typmod is -1, typmod is NULL VALUE*/
 				/* put a data type length metadata */
@@ -560,6 +565,38 @@ bool CreateTable::get_data_lengths(List* typmods, std::vector<int64_t>& dataleng
 				* The given data type length must be constant integer value.
 				*/
 				datalengths.emplace_back(a_const->val.val.ival);
+			} else {
+				this->show_syntax_error_msg("can use only integer value in data length");
+				return result;
+			}
+		} else {
+			this->show_syntax_error_msg("can use only constant value in data length");
+			return result;
+		}
+	}
+	result = true;
+
+	return result;
+}
+
+/**
+ * @brief	Get column data length.
+ */
+bool CreateTable::get_data_length(List* typmods, int64_t& datalength) const
+{
+	bool result{false};
+
+	ListCell *listptr;
+	foreach(listptr, typmods) {
+		Node* node = (Node*) lfirst(listptr);
+		if (IsA(node, A_Const)) {
+			A_Const* a_const = (A_Const*) node;
+			if (IsA(&a_const->val, Integer)) {
+				/*
+				* get data type lengths from typmods of TypeName structure.
+				* The given data type length must be constant integer value.
+				*/
+				datalength = a_const->val.val.ival;
 			} else {
 				this->show_syntax_error_msg("can use only integer value in data length");
 				return result;
