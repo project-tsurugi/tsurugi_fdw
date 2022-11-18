@@ -43,7 +43,6 @@ int64_t execute_create_index(IndexStmt* index_stmt)
 
     create_index.validate_syntax();
 	create_index.validate_data_type();
-
 #if 0
 	metadata::Index index;
 	bool success = create_index.generate_metadata(index);
@@ -64,7 +63,6 @@ int64_t execute_create_index(IndexStmt* index_stmt)
 				index.name.c_str(), (int) error)));
 	}
 #endif
-
 #if 0
 //	metadata::Constraint constraint;
 //	success = create_index.generate_constraint_metadata(constraint);

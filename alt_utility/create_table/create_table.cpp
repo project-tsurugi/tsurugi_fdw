@@ -344,14 +344,11 @@ bool CreateTable::validate_data_type() const
  * @param	table_tree	
  * @return	true if success.
  */
-bool CreateTable::generate_metadata(manager::metadata::Object& object) const
+bool CreateTable::generate_metadata(manager::metadata::Table& table) const
 {
 	const CreateStmt* create_stmt = this->create_stmt();
 	assert(create_stmt != NULL);
-	auto& table = static_cast<metadata::Table&>(object);
-
 	bool result{false};
-//	ptree table_tree;
 
 	//
 	// table metadata

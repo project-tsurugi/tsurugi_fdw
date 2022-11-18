@@ -50,10 +50,8 @@ class CreateCommand : public DDLCommand{
 	 *  @return true if supported
 	 *  @return false otherwise.
 	 */
-#if 0
-	virtual bool generate_metadata(boost::property_tree::ptree& metadata) const = 0;
-#endif
-	virtual bool generate_metadata(manager::metadata::Object& object) const = 0;
+//	virtual bool generate_metadata(boost::property_tree::ptree& metadata) const = 0;
+//	virtual bool generate_metadata(manager::metadata::Object& object) const = 0;
 
 	CreateCommand() = delete;
 	CreateCommand(const CreateCommand&) = delete;

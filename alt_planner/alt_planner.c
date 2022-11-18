@@ -62,12 +62,14 @@ PG_MODULE_MAGIC;
 
 /* planner_hook function */
 PlannedStmt *alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams);
-
 bool is_only_foreign_table(AltPlannerInfo *root, List *rtable);
 AltPlannerInfo *init_altplannerinfo(Query *parse);
-ForeignScan *create_foreign_scan(AltPlannerInfo *root); /* ForeignScanプランノードの初期化 */
-ModifyTable *create_modify_table(AltPlannerInfo *root, ForeignScan *scan); /* ModifyTableプランノードの初期化 */
-void is_valid_targetentry(ForeignScan *scan, AltPlannerInfo *root); /* fdw_scan_tlsitとtargetlistの貼り付け(JOIN, Aggrefのみ) */
+/* ForeignScanプランノードの初期化 */
+ForeignScan *create_foreign_scan(AltPlannerInfo *root); 
+/* ModifyTableプランノードの初期化 */
+ModifyTable *create_modify_table(AltPlannerInfo *root, ForeignScan *scan); 
+/* fdw_scan_tlsitとtargetlistの貼り付け(JOIN, Aggrefのみ) */
+void is_valid_targetentry(ForeignScan *scan, AltPlannerInfo *root); 
 PlannedStmt *create_planned_stmt(AltPlannerInfo *root, Plan *plan);
 void preprocess_targetlist2(Query *parse, ForeignScan *scan);
 static List *expand_targetlist(List *tlist, int command_type, Index result_relation, Relation rel);
@@ -88,9 +90,7 @@ bool include_foreign_table(AltPlannerInfo *root, List *rtable);
 struct PlannedStmt *
 alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 {
-	/* 変数宣言 */
 	Query *parse = copyObject(parse2);
-
 	AltPlannerInfo *root = init_altplannerinfo(parse);
 	ForeignScan *scan = 0;
 	Plan *plan = 0;
@@ -101,7 +101,8 @@ alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 	 * 操作対象のSQLコマンドかどうかに応じて処理を行う
 	 * SQL文に含まれるオブジェクトがすべて同一サーバ上のRangeTblEntryであることを確認
 	 */
-	if (root->parse->rtable == NULL || !include_foreign_table(root, root->parse->rtable))
+	if ((root->parse != NULL && root->parse->rtable == NULL) || 
+		!include_foreign_table(root, root->parse->rtable))
 	{
 		return standard_planner(parse2, cursorOptions, boundParams);
 	}
@@ -121,7 +122,7 @@ alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 	{
 		case CMD_SELECT:
 		{
-			/* v0版では暗黙のJOINはサポート対象外ですが一応*/
+			/* 暗黙のJOIN */
 			if (root->oidlist != NULL && root->oidlist->length > 1 && !root->hasjoin)
 			{
 				root->hasjoin = true;
@@ -131,6 +132,7 @@ alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 			plan = (Plan *) scan;
 			break;
 		}
+
 		case CMD_INSERT:
 		case CMD_UPDATE:
 		case CMD_DELETE:
@@ -143,12 +145,12 @@ alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 			{
 				elog(NOTICE, "PostgreSQL独自文法です。(UPDATEもしくはDELETEでのFROM句の使用)");
 			}
-
 			scan = create_foreign_scan(root);
 			modify = create_modify_table(root, scan);
 			plan = (Plan *) modify;
 			break;
 		}
+
 		default:
 		{
 			return standard_planner(parse2, cursorOptions, boundParams);
@@ -235,7 +237,6 @@ is_only_foreign_table(AltPlannerInfo *root, List *rtable)
 					/* OIDをoidlistに追加 */
 					root->oidlist = lappend_oid(root->oidlist, range_table_entry->relid);
 
-
 					/* 異なるサーバ上のオブジェクトが混在していないかをチェック */
 					if (root->serverid == 0)
 					{
@@ -248,15 +249,14 @@ is_only_foreign_table(AltPlannerInfo *root, List *rtable)
 						return false;
 					}
 				}
-
-				/* リレーションが外部表以外の場合は処理対象外とする */
 				else
 				{
+					/* リレーションが外部表以外の場合は処理対象外とする */
 					return false;
 				}
-
 				break;
 			}
+
 			case RTE_SUBQUERY:
 			{
 				/* 純粋なSUBQUERY以外除外する(VIEWなどは除外する) */
@@ -325,7 +325,6 @@ include_foreign_table(AltPlannerInfo *root, List *rtable)
 	{
 		RangeTblEntry	*range_table_entry;
 		range_table_entry = lfirst_node(RangeTblEntry, rtable_list_cell);
-
 		switch ((int) range_table_entry->rtekind)
 		{
 			case RTE_RELATION:
@@ -355,6 +354,7 @@ include_foreign_table(AltPlannerInfo *root, List *rtable)
 				}
 				break;
 			}
+
 			case RTE_SUBQUERY:
 			{
 				/* 純粋なSUBQUERY以外除外する(VIEWなどは除外する) */
@@ -375,25 +375,29 @@ include_foreign_table(AltPlannerInfo *root, List *rtable)
 				}
 				break;
 			}
+
 			case RTE_JOIN:
 			{
 				/* JOIN句を明示的に使用した場合、JOINであることを示すRTEが作られる。
 				ただし、実質的にほぼ空なハズなので、特にこれと言った処理はしない。
 				*/
-				if(!root->hasjoin)
+				if (!root->hasjoin)
 				{
 					root->hasjoin = true;
 				}
 				break;
 			}
-			/* 以下、処理対象外とします。 */
+
 			case RTE_CTE:
 			case RTE_FUNCTION:
 			case RTE_TABLEFUNC:
 			case RTE_VALUES:
 			case RTE_NAMEDTUPLESTORE:
+			default:
+			{
 				return false;
 				break;
+			}
 		}
 	} /* foreach終了 */
 

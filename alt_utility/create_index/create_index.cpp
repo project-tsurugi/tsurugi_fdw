@@ -137,12 +137,11 @@ int64_t get_direction(IndexElem* elem)
  *  @return true if success.
  *  @return false otherwise.
  */
-bool CreateIndex::generate_metadata(manager::metadata::Object& object) const
+bool CreateIndex::generate_metadata(manager::metadata::Index& index) const
 {
 	bool result{false};
 	IndexStmt* index_stmt{this->index_stmt()};
 	Assert(index_stmt != NULL);
-	auto& index = static_cast<metadata::Index&>(object);
     auto tables = metadata::get_table_metadata("tsurugi");
 
     metadata::Table table;

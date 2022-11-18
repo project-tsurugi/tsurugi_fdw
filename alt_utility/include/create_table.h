@@ -29,7 +29,7 @@ class CreateTable : public CreateCommand {
 
 	virtual bool validate_syntax() const override;
 	virtual bool validate_data_type() const override;
-	virtual bool generate_metadata(manager::metadata::Object& object) const override;
+	bool generate_metadata(manager::metadata::Table& table) const;
 	manager::metadata::ErrorCode generate_constraint_metadata(manager::metadata::Table& table) const;
 	/**
 	 * @brief
