@@ -49,6 +49,7 @@ class CreateTable : public CreateCommand {
 								int64_t ordinal_position, 
 								TupleDesc descriptor,
 								manager::metadata::Column& column) const;
+	bool get_data_length(List* typmods, int64_t& datalength) const;
 	bool get_data_lengths(List* typmods, std::vector<int64_t>& datalengths) const;
 	bool get_constraint_metadata(Constraint* constr, 
 								manager::metadata::Table& table, 
