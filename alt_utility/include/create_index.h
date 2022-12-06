@@ -29,7 +29,7 @@ class CreateIndex : public IndexCommand {
 	CreateIndex(IndexStmt* index_stmt) : IndexCommand(index_stmt) {}
 	virtual bool validate_syntax() const override;
 	virtual bool validate_data_type() const override;
-	bool generate_metadata(manager::metadata::Index& index) const;
+	bool generate_metadata(manager::metadata::Object& object) const;
 	manager::metadata::ErrorCode 
 	generate_constraint_metadata(manager::metadata::Table& table) const;
 	manager::metadata::ErrorCode 
