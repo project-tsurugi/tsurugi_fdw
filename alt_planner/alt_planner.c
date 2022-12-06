@@ -36,16 +36,12 @@
 typedef struct AltPlannerInfo
 {
 	Query	*parse;
-
 	/* JOINがあるか */
 	bool	hasjoin;
-
 	/* 集積関数があるか */
 	bool	hasaggref;
-
 	/* 外部サーバオブジェクトのOID */
 	Oid		serverid;
-
 	/* 入力されたクエリに関係のあるOIDのリスト */
 	List	*oidlist;
 } AltPlannerInfo;
@@ -607,8 +603,6 @@ is_valid_targetentry(ForeignScan *scan, AltPlannerInfo *root)
 					aggref->aggtype = INT4OID;
 
 				}
-
-
 				/* ForeignScan->targetlist用 */
 				newvar = makeVar(INDEX_VAR,
 								  attno,
@@ -623,19 +617,14 @@ is_valid_targetentry(ForeignScan *scan, AltPlannerInfo *root)
 										 te->resjunk);
 
 				newte->ressortgroupref = 0;
-
 				scan->scan.plan.targetlist = lappend(scan->scan.plan.targetlist, newte);
-
 
 				/* ForeignScan->fdw_scan_tlist用 */
 				newfste = makeTargetEntry((Expr *) node,
 										   attno,
 										   NULL,
 										   false);
-
-
 				scan->fdw_scan_tlist = lappend(scan->fdw_scan_tlist, newfste);
-
 				break;
 			}
 			/* 以下、処理しません */
