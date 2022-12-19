@@ -246,7 +246,9 @@ static void tsurugiBeginForeignScan(ForeignScanState* node, int eflags);
 static TupleTableSlot* tsurugiIterateForeignScan(ForeignScanState* node);
 static void tsurugiReScanForeignScan(ForeignScanState* node);
 static void tsurugiEndForeignScan(ForeignScanState* node);
-
+static void tsurugiGetForeignUpperPaths(PlannerInfo *root, UpperRelationKind stage,
+							 RelOptInfo *input_rel, RelOptInfo *output_rel,
+							 void *extra);
 /*
  * FDW callback routines (Insert/Update/Delete)
  */
@@ -257,31 +259,6 @@ static List *tsurugiPlanForeignModify(PlannerInfo *root,
 									   ModifyTable *plan,
 									   Index resultRelation,
 									   int subplan_index);
-static void tsurugiBeginForeignModify(ModifyTableState *mtstate,
-									   ResultRelInfo *resultRelInfo,
-									   List *fdw_private,
-									   int subplan_index,
-									   int eflags);
-static TupleTableSlot* tsurugiExecForeignInsert(EState *estate,
-												 ResultRelInfo *rinfo,
-												 TupleTableSlot *slot,
-												 TupleTableSlot *planSlot);
-static TupleTableSlot* tsurugiExecForeignUpdate(EState *estate,
-												 ResultRelInfo *rinfo,
-												 TupleTableSlot *slot,
-												 TupleTableSlot *planSlot);
-static TupleTableSlot* tsurugiExecForeignDelete(EState *estate,
-												 ResultRelInfo *rinfo,
-												 TupleTableSlot *slot,
-												 TupleTableSlot *planSlot);
-static void tsurugiEndForeignModify(EState *estate,
-									 ResultRelInfo *resultRelInfo);
-static void tsurugiBeginForeignInsert(ModifyTableState *mtstate,
-									   ResultRelInfo *resultRelInfo);
-static void tsurugiEndForeignInsert(EState *estate,
-									 ResultRelInfo *resultRelInfo);
-static int	tsurugiIsForeignRelUpdatable(Relation rel);
-
 static bool tsurugiPlanDirectModify(PlannerInfo *root,
 									 ModifyTable *plan,
 									 Index resultRelation,
@@ -302,18 +279,6 @@ static bool tsurugiAnalyzeForeignTable(
 static List* tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt, 
 										  Oid serverOid);
 
-static void tsurugiGetForeignJoinPaths(PlannerInfo *root,
-										RelOptInfo *joinrel,
-										RelOptInfo *outerrel,
-										RelOptInfo *innerrel,
-										JoinType jointype,
-										JoinPathExtraData *extra);
-static void tsurugiGetForeignUpperPaths(PlannerInfo *root,
-										 UpperRelationKind stage,
-										 RelOptInfo *input_rel,
-										 RelOptInfo *output_rel,
-										 void *extra);
-
 #ifdef __cplusplus
 }
 #endif
@@ -331,7 +296,7 @@ static void make_virtual_tuple(TupleTableSlot* slot, ForeignScanState* node);
 static TupleTableSlot* make_tuple_from_result_set(ResultSetPtr result_set, 
 												  OgawayamaFdwState* fdw_state);
 static void begin_backend_xact(void);
-static void tsurugi_xact_callback (XactEvent event, void *arg);
+static void ogawayama_xact_callback (XactEvent event, void *arg);
 
 /* 
  * Helper functions of postgres_fdw 
@@ -346,9 +311,6 @@ static void estimate_path_cost_size(PlannerInfo *root,
 static bool ec_member_matches_foreign(PlannerInfo *root, RelOptInfo *rel,
 									  EquivalenceClass *ec, EquivalenceMember *em,
 									  void *arg);
-static bool foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel,
-							JoinType jointype, RelOptInfo *outerrel, RelOptInfo *innerrel,
-							JoinPathExtraData *extra);
 static List *get_useful_pathkeys_for_relation(PlannerInfo *root,
 											  RelOptInfo *rel);
 static void add_paths_with_pathkeys_for_rel(PlannerInfo *root, RelOptInfo *rel,
@@ -383,9 +345,10 @@ static OgawayamaFdwInfo fdw_info_;
 Datum
 ogawayama_fdw_handler(PG_FUNCTION_ARGS)
 {
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
 	FdwRoutine* routine = makeNode(FdwRoutine);
+
+	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
 	/*Functions for scanning foreign tables*/
 	routine->GetForeignRelSize = tsurugiGetForeignRelSize;
@@ -395,18 +358,11 @@ ogawayama_fdw_handler(PG_FUNCTION_ARGS)
 	routine->IterateForeignScan = tsurugiIterateForeignScan;
 	routine->ReScanForeignScan = tsurugiReScanForeignScan;
 	routine->EndForeignScan = tsurugiEndForeignScan;
+	routine->GetForeignUpperPaths = tsurugiGetForeignUpperPaths;
 
 	/*Functions for updating foreign tables*/
 	routine->AddForeignUpdateTargets = tsurugiAddForeignUpdateTargets;
 	routine->PlanForeignModify = tsurugiPlanForeignModify;
-//	routine->BeginForeignModify = tsurugiBeginForeignModify;
-	routine->ExecForeignInsert = tsurugiExecForeignInsert;
-	routine->ExecForeignUpdate = tsurugiExecForeignUpdate;
-	routine->ExecForeignDelete = tsurugiExecForeignDelete;
-	routine->EndForeignModify = tsurugiEndForeignModify;
-//	routine->BeginForeignInsert = tsurugiBeginForeignInsert;
-//	routine->EndForeignInsert = tsurugiEndForeignInsert;
-//	routine->IsForeignRelUpdatable = tsurugiIsForeignRelUpdatable;
 	routine->PlanDirectModify = tsurugiPlanDirectModify;
 	routine->BeginDirectModify = tsurugiBeginDirectModify;
 	routine->IterateDirectModify = tsurugiIterateDirectModify;
@@ -421,12 +377,6 @@ ogawayama_fdw_handler(PG_FUNCTION_ARGS)
 
 	/*Support functions for IMPORT FOREIGN SCHEMA*/
 	routine->ImportForeignSchema = tsurugiImportForeignSchema;
-
-	/* Support functions for join push-down */
-	routine->GetForeignJoinPaths = tsurugiGetForeignJoinPaths;
-
-	/* Support functions for upper relation push-down */
-	routine->GetForeignUpperPaths = tsurugiGetForeignUpperPaths;
 
 	ERROR_CODE error = StubManager::init();
 	if (error != ERROR_CODE::OK) 
@@ -997,10 +947,10 @@ static void tsurugiGetForeignPaths(PlannerInfo *root,
 	foreach(lc, ppi_list)
 	{
 		ParamPathInfo *param_info = (ParamPathInfo *) lfirst(lc);
-		double		rows;
-		int			width;
-		Cost		startup_cost;
-		Cost		total_cost;
+		double		rows = 0;
+//		int			width;
+		Cost		startup_cost = 0;
+		Cost		total_cost = 0;
 #if 0
 		/* Get a cost estimate from the remote */
 		estimate_path_cost_size(root, baserel,
@@ -1213,10 +1163,12 @@ tsurugiGetForeignPlan(PlannerInfo *root,
 	 * expressions to be sent as parameters.
 	 */
 	initStringInfo(&sql);
+	elog(DEBUG2, "deparseSelectStmtForRel start. : %s", __func__);
 	deparseSelectStmtForRel(&sql, root, foreignrel, fdw_scan_tlist,
 							remote_exprs, best_path->path.pathkeys,
 							has_final_sort, has_limit, false,
 							&retrieved_attrs, &params_list);
+	elog(DEBUG2, "deparseSelectStmtForRel done. : %s", __func__);
 
 	/* Remember remote_exprs for possible use by tsurugiPlanDirectModify */
 	fpinfo->final_remote_exprs = remote_exprs;
@@ -1248,201 +1200,6 @@ tsurugiGetForeignPlan(PlannerInfo *root,
 							fdw_recheck_quals,
 							outer_plan);
 }											
-
-/*
- * postgresGetForeignJoinPaths
- *		Add possible ForeignPath to joinrel, if join is safe to push down.
- */
-static void 
-tsurugiGetForeignJoinPaths(PlannerInfo *root,
-							RelOptInfo *joinrel,
-							RelOptInfo *outerrel,
-							RelOptInfo *innerrel,
-							JoinType jointype,
-							JoinPathExtraData *extra)
-{
-	tsurugiFdwRelationInfo *fpinfo;
-	ForeignPath *joinpath;
-	double		rows;
-	int			width;
-	Cost		startup_cost;
-	Cost		total_cost;
-	Path	   *epq_path;		/* Path to create plan to be executed when
-								 * EvalPlanQual gets triggered. */
-
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-
-	/*
-	 * Skip if this join combination has been considered already.
-	 */
-	if (joinrel->fdw_private)
-		return;
-
-	/*
-	 * This code does not work for joins with lateral references, since those
-	 * must have parameterized paths, which we don't generate yet.
-	 */
-	if (!bms_is_empty(joinrel->lateral_relids))
-		return;
-
-	/*
-	 * Create unfinished tsurugiFdwRelationInfo entry which is used to indicate
-	 * that the join relation is already considered, so that we won't waste
-	 * time in judging safety of join pushdown and adding the same paths again
-	 * if found safe. Once we know that this join can be pushed down, we fill
-	 * the entry.
-	 */
-	fpinfo = (tsurugiFdwRelationInfo *) palloc0(sizeof(tsurugiFdwRelationInfo));
-	fpinfo->pushdown_safe = false;
-	joinrel->fdw_private = fpinfo;
-	/* attrs_used is only for base relations. */
-	fpinfo->attrs_used = NULL;
-
-	/*
-	 * If there is a possibility that EvalPlanQual will be executed, we need
-	 * to be able to reconstruct the row using scans of the base relations.
-	 * GetExistingLocalJoinPath will find a suitable path for this purpose in
-	 * the path list of the joinrel, if one exists.  We must be careful to
-	 * call it before adding any ForeignPath, since the ForeignPath might
-	 * dominate the only suitable local path available.  We also do it before
-	 * calling foreign_join_ok(), since that function updates fpinfo and marks
-	 * it as pushable if the join is found to be pushable.
-	 */
-	if (root->parse->commandType == CMD_DELETE ||
-		root->parse->commandType == CMD_UPDATE ||
-		root->rowMarks)
-	{
-		epq_path = GetExistingLocalJoinPath(joinrel);
-		if (!epq_path)
-		{
-			elog(DEBUG3, "could not push down foreign join because a local path suitable for EPQ checks was not found");
-			return;
-		}
-	}
-	else
-		epq_path = NULL;
-
-	if (!foreign_join_ok(root, joinrel, jointype, outerrel, innerrel, extra))
-	{
-		/* Free path required for EPQ if we copied one; we don't need it now */
-		if (epq_path)
-			pfree(epq_path);
-		return;
-	}
-
-	/*
-	 * Compute the selectivity and cost of the local_conds, so we don't have
-	 * to do it over again for each path. The best we can do for these
-	 * conditions is to estimate selectivity on the basis of local statistics.
-	 * The local conditions are applied after the join has been computed on
-	 * the remote side like quals in WHERE clause, so pass jointype as
-	 * JOIN_INNER.
-	 */
-	fpinfo->local_conds_sel = clauselist_selectivity(root,
-													 fpinfo->local_conds,
-													 0,
-													 JOIN_INNER,
-													 NULL);
-	cost_qual_eval(&fpinfo->local_conds_cost, fpinfo->local_conds, root);
-
-	/*
-	 * If we are going to estimate costs locally, estimate the join clause
-	 * selectivity here while we have special join info.
-	 */
-	if (!fpinfo->use_remote_estimate)
-		fpinfo->joinclause_sel = clauselist_selectivity(root, fpinfo->joinclauses,
-														0, fpinfo->jointype,
-														extra->sjinfo);
-
-	/* Estimate costs for bare join relation */
-	estimate_path_cost_size(root, joinrel, NIL, NIL, NULL,
-							&rows, &width, &startup_cost, &total_cost);
-	/* Now update this information in the joinrel */
-	joinrel->rows = rows;
-	joinrel->reltarget->width = width;
-	fpinfo->rows = rows;
-	fpinfo->width = width;
-	fpinfo->startup_cost = startup_cost;
-	fpinfo->total_cost = total_cost;
-
-	/*
-	 * Create a new join path and add it to the joinrel which represents a
-	 * join between foreign tables.
-	 */
-	joinpath = create_foreign_join_path(root,
-										joinrel,
-										NULL,	/* default pathtarget */
-										rows,
-										startup_cost,
-										total_cost,
-										NIL,	/* no pathkeys */
-										joinrel->lateral_relids,
-										epq_path,
-										NIL);	/* no fdw_private */
-
-	/* Add generated path into joinrel by add_path(). */
-	add_path(joinrel, (Path *) joinpath);
-
-	/* Consider pathkeys for the join relation */
-	add_paths_with_pathkeys_for_rel(root, joinrel, epq_path);
-
-	/* XXX Consider parameterized paths for the join relation */
-}										
-
-/*
- * postgresGetForeignUpperPaths
- *		Add paths for post-join operations like aggregation, grouping etc. if
- *		corresponding operations are safe to push down.
- */
-static void 
-tsurugiGetForeignUpperPaths(PlannerInfo *root,
-							UpperRelationKind stage,
-							RelOptInfo *input_rel,
-							RelOptInfo *output_rel,
-							void *extra)
-{
-	tsurugiFdwRelationInfo *fpinfo;
-
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-
-	/*
-	 * If input rel is not safe to pushdown, then simply return as we cannot
-	 * perform any post-join operations on the foreign server.
-	 */
-	if (!input_rel->fdw_private ||
-		!((tsurugiFdwRelationInfo *) input_rel->fdw_private)->pushdown_safe)
-		return;
-
-	/* Ignore stages we don't support; and skip any duplicate calls. */
-	if ((stage != UPPERREL_GROUP_AGG &&
-		 stage != UPPERREL_ORDERED &&
-		 stage != UPPERREL_FINAL) ||
-		output_rel->fdw_private)
-		return;
-
-	fpinfo = (tsurugiFdwRelationInfo *) palloc0(sizeof(tsurugiFdwRelationInfo));
-	fpinfo->pushdown_safe = false;
-	fpinfo->stage = stage;
-	output_rel->fdw_private = fpinfo;
-
-	switch (stage)
-	{
-		case UPPERREL_GROUP_AGG:
-			add_foreign_grouping_paths(root, input_rel, output_rel,
-									   (GroupPathExtraData *) extra);
-			break;
-		case UPPERREL_ORDERED:
-			add_foreign_ordered_paths(root, input_rel, output_rel);
-			break;
-		case UPPERREL_FINAL:
-			add_foreign_final_paths(root, input_rel, output_rel,
-									(FinalPathExtraData *) extra);
-			break;
-		default:
-			elog(ERROR, "unexpected upper relation: %d", (int) stage);
-			break;
-	}
-}										 
 
 /* 
  * 	FDW Executor functions 
@@ -1889,76 +1646,8 @@ static List
 									   int subplan_index)
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-
+	return NULL;
 }									   
-
-/*
- * 	@note	Not in use.
- */
-static TupleTableSlot*
-tsurugiExecForeignInsert(
-	EState *estate, 
-	ResultRelInfo *rinfo, 
-	TupleTableSlot *slot, 
-	TupleTableSlot *planSlot)
-{
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-	slot = nullptr;
-
-	return slot;
-}
-
-/*
- * 	@note	Not in use.
- */
-static TupleTableSlot*
-tsurugiExecForeignUpdate(
-	EState *estate, 
-	ResultRelInfo *rinfo, 
-	TupleTableSlot *slot, 
-	TupleTableSlot *planSlot)
-{
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-	slot = nullptr;
-
-	return slot;
-}
-
-/*
- * 	@note	Not in use.
- */
-static TupleTableSlot*
-tsurugiExecForeignDelete(
-	EState *estate, 
-	ResultRelInfo *rinfo, 
-	TupleTableSlot *slot, 
-	TupleTableSlot *planSlot)
-{
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-	slot = nullptr;
-
-	return slot;
-}
-
-/*
- * tsurugiEndForeignModify
- *		Finish an insert/update/delete operation on a foreign table
- */
-static void
-tsurugiEndForeignModify(EState *estate,
-						 ResultRelInfo *resultRelInfo)
-{
-	tsurugiFdwModifyState *fmstate = (tsurugiFdwModifyState *) resultRelInfo->ri_FdwState;
-
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-
-	/* If fmstate is NULL, we are in EXPLAIN; nothing to do */
-	if (fmstate == NULL)
-		return;
-
-	/* Destroy the execution state */
-//	finish_foreign_modify(fmstate);
-}
 
 /*
  * Functions to be implemented in the future are below.  
@@ -1967,13 +1656,38 @@ tsurugiEndForeignModify(EState *estate,
 
 
 /*
- *	@note	Not in use.
+ * tsurugiExplainForeignScan
+ *		Produce extra output for EXPLAIN of a ForeignScan on a foreign table
  */
 static void 
 tsurugiExplainForeignScan(ForeignScanState* node,
 						   	ExplainState* es)
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+	List	   *fdw_private;
+	char	   *sql;
+	char	   *relations;
+
+	fdw_private = ((ForeignScan *) node->ss.ps.plan)->fdw_private;
+
+	/*
+	 * Add names of relation handled by the foreign scan when the scan is a
+	 * join
+	 */
+	if (list_length(fdw_private) > FdwScanPrivateRelations)
+	{
+		relations = strVal(list_nth(fdw_private, FdwScanPrivateRelations));
+		ExplainPropertyText("Relations", relations, es);
+	}
+
+	/*
+	 * Add remote query, when VERBOSE option is specified.
+	 */
+	if (es->verbose)
+	{
+		sql = strVal(list_nth(fdw_private, FdwScanPrivateSelectSql));
+		ExplainPropertyText("Remote SQL", sql, es);
+	}
 }
 
 /*
@@ -2161,10 +1875,11 @@ create_cursor(ForeignScanState* node)
 static bool
 confirm_columns(MetadataPtr metadata, ForeignScanState* node)
 {
-	elog(DEBUG4, "confirm_columns() started.");
 
 	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
 	bool ret = true;
+
+	elog(DEBUG4, "confirm_columns() started.");
 
 	if (metadata->get_types().size() != fdw_state->number_of_columns)
 	{
@@ -2333,11 +2048,12 @@ fetch_more_data(ForeignScanState* node)
 static TupleTableSlot* 
 make_tuple_from_result_set(ResultSetPtr result_set, OgawayamaFdwState* fdw_state)
 {
-	elog(DEBUG4, "make_tuple_from_result_set() started.");
 
 	TupleTableSlot* tuple = (TupleTableSlot*) palloc(sizeof(TupleTableSlot));
 	tuple->tts_values = (Datum *) palloc0(fdw_state->number_of_columns * sizeof(Datum));
 	tuple->tts_isnull = (bool *) palloc0(fdw_state->number_of_columns * sizeof(bool));
+
+	elog(DEBUG4, "make_tuple_from_result_set() started.");
 
 	for (size_t i = 0; i < fdw_state->number_of_columns; i++)
 	{
@@ -2497,9 +2213,8 @@ begin_backend_xact(void)
 static void
 ogawayama_xact_callback (XactEvent event, void *arg)
 {
-	elog(DEBUG4, "ogawayama_xact_callback() started. ");
-
     int local_xact_level = GetCurrentTransactionNestLevel();
+	elog(DEBUG4, "ogawayama_xact_callback() started. ");
 	elog(DEBUG1, "Local transaction level: (%d)", local_xact_level);
 
 	if (fdw_info_.xact_level > 0)
@@ -2767,420 +2482,6 @@ rebuild_fdw_scan_tlist(ForeignScan *fscan, List *tlist)
 	fscan->fdw_scan_tlist = new_tlist;
 }
 
-
-/*
- * Prepare for processing of parameters used in remote query.
- */
-static void
-prepare_query_params(PlanState *node,
-					 List *fdw_exprs,
-					 int numParams,
-					 FmgrInfo **param_flinfo,
-					 List **param_exprs,
-					 const char ***param_values)
-{
-	int			i;
-	ListCell   *lc;
-
-	Assert(numParams > 0);
-
-	/* Prepare for output conversion of parameters used in remote query. */
-	*param_flinfo = (FmgrInfo *) palloc0(sizeof(FmgrInfo) * numParams);
-
-	i = 0;
-	foreach(lc, fdw_exprs)
-	{
-		Node	   *param_expr = (Node *) lfirst(lc);
-		Oid			typefnoid;
-		bool		isvarlena;
-
-		getTypeOutputInfo(exprType(param_expr), &typefnoid, &isvarlena);
-		fmgr_info(typefnoid, &(*param_flinfo)[i]);
-		i++;
-	}
-
-	/*
-	 * Prepare remote-parameter expressions for evaluation.  (Note: in
-	 * practice, we expect that all these expressions will be just Params, so
-	 * we could possibly do something more efficient than using the full
-	 * expression-eval machinery for this.  But probably there would be little
-	 * benefit, and it'd require postgres_fdw to know more than is desirable
-	 * about Param evaluation.)
-	 */
-	*param_exprs = ExecInitExprList(fdw_exprs, node);
-
-	/* Allocate buffer for text form of query parameters. */
-	*param_values = (const char **) palloc0(numParams * sizeof(char *));
-}
-
-/*
- * Construct array of query parameter values in text format.
- */
-static void
-process_query_params(ExprContext *econtext,
-					 FmgrInfo *param_flinfo,
-					 List *param_exprs,
-					 const char **param_values)
-{
-	int			nestlevel;
-	int			i;
-	ListCell   *lc;
-
-	nestlevel = set_transmission_modes();
-
-	i = 0;
-	foreach(lc, param_exprs)
-	{
-		ExprState  *expr_state = (ExprState *) lfirst(lc);
-		Datum		expr_value;
-		bool		isNull;
-
-		/* Evaluate the parameter expression */
-		expr_value = ExecEvalExpr(expr_state, econtext, &isNull);
-
-		/*
-		 * Get string representation of each parameter value by invoking
-		 * type-specific output function, unless the value is null.
-		 */
-		if (isNull)
-			param_values[i] = NULL;
-		else
-			param_values[i] = OutputFunctionCall(&param_flinfo[i], expr_value);
-
-		i++;
-	}
-
-	reset_transmission_modes(nestlevel);
-}
-
-/*
- * Assess whether the join between inner and outer relations can be pushed down
- * to the foreign server. As a side effect, save information we obtain in this
- * function to tsurugiFdwRelationInfo passed in.
- */
-static bool
-foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
-				RelOptInfo *outerrel, RelOptInfo *innerrel,
-				JoinPathExtraData *extra)
-{
-	tsurugiFdwRelationInfo *fpinfo;
-	tsurugiFdwRelationInfo *fpinfo_o;
-	tsurugiFdwRelationInfo *fpinfo_i;
-	ListCell   *lc;
-	List	   *joinclauses;
-
-	/*
-	 * We support pushing down INNER, LEFT, RIGHT and FULL OUTER joins.
-	 * Constructing queries representing SEMI and ANTI joins is hard, hence
-	 * not considered right now.
-	 */
-	if (jointype != JOIN_INNER && jointype != JOIN_LEFT &&
-		jointype != JOIN_RIGHT && jointype != JOIN_FULL)
-		return false;
-
-	/*
-	 * If either of the joining relations is marked as unsafe to pushdown, the
-	 * join can not be pushed down.
-	 */
-	fpinfo = (tsurugiFdwRelationInfo *) joinrel->fdw_private;
-	fpinfo_o = (tsurugiFdwRelationInfo *) outerrel->fdw_private;
-	fpinfo_i = (tsurugiFdwRelationInfo *) innerrel->fdw_private;
-	if (!fpinfo_o || !fpinfo_o->pushdown_safe ||
-		!fpinfo_i || !fpinfo_i->pushdown_safe)
-		return false;
-
-	/*
-	 * If joining relations have local conditions, those conditions are
-	 * required to be applied before joining the relations. Hence the join can
-	 * not be pushed down.
-	 */
-	if (fpinfo_o->local_conds || fpinfo_i->local_conds)
-		return false;
-
-	/*
-	 * Merge FDW options.  We might be tempted to do this after we have deemed
-	 * the foreign join to be OK.  But we must do this beforehand so that we
-	 * know which quals can be evaluated on the foreign server, which might
-	 * depend on shippable_extensions.
-	 */
-	fpinfo->server = fpinfo_o->server;
-	merge_fdw_options(fpinfo, fpinfo_o, fpinfo_i);
-
-	/*
-	 * Separate restrict list into join quals and pushed-down (other) quals.
-	 *
-	 * Join quals belonging to an outer join must all be shippable, else we
-	 * cannot execute the join remotely.  Add such quals to 'joinclauses'.
-	 *
-	 * Add other quals to fpinfo->remote_conds if they are shippable, else to
-	 * fpinfo->local_conds.  In an inner join it's okay to execute conditions
-	 * either locally or remotely; the same is true for pushed-down conditions
-	 * at an outer join.
-	 *
-	 * Note we might return failure after having already scribbled on
-	 * fpinfo->remote_conds and fpinfo->local_conds.  That's okay because we
-	 * won't consult those lists again if we deem the join unshippable.
-	 */
-	joinclauses = NIL;
-	foreach(lc, extra->restrictlist)
-	{
-		RestrictInfo *rinfo = lfirst_node(RestrictInfo, lc);
-		bool		is_remote_clause = is_foreign_expr(root, joinrel,
-													   rinfo->clause);
-
-		if (IS_OUTER_JOIN(jointype) &&
-			!RINFO_IS_PUSHED_DOWN(rinfo, joinrel->relids))
-		{
-			if (!is_remote_clause)
-				return false;
-			joinclauses = lappend(joinclauses, rinfo);
-		}
-		else
-		{
-			if (is_remote_clause)
-				fpinfo->remote_conds = lappend(fpinfo->remote_conds, rinfo);
-			else
-				fpinfo->local_conds = lappend(fpinfo->local_conds, rinfo);
-		}
-	}
-
-	/*
-	 * deparseExplicitTargetList() isn't smart enough to handle anything other
-	 * than a Var.  In particular, if there's some PlaceHolderVar that would
-	 * need to be evaluated within this join tree (because there's an upper
-	 * reference to a quantity that may go to NULL as a result of an outer
-	 * join), then we can't try to push the join down because we'll fail when
-	 * we get to deparseExplicitTargetList().  However, a PlaceHolderVar that
-	 * needs to be evaluated *at the top* of this join tree is OK, because we
-	 * can do that locally after fetching the results from the remote side.
-	 */
-	foreach(lc, root->placeholder_list)
-	{
-		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(lc);
-		Relids		relids;
-
-		/* PlaceHolderInfo refers to parent relids, not child relids. */
-		relids = IS_OTHER_REL(joinrel) ?
-			joinrel->top_parent_relids : joinrel->relids;
-
-		if (bms_is_subset(phinfo->ph_eval_at, relids) &&
-			bms_nonempty_difference(relids, phinfo->ph_eval_at))
-			return false;
-	}
-
-	/* Save the join clauses, for later use. */
-	fpinfo->joinclauses = joinclauses;
-
-	fpinfo->outerrel = outerrel;
-	fpinfo->innerrel = innerrel;
-	fpinfo->jointype = jointype;
-
-	/*
-	 * By default, both the input relations are not required to be deparsed as
-	 * subqueries, but there might be some relations covered by the input
-	 * relations that are required to be deparsed as subqueries, so save the
-	 * relids of those relations for later use by the deparser.
-	 */
-	fpinfo->make_outerrel_subquery = false;
-	fpinfo->make_innerrel_subquery = false;
-	Assert(bms_is_subset(fpinfo_o->lower_subquery_rels, outerrel->relids));
-	Assert(bms_is_subset(fpinfo_i->lower_subquery_rels, innerrel->relids));
-	fpinfo->lower_subquery_rels = bms_union(fpinfo_o->lower_subquery_rels,
-											fpinfo_i->lower_subquery_rels);
-
-	/*
-	 * Pull the other remote conditions from the joining relations into join
-	 * clauses or other remote clauses (remote_conds) of this relation
-	 * wherever possible. This avoids building subqueries at every join step.
-	 *
-	 * For an inner join, clauses from both the relations are added to the
-	 * other remote clauses. For LEFT and RIGHT OUTER join, the clauses from
-	 * the outer side are added to remote_conds since those can be evaluated
-	 * after the join is evaluated. The clauses from inner side are added to
-	 * the joinclauses, since they need to be evaluated while constructing the
-	 * join.
-	 *
-	 * For a FULL OUTER JOIN, the other clauses from either relation can not
-	 * be added to the joinclauses or remote_conds, since each relation acts
-	 * as an outer relation for the other.
-	 *
-	 * The joining sides can not have local conditions, thus no need to test
-	 * shippability of the clauses being pulled up.
-	 */
-	switch (jointype)
-	{
-		case JOIN_INNER:
-			fpinfo->remote_conds = list_concat(fpinfo->remote_conds,
-											   list_copy(fpinfo_i->remote_conds));
-			fpinfo->remote_conds = list_concat(fpinfo->remote_conds,
-											   list_copy(fpinfo_o->remote_conds));
-			break;
-
-		case JOIN_LEFT:
-			fpinfo->joinclauses = list_concat(fpinfo->joinclauses,
-											  list_copy(fpinfo_i->remote_conds));
-			fpinfo->remote_conds = list_concat(fpinfo->remote_conds,
-											   list_copy(fpinfo_o->remote_conds));
-			break;
-
-		case JOIN_RIGHT:
-			fpinfo->joinclauses = list_concat(fpinfo->joinclauses,
-											  list_copy(fpinfo_o->remote_conds));
-			fpinfo->remote_conds = list_concat(fpinfo->remote_conds,
-											   list_copy(fpinfo_i->remote_conds));
-			break;
-
-		case JOIN_FULL:
-
-			/*
-			 * In this case, if any of the input relations has conditions, we
-			 * need to deparse that relation as a subquery so that the
-			 * conditions can be evaluated before the join.  Remember it in
-			 * the fpinfo of this relation so that the deparser can take
-			 * appropriate action.  Also, save the relids of base relations
-			 * covered by that relation for later use by the deparser.
-			 */
-			if (fpinfo_o->remote_conds)
-			{
-				fpinfo->make_outerrel_subquery = true;
-				fpinfo->lower_subquery_rels =
-					bms_add_members(fpinfo->lower_subquery_rels,
-									outerrel->relids);
-			}
-			if (fpinfo_i->remote_conds)
-			{
-				fpinfo->make_innerrel_subquery = true;
-				fpinfo->lower_subquery_rels =
-					bms_add_members(fpinfo->lower_subquery_rels,
-									innerrel->relids);
-			}
-			break;
-
-		default:
-			/* Should not happen, we have just checked this above */
-			elog(ERROR, "unsupported join type %d", jointype);
-	}
-
-	/*
-	 * For an inner join, all restrictions can be treated alike. Treating the
-	 * pushed down conditions as join conditions allows a top level full outer
-	 * join to be deparsed without requiring subqueries.
-	 */
-	if (jointype == JOIN_INNER)
-	{
-		Assert(!fpinfo->joinclauses);
-		fpinfo->joinclauses = fpinfo->remote_conds;
-		fpinfo->remote_conds = NIL;
-	}
-
-	/* Mark that this join can be pushed down safely */
-	fpinfo->pushdown_safe = true;
-
-	/* Get user mapping */
-	if (fpinfo->use_remote_estimate)
-	{
-		if (fpinfo_o->use_remote_estimate)
-			fpinfo->user = fpinfo_o->user;
-		else
-			fpinfo->user = fpinfo_i->user;
-	}
-	else
-		fpinfo->user = NULL;
-
-	/*
-	 * Set # of retrieved rows and cached relation costs to some negative
-	 * value, so that we can detect when they are set to some sensible values,
-	 * during one (usually the first) of the calls to estimate_path_cost_size.
-	 */
-	fpinfo->retrieved_rows = -1;
-	fpinfo->rel_startup_cost = -1;
-	fpinfo->rel_total_cost = -1;
-
-	/*
-	 * Set the string describing this join relation to be used in EXPLAIN
-	 * output of corresponding ForeignScan.
-	 */
-	fpinfo->relation_name = makeStringInfo();
-	appendStringInfo(fpinfo->relation_name, "(%s) %s JOIN (%s)",
-					 fpinfo_o->relation_name->data,
-					 get_jointype_name(fpinfo->jointype),
-					 fpinfo_i->relation_name->data);
-
-	/*
-	 * Set the relation index.  This is defined as the position of this
-	 * joinrel in the join_rel_list list plus the length of the rtable list.
-	 * Note that since this joinrel is at the end of the join_rel_list list
-	 * when we are called, we can get the position by list_length.
-	 */
-	Assert(fpinfo->relation_index == 0);	/* shouldn't be set yet */
-	fpinfo->relation_index =
-		list_length(root->parse->rtable) + list_length(root->join_rel_list);
-
-	return true;
-}
-
-static void
-add_paths_with_pathkeys_for_rel(PlannerInfo *root, RelOptInfo *rel,
-								Path *epq_path)
-{
-	List	   *useful_pathkeys_list = NIL; /* List of all pathkeys */
-	ListCell   *lc;
-
-	useful_pathkeys_list = get_useful_pathkeys_for_relation(root, rel);
-
-	/* Create one path for each set of pathkeys we found above. */
-	foreach(lc, useful_pathkeys_list)
-	{
-		double		rows;
-		int			width;
-		Cost		startup_cost;
-		Cost		total_cost;
-		List	   *useful_pathkeys = (List *) lfirst(lc);
-		Path	   *sorted_epq_path;
-#if 0
-		estimate_path_cost_size(root, rel, NIL, useful_pathkeys, NULL,
-								&rows, &width, &startup_cost, &total_cost);
-#endif
-		/*
-		 * The EPQ path must be at least as well sorted as the path itself, in
-		 * case it gets used as input to a mergejoin.
-		 */
-		sorted_epq_path = epq_path;
-		if (sorted_epq_path != NULL &&
-			!pathkeys_contained_in(useful_pathkeys,
-								   sorted_epq_path->pathkeys))
-			sorted_epq_path = (Path *)
-				create_sort_path(root,
-								 rel,
-								 sorted_epq_path,
-								 useful_pathkeys,
-								 -1.0);
-
-		if (IS_SIMPLE_REL(rel))
-			add_path(rel, (Path *)
-					 create_foreignscan_path(root, rel,
-											 NULL,
-											 rows,
-											 startup_cost,
-											 total_cost,
-											 useful_pathkeys,
-											 rel->lateral_relids,
-											 sorted_epq_path,
-											 NIL));
-		else
-			add_path(rel, (Path *)
-					 create_foreign_join_path(root, rel,
-											  NULL,
-											  rows,
-											  startup_cost,
-											  total_cost,
-											  useful_pathkeys,
-											  rel->lateral_relids,
-											  sorted_epq_path,
-											  NIL));
-	}
-}
-
 /*
  * Parse options from foreign table and apply them to fpinfo.
  *
@@ -3255,145 +2556,6 @@ merge_fdw_options(tsurugiFdwRelationInfo *fpinfo,
 		 */
 		fpinfo->fetch_size = Max(fpinfo_o->fetch_size, fpinfo_i->fetch_size);
 	}
-}
-
-/*
- * postgresGetForeignJoinPaths
- *		Add possible ForeignPath to joinrel, if join is safe to push down.
- */
-static void
-postgresGetForeignJoinPaths(PlannerInfo *root,
-							RelOptInfo *joinrel,
-							RelOptInfo *outerrel,
-							RelOptInfo *innerrel,
-							JoinType jointype,
-							JoinPathExtraData *extra)
-{
-	tsurugiFdwRelationInfo *fpinfo;
-	ForeignPath *joinpath;
-	double		rows;
-	int			width;
-	Cost		startup_cost;
-	Cost		total_cost;
-	Path	   *epq_path;		/* Path to create plan to be executed when
-								 * EvalPlanQual gets triggered. */
-
-	/*
-	 * Skip if this join combination has been considered already.
-	 */
-	if (joinrel->fdw_private)
-		return;
-
-	/*
-	 * This code does not work for joins with lateral references, since those
-	 * must have parameterized paths, which we don't generate yet.
-	 */
-	if (!bms_is_empty(joinrel->lateral_relids))
-		return;
-
-	/*
-	 * Create unfinished tsurugiFdwRelationInfo entry which is used to indicate
-	 * that the join relation is already considered, so that we won't waste
-	 * time in judging safety of join pushdown and adding the same paths again
-	 * if found safe. Once we know that this join can be pushed down, we fill
-	 * the entry.
-	 */
-	fpinfo = (tsurugiFdwRelationInfo *) palloc0(sizeof(tsurugiFdwRelationInfo));
-	fpinfo->pushdown_safe = false;
-	joinrel->fdw_private = fpinfo;
-	/* attrs_used is only for base relations. */
-	fpinfo->attrs_used = NULL;
-
-	/*
-	 * If there is a possibility that EvalPlanQual will be executed, we need
-	 * to be able to reconstruct the row using scans of the base relations.
-	 * GetExistingLocalJoinPath will find a suitable path for this purpose in
-	 * the path list of the joinrel, if one exists.  We must be careful to
-	 * call it before adding any ForeignPath, since the ForeignPath might
-	 * dominate the only suitable local path available.  We also do it before
-	 * calling foreign_join_ok(), since that function updates fpinfo and marks
-	 * it as pushable if the join is found to be pushable.
-	 */
-	if (root->parse->commandType == CMD_DELETE ||
-		root->parse->commandType == CMD_UPDATE ||
-		root->rowMarks)
-	{
-		epq_path = GetExistingLocalJoinPath(joinrel);
-		if (!epq_path)
-		{
-			elog(DEBUG3, "could not push down foreign join because a local path suitable for EPQ checks was not found");
-			return;
-		}
-	}
-	else
-		epq_path = NULL;
-
-	if (!foreign_join_ok(root, joinrel, jointype, outerrel, innerrel, extra))
-	{
-		/* Free path required for EPQ if we copied one; we don't need it now */
-		if (epq_path)
-			pfree(epq_path);
-		return;
-	}
-
-	/*
-	 * Compute the selectivity and cost of the local_conds, so we don't have
-	 * to do it over again for each path. The best we can do for these
-	 * conditions is to estimate selectivity on the basis of local statistics.
-	 * The local conditions are applied after the join has been computed on
-	 * the remote side like quals in WHERE clause, so pass jointype as
-	 * JOIN_INNER.
-	 */
-	fpinfo->local_conds_sel = clauselist_selectivity(root,
-													 fpinfo->local_conds,
-													 0,
-													 JOIN_INNER,
-													 NULL);
-	cost_qual_eval(&fpinfo->local_conds_cost, fpinfo->local_conds, root);
-
-	/*
-	 * If we are going to estimate costs locally, estimate the join clause
-	 * selectivity here while we have special join info.
-	 */
-	if (!fpinfo->use_remote_estimate)
-		fpinfo->joinclause_sel = clauselist_selectivity(root, fpinfo->joinclauses,
-														0, fpinfo->jointype,
-														extra->sjinfo);
-#if 0
-	/* Estimate costs for bare join relation */
-	estimate_path_cost_size(root, joinrel, NIL, NIL, NULL,
-							&rows, &width, &startup_cost, &total_cost);
-#endif
-	/* Now update this information in the joinrel */
-	joinrel->rows = rows;
-	joinrel->reltarget->width = width;
-	fpinfo->rows = rows;
-	fpinfo->width = width;
-	fpinfo->startup_cost = startup_cost;
-	fpinfo->total_cost = total_cost;
-
-	/*
-	 * Create a new join path and add it to the joinrel which represents a
-	 * join between foreign tables.
-	 */
-	joinpath = create_foreign_join_path(root,
-										joinrel,
-										NULL,	/* default pathtarget */
-										rows,
-										startup_cost,
-										total_cost,
-										NIL,	/* no pathkeys */
-										joinrel->lateral_relids,
-										epq_path,
-										NIL);	/* no fdw_private */
-
-	/* Add generated path into joinrel by add_path(). */
-	add_path(joinrel, (Path *) joinpath);
-
-	/* Consider pathkeys for the join relation */
-	add_paths_with_pathkeys_for_rel(root, joinrel, epq_path);
-
-	/* XXX Consider parameterized paths for the join relation */
 }
 
 /*
@@ -3633,12 +2795,12 @@ foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 }
 
 /*
- * postgresGetForeignUpperPaths
+ * tsurugiGetForeignUpperPaths
  *		Add paths for post-join operations like aggregation, grouping etc. if
  *		corresponding operations are safe to push down.
  */
 static void
-postgresGetForeignUpperPaths(PlannerInfo *root, UpperRelationKind stage,
+tsurugiGetForeignUpperPaths(PlannerInfo *root, UpperRelationKind stage,
 							 RelOptInfo *input_rel, RelOptInfo *output_rel,
 							 void *extra)
 {
@@ -3699,10 +2861,10 @@ add_foreign_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 	tsurugiFdwRelationInfo *ifpinfo = (tsurugiFdwRelationInfo *) input_rel->fdw_private;
 	tsurugiFdwRelationInfo *fpinfo = (tsurugiFdwRelationInfo *) grouped_rel->fdw_private;
 	ForeignPath *grouppath;
-	double		rows;
-	int			width;
-	Cost		startup_cost;
-	Cost		total_cost;
+	double		rows = 0;
+//	int			width = 0;
+	Cost		startup_cost = 0;
+	Cost		total_cost = 0;
 
 	/* Nothing to be done, if there is no grouping or aggregation required. */
 	if (!parse->groupClause && !parse->groupingSets && !parse->hasAggs &&
@@ -3752,12 +2914,13 @@ add_foreign_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 	/* Estimate the cost of push down */
 	estimate_path_cost_size(root, grouped_rel, NIL, NIL, NULL,
 							&rows, &width, &startup_cost, &total_cost);
-#endif
+
 	/* Now update this information in the fpinfo */
 	fpinfo->rows = rows;
 	fpinfo->width = width;
 	fpinfo->startup_cost = startup_cost;
 	fpinfo->total_cost = total_cost;
+#endif
 
 	/* Create and add foreign path to the grouping relation. */
 	grouppath = create_foreign_upper_path(root,
@@ -3790,7 +2953,7 @@ add_foreign_ordered_paths(PlannerInfo *root, RelOptInfo *input_rel,
 	tsurugiFdwRelationInfo *fpinfo = (tsurugiFdwRelationInfo *) ordered_rel->fdw_private;
 	PgFdwPathExtraData *fpextra;
 	double		rows;
-	int			width;
+	int			width = 0;
 	Cost		startup_cost;
 	Cost		total_cost;
 	List	   *fdw_private;
@@ -4237,4 +3400,67 @@ estimate_path_cost_size(PlannerInfo *root,
 						Cost *p_startup_cost, Cost *p_total_cost)
 {
 	return;
+}
+
+
+static void
+add_paths_with_pathkeys_for_rel(PlannerInfo *root, RelOptInfo *rel,
+								Path *epq_path)
+{
+	List	   *useful_pathkeys_list = NIL; /* List of all pathkeys */
+	ListCell   *lc;
+
+	useful_pathkeys_list = get_useful_pathkeys_for_relation(root, rel);
+
+	/* Create one path for each set of pathkeys we found above. */
+	foreach(lc, useful_pathkeys_list)
+	{
+		double		rows;
+		int			width;
+		Cost		startup_cost;
+		Cost		total_cost;
+		List	   *useful_pathkeys = (List *) lfirst(lc);
+		Path	   *sorted_epq_path;
+
+		estimate_path_cost_size(root, rel, NIL, useful_pathkeys, NULL,
+								&rows, &width, &startup_cost, &total_cost);
+
+		/*
+		 * The EPQ path must be at least as well sorted as the path itself, in
+		 * case it gets used as input to a mergejoin.
+		 */
+		sorted_epq_path = epq_path;
+		if (sorted_epq_path != NULL &&
+			!pathkeys_contained_in(useful_pathkeys,
+								   sorted_epq_path->pathkeys))
+			sorted_epq_path = (Path *)
+				create_sort_path(root,
+								 rel,
+								 sorted_epq_path,
+								 useful_pathkeys,
+								 -1.0);
+
+		if (IS_SIMPLE_REL(rel))
+			add_path(rel, (Path *)
+					 create_foreignscan_path(root, rel,
+											 NULL,
+											 rows,
+											 startup_cost,
+											 total_cost,
+											 useful_pathkeys,
+											 rel->lateral_relids,
+											 sorted_epq_path,
+											 NIL));
+		else
+			add_path(rel, (Path *)
+					 create_foreign_join_path(root, rel,
+											  NULL,
+											  rows,
+											  startup_cost,
+											  total_cost,
+											  useful_pathkeys,
+											  rel->lateral_relids,
+											  sorted_epq_path,
+											  NIL));
+	}
 }

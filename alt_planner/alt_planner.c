@@ -93,6 +93,8 @@ alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 	PlannedStmt *stmt;
 	ModifyTable *modify;
 
+	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+
 	/*
 	 * 操作対象のSQLコマンドかどうかに応じて処理を行う
 	 * SQL文に含まれるオブジェクトがすべて同一サーバ上のRangeTblEntryであることを確認
@@ -116,19 +118,6 @@ alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 	 */
 	switch (parse->commandType)
 	{
-		case CMD_SELECT:
-		{
-			/* 暗黙のJOIN */
-			if (root->oidlist != NULL && root->oidlist->length > 1 && !root->hasjoin)
-			{
-				root->hasjoin = true;
-				elog(NOTICE, "暗黙のJOINは対象外です(今は通しますが。)");
-			}
-			scan = create_foreign_scan(root);
-			plan = (Plan *) scan;
-			break;
-		}
-
 		case CMD_INSERT:
 		case CMD_UPDATE:
 		case CMD_DELETE:
@@ -147,6 +136,7 @@ alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 			break;
 		}
 
+		case CMD_SELECT:
 		default:
 		{
 			return standard_planner(parse2, cursorOptions, boundParams);

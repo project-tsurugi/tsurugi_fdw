@@ -19,8 +19,6 @@ extern void tsurugi_ProcessUtility(PlannedStmt *pstmt,
 void
 _PG_init(void)
 {
-#if 0
   planner_hook = alt_planner; 
-#endif
   ProcessUtility_hook = tsurugi_ProcessUtility;
 }

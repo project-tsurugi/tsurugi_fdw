@@ -303,6 +303,8 @@ foreign_expr_walker(Node *node,
 	Oid			collation;
 	FDWCollateState state;
 
+	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+
 	/* Need do nothing for empty subexpressions */
 	if (node == NULL)
 		return true;
@@ -999,9 +1001,12 @@ deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *rel,
 						bool has_final_sort, bool has_limit, bool is_subquery,
 						List **retrieved_attrs, List **params_list)
 {
+
 	deparse_expr_cxt context;
 	tsurugiFdwRelationInfo *fpinfo = (tsurugiFdwRelationInfo *) rel->fdw_private;
 	List	   *quals;
+
+	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
 	/*
 	 * We handle relations for foreign tables, joins between those and upper
@@ -1084,6 +1089,8 @@ deparseSelectSql(List *tlist, bool is_subquery, List **retrieved_attrs,
 	PlannerInfo *root = context->root;
 	tsurugiFdwRelationInfo *fpinfo = (tsurugiFdwRelationInfo *) foreignrel->fdw_private;
 
+	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+
 	/*
 	 * Construct SELECT list
 	 */
@@ -1139,6 +1146,8 @@ deparseFromExpr(List *quals, deparse_expr_cxt *context)
 	StringInfo	buf = context->buf;
 	RelOptInfo *scanrel = context->scanrel;
 
+	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+
 	/* For upper relations, scanrel must be either a joinrel or a baserel */
 	Assert(!IS_UPPER_REL(context->foreignrel) ||
 		   IS_JOIN_REL(scanrel) || IS_SIMPLE_REL(scanrel));
@@ -1183,6 +1192,7 @@ deparseTargetList(StringInfo buf,
 	int			i;
 
 	*retrieved_attrs = NIL;
+	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
 	/* If there's a whole-row reference, we'll need all the columns. */
 	have_wholerow = bms_is_member(0 - FirstLowInvalidHeapAttributeNumber,
@@ -1488,6 +1498,8 @@ deparseFromExprForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 {
 	tsurugiFdwRelationInfo *fpinfo = (tsurugiFdwRelationInfo *) foreignrel->fdw_private;
 
+	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+
 	if (IS_JOIN_REL(foreignrel))
 	{
 		StringInfoData join_sql_o;
@@ -1525,7 +1537,7 @@ deparseFromExprForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 			else if (innerrel->relid == ignore_rel)
 				innerrel_is_target = true;
 		}
-
+//		elog(DEBUG2, "join_sql_o: %s, join_sql_i: %s", join_sql_o, join_sql_i);
 		/* Deparse outer relation if not the target relation. */
 		if (!outerrel_is_target)
 		{
@@ -2258,6 +2270,8 @@ deparseRelation(StringInfo buf, Relation rel)
 	const char *relname = NULL;
 	ListCell   *lc;
 
+	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+
 	/* obtain additional catalog information. */
 	table = GetForeignTable(RelationGetRelid(rel));
 
@@ -2282,9 +2296,12 @@ deparseRelation(StringInfo buf, Relation rel)
 		nspname = get_namespace_name(RelationGetNamespace(rel));
 	if (relname == NULL)
 		relname = RelationGetRelationName(rel);
-
-	appendStringInfo(buf, "%s.%s",
-					 quote_identifier(nspname), quote_identifier(relname));
+//	appendStringInfo(buf, "%s.%s",
+//					 quote_identifier(nspname), quote_identifier(relname));
+	appendStringInfo(buf, "%s",
+					 quote_identifier(relname));
+	elog(DEBUG2, "schema_name: %s, table_name: %s", nspname, relname);
+	elog(DEBUG2, "sql_buf: %s", buf->data);
 }
 
 /*
