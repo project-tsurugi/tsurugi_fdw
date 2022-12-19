@@ -94,9 +94,9 @@ int64_t execute_create_index(IndexStmt* index_stmt)
 
 #if 0
 	// Primary Keys
-	auto tables = std::make_unique<metadata::Tables>("tsurugi");
+	auto tables = metadata::get_table_metadata("tsurugi");
 	metadata::Table table;
-	auto error = tables->get(create_index.get_table_name(), table);
+	ErrorCode error = tables->get(create_index.get_table_name(), table);
 	if (error != metadata::ErrorCode::OK) {
 		ereport(NOTICE,
 				errmsg("Table not found. (name: %s)", 

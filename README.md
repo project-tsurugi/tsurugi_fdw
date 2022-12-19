@@ -4,8 +4,7 @@
 * C++ Compiler `>= C++17`
 * Source code of PostgreSQL `>=12.4`
 * Access to installed dependent modules:
-  * metadata-manager
-  * message-manager
+  * managers (metadata-manager, message-manager)
   * ogawayama
 
 ## How to build frontend
