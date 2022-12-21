@@ -21,7 +21,7 @@ cd $TSURUGI_HOME
 if [[ -d $TSURUGI_HOME/metadata-manager ]]; then
   cd $TSURUGI_HOME
 else
-  git clone -b dev/constraint_metadata3 git@github.com:project-tsurugi/metadata-manager.git
+  git clone git@github.com:project-tsurugi/metadata-manager.git
 fi
 
 if [[ -d $TSURUGI_HOME/message-manager ]]; then
@@ -33,7 +33,7 @@ fi
 if [[ -d $TSURUGI_HOME/ogawayama ]]; then
   cd $TSURUGI_HOME
 else
-  git clone -b dev/constraint_metadata git@github.com:project-tsurugi/ogawayama.git
+  git clone git@github.com:project-tsurugi/ogawayama.git
 fi
 
 ###
