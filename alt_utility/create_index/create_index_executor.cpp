@@ -38,13 +38,12 @@ int64_t execute_create_index(IndexStmt* index_stmt)
 	assert(index_stmt != NULL);
 
 	ObjectId object_id = metadata::INVALID_OBJECT_ID;
-    auto indexes = metadata::get_index_metadata("tsurugi");
+    auto indexes = metadata::get_indexes_ptr("tsurugi");
     CreateIndex create_index{index_stmt};
 
     create_index.validate_syntax();
 	create_index.validate_data_type();
 
-#if 0
 	metadata::Index index;
 	bool success = create_index.generate_metadata(index);
 	if (!success) {
@@ -63,17 +62,11 @@ int64_t execute_create_index(IndexStmt* index_stmt)
 				(const char*) create_index.get_table_name(), 
 				index.name.c_str(), (int) error)));
 	}
-#endif
-
-#if 0
-//	metadata::Constraint constraint;
-//	success = create_index.generate_constraint_metadata(constraint);
-	auto tables = std::make_unique<metadata::Tables>("tsurugi");
 
 	// Constraint metadata
+	auto tables = metadata::get_tables_ptr("tsurugi");
 	metadata::Table table_constraint;
-//	auto error = tables->get(object_id, table_constraint);
-	auto error = tables->get(create_index.get_table_name(), table_constraint);
+	error = tables->get(create_index.get_table_name(), table_constraint);
 	if (error != metadata::ErrorCode::OK) {
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
@@ -90,23 +83,16 @@ int64_t execute_create_index(IndexStmt* index_stmt)
 					errmsg("CreateIndex::generate_constraint_metadata() failed.")));
 			return object_id;
 		}
-		error = tables->remove(table_constraint.id);
+		error = tables->update(object_id, table_constraint);
 		if (error != metadata::ErrorCode::OK) {
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
-					errmsg("Remove a table metadata failed when registing constraints. " \
-					"(name: %s) (error:%d)", table_constraint.name.data(), (int) error)));
-		}
-		error = tables->add(table_constraint, &object_id);
-		if (error != metadata::ErrorCode::OK) {
-			ereport(ERROR,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-					errmsg("Add a table metadata failed when registing constraints. " \
+					errmsg("Update a table metadata failed when registing constraints. " \
 					"(name: %s) (error:%d)", table_constraint.name.data(), (int) error)));
 		}
 	}
-#endif
-#if 1
+
+#if 0
 	// Primary Keys
 	auto tables = metadata::get_table_metadata("tsurugi");
 	metadata::Table table;
