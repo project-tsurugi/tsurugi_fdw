@@ -396,7 +396,9 @@ ogawayama_fdw_handler(PG_FUNCTION_ARGS)
 	routine->ExecForeignInsert = tsurugiExecForeignInsert;
 	routine->ExecForeignUpdate = tsurugiExecForeignUpdate;
 	routine->ExecForeignDelete = tsurugiExecForeignDelete;
-    
+
+    RegisterXactCallback( ogawayama_xact_callback, NULL );
+
 	ERROR_CODE error = StubManager::init();
 	if (error != ERROR_CODE::OK) 
 	{
@@ -1714,10 +1716,11 @@ static void
 tsurugiExplainForeignScan(ForeignScanState* node,
 						   	ExplainState* es)
 {
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 	List	   *fdw_private;
 	char	   *sql;
 	char	   *relations;
+
+	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
 	fdw_private = ((ForeignScan *) node->ss.ps.plan)->fdw_private;
 
@@ -1930,7 +1933,7 @@ confirm_columns(MetadataPtr metadata, ForeignScanState* node)
 	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
 	bool ret = true;
 
-	elog(DEBUG4, "confirm_columns() started.");
+	elog(DEBUG4, "tsurugi_fdw : %s", __func__);
 
 	if (metadata->get_types().size() != fdw_state->number_of_columns)
 	{
@@ -2054,6 +2057,8 @@ fetch_more_data(ForeignScanState* node)
 	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
 	MemoryContext oldcontext = nullptr;
 
+	elog(DEBUG4, "tsurugi_fdw : %s", __func__);
+
 	fdw_state->tuples.clear();
 	MemoryContextReset(fdw_state->batch_cxt);
 	oldcontext = MemoryContextSwitchTo(fdw_state->batch_cxt);
@@ -2104,7 +2109,7 @@ make_tuple_from_result_set(ResultSetPtr result_set, OgawayamaFdwState* fdw_state
 	tuple->tts_values = (Datum *) palloc0(fdw_state->number_of_columns * sizeof(Datum));
 	tuple->tts_isnull = (bool *) palloc0(fdw_state->number_of_columns * sizeof(bool));
 
-	elog(DEBUG4, "make_tuple_from_result_set() started.");
+	elog(DEBUG4, "tsurugi_fdw : %s", __func__);
 
 	for (size_t i = 0; i < fdw_state->number_of_columns; i++)
 	{
@@ -2222,6 +2227,8 @@ make_tuple_from_result_set(ResultSetPtr result_set, OgawayamaFdwState* fdw_state
 static void
 begin_backend_xact(void)
 {
+	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+
 	/* ローカルトランザクションのネストレベルを取得する */
     int local_xact_level = GetCurrentTransactionNestLevel();
 	elog(DEBUG1, "Local transaction level: (%d)", local_xact_level);
@@ -2265,7 +2272,8 @@ static void
 ogawayama_xact_callback (XactEvent event, void *arg)
 {
     int local_xact_level = GetCurrentTransactionNestLevel();
-	elog(DEBUG4, "ogawayama_xact_callback() started. ");
+
+	elog(DEBUG2, "tsurugi_fdw : %s (event: %d)", __func__, (int) event);
 	elog(DEBUG1, "Local transaction level: (%d)", local_xact_level);
 
 	if (fdw_info_.xact_level > 0)
