@@ -21,7 +21,7 @@ cd $TSURUGI_HOME
 if [[ -d $TSURUGI_HOME/metadata-manager ]]; then
   cd $TSURUGI_HOME
 else
-  git clone git@github.com:project-tsurugi/metadata-manager.git
+  git clone -b feature/timestamp git@github.com:project-tsurugi/metadata-manager.git
 fi
 
 if [[ -d $TSURUGI_HOME/message-manager ]]; then

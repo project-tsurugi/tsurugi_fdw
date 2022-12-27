@@ -508,8 +508,14 @@ bool CreateTable::generate_column_metadata(ColumnDef* column_def,
 		}
 	}
 
-	/* put data type lengths metadata if given type is varchar or char */
+	/* put data type lengths metadata */
 	switch (static_cast<metadata::DataTypes::DataTypesId>(id)) {
+		case metadata::DataTypes::DataTypesId::INTERVAL:
+		case metadata::DataTypes::DataTypesId::TIMESTAMPTZ:
+		case metadata::DataTypes::DataTypesId::TIMESTAMP:
+		case metadata::DataTypes::DataTypesId::TIMETZ:
+		case metadata::DataTypes::DataTypesId::TIME:
+		case metadata::DataTypes::DataTypesId::NUMERIC:
 		case metadata::DataTypes::DataTypesId::VARCHAR:
 		case metadata::DataTypes::DataTypesId::CHAR: {
 			/*
