@@ -1006,8 +1006,6 @@ deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *rel,
 	tsurugiFdwRelationInfo *fpinfo = (tsurugiFdwRelationInfo *) rel->fdw_private;
 	List	   *quals;
 
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-
 	/*
 	 * We handle relations for foreign tables, joins between those and upper
 	 * relations.
@@ -1089,8 +1087,6 @@ deparseSelectSql(List *tlist, bool is_subquery, List **retrieved_attrs,
 	PlannerInfo *root = context->root;
 	tsurugiFdwRelationInfo *fpinfo = (tsurugiFdwRelationInfo *) foreignrel->fdw_private;
 
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-
 	/*
 	 * Construct SELECT list
 	 */
@@ -1146,8 +1142,6 @@ deparseFromExpr(List *quals, deparse_expr_cxt *context)
 	StringInfo	buf = context->buf;
 	RelOptInfo *scanrel = context->scanrel;
 
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-
 	/* For upper relations, scanrel must be either a joinrel or a baserel */
 	Assert(!IS_UPPER_REL(context->foreignrel) ||
 		   IS_JOIN_REL(scanrel) || IS_SIMPLE_REL(scanrel));
@@ -1192,7 +1186,6 @@ deparseTargetList(StringInfo buf,
 	int			i;
 
 	*retrieved_attrs = NIL;
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
 	/* If there's a whole-row reference, we'll need all the columns. */
 	have_wholerow = bms_is_member(0 - FirstLowInvalidHeapAttributeNumber,
@@ -1497,8 +1490,6 @@ deparseFromExprForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 					  List **params_list)
 {
 	tsurugiFdwRelationInfo *fpinfo = (tsurugiFdwRelationInfo *) foreignrel->fdw_private;
-
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
 	if (IS_JOIN_REL(foreignrel))
 	{
@@ -2268,8 +2259,6 @@ deparseRelation(StringInfo buf, Relation rel)
 	const char *nspname = NULL;
 	const char *relname = NULL;
 	ListCell   *lc;
-
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
 	/* obtain additional catalog information. */
 	table = GetForeignTable(RelationGetRelid(rel));

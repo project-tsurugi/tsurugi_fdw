@@ -1328,9 +1328,8 @@ tsurugiEndForeignScan(ForeignScanState* node)
 
 	if (fdw_info_.transaction != nullptr)
 	{
-		elog(DEBUG2, "transaction::commit() start.");
 		error = fdw_info_.transaction->commit();
-		elog(DEBUG2, "transaction::commit() done.");
+        fdw_info_.transaction = nullptr;
 		if (error != ERROR_CODE::OK)
 		{
 			elog(ERROR, "transaction::commit() failed. (%d)", (int) error);
@@ -1338,9 +1337,8 @@ tsurugiEndForeignScan(ForeignScanState* node)
 	}
 
 	StubManager::end();
-	fdw_info_.transaction = nullptr;
 	fdw_info_.xact_level--;
-	elog(DEBUG2, "xact_level: (%d)", fdw_info_.xact_level);
+	elog(DEBUG2, "FDW xact_level: (%d)", fdw_info_.xact_level);
 
 	if (fdw_state != nullptr)
 		free_fdwstate(fdw_state);
@@ -1400,13 +1398,28 @@ tsurugiIterateDirectModify(ForeignScanState* node)
 	{
 		query.pop_back();
 	}
-	elog(DEBUG1, "statement string: \"%s\"", query.c_str());
+	elog(DEBUG1, "tsurugi_fdw: statement string: \"%s\"", query.c_str());
 	elog(DEBUG2, "transaction::execute_statement() start.");
 	error = fdw_info_.transaction->execute_statement(query);
 	elog(DEBUG2, "transaction::execute_statement() done.");
-	if (error != ERROR_CODE::OK) 
+
+    ERROR_CODE err;
+	if (error == ERROR_CODE::OK) 
     {
-		elog(ERROR, "transaction::execute_statement() failed. (%d)", (int) error);	
+        err = fdw_info_.transaction->commit();
+        if (err != ERROR_CODE::OK)
+        {
+            elog(ERROR, "transaction::commit() failed. (%d)", (int) err);
+        }        
+    } 
+    else 
+    {
+        err = fdw_info_.transaction->rollback();
+        if (err != ERROR_CODE::OK)
+        {
+            elog(ERROR, "transaction::rollback() failed. (%d)", (int) err);
+        }
+        elog(ERROR, "transaction::execute_statement() failed. (%d)", (int) error);	
 	}
 	
 	return slot;	
@@ -1420,19 +1433,6 @@ static void
 tsurugiEndDirectModify(ForeignScanState* node)
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-
-	ERROR_CODE error;
-
-	if (fdw_info_.transaction != nullptr)
-	{
-		elog(DEBUG2, "transaction::commit() start.");
-		error = fdw_info_.transaction->commit();
-		elog(DEBUG2, "transaction::commit() done.");
-		if (error != ERROR_CODE::OK)
-		{
-			elog(ERROR, "transaction::commit() failed. (%d)", (int) error);
-		}
-	}
 
 	StubManager::end();
 	fdw_info_.transaction = nullptr;
@@ -1875,7 +1875,8 @@ store_pg_data_type(OgawayamaFdwState* fdw_state, List* tlist)
 static void 
 create_cursor(ForeignScanState* node)
 {
-	Assert(node!= nullptr);
+	Assert(node != nullptr);
+    Assert(fdw_info_.transaction != nullptr);
 
 	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
 
@@ -1890,15 +1891,15 @@ create_cursor(ForeignScanState* node)
 	fdw_info_.result_set = nullptr;
 
 	/* dispatch query */
-	elog(DEBUG1, "query string : \"%s\"\n", query.c_str());
-	elog(DEBUG1, "tsurugi_fdw : transaction::execute_query() start.");
+	elog(DEBUG1, "tsurugi_fdw : transaction::execute_query() start. \"%s\"", query.c_str());
 	ERROR_CODE error = fdw_info_.transaction->execute_query(query, fdw_info_.result_set);
 	elog(DEBUG1, "tsurugi_fdw : transaction::execute_query() done.");
 	if (error != ERROR_CODE::OK)
 	{
 		elog(ERROR, "Transaction::execute_query() failed. (%d)", (int) error);
 		fdw_info_.result_set = nullptr;
-		fdw_info_.transaction->rollback();
+		fdw_info_.transaction->commit();
+		fdw_info_.transaction = nullptr;
 		fdw_info_.xact_level--;
 	}
 	
@@ -1907,11 +1908,12 @@ create_cursor(ForeignScanState* node)
 	{
 		elog(ERROR, "result_set::get_metadata() failed. (%d)", (int) error);
 	}
+#if 0    
 	if (!confirm_columns(fdw_info_.metadata, node))
 	{
 		elog(ERROR, "NOT matched columns between PostgreSQL and Ogawayama.");
 	}
-
+#endif
 	fdw_state->cursor_exists = true;
 	fdw_state->tuples.clear();
 	fdw_state->num_tuples = 0;
@@ -2262,6 +2264,8 @@ begin_backend_xact(void)
 	{
 		elog(ERROR, "Nested transaction is NOT supported.");
 	}
+
+    elog(DEBUG2, "FDW transaction level: (%d)", fdw_info_.xact_level);
 }
 
 /*
@@ -2273,8 +2277,9 @@ ogawayama_xact_callback (XactEvent event, void *arg)
 {
     int local_xact_level = GetCurrentTransactionNestLevel();
 
-	elog(DEBUG2, "tsurugi_fdw : %s (event: %d)", __func__, (int) event);
-	elog(DEBUG1, "Local transaction level: (%d)", local_xact_level);
+//	elog(DEBUG2, "tsurugi_fdw : %s (event: %d)", __func__, (int) event);
+//	elog(DEBUG1, "FDW transaction level: (%d)", fdw_info_.xact_level);
+//	elog(DEBUG1, "Local transaction level: (%d)", local_xact_level);
 
 	if (fdw_info_.xact_level > 0)
 	{
@@ -2291,17 +2296,18 @@ ogawayama_xact_callback (XactEvent event, void *arg)
 				fdw_info_.transaction = nullptr;
 				StubManager::end();
 				fdw_info_.xact_level--;
-				elog(DEBUG1, "Transaction::commit() done. (xact_level: %d)", 
+				elog(DEBUG1, "Transaction::commit() done. (FDW xact_level: %d)", 
 					fdw_info_.xact_level);
 				break;
 
 			case XACT_EVENT_ABORT:
-				elog(DEBUG1, "XACT_EVENT_ABORT (xact_level: %d)", fdw_info_.xact_level);
+				elog(DEBUG1, "XACT_EVENT_ABORT (xact_level: %d)", 
+                    fdw_info_.xact_level);
 				fdw_info_.transaction->rollback();
 				fdw_info_.transaction = nullptr;
 				StubManager::end();
 				fdw_info_.xact_level--;
-				elog(DEBUG1, "Transaction::rollback() done. (xact_level: %d)", 
+				elog(DEBUG1, "Transaction::rollback() done. (FDW xact_level: %d)", 
 					fdw_info_.xact_level);
 				break;
 
