@@ -70,7 +70,7 @@ std::vector<int64_t> get_primary_key(
 				if (constr->contype == CONSTR_PRIMARY) {
 					for (metadata::Column column : columns) {
 						if (column.name == column_def->colname) {
-							primary_keys.emplace_back(column.ordinal_position);
+							primary_keys.emplace_back(column.column_number);
 							break;
 						}
 					}
@@ -365,7 +365,7 @@ bool CreateTable::generate_metadata(manager::metadata::Object& object) const
 		return result;
 	}
 	// tuples
-	table.tuples = 0;
+	table.number_of_tuples = 0;
 
 	//
 	// columns metadata
@@ -417,13 +417,13 @@ bool CreateTable::generate_column_metadata(ColumnDef* column_def,
 	auto datatypes = std::make_unique<metadata::DataTypes>("tsurugi");
 
 	/* ordinalPosition  */
-	column.ordinal_position = ordinal_position;
+	column.column_number = ordinal_position;
 
 	/* column name */
 	column.name = column_def->colname;
 
 	// nullable
-	column.nullable = !(column_def->is_not_null);
+	column.is_not_null = column_def->is_not_null;
 
 	// default_expr
 	if (column_def->raw_default != NULL) {
@@ -435,7 +435,7 @@ bool CreateTable::generate_column_metadata(ColumnDef* column_def,
 										NameStr(atp->attname), 0);
 		adsrc = deparse_expression(expr_cooked, NIL, false, false);
 		if (adsrc) {
-			column.default_expr = adsrc;
+			column.default_expression = adsrc;
 		}
 	}
 
@@ -521,19 +521,14 @@ bool CreateTable::generate_column_metadata(ColumnDef* column_def,
 			int64_t typemod = (int64_t) column_type->typemod - VARHDRSZ;
 			if (typmods != NIL) {
 				/* for data type lengths metadata */
-				bool success = get_data_lengths(typmods, column.data_lengths);
-				if (!success) {
-					return result;
-				}
-				/* for data type length metadata */
-				success = get_data_length(typmods, column.data_length);
+				bool success = get_data_lengths(typmods, column.data_length);
 				if (!success) {
 					return result;
 				}
 			} else if (typemod >= 0) {
 				/* if typmod is -1, typmod is NULL VALUE*/
 				/* put a data type length metadata */
-				column.data_lengths.emplace_back(typemod);
+				column.data_length.emplace_back(typemod);
 			}
 			break;
 		}
@@ -580,40 +575,7 @@ bool CreateTable::get_data_lengths(List* typmods, std::vector<int64_t>& dataleng
 }
 
 /**
- * @brief	Get column data length.
- */
-bool CreateTable::get_data_length(List* typmods, int64_t& datalength) const
-{
-	bool result{false};
-
-	ListCell *listptr;
-	foreach(listptr, typmods) {
-		Node* node = (Node*) lfirst(listptr);
-		if (IsA(node, A_Const)) {
-			A_Const* a_const = (A_Const*) node;
-			if (IsA(&a_const->val, Integer)) {
-				/*
-				* get data type lengths from typmods of TypeName structure.
-				* The given data type length must be constant integer value.
-				*/
-				datalength = a_const->val.val.ival;
-			} else {
-				this->show_syntax_error_msg("can use only integer value in data length");
-				return result;
-			}
-		} else {
-			this->show_syntax_error_msg("can use only constant value in data length");
-			return result;
-		}
-	}
-	result = true;
-
-	return result;
-}
-
-/**
- * @brief	Get constraint information except CONSTR_PRIMARY and CONSTR_UNIQUE.
- *			They get their constraint information from IndexStmt.
+ * @brief	Get check constraint information.
  * @param 	constr [in] column query tree.
  * @param 	table [in] table metadata.
  * @param 	column_def [in] column query tree.
@@ -627,7 +589,7 @@ bool CreateTable::get_constraint_metadata(Constraint* constr,
 {
 	bool result{false};
 
-	if (constr->contype == CONSTR_CHECK || constr->contype == CONSTR_FOREIGN) {
+	if (constr->contype == CONSTR_CHECK) {
 
 		/* put constraint name metadata */
 		if (constr->conname != NULL) {
@@ -638,40 +600,34 @@ bool CreateTable::get_constraint_metadata(Constraint* constr,
 		if (column_def != NULL) {
 			for (const auto& column : table.columns) {
 				if (column.name == column_def->colname) {
-					constraint.columns.emplace_back(column.ordinal_position);
-					// Temporary until table->update is implemented.
-					constraint.columns_id.emplace_back(column.id + table.columns.size());
+					constraint.columns.emplace_back(column.column_number);
+					constraint.columns_id.emplace_back(column.id);
 				}
 			}
 		}
 
-		/* put constraint metadata */
-		switch (constr->contype) {
-			case CONSTR_CHECK:
-				/* put constraint type metadata */
-				constraint.type = metadata::Constraint::ConstraintType::CHECK;
-				// todo 
-				constraint.expression = "todo";
-				break;
-			case CONSTR_FOREIGN:
-				/* put constraint type metadata */
-				constraint.type = metadata::Constraint::ConstraintType::FOREIGN_KEY;
-				// todo 
-				break;
-			default:
-				break;
+		/* put constraint type metadata */
+		constraint.type = metadata::Constraint::ConstraintType::CHECK;
+
+		/* put constraint expression metadata */
+		char* adsrc;
+		adsrc = get_check_expression(constr->raw_expr);
+		if (!adsrc) {
+			return result;
 		}
+		constraint.expression = adsrc;
 
 		result = true;
 	}
+
 	return result;
 }
 
 /**
  * @brief  	Create constraint metadata from query tree.
  * @param 	table [in] table metadata.
- * @return 	true if success, otherwise fault.
- * @note	Add metadata of CONSTR_CHECK and CONSTR_FOREIGN.
+ * @return 	OK if success, otherwise fault.
+ * @note	Add metadata of CONSTR_CHECK.
  */
 metadata::ErrorCode 
 CreateTable::generate_constraint_metadata(metadata::Table& table) const
@@ -680,10 +636,9 @@ CreateTable::generate_constraint_metadata(metadata::Table& table) const
 	assert(create_stmt != NULL);
 	metadata::ErrorCode result = metadata::ErrorCode::NOT_FOUND;
 
-	ListCell* listptr;
 	/* for table columns */
-	List* table_constraints = create_stmt->constraints;
-	foreach(listptr, table_constraints) {
+	ListCell* listptr;
+	foreach(listptr, create_stmt->constraints) {
 		Constraint* constr = (Constraint*) lfirst(listptr);
 		metadata::Constraint constraint;
 		bool success = get_constraint_metadata(constr, table, NULL, constraint);
@@ -693,6 +648,7 @@ CreateTable::generate_constraint_metadata(metadata::Table& table) const
 		}
 	}
 
+#if 0
 	/* for each columns */
 	List* table_elts = create_stmt->tableElts;
 	foreach(listptr, table_elts) {
@@ -711,6 +667,260 @@ CreateTable::generate_constraint_metadata(metadata::Table& table) const
 					result = metadata::ErrorCode::OK;
 				}
 			}
+		}
+	}
+#endif
+
+	return result;
+}
+
+/**
+ * @brief	Analyze and get the check constraint expression.
+ * @param	expr [in] expression.
+ * @return	The parsed expression string.
+ */
+char* CreateTable::get_check_expression(Node* expr) const
+{
+	StringInfoData buf;
+	initStringInfo(&buf);
+
+	bool success = get_expr_recurse(expr, &buf);
+	if (!success) {
+		return NULL;
+	}
+
+	/* Remove trailing spaces */
+	buf.data[buf.len - 1] = '\0';
+
+	return buf.data;
+}
+
+/**
+ * @brief	Recursively get the check constraint expressions.
+ * @param	expr [in] expression.
+ * @param	buf [in] StringInfoData.
+ * @return	true if success, otherwise fault.
+ */
+bool CreateTable::get_expr_recurse(Node* expr, StringInfoData* buf) const
+{
+	bool result{true};
+
+	switch (nodeTag(expr))
+	{
+		case T_ColumnRef:
+			result = get_column_ref((ColumnRef*) expr, buf);
+			break;
+
+		case T_A_Const:
+			{
+				A_Const* con = (A_Const *) expr;
+				Value* val = &con->val;
+				result = get_a_const(val, buf);
+				break;
+			}
+
+		case T_A_Expr:
+			{
+				A_Expr* a = (A_Expr *) expr;
+				switch (a->kind)
+				{
+					case AEXPR_OP:
+						result = get_aexpr_op(a, buf);
+						break;
+					default:
+						ereport(INFO, errmsg("unrecognized A_Expr kind: %d", a->kind));
+						result = false;
+						break;
+				}
+				break;
+			}
+
+		case T_BoolExpr:
+			result = get_bool_expr((BoolExpr*) expr, buf);
+			break;
+
+		default:
+			/* should not reach here */
+			ereport(INFO, errmsg("unrecognized expr node type: %d", (int) nodeTag(expr)));
+			result = false;
+			break;
+	}
+
+	return result;
+}
+
+/**
+ * @brief	Get column name from ColumnRef.
+ * @param	expr [in] expression.
+ * @param	buf [in] StringInfoData.
+ * @return	true if success, otherwise fault.
+ */
+bool CreateTable::get_column_ref(ColumnRef* cref, StringInfoData* buf) const
+{
+	bool result{true};
+
+	/*----------
+	 * The allowed syntaxes are:
+	 *
+	 * A		First try to resolve as unqualified column name;
+	 *			if no luck, try to resolve as unqualified table name (A.*).
+	 * A.B		A is an unqualified table name; B is either a
+	 *			column or function name (trying column name first).
+	 * A.B.C	schema A, table B, col or func name C.
+	 * A.B.C.D	catalog A, schema B, table C, col or func D.
+	 * A.*		A is an unqualified table name; means whole-row value.
+	 * A.B.*	whole-row value of table B in schema A.
+	 * A.B.C.*	whole-row value of table C in schema B in catalog A.
+	 *
+	 * We do not need to cope with bare "*"; that will only be accepted by
+	 * the grammar at the top level of a SELECT list, and transformTargetList
+	 * will take care of it before it ever gets here.  Also, "A.*" etc will
+	 * be expanded by transformTargetList if they appear at SELECT top level,
+	 * so here we are only going to see them as function or operator inputs.
+	 *
+	 * Currently, if a catalog name is given then it must equal the current
+	 * database name; we check it here and then discard it.
+	 *----------
+	 */
+	switch (list_length(cref->fields))
+	{
+		case 1:
+			{
+				Node* field1 = (Node*) linitial(cref->fields);
+				Assert(IsA(field1, String));
+				appendStringInfo(buf, "%s ", strVal(field1));
+				break;
+			}
+		case 2:
+			{
+				Node* field2 = (Node*) lsecond(cref->fields);
+				Assert(IsA(field2, String));
+				appendStringInfo(buf, "%s ", strVal(field2));
+				break;
+			}
+		case 3:
+			{
+				Node* field3 = (Node*) lthird(cref->fields);
+				Assert(IsA(field3, String));
+				appendStringInfo(buf, "%s ", strVal(field3));
+				break;
+			}
+		case 4:
+			{
+				Node* field4 = (Node*) lfourth(cref->fields);
+				Assert(IsA(field4, String));
+				appendStringInfo(buf, "%s ", strVal(field4));
+				break;
+			}
+		default:
+			ereport(INFO, errmsg("improper qualified name (too many dotted names)"));
+			result = false;
+			break;
+	}
+
+	return result;
+}
+
+/**
+ * @brief	Get constant value from Value(A_Const).
+ * @param	expr [in] expression.
+ * @param	buf [in] StringInfoData.
+ * @return	true if success, otherwise fault.
+ */
+bool CreateTable::get_a_const(Value* value, StringInfoData* buf) const
+{
+	bool result{true};
+
+	switch (nodeTag(value))
+	{
+		case T_Integer:
+			appendStringInfo(buf, "%d ", intVal(value));
+			break;
+		case T_String:
+			appendStringInfo(buf, "\'%s\' ", strVal(value));
+			break;
+		default:
+			ereport(INFO, errmsg("unrecognized a_const node type: %d", (int) nodeTag(value)));
+			result = false;
+			break;
+	}
+
+	return result;
+}
+
+/**
+ * @brief	Recursively get the check constraint expressions(A_Expr).
+ * @param	a [in] expression(A_Expr).
+ * @param	buf [in] StringInfoData.
+ * @return	true if success, otherwise fault.
+ */
+bool CreateTable::get_aexpr_op(A_Expr* a, StringInfoData* buf) const
+{
+	Node* lexpr = a->lexpr;
+	Node* rexpr = a->rexpr;
+	bool result{true};
+
+	result = get_expr_recurse(lexpr, buf);
+	if (result != true) {
+		return result;
+	}
+
+	switch (list_length(a->name))
+	{
+		case 1:
+			appendStringInfo(buf, "%s ", strVal(linitial(a->name)));
+			break;
+		default:
+			ereport(INFO, errmsg("get_aexpr_op: list_length = %d", list_length(a->name)));
+			result = false;
+			break;
+	}
+
+	result = get_expr_recurse(rexpr, buf);
+
+	return result;
+}
+
+/**
+ * @brief	Recursively get the check constraint expressions(BoolExpr).
+ * @param	a [in] expression(BoolExpr).
+ * @param	buf [in] StringInfoData.
+ * @return	true if success, otherwise fault.
+ */
+bool CreateTable::get_bool_expr(BoolExpr* a, StringInfoData* buf) const
+{
+	const char* opname;
+	ListCell   *lc;
+	bool result{true};
+
+	switch (a->boolop)
+	{
+		case AND_EXPR:
+			opname = "AND";
+			break;
+		case OR_EXPR:
+			opname = "OR";
+			break;
+		case NOT_EXPR:
+			opname = "NOT";
+			break;
+		default:
+			ereport(INFO, errmsg("get_bool_expr: unrecognized boolop: %d", (int) a->boolop));
+			result = false;
+			return result;
+	}
+
+	bool set_opname{false};
+	foreach(lc, a->args)
+	{
+		Node* arg = (Node *) lfirst(lc);
+		result = get_expr_recurse(arg, buf);
+		if (result != true) {
+			return result;
+		}
+		if (set_opname != true) {
+			appendStringInfo(buf, "%s ", opname);
+			set_opname = true;
 		}
 	}
 

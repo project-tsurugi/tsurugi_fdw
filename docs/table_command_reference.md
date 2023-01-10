@@ -1,5 +1,7 @@
 # Tsurugi テーブル管理機能 SQLコマンド
+
 2022.07.22 NEC  
+2022.10.28 NEC  
 
 # 目次
 - [Tsurugi テーブル管理機能 SQLコマンド](#tsurugi-テーブル管理機能-sqlコマンド)
@@ -97,7 +99,6 @@
 
 * **CHECK ( expression )**  
   作成するテーブルへの挿入または更新操作が成功するために、新しい行または更新された行が満たさなければならないBoolean型の結果を返す条件式を指定します。  
-  本パラメータは、2022年10月実装となります。
 
   Tsurugiでは、CHECK制約におけるNO INHERITオプションを非サポートとします。
 
@@ -107,7 +108,6 @@
 * **UNIQUE （列制約）**  
   **UNIQUE ( column_name [, ... ] ) [ INCLUDE ( column_name [, ...]) ] (テーブル制約)**  
   テーブルの1つまたは複数の列からなるグループが、一意な値のみを持つことができることを指定します。  
-  本パラメータは、2022年10月実装となります。
 
   Tsurugiでは、WITH句にインデックスのパラメータを格納できません。非サポートとします。
   
@@ -120,7 +120,6 @@
 * **REFERENCES reftable [ ( refcolumn ) ] [ MATCH matchtype ] [ ON DELETE action ] [ ON UPDATE action ] （列制約）**  
   **FOREIGN KEY ( column_name [, ... ] ) REFERENCES reftable [ ( refcolumn [, ... ] ) ] [ MATCH matchtype ] [ ON DELETE referential_action ] [ ON UPDATE referential_action ] （テーブル制約）**  
   テーブルの1つまたは複数の列からなるグループが、被参照テーブルの一部の行の被参照列に一致する値を持たなければならないことを指定します。  
-  本パラメータは、2022年10月実装となります。
 
   Tsurugiでは、被参照列のデータが削除(ON DELETE)または更新(ON UPADTE)された場合の動作にCASCADEを指定することはできません。非サポートとします。
 
@@ -145,17 +144,6 @@
     * filmsテーブルは、hollywoodスキーマに作成しています。
     * distributorsテーブルは、既に存在している場合に注意が出力されます。
 
-* arrayテーブルとemptyテーブルを作成します。
-    ~~~sql
-    CREATE TABLE array_int (
-        vector  int[][]
-    ) TABLESPACE tsurugi;
-
-    CREATE TABLE empty () TABLESPACE tsurugi;
-    ~~~
-    * arrayテーブルは、vector列が二次元配列となります。
-    * emptyテーブルは、列を持たない空のテーブルとなります。
-
 * NOT NULL制約
     ~~~sql
     CREATE TABLE distributors (
@@ -166,7 +154,7 @@
     * did列とname列にNOT NULL制約を定義しています。
     * did列に明示的な名前no_nullを付けています。
 
-* CHECK制約（2022年10月実装予定）
+* CHECK制約
     ~~~sql
     CREATE TABLE distributors (
         did    integer CHECK (did > 100),
@@ -191,7 +179,7 @@
     ~~~
     * name列とdid列にDEAFALT制約を定義しています。
 
-* UNIQUE制約（2022年10月実装予定）
+* UNIQUE制約
     ~~~sql
     CREATE TABLE distributors (
         name      varchar(40) UNIQUE,
@@ -243,7 +231,7 @@
     * films_tableテーブルは、code列とtitle列をセットとしたPRIMARY KEYテーブル制約を定義しています。
     * films_indexテーブルは、code列とtitle列にUNIQUEテーブル制約を定義し、title列を非キー列としています。
 
-* FOREIGN KEY制約（2022年10月実装予定）
+* FOREIGN KEY制約
     ~~~sql
     CREATE TABLE films (
         code        char(5),
