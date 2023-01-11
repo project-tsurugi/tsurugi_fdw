@@ -421,7 +421,6 @@ static void tsurugiGetForeignRelSize(
 	RangeTblEntry *rte = planner_rt_fetch(baserel->relid, root);
 	const char *namespace_string;
 	const char *relname;
-	const char *refname;
 
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
