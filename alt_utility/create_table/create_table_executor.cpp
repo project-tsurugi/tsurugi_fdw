@@ -84,7 +84,7 @@ int64_t execute_create_table(CreateStmt* create_stmt)
 		return  object_id;
 	}
 
-	auto tables = metadata::get_table_metadata(DBNAME);
+	auto tables = metadata::get_tables_ptr(DBNAME);
 	metadata::ErrorCode error = tables->add(table, &object_id);
 	if (error != metadata::ErrorCode::OK ) {
 		if (error == metadata::ErrorCode::ALREADY_EXISTS) {
@@ -120,18 +120,11 @@ int64_t execute_create_table(CreateStmt* create_stmt)
 					errmsg("CreateTable::generate_constraint_metadata() failed.")));
 			return object_id;
 		}
-		error = tables->remove(table_constraint.id);
+		error = tables->update(object_id, table_constraint);
 		if (error != metadata::ErrorCode::OK) {
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
-					errmsg("Remove a table metadata failed when registing constraints. " \
-					"(name: %s) (error:%d)", table_constraint.name.data(), (int) error)));
-		}
-		error = tables->add(table_constraint, &object_id);
-		if (error != metadata::ErrorCode::OK) {
-			ereport(ERROR,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-					errmsg("Add a table metadata failed when registing constraints. " \
+					errmsg("Update a table metadata failed when registing constraints. " \
 					"(name: %s) (error:%d)", table_constraint.name.data(), (int) error)));
 		}
 	}
