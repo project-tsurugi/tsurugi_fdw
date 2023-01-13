@@ -118,7 +118,7 @@ enum FdwScanPrivateIndex
 	FdwScanPrivateRelations
 };
 
-#define DEFAULT_FETCH_SIZE (10000)
+#define DEFAULT_FETCH_SIZE (10000 * 20)
 typedef struct row_data_
 {
 	size_t 		number_of_columns;		/* SELECT対象の列数 */
