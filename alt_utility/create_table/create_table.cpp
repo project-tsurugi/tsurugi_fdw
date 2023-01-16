@@ -436,6 +436,9 @@ bool CreateTable::generate_column_metadata(ColumnDef* column_def,
 		adsrc = deparse_expression(expr_cooked, NIL, false, false);
 		if (adsrc) {
 			column.default_expression = adsrc;
+			if (IsA(column_def->raw_default, SQLValueFunction)) {
+				column.is_funcexpr = true;
+			}
 		}
 	}
 
