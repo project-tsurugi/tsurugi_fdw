@@ -18,6 +18,7 @@
  */
 #include <string>
 #include <memory>
+#include <regex>
 #include "ogawayama/stub/error_code.h"
 #include "ogawayama/stub/api.h"
 #include "stub_manager.h"
@@ -1880,7 +1881,9 @@ create_cursor(ForeignScanState* node)
 
 	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
 
-	elog(DEBUG2, "tsurugi_fdw : %s \"%s\"", __func__, fdw_state->query_string);
+	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+
+	elog(DEBUG2, "tsurugi_fdw : raw query string : \"%s\"", fdw_state->query_string);
 
 	// trim terminal semi-column.
 	std::string query(fdw_state->query_string);
@@ -1890,8 +1893,12 @@ create_cursor(ForeignScanState* node)
 	}
 	fdw_info_.result_set = nullptr;
 
+    query = std::regex_replace(query, std::regex("(::[a-zA-Z]+)"), "");
+
+	elog(DEBUG2, "tsurugi_fdw : shaped query string : \"%s\"", query.c_str());
+
 	/* dispatch query */
-	elog(DEBUG1, "tsurugi_fdw : transaction::execute_query() start. \"%s\"", query.c_str());
+	elog(DEBUG1, "tsurugi_fdw : transaction::execute_query() start. \n\"%s\"", query.c_str());
 	ERROR_CODE error = fdw_info_.transaction->execute_query(query, fdw_info_.result_set);
 	elog(DEBUG1, "tsurugi_fdw : transaction::execute_query() done.");
 	if (error != ERROR_CODE::OK)
