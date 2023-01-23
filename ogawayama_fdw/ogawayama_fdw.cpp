@@ -1275,14 +1275,18 @@ tsurugiIterateForeignScan(ForeignScanState* node)
 	TupleTableSlot* slot = node->ss.ss_ScanTupleSlot;
 	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
 
-	if (!fdw_state->cursor_exists)
+	if (!fdw_state->cursor_exists) 
+    {
 		create_cursor(node);
+    }
 
 	if (fdw_state->next_tuple >= fdw_state->num_tuples)
 	{
 		/* No point in another fetch if we already detected EOF, though. */
-		if (!fdw_state->eof_reached)
+		if (!fdw_state->eof_reached) 
+        {
 			fetch_more_data(node);
+        }
 
 		/* If we didn't get any tuples, must be end of data */		
 		if (fdw_state->next_tuple >= fdw_state->num_tuples)
@@ -1893,12 +1897,16 @@ create_cursor(ForeignScanState* node)
 	}
 	fdw_info_.result_set = nullptr;
 
+    // for deleting cast string
     query = std::regex_replace(query, std::regex("(::[a-zA-Z]+)"), "");
+
+    // for ORDER BY
+    query = std::regex_replace(query, std::regex("(ASC|NULLS|LAST|FIRST)"), "");
 
 	elog(DEBUG2, "tsurugi_fdw : shaped query string : \"%s\"", query.c_str());
 
 	/* dispatch query */
-	elog(DEBUG1, "tsurugi_fdw : transaction::execute_query() start. \n\"%s\"", query.c_str());
+	elog(LOG, "tsurugi_fdw : transaction::execute_query() start. \n\"%s\"", query.c_str());
 	ERROR_CODE error = fdw_info_.transaction->execute_query(query, fdw_info_.result_set);
 	elog(DEBUG1, "tsurugi_fdw : transaction::execute_query() done.");
 	if (error != ERROR_CODE::OK)
@@ -1915,7 +1923,7 @@ create_cursor(ForeignScanState* node)
 	{
 		elog(ERROR, "result_set::get_metadata() failed. (%d)", (int) error);
 	}
-#if 0    
+#if 0
 	if (!confirm_columns(fdw_info_.metadata, node))
 	{
 		elog(ERROR, "NOT matched columns between PostgreSQL and Ogawayama.");
