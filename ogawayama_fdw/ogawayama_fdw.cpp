@@ -2053,7 +2053,7 @@ create_cursor(ForeignScanState* node)
     query = std::regex_replace(query, std::regex("(::[a-zA-Z]+)"), "");
 
     // for ORDER BY
-    query = std::regex_replace(query, std::regex("(ASC|DESC|NULLS|LAST|FIRST)"), "");
+    query = std::regex_replace(query, std::regex("(ASC|NULLS|LAST|FIRST)"), "");
 
 	elog(DEBUG2, "tsurugi_fdw : shaped query string : \"%s\"", query.c_str());
 
