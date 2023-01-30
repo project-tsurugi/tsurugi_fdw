@@ -33,7 +33,7 @@ fi
 if [[ -d $TSURUGI_HOME/ogawayama ]]; then
   cd $TSURUGI_HOME
 else
-  git clone -b feature/timestamp git@github.com:project-tsurugi/ogawayama.git
+  git clone -b feature/timestamp_pb git@github.com:project-tsurugi/ogawayama.git
 fi
 
 ###
