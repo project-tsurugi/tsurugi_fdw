@@ -92,7 +92,7 @@ jobs:
       - id: Install_takatori
         name: Install_takatori
         run: |
-          cd postgresql-${{ matrix.postgresql }}/contrib/frontend/third_party/ogawayama/third_party/jogasaki/third_party/tateyama/third_party/takatori
+          cd postgresql-${{ matrix.postgresql }}/contrib/frontend/third_party/ogawayama/third_party/jogasaki/third_party/mizugaki/third_party/yugawara/third_party/takatori
           rm -rf build
           mkdir -p build
           cd build
