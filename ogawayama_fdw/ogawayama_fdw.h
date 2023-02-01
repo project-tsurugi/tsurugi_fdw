@@ -19,6 +19,9 @@
 #ifndef OGAWAYAMA_FDW_H
 #define OGAWAYAMA_FDW_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "foreign/foreign.h"
 #include "lib/stringinfo.h"
 #include "nodes/pathnodes.h"
@@ -188,5 +191,9 @@ extern const char *get_jointype_name(JoinType jointype);
 /* in shippable.c */
 extern bool is_builtin(Oid objectId);
 extern bool is_shippable(Oid objectId, Oid classId, tsurugiFdwRelationInfo *fpinfo);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // OGAWAYAMA_FDW_H
