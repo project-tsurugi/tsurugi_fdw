@@ -20,6 +20,7 @@
 #include <memory>
 #include <regex>
 #include <boost/format.hpp>
+#include "tsurugi_utils.h"
 #include "ogawayama/stub/error_code.h"
 #include "ogawayama/stub/api.h"
 #include "stub_manager.h"
@@ -27,29 +28,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 #include "postgres.h"
-
 #include "ogawayama_fdw.h"
-
-#if 0
-#include "access/htup.h"
-#include "access/htup_details.h"
-#include "catalog/pg_type.h"
-#include "foreign/fdwapi.h"
-#include "optimizer/pathnode.h"
-#include "optimizer/planmain.h"
-#include "optimizer/restrictinfo.h"
-#include "optimizer/cost.h"
-#include "storage/proc.h"
-#include "utils/fmgrprotos.h"
-#include "utils/memutils.h"
-#endif
 
 #include "access/xact.h"
 #include "utils/syscache.h"
-
-// postgres_fdwから流用
 #include "access/htup_details.h"
 #include "access/sysattr.h"
 #include "access/table.h"
@@ -79,6 +62,8 @@ extern "C" {
 #include "utils/rel.h"
 #include "utils/sampling.h"
 #include "utils/selfuncs.h"
+#include "access/tupdesc.h"
+#include "nodes/pg_list.h"
 
 PG_MODULE_MAGIC;
 
@@ -87,6 +72,8 @@ PG_MODULE_MAGIC;
 #endif
 
 using namespace ogawayama;
+
+int unused PG_USED_FOR_ASSERTS_ONLY;
 
 /* Default CPU cost to start up a foreign query. */
 #define DEFAULT_FDW_STARTUP_COST	100.0
@@ -131,19 +118,51 @@ typedef struct row_data_
  */
 typedef struct ogawayama_fdw_state_
 {
-	bool 			cursor_exists;			
 	const char* 	query_string;		/* SQL Query Text */
+    Relation        rel;                /* relcache entry for the foreign table */
+    TupleDesc       tupdesc;            /* tuple descriptor of scan */
+    AttInMetadata*  attinmeta;          /* attribute datatype conversion */
+    List*           retrieved_attrs;    /* list of target attribute numbers */
+
+	bool 			cursor_exists;		/* have we created the cursor? */
+    int             numParams;          /* number of parameters passed to query */
+    FmgrInfo*       param_flinfo;       /* output conversion functions for them */
+    List*           param_exprs;        /* executable expressions for param values */
+    const char**    param_values;       /* textual values of query parameters */
+    Oid*            param_types;        /* type of query parameters */
+
 	size_t 			number_of_columns;	/* SELECT対象の列数 */
 	Oid* 			column_types; 		/* SELECT予定の列のデータ型(Oid)用のポインタ */
-	RowData			row;
-	MemoryContext 	batch_cxt;			
-	std::vector<TupleTableSlot*> tuples;
-	decltype(tuples)::iterator tuple_ite;
-	size_t			fetch_size;
-	size_t			num_tuples;
-	size_t			next_tuple;
-	bool			eof_reached;
-} OgawayamaFdwState;
+
+    int             p_nums;             /* number of parameters to transmit */
+    FmgrInfo*       p_flinfo;           /* output conversion functions for them */
+
+    /* batch operation stuff */
+    int             num_slots;          /* number of slots to insert */
+
+    List*           attr_list;          /* query attribute list */
+    List*           column_list;        /* Column list of Tsurugi Column structres */
+
+    size_t          row_nums;           /* number of rows */
+    Datum**         rows;               /* all rows of scan */
+    size_t          rowidx;             /* current index of rows */
+    bool**          rows_isnull;        /* is null*/
+    bool            for_update;         /* true if this scan is update target */
+    int             batch_size;         /* value of FDW option "batch_size" */
+
+	size_t			num_tuples;         /* # of tuples in array */
+	size_t			next_tuple;         /* index of next one to return */
+	std::vector<TupleTableSlot*>    tuples;
+	decltype(tuples)::iterator      tuple_ite;
+
+	bool			eof_reached;        /* true if last fetch reached EOF */
+
+    /* working memory contextexts */
+	MemoryContext 	batch_cxt;
+    MemoryContext   temp_cxt;	
+
+	size_t			fetch_size;         /* number of tuples per fetch */
+} tsurugiFdwState;
 
 /*
  *	@brief 	セッションごとのFDWの状態
@@ -304,7 +323,12 @@ static bool tsurugiAnalyzeForeignTable(
 	Relation relation, AcquireSampleRowsFunc* func, BlockNumber* totalpages);
 static List* tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt, 
 										  Oid serverOid);
-
+static void tsurugiGetForeignJoinPaths(PlannerInfo *root,
+										RelOptInfo *joinrel,
+										RelOptInfo *outerrel,
+										RelOptInfo *innerrel,
+										JoinType jointype,
+										JoinPathExtraData *extra);
 #ifdef __cplusplus
 }
 #endif
@@ -312,15 +336,19 @@ static List* tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt,
 /*
  * Helper functions
  */
-static OgawayamaFdwState* create_fdwstate();
-static void free_fdwstate(OgawayamaFdwState* fdw_state);
-static void store_pg_data_type(OgawayamaFdwState* fdw_state, List* tlist);
+static tsurugiFdwState* create_fdwstate();
+static void free_fdwstate(tsurugiFdwState* fdw_state);
+static void store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist);
 static bool confirm_columns(MetadataPtr metadata, ForeignScanState* node);
-static void create_cursor(ForeignScanState* node);
-static void fetch_more_data(ForeignScanState* node);
+static void tsurugi_create_cursor(ForeignScanState* node);
+static void tsurugi_fetch_more_data(ForeignScanState* node);
 static void make_virtual_tuple(TupleTableSlot* slot, ForeignScanState* node);
-static TupleTableSlot* make_tuple_from_result_set(ResultSetPtr result_set, 
-												  OgawayamaFdwState* fdw_state);
+static void make_tuple_from_result_row(ResultSetPtr result_set, 
+                                        TupleDesc tupleDescriptor,
+                                        List* retrieved_attrs,
+                                        Datum* row,
+                                        bool* is_null,
+                                        tsurugiFdwState* fdw_state);
 static void begin_backend_xact(void);
 static void ogawayama_xact_callback (XactEvent event, void *arg);
 
@@ -370,6 +398,12 @@ create_foreign_modify(EState *estate,
 					  int values_end,
 					  bool has_returning,
 					  List *retrieved_attrs);
+
+
+static bool
+tsurugi_foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
+        				RelOptInfo *outerrel, RelOptInfo *innerrel,
+		        		JoinPathExtraData *extra);
 
 extern PGDLLIMPORT PGPROC *MyProc;
 
@@ -423,6 +457,9 @@ ogawayama_fdw_handler(PG_FUNCTION_ARGS)
     routine->BeginForeignInsert = tsurugiBeginForeignInsert;
 	routine->ExecForeignInsert = tsurugiExecForeignInsert;
     routine->EndForeignInsert = tsurugiEndForeignInsert;
+
+	/* Support functions for join push-down */
+	routine->GetForeignJoinPaths = tsurugiGetForeignJoinPaths;
 
     RegisterXactCallback( ogawayama_xact_callback, NULL );
 
@@ -1138,7 +1175,7 @@ tsurugiGetForeignPlan(PlannerInfo *root,
 		/*
 		 * We leave fdw_recheck_quals empty in this case, since we never need
 		 * to apply EPQ recheck clauses.  In the case of a joinrel, EPQ
-		 * recheck is handled elsewhere --- see postgresGetForeignJoinPaths().
+		 * recheck is handled elsewhere --- see tsurugiGetForeignJoinPaths().
 		 * If we're planning an upperrel (ie, remote grouping or aggregation)
 		 * then there's no EPQ to do because SELECT FOR UPDATE wouldn't be
 		 * allowed, and indeed we *can't* put the remote clauses into
@@ -1246,6 +1283,144 @@ tsurugiGetForeignPlan(PlannerInfo *root,
 							outer_plan);
 }											
 
+/*
+ * tsurugiGetForeignJoinPaths
+ *		Add possible ForeignPath to joinrel, if join is safe to push down.
+ */
+static void
+tsurugiGetForeignJoinPaths(PlannerInfo *root,
+							RelOptInfo *joinrel,
+							RelOptInfo *outerrel,
+							RelOptInfo *innerrel,
+							JoinType jointype,
+							JoinPathExtraData *extra)
+{
+	tsurugiFdwRelationInfo *fpinfo;
+	ForeignPath *joinpath;
+	double		rows;
+	int			width;
+	Cost		startup_cost;
+	Cost		total_cost;
+	Path	   *epq_path;		/* Path to create plan to be executed when
+								 * EvalPlanQual gets triggered. */
+
+	/*
+	 * Skip if this join combination has been considered already.
+	 */
+	if (joinrel->fdw_private)
+		return;
+
+	/*
+	 * This code does not work for joins with lateral references, since those
+	 * must have parameterized paths, which we don't generate yet.
+	 */
+	if (!bms_is_empty(joinrel->lateral_relids))
+		return;
+
+	/*
+	 * Create unfinished tsurugiFdwRelationInfo entry which is used to indicate
+	 * that the join relation is already considered, so that we won't waste
+	 * time in judging safety of join pushdown and adding the same paths again
+	 * if found safe. Once we know that this join can be pushed down, we fill
+	 * the entry.
+	 */
+	fpinfo = (tsurugiFdwRelationInfo *) palloc0(sizeof(tsurugiFdwRelationInfo));
+	fpinfo->pushdown_safe = false;
+	joinrel->fdw_private = fpinfo;
+	/* attrs_used is only for base relations. */
+	fpinfo->attrs_used = NULL;
+
+	/*
+	 * If there is a possibility that EvalPlanQual will be executed, we need
+	 * to be able to reconstruct the row using scans of the base relations.
+	 * GetExistingLocalJoinPath will find a suitable path for this purpose in
+	 * the path list of the joinrel, if one exists.  We must be careful to
+	 * call it before adding any ForeignPath, since the ForeignPath might
+	 * dominate the only suitable local path available.  We also do it before
+	 * calling tsurugi_foreign_join_ok(), since that function updates fpinfo and marks
+	 * it as pushable if the join is found to be pushable.
+	 */
+	if (root->parse->commandType == CMD_DELETE ||
+		root->parse->commandType == CMD_UPDATE ||
+		root->rowMarks)
+	{
+		epq_path = GetExistingLocalJoinPath(joinrel);
+		if (!epq_path)
+		{
+			elog(DEBUG3, "could not push down foreign join because a local path suitable for EPQ checks was not found");
+			return;
+		}
+	}
+	else
+		epq_path = NULL;
+
+	if (!tsurugi_foreign_join_ok(root, joinrel, jointype, outerrel, innerrel, extra))
+	{
+		/* Free path required for EPQ if we copied one; we don't need it now */
+		if (epq_path)
+			pfree(epq_path);
+		return;
+	}
+
+	/*
+	 * Compute the selectivity and cost of the local_conds, so we don't have
+	 * to do it over again for each path. The best we can do for these
+	 * conditions is to estimate selectivity on the basis of local statistics.
+	 * The local conditions are applied after the join has been computed on
+	 * the remote side like quals in WHERE clause, so pass jointype as
+	 * JOIN_INNER.
+	 */
+	fpinfo->local_conds_sel = clauselist_selectivity(root,
+													 fpinfo->local_conds,
+													 0,
+													 JOIN_INNER,
+													 NULL);
+	cost_qual_eval(&fpinfo->local_conds_cost, fpinfo->local_conds, root);
+
+	/*
+	 * If we are going to estimate costs locally, estimate the join clause
+	 * selectivity here while we have special join info.
+	 */
+	if (!fpinfo->use_remote_estimate)
+		fpinfo->joinclause_sel = clauselist_selectivity(root, fpinfo->joinclauses,
+														0, fpinfo->jointype,
+														extra->sjinfo);
+
+	/* Estimate costs for bare join relation */
+	estimate_path_cost_size(root, joinrel, NIL, NIL, NULL,
+							&rows, &width, &startup_cost, &total_cost);
+	/* Now update this information in the joinrel */
+	joinrel->rows = rows;
+	joinrel->reltarget->width = width;
+	fpinfo->rows = rows;
+	fpinfo->width = width;
+	fpinfo->startup_cost = startup_cost;
+	fpinfo->total_cost = total_cost;
+
+	/*
+	 * Create a new join path and add it to the joinrel which represents a
+	 * join between foreign tables.
+	 */
+	joinpath = create_foreign_join_path(root,
+										joinrel,
+										NULL,	/* default pathtarget */
+										rows,
+										startup_cost,
+										total_cost,
+										NIL,	/* no pathkeys */
+										joinrel->lateral_relids,
+										epq_path,
+										NIL);	/* no fdw_private */
+
+	/* Add generated path into joinrel by add_path(). */
+	add_path(joinrel, (Path *) joinpath);
+
+	/* Consider pathkeys for the join relation */
+	add_paths_with_pathkeys_for_rel(root, joinrel, epq_path);
+
+	/* XXX Consider parameterized paths for the join relation */
+}                            
+
 /* 
  * 	FDW Executor functions 
  */
@@ -1258,31 +1433,52 @@ tsurugiGetForeignPlan(PlannerInfo *root,
 static void 
 tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 {
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-
 	Assert(node != nullptr);
 
 	ForeignScan* fsplan = (ForeignScan*) node->ss.ps.plan;
 	EState*	estate = node->ss.ps.state;
-	OgawayamaFdwState* fdw_state = create_fdwstate();
+	tsurugiFdwState* fdw_state = create_fdwstate();
 
-	fdw_state->fetch_size = DEFAULT_FETCH_SIZE;
+	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
-	/* Create MemoryContext for tuple data */
-	fdw_state->batch_cxt = AllocSetContextCreate(
-		estate->es_query_cxt, "ogawayama_fdw tuple data", ALLOCSET_DEFAULT_SIZES);
-
-	/* トランザクション開始 */
 	begin_backend_xact();
 
-	/* SELECT対象の列のデータ型を格納 */
+	/*
+	 * We'll save private state in node->fdw_state.
+	 */
+    node->fdw_state = (void*) fdw_state;
+    fdw_state->rowidx = 0;
+
 	store_pg_data_type(fdw_state, fsplan->scan.plan.targetlist);
-	
+
 	fdw_state->query_string = strVal(list_nth(fsplan->fdw_private,
 									 FdwScanPrivateSelectSql));
+    fdw_state->retrieved_attrs = (List*) list_nth(fsplan->fdw_private, 
+                                                   FdwScanPrivateRetrievedAttrs);
+    fdw_state->cursor_exists = false;                                                  
+	fdw_state->fetch_size = DEFAULT_FETCH_SIZE;
 
-	 /* fdw_stateをnode->fdw_stateに格納する */
-	 node->fdw_state = fdw_state;
+   	/*
+	 * Get info we'll need for converting data fetched from the foreign server
+	 * into local representation and error reporting during that process.
+	 */
+	if (fsplan->scan.scanrelid > 0)
+	{
+		fdw_state->rel = node->ss.ss_currentRelation;
+		fdw_state->tupdesc = RelationGetDescr(fdw_state->rel);
+	}
+	else
+	{
+		fdw_state->rel = NULL;
+		fdw_state->tupdesc = node->ss.ss_ScanTupleSlot->tts_tupleDescriptor;
+	} 
+
+    fdw_state->attinmeta = TupleDescGetAttInMetadata(fdw_state->tupdesc);
+
+	/* Create MemoryContext for tuple data */
+	fdw_state->batch_cxt = AllocSetContextCreate(estate->es_query_cxt, 
+                                                "tsurugi_fdw tuple data", 
+                                                ALLOCSET_DEFAULT_SIZES);
 }
 
 /*
@@ -1293,39 +1489,28 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 static TupleTableSlot* 
 tsurugiIterateForeignScan(ForeignScanState* node)
 {
-	elog(DEBUG5, "tsurugi_fdw : %s", __func__);
-
 	Assert(node != nullptr);
 	Assert(fdw_info_.transaction != nullptr);
 
-	TupleTableSlot* slot = node->ss.ss_ScanTupleSlot;
-	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
+	tsurugiFdwState* fdw_state = (tsurugiFdwState*) node->fdw_state;
+	TupleTableSlot* tupleSlot = node->ss.ss_ScanTupleSlot;
 
-	if (!fdw_state->cursor_exists)
-		create_cursor(node);
+	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
-	if (fdw_state->next_tuple >= fdw_state->num_tuples)
-	{
-		/* No point in another fetch if we already detected EOF, though. */
-		if (!fdw_state->eof_reached)
-			fetch_more_data(node);
+	if (!fdw_state->cursor_exists) 
+    {
+        tsurugi_create_cursor(node);
+    }
 
-		/* If we didn't get any tuples, must be end of data */		
-		if (fdw_state->next_tuple >= fdw_state->num_tuples)
-		{
-			ExecClearTuple(slot);
-			goto EXIT;
-		}
-	}
-	make_virtual_tuple(slot, node);
-	ExecStoreVirtualTuple(slot);
+	ExecClearTuple(tupleSlot);
 
-	fdw_state->tuple_ite++;
-	fdw_state->next_tuple = std::distance(
-		fdw_state->tuples.begin(), fdw_state->tuple_ite);
+    /* No point in another fetch if we already detected EOF, though. */
+    if (!fdw_state->eof_reached) 
+    {
+        tsurugi_fetch_more_data(node);
+    }
 
-EXIT:
-	return slot;
+	return tupleSlot;
 }
 
 /*
@@ -1346,7 +1531,7 @@ tsurugiEndForeignScan(ForeignScanState* node)
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
-	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
+	tsurugiFdwState* fdw_state = (tsurugiFdwState*) node->fdw_state;
 
 	/* close cursor */
 	fdw_info_.result_set = nullptr;
@@ -1387,7 +1572,7 @@ tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
 
 	EState* estate = node->ss.ps.state;
 
-	OgawayamaFdwState* fdw_state = create_fdwstate();
+	tsurugiFdwState* fdw_state = create_fdwstate();
 	if (fdw_state == nullptr)
 	{
 		elog(ERROR, "create_fdw_state() failed.");
@@ -1413,7 +1598,7 @@ tsurugiIterateDirectModify(ForeignScanState* node)
 	Assert(node != nullptr);
 	Assert(fdw_info_.transaction != nullptr);
 
-	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
+	tsurugiFdwState* fdw_state = (tsurugiFdwState*) node->fdw_state;
 	TupleTableSlot* slot = nullptr;
 	ERROR_CODE error;
 
@@ -1467,7 +1652,7 @@ tsurugiEndDirectModify(ForeignScanState* node)
 	elog(DEBUG2, "xact_level: (%d)", fdw_info_.xact_level);
 
 	if (node->fdw_state != nullptr)
-		free_fdwstate((OgawayamaFdwState*) node->fdw_state);
+		free_fdwstate((tsurugiFdwState*) node->fdw_state);
 }
 
 static void 
@@ -1955,13 +2140,17 @@ tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt,
 }
 
 /*
- *	@brief:	Create OgawayamaFdwState structure.
+ *  Helper functions.
  */
-static OgawayamaFdwState* 
+
+/*
+ *	@brief:	Create tsurugiFdwState structure.
+ */
+static tsurugiFdwState* 
 create_fdwstate()
 {
-	OgawayamaFdwState* fdw_state = 
-		(OgawayamaFdwState*) palloc0(sizeof(OgawayamaFdwState));
+	tsurugiFdwState* fdw_state = 
+		(tsurugiFdwState*) palloc0(sizeof(tsurugiFdwState));
 	
 	fdw_state->cursor_exists = false;
 	fdw_state->number_of_columns = 0;
@@ -1975,7 +2164,7 @@ create_fdwstate()
  *	@param:	[in] Ogawayama-fdw state.
  */
 static void 
-free_fdwstate(OgawayamaFdwState* fdw_state)
+free_fdwstate(tsurugiFdwState* fdw_state)
 {
 	if (fdw_state->column_types != nullptr) 
 	{
@@ -2007,28 +2196,25 @@ free_fdwstate(OgawayamaFdwState* fdw_state)
  * 	判断したため用意した関数。
  */
 static void 
-store_pg_data_type(OgawayamaFdwState* fdw_state, List* tlist)
+store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist)
 {
 	ListCell* lc;
 
 	if (tlist != NULL)
 	{
-		Oid *data_types = (Oid *)palloc(sizeof(Oid) * tlist->length);
+		Oid *data_types = (Oid *) palloc(sizeof(Oid) * tlist->length + 1);
 
 		int i = 0;
 		int count = 0;
 		foreach (lc, tlist)
 		{
-			TargetEntry *entry = (TargetEntry *)lfirst(lc);
-			Node *node = (Node *)entry->expr;
-			if (entry->resjunk == false)
-			{
-				count++;
-			}
+			TargetEntry *entry = (TargetEntry *) lfirst(lc);
+			Node *node = (Node *) entry->expr;
+			count++;
 
 			if (nodeTag(node) == T_Var)
 			{
-				Var *var = (Var *)node;
+				Var *var = (Var *) node;
 				data_types[i] = var->vartype;
 			}
 			else
@@ -2048,51 +2234,31 @@ store_pg_data_type(OgawayamaFdwState* fdw_state, List* tlist)
  *	@brief	dispatch the query to ogawayama stub.
  */
 static void 
-create_cursor(ForeignScanState* node)
+tsurugi_create_cursor(ForeignScanState* node)
 {
 	Assert(node != nullptr);
     Assert(fdw_info_.transaction != nullptr);
 
-	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
+	tsurugiFdwState* fdw_state = (tsurugiFdwState*) node->fdw_state;
 
-	elog(DEBUG2, "tsurugi_fdw : %s \"%s\"", __func__, fdw_state->query_string);
+  std::string tsurugi_query = make_tsurugi_query(fdw_state->query_string);
+  elog(LOG, "tsurugi_fdw : transaction::execute_query() start. \n\"%s\"", 
+      tsurugi_query.c_str());
 
-	// trim terminal semi-column.
-	std::string query(fdw_state->query_string);
-	if (query.back() == ';') 
-	{
-		query.pop_back();	// trim the trailing colon.
-	}
-	fdw_info_.result_set = nullptr;
-
-	/* dispatch query */
-	elog(DEBUG1, "tsurugi_fdw : transaction::execute_query() start. \"%s\"", query.c_str());
-	ERROR_CODE error = fdw_info_.transaction->execute_query(query, fdw_info_.result_set);
-	elog(DEBUG1, "tsurugi_fdw : transaction::execute_query() done.");
-	if (error != ERROR_CODE::OK)
-	{
-		elog(ERROR, "Transaction::execute_query() failed. (%d)", (int) error);
-		fdw_info_.result_set = nullptr;
-		fdw_info_.transaction->commit();
-		fdw_info_.transaction = nullptr;
-		fdw_info_.xact_level--;
-	}
+  /* dispatch query */
+  fdw_info_.result_set = nullptr;
+  ERROR_CODE error = fdw_info_.transaction->execute_query(tsurugi_query, 
+                                                          fdw_info_.result_set);
+  elog(DEBUG1, "tsurugi_fdw : transaction::execute_query() done.");
+  if (error != ERROR_CODE::OK)
+  {
+      elog(ERROR, "Transaction::execute_query() failed. (%d)", (int) error);
+      fdw_info_.transaction->commit();
+      fdw_info_.transaction = nullptr;
+      fdw_info_.xact_level--;
+  }        
 	
-	error = fdw_info_.result_set->get_metadata(fdw_info_.metadata);
-	if (error != ERROR_CODE::OK)
-	{
-		elog(ERROR, "result_set::get_metadata() failed. (%d)", (int) error);
-	}
-#if 0    
-	if (!confirm_columns(fdw_info_.metadata, node))
-	{
-		elog(ERROR, "NOT matched columns between PostgreSQL and Ogawayama.");
-	}
-#endif
 	fdw_state->cursor_exists = true;
-	fdw_state->tuples.clear();
-	fdw_state->num_tuples = 0;
-	fdw_state->next_tuple = 0;
 	fdw_state->eof_reached = false;
 }
 
@@ -2107,7 +2273,7 @@ static bool
 confirm_columns(MetadataPtr metadata, ForeignScanState* node)
 {
 
-	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
+	tsurugiFdwState* fdw_state = (tsurugiFdwState*) node->fdw_state;
 	bool ret = true;
 
 	elog(DEBUG4, "tsurugi_fdw : %s", __func__);
@@ -2215,10 +2381,10 @@ confirm_columns(MetadataPtr metadata, ForeignScanState* node)
 static void
 make_virtual_tuple(TupleTableSlot* slot, ForeignScanState* node)
 {
-	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
+	tsurugiFdwState* fdw_state = (tsurugiFdwState*) node->fdw_state;
 
 	TupleTableSlot* tuple = *fdw_state->tuple_ite;
-	for (size_t i = 0; i < fdw_state->number_of_columns; i++)
+	for (size_t i = 0; i < fdw_state->number_of_columns + 1; i++)
 	{
 		slot->tts_values[i] = tuple->tts_values[i];
 		slot->tts_isnull[i] = tuple->tts_isnull[i];
@@ -2229,48 +2395,36 @@ make_virtual_tuple(TupleTableSlot* slot, ForeignScanState* node)
  *	@brief	fetch result set from ogawayama stub.
  */
 static void
-fetch_more_data(ForeignScanState* node)
+tsurugi_fetch_more_data(ForeignScanState* node)
 {
-	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
+	tsurugiFdwState* fdw_state = (tsurugiFdwState*) node->fdw_state;
+	TupleTableSlot *tupleSlot = node->ss.ss_ScanTupleSlot;
 	MemoryContext oldcontext = nullptr;
 
 	elog(DEBUG4, "tsurugi_fdw : %s", __func__);
 
-	fdw_state->tuples.clear();
-	MemoryContextReset(fdw_state->batch_cxt);
-	oldcontext = MemoryContextSwitchTo(fdw_state->batch_cxt);
-
-	PG_TRY();
-	{
-		/* fetch result set */
-		ERROR_CODE error = fdw_info_.result_set->next();
-		while (error == ERROR_CODE::OK)
-		{
-			TupleTableSlot* tuple = make_tuple_from_result_set(fdw_info_.result_set, fdw_state);
-			fdw_state->tuples.push_back(tuple);
-			error = fdw_info_.result_set->next();
-		}
-		if (error == ERROR_CODE::END_OF_ROW) 
-		{
-			elog(DEBUG2, "End of row.");
-		}
-		else
-		{
-			elog(ERROR, "result_set::next() failed. (%d)", (int) error);
-		}
-		fdw_state->tuple_ite = fdw_state->tuples.begin();
-		fdw_state->num_tuples = fdw_state->tuples.size();
-		fdw_state->eof_reached = (fdw_state->num_tuples < fdw_state->fetch_size);
-
-		elog(DEBUG1, "result set count: %d", (int) fdw_state->num_tuples);
-	}
-	PG_CATCH();
-	{
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
-
-	MemoryContextSwitchTo(oldcontext);
+    ERROR_CODE error = fdw_info_.result_set->next();
+    if (error == ERROR_CODE::OK)
+    {
+        make_tuple_from_result_row(fdw_info_.result_set, 
+                                    tupleSlot->tts_tupleDescriptor,
+                                    fdw_state->retrieved_attrs,
+                                    tupleSlot->tts_values,
+                                    tupleSlot->tts_isnull,
+                                    fdw_state);
+        ExecStoreVirtualTuple(tupleSlot);
+        fdw_state->num_tuples++;
+    }
+    else if (error == ERROR_CODE::END_OF_ROW) 
+    {
+        elog(LOG, "End of row. (rows: %d)", (int) fdw_state->num_tuples);
+        fdw_state->eof_reached = true;
+    }
+    else
+    {
+        // Other than OK and END_OF_ROW
+        elog(ERROR, "result_set::next() failed. (%d)", (int) error);
+    }
 }
 
 /*
@@ -2278,121 +2432,25 @@ fetch_more_data(ForeignScanState* node)
  *	@param	[in] result set of query.
  *	@param	[in] FDW state.
  */
-static TupleTableSlot* 
-make_tuple_from_result_set(ResultSetPtr result_set, OgawayamaFdwState* fdw_state)
+static void 
+make_tuple_from_result_row(ResultSetPtr result_set, 
+                            TupleDesc tupleDescriptor,
+                            List* retrieved_attrs,
+                            Datum* row,
+                            bool* is_null,
+                            tsurugiFdwState* fdw_state)
 {
+    ListCell   *lc = NULL;
+    int         attid = 0;
 
-	TupleTableSlot* tuple = (TupleTableSlot*) palloc(sizeof(TupleTableSlot));
-	tuple->tts_values = (Datum *) palloc0(fdw_state->number_of_columns * sizeof(Datum));
-	tuple->tts_isnull = (bool *) palloc0(fdw_state->number_of_columns * sizeof(bool));
-
-	elog(DEBUG4, "tsurugi_fdw : %s", __func__);
-
-	for (size_t i = 0; i < fdw_state->number_of_columns; i++)
+    foreach(lc, retrieved_attrs)
 	{
-		tuple->tts_values[i] = PointerGetDatum(nullptr);
-		tuple->tts_isnull[i] = true;
+        int     attnum = lfirst_int(lc) - 1;
+        Oid     pgtype = TupleDescAttr(tupleDescriptor, attnum)->atttypid;
 
-		switch (fdw_state->column_types[i])
-		{
-			case INT2OID:
-				{
-					std::int16_t value;
-					if (result_set->next_column(value) == ERROR_CODE::OK)
-					{
-						tuple->tts_values[i] = Int16GetDatum(value);
-						tuple->tts_isnull[i] = false;
-					}
-				}
-				break;
-
-			case INT4OID:
-				{
-					std::int32_t value;
-					if (result_set->next_column(value) == ERROR_CODE::OK)
-					{
-						tuple->tts_values[i] = Int32GetDatum(value);
-						tuple->tts_isnull[i] = false;
-					}
-				}
-				break;
-
-			case INT8OID:
-				{
-					std::int64_t value;
-					if (result_set->next_column(value) == ERROR_CODE::OK) 
-					{
-						tuple->tts_values[i] = Int64GetDatum(value);
-						tuple->tts_isnull[i] = false;
-					}
-				}
-				break;
-
-			case FLOAT4OID:
-				{
-					float4 value;
-					if (result_set->next_column(value) == ERROR_CODE::OK)
-					{
-						tuple->tts_values[i] = Float4GetDatum(value);
-						tuple->tts_isnull[i] = false;
-					}
-				}
-				break;
-
-			case FLOAT8OID:
-				{
-					float8 value;
-					if (result_set->next_column(value) == ERROR_CODE::OK)
-					{
-						tuple->tts_values[i] = Float8GetDatum(value);
-						tuple->tts_isnull[i] = false;
-					}
-				}
-				break;
-			
-			case BPCHAROID:
-			case VARCHAROID:
-			case TEXTOID:
-				{
-					Datum dat;
-					std::string_view value;
-					result_set->next_column(value);
-					dat = CStringGetDatum(value.data());				
-					if (dat == (Datum) nullptr)
-					{
-						break;
-					}
-					else
-					{
-						HeapTuple 	heap_tuple;
-						regproc 	typinput;
-						int 		typemod;
-
-						heap_tuple = SearchSysCache1(
-							TYPEOID, ObjectIdGetDatum(fdw_state->column_types[i]));
-						if (!HeapTupleIsValid(heap_tuple))
-						{
-							elog(ERROR, "cache lookup failed for type %u",
-								 fdw_state->column_types[i]);
-						}
-						typinput = ((Form_pg_type)GETSTRUCT(heap_tuple))->typinput;
-						typemod = ((Form_pg_type)GETSTRUCT(heap_tuple))->typtypmod;
-						ReleaseSysCache(heap_tuple);
-						tuple->tts_values[i] = OidFunctionCall3(typinput, dat, ObjectIdGetDatum(InvalidOid), Int32GetDatum(typemod));
-						tuple->tts_isnull[i] = false;
-					}
-				}
-				break;
-				
-			default:
-				elog(ERROR, "Invalid data type of column.");
-				break;
-		}
+        is_null[attnum] = false;
+        row[attnum] = tsurugi_convert_to_pg(pgtype, result_set);
 	}
-
-	elog(DEBUG4, "make_tuple_from_result_set() done.");
-
-	return tuple;
 }
 
 /*
@@ -2508,9 +2566,6 @@ ogawayama_xact_callback (XactEvent event, void *arg)
 
 	elog(DEBUG4, "ogawayama_xact_callback() done.");
 }
-
-
-
 
 /*
  * Detect whether we want to process an EquivalenceClass member.
@@ -3140,7 +3195,7 @@ add_foreign_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 	 * to do it over again for each path.  (Currently we create just a single
 	 * path here, but in future it would be possible that we build more paths
 	 * such as pre-sorted paths as in postgresGetForeignPaths and
-	 * postgresGetForeignJoinPaths.)  The best we can do for these conditions
+	 * tsurugiGetForeignJoinPaths.)  The best we can do for these conditions
 	 * is to estimate selectivity on the basis of local statistics.
 	 */
 	fpinfo->local_conds_sel = clauselist_selectivity(root,
@@ -3709,4 +3764,270 @@ add_paths_with_pathkeys_for_rel(PlannerInfo *root, RelOptInfo *rel,
 											  sorted_epq_path,
 											  NIL));
 	}
+}
+
+/*
+ * Assess whether the join between inner and outer relations can be pushed down
+ * to the foreign server. As a side effect, save information we obtain in this
+ * function to tsurugiFdwRelationInfo passed in.
+ */
+static bool
+tsurugi_foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
+				RelOptInfo *outerrel, RelOptInfo *innerrel,
+				JoinPathExtraData *extra)
+{
+	tsurugiFdwRelationInfo *fpinfo;
+	tsurugiFdwRelationInfo *fpinfo_o;
+	tsurugiFdwRelationInfo *fpinfo_i;
+	ListCell   *lc;
+	List	   *joinclauses;
+
+	/*
+	 * We support pushing down INNER, LEFT, RIGHT and FULL OUTER joins.
+	 * Constructing queries representing SEMI and ANTI joins is hard, hence
+	 * not considered right now.
+	 */
+	if (jointype != JOIN_INNER && jointype != JOIN_LEFT &&
+		jointype != JOIN_RIGHT && jointype != JOIN_FULL)
+		return false;
+
+	/*
+	 * If either of the joining relations is marked as unsafe to pushdown, the
+	 * join can not be pushed down.
+	 */
+	fpinfo = (tsurugiFdwRelationInfo *) joinrel->fdw_private;
+	fpinfo_o = (tsurugiFdwRelationInfo *) outerrel->fdw_private;
+	fpinfo_i = (tsurugiFdwRelationInfo *) innerrel->fdw_private;
+	if (!fpinfo_o || !fpinfo_o->pushdown_safe ||
+		!fpinfo_i || !fpinfo_i->pushdown_safe)
+		return false;
+
+	/*
+	 * If joining relations have local conditions, those conditions are
+	 * required to be applied before joining the relations. Hence the join can
+	 * not be pushed down.
+	 */
+	if (fpinfo_o->local_conds || fpinfo_i->local_conds)
+		return false;
+
+	/*
+	 * Merge FDW options.  We might be tempted to do this after we have deemed
+	 * the foreign join to be OK.  But we must do this beforehand so that we
+	 * know which quals can be evaluated on the foreign server, which might
+	 * depend on shippable_extensions.
+	 */
+	fpinfo->server = fpinfo_o->server;
+	merge_fdw_options(fpinfo, fpinfo_o, fpinfo_i);
+
+	/*
+	 * Separate restrict list into join quals and pushed-down (other) quals.
+	 *
+	 * Join quals belonging to an outer join must all be shippable, else we
+	 * cannot execute the join remotely.  Add such quals to 'joinclauses'.
+	 *
+	 * Add other quals to fpinfo->remote_conds if they are shippable, else to
+	 * fpinfo->local_conds.  In an inner join it's okay to execute conditions
+	 * either locally or remotely; the same is true for pushed-down conditions
+	 * at an outer join.
+	 *
+	 * Note we might return failure after having already scribbled on
+	 * fpinfo->remote_conds and fpinfo->local_conds.  That's okay because we
+	 * won't consult those lists again if we deem the join unshippable.
+	 */
+	joinclauses = NIL;
+	foreach(lc, extra->restrictlist)
+	{
+		RestrictInfo *rinfo = lfirst_node(RestrictInfo, lc);
+		bool		is_remote_clause = is_foreign_expr(root, joinrel,
+													   rinfo->clause);
+
+		if (IS_OUTER_JOIN(jointype) &&
+			!RINFO_IS_PUSHED_DOWN(rinfo, joinrel->relids))
+		{
+			if (!is_remote_clause)
+				return false;
+			joinclauses = lappend(joinclauses, rinfo);
+		}
+		else
+		{
+			if (is_remote_clause)
+				fpinfo->remote_conds = lappend(fpinfo->remote_conds, rinfo);
+			else
+				fpinfo->local_conds = lappend(fpinfo->local_conds, rinfo);
+		}
+	}
+
+	/*
+	 * deparseExplicitTargetList() isn't smart enough to handle anything other
+	 * than a Var.  In particular, if there's some PlaceHolderVar that would
+	 * need to be evaluated within this join tree (because there's an upper
+	 * reference to a quantity that may go to NULL as a result of an outer
+	 * join), then we can't try to push the join down because we'll fail when
+	 * we get to deparseExplicitTargetList().  However, a PlaceHolderVar that
+	 * needs to be evaluated *at the top* of this join tree is OK, because we
+	 * can do that locally after fetching the results from the remote side.
+	 */
+	foreach(lc, root->placeholder_list)
+	{
+		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(lc);
+		Relids		relids;
+
+		/* PlaceHolderInfo refers to parent relids, not child relids. */
+		relids = IS_OTHER_REL(joinrel) ?
+			joinrel->top_parent_relids : joinrel->relids;
+
+		if (bms_is_subset(phinfo->ph_eval_at, relids) &&
+			bms_nonempty_difference(relids, phinfo->ph_eval_at))
+			return false;
+	}
+
+	/* Save the join clauses, for later use. */
+	fpinfo->joinclauses = joinclauses;
+
+	fpinfo->outerrel = outerrel;
+	fpinfo->innerrel = innerrel;
+	fpinfo->jointype = jointype;
+
+	/*
+	 * By default, both the input relations are not required to be deparsed as
+	 * subqueries, but there might be some relations covered by the input
+	 * relations that are required to be deparsed as subqueries, so save the
+	 * relids of those relations for later use by the deparser.
+	 */
+	fpinfo->make_outerrel_subquery = false;
+	fpinfo->make_innerrel_subquery = false;
+	Assert(bms_is_subset(fpinfo_o->lower_subquery_rels, outerrel->relids));
+	Assert(bms_is_subset(fpinfo_i->lower_subquery_rels, innerrel->relids));
+	fpinfo->lower_subquery_rels = bms_union(fpinfo_o->lower_subquery_rels,
+											fpinfo_i->lower_subquery_rels);
+
+	/*
+	 * Pull the other remote conditions from the joining relations into join
+	 * clauses or other remote clauses (remote_conds) of this relation
+	 * wherever possible. This avoids building subqueries at every join step.
+	 *
+	 * For an inner join, clauses from both the relations are added to the
+	 * other remote clauses. For LEFT and RIGHT OUTER join, the clauses from
+	 * the outer side are added to remote_conds since those can be evaluated
+	 * after the join is evaluated. The clauses from inner side are added to
+	 * the joinclauses, since they need to be evaluated while constructing the
+	 * join.
+	 *
+	 * For a FULL OUTER JOIN, the other clauses from either relation can not
+	 * be added to the joinclauses or remote_conds, since each relation acts
+	 * as an outer relation for the other.
+	 *
+	 * The joining sides can not have local conditions, thus no need to test
+	 * shippability of the clauses being pulled up.
+	 */
+	switch (jointype)
+	{
+		case JOIN_INNER:
+			fpinfo->remote_conds = list_concat(fpinfo->remote_conds,
+											   list_copy(fpinfo_i->remote_conds));
+			fpinfo->remote_conds = list_concat(fpinfo->remote_conds,
+											   list_copy(fpinfo_o->remote_conds));
+			break;
+
+		case JOIN_LEFT:
+			fpinfo->joinclauses = list_concat(fpinfo->joinclauses,
+											  list_copy(fpinfo_i->remote_conds));
+			fpinfo->remote_conds = list_concat(fpinfo->remote_conds,
+											   list_copy(fpinfo_o->remote_conds));
+			break;
+
+		case JOIN_RIGHT:
+			fpinfo->joinclauses = list_concat(fpinfo->joinclauses,
+											  list_copy(fpinfo_o->remote_conds));
+			fpinfo->remote_conds = list_concat(fpinfo->remote_conds,
+											   list_copy(fpinfo_i->remote_conds));
+			break;
+
+		case JOIN_FULL:
+
+			/*
+			 * In this case, if any of the input relations has conditions, we
+			 * need to deparse that relation as a subquery so that the
+			 * conditions can be evaluated before the join.  Remember it in
+			 * the fpinfo of this relation so that the deparser can take
+			 * appropriate action.  Also, save the relids of base relations
+			 * covered by that relation for later use by the deparser.
+			 */
+			if (fpinfo_o->remote_conds)
+			{
+				fpinfo->make_outerrel_subquery = true;
+				fpinfo->lower_subquery_rels =
+					bms_add_members(fpinfo->lower_subquery_rels,
+									outerrel->relids);
+			}
+			if (fpinfo_i->remote_conds)
+			{
+				fpinfo->make_innerrel_subquery = true;
+				fpinfo->lower_subquery_rels =
+					bms_add_members(fpinfo->lower_subquery_rels,
+									innerrel->relids);
+			}
+			break;
+
+		default:
+			/* Should not happen, we have just checked this above */
+			elog(ERROR, "unsupported join type %d", jointype);
+	}
+
+	/*
+	 * For an inner join, all restrictions can be treated alike. Treating the
+	 * pushed down conditions as join conditions allows a top level full outer
+	 * join to be deparsed without requiring subqueries.
+	 */
+	if (jointype == JOIN_INNER)
+	{
+		Assert(!fpinfo->joinclauses);
+		fpinfo->joinclauses = fpinfo->remote_conds;
+		fpinfo->remote_conds = NIL;
+	}
+
+	/* Mark that this join can be pushed down safely */
+	fpinfo->pushdown_safe = true;
+
+	/* Get user mapping */
+	if (fpinfo->use_remote_estimate)
+	{
+		if (fpinfo_o->use_remote_estimate)
+			fpinfo->user = fpinfo_o->user;
+		else
+			fpinfo->user = fpinfo_i->user;
+	}
+	else
+		fpinfo->user = NULL;
+
+	/*
+	 * Set # of retrieved rows and cached relation costs to some negative
+	 * value, so that we can detect when they are set to some sensible values,
+	 * during one (usually the first) of the calls to estimate_path_cost_size.
+	 */
+	fpinfo->retrieved_rows = -1;
+	fpinfo->rel_startup_cost = -1;
+	fpinfo->rel_total_cost = -1;
+
+	/*
+	 * Set the string describing this join relation to be used in EXPLAIN
+	 * output of corresponding ForeignScan.
+	 */
+	fpinfo->relation_name = makeStringInfo();
+	appendStringInfo(fpinfo->relation_name, "(%s) %s JOIN (%s)",
+					 fpinfo_o->relation_name->data,
+					 get_jointype_name(fpinfo->jointype),
+					 fpinfo_i->relation_name->data);
+
+	/*
+	 * Set the relation index.  This is defined as the position of this
+	 * joinrel in the join_rel_list list plus the length of the rtable list.
+	 * Note that since this joinrel is at the end of the join_rel_list list
+	 * when we are called, we can get the position by list_length.
+	 */
+	Assert(fpinfo->relation_index == 0);	/* shouldn't be set yet */
+	fpinfo->relation_index =
+		list_length(root->parse->rtable) + list_length(root->join_rel_list);
+
+	return true;
 }
