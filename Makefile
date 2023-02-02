@@ -2,7 +2,7 @@
 
 MODULE_big = ogawayama_fdw
 OBJS = common/init.o common/stub_manager.o \
-        ogawayama_fdw/ogawayama_fdw.o ogawayama_fdw/deparse.o ogawayama_fdw/shippable.o \
+        ogawayama_fdw/deparse.o ogawayama_fdw/shippable.o ogawayama_fdw/tsurugi_utils.o ogawayama_fdw/ogawayama_fdw.o \
         alt_planner/alt_planner.o \
 				alt_utility/send_message.o \
         alt_utility/alt_utility.o alt_utility/create_stmt.o alt_utility/drop_stmt.o \
