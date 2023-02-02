@@ -140,7 +140,8 @@ tsurugi_convert_to_pg(Oid pgtype, ResultSetPtr result_set)
             {
                 std::string_view value;
                 Datum value_datum;
-                if (result_set->next_column(value) == ERROR_CODE::OK)
+                ERROR_CODE result = result_set->next_column(value);
+                if (result == ERROR_CODE::OK)
                 {
                     value_datum = CStringGetDatum(value.data());				
                     if (value_datum == (Datum) nullptr)
@@ -152,8 +153,22 @@ tsurugi_convert_to_pg(Oid pgtype, ResultSetPtr result_set)
                                                 ObjectIdGetDatum(InvalidOid), 
                                                 Int32GetDatum(typemod));
                 }
-                break;
+                else if (result == ERROR_CODE::COLUMN_WAS_NULL)
+                {
+                    value_datum = CStringGetDatum("");
+                    dat = (Datum) OidFunctionCall3(typinput, 
+                                                value_datum, 
+                                                ObjectIdGetDatum(InvalidOid), 
+                                                Int32GetDatum(typemod));
+                }
+                else
+                {
+                    elog(ERROR, 
+                        "stub::ResultSet::next_column() failed. (error: %d)", 
+                        (int) result);
+                }
             }
+            break;
             
         default:
             elog(ERROR, "Invalid data type. (%d)", pgtype);
