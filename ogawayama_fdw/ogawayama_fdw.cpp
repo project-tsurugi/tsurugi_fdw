@@ -20,6 +20,8 @@
 #include <memory>
 
 #include "tsurugi_utils.h"
+#include <regex>
+#include <boost/format.hpp>
 #include "ogawayama/stub/error_code.h"
 #include "ogawayama/stub/api.h"
 #include "stub_manager.h"
@@ -286,11 +288,11 @@ static bool tsurugiPlanDirectModify(PlannerInfo *root,
 static void tsurugiBeginDirectModify(ForeignScanState* node, int eflags);
 static TupleTableSlot* tsurugiIterateDirectModify(ForeignScanState* node);
 static void tsurugiEndDirectModify(ForeignScanState* node);
-static TupleTableSlot* tsurugiExecForeignInsert(EState *estate, 
-                                                ResultRelInfo *rinfo, 
-                                                TupleTableSlot *slot, 
-                                                TupleTableSlot *planSlot);
-
+static void tsurugiBeginForeignModify(ModifyTableState *mtstate,
+                                        ResultRelInfo *rinfo,
+                                        List *fdw_private,
+                                        int subplan_index,
+                                        int eflags);
 static TupleTableSlot* tsurugiExecForeignUpdate(EState *estate, 
                                                 ResultRelInfo *rinfo, 
                                                 TupleTableSlot *slot, 
@@ -300,6 +302,16 @@ static TupleTableSlot* tsurugiExecForeignDelete(EState *estate,
                                                 ResultRelInfo *rinfo, 
                                                 TupleTableSlot *slot, 
                                                 TupleTableSlot *planSlot);
+static void tsurugiEndForeignModify(EState *estate,
+                                    ResultRelInfo *rinfo);
+static void tsurugiBeginForeignInsert(ModifyTableState *mtstate,
+                                    ResultRelInfo *rinfo);
+static TupleTableSlot* tsurugiExecForeignInsert(EState *estate, 
+                                                ResultRelInfo *rinfo, 
+                                                TupleTableSlot *slot, 
+                                                TupleTableSlot *planSlot);
+static void tsurugiEndForeignInsert(EState *estate,
+                                    ResultRelInfo *rinfo);
 
 /*
  * FDW callback routines (Others)
@@ -376,6 +388,17 @@ static void merge_fdw_options(tsurugiFdwRelationInfo *fpinfo,
 static List *build_remote_returning(Index rtindex, Relation rel,
 									List *returningList);
 static void rebuild_fdw_scan_tlist(ForeignScan *fscan, List *tlist);
+static tsurugiFdwModifyState *
+create_foreign_modify(EState *estate,
+					  RangeTblEntry *rte,
+					  ResultRelInfo *resultRelInfo,
+					  CmdType operation,
+					  Plan *subplan,
+					  char *query,
+					  List *target_attrs,
+					  int values_end,
+					  bool has_returning,
+					  List *retrieved_attrs);
 
 
 static bool
@@ -428,9 +451,13 @@ ogawayama_fdw_handler(PG_FUNCTION_ARGS)
 	routine->ImportForeignSchema = tsurugiImportForeignSchema;
 
    /*Functions for foreign modify*/
-	routine->ExecForeignInsert = tsurugiExecForeignInsert;
+    routine->BeginForeignModify = tsurugiBeginForeignModify;
 	routine->ExecForeignUpdate = tsurugiExecForeignUpdate;
 	routine->ExecForeignDelete = tsurugiExecForeignDelete;
+    routine->EndForeignModify = tsurugiEndForeignModify;
+    routine->BeginForeignInsert = tsurugiBeginForeignInsert;
+	routine->ExecForeignInsert = tsurugiExecForeignInsert;
+    routine->EndForeignInsert = tsurugiEndForeignInsert;
 
 	/* Support functions for join push-down */
 	routine->GetForeignJoinPaths = tsurugiGetForeignJoinPaths;
@@ -1463,6 +1490,8 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 static TupleTableSlot* 
 tsurugiIterateForeignScan(ForeignScanState* node)
 {
+	elog(DEBUG5, "tsurugi_fdw : %s", __func__);
+
 	Assert(node != nullptr);
 	Assert(fdw_info_.transaction != nullptr);
 
@@ -1844,24 +1873,23 @@ tsurugiPlanDirectModify(PlannerInfo *root,
 
 static List 
 *tsurugiPlanForeignModify(PlannerInfo *root,
-									   ModifyTable *plan,
-									   Index resultRelation,
-									   int subplan_index)
+						   ModifyTable *plan,
+						   Index resultRelation,
+						   int subplan_index)
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 	return NULL;
 }
 
-static TupleTableSlot*
-tsurugiExecForeignInsert(
-	EState *estate, 
-	ResultRelInfo *rinfo, 
-	TupleTableSlot *slot, 
-	TupleTableSlot *planSlot)
+static void 
+tsurugiBeginForeignModify(ModifyTableState *mtstate,
+                        ResultRelInfo *rinfo,
+                        List *fdw_private,
+                        int subplan_index,
+                        int eflags)
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-	slot = nullptr;
-    return slot;
+	return;
 }
 
 static TupleTableSlot*
@@ -1887,6 +1915,155 @@ tsurugiExecForeignDelete(
 	slot = nullptr;
 	return slot;
 }
+
+static void 
+tsurugiEndForeignModify(EState *estate,
+                        ResultRelInfo *rinfo)
+{
+	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+    return;
+}
+
+
+static void 
+tsurugiBeginForeignInsert(ModifyTableState *mtstate,
+                        ResultRelInfo *resultRelInfo)
+{
+	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+
+	tsurugiFdwModifyState *fmstate;
+	ModifyTable *plan = castNode(ModifyTable, mtstate->ps.plan);
+	EState	   *estate = mtstate->ps.state;
+	Index		resultRelation = resultRelInfo->ri_RangeTableIndex;
+	Relation	rel = resultRelInfo->ri_RelationDesc;
+	RangeTblEntry *rte;
+	TupleDesc	tupdesc = RelationGetDescr(rel);
+	int			attnum;
+	StringInfoData sql;
+	List	   *targetAttrs = NIL;
+	List	   *retrieved_attrs = NIL;
+	bool		doNothing = false;
+
+	initStringInfo(&sql);
+
+	/* We transmit all columns that are defined in the foreign table. */
+	for (attnum = 1; attnum <= tupdesc->natts; attnum++)
+	{
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
+
+		if (!attr->attisdropped)
+			targetAttrs = lappend_int(targetAttrs, attnum);
+	}
+
+	/*
+	 * If the foreign table is a partition, we need to create a new RTE
+	 * describing the foreign table for use by deparseInsertSql and
+	 * create_foreign_modify() below, after first copying the parent's RTE and
+	 * modifying some fields to describe the foreign partition to work on.
+	 * However, if this is invoked by UPDATE, the existing RTE may already
+	 * correspond to this partition if it is one of the UPDATE subplan target
+	 * rels; in that case, we can just use the existing RTE as-is.
+	 */
+	rte = exec_rt_fetch(resultRelation, estate);
+	if (rte->relid != RelationGetRelid(rel))
+	{
+//		rte = copyObject(rte);
+        rte = (RangeTblEntry*) copyObjectImpl(rte);
+		rte->relid = RelationGetRelid(rel);
+		rte->relkind = RELKIND_FOREIGN_TABLE;
+
+		/*
+		 * For UPDATE, we must use the RT index of the first subplan target
+		 * rel's RTE, because the core code would have built expressions for
+		 * the partition, such as RETURNING, using that RT index as varno of
+		 * Vars contained in those expressions.
+		 */
+		if (plan && plan->operation == CMD_UPDATE &&
+			resultRelation == plan->rootRelation)
+			resultRelation = mtstate->resultRelInfo[0].ri_RangeTableIndex;
+	}
+
+	/* Construct the SQL command string. */
+	deparseInsertSql(&sql, rte, resultRelation, rel, targetAttrs, doNothing,
+					 resultRelInfo->ri_WithCheckOptions,
+					 resultRelInfo->ri_returningList,
+					 &retrieved_attrs);
+
+	tsurugiFdwState* fdw_state = create_fdwstate();
+	if (fdw_state == nullptr)
+	{
+		elog(ERROR, "create_fdw_state() failed.");
+	}
+
+    elog(DEBUG2, "deparse sql : %s", sql.data);
+
+ 	fdw_state->query_string = sql.data;
+    resultRelInfo->ri_FdwState = fdw_state;
+
+	begin_backend_xact();
+}
+
+static TupleTableSlot*
+tsurugiExecForeignInsert(
+	EState *estate, 
+	ResultRelInfo *rinfo, 
+	TupleTableSlot *slot, 
+	TupleTableSlot *planSlot)
+{
+	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+
+	Assert(fdw_info_.transaction != nullptr);
+
+	ERROR_CODE error;
+
+	tsurugiFdwState* fdw_state = (tsurugiFdwState*) rinfo->ri_FdwState;
+
+ 	std::string query(fdw_state->query_string);
+    query = std::regex_replace(query, std::regex("\\$\\d"), "%s");
+    query = (boost::format(query) % slot->tts_values[0] % slot->tts_values[1]).str();
+	elog(DEBUG1, "tsurugi_fdw: statement string: \"%s\"", query.c_str());
+
+	elog(DEBUG2, "transaction::execute_statement() start.");
+	error = fdw_info_.transaction->execute_statement(query);
+	elog(DEBUG2, "transaction::execute_statement() done.");
+
+    ERROR_CODE err;
+	if (error == ERROR_CODE::OK) 
+    {
+        err = fdw_info_.transaction->commit();
+        if (err != ERROR_CODE::OK)
+        {
+            elog(ERROR, "transaction::commit() failed. (%d)", (int) err);
+        }        
+    } 
+    else 
+    {
+        err = fdw_info_.transaction->rollback();
+        if (err != ERROR_CODE::OK)
+        {
+            elog(ERROR, "transaction::rollback() failed. (%d)", (int) err);
+        }
+        elog(ERROR, "transaction::execute_statement() failed. (%d)", (int) error);	
+	}
+	
+	slot = nullptr;
+    return slot;
+}
+
+static void 
+tsurugiEndForeignInsert(EState *estate,
+                        ResultRelInfo *rinfo)
+{
+	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+
+	StubManager::end();
+	fdw_info_.transaction = nullptr;
+	fdw_info_.xact_level--;
+	elog(DEBUG2, "xact_level: (%d)", fdw_info_.xact_level);
+
+    return;
+}
+
 
 /*
  * Functions to be implemented in the future are below.  
