@@ -1,0 +1,361 @@
+/* DDL */
+CREATE TABLE t1(
+    c1 INTEGER PRIMARY KEY, 
+    c2 INTEGER, 
+    c3 BIGINT,
+    c4 REAL, 
+    c5 DOUBLE PRECISION, 
+    c6 CHAR(10),
+    c7 VARCHAR(26)
+) TABLESPACE tsurugi;
+CREATE FOREIGN TABLE t1(
+    c1 INTEGER, 
+    c2 INTEGER, 
+    c3 BIGINT,
+    c4 REAL, 
+    c5 DOUBLE PRECISION, 
+    c6 CHAR(10),
+    c7 VARCHAR(26)
+) SERVER ogawayama;
+CREATE TABLE t2(
+    c1 INTEGER PRIMARY KEY, 
+    c2 INTEGER, 
+    c3 BIGINT,
+    c4 REAL, 
+    c5 DOUBLE PRECISION, 
+    c6 CHAR(10),
+    c7 VARCHAR(26)
+) TABLESPACE tsurugi;
+CREATE FOREIGN TABLE t2(
+    c1 INTEGER, 
+    c2 INTEGER, 
+    c3 BIGINT,
+    c4 REAL, 
+    c5 DOUBLE PRECISION, 
+    c6 CHAR(10),
+    c7 VARCHAR(26)
+) SERVER ogawayama;
+CREATE TABLE pt1(
+    c1 INTEGER PRIMARY KEY, 
+    c2 INTEGER, 
+    c3 BIGINT,
+    c4 REAL, 
+    c5 DOUBLE PRECISION, 
+    c6 CHAR(10),
+    c7 VARCHAR(26)
+);
+CREATE TABLE pt2(
+    c1 INTEGER PRIMARY KEY, 
+    c2 INTEGER, 
+    c3 BIGINT,
+    c4 REAL, 
+    c5 DOUBLE PRECISION, 
+    c6 CHAR(10),
+    c7 VARCHAR(26)
+);
+/* DML */
+SELECT * FROM t1;
+ c1 | c2 | c3 | c4 | c5 | c6 | c7 
+----+----+----+----+----+----+----
+(0 rows)
+
+SELECT c2, c4, c6 FROM t2;
+ c2 | c4 | c6 
+----+----+----
+(0 rows)
+
+INSERT INTO 
+    t1(c1, c2, c3, c4, c5, c6, c7)
+VALUES
+    (1, 11, 111, 1.1, 1.11, 'first', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+INSERT INTO 
+    t1(c1, c2, c3, c4, c5, c6, c7)
+VALUES
+    (2, 22, 222, 2.2, 2.22, 'second', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+INSERT INTO 
+    t1(c1, c2, c3, c4, c5, c6, c7)
+VALUES
+    (3, 33, 333, 3.3, 3.33, 'third', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+SELECT * FROM t1;
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
+----+----+-----+-----+------+------------+----------------------------
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+(3 rows)
+
+SELECT c1, c3, c5, c7 FROM t1 WHERE c1 = 2;
+ c1 | c3  |  c5  |             c7             
+----+-----+------+----------------------------
+  2 | 222 | 2.22 | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+(1 row)
+
+INSERT INTO 
+    t2(c1, c2, c3, c4, c5, c6, c7)
+VALUES
+    (1, 11, 111, 1.1, 1.11, 'one', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+INSERT INTO 
+    t2(c1, c2, c3, c4, c5, c6, c7)
+VALUES
+    (2, 22, 222, 2.2, 2.22, 'two', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+INSERT INTO 
+    t2(c1, c2, c3, c4, c5, c6, c7)
+VALUES
+    (3, 33, 333, 3.3, 3.33, 'three', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+INSERT INTO 
+    t2(c1, c2, c3, c4, c5, c6, c7)
+VALUES
+    (4, NULL, NULL, NULL, NULL, 'NULL', NULL);
+INSERT INTO 
+    t2(c1, c2, c3, c4, c5, c6, c7)
+VALUES
+    (5, 55, 555, 5.5, 5.55, 'five', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+SELECT * FROM t2;
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
+----+----+-----+-----+------+------------+----------------------------
+  1 | 11 | 111 | 1.1 | 1.11 | one        | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  2 | 22 | 222 | 2.2 | 2.22 | two        | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  3 | 33 | 333 | 3.3 | 3.33 | three      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  4 |  0 |   0 |   0 |    0 | NULL       | 
+  5 | 55 | 555 | 5.5 | 5.55 | five       | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+(5 rows)
+
+SELECT c6 FROM t2;
+     c6     
+------------
+ one       
+ two       
+ three     
+ NULL      
+ five      
+(5 rows)
+
+INSERT INTO 
+    pt1 
+VALUES
+    (1, 11, 111, 1.1, 1.11, 'first', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+INSERT INTO 
+    pt1 
+VALUES
+    (2, 22, 222, 2.2, 2.22, 'second', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+INSERT INTO 
+    pt1 
+VALUES
+    (3, 33, 333, 3.3, 3.33, 'third', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+SELECT * FROM pt1;
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
+----+----+-----+-----+------+------------+----------------------------
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+(3 rows)
+
+INSERT INTO 
+    pt2 
+VALUES
+    (1, 11, 111, 1.1, 1.11, 'one', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+INSERT INTO 
+    pt2 
+VALUES
+    (2, 22, 222, 2.2, 2.22, 'two', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+INSERT INTO 
+    pt2 
+VALUES
+    (3, 33, 333, 3.3, 3.33, 'three', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+INSERT INTO 
+    pt2(c1, c2, c3, c4, c5, c6, c7)
+VALUES
+    (4, NULL, NULL, NULL, NULL, 'NULL', NULL);
+INSERT INTO 
+    pt2(c1, c2, c3, c4, c5, c6, c7)
+VALUES
+    (5, 55, 555, 5.5, 5.55, 'five', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+SELECT * FROM pt2;
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
+----+----+-----+-----+------+------------+----------------------------
+  1 | 11 | 111 | 1.1 | 1.11 | one        | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  2 | 22 | 222 | 2.2 | 2.22 | two        | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  3 | 33 | 333 | 3.3 | 3.33 | three      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  4 |    |     |     |      | NULL       | 
+  5 | 55 | 555 | 5.5 | 5.55 | five       | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+(5 rows)
+
+-- FOREIGN TABLE JOIN
+SELECT 
+    *
+FROM 
+    t1 a INNER JOIN t2 b ON a.c1 = b.c1
+WHERE
+    b.c1 > 1;
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
+----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+----------------------------
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+(2 rows)
+
+SELECT 
+    a.c1, b.c2, a.c4, b.c6
+FROM 
+    t1 a INNER JOIN t2 b USING (c1)
+ORDER BY
+    b.c4 DESC;   
+ c1 | c2 | c4  |     c6     
+----+----+-----+------------
+  3 | 33 | 3.3 | three     
+  2 | 22 | 2.2 | two       
+  1 | 11 | 1.1 | one       
+(3 rows)
+
+SELECT 
+    a.c1, b.c3, a.c5, b.c7
+FROM 
+    t1 a INNER JOIN t2 b ON a.c1 != b.c1;
+ c1 | c3  |  c5  |             c7             
+----+-----+------+----------------------------
+  1 | 222 | 1.11 | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  1 | 333 | 1.11 | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  1 |   0 | 1.11 | 
+  1 | 555 | 1.11 | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  2 | 111 | 2.22 | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  2 | 333 | 2.22 | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  2 |   0 | 2.22 | 
+  2 | 555 | 2.22 | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  3 | 111 | 3.33 | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  3 | 222 | 3.33 | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  3 |   0 | 3.33 | 
+  3 | 555 | 3.33 | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+(12 rows)
+
+-- POSTGRESQL TABLE JOIN
+-- #1
+SELECT 
+    *
+FROM 
+    pt1 a INNER JOIN pt2 b ON a.c4 = b.c4
+WHERE
+    a.c1 > 1;
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
+----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+----------------------------
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+(2 rows)
+
+SELECT 
+    *
+FROM 
+    t1 a INNER JOIN pt2 b ON a.c4 = b.c4
+WHERE
+    a.c1 > 1;
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
+----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+----------------------------
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+(2 rows)
+
+-- #2
+SELECT 
+    a.c1, a.c2, b.c4, b.c6
+FROM 
+    pt1 a INNER JOIN pt2  b USING (c1)
+ORDER BY
+    b.c4 DESC;
+ c1 | c2 | c4  |     c6     
+----+----+-----+------------
+  3 | 33 | 3.3 | three     
+  2 | 22 | 2.2 | two       
+  1 | 11 | 1.1 | one       
+(3 rows)
+
+SELECT 
+    a.c1, a.c2, b.c4, b.c6
+FROM 
+    t1 a INNER JOIN pt2  b USING (c1)
+ORDER BY
+    b.c4 DESC;
+ c1 | c2 | c4  |     c6     
+----+----+-----+------------
+  3 | 33 | 3.3 | three     
+  2 | 22 | 2.2 | two       
+  1 | 11 | 1.1 | one       
+(3 rows)
+
+-- #3
+SELECT 
+    a.c1, a.c3, b.c5, b.c7
+FROM 
+    pt2 a LEFT OUTER JOIN pt1 b ON a.c1 = b.c1;
+ c1 | c3  |  c5  |             c7             
+----+-----+------+----------------------------
+  1 | 111 | 1.11 | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  2 | 222 | 2.22 | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  3 | 333 | 3.33 | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  4 |     |      | 
+  5 | 555 |      | 
+(5 rows)
+
+SELECT 
+    a.c1, a.c3, b.c5, b.c7
+FROM 
+    t2 a LEFT OUTER JOIN pt2 b ON a.c1 = b.c1;
+ c1 | c3  |  c5  |             c7             
+----+-----+------+----------------------------
+  1 | 111 | 1.11 | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  2 | 222 | 2.22 | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  3 | 333 | 3.33 | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  4 |   0 |      | 
+  5 | 555 | 5.55 | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+(5 rows)
+
+-- #4
+SELECT 
+    *
+FROM 
+    pt1 a INNER JOIN pt2 b ON a.c4 = b.c4
+WHERE
+    a.c1 > 1 AND a.c1 < 3;
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
+----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+----------------------------
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+(1 row)
+
+SELECT 
+    *
+FROM 
+    pt1 a INNER JOIN t2 b ON a.c4 = b.c4
+WHERE
+    a.c1 > 1 AND a.c1 < 3;
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
+----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+----------------------------
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+(1 row)
+
+-- #5
+SELECT
+    count(a.c1), sum(b.c2), b.c7
+FROM 
+    pt1 a INNER JOIN pt2 b USING (c2)
+GROUP BY
+    b.c7;
+ count | sum |             c7             
+-------+-----+----------------------------
+     3 |  66 | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+(1 row)
+
+SELECT
+    count(a.c1), sum(b.c2), b.c7
+FROM 
+    pt1 a INNER JOIN t2 b USING (c2)
+GROUP BY
+    b.c7;
+ count | sum |             c7             
+-------+-----+----------------------------
+     3 |  66 | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+(1 row)
+
+/* DDL */
+DROP TABLE t1;
+DROP FOREIGN TABLE t1;
+DROP TABLE t2;
+DROP FOREIGN TABLE t2;
+DROP TABLE pt1;
+DROP TABLE pt2;

@@ -1,6 +1,3 @@
-CREATE EXTENSION IF NOT EXISTS ogawayama_fdw;
-CREATE SERVER IF NOT EXISTS ogawayama FOREIGN DATA WRAPPER ogawayama_fdw;
-
 /* DDL */
 ---int
 CREATE TABLE update_delete_int1(col1 int PRIMARY KEY, col2 int) TABLESPACE tsurugi;
@@ -124,3 +121,18 @@ SELECT * FROM update_delete_varchar1;
 
 DELETE FROM update_delete_varchar1 WHERE col3 = 'ab';
 SELECT * FROM update_delete_varchar1;
+
+/* DDL */
+DROP TABLE update_delete_int1;
+DROP TABLE update_delete_bigint1;
+DROP TABLE update_delete_real1;
+DROP TABLE update_delete_double1;
+DROP TABLE update_delete_char1;
+DROP TABLE update_delete_varchar1;
+
+DROP FOREIGN TABLE update_delete_int1;
+DROP FOREIGN TABLE update_delete_bigint1;
+DROP FOREIGN TABLE update_delete_real1;
+DROP FOREIGN TABLE update_delete_double1;
+DROP FOREIGN TABLE update_delete_char1;
+DROP FOREIGN TABLE update_delete_varchar1;
