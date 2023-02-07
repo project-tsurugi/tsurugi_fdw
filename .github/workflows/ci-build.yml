@@ -196,8 +196,8 @@ jobs:
           git clean -dfx
           mkdir build
           cd build
-          cmake -G Ninja -DBUILD_STUB_ONLY=ON -DBUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DFORCE_INSTALL_RPATH=ON -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
-          cmake --build . --target install --clean-first -- -j8
+          cmake -DCMAKE_BUILD_TYPE=Debug -DSHARKSFIN_IMPLEMENTATION=shirakami -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/.local -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+          cmake --build . --target install --clean-first -- -j
 
       - id: Make_Install
         name: Make_Build
