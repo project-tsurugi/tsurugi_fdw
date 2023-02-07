@@ -189,6 +189,16 @@ jobs:
           cmake -DCMAKE_BUILD_TYPE=Debug -DSHARKSFIN_IMPLEMENTATION=shirakami -DBUILD_TESTS=OFF -DBUILD_DOCUMENTS=OFF -DFORCE_INSTALL_RPATH=ON -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local -DCMAKE_PREFIX_PATH="${{ matrix.additional_prefix_path }};${GITHUB_WORKSPACE}/.local" ..
           cmake --build . --target install --clean-first -- -j
 
+      - id: Install_jogasaki
+        name: Install_jogasaki
+        run: |
+          cd third_party/temp_jogasaki
+          rm -rf build
+          mkdir -p build
+          cd build
+          cmake -DCMAKE_BUILD_TYPE=Debug -DSHARKSFIN_IMPLEMENTATION=shirakami -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/.local ..
+          cmake --build . --target install --clean-first -- -j
+
       - id: CMake_Build_ogawayama
         name: CMake_Build_ogawayama
         run: |
