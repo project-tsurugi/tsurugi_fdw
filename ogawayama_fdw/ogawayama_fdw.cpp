@@ -2450,9 +2450,105 @@ make_tuple_from_result_row(ResultSetPtr result_set,
 	{
         int     attnum = lfirst_int(lc) - 1;
         Oid     pgtype = TupleDescAttr(tupleDescriptor, attnum)->atttypid;
+        HeapTuple 	heap_tuple;
+        regproc 	typinput;
+        int 		typemod;
 
-        is_null[attnum] = false;
-        row[attnum] = tsurugi_convert_to_pg(pgtype, result_set);
+        heap_tuple = SearchSysCache1(TYPEOID, 
+                                    ObjectIdGetDatum(pgtype));
+        if (!HeapTupleIsValid(heap_tuple))
+        {
+            elog(ERROR, "cache lookup failed for type %u", pgtype);
+        }
+        typinput = ((Form_pg_type) GETSTRUCT(heap_tuple))->typinput;
+        typemod = ((Form_pg_type) GETSTRUCT(heap_tuple))->typtypmod;
+        ReleaseSysCache(heap_tuple);
+
+        is_null[attnum] = true;
+        switch (pgtype)
+        {
+            case INT2OID:
+                {
+                    std::int16_t value;
+                    if (result_set->next_column(value) == ERROR_CODE::OK)
+                    {
+                        is_null[attnum] = false;
+                        row[attnum] = Int16GetDatum(value);
+                    }
+                }
+                break;
+
+            case INT4OID:
+                {
+                    std::int32_t value;
+                    if (result_set->next_column(value) == ERROR_CODE::OK)
+                    {
+                        is_null[attnum] = false;
+                        row[attnum] =  Int32GetDatum(value);
+                    }
+                }
+                break;
+
+            case INT8OID:
+                {
+                    std::int64_t value;
+                    if (result_set->next_column(value) == ERROR_CODE::OK) 
+                    {
+                        is_null[attnum] = false;
+                        row[attnum] = Int64GetDatum(value);
+                    }
+                }
+                break;
+
+            case FLOAT4OID:
+                {
+                    float4 value;
+                    if (result_set->next_column(value) == ERROR_CODE::OK)
+                    {
+                        is_null[attnum] = false;
+                        row[attnum] = Float4GetDatum(value);
+                    }
+                }
+                break;
+
+            case FLOAT8OID:
+                {
+                    float8 value;
+                    if (result_set->next_column(value) == ERROR_CODE::OK)
+                    {
+                        is_null[attnum] = false;
+                        row[attnum] = Float8GetDatum(value);
+                    }
+                }
+                break;
+            
+            case BPCHAROID:
+            case VARCHAROID:
+            case TEXTOID:
+                {
+                    std::string_view value;
+                    Datum value_datum;
+                    ERROR_CODE result = result_set->next_column(value);
+                    if (result == ERROR_CODE::OK)
+                    {
+                        value_datum = CStringGetDatum(value.data());				
+                        if (value_datum == (Datum) nullptr)
+                        {
+                            break;
+                        }
+                        is_null[attnum] = false;
+                        row[attnum] = (Datum) OidFunctionCall3(typinput, 
+                                                    value_datum, 
+                                                    ObjectIdGetDatum(InvalidOid), 
+                                                    Int32GetDatum(typemod));
+                    }
+                }
+                break;
+                
+            default:
+                elog(ERROR, "Invalid data type of PG. (%u)", pgtype);
+                break;
+        }
 	}
 }
 
