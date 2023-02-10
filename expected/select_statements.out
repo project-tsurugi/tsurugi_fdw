@@ -103,7 +103,7 @@ SELECT * FROM t2;
   1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
   2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
   3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
-  4 |  0 |   0 |   0 |    0 | NULL       | 
+  4 |    |     |     |      | NULL       | 
   5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
 (5 rows)
 
@@ -195,7 +195,7 @@ SELECT c2, c4, c6 FROM t2;
  11 | 1.1 | one       
  22 | 2.2 | two       
  33 | 3.3 | three     
-  0 |   0 | NULL      
+    |     | NULL      
  55 | 5.5 | five      
 (5 rows)
 
@@ -239,7 +239,7 @@ SELECT c1, c2 AS seisu  FROM t2;
   1 |    11
   2 |    22
   3 |    33
-  4 |     0
+  4 |      
   5 |    55
 (5 rows)
 
@@ -269,7 +269,7 @@ ORDER BY
     c6;
  c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
 ----+----+-----+-----+------+------------+-----
-  4 |  0 |   0 |   0 |    0 | NULL       | 
+  4 |    |     |     |      | NULL       | 
   5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
   1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
   3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
@@ -302,7 +302,7 @@ ORDER BY
     6;
  c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
 ----+----+-----+-----+------+------------+-----
-  4 |  0 |   0 |   0 |    0 | NULL       | 
+  4 |    |     |     |      | NULL       | 
   5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
   1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
   3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
@@ -337,7 +337,7 @@ ORDER BY
     c7;
  c1 | c4  |  c5  |     c6     | c7  
 ----+-----+------+------------+-----
-  4 |   0 |    0 | NULL       | 
+  4 |     |      | NULL       | 
   3 | 3.3 | 3.33 | three      | ABC
   5 | 5.5 | 5.55 | five       | XYZ
 (3 rows)
@@ -767,7 +767,7 @@ FROM
   1 | 111 | 1.11 | ABCDEFGHIJKLMNOPQRSTUVWXYZ
   2 | 222 | 2.22 | ABCDEFGHIJKLMNOPQRSTUVWXYZ
   3 | 333 | 3.33 | ABCDEFGHIJKLMNOPQRSTUVWXYZ
-  4 |   0 |      | 
+  4 |     |      | 
   5 | 555 |      | 
 (5 rows)
 
