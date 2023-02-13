@@ -2635,9 +2635,10 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                         auto subsecond = value.subsecond().count();
                         time = (value.hour() * MINS_PER_HOUR) + value.minute();
                         time = (time * SECS_PER_MINUTE) + value.second();
+                        time = time * USECS_PER_SEC;
                         if (subsecond) {
                             subsecond /= 1000;
-                            time = (time * USECS_PER_SEC) + subsecond;
+                            time = time + subsecond;
                         }
                         row[attnum] = TimeADTGetDatum(time);
                         is_null[attnum] = false;
@@ -2654,9 +2655,10 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                         auto subsecond = value.subsecond().count();
                         timestamp = value.seconds_since_epoch().count() -
                             ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
+                        timestamp = timestamp * USECS_PER_SEC;
                         if (subsecond) {
                             subsecond /= 1000;
-                            timestamp = (timestamp * USECS_PER_SEC) + subsecond;
+                            timestamp = timestamp + subsecond;
                         }
                         row[attnum] = TimestampGetDatum(timestamp);
                         is_null[attnum] = false;
