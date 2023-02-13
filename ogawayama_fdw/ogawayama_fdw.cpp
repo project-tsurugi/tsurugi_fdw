@@ -47,6 +47,7 @@ extern "C" {
 
 #include "access/xact.h"
 #include "utils/syscache.h"
+#include "utils/date.h"
 
 // postgres_fdwから流用
 #include "access/htup_details.h"
@@ -2182,6 +2183,72 @@ confirm_columns(MetadataPtr metadata, ForeignScanState* node)
 				}
 				break;
 
+			case stub::Metadata::ColumnType::Type::DATE:
+				if (fdw_state->column_types[i] != DATEOID)
+				{
+					elog(ERROR,
+						"Don't match data type of the column. "
+						"(column: %lu) (og: %d) (pg: %u)",
+						i, (int) types.get_type(), fdw_state->column_types[i] );
+					ret = false;
+				}
+				break;
+
+			case stub::Metadata::ColumnType::Type::TIME:
+				if (fdw_state->column_types[i] != TIMEOID)
+				{
+					elog(ERROR,
+						"Don't match data type of the column. "
+						"(column: %lu) (og: %d) (pg: %u)",
+						i, (int) types.get_type(), fdw_state->column_types[i] );
+					ret = false;
+				}
+				break;
+
+			case stub::Metadata::ColumnType::Type::TIMESTAMP:
+				if (fdw_state->column_types[i] != TIMESTAMPOID)
+				{
+					elog(ERROR,
+						"Don't match data type of the column. "
+						"(column: %lu) (og: %d) (pg: %u)",
+						i, (int) types.get_type(), fdw_state->column_types[i] );
+					ret = false;
+				}
+				break;
+
+			case stub::Metadata::ColumnType::Type::TIMETZ:
+				if (fdw_state->column_types[i] != TIMETZOID)
+				{
+					elog(ERROR,
+						"Don't match data type of the column. "
+						"(column: %lu) (og: %d) (pg: %u)",
+						i, (int) types.get_type(), fdw_state->column_types[i] );
+					ret = false;
+				}
+				break;
+
+			case stub::Metadata::ColumnType::Type::TIMESTAMPTZ:
+				if (fdw_state->column_types[i] != TIMESTAMPTZOID)
+				{
+					elog(ERROR,
+						"Don't match data type of the column. "
+						"(column: %lu) (og: %d) (pg: %u)",
+						i, (int) types.get_type(), fdw_state->column_types[i] );
+					ret = false;
+				}
+				break;
+
+			case stub::Metadata::ColumnType::Type::DECIMAL:
+				if (fdw_state->column_types[i] != NUMERICOID)
+				{
+					elog(ERROR,
+						"Don't match data type of the column. "
+						"(column: %lu) (og: %d) (pg: %u)",
+						i, (int) types.get_type(), fdw_state->column_types[i] );
+					ret = false;
+				}
+				break;
+
 			case stub::Metadata::ColumnType::Type::NULL_VALUE:
 				elog(DEBUG1, "nullptr_VALUE found. (column: %lu)", i);
 				ret = false;
@@ -2375,7 +2442,59 @@ make_tuple_from_result_set(ResultSetPtr result_set, OgawayamaFdwState* fdw_state
 					}
 				}
 				break;
-				
+
+			case DATEOID:
+				{
+					stub::date_type value;
+					if (result_set->next_column(value) == ERROR_CODE::OK)
+					{
+						DateADT date;
+						date = value.days_since_epoch();
+						date = date - (POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE);
+						tuple->tts_values[i] = DateADTGetDatum(date);
+						tuple->tts_isnull[i] = false;
+					}
+				}
+				break;
+
+			case TIMEOID:
+				{
+					stub::time_type value;
+					if (result_set->next_column(value) == ERROR_CODE::OK)
+					{
+						TimeADT time;
+						auto subsecond = value.subsecond().count();
+						time = (value.hour() * MINS_PER_HOUR) + value.minute();
+						time = (time * SECS_PER_MINUTE) + value.second();
+						if (subsecond) {
+							subsecond /= 1000;
+							time = (time * USECS_PER_SEC) + subsecond;
+						}
+						tuple->tts_values[i] = TimeADTGetDatum(time);
+						tuple->tts_isnull[i] = false;
+					}
+				}
+				break;
+
+			case TIMESTAMPOID:
+				{
+					stub::timestamp_type value;
+					if (result_set->next_column(value) == ERROR_CODE::OK)
+					{
+						Timestamp timestamp;
+						auto subsecond = value.subsecond().count();
+						timestamp = value.seconds_since_epoch().count() -
+							((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
+						if (subsecond) {
+							subsecond /= 1000;
+							timestamp = (timestamp * USECS_PER_SEC) + subsecond;
+						}
+						tuple->tts_values[i] = TimestampGetDatum(timestamp);
+						tuple->tts_isnull[i] = false;
+					}
+				}
+				break;
+
 			default:
 				elog(ERROR, "Invalid data type of column.");
 				break;
