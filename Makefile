@@ -2,7 +2,7 @@
 
 MODULE_big = ogawayama_fdw
 OBJS = common/init.o common/stub_manager.o \
-        ogawayama_fdw/ogawayama_fdw.o ogawayama_fdw/deparse.o ogawayama_fdw/shippable.o \
+        ogawayama_fdw/deparse.o ogawayama_fdw/shippable.o ogawayama_fdw/tsurugi_utils.o ogawayama_fdw/ogawayama_fdw.o \
         alt_planner/alt_planner.o \
 				alt_utility/send_message.o \
         alt_utility/alt_utility.o alt_utility/create_stmt.o alt_utility/drop_stmt.o \
@@ -16,7 +16,8 @@ EXTENSION = ogawayama_fdw
 DATA = ogawayama_fdw--0.1.sql
 
 # REGRESS_BASIC: variable used in frontend
-REGRESS_BASIC = test_create_table otable_of_constr ch-benchmark-ddl create_table_syntax_type update_delete insert_select
+#REGRESS_BASIC = test_create_table otable_of_constr ch-benchmark-ddl create_table_syntax_type update_delete insert_select
+REGRESS_BASIC = test_preparation create_table insert_select_happy update_delete select_statements
 ifdef REGRESS_EXTRA
 	# REGRESS: variable defined in PostgreSQL
 	REGRESS = $(REGRESS_BASIC) otable_of_constr2
