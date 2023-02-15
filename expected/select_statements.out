@@ -512,7 +512,12 @@ FROM
     t1
 WHERE
     c4 >= 2.2 AND c4 < 5.5;
-ERROR:  Transaction::execute_query() failed. (9)
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
+----+----+-----+-----+------+------------+----------------------------
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+(2 rows)
+
 -- WHERE #6
 -- PG
 SELECT
@@ -535,7 +540,13 @@ FROM
     t2
 WHERE
     c4 BETWEEN 2.2 AND 5.5;
-ERROR:  Transaction::execute_query() failed. (9)
+ c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
+----+----+-----+-----+------+------------+-----
+  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
+  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
+  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
+(3 rows)
+
 -- WHERE #7
 -- PG
 SELECT

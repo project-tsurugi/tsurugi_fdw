@@ -2342,7 +2342,7 @@ deparseExpr(Expr *node, deparse_expr_cxt *context)
 			deparseVar((Var *) node, context);
 			break;
 		case T_Const:
-			deparseConst((Const *) node, context, 0);
+			deparseConst((Const *) node, context, -1);  // tsurugi does not support typecast.
 			break;
 		case T_Param:
 			deparseParam((Param *) node, context);
@@ -3093,11 +3093,12 @@ appendAggOrderBy(List *orderList, List *targetList, deparse_expr_cxt *context)
 			deparseOperatorName(buf, operform);
 			ReleaseSysCache(opertup);
 		}
-
+#if 0 // tsurugi does not support NULLS FIRST/LAST
 		if (srt->nulls_first)
 			appendStringInfoString(buf, " NULLS FIRST");
 		else
 			appendStringInfoString(buf, " NULLS LAST");
+#endif
 	}
 }
 
@@ -3225,12 +3226,12 @@ appendOrderByClause(List *pathkeys, bool has_final_sort,
 			appendStringInfoString(buf, " ASC");
 		else
 			appendStringInfoString(buf, " DESC");
-
+#if 0 // tsurugi does not support NULLS FIRST/LAST
 		if (pathkey->pk_nulls_first)
 			appendStringInfoString(buf, " NULLS FIRST");
 		else
 			appendStringInfoString(buf, " NULLS LAST");
-
+#endif
 		delim = ", ";
 	}
 	reset_transmission_modes(nestlevel);
@@ -3326,7 +3327,7 @@ deparseSortGroupClause(Index ref, List *tlist, bool force_colno,
 		 * BY 2", which will be misconstrued as a column position rather than
 		 * a constant.
 		 */
-		deparseConst((Const *) expr, context, 1);
+		deparseConst((Const *) expr, context, -1);  // tsurugi does not support typecast.
 	}
 	else if (!expr || IsA(expr, Var))
 		deparseExpr(expr, context);
