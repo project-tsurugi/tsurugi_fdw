@@ -419,6 +419,40 @@ FROM
 WHERE
     c7 LIKE '%LMN%';
 
+-- WHERE #8
+-- PG
+SELECT
+    *
+FROM
+    pt1
+WHERE
+    EXISTS (SELECT * FROM pt2 WHERE c2 = 22);
+
+-- TG
+SELECT
+    *
+FROM
+    t1
+WHERE
+    EXISTS (SELECT * FROM t2 WHERE c2 = 22);
+
+-- WHERE #9
+-- PG
+SELECT
+    *
+FROM
+    pt2
+WHERE
+    c4 IN (1.1,3.3);
+
+-- TG
+SELECT
+    *
+FROM
+    t2
+WHERE
+    c4 IN (1.1,3.3);
+
 -- GROUP BY #1
 -- PG
 SELECT
@@ -578,6 +612,69 @@ FROM
     pt1 a INNER JOIN t2 b USING (c2)
 GROUP BY
     b.c7;
+
+-- PG JOIN #6
+-- PG
+SELECT
+    *
+FROM
+    pt1 AS a JOIN pt2 AS b ON a.c4=b.c4 JOIN pt1 AS c ON b.c4=c.c4
+WHERE
+    a.c2=22;
+
+-- TG
+SELECT
+    *
+FROM
+    t1 AS a JOIN t2 AS b ON a.c4=b.c4 JOIN t1 AS c ON b.c4=c.c4
+WHERE
+    a.c2=22;
+
+-- PG&TG
+SELECT
+    *
+FROM
+    t1 AS a JOIN pt2 AS b ON a.c4=b.c4 JOIN t1 AS c ON b.c4=c.c4
+WHERE
+    a.c2=22;
+
+-- PG JOIN #7
+-- PG
+SELECT
+    *
+FROM
+    pt1 AS a CROSS JOIN pt2 AS b
+ORDER BY
+    b.c1;
+
+-- TG
+SELECT
+    *
+FROM
+    t1 AS a CROSS JOIN t2 AS b
+ORDER BY
+    b.c1;
+
+-- PG&TG
+SELECT
+    *
+FROM
+    pt1 AS a CROSS JOIN t2 AS b
+ORDER BY
+    b.c1;
+
+-- PG JOIN #7
+-- PG
+SELECT
+    *
+FROM
+    pt1 AS a JOIN pt1 AS b ON a.c3=b.c3;
+
+-- TG
+SELECT
+    *
+FROM
+    t1 AS a JOIN t1 AS b ON a.c3=b.c3;
 
 /* DDL */
 DROP TABLE t1;
