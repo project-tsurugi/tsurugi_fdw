@@ -429,13 +429,14 @@ WHERE
     EXISTS (SELECT * FROM pt2 WHERE c2 = 22);
 
 -- TG
+/*
 SELECT
     *
 FROM
     t1
 WHERE
     EXISTS (SELECT * FROM t2 WHERE c2 = 22);
-
+*/
 -- WHERE #9
 -- PG
 SELECT

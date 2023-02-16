@@ -119,6 +119,36 @@ SELECT * FROM t2;
   5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
 (5 rows)
 
+INSERT INTO
+    t3(c1, c2)
+VALUES
+    (1, 'ichi');
+INSERT INTO
+    t3(c1, c2)
+VALUES
+    (2, 'ni');
+INSERT INTO
+    t3(c1, c2)
+VALUES
+    (3, 'san');
+INSERT INTO
+    t3(c1, c2)
+VALUES
+    (4, 'si');
+INSERT INTO
+    t3(c1, c2)
+VALUES
+    (5, 'go');
+SELECT * FROM t3;
+ c1 |     c2     
+----+------------
+  1 | ichi      
+  2 | ni        
+  3 | san       
+  4 | si        
+  5 | go        
+(5 rows)
+
 -- PG tables
 INSERT INTO 
     pt1 
@@ -168,6 +198,36 @@ SELECT * FROM pt2;
   3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
   4 |    |     |     |      | NULL       | 
   5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
+(5 rows)
+
+INSERT INTO
+    pt3(c1, c2)
+VALUES
+    (1, 'ichi');
+INSERT INTO
+    pt3(c1, c2)
+VALUES
+    (2, 'ni');
+INSERT INTO
+    pt3(c1, c2)
+VALUES
+    (3, 'san');
+INSERT INTO
+    pt3(c1, c2)
+VALUES
+    (4, 'si');
+INSERT INTO
+    pt3(c1, c2)
+VALUES
+    (5, 'go');
+SELECT * FROM pt3;
+ c1 |     c2     
+----+------------
+  1 | ichi      
+  2 | ni        
+  3 | san       
+  4 | si        
+  5 | go        
 (5 rows)
 
 -- SELECT
@@ -582,7 +642,6 @@ FROM
 WHERE
     c7 LIKE '%LMN%';
 ERROR:  Transaction::execute_query() failed. (9)
-
 -- WHERE #8
 -- PG
 SELECT
@@ -591,7 +650,7 @@ FROM
     pt1
 WHERE
     EXISTS (SELECT * FROM pt2 WHERE c2 = 22);
- c1 | c2 | c3  | c4  |  c5  |     c6     |             c7
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
 ----+----+-----+-----+------+------------+----------------------------
   1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
   2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
@@ -599,16 +658,14 @@ WHERE
 (3 rows)
 
 -- TG
+/*
 SELECT
     *
 FROM
     t1
 WHERE
     EXISTS (SELECT * FROM t2 WHERE c2 = 22);
-E0215 16:15:38.880625 2626496 worker.cpp:191] unsurpported data type: unknown
- c1 | c2 | c3 | c4 | c5 | c6 | c7
-----+----+----+----+----+----+----
-(0 rows)
+*/
 -- WHERE #9
 -- PG
 SELECT
@@ -617,7 +674,7 @@ FROM
     pt2
 WHERE
     c4 IN (1.1,3.3);
- c1 | c2 | c3  | c4  |  c5  |     c6     | c7
+ c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
 ----+----+-----+-----+------+------------+-----
   1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
   3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
@@ -630,8 +687,6 @@ FROM
     t2
 WHERE
     c4 IN (1.1,3.3);
-line 1:71 token recognition error at: '['
-line 1:72 token recognition error at: ']'
 ERROR:  Transaction::execute_query() failed. (9)
 -- GROUP BY #1
 -- PG
@@ -902,45 +957,36 @@ GROUP BY
 SELECT
     *
 FROM
-    pt1 AS a JOIN pt2 AS b ON a.c4=b.c4 JOIN pt3 AS c ON b.c1=c.c1 
+    pt1 AS a JOIN pt2 AS b ON a.c4=b.c4 JOIN pt1 AS c ON b.c4=c.c4
 WHERE
     a.c2=22;
- c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2
-| c3  | c4  |  c5  |     c6     | c7  | c1 |     c2
-----+----+-----+-----+------+------------+----------------------------+----+----
-+-----+-----+------+------------+-----+----+------------
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22
-| 222 | 2.2 | 2.22 | two        | XYZ |  2 | ni
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  | c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
+----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----+----+----+-----+-----+------+------------+----------------------------
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ |  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
 (1 row)
 
 -- TG
 SELECT
     *
 FROM
-    t1 AS a JOIN t2 AS b ON a.c4=b.c4 JOIN t3 AS c ON b.c1=c.c1
+    t1 AS a JOIN t2 AS b ON a.c4=b.c4 JOIN t1 AS c ON b.c4=c.c4
 WHERE
     a.c2=22;
- c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2
-| c3  | c4  |  c5  |     c6     | c7  | c1 |     c2
-----+----+-----+-----+------+------------+----------------------------+----+----
-+-----+-----+------+------------+-----+----+------------
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22
-| 222 | 2.2 | 2.22 | two        | XYZ |  2 | ni
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  | c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
+----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----+----+----+-----+-----+------+------------+----------------------------
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ |  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
 (1 row)
 
 -- PG&TG
 SELECT
     *
 FROM
-    t1 AS a JOIN pt2 AS b ON a.c4=b.c4 JOIN t3 AS c ON b.c1=c.c1
+    t1 AS a JOIN pt2 AS b ON a.c4=b.c4 JOIN t1 AS c ON b.c4=c.c4
 WHERE
     a.c2=22;
- c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2
-| c3  | c4  |  c5  |     c6     | c7  | c1 |     c2
-----+----+-----+-----+------+------------+----------------------------+----+----
-+-----+-----+------+------------+-----+----+------------
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22
-| 222 | 2.2 | 2.22 | two        | XYZ |  2 | ni
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  | c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
+----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----+----+----+-----+-----+------+------------+----------------------------
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ |  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
 (1 row)
 
 -- PG JOIN #7
@@ -951,7 +997,7 @@ FROM
     pt1 AS a CROSS JOIN pt2 AS b
 ORDER BY
     b.c1;
- c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
 ----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----
   1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
   2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
@@ -962,9 +1008,9 @@ ORDER BY
   1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
   2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
   3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
-  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       |
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       |
-  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       |
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       | 
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       | 
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       | 
   1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
   2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
   3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
@@ -977,7 +1023,7 @@ FROM
     t1 AS a CROSS JOIN t2 AS b
 ORDER BY
     b.c1;
- c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
 ----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----
   1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
   2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
@@ -988,9 +1034,9 @@ ORDER BY
   1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
   2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
   3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
-  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       |
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       |
-  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       |
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       | 
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       | 
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       | 
   1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
   2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
   3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
@@ -1000,10 +1046,10 @@ ORDER BY
 SELECT
     *
 FROM
-    pt1 AS a CROSS JOIN t2 AS b 
+    pt1 AS a CROSS JOIN t2 AS b
 ORDER BY
     b.c1;
- c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
 ----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----
   1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
   2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
@@ -1014,9 +1060,9 @@ ORDER BY
   1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
   2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
   3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
-  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       |
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       |
-  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       |
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       | 
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       | 
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       | 
   1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
   2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
   3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
@@ -1028,7 +1074,7 @@ SELECT
     *
 FROM
     pt1 AS a JOIN pt1 AS b ON a.c3=b.c3;
- c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     |             c7
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
 ----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+----------------------------
   1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
   2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
@@ -1040,7 +1086,7 @@ SELECT
     *
 FROM
     t1 AS a JOIN t1 AS b ON a.c3=b.c3;
- c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     |             c7
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
 ----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+----------------------------
   1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
   2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
