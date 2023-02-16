@@ -95,10 +95,6 @@ alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
-	/*
-	 * 操作対象のSQLコマンドかどうかに応じて処理を行う
-	 * SQL文に含まれるオブジェクトがすべて同一サーバ上のRangeTblEntryであることを確認
-	 */
 	if ((root->parse != NULL && root->parse->rtable == NULL) || 
 		!contain_foreign_tables(root, root->parse->rtable))
 	{
@@ -130,17 +126,25 @@ alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 			{
 				elog(NOTICE, "PostgreSQL独自文法です。(UPDATEもしくはDELETEでのFROM句の使用)");
 			}
-			scan = create_foreign_scan(root);
-			modify = create_modify_table(root, scan);
-			plan = (Plan *) modify;
-        	elog(LOG, "tsurugi_fdw : choose direct modify. %s", __func__);
+            
+            if (root->parse != NULL && root->parse->rtable != NULL &&
+                is_only_foreign_table(root, root->parse->rtable)) 
+            {
+                elog(LOG, "tsurugi_fdw : Execute direct modify. %s", __func__);
+                scan = create_foreign_scan(root);
+                modify = create_modify_table(root, scan);
+                plan = (Plan *) modify;
+            } 
+            else 
+            {
+        		return standard_planner(parse2, cursorOptions, boundParams);    
+            }
 			break;
 		}
 
 		case CMD_SELECT:
 		default:
 		{
-    	elog(DEBUG2, "tsurugi_fdw : call standard_planner(). %s", __func__);
 			return standard_planner(parse2, cursorOptions, boundParams);
 		}
 	}
