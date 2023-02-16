@@ -40,6 +40,16 @@ CREATE FOREIGN TABLE t2(
     c7 VARCHAR(26)
 ) SERVER ogawayama;
 
+CREATE TABLE t3(
+    c1 INTEGER PRIMARY KEY,
+    c2 CHAR(10)
+) TABLESPACE tsurugi;
+
+CREATE FOREIGN TABLE t3(
+    c1 INTEGER,
+    c2 CHAR(10)
+) SERVER ogawayama;
+
 -- PG tables
 CREATE TABLE pt1(
     c1 INTEGER PRIMARY KEY, 
@@ -59,6 +69,11 @@ CREATE TABLE pt2(
     c5 DOUBLE PRECISION, 
     c6 CHAR(10),
     c7 VARCHAR(26)
+);
+
+CREATE TABLE pt3(
+    c1 INTEGER PRIMARY KEY,
+    c2 CHAR(10)
 );
 
 /* DML */
@@ -99,6 +114,28 @@ VALUES
     (5, 55, 555, 5.5, 5.55, 'five', 'XYZ');
 SELECT * FROM t2;
 
+INSERT INTO
+    t3(c1, c2)
+VALUES
+    (1, 'ichi');
+INSERT INTO
+    t3(c1, c2)
+VALUES
+    (2, 'ni');
+INSERT INTO
+    t3(c1, c2)
+VALUES
+    (3, 'san');
+INSERT INTO
+    t3(c1, c2)
+VALUES
+    (4, 'si');
+INSERT INTO
+    t3(c1, c2)
+VALUES
+    (5, 'go');
+SELECT * FROM t3;
+
 -- PG tables
 INSERT INTO 
     pt1 
@@ -135,6 +172,28 @@ INSERT INTO
 VALUES
     (5, 55, 555, 5.5, 5.55, 'five', 'XYZ');
 SELECT * FROM pt2;
+
+INSERT INTO
+    pt3(c1, c2)
+VALUES
+    (1, 'ichi');
+INSERT INTO
+    pt3(c1, c2)
+VALUES
+    (2, 'ni');
+INSERT INTO
+    pt3(c1, c2)
+VALUES
+    (3, 'san');
+INSERT INTO
+    pt3(c1, c2)
+VALUES
+    (4, 'si');
+INSERT INTO
+    pt3(c1, c2)
+VALUES
+    (5, 'go');
+SELECT * FROM pt3;
 
 -- SELECT
 -- PG
@@ -360,6 +419,40 @@ FROM
 WHERE
     c7 LIKE '%LMN%';
 
+-- WHERE #8
+-- PG
+SELECT
+    *
+FROM
+    pt1
+WHERE
+    EXISTS (SELECT * FROM pt2 WHERE c2 = 22);
+
+-- TG
+SELECT
+    *
+FROM
+    t1
+WHERE
+    EXISTS (SELECT * FROM t2 WHERE c2 = 22);
+
+-- WHERE #9
+-- PG
+SELECT
+    *
+FROM
+    pt2
+WHERE
+    c4 IN (1.1,3.3);
+
+-- TG
+SELECT
+    *
+FROM
+    t2
+WHERE
+    c4 IN (1.1,3.3);
+
 -- GROUP BY #1
 -- PG
 SELECT
@@ -520,10 +613,76 @@ FROM
 GROUP BY
     b.c7;
 
+-- PG JOIN #6
+-- PG
+SELECT
+    *
+FROM
+    pt1 AS a JOIN pt2 AS b ON a.c4=b.c4 JOIN pt1 AS c ON b.c4=c.c4
+WHERE
+    a.c2=22;
+
+-- TG
+SELECT
+    *
+FROM
+    t1 AS a JOIN t2 AS b ON a.c4=b.c4 JOIN t1 AS c ON b.c4=c.c4
+WHERE
+    a.c2=22;
+
+-- PG&TG
+SELECT
+    *
+FROM
+    t1 AS a JOIN pt2 AS b ON a.c4=b.c4 JOIN t1 AS c ON b.c4=c.c4
+WHERE
+    a.c2=22;
+
+-- PG JOIN #7
+-- PG
+SELECT
+    *
+FROM
+    pt1 AS a CROSS JOIN pt2 AS b
+ORDER BY
+    b.c1;
+
+-- TG
+SELECT
+    *
+FROM
+    t1 AS a CROSS JOIN t2 AS b
+ORDER BY
+    b.c1;
+
+-- PG&TG
+SELECT
+    *
+FROM
+    pt1 AS a CROSS JOIN t2 AS b
+ORDER BY
+    b.c1;
+
+-- PG JOIN #7
+-- PG
+SELECT
+    *
+FROM
+    pt1 AS a JOIN pt1 AS b ON a.c3=b.c3;
+
+-- TG
+SELECT
+    *
+FROM
+    t1 AS a JOIN t1 AS b ON a.c3=b.c3;
+
 /* DDL */
 DROP TABLE t1;
 DROP FOREIGN TABLE t1;
 DROP TABLE t2;
 DROP FOREIGN TABLE t2;
+DROP TABLE t3;
+DROP FOREIGN TABLE t3;
 DROP TABLE pt1;
 DROP TABLE pt2;
+DROP TABLE pt3;
