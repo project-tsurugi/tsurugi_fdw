@@ -20,6 +20,9 @@
 #include <vector>
 #include "create_index.h"
 #include "manager/metadata/tables.h"
+#include "manager/metadata/index.h"
+#include "manager/metadata/indexes.h"
+#include "manager/metadata/metadata_factory.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,33 +58,6 @@ bool CreateIndex::validate_syntax() const
 
   /* Check members of IndexStmt structure */
   if (index_stmt != nullptr) {
-    if (index_stmt->unique && !(index_stmt->primary)) {
-        show_table_constraint_syntax_error_msg(
-            "Tsurugi does not support UNIQUE table constraint");
-        return result;
-    }
-#if 0
-    if (index_stmt->tableSpace != nullptr) {
-        ereport(ERROR,
-                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                  errmsg("Tsurugi does not support USING INDEX TABLESPACE clause")));
-        return result;
-    }
-#endif
-    if (index_stmt->indexIncludingParams != NIL) {
-        ereport(ERROR,
-                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                  errmsg("Tsurugi does not support INCLUDE clause")));
-        return result;
-    }
-
-    if (index_stmt->options != NIL) {
-        ereport(ERROR,
-                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                  errmsg("Tsurugi does not support WITH clause")));
-        return result;
-    }
-
     if (index_stmt->excludeOpNames != nullptr) {
         show_table_constraint_syntax_error_msg(
 			"Tsurugi does not support EXCLUDE table constraint");
@@ -167,39 +143,44 @@ bool CreateIndex::generate_metadata(manager::metadata::Object& object) const
 	IndexStmt* index_stmt{this->index_stmt()};
 	Assert(index_stmt != NULL);
 	auto& index = static_cast<metadata::Index&>(object);
-	auto tables = std::make_unique<metadata::Tables>("tsurugi");
-	
-	index.access_method = 
-			std::underlying_type_t<metadata::Index::AccessMethod>
-			(metadata::Index::AccessMethod::MASS_TREE_METHOD);
-	index.name 			= index_stmt->idxname;
-	index.is_primary 	= index_stmt->primary;
-	index.is_unique 	= index_stmt->unique;
+    auto tables = metadata::get_tables_ptr("tsurugi");
 
-	// Generate key indexes.
-	ListCell* listptr;
-	foreach(listptr, index_stmt->indexParams) {
-		Node* node = (Node*) lfirst(listptr);
-		if (IsA(node, IndexElem)) {
-			IndexElem* elem = (IndexElem*) node;
-			metadata::Table table;
-			tables->get(index_stmt->relation->relname, table);
-			for (const auto& column : table.columns) {
-				if (column.name == elem->name) {
-					index.keys.emplace_back(column.ordinal_position);
-					index.keys_id.emplace_back(column.id);
-					int64_t direction = get_direction(elem);
-					if (direction == metadata::INVALID_VALUE) {
-						return result;
-					}
-					index.options.emplace_back(direction);
-				}
-			}
-		}
+    metadata::Table table;
+    tables->get(this->get_table_name(), table);
+
+    index.table_id = table.id;
+    index.access_method 
+			= std::underlying_type_t<metadata::Index::AccessMethod>(
+    				metadata::Index::AccessMethod::MASS_TREE_METHOD);
+    index.is_primary = index_stmt->primary;
+    index.is_unique = index_stmt->unique;
+
+    // Create key indexes.
+	std::string column_name;
+    ListCell* listptr;
+    foreach (listptr, index_stmt->indexParams) {
+    	Node* node = (Node*)lfirst(listptr);
+      	if (IsA(node, IndexElem)) {
+        	IndexElem* elem = (IndexElem*) node;
+        	metadata::Table table;
+        	tables->get(index_stmt->relation->relname, table);
+        	for (const auto& column : table.columns) {
+          		if (column.name == elem->name) {
+            		index.keys.emplace_back(column.column_number);
+            		index.keys_id.emplace_back(column.id);
+					column_name += '_' + column.name;
+            		int64_t direction = get_direction(elem);
+            		if (direction == metadata::INVALID_VALUE) {
+              			return result;
+            		}
+            		index.options.emplace_back(direction);
+          		}
+        	}
+      	}
 	}
 	index.number_of_key_columns = index.keys.size();
 
-	// Generaete included keys.
+	// Create included keys.
 	foreach(listptr, index_stmt->indexIncludingParams) {
 		Node* node = (Node*) lfirst(listptr);
 		if (IsA(node, IndexElem)) {
@@ -208,37 +189,130 @@ bool CreateIndex::generate_metadata(manager::metadata::Object& object) const
 			tables->get(index_stmt->relation->relname, table);
 			for (const auto& column : table.columns) {
 				if (column.name == elem->name) {
-					index.keys.emplace_back(column.ordinal_position);
+					index.keys.emplace_back(column.column_number);
 					index.keys_id.emplace_back(column.id);
+					column_name += '_' + column.name;
 					// Included keys does NOT have direction.
 				}
 			}
 		}
 	}
-	result = true;
+    index.number_of_columns = index.keys.size();
+
+    if (index_stmt->idxname != nullptr) {
+		index.name = index_stmt->idxname;
+	} else {
+		// default index names.
+		if (index.is_primary) {
+	        index.name = table.name + std::string("_pkey");
+		} else {
+	        index.name = std::string(table.name + column_name + "_key");
+		}
+    }
+
+    result = true;
 
   	return result;
 }
 
 /**
- * @brief	Get ordinal position of primary keys.
- * @param 	index_stmt		Pointer of index statement.
- * @param	primary_keys	Reference of vector for storing key position.
- * @return	true if success.
+ *  @brief  Generate constraint metadata from query tree.
+ *  @return true if success.
+ *  @return false otherwise.
+ */
+metadata::ErrorCode 
+CreateIndex::generate_constraint_metadata(metadata::Table& table) const
+{
+	IndexStmt* index_stmt{this->index_stmt()};
+	Assert(index_stmt != NULL);
+	metadata::ErrorCode result = metadata::ErrorCode::NOT_FOUND;
+
+	if (index_stmt->primary || index_stmt->unique) {
+		metadata::Constraint constraint;
+		std::string column_name;
+
+		/* put constraint name metadata */
+		if (index_stmt->idxname != NULL) {
+			constraint.name = index_stmt->idxname;
+		}
+
+		/* put constraint type metadata */
+		if (index_stmt->primary) {
+			constraint.type = metadata::Constraint::ConstraintType::PRIMARY_KEY;
+		} else if (index_stmt->unique) {
+			constraint.type = metadata::Constraint::ConstraintType::UNIQUE;
+		}
+
+		/* put constraint columns and columns_id metadata */
+		ListCell* listptr;
+		foreach(listptr, index_stmt->indexParams) {
+			Node* node = (Node*) lfirst(listptr);
+			if (IsA(node, IndexElem)) {
+				IndexElem* elem = (IndexElem*) node;
+				for (const auto& column : table.columns) {
+					if (column.name == elem->name) {
+						constraint.columns.emplace_back(column.column_number);
+						constraint.columns_id.emplace_back(column.id);
+						column_name += '_' + column.name;
+					}
+				}
+			}
+		}
+
+		/* put constraint index_id metadata */
+		std::string index_name;
+		if (index_stmt->idxname != nullptr) {
+			index_name = index_stmt->idxname;
+		} else {
+			// default index names.
+			if (index_stmt->primary) {
+				index_name = table.name + std::string("_pkey");
+			} else {
+				index_name = std::string(table.name + column_name + "_key");
+			}
+		}
+
+		auto indexes = metadata::get_indexes_ptr("tsurugi");
+		metadata::Index index;
+		auto error = indexes->get(index_name, index);
+		if (error != metadata::ErrorCode::OK) {
+			elog(NOTICE, "Index not found. (error:%d) (name:%s)", 
+				(int) error, index_stmt->relation->relname);
+			return result;
+		}
+		if (index_name == index.name) {
+			constraint.index_id = index.id;
+		} else {
+			elog(NOTICE, "Index not found. (index name:%s)", index_name.data());
+			return result;
+		}
+
+		table.constraints.emplace_back(constraint);
+		result = metadata::ErrorCode::OK;
+	}
+
+	return result;
+}
+
+/**
+ * @brief  	Create constraint metadata from query tree.
+ * @param 	table [in] table metadata.
+ * @return 	true if success, otherwise fault.
+ * @note	Add metadata of CONSTR_CHECK and CONSTR_FOREIGN.
  */
 bool get_primary_keys(IndexStmt* index_stmt, std::vector<int64_t>& primary_keys)
 {
 	bool result = false;
-	auto tables = std::make_unique<metadata::Tables>("tsurugi");
+    auto tables = metadata::get_tables_ptr("tsurugi");
 
-	if (index_stmt->primary) {
+        if (index_stmt->primary) {
 		ListCell* listptr;
 		foreach(listptr, index_stmt->indexParams) {
 			Node* stmt = (Node*) lfirst(listptr);
 			if (IsA(stmt, IndexElem)) {
 				IndexElem* elem = (IndexElem*) stmt;
 				metadata::Table table;
-				auto error = tables->get(index_stmt->relation->relname, table);
+				auto error = tables->get((const char*) index_stmt->relation->relname, table);
 				if (error != metadata::ErrorCode::OK) {
 					elog(NOTICE, "Table not found. (error:%d) (name:%s)", 
 						(int) error, index_stmt->relation->relname);
@@ -246,7 +320,7 @@ bool get_primary_keys(IndexStmt* index_stmt, std::vector<int64_t>& primary_keys)
 				}
 				for (const auto& column : table.columns) {
 					if (column.name == elem->name) {
-						primary_keys.emplace_back(column.ordinal_position);
+						primary_keys.emplace_back(column.column_number);
 					}
 				}
 			}
@@ -257,6 +331,7 @@ bool get_primary_keys(IndexStmt* index_stmt, std::vector<int64_t>& primary_keys)
 	return result;
 }
 
+#if 0
 /**
  * @brief  	Create table metadata from query tree.
  * @return 	true if success, otherwise fault.
@@ -274,3 +349,4 @@ CreateIndex::generate_table_metadata(manager::metadata::Table& table) const
 
 	return metadata::ErrorCode::OK;
 }
+#endif

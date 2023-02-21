@@ -40,8 +40,7 @@ fi
 if [[ -d $TSURUGI_HOME/ogawayama ]]; then
   cd $TSURUGI_HOME
 else
-#  git clone git@github.com:project-tsurugi/ogawayama.git
-  git clone git@github.com:koh-okada/ogawayama.git
+  git clone git@github.com:project-tsurugi/ogawayama.git
 fi
 
 if [[ -d $TSURUGI_HOME/tateyama-bootstrap ]]; then

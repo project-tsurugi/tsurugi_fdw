@@ -23,6 +23,7 @@
 #include "manager/metadata/datatypes.h"
 #include "manager/metadata/metadata.h"
 #include "manager/metadata/tables.h"
+#include "manager/metadata/metadata_factory.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -37,6 +38,7 @@ extern "C"
 #include "send_message.h"
 #include "drop_table_executor.h"
 #include "drop_table.h"
+#include "manager/metadata/metadata.h"
 
 /* DB name metadata-manager manages */
 const std::string DBNAME = "Tsurugi";
@@ -53,8 +55,8 @@ using namespace ogawayama;
  */
 bool table_exists_in_tsurugi(const char *relname)
 {
-    auto tables = std::make_unique<Tables>(DBNAME);
-	return (tables->exists(relname)) ? true : false;
+  	auto tables = get_tables_ptr(DBNAME);
+  	return tables->exists(relname);
 }
 
 /**
@@ -79,9 +81,9 @@ bool execute_drop_table(DropStmt* drop_stmt, const char* relname)
 
     /* Get the object ID of the table to be deleted */
 	Table table;
-    auto tables = std::make_unique<Tables>(DBNAME);
+    auto tables = get_tables_ptr(DBNAME);
     metadata::ErrorCode error = tables->get(relname, table);
-    if (error != ErrorCode::OK) {
+	if (error != ErrorCode::OK) {
         if (error == ErrorCode::NAME_NOT_FOUND && drop_stmt->missing_ok) {
             result = true;
         } else {
@@ -106,12 +108,67 @@ bool execute_drop_table(DropStmt* drop_stmt, const char* relname)
       return result;
     }
 
-    /* remobe metadata */
+	/* remove index metadata */
+#if 1
+	auto indexes = metadata::get_indexes_ptr(DBNAME);
+	std::vector<boost::property_tree::ptree> index_elements = {};
+	error = indexes->get_all(index_elements);
+    if (error != ErrorCode::OK) {
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("drop_table() get remove all index metadata failed. (error:%d)",
+				 (int) error)));
+		return result;
+	}
+	if (index_elements.size() != 0) {
+		for (size_t i=0; i<index_elements.size(); i++) {
+			auto index_table_id = index_elements[i].get_optional<ObjectIdType>(metadata::Index::TABLE_ID);
+			if (table.id == index_table_id.get()) {
+				auto remove_id = index_elements[i].get_optional<ObjectIdType>(metadata::Index::ID);
+				error = indexes->remove(remove_id.get());
+			    if (error != ErrorCode::OK) {
+					ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+							 errmsg("drop_table() remove index metadata failed. (error:%d)",
+							 (int) error)));
+					return result;
+				}
+			}
+		}
+	}
+#else
+	auto indexes = metadata::get_index_metadata(DBNAME);
+	std::vector<metadata::Index> index_elements = {};
+	error = indexes->get_all(index_elements);
+    if (error != ErrorCode::OK) {
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("drop_table() get remove all index metadata failed. (error:%d)",
+				 (int) error)));
+		return result;
+	}
+	if (index_elements.size() != 0) {
+		for (size_t i=0; i<index_elements.size(); i++) {
+			if (table.id == index_elements[i].table_id) {
+				error = indexes->remove(index_elements[i].id);
+			    if (error != ErrorCode::OK) {
+					ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+							 errmsg("drop_table() remove index metadata failed. (error:%d)",
+							 (int) error)));
+					return result;
+				}
+			}
+		}
+	}
+#endif
+
+    /* remove metadata */
     error = tables->remove(table.id);
     if (error != ErrorCode::OK) {
         ereport(ERROR,
                 (errcode(ERRCODE_INTERNAL_ERROR),
-                 errmsg("drop_table() remove metadata failed.")));
+                 errmsg("drop_table() remove table metadata failed.")));
         return result;
     }
 	result = true;

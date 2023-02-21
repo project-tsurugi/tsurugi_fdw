@@ -69,23 +69,17 @@ bool send_message(message::Message& message)
             begin_ddl.string(), status.get_sub_error_code())));
     return ret_value;
   }
-  ereport(INFO,
-  		errmsg("Send message to ogawayama. (message: %s)", 
-		begin_ddl.string()));
 
   status = message::Broker::send_message(&message);
   if (status.get_error_code() == message::ErrorCode::FAILURE) {
     ereport(NOTICE,
             (errcode(ERRCODE_INTERNAL_ERROR),
             errmsg("Broker::send_message() failed. (msg: %s, code: %d)", 
-            end_ddl.string(), status.get_sub_error_code())));
+            message.string(), status.get_sub_error_code())));
     // ToDo: Add rollback process.
     message::Broker::send_message(&end_ddl);
     return ret_value;
   }
-  ereport(INFO,
-  		errmsg("Send message to ogawayama. (message: %s)", 
-		message.string()));
 
   status = message::Broker::send_message(&end_ddl);
   if (status.get_error_code() == message::ErrorCode::FAILURE) {
@@ -95,9 +89,6 @@ bool send_message(message::Message& message)
             end_ddl.string(), status.get_sub_error_code())));
     return ret_value;
   }
-  ereport(INFO,
-  		errmsg("Send message to ogawayama. (message: %s)", 
-		end_ddl.string()));
 
   ret_value = true;
 

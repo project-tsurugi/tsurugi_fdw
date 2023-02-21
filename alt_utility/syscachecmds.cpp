@@ -71,7 +71,7 @@ bool get_roleid_by_rolename_from_syscache(const char* role_name,
  *  @param  [in] object_id Role id.
  *  @return True if the role exists, false if it does not.
  */
-bool confirm_roleid_from_syscache(const uint64_t object_id) {
+bool confirm_roleid_from_syscache(const int64_t object_id) {
   /* return value */
   bool ret_value = false;
   HeapTuple tuple;
