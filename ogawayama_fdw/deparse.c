@@ -235,7 +235,7 @@ is_foreign_expr(PlannerInfo *root,
 {
 	foreign_glob_cxt glob_cxt;
 	foreign_loc_cxt loc_cxt;
-	tsurugiFdwRelationInfo *fpinfo = (tsurugiFdwRelationInfo *) (baserel->fdw_private);
+	TgFdwRelationInfo *fpinfo = (TgFdwRelationInfo *) (baserel->fdw_private);
 
 	/*
 	 * Check that the expression consists of nodes that are safe to execute
@@ -298,7 +298,7 @@ foreign_expr_walker(Node *node,
 					foreign_loc_cxt *outer_cxt)
 {
 	bool		check_type = true;
-	tsurugiFdwRelationInfo *fpinfo;
+	TgFdwRelationInfo *fpinfo;
 	foreign_loc_cxt inner_cxt;
 	Oid			collation;
 	FDWCollateState state;
@@ -310,7 +310,7 @@ foreign_expr_walker(Node *node,
 		return true;
 
 	/* May need server info from baserel's fdw_private struct */
-	fpinfo = (tsurugiFdwRelationInfo *) (glob_cxt->foreignrel->fdw_private);
+	fpinfo = (TgFdwRelationInfo *) (glob_cxt->foreignrel->fdw_private);
 
 	/* Set up inner_cxt for possible recursion to child nodes */
 	inner_cxt.collation = InvalidOid;
@@ -885,7 +885,7 @@ is_foreign_param(PlannerInfo *root,
 			{
 				/* It would have to be sent unless it's a foreign Var */
 				Var		   *var = (Var *) expr;
-				tsurugiFdwRelationInfo *fpinfo = (tsurugiFdwRelationInfo *) (baserel->fdw_private);
+				TgFdwRelationInfo *fpinfo = (TgFdwRelationInfo *) (baserel->fdw_private);
 				Relids		relids;
 
 				if (IS_UPPER_REL(baserel))
@@ -942,7 +942,7 @@ List *
 build_tlist_to_deparse(RelOptInfo *foreignrel)
 {
 	List	   *tlist = NIL;
-	tsurugiFdwRelationInfo *fpinfo = (tsurugiFdwRelationInfo *) foreignrel->fdw_private;
+	TgFdwRelationInfo *fpinfo = (TgFdwRelationInfo *) foreignrel->fdw_private;
 	ListCell   *lc;
 
 	/*
@@ -1003,7 +1003,7 @@ deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *rel,
 {
 
 	deparse_expr_cxt context;
-	tsurugiFdwRelationInfo *fpinfo = (tsurugiFdwRelationInfo *) rel->fdw_private;
+	TgFdwRelationInfo *fpinfo = (TgFdwRelationInfo *) rel->fdw_private;
 	List	   *quals;
 
 	/*
@@ -1029,9 +1029,9 @@ deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *rel,
 	 */
 	if (IS_UPPER_REL(rel))
 	{
-		tsurugiFdwRelationInfo *ofpinfo;
+		TgFdwRelationInfo *ofpinfo;
 
-		ofpinfo = (tsurugiFdwRelationInfo *) fpinfo->outerrel->fdw_private;
+		ofpinfo = (TgFdwRelationInfo *) fpinfo->outerrel->fdw_private;
 		quals = ofpinfo->remote_conds;
 	}
 	else
@@ -1085,7 +1085,7 @@ deparseSelectSql(List *tlist, bool is_subquery, List **retrieved_attrs,
 	StringInfo	buf = context->buf;
 	RelOptInfo *foreignrel = context->foreignrel;
 	PlannerInfo *root = context->root;
-	tsurugiFdwRelationInfo *fpinfo = (tsurugiFdwRelationInfo *) foreignrel->fdw_private;
+	TgFdwRelationInfo *fpinfo = (TgFdwRelationInfo *) foreignrel->fdw_private;
 
 	/*
 	 * Construct SELECT list
@@ -1252,7 +1252,7 @@ deparseLockingClause(deparse_expr_cxt *context)
 	StringInfo	buf = context->buf;
 	PlannerInfo *root = context->root;
 	RelOptInfo *rel = context->scanrel;
-	tsurugiFdwRelationInfo *fpinfo = (tsurugiFdwRelationInfo *) rel->fdw_private;
+	TgFdwRelationInfo *fpinfo = (TgFdwRelationInfo *) rel->fdw_private;
 	int			relid = -1;
 
 	while ((relid = bms_next_member(rel->relids, relid)) >= 0)
@@ -1489,7 +1489,7 @@ deparseFromExprForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 					  bool use_alias, Index ignore_rel, List **ignore_conds,
 					  List **params_list)
 {
-	tsurugiFdwRelationInfo *fpinfo = (tsurugiFdwRelationInfo *) foreignrel->fdw_private;
+	TgFdwRelationInfo *fpinfo = (TgFdwRelationInfo *) foreignrel->fdw_private;
 
 	if (IS_JOIN_REL(foreignrel))
 	{
@@ -1639,7 +1639,7 @@ deparseRangeTblRef(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 				   bool make_subquery, Index ignore_rel, List **ignore_conds,
 				   List **params_list)
 {
-	tsurugiFdwRelationInfo *fpinfo = (tsurugiFdwRelationInfo *) foreignrel->fdw_private;
+	TgFdwRelationInfo *fpinfo = (TgFdwRelationInfo *) foreignrel->fdw_private;
 
 	/* Should only be called in these cases. */
 	Assert(IS_SIMPLE_REL(foreignrel) || IS_JOIN_REL(foreignrel));
@@ -3351,7 +3351,7 @@ deparseSortGroupClause(Index ref, List *tlist, bool force_colno,
 static bool
 is_subquery_var(Var *node, RelOptInfo *foreignrel, int *relno, int *colno)
 {
-	tsurugiFdwRelationInfo *fpinfo = (tsurugiFdwRelationInfo *) foreignrel->fdw_private;
+	TgFdwRelationInfo *fpinfo = (TgFdwRelationInfo *) foreignrel->fdw_private;
 	RelOptInfo *outerrel = fpinfo->outerrel;
 	RelOptInfo *innerrel = fpinfo->innerrel;
 
@@ -3414,7 +3414,7 @@ static void
 get_relation_column_alias_ids(Var *node, RelOptInfo *foreignrel,
 							  int *relno, int *colno)
 {
-	tsurugiFdwRelationInfo *fpinfo = (tsurugiFdwRelationInfo *) foreignrel->fdw_private;
+	TgFdwRelationInfo *fpinfo = (TgFdwRelationInfo *) foreignrel->fdw_private;
 	int			i;
 	ListCell   *lc;
 

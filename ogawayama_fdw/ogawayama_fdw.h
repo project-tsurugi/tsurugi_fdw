@@ -24,7 +24,9 @@ extern "C" {
 #endif
 #include "foreign/foreign.h"
 #include "lib/stringinfo.h"
+#include "nodes/execnodes.h"
 #include "nodes/pathnodes.h"
+#include "nodes/plannodes.h"
 #include "utils/relcache.h"
 
 /*
@@ -123,7 +125,7 @@ typedef struct tsurugi_fdw_relation_info_
 	 * representing the relation.
 	 */
 	int			relation_index;
-} tsurugiFdwRelationInfo;
+} TgFdwRelationInfo;
 
 /* in postgres_fdw.c */
 extern int	set_transmission_modes(void);
@@ -188,9 +190,67 @@ extern void deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root,
 									List **retrieved_attrs, List **params_list);
 extern const char *get_jointype_name(JoinType jointype);
 
+/* Callback argument for ec_member_matches_foreign */
+typedef struct
+{
+	Expr	   *current;		/* current expr, or NULL if not yet found */
+	List	   *already_used;	/* expressions already dealt with */
+} ec_member_foreign_arg;
+
+/* Struct for extra information passed to estimate_path_cost_size() */
+typedef struct
+{
+	PathTarget *target;
+	bool		has_final_sort;
+	bool		has_limit;
+	double		limit_tuples;
+	int64		count_est;
+	int64		offset_est;
+} TgFdwPathExtraData;
+
+/* 
+ * Helper functions.
+ */
+extern void estimate_path_cost_size(PlannerInfo *root,
+									RelOptInfo *foreignrel,
+									List *param_join_conds,
+									List *pathkeys,
+									TgFdwPathExtraData *fpextra,
+									double *p_rows, int *p_width,
+									Cost *p_startup_cost, Cost *p_total_cost);
+extern bool ec_member_matches_foreign(PlannerInfo *root, RelOptInfo *rel,
+									  EquivalenceClass *ec, EquivalenceMember *em,
+									  void *arg);
+extern List *get_useful_pathkeys_for_relation(PlannerInfo *root,
+											  RelOptInfo *rel);
+extern void add_paths_with_pathkeys_for_rel(PlannerInfo *root, RelOptInfo *rel,
+											Path *epq_path);
+extern void add_foreign_grouping_paths(PlannerInfo *root,
+									   RelOptInfo *input_rel,
+									   RelOptInfo *grouped_rel,
+									   GroupPathExtraData *extra);
+extern void add_foreign_ordered_paths(PlannerInfo *root,
+									  RelOptInfo *input_rel,
+									  RelOptInfo *ordered_rel);
+extern void add_foreign_final_paths(PlannerInfo *root,
+									RelOptInfo *input_rel,
+									RelOptInfo *final_rel,
+									FinalPathExtraData *extra);
+extern void apply_table_options(TgFdwRelationInfo *fpinfo);
+extern void merge_fdw_options(TgFdwRelationInfo *fpinfo,
+							  const TgFdwRelationInfo *fpinfo_o,
+							  const TgFdwRelationInfo *fpinfo_i);
+extern List *build_remote_returning(Index rtindex, Relation rel,
+									List *returningList);
+extern void rebuild_fdw_scan_tlist(ForeignScan *fscan, List *tlist);
+extern bool
+tsurugi_foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
+        				RelOptInfo *outerrel, RelOptInfo *innerrel,
+		        		JoinPathExtraData *extra);
+
 /* in shippable.c */
 extern bool is_builtin(Oid objectId);
-extern bool is_shippable(Oid objectId, Oid classId, tsurugiFdwRelationInfo *fpinfo);
+extern bool is_shippable(Oid objectId, Oid classId, TgFdwRelationInfo *fpinfo);
 
 #ifdef __cplusplus
 }

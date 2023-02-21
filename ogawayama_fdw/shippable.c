@@ -116,7 +116,7 @@ InitializeShippableCache(void)
  * additionally have a whitelist of functions/operators declared one at a time.
  */
 static bool
-lookup_shippable(Oid objectId, Oid classId, tsurugiFdwRelationInfo *fpinfo)
+lookup_shippable(Oid objectId, Oid classId, TgFdwRelationInfo *fpinfo)
 {
 	Oid			extensionOid;
 
@@ -162,7 +162,7 @@ is_builtin(Oid objectId)
  *	   Is this object (function/operator/type) shippable to foreign server?
  */
 bool
-is_shippable(Oid objectId, Oid classId, tsurugiFdwRelationInfo *fpinfo)
+is_shippable(Oid objectId, Oid classId, TgFdwRelationInfo *fpinfo)
 {
 	ShippableCacheKey key;
 	ShippableCacheEntry *entry;
