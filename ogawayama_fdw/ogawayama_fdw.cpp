@@ -2636,7 +2636,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                         time = (value.hour() * MINS_PER_HOUR) + value.minute();
                         time = (time * SECS_PER_MINUTE) + value.second();
                         time = time * USECS_PER_SEC;
-                        if (subsecond) {
+                        if (subsecond != 0) {
                             subsecond /= 1000;
                             time = time + subsecond;
                         }
@@ -2656,7 +2656,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                         timestamp = value.seconds_since_epoch().count() -
                             ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
                         timestamp = timestamp * USECS_PER_SEC;
-                        if (subsecond) {
+                        if (subsecond != 0) {
                             subsecond /= 1000;
                             timestamp = timestamp + subsecond;
                         }
