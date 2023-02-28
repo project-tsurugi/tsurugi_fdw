@@ -28,7 +28,7 @@ fi
 if [[ -d $TSURUGI_HOME/metadata-manager ]]; then
   cd $TSURUGI_HOME
 else
-  git clone -b feature/timestamp git@github.com:project-tsurugi/metadata-manager.git
+  git clone git@github.com:project-tsurugi/metadata-manager.git
 fi
 
 if [[ -d $TSURUGI_HOME/message-manager ]]; then
@@ -40,7 +40,7 @@ fi
 if [[ -d $TSURUGI_HOME/ogawayama ]]; then
   cd $TSURUGI_HOME
 else
-  git clone -b feature/timestamp_pb git@github.com:project-tsurugi/ogawayama.git
+  git clone -b feature/timestamp_pb_ltx_prepare git@github.com:project-tsurugi/ogawayama.git
 fi
 
 if [[ -d $TSURUGI_HOME/tateyama-bootstrap ]]; then
@@ -111,7 +111,8 @@ echo -e "********** Install_mpdecimal **********"
 echo -e "***************************************"
 cd $TSURUGI_HOME/
 rm -rf mpdecimal-2.5.1
-wget https://www.bytereef.org/software/mpdecimal/releases/mpdecimal-2.5.1.tar.gz
+wget https://www.bytereef.org/software/mpdecimal/releases/mpdecimal-2.5.1.tar.gz -e https_proxy=http://proxygate2.nic.nec.co.jp:8080/ --no-check-certificate
+# wget https://www.bytereef.org/software/mpdecimal/releases/mpdecimal-2.5.1.tar.gz
 tar zxf mpdecimal-2.5.1.tar.gz
 rm mpdecimal-2.5.1.tar.gz
 

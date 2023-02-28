@@ -10,6 +10,7 @@ OBJS = common/init.o common/stub_manager.o \
         alt_utility/create_index/create_index_executor.o alt_utility/create_index/create_index.o \
         alt_utility/drop_table/drop_table_executor.o \
         alt_utility/alter_table/alter_table_executor.o alt_utility/alter_table/alter_table.o \
+        alt_function/alt_function.o \
         $(WIN32RES)
 
 EXTENSION = ogawayama_fdw
