@@ -7,3 +7,6 @@
 [submodule "third_party/message-manager"]
 	path = third_party/message-manager
 	url = git@github.com:project-tsurugi/message-manager.git
+[submodule "third_party/takatori"]
+	path = third_party/takatori
+	url = git@github.com:project-tsurugi/takatori.git
