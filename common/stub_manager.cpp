@@ -1,11 +1,11 @@
-
 #include <iostream>
 #include <string>
 #include <string_view>
+#include <boost/property_tree/ini_parser.hpp>
+#include <boost/filesystem.hpp>
 
 #include "ogawayama/stub/error_code.h"
 #include "ogawayama/stub/api.h"
-
 #include "stub_manager.h"
 
 using namespace ogawayama;
@@ -34,6 +34,24 @@ StubPtr StubManager::stub_ = nullptr;
 ConnectionPtr StubManager::connection_ = nullptr;
 TransactionPtr StubManager::transaction_ = nullptr;
 
+std::string get_shared_memory_name()
+{
+    std::string name(ogawayama::common::param::SHARED_MEMORY_NAME);  
+    boost::property_tree::ptree pt;
+    const boost::filesystem::path conf_file("tsurugi_fdw.conf");
+    boost::system::error_code error;
+    if (boost::filesystem::exists(conf_file, error)) {
+        boost::property_tree::read_ini("tsurugi_fdw.conf", pt);
+        boost::optional<std::string> str = 
+            pt.get_optional<std::string>("Configurations.SHARED_MEMORY_NAME");
+        if (str) {
+            name = str.get();
+        }
+    }
+
+    return name;
+}
+
 /*
  * 	@brief: 
  */
@@ -43,13 +61,14 @@ ERROR_CODE StubManager::init()
 
 	if (stub_ == nullptr)
 	{
-		error = make_stub(stub_);
-		if (error != ERROR_CODE::OK)
-		{
+        std::string shared_memory_name(get_shared_memory_name());
+		error = make_stub(stub_, shared_memory_name);
+		if (error != ERROR_CODE::OK) {
 			std::cerr << "stub::make_stub() failed. " << (int) error << std::endl;
 			return error;
 		}
-		elog(DEBUG1, "make_stub() succeeded.");
+		elog(LOG, "make_stub() succeeded. (shared memory name: %s)", 
+            shared_memory_name.c_str());
 	}
 	
 	error = ERROR_CODE::OK;
@@ -66,8 +85,7 @@ ERROR_CODE StubManager::get_stub(stub::Stub** stub)
 
 	if (stub_ == nullptr) {
 		error = init();
-		if (error != ERROR_CODE::OK)
-		{
+		if (error != ERROR_CODE::OK) {
 			std::cerr << "init() failed(). " << (int) error << std::endl;
 			return error;
 		}
