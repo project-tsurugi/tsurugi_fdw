@@ -1,5 +1,11 @@
 BasedOnStyle: Google
-IncludeBlocks: Preserve
-IndentWidth: 2
+Language: Cpp
+ColumnLimit: 100
 DerivePointerAlignment: false
+IncludeBlocks: Preserve
+IndentCaseBlocks: true
+IndentCaseLabels: true
+IndentWidth: 4
+TabWidth: 4
+UseTab: Always
 PointerAlignment: Left
