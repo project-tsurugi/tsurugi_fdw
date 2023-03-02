@@ -4,41 +4,77 @@ CREATE ROLE sample_role2;
 CREATE ROLE sample_role3;
 CREATE ROLE sample_role4;
 CREATE ROLE admin SUPERUSER;
-SELECT rolname FROM pg_authid WHERE rolname = 'sample_role1';
-   rolname    
---------------
- sample_role1
+SELECT 
+    rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb, rolcanlogin, 
+    rolreplication, rolbypassrls, rolconnlimit, rolpassword, rolvaliduntil
+FROM 
+    pg_authid 
+WHERE 
+    rolname = 'sample_role1';
+   rolname    | rolsuper | rolinherit | rolcreaterole | rolcreatedb | rolcanlogin | rolreplication | rolbypassrls | rolconnlimit | rolpassword | rolvaliduntil 
+--------------+----------+------------+---------------+-------------+-------------+----------------+--------------+--------------+-------------+---------------
+ sample_role1 | f        | t          | f             | f           | f           | f              | f            |           -1 |             | 
 (1 row)
 
-SELECT rolname FROM pg_authid WHERE rolname = 'sample_role2';
-   rolname    
---------------
- sample_role2
+SELECT 
+    rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb, rolcanlogin, 
+    rolreplication, rolbypassrls, rolconnlimit, rolpassword, rolvaliduntil
+FROM 
+    pg_authid 
+WHERE 
+    rolname = 'sample_role2';
+   rolname    | rolsuper | rolinherit | rolcreaterole | rolcreatedb | rolcanlogin | rolreplication | rolbypassrls | rolconnlimit | rolpassword | rolvaliduntil 
+--------------+----------+------------+---------------+-------------+-------------+----------------+--------------+--------------+-------------+---------------
+ sample_role2 | f        | t          | f             | f           | f           | f              | f            |           -1 |             | 
 (1 row)
 
-SELECT rolname FROM pg_authid WHERE rolname = 'sample_role3';
-   rolname    
---------------
- sample_role3
+SELECT 
+    rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb, rolcanlogin, 
+    rolreplication, rolbypassrls, rolconnlimit, rolpassword, rolvaliduntil
+FROM 
+    pg_authid 
+WHERE 
+    rolname = 'sample_role3';
+   rolname    | rolsuper | rolinherit | rolcreaterole | rolcreatedb | rolcanlogin | rolreplication | rolbypassrls | rolconnlimit | rolpassword | rolvaliduntil 
+--------------+----------+------------+---------------+-------------+-------------+----------------+--------------+--------------+-------------+---------------
+ sample_role3 | f        | t          | f             | f           | f           | f              | f            |           -1 |             | 
 (1 row)
 
-SELECT rolname FROM pg_authid WHERE rolname = 'sample_role4';
-   rolname    
---------------
- sample_role4
+SELECT 
+    rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb, rolcanlogin, 
+    rolreplication, rolbypassrls, rolconnlimit, rolpassword, rolvaliduntil
+FROM 
+    pg_authid 
+WHERE 
+    rolname = 'sample_role4';
+   rolname    | rolsuper | rolinherit | rolcreaterole | rolcreatedb | rolcanlogin | rolreplication | rolbypassrls | rolconnlimit | rolpassword | rolvaliduntil 
+--------------+----------+------------+---------------+-------------+-------------+----------------+--------------+--------------+-------------+---------------
+ sample_role4 | f        | t          | f             | f           | f           | f              | f            |           -1 |             | 
 (1 row)
 
-SELECT rolname FROM pg_authid WHERE rolname = 'admin';
- rolname 
----------
- admin
+SELECT 
+    rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb, rolcanlogin, 
+    rolreplication, rolbypassrls, rolconnlimit, rolpassword, rolvaliduntil
+FROM 
+    pg_authid 
+WHERE 
+    rolname = 'admin';
+ rolname | rolsuper | rolinherit | rolcreaterole | rolcreatedb | rolcanlogin | rolreplication | rolbypassrls | rolconnlimit | rolpassword | rolvaliduntil 
+---------+----------+------------+---------------+-------------+-------------+----------------+--------------+--------------+-------------+---------------
+ admin   | t        | t          | f             | f           | f           | f              | f            |           -1 |             | 
 (1 row)
 
 ALTER ROLE sample_role1 LOGIN;
-SELECT rolname FROM pg_authid WHERE rolname = 'sample_role1';
-   rolname    
---------------
- sample_role1
+SELECT 
+    rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb, rolcanlogin, 
+    rolreplication, rolbypassrls, rolconnlimit, rolpassword, rolvaliduntil
+FROM 
+    pg_authid 
+WHERE 
+    rolname = 'sample_role1';
+   rolname    | rolsuper | rolinherit | rolcreaterole | rolcreatedb | rolcanlogin | rolreplication | rolbypassrls | rolconnlimit | rolpassword | rolvaliduntil 
+--------------+----------+------------+---------------+-------------+-------------+----------------+--------------+--------------+-------------+---------------
+ sample_role1 | f        | t          | f             | f           | t           | f              | f            |           -1 |             | 
 (1 row)
 
 GRANT sample_role1 TO sample_role2;

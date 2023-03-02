@@ -4,14 +4,50 @@ CREATE ROLE sample_role2;
 CREATE ROLE sample_role3;
 CREATE ROLE sample_role4;
 CREATE ROLE admin SUPERUSER;
-SELECT rolname FROM pg_authid WHERE rolname = 'sample_role1';
-SELECT rolname FROM pg_authid WHERE rolname = 'sample_role2';
-SELECT rolname FROM pg_authid WHERE rolname = 'sample_role3';
-SELECT rolname FROM pg_authid WHERE rolname = 'sample_role4';
-SELECT rolname FROM pg_authid WHERE rolname = 'admin';
+SELECT 
+    rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb, rolcanlogin, 
+    rolreplication, rolbypassrls, rolconnlimit, rolpassword, rolvaliduntil
+FROM 
+    pg_authid 
+WHERE 
+    rolname = 'sample_role1';
+SELECT 
+    rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb, rolcanlogin, 
+    rolreplication, rolbypassrls, rolconnlimit, rolpassword, rolvaliduntil
+FROM 
+    pg_authid 
+WHERE 
+    rolname = 'sample_role2';
+SELECT 
+    rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb, rolcanlogin, 
+    rolreplication, rolbypassrls, rolconnlimit, rolpassword, rolvaliduntil
+FROM 
+    pg_authid 
+WHERE 
+    rolname = 'sample_role3';
+SELECT 
+    rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb, rolcanlogin, 
+    rolreplication, rolbypassrls, rolconnlimit, rolpassword, rolvaliduntil
+FROM 
+    pg_authid 
+WHERE 
+    rolname = 'sample_role4';
+SELECT 
+    rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb, rolcanlogin, 
+    rolreplication, rolbypassrls, rolconnlimit, rolpassword, rolvaliduntil
+FROM 
+    pg_authid 
+WHERE 
+    rolname = 'admin';
 
 ALTER ROLE sample_role1 LOGIN;
-SELECT rolname FROM pg_authid WHERE rolname = 'sample_role1';
+SELECT 
+    rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb, rolcanlogin, 
+    rolreplication, rolbypassrls, rolconnlimit, rolpassword, rolvaliduntil
+FROM 
+    pg_authid 
+WHERE 
+    rolname = 'sample_role1';
 
 GRANT sample_role1 TO sample_role2;
 GRANT sample_role1 TO sample_role3, sample_role4;
