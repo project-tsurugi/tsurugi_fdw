@@ -42,13 +42,6 @@ PG_FUNCTION_INFO_V1(tg_show_transaction);
 }
 #endif
 
-// options for beginning transactions
-static constexpr const char* const OPTION_TYPE 				= "TransactionType";
-static constexpr const char* const OPTION_PRIORITY 			= "TransactionPriority";
-static constexpr const char* const OPTION_LABEL 			= "TransactionLabel";
-static constexpr const char* const OPTION_WRITE_PRESERVE	= "WritePreserve";
-static constexpr const char* const OPTION_TABLE_NAME		= "TableName";
-
 static int64_t type = ogawayama::stub::TransactionType::SHORT;
 static int64_t priority = ogawayama::stub::TransactionPriority::TRANSACTION_PRIORITY_UNSPECIFIED;
 static std::string label = "pgsql-transaction";
@@ -109,19 +102,19 @@ GetTransactionOption(boost::property_tree::ptree& transaction)
 	boost::property_tree::ptree pt_table;
 
 	transaction.clear();
-	transaction.put<int64_t>(OPTION_TYPE, type);
-	transaction.put<int64_t>(OPTION_PRIORITY, priority);
-	transaction.put<std::string>(OPTION_LABEL, label);
+	transaction.put<int64_t>(ogawayama::stub::TRANSACTION_TYPE, type);
+	transaction.put<int64_t>(ogawayama::stub::TRANSACTION_PRIORITY, priority);
+	transaction.put<std::string>(ogawayama::stub::TRANSACTION_LABEL, label);
 	if (write_preserves.size()) {
 		for (std::string prev_table : write_preserves) {
-			pt_table.put<std::string>(OPTION_TABLE_NAME, prev_table);
+			pt_table.put<std::string>(ogawayama::stub::TABLE_NAME, prev_table);
 			pt_write_preserves.push_back(std::make_pair("", pt_table));
 		}
 	} else {
-		pt_table.put<std::string>(OPTION_TABLE_NAME, "");
+		pt_table.put<std::string>(ogawayama::stub::TABLE_NAME, "");
 		pt_write_preserves.push_back(std::make_pair("", pt_table));
 	}
-	transaction.add_child(OPTION_WRITE_PRESERVE, pt_write_preserves);
+	transaction.add_child(ogawayama::stub::WRITE_PRESERVE, pt_write_preserves);
 
 	result = true;
 	return result;

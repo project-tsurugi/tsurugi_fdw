@@ -136,9 +136,9 @@ ERROR_CODE StubManager::begin(stub::Transaction** transaction)
 	}
 
 	if (transaction_ == nullptr) {
-#if 0
+#if 1
 		boost::property_tree::ptree option;
-		if (GetTransactionOption(option))
+		if (GetTransactionOption(option) == false)
 		{
 			std::cerr << "GetTransactionOption() failed. " << (int) error << std::endl;
 			return error;
