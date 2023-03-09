@@ -93,6 +93,8 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
                     || IsTransactionBlock());
 	ParseState *pstate;
 
+	elog(INFO, "tsurugi_fdw : %s", __func__);
+
 	/* This can recurse, so check for excessive recursion */
 	check_stack_depth();
 
@@ -212,6 +214,8 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
     bool	commandCollected = false;
     ObjectAddress address;
     ObjectAddress secondaryObject = InvalidObjectAddress;
+
+	elog(INFO, "tsurugi_fdw : %s", __func__);
 
     /* All event trigger calls are done only when isCompleteQuery is true */
     needCleanup = isCompleteQuery && EventTriggerBeginCompleteQuery();

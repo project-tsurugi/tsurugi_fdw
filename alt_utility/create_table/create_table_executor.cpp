@@ -58,6 +58,8 @@ int64_t execute_create_table(CreateStmt* create_stmt)
 {
 	Assert(create_stmt != nullptr);
 
+	elog(INFO, "tsurugi_fdw : %s", __func__);
+
 	metadata::ObjectIdType object_id = metadata::INVALID_OBJECT_ID;
 	CreateTable create_table{create_stmt};
 
@@ -140,6 +142,8 @@ bool send_create_table_message(const int64_t object_id)
 {
 	bool result = false;
 
+	elog(INFO, "tsurugi_fdw : %s", __func__);
+
 	if (object_id == metadata::INVALID_OBJECT_ID) {
 		return result;
 	}
@@ -171,6 +175,8 @@ bool remove_table_metadata(const int64_t object_id)
 {
   bool result{false};
   auto tables = std::make_unique<metadata::Tables>(DBNAME);
+
+  elog(INFO, "tsurugi_fdw : %s", __func__);
 
   if (tables->exists(object_id)) {
     metadata::ErrorCode error = tables->remove(object_id);

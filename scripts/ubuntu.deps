@@ -1,5 +1,4 @@
 build-essential
-clang-tidy-8
 cmake
 curl
 doxygen

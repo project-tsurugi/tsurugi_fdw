@@ -33,6 +33,7 @@ extern "C" {
 
 #include "access/xact.h"
 #include "utils/syscache.h"
+#include "utils/date.h"
 #include "access/htup_details.h"
 #include "access/sysattr.h"
 #include "access/table.h"
@@ -2111,6 +2112,72 @@ confirm_columns(MetadataPtr metadata, ForeignScanState* node)
 				}
 				break;
 
+			case stub::Metadata::ColumnType::Type::DATE:
+				if (fdw_state->column_types[i] != DATEOID)
+				{
+					elog(ERROR,
+						"Don't match data type of the column. "
+						"(column: %lu) (og: %d) (pg: %u)",
+						i, (int) types.get_type(), fdw_state->column_types[i] );
+					ret = false;
+				}
+				break;
+
+			case stub::Metadata::ColumnType::Type::TIME:
+				if (fdw_state->column_types[i] != TIMEOID)
+				{
+					elog(ERROR,
+						"Don't match data type of the column. "
+						"(column: %lu) (og: %d) (pg: %u)",
+						i, (int) types.get_type(), fdw_state->column_types[i] );
+					ret = false;
+				}
+				break;
+
+			case stub::Metadata::ColumnType::Type::TIMESTAMP:
+				if (fdw_state->column_types[i] != TIMESTAMPOID)
+				{
+					elog(ERROR,
+						"Don't match data type of the column. "
+						"(column: %lu) (og: %d) (pg: %u)",
+						i, (int) types.get_type(), fdw_state->column_types[i] );
+					ret = false;
+				}
+				break;
+
+			case stub::Metadata::ColumnType::Type::TIMETZ:
+				if (fdw_state->column_types[i] != TIMETZOID)
+				{
+					elog(ERROR,
+						"Don't match data type of the column. "
+						"(column: %lu) (og: %d) (pg: %u)",
+						i, (int) types.get_type(), fdw_state->column_types[i] );
+					ret = false;
+				}
+				break;
+
+			case stub::Metadata::ColumnType::Type::TIMESTAMPTZ:
+				if (fdw_state->column_types[i] != TIMESTAMPTZOID)
+				{
+					elog(ERROR,
+						"Don't match data type of the column. "
+						"(column: %lu) (og: %d) (pg: %u)",
+						i, (int) types.get_type(), fdw_state->column_types[i] );
+					ret = false;
+				}
+				break;
+
+			case stub::Metadata::ColumnType::Type::DECIMAL:
+				if (fdw_state->column_types[i] != NUMERICOID)
+				{
+					elog(ERROR,
+						"Don't match data type of the column. "
+						"(column: %lu) (og: %d) (pg: %u)",
+						i, (int) types.get_type(), fdw_state->column_types[i] );
+					ret = false;
+				}
+				break;
+
 			case stub::Metadata::ColumnType::Type::NULL_VALUE:
 				elog(DEBUG1, "nullptr_VALUE found. (column: %lu)", i);
 				ret = false;
@@ -2199,7 +2266,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
     int         attid = 0;
 
     foreach(lc, retrieved_attrs)
-	{
+    {
         int     attnum = lfirst_int(lc) - 1;
         Oid     pgtype = TupleDescAttr(tupleDescriptor, attnum)->atttypid;
         HeapTuple 	heap_tuple;
@@ -2244,7 +2311,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case INT8OID:
                 {
                     std::int64_t value;
-                    if (result_set->next_column(value) == ERROR_CODE::OK) 
+                    if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         is_null[attnum] = false;
                         row[attnum] = Int64GetDatum(value);
@@ -2273,7 +2340,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                     }
                 }
                 break;
-            
+
             case BPCHAROID:
             case VARCHAROID:
             case TEXTOID:
@@ -2283,25 +2350,79 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                     ERROR_CODE result = result_set->next_column(value);
                     if (result == ERROR_CODE::OK)
                     {
-                        value_datum = CStringGetDatum(value.data());				
+                        value_datum = CStringGetDatum(value.data());
                         if (value_datum == (Datum) nullptr)
                         {
                             break;
                         }
                         is_null[attnum] = false;
-                        row[attnum] = (Datum) OidFunctionCall3(typinput, 
+                        row[attnum] = (Datum) OidFunctionCall3(typinput,
                                                     value_datum, 
-                                                    ObjectIdGetDatum(InvalidOid), 
+                                                    ObjectIdGetDatum(InvalidOid),
                                                     Int32GetDatum(typemod));
                     }
                 }
                 break;
-                
+
+            case DATEOID:
+                {
+                    stub::date_type value;
+                    if (result_set->next_column(value) == ERROR_CODE::OK)
+                    {
+                        DateADT date;
+                        date = value.days_since_epoch();
+                        date = date - (POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE);
+                        row[attnum] = DateADTGetDatum(date);
+                        is_null[attnum] = false;
+                    }
+                }
+                break;
+
+            case TIMEOID:
+                {
+                    stub::time_type value;
+                    if (result_set->next_column(value) == ERROR_CODE::OK)
+                    {
+                        TimeADT time;
+                        auto subsecond = value.subsecond().count();
+                        time = (value.hour() * MINS_PER_HOUR) + value.minute();
+                        time = (time * SECS_PER_MINUTE) + value.second();
+                        time = time * USECS_PER_SEC;
+                        if (subsecond != 0) {
+                            subsecond /= 1000;
+                            time = time + subsecond;
+                        }
+                        row[attnum] = TimeADTGetDatum(time);
+                        is_null[attnum] = false;
+                    }
+                }
+                break;
+
+            case TIMESTAMPOID:
+                {
+                    stub::timestamp_type value;
+                    if (result_set->next_column(value) == ERROR_CODE::OK)
+                    {
+                        Timestamp timestamp;
+                        auto subsecond = value.subsecond().count();
+                        timestamp = value.seconds_since_epoch().count() -
+                            ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
+                        timestamp = timestamp * USECS_PER_SEC;
+                        if (subsecond != 0) {
+                            subsecond /= 1000;
+                            timestamp = timestamp + subsecond;
+                        }
+                        row[attnum] = TimestampGetDatum(timestamp);
+                        is_null[attnum] = false;
+                    }
+                }
+                break;
+
             default:
                 elog(ERROR, "Invalid data type of PG. (%u)", pgtype);
                 break;
         }
-	}
+    }
 }
 
 /*
