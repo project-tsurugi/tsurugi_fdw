@@ -1304,6 +1304,7 @@ tsurugiEndForeignScan(ForeignScanState* node)
 		{
 			elog(ERROR, "transaction::commit() failed. (%d)", (int) error);
 		}
+    	elog(LOG, "transaction::commit() done.");
 	}
 
 	StubManager::end();
@@ -1373,8 +1374,9 @@ tsurugiIterateDirectModify(ForeignScanState* node)
         if (err != ERROR_CODE::OK)
         {
             elog(ERROR, "transaction::commit() failed. (%d)", (int) err);
-        }        
-    } 
+        }
+    	elog(LOG, "transaction::commit() done.");
+    }
     else 
     {
         err = fdw_info_.transaction->rollback();
@@ -1782,7 +1784,8 @@ tsurugiExecForeignInsert(
         if (err != ERROR_CODE::OK)
         {
             elog(ERROR, "transaction::commit() failed. (%d)", (int) err);
-        }        
+        }
+    	elog(LOG, "transaction::commit() done.");
     } 
     else 
     {
@@ -2007,6 +2010,7 @@ tsurugi_create_cursor(ForeignScanState* node)
       fdw_info_.transaction->commit();
       fdw_info_.transaction = nullptr;
       fdw_info_.xact_level--;
+      elog(LOG, "transaction::commit() done.");
   }        
 	
 	fdw_state->cursor_exists = true;
@@ -2309,11 +2313,11 @@ make_tuple_from_result_row(ResultSetPtr result_set,
 static void
 begin_backend_xact(void)
 {
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+	elog(LOG, "tsurugi_fdw : %s", __func__);
 
 	/* ローカルトランザクションのネストレベルを取得する */
     int local_xact_level = GetCurrentTransactionNestLevel();
-	elog(DEBUG1, "Local transaction level: (%d)", local_xact_level);
+	elog(LOG, "Local transaction level: (%d)", local_xact_level);
 
 	if (local_xact_level <= 0)
 	{
@@ -2330,6 +2334,7 @@ begin_backend_xact(void)
 				{
 					elog(ERROR, "Connection::begin() failed. (%d)", (int) error);
 				}
+    			elog(LOG, "Connection::begin() started. ");
 			}
 			else
 			{
@@ -2345,7 +2350,7 @@ begin_backend_xact(void)
 		elog(ERROR, "Nested transaction is NOT supported.");
 	}
 
-    elog(DEBUG2, "FDW transaction level: (%d)", fdw_info_.xact_level);
+    elog(LOG, "FDW transaction level: (%d)", fdw_info_.xact_level);
 }
 
 /*
@@ -2402,11 +2407,11 @@ ogawayama_xact_callback (XactEvent event, void *arg)
 			case XACT_EVENT_PARALLEL_COMMIT:
 			case XACT_EVENT_PARALLEL_ABORT:
 			case XACT_EVENT_PARALLEL_PRE_COMMIT:
-				elog(DEBUG1, "Unexpected XACT event occurred. (%d)", event);
+				elog(WARNING, "Unexpected XACT event occurred. (%d)", event);
 				break;
 
 			default:
-				elog(WARNING, "Unexpected XACT event occurred. (Unknown event)");
+				elog(WARNING, "Unexpected XACT event occurred. (%d)", event);
 				break;
 		}
 	}
