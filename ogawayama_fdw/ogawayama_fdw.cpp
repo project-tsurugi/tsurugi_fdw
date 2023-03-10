@@ -1294,24 +1294,6 @@ tsurugiEndForeignScan(ForeignScanState* node)
 
 	/* close cursor */
 	fdw_info_.result_set = nullptr;
-
-	ERROR_CODE error;
-
-	if (fdw_info_.transaction != nullptr)
-	{
-		error = fdw_info_.transaction->commit();
-        fdw_info_.transaction = nullptr;
-		if (error != ERROR_CODE::OK)
-		{
-			elog(ERROR, "transaction::commit() failed. (%d)", (int) error);
-		}
-    	elog(LOG, "transaction::commit() done.");
-	}
-
-	StubManager::end();
-	fdw_info_.xact_level--;
-	elog(DEBUG2, "FDW xact_level: (%d)", fdw_info_.xact_level);
-
 	if (fdw_state != nullptr)
 		free_fdwstate(fdw_state);
 	
@@ -1369,16 +1351,7 @@ tsurugiIterateDirectModify(ForeignScanState* node)
 	elog(LOG, "transaction::execute_statement() done.");
 
     ERROR_CODE err;
-	if (error == ERROR_CODE::OK) 
-    {
-        err = fdw_info_.transaction->commit();
-        if (err != ERROR_CODE::OK)
-        {
-            elog(ERROR, "transaction::commit() failed. (%d)", (int) err);
-        }
-    	elog(LOG, "transaction::commit() done.");
-    }
-    else 
+	if (error != ERROR_CODE::OK) 
     {
         err = fdw_info_.transaction->rollback();
         if (err != ERROR_CODE::OK)
@@ -1386,6 +1359,9 @@ tsurugiIterateDirectModify(ForeignScanState* node)
             elog(ERROR, "transaction::rollback() failed. (%d)", (int) err);
         }
         elog(ERROR, "transaction::execute_statement() failed. (%d)", (int) error);	
+
+        // 実験的呼び出し
+        ogawayama_xact_callback(XACT_EVENT_ABORT, nullptr);
 	}
 	
 	return slot;	
@@ -1399,11 +1375,6 @@ static void
 tsurugiEndDirectModify(ForeignScanState* node)
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-
-	StubManager::end();
-	fdw_info_.transaction = nullptr;
-	fdw_info_.xact_level--;
-	elog(DEBUG2, "xact_level: (%d)", fdw_info_.xact_level);
 
 	if (node->fdw_state != nullptr)
 		free_fdwstate((tsurugiFdwState*) node->fdw_state);
@@ -1779,16 +1750,7 @@ tsurugiExecForeignInsert(
 	elog(DEBUG2, "transaction::execute_statement() done.");
 
     ERROR_CODE err;
-	if (error == ERROR_CODE::OK) 
-    {
-        err = fdw_info_.transaction->commit();
-        if (err != ERROR_CODE::OK)
-        {
-            elog(ERROR, "transaction::commit() failed. (%d)", (int) err);
-        }
-    	elog(LOG, "transaction::commit() done.");
-    } 
-    else 
+	if (error != ERROR_CODE::OK) 
     {
         err = fdw_info_.transaction->rollback();
         if (err != ERROR_CODE::OK)
@@ -1796,6 +1758,9 @@ tsurugiExecForeignInsert(
             elog(ERROR, "transaction::rollback() failed. (%d)", (int) err);
         }
         elog(ERROR, "transaction::execute_statement() failed. (%d)", (int) error);	
+
+        // 実験的呼び出し
+        ogawayama_xact_callback(XACT_EVENT_ABORT, nullptr);
 	}
 	
 	slot = nullptr;
@@ -2434,62 +2399,59 @@ make_tuple_from_result_row(ResultSetPtr result_set,
 static void
 begin_backend_xact(void)
 {
-	elog(LOG, "tsurugi_fdw : %s", __func__);
-
-	/* ローカルトランザクションのネストレベルを取得する */
     int local_xact_level = GetCurrentTransactionNestLevel();
-	elog(LOG, "Local transaction level: (%d)", local_xact_level);
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "PG transaction level: (%d)", local_xact_level);
+	elog(DEBUG3, "TG transaction level: (%d)", fdw_info_.xact_level);
 
 	if (local_xact_level <= 0)
 	{
-		elog(WARNING, "local_xact_level (%d)", local_xact_level);
+		elog(WARNING, "Illegal transaction level. (%d)", local_xact_level);
 	}
 	else if (local_xact_level == 1)
 	{
-		if (fdw_info_.xact_level == 0)
-		{	
-			if (fdw_info_.transaction == nullptr)
-			{
-				ERROR_CODE error = StubManager::begin(&fdw_info_.transaction);
-				if (error != ERROR_CODE::OK) 
-				{
-					elog(ERROR, "Connection::begin() failed. (%d)", (int) error);
-				}
-    			elog(LOG, "Connection::begin() started. ");
-			}
-			else
-			{
-				elog(ERROR, "transaction alreayd started.");
-			}
-			fdw_info_.xact_level++;
-			elog(DEBUG1, "StubManager::begin() done. (xact_level: %d)", 
-			fdw_info_.xact_level);
-		}
+        if (fdw_info_.transaction == nullptr)
+        {
+            ERROR_CODE error = StubManager::begin(&fdw_info_.transaction);
+            if (error != ERROR_CODE::OK) 
+            {
+                elog(ERROR, "Connection::begin() failed. (error: %d)", 
+                    (int) error);
+            }
+            fdw_info_.xact_level++;
+            elog(LOG, "Connection::begin() done. (TG xact_level: %d)", 
+                (int) fdw_info_.xact_level);
+        }
+        else
+        {
+            elog(ERROR, "TG transaction already exists.");
+        }
 	}
 	else if (local_xact_level >= 2)
 	{
 		elog(ERROR, "Nested transaction is NOT supported.");
 	}
 
-    elog(LOG, "FDW transaction level: (%d)", fdw_info_.xact_level);
+    elog(DEBUG4, "TG transaction level: (%d)", fdw_info_.xact_level);
 }
 
 /*
- * 	@biref	Callback function for transaction events.
- *	@param	Transaction event.
+ * 	ogawayama_xact_callback
+        Callback function for transaction events.
+ *	    Transaction events. (See xact.h)
  */
 static void
-ogawayama_xact_callback (XactEvent event, void *arg)
+ogawayama_xact_callback(XactEvent event, void *arg)
 {
     int local_xact_level = GetCurrentTransactionNestLevel();
 
-	elog(LOG, "tsurugi_fdw : %s (event: %d)", __func__, (int) event);
-	elog(DEBUG2, "FDW transaction level: (%d)", fdw_info_.xact_level);
-	elog(DEBUG2, "Local transaction level: (%d)", local_xact_level);
+	elog(DEBUG1, "tsurugi_fdw : %s (event: %d)", __func__, (int) event);
+	elog(DEBUG3, "TG transaction level: (%d)", fdw_info_.xact_level);
+	elog(DEBUG3, "PG transaction level: (%d)", local_xact_level);
 
 	if (fdw_info_.xact_level > 0)
 	{
-		/* 入力されるeventの内容は、xact.hに記載あり */
 		switch (event)
 		{
 			case XACT_EVENT_PRE_COMMIT:
@@ -2499,22 +2461,24 @@ ogawayama_xact_callback (XactEvent event, void *arg)
 			case XACT_EVENT_COMMIT:
 				elog(LOG, "XACT_EVENT_COMMIT");
 				fdw_info_.transaction->commit();
+				fdw_info_.xact_level--;
+				elog(LOG, "Transaction::commit() done. (TG xact_level: %d)", 
+					fdw_info_.xact_level);
 				fdw_info_.transaction = nullptr;
 				StubManager::end();
-				fdw_info_.xact_level--;
-				elog(DEBUG1, "Transaction::commit() done. (FDW xact_level: %d)", 
-					fdw_info_.xact_level);
+				elog(DEBUG2, "Transaction::end() done.");
 				break;
 
 			case XACT_EVENT_ABORT:
 				elog(LOG, "XACT_EVENT_ABORT (xact_level: %d)", 
                     fdw_info_.xact_level);
 				fdw_info_.transaction->rollback();
+				fdw_info_.xact_level--;
+				elog(LOG, "Transaction::rollback() done. (TG xact_level: %d)", 
+					fdw_info_.xact_level);
 				fdw_info_.transaction = nullptr;
 				StubManager::end();
-				fdw_info_.xact_level--;
-				elog(DEBUG1, "Transaction::rollback() done. (FDW xact_level: %d)", 
-					fdw_info_.xact_level);
+				elog(DEBUG2, "Transaction::end() done.");
 				break;
 
 			case XACT_EVENT_PRE_PREPARE:
@@ -2536,6 +2500,4 @@ ogawayama_xact_callback (XactEvent event, void *arg)
 				break;
 		}
 	}
-
-	elog(DEBUG4, "ogawayama_xact_callback() done.");
 }
