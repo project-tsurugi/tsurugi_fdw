@@ -1,12 +1,11 @@
-
 #include <iostream>
 #include <string>
 #include <string_view>
 #include <boost/property_tree/ini_parser.hpp>
+#include <boost/filesystem.hpp>
 
 #include "ogawayama/stub/error_code.h"
 #include "ogawayama/stub/api.h"
-
 #include "stub_manager.h"
 
 using namespace ogawayama;
@@ -39,14 +38,16 @@ std::string get_shared_memory_name()
 {
     std::string name(ogawayama::common::param::SHARED_MEMORY_NAME);  
     boost::property_tree::ptree pt;
-    try {
-        read_ini("tsurugi_fdw.conf", pt);
+    const boost::filesystem::path conf_file("tsurugi_fdw.conf");
+    boost::system::error_code error;
+    if (boost::filesystem::exists(conf_file, error)) {
+        boost::property_tree::read_ini("tsurugi_fdw.conf", pt);
         boost::optional<std::string> str = 
             pt.get_optional<std::string>("Configurations.SHARED_MEMORY_NAME");
         if (str) {
             name = str.get();
         }
-    } catch(std::exception& e) {}
+    }
 
     return name;
 }
