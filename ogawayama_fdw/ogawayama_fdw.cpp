@@ -334,6 +334,9 @@ static void make_tuple_from_result_row(ResultSetPtr result_set,
                                         tsurugiFdwState* fdw_state);
 static void begin_backend_xact(void);
 static void ogawayama_xact_callback (XactEvent event, void *arg);
+static void tsurugi_start_transaction();
+static void tsurugi_commit_transaction();
+static void tsurugi_rollback_transaction();
 
 extern PGDLLIMPORT PGPROC *MyProc;
 
@@ -1353,15 +1356,9 @@ tsurugiIterateDirectModify(ForeignScanState* node)
     ERROR_CODE err;
 	if (error != ERROR_CODE::OK) 
     {
-        err = fdw_info_.transaction->rollback();
-        if (err != ERROR_CODE::OK)
-        {
-            elog(ERROR, "transaction::rollback() failed. (%d)", (int) err);
-        }
-        elog(ERROR, "transaction::execute_statement() failed. (%d)", (int) error);	
-
-        // 実験的呼び出し
-        ogawayama_xact_callback(XACT_EVENT_ABORT, nullptr);
+        elog(ERROR, "transaction::execute_statement() failed. (%d)", 
+            (int) error);
+        tsurugi_rollback_transaction();
 	}
 	
 	return slot;	
@@ -1749,18 +1746,11 @@ tsurugiExecForeignInsert(
 	error = fdw_info_.transaction->execute_statement(query);
 	elog(DEBUG2, "transaction::execute_statement() done.");
 
-    ERROR_CODE err;
 	if (error != ERROR_CODE::OK) 
     {
-        err = fdw_info_.transaction->rollback();
-        if (err != ERROR_CODE::OK)
-        {
-            elog(ERROR, "transaction::rollback() failed. (%d)", (int) err);
-        }
-        elog(ERROR, "transaction::execute_statement() failed. (%d)", (int) error);	
-
-        // 実験的呼び出し
-        ogawayama_xact_callback(XACT_EVENT_ABORT, nullptr);
+        elog(ERROR, "transaction::execute_statement() failed. (%d)", 
+            (int) error);
+        tsurugi_rollback_transaction();
 	}
 	
 	slot = nullptr;
@@ -1951,7 +1941,7 @@ store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist)
 }
 
 /*
- *	@brief	dispatch the query to ogawayama stub.
+ * tsurugi_create_cursor
  */
 static void 
 tsurugi_create_cursor(ForeignScanState* node)
@@ -1961,25 +1951,21 @@ tsurugi_create_cursor(ForeignScanState* node)
 
 	tsurugiFdwState* fdw_state = (tsurugiFdwState*) node->fdw_state;
 
-  std::string tsurugi_query = make_tsurugi_query(fdw_state->query_string);
-  elog(LOG, "tsurugi_fdw : transaction::execute_query() start. \n\"%s\"", 
-      tsurugi_query.c_str());
+    std::string tsurugi_query = make_tsurugi_query(fdw_state->query_string);
+    elog(LOG, "tsurugi_fdw : transaction::execute_query() start. \n\"%s\"", 
+        tsurugi_query.c_str());
 
-  /* dispatch a query to tsurugi. */
-  fdw_info_.result_set = nullptr;
-  ERROR_CODE error = fdw_info_.transaction->execute_query(tsurugi_query, 
-                                                          fdw_info_.result_set);
-  elog(LOG, "tsurugi_fdw : transaction::execute_query() done.");
-  if (error != ERROR_CODE::OK)
-  {
-      elog(ERROR, "Transaction::execute_query() failed. (%d)", (int) error);
-      fdw_info_.transaction->commit();
-      fdw_info_.transaction = nullptr;
-      fdw_info_.xact_level--;
-      elog(LOG, "transaction::commit() done.");
-  }        
-	
-	fdw_state->cursor_exists = true;
+    fdw_info_.result_set = nullptr;
+    ERROR_CODE error = fdw_info_.transaction->execute_query(tsurugi_query, 
+                                                            fdw_info_.result_set);
+    elog(LOG, "tsurugi_fdw : transaction::execute_query() done.");
+    if (error != ERROR_CODE::OK)
+    {
+        elog(ERROR, "Transaction::execute_query() failed. (%d)", (int) error);
+        tsurugi_rollback_transaction();
+    }
+
+    fdw_state->cursor_exists = true;
 	fdw_state->eof_reached = false;
 }
 
@@ -2179,7 +2165,8 @@ make_virtual_tuple(TupleTableSlot* slot, ForeignScanState* node)
 }
 
 /*
- *	@brief	fetch result set from ogawayama stub.
+ * tsurugi_fetch_more_data
+ *      Fetch result set from ogawayama stub.
  */
 static void
 tsurugi_fetch_more_data(ForeignScanState* node)
@@ -2437,8 +2424,89 @@ begin_backend_xact(void)
 }
 
 /*
+ * Start a tsurugi transaction.
+ */
+static void
+tsurugi_start_transaction()
+{
+    if (fdw_info_.transaction == nullptr)
+    {
+        elog(LOG, "tsurugi_fdw : Try to start the transaction.");
+        ERROR_CODE error = StubManager::begin(&fdw_info_.transaction);
+        if (error == ERROR_CODE::OK) 
+        {
+            elog(INFO, "START TSURUGI TRANSACTION");
+            fdw_info_.xact_level++;
+        }
+        else
+        {
+            elog(ERROR, "Connection::begin() failed. (error: %d)", 
+                (int) error);
+        }
+        elog(LOG, "Connection::begin() done. (TG xact_level: %d)", 
+            (int) fdw_info_.xact_level);
+    }
+    else
+    {
+        elog(ERROR, "Tsurugi transaction already exists.");
+    }
+}
+
+/*
+ * Commit a tsurugi transaction.
+ */
+static void 
+tsurugi_commit_transaction()
+{
+    Assert(fdw_info_.transaction != nullptr);
+
+    elog(LOG, "tsurugi_fdw : Try to commit the transaction.");
+    ERROR_CODE error = fdw_info_.transaction->commit();
+    if (error == ERROR_CODE::OK) 
+    {
+        elog(INFO, "TSURUGI TRANSACTION COMMIT");
+    }
+    else
+    {
+        elog(WARNING, "Transaction::commit() failed. (error: %d)",
+            (int) error);
+    }
+    fdw_info_.transaction = nullptr;
+    fdw_info_.xact_level--;
+    StubManager::end();
+    elog(DEBUG1, "Transaction::end() done.");
+}
+
+/*
+ * Rollback a tsurugi transaction.
+ */
+static void 
+tsurugi_rollback_transaction()
+{
+    Assert(fdw_info_.transaction != nullptr);
+
+    bool result = false;
+
+    elog(LOG, "Tsurugi_fdw : Try to rollback the transaction.");
+    ERROR_CODE error = fdw_info_.transaction->rollback();
+    if (error == ERROR_CODE::OK)
+    {
+        elog(INFO, "TSURUGI TRANSACTION ROLLBACK");
+    }
+    else
+    {
+        elog(WARNING, "transaction::rollback() failed. (%d)", 
+            (int) error);
+    }
+    fdw_info_.transaction = nullptr;
+    fdw_info_.xact_level--;
+    StubManager::end();
+    elog(DEBUG1, "Transaction::end() done.");
+}
+
+/*
  * 	ogawayama_xact_callback
-        Callback function for transaction events.
+ *      Callback function for transaction events.
  *	    Transaction events. (See xact.h)
  */
 static void
@@ -2459,26 +2527,15 @@ ogawayama_xact_callback(XactEvent event, void *arg)
 				break;
 
 			case XACT_EVENT_COMMIT:
-				elog(LOG, "XACT_EVENT_COMMIT");
-				fdw_info_.transaction->commit();
-				fdw_info_.xact_level--;
-				elog(LOG, "Transaction::commit() done. (TG xact_level: %d)", 
-					fdw_info_.xact_level);
-				fdw_info_.transaction = nullptr;
-				StubManager::end();
-				elog(DEBUG2, "Transaction::end() done.");
+				elog(LOG, "XACT_EVENT_COMMIT (TG transaction level: %d)",
+                    fdw_info_.xact_level);
+                tsurugi_commit_transaction();
 				break;
 
 			case XACT_EVENT_ABORT:
-				elog(LOG, "XACT_EVENT_ABORT (xact_level: %d)", 
+				elog(LOG, "XACT_EVENT_ABORT (TG transaction level: %d)", 
                     fdw_info_.xact_level);
-				fdw_info_.transaction->rollback();
-				fdw_info_.xact_level--;
-				elog(LOG, "Transaction::rollback() done. (TG xact_level: %d)", 
-					fdw_info_.xact_level);
-				fdw_info_.transaction = nullptr;
-				StubManager::end();
-				elog(DEBUG2, "Transaction::end() done.");
+                tsurugi_rollback_transaction();
 				break;
 
 			case XACT_EVENT_PRE_PREPARE:
