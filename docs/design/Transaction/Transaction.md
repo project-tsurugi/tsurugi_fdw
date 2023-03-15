@@ -41,7 +41,7 @@ tsurugiトランザクションには以下のトランザクション種別が�
 ### トランザクションラベル
 
 それぞれのトランザクションにつける名前。  
-デフォルトでは'pgsql-transaction'とする。
+デフォルトでは'pgsql-transaction'が設定される。
 
 ### 書き込み予約テーブル
 
@@ -51,58 +51,67 @@ longトランザクションにおいてデータの挿入／更新／削除な�
 
 ### 3-1. 明示的にトランザクションブロックを開始する
 
-tsurugiトランザクションを開始する前に`tg_set_transaction`でデフォルトのトランザクション特性を設定しておく。
-次に`tg_start_transaction`でトランザクションを開始し、`tg_commit`でトランザクションを終了する。
+`tg_start_transaction`でトランザクションを開始し`tg_commit`でトランザクションを終了する。明示的にトランザクションブロックを開始した場合は、明示的にトランザクションブロックを終了させる必要がある。
 
 ```sql
-SELECT tg_set_transaction('short');  -- デフォルトのトランザクション特性を設定する
-
 SELECT tg_start_transaction();  -- 明示的にトランザクションを開始する
-INSERT INTO tg_table VALUES (...);  -- tg_table: tsurugiテーブル（外部テーブル）
+INSERT INTO tg_table VALUES (...);  -- tg_table: tsurugiテーブル
 SELECT ... FROM tg_table WHERE ...;
 SELECT tg_commit();  -- トランザクション終了
 ```
 
-特定のトランザクションについてデフォルトのトランザクション特性を変更して実行したい場合は、`tg_start_transaction`にパラメータを設定することで実現できる。ここで設定したトランザクション特性は該当トランザクションのみで有効になり、**デフォルトのトランザクション特性は更新されない**。
+デフォルトのトランザクション特性を変更したい場合は`tg_set_transaction`で変更する。
 
 ```sql
-SELECT tg_set_transaction('short');  -- デフォルトのトランザクション特性を設定する(short)
+SELECT tg_set_transaction('short', 'interrupt');  /* デフォルトのトランザクション特性を変更する
+                                                    （priority = 'interrupt'） */
 
-SELECT tg_start_transaction('read_only', 'wait', 'read_only_tx');  -- このトランザクションでのみ有効な特性値
+SELECT tg_start_transaction();  -- 変更されたトランザクション特性が適用される（priority = 'interrupt'）
+INSERT INTO tg_table VALUES (...);
+SELECT ... FROM tg_table WHERE ...;
+SELECT tg_commit();  -- トランザクション終了
+```
+
+特定のトランザクションブロックのみトランザクション特性を変更したい場合は、`tg_start_transaction`にパラメータを設定する。ここで設定したトランザクション特性は該当トランザクションブロックのみで有効になり、**デフォルトのトランザクション特性は更新されない**。
+
+```sql
+SELECT tg_start_transaction('read_only', 'wait', 'read_only_tx');  -- このトランザクションブロックのみで有効
 SELECT ... FROM tg_table WHERE ...;
 SELECT tg_commit();  -- トランザクション終了
 
-INSERT INTO tg_table VALUES (...);  -- デフォルト設定のshortトランザクションが暗黙的に開始される
+SELECT tg_start_transaction();   -- デフォルトのトランザクション特性が適用される
+INSERT INTO tg_table VALUES (...); 
 SELECT tg_commit();  -- トランザクション終了
 ```
 
 ### 3-2 暗黙的にトランザクションを開始する
 
-`tg_start_transaction`を省略して暗黙的にトランザクションを開始することもできる。  
+`tg_start_transaction`を省略して暗黙的にトランザクションを開始することができる。  
 ~~トランザクションの終了（`tg_commit`や`tg_rollback`）は必須である。~~  
-この場合は、トランザクションが暗黙的にコミットされる（auto-commit）。
+この場合はトランザクションが暗黙的にコミットされる（auto-commit）。
 
 ```sql
-SELECT tg_set_transaction('short');
-
 INSERT INTO tg_table VALUES (...);  -- 暗黙的にトランザクションが開始し、コミットされる（COMMIT文不要）
 
-SELECT ... FROM tg_table;  -- INSERT文による更新が反映される
+SELECT tg_start_transaction();
+UPDATE tg_table SET ... WHERE ...;
+SELECT tg_rollback();  -- UPDATE文の更新内容は破棄されるが、上記のINSERT文の更新内容は破棄されない
 ```
 
 ### 3-3. longトランザクションを実行する
 
-longトランザクションを開始するためには事前に`tg_set_transaction`でlongトランザクションをデフォルトに設定し、`tg_set_write_preserve`で書き込みを予約するテーブル名を設定する。
+longトランザクションを実行するためには、事前に`tg_set_transaction`でデフォルトのトランザクション特性を変更した後に、`tg_set_write_preserve`で書き込みを予約するテーブル名を設定しておく。
 
 ```sql
 SELECT tg_set_transaction('long');  -- longトランザクションをデフォルトに設定する
-SELECT tg_set_write_preserve('tg_table');  -- 書き込み予約するテーブルを設定する（複数可）
+SELECT tg_set_write_preserve('tg_table1', 'tg_table2', 'tg_table3');  -- 書き込み予約するテーブルを設定する
 
-SELECT tg_start_transaction();  -- 省略可能
-INSERT INTO tg_table VALUES (...);
+SELECT tg_start_transaction();  -- longトランザクション開始
+INSERT INTO tg_table1 VALUES (...);
+UPDATE tg_table2 SET ... WHERE ...;
+DELETE FROM tg_table3 WHERE ...;
 ...
-SELECT ... FROM tg_table WHERE ...;
-SELECT tg_commit();  -- トランザクション終了
+SELECT tg_commit();  -- longトランザクション終了
 ```
 
 ### 3-4. PostgreSQLのトランザクションとの関係
@@ -110,17 +119,18 @@ SELECT tg_commit();  -- トランザクション終了
 PostgreSQLとTsurugiのトランザクションは別々に管理され、相互に影響を与えない。
 
 ```sql
-SELECT tg_start_transaction();  -- tsurugiトランザクションを開始する
+SELECT tg_start_transaction();      -- tsurugiトランザクションを開始する
 UPDATE tg_table SET ... WHERE ...;  -- tsurugiテーブル(tg_table)を更新する
 
-    BEGIN;  -- PostgreSQLのトランザクションを開始する
-    UPDATE pg_table SET ... WHERE ...;  -- PostgreSQLテーブル(pg_table)を更新する
+    BEGIN;                                  -- PostgreSQLのトランザクションを開始する
+    UPDATE pg_table SET ... WHERE ...;      -- PostgreSQLテーブル(pg_table)を更新する
 
-SELECT tg_rollback();  /* tsurugiトランザクションをアボートして終了する。
-                          tsurugiテーブル(tg_table)の更新内容は破棄されるが、
-                          PostgreSQLテーブル(pg_table)の更新内容は破棄されない。 */
+SELECT tg_rollback();               /*  tsurugiトランザクションをアボートして終了する。
+                                        tsurugiテーブル(tg_table)の更新内容は破棄されるが、
+                                        PostgreSQLテーブル(pg_table)の更新内容は破棄されない。 */
 
-    COMMIT;             -- PostgreSQLのトランザクション終了（更新内容を永続化する）
+    COMMIT;                                 /*  PostgreSQLのトランザクションを終了する
+                                                （PostgreSQLテーブルの変更内容が永続化される）
 ```
 
 ### 3-5. PostgreSQLのテーブルと連携したクエリーのトランザクション
@@ -135,18 +145,18 @@ SELECT tg_commit();
 PostgreSQLとTsurugiのトランザクションは別々に管理されるため、コミット前のtsurugiテーブルのデータを参照していないか注意する必要がある。
 
 ```sql
-SELECT tg_start_transaction();  -- tsurugiトランザクションを開始する
+SELECT tg_start_transaction();      -- tsurugiトランザクションを開始する
 UPDATE tg_table SET ... WHERE ...;  -- tsurugiテーブル(tg_table)を更新する
 
-    BEGIN;  -- PostgreSQLのトランザクションを開始する
+    BEGIN;                                          -- PostgreSQLのトランザクションを開始する
     INSERT INTO pg_table SELECT ... FROM tg_table;  /* コミット前のtsurugiテーブルのデータを
                                                        PostgreSQLのテーブルに挿入する！      */
 
-SELECT tg_rollback();  /* tsurugiトランザクションをアボートして終了する。
-                          tsurugiテーブル(tg_table)の更新内容は破棄されるが、
-                          PostgreSQLテーブル(pg_table)の更新内容は破棄されない！ */
+SELECT tg_rollback();               /*  tsurugiトランザクションをアボートして終了する。
+                                        tsurugiテーブル(tg_table)の更新内容は破棄されるが、
+                                        PostgreSQLテーブル(pg_table)の更新内容は破棄されない！ */
 
-    COMMIT;            -- PostgreSQLのトランザクション終了（更新内容を永続化する）
+    COMMIT;                                         -- PostgreSQLのトランザクションを終了する
 ```
 
 ## 4. リファレンス
