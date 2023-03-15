@@ -14,17 +14,25 @@ tsurugiのトランザクションには以下の５つのトランザクショ�
 - トランザクション種別
 - トランザクション優先度
 - トランザクションラベル
-- 書き込み予約テーブル ※longトランザクションのみ
+- 書き込み予約テーブル ※Longトランザクションのみ
 - 読み込み制限テーブル ※将来実装される予定の特性（本ドキュメントでは省略）
 
 ### トランザクション種別
 
-tsurugiトランザクションの種別を表す。トランザクションの用途によって適した種別を指定する必要がある。  
+tsurugiトランザクションの種別を表す。トランザクションの用途によって適した種別を指定する必要がある。
 tsurugiトランザクションには以下のトランザクション種別が用意されている。
 
-- `short` - アドホックな比較的短い処理時間が想定されるトランザクション（optimistic concurrency control）
-- `long` - バッチ処理など比較的長い処理時間が想定されるトランザクション（pessmisic concurrency control）
-- `read only` - 読み取りのみのトランザクション
+- `short`
+
+    Tsurugiにおいて`Short Transaction`と位置付けられているトランザクション（optimistic concurrency control）。比較的短時間で完了するアドホックなトランザクションを想定している。
+
+- `long`
+
+    Tsurugiにおいて`Long Transaction`と位置付けられているトランザクション（pessmisic concurrency control）。バッチ処理など比較的長い処理時間がかかるトランザクションを想定している。
+
+- `read only`
+
+    読み取りのみのトランザクション。
 
 デフォルトでは`short`が選択される。
 
@@ -45,7 +53,7 @@ tsurugiトランザクションには以下のトランザクション種別が�
 
 ### 書き込み予約テーブル
 
-longトランザクションにおいてデータの挿入／更新／削除などを可能とするテーブル。longトランザクションでは、事前に書き込み予約テーブルを設定しておく必要がある。
+Longトランザクションにおいてデータの挿入／更新／削除などを可能とするテーブル。Longトランザクションでは、事前に書き込み予約テーブルを設定しておく必要がある。
 
 ## 3. PostgreSQLからTsurugiのトランザクションを利用する方法
 
@@ -54,34 +62,40 @@ longトランザクションにおいてデータの挿入／更新／削除な�
 `tg_start_transaction`でトランザクションを開始し`tg_commit`でトランザクションを終了する。明示的にトランザクションブロックを開始した場合は、明示的にトランザクションブロックを終了させる必要がある。
 
 ```sql
-SELECT tg_start_transaction();  -- 明示的にトランザクションを開始する
-INSERT INTO tg_table VALUES (...);  -- tg_table: tsurugiテーブル
+SELECT tg_start_transaction();      --  明示的にトランザクションを開始する
+
+INSERT INTO tg_table VALUES (...);  --  Tsurugiテーブルを操作する（tg_table: tsurugiテーブル）
+UPDATE tg_table SET ... WHERE ...;
+DELETE FROM tg_table WHERE ...;
 SELECT ... FROM tg_table WHERE ...;
-SELECT tg_commit();  -- トランザクション終了
+
+SELECT tg_commit();     --  トランザクション終了
 ```
 
 デフォルトのトランザクション特性を変更したい場合は`tg_set_transaction`で変更する。
 
 ```sql
-SELECT tg_set_transaction('short', 'interrupt');  /* デフォルトのトランザクション特性を変更する
-                                                    （priority = 'interrupt'） */
+SELECT tg_set_transaction('short', 'interrupt');    /*  デフォルトのトランザクション特性を変更する
+                                                        （priority = 'interrupt'） */
 
-SELECT tg_start_transaction();  -- 変更されたトランザクション特性が適用される（priority = 'interrupt'）
+SELECT tg_start_transaction();  /*  変更されたトランザクション特性が適用される
+                                    （priority = 'interrupt'）  */
 INSERT INTO tg_table VALUES (...);
 SELECT ... FROM tg_table WHERE ...;
+
 SELECT tg_commit();  -- トランザクション終了
 ```
 
 特定のトランザクションブロックのみトランザクション特性を変更したい場合は、`tg_start_transaction`にパラメータを設定する。ここで設定したトランザクション特性は該当トランザクションブロックのみで有効になり、**デフォルトのトランザクション特性は更新されない**。
 
 ```sql
-SELECT tg_start_transaction('read_only', 'wait', 'read_only_tx');  -- このトランザクションブロックのみで有効
+SELECT tg_start_transaction('read_only', 'wait', 'read_only_tx');   --  このトランザクションブロックのみで有効
 SELECT ... FROM tg_table WHERE ...;
-SELECT tg_commit();  -- トランザクション終了
+SELECT tg_commit();     --  トランザクション終了
 
-SELECT tg_start_transaction();   -- デフォルトのトランザクション特性が適用される
+SELECT tg_start_transaction();      --  デフォルトのトランザクション特性が適用される
 INSERT INTO tg_table VALUES (...); 
-SELECT tg_commit();  -- トランザクション終了
+SELECT tg_commit();     --  トランザクション終了
 ```
 
 ### 3-2 暗黙的にトランザクションを開始する
@@ -91,27 +105,29 @@ SELECT tg_commit();  -- トランザクション終了
 この場合はトランザクションが暗黙的にコミットされる（auto-commit）。
 
 ```sql
-INSERT INTO tg_table VALUES (...);  -- 暗黙的にトランザクションが開始し、コミットされる（COMMIT文不要）
+INSERT INTO tg_table VALUES (...);  --  暗黙的にトランザクションが開始し、コミットされる（COMMIT文不要）
 
 SELECT tg_start_transaction();
 UPDATE tg_table SET ... WHERE ...;
-SELECT tg_rollback();  -- UPDATE文の更新内容は破棄されるが、上記のINSERT文の更新内容は破棄されない
+SELECT tg_rollback();   --  UPDATE文の更新内容は破棄されるが、上記のINSERT文の更新内容は破棄されない
 ```
 
-### 3-3. longトランザクションを実行する
+### 3-3. Longトランザクションを実行する
 
-longトランザクションを実行するためには、事前に`tg_set_transaction`でデフォルトのトランザクション特性を変更した後に、`tg_set_write_preserve`で書き込みを予約するテーブル名を設定しておく。
+Longトランザクションを実行するためには、事前に`tg_set_transaction`でデフォルトのトランザクション特性を変更した後に、`tg_set_write_preserve`で書き込みを予約するテーブル名を設定しておく。
 
 ```sql
-SELECT tg_set_transaction('long');  -- longトランザクションをデフォルトに設定する
-SELECT tg_set_write_preserve('tg_table1', 'tg_table2', 'tg_table3');  -- 書き込み予約するテーブルを設定する
+SELECT tg_set_transaction('long');      --  Longトランザクションをデフォルトに設定する
+SELECT tg_set_write_preserve('tg_table1', 'tg_table2', 'tg_table3');    --  書き込みを予約するテーブルを設定する
 
-SELECT tg_start_transaction();  -- longトランザクション開始
+SELECT tg_start_transaction();  -- Longトランザクション開始
+
 INSERT INTO tg_table1 VALUES (...);
 UPDATE tg_table2 SET ... WHERE ...;
 DELETE FROM tg_table3 WHERE ...;
 ...
-SELECT tg_commit();  -- longトランザクション終了
+
+SELECT tg_commit();             -- Longトランザクション終了
 ```
 
 ### 3-4. PostgreSQLのトランザクションとの関係
@@ -138,19 +154,19 @@ SELECT tg_rollback();               /*  tsurugiトランザクションをアボ
 tsurugiテーブルのデータを検索した結果をPostgreSQLのテーブルに挿入することができる。
 
 ```sql
-INSERT INTO pg_table SELECT ... FROM tg_table;  -- tsurugiテーブルのデータをPostgreSQLのテーブルに挿入する
+INSERT INTO pg_table SELECT ... FROM tg_table;  --  tsurugiテーブルのデータをPostgreSQLのテーブルに挿入する
 SELECT tg_commit();
 ```
 
 PostgreSQLとTsurugiのトランザクションは別々に管理されるため、コミット前のtsurugiテーブルのデータを参照していないか注意する必要がある。
 
 ```sql
-SELECT tg_start_transaction();      -- tsurugiトランザクションを開始する
-UPDATE tg_table SET ... WHERE ...;  -- tsurugiテーブル(tg_table)を更新する
+SELECT tg_start_transaction();      --  tsurugiトランザクションを開始する
+UPDATE tg_table SET ... WHERE ...;  --  tsurugiテーブル(tg_table)を更新する
 
-    BEGIN;                                          -- PostgreSQLのトランザクションを開始する
-    INSERT INTO pg_table SELECT ... FROM tg_table;  /* コミット前のtsurugiテーブルのデータを
-                                                       PostgreSQLのテーブルに挿入する！      */
+    BEGIN;                                          --  PostgreSQLのトランザクションを開始する
+    INSERT INTO pg_table SELECT ... FROM tg_table;  /*  コミット前のtsurugiテーブルのデータを
+                                                        PostgreSQLのテーブルに挿入する！      */
 
 SELECT tg_rollback();               /*  tsurugiトランザクションをアボートして終了する。
                                         tsurugiテーブル(tg_table)の更新内容は破棄されるが、
@@ -166,7 +182,7 @@ SELECT tg_rollback();               /*  tsurugiトランザクションをアボ
 - [tg_commit](commands/tg_commit.md) - 現在のトランザクションをコミットする
 - [tg_rollback](commands/tg_rollback.md) - 現在のトランザクションをアボートする
 - [tg_set_transaction](commands/tg_set_transaction.md) - デフォルトのトランザクション特性を設定する
-- [tg_set_write_preserve](commands/tg_set_write_preserve.md) - longトランザクションにおける書き込み予約テーブルを設定する
+- [tg_set_write_preserve](commands/tg_set_write_preserve.md) - Longトランザクションにおける書き込み予約テーブルを設定する
 - [tg_show_transaction](commands/tg_show_transaction.md) - デフォルトのトランザクション特性の値を表示する
 - [tg_start_transaction](commands/tg_start_transaction.md) - 新しいトランザクションブロックを開始する
 

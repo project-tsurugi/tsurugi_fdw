@@ -1,6 +1,6 @@
 # tg_set_write_preserve
 
-- tg_set_write_preserve - longトランザクションにおける書き込み予約テーブルを設定する
+- tg_set_write_preserve - Longトランザクションにおける書き込み予約テーブルを設定する
 
 ## 概要
 
@@ -10,7 +10,7 @@ tg_set_write_preserve(table name [, ...])
 
 ## 説明
 
-Tsurugiのlongトランザクションでは、トランザクションの実行中に書き込みを行うテーブルをあらかじめ指定しておく必要があります。`tg_set_write_preserve`はlongトランザクションで書き込みをするテーブルをトランザクション特性に追加します。
+TsurugiのLongトランザクションでは、トランザクションの実行中に書き込み（挿入、更新、削除）を行うテーブルをあらかじめ指定しておく必要があります。`tg_set_write_preserve`はLongトランザクションにおいて書き込みを行うテーブルをトランザクション特性に追加します。
 
 トランザクション種別が`'long'`以外のトランザクションに対して書き込み予約テーブルを設定してもその値は無視されます。
 
@@ -22,11 +22,11 @@ Tsurugiのlongトランザクションでは、トランザクションの実行
 
 ## 例
 
-`tg_set_transaction`でlongトランザクションを設定してから書き込み予約テーブルを設定します。
+`tg_set_transaction`でLongトランザクションを設定してから書き込み予約テーブルを設定します。
 
 ```sql
 SELECT tg_set_transaction('long');
-              tg_set_transaction
+              tg_transaction
 --------------------------------------------------
 {                                                +
     "transactionType": "2",                      +
@@ -39,7 +39,7 @@ SELECT tg_set_transaction('long');
 (1 row)
 
 SELECT tg_set_write_preserve('tg_table1', 'tg_table2', 'tg_table3');
-              tg_set_transaction
+              tg_transaction
 --------------------------------------------------
 {                                                +
     "transactionType": "2",                      +
@@ -53,7 +53,7 @@ SELECT tg_set_write_preserve('tg_table1', 'tg_table2', 'tg_table3');
             "tableName": "tg_table2"             +
         },                                       +
         {                                        +
-            "tableName": "t_table3"              +
+            "tableName": "tg_table3"             +
         }                                        +
     ]                                            +
 }                                                +

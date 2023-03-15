@@ -80,7 +80,7 @@ priorityには以下のいずれかが入ります。
 
 ## 注釈
 
-PostgreSQLの`SET TRANSACTION`は**実行中の**トランザクションのトランザクション特性を変更しますが、`tg_set_transaction`はtsurugiトランザクションを**開始する前**に実行する必要があります。Tsurugiトランザクションでは、トランザクションの実行中にトランザクション特性を変更することはできません。
+PostgreSQLの`SET transaction`は**実行中の**トランザクションのトランザクション特性を変更しますが、`tg_set_transaction`はtsurugiトランザクションを**開始する前**に実行する必要があります。Tsurugiトランザクションでは、トランザクションの実行中にトランザクション特性を変更することはできません。
 
 ## 例
 
@@ -91,37 +91,37 @@ PostgreSQLの`SET TRANSACTION`は**実行中の**トランザクションのト�
                 tg_transaction
   --------------------------------------------------
   {                                                +
-      "TransactionType": "1",                      +
-      "TransactionPriority": "1",                  +
-      "TransactionLabel": "pgsql-short-transaction"+
+      "transactionType": "1",                      +
+      "transactionPriority": "1",                  +
+      "transactionLabel": "pgsql-short-transaction"+
   }                                                +
 
   (1 row)
   ```
 
-* `TransactionType`はトランザクション種別を示します（"`1`"は`short`を意味します）
-* `TransactionPriority`はトランザクションの優先度を示します（"`1`"は`interrupt`を意味します）
-* `TransactionLabel`はトランザクションのラベル名を示します
+* `transactionType`はトランザクション種別を示します（"`1`"は`short`を意味します）
+* `transactionPriority`はトランザクションの優先度を示します（"`1`"は`interrupt`を意味します）
+* `transactionLabel`はトランザクションのラベル名を示します
 
-#### longトランザクションを設定する
+#### Longトランザクションを設定する
 
   ```sql
   postgres=# select tg_set_transaction('long');
                 tg_transaction
   --------------------------------------------------
   {                                                +
-      "TransactionType": "2",                      +
-      "TransactionPriority": "0",                  +
-      "TransactionLabel": "pgsql-transaction",     +
-      "WritePreserve": [                           +
+      "transactionType": "2",                      +
+      "transactionPriority": "0",                  +
+      "transactionLabel": "pgsql-transaction",     +
+      "writePreserve": [                           +
       ]                                            +
   }                                                +
 
   (1 row)
   ```
-* `TransactionType`はトランザクション種別を示します（"`2`"は`long`を意味します）
-* `TransactionPriority`と`TransactionLabel`にはデフォルト値が設定されます
-* longトランザクションを指定した場合のみWritePreserveパラメータが追加されます
-  - Write Preserveの対象となるテーブルを設定するには[`tg_set_write_preserve`](./tg_set_write_preserve.md)を使用します
+* `transactionType`はトランザクション種別を示します（"`2`"は`long`を意味します）
+* `transactionPriority`と`transactionLabel`にはデフォルト値が設定されます
+* Longトランザクションを指定した場合のみwritePreserveパラメータが追加されます
+  - write Preserveの対象となるテーブルを設定するには[`tg_set_write_preserve`](./tg_set_write_preserve.md)を使用します
 
 ---

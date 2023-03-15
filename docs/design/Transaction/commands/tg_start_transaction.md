@@ -24,19 +24,15 @@ priorityには以下のいずれかが入ります。
 
 このコマンドのパラメータの意味については[`tg_set_transaction`](./tg_set_transaction.md)を参照してください。
 
-`tg_set_transaction`によって一度もトランザクション特性を変更していない場合は、以下のデフォルトの設定が適用されます。
-
-- トランザクション種別 - **'short'**
-- 優先度 - **'default'**
-- ラベル名 - **'pgsql-transaction'**
-
 ## 例
 
-パラメータなしで`tg_start_transaction`を実行するとデフォルトのトランザクション特性でトランザクションブロックが開始されます。
+パラメータを指定せずに`tg_start_transaction`を実行すると、デフォルトのトランザクション特性でトランザクションブロックが開始されます。
 
 ```sql
 SELECT tg_start_transaction();  -- デフォルトのトランザクション特性が適用される
+
 UPDATE tg_table SET c2 = 'new data' WHERE c1 = 1;
+
 SELECT tg_commit();
 ```
 
