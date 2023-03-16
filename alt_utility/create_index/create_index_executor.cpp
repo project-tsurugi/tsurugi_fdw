@@ -37,8 +37,6 @@ int64_t execute_create_index(IndexStmt* index_stmt)
 {
 	assert(index_stmt != NULL);
 
-	elog(INFO, "tsurugi_fdw : %s", __func__);
-
 	ObjectId object_id = metadata::INVALID_OBJECT_ID;
     auto indexes = metadata::get_indexes_ptr("tsurugi");
     CreateIndex create_index{index_stmt};

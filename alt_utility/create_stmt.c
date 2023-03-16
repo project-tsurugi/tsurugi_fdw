@@ -53,8 +53,6 @@ void execute_create_stmt(PlannedStmt *pstmt,
     int64_t  object_id = -1;
 	bool success;
 
-	elog(INFO, "tsurugi_fdw : %s", __func__);
-
     /* ... and do it */
     foreach(l, stmts)
     {
@@ -112,8 +110,6 @@ int64_t do_create_stmt(PlannedStmt *pstmt,
                       CreateStmt *create_stmt)
 {
     int64_t object_id = 0;
-
-	elog(INFO, "tsurugi_fdw : %s", __func__);
 
 	object_id = execute_create_table(create_stmt);
 	if (object_id == -1) 
