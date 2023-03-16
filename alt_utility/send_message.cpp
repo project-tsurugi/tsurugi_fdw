@@ -44,8 +44,6 @@ bool send_message(message::Message& message)
 {
   bool ret_value = false;
 
-  elog(INFO, "tsurugi_fdw : %s", __func__);
-
   // Get a receiver.
   stub::Connection* connection;
   stub::ErrorCode error = StubManager::get_connection(&connection);
@@ -63,12 +61,7 @@ bool send_message(message::Message& message)
   end_ddl.set_receiver(connection);
   message.set_receiver(connection);
 
-  elog(INFO, "tsurugi_fdw : --> Call message::Broker::send_message(BeginDDL)");
-
   message::Status status = message::Broker::send_message(&begin_ddl);
-
-  elog(INFO, "tsurugi_fdw :     Return message::Broker::send_message(BeginDDL) : %d", (int) status.get_error_code());
-
   if (status.get_error_code() == message::ErrorCode::FAILURE) {
     ereport(NOTICE,
             (errcode(ERRCODE_INTERNAL_ERROR),
