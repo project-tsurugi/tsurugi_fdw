@@ -2593,12 +2593,12 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case VARCHAROID:
             case TEXTOID:
                 {
-                    std::string_view value;
+                    std::string value;
                     Datum value_datum;
                     ERROR_CODE result = result_set->next_column(value);
                     if (result == ERROR_CODE::OK)
                     {
-                        value_datum = CStringGetDatum(value.data());
+                        value_datum = CStringGetDatum(value.c_str());
                         if (value_datum == (Datum) nullptr)
                         {
                             break;
