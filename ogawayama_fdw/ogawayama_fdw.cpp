@@ -394,8 +394,6 @@ ogawayama_fdw_handler(PG_FUNCTION_ARGS)
 	/* Support functions for join push-down */
 	routine->GetForeignJoinPaths = tsurugiGetForeignJoinPaths;
 
-    RegisterXactCallback( ogawayama_xact_callback, NULL );
-
 	ERROR_CODE error = StubManager::init();
 	if (error != ERROR_CODE::OK) 
 	{
@@ -408,7 +406,7 @@ ogawayama_fdw_handler(PG_FUNCTION_ARGS)
 /* FDW Plan functions */
 
 /*
- *	
+ * tsurugiGetForeignRelSize
  */
 static void tsurugiGetForeignRelSize(
 	PlannerInfo* root, RelOptInfo* baserel, Oid foreigntableid)
@@ -615,7 +613,7 @@ tsurugiGetForeignUpperPaths(PlannerInfo *root, UpperRelationKind stage,
 }
 
 /*
- *
+ * tsurugiGetForeignPaths
  */
 static void tsurugiGetForeignPaths(PlannerInfo *root,
 									RelOptInfo *baserel,
@@ -822,7 +820,8 @@ static void tsurugiGetForeignPaths(PlannerInfo *root,
 	}
 }
 
-/*	tsurugiGetForeignPlan
+/*	
+ * tsurugiGetForeignPlan
  *		Create ForeignScan plan node which implements selected best path.
  */
 static ForeignScan *
@@ -1182,13 +1181,12 @@ tsurugiGetForeignJoinPaths(PlannerInfo *root,
 }                            
 
 /* 
- * 	FDW Executor functions 
+ * 	fdw executor functions 
  */
 
 /*
- *	@brief	Preparation for scanning foreign tables.
- *	@param	[in] Foreign scan inforamtion.
- *	@param	[in] Some flag parameters. (e.g. EXEC_FLAG_EXPLAIN_ONLY)
+ *  tsurugiBeginForeignScan
+ *	    Preparation for scanning foreign tables.
  */
 static void 
 tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
@@ -1242,9 +1240,8 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 }
 
 /*
- *	@briref	Scanning row data from foreign tables.
- *	@param	[in] Foreign scan inforamtion.
- *	@return	Scaned row data.
+ * tsurugiIterateForeignScan
+ *      Scanning row data from foreign tables.
  */
 static TupleTableSlot* 
 tsurugiIterateForeignScan(ForeignScanState* node)
@@ -1365,8 +1362,8 @@ tsurugiIterateDirectModify(ForeignScanState* node)
 }
 
 /*
- * 	@biref	Clean up for modifying foreign tables.
- *	@param	[in] foreign scan information.
+ * tsurugiEndDirectModify(ForeignScanState* node)
+ *      Clean up for modifying foreign tables.
  */
 static void 
 tsurugiEndDirectModify(ForeignScanState* node)
@@ -1377,10 +1374,15 @@ tsurugiEndDirectModify(ForeignScanState* node)
 		free_fdwstate((tsurugiFdwState*) node->fdw_state);
 }
 
+
+/*
+ * tsurugiAddForeignUpdateTargets
+ *      
+ */
 static void 
 tsurugiAddForeignUpdateTargets(Query *parsetree,
-											RangeTblEntry *target_rte,
-											Relation target_relation)
+								RangeTblEntry *target_rte,
+								Relation target_relation)
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
@@ -1590,6 +1592,9 @@ tsurugiPlanDirectModify(PlannerInfo *root,
 	return true;
 }
 
+/*
+ * tsurugiPlanForeignModify
+ */
 static List 
 *tsurugiPlanForeignModify(PlannerInfo *root,
 						   ModifyTable *plan,
@@ -1600,6 +1605,9 @@ static List
 	return NULL;
 }
 
+/*
+ * tsurugiBeginForeignModify
+ */
 static void 
 tsurugiBeginForeignModify(ModifyTableState *mtstate,
                         ResultRelInfo *rinfo,
@@ -1611,6 +1619,9 @@ tsurugiBeginForeignModify(ModifyTableState *mtstate,
 	return;
 }
 
+/*
+ * tsurugiExecForeignUpdate
+ */
 static TupleTableSlot*
 tsurugiExecForeignUpdate(
 	EState *estate, 
@@ -1623,6 +1634,9 @@ tsurugiExecForeignUpdate(
     return slot;
 }
 
+/*
+ * tsurugiExecForeignDelete
+ */
 static TupleTableSlot*
 tsurugiExecForeignDelete(
 	EState *estate, 
@@ -1635,6 +1649,9 @@ tsurugiExecForeignDelete(
 	return slot;
 }
 
+/*
+ * tsurugiEndForeignModify
+ */
 static void 
 tsurugiEndForeignModify(EState *estate,
                         ResultRelInfo *rinfo)
@@ -1643,7 +1660,9 @@ tsurugiEndForeignModify(EState *estate,
     return;
 }
 
-
+/*
+ * tsurugiBeginForeignInsert
+ */
 static void 
 tsurugiBeginForeignInsert(ModifyTableState *mtstate,
                         ResultRelInfo *resultRelInfo)
@@ -1722,6 +1741,9 @@ tsurugiBeginForeignInsert(ModifyTableState *mtstate,
 	begin_backend_xact();
 }
 
+/*
+ * tsurugiExecForeignInsert
+ */
 static TupleTableSlot*
 tsurugiExecForeignInsert(
 	EState *estate, 
@@ -1757,6 +1779,9 @@ tsurugiExecForeignInsert(
     return slot;
 }
 
+/*
+ * tsurugiEndForeignInsert
+ */
 static void 
 tsurugiEndForeignInsert(EState *estate,
                         ResultRelInfo *rinfo)
@@ -1815,7 +1840,8 @@ tsurugiExplainForeignScan(ForeignScanState* node,
 }
 
 /*
- *	@note	Not in use.
+ * tsurugiExplainDirectModify
+ *      Not in use.
  */
 static void 
 tsurugiExplainDirectModify(ForeignScanState* node,
@@ -1825,7 +1851,8 @@ tsurugiExplainDirectModify(ForeignScanState* node,
 }
 
 /*
- *	@note	Not in use.
+ * tsurugiAnalyzeForeignTable
+ *      Not in use.
  */
 static bool tsurugiAnalyzeForeignTable(Relation relation,
 							AcquireSampleRowsFunc* func,
@@ -1854,7 +1881,8 @@ tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt,
  */
 
 /*
- *	@brief:	Create tsurugiFdwState structure.
+ *	create_fdwstate
+ *      Create tsurugiFdwState structure.
  */
 static tsurugiFdwState* 
 create_fdwstate()
@@ -1870,8 +1898,8 @@ create_fdwstate()
 }
 
 /*
- *	@brief:	free allocated memories.
- *	@param:	[in] Ogawayama-fdw state.
+ * free_fdwstate
+ *      Free allocated memories.
  */
 static void 
 free_fdwstate(tsurugiFdwState* fdw_state)
@@ -1970,11 +1998,10 @@ tsurugi_create_cursor(ForeignScanState* node)
 }
 
 /*
- * 	@brief	Confirm column information between PostgreSQL and Ogawayama.
- * 	@param	[in] Ogawayama column information.
- * 	@param	[in] PostgreSQL column information.
- * 	@return true if matched column information.
- * 	@note	This function may be eliminated for performance improvement in the future.
+ * confirm_columns
+ * 	    Confirm column information between PostgreSQL and Ogawayama.
+ *
+ * 	This function may be eliminated for performance improvement in the future.
  */
 static bool
 confirm_columns(MetadataPtr metadata, ForeignScanState* node)
@@ -2166,7 +2193,7 @@ make_virtual_tuple(TupleTableSlot* slot, ForeignScanState* node)
 
 /*
  * tsurugi_fetch_more_data
- *      Fetch result set from ogawayama stub.
+ *      Fetch result set from ogawayama in Tsurugi.
  */
 static void
 tsurugi_fetch_more_data(ForeignScanState* node)
@@ -2202,9 +2229,8 @@ tsurugi_fetch_more_data(ForeignScanState* node)
 }
 
 /*
- *	@breif	obtain tuple data from Ogawayama and convert data type.
- *	@param	[in] result set of query.
- *	@param	[in] FDW state.
+ * make_tuple_from_result_row
+ *      Obtain tuple data from Ogawayama and convert data type.
  */
 static void 
 make_tuple_from_result_row(ResultSetPtr result_set, 
@@ -2378,7 +2404,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
 }
 
 /*
- * @biref	Begin transaction.
+ * begin_backend_xact
  * 
  * V0版では、フロントエンド側のトランザクション(ローカルトランザクション)が
  * ネストされている場合はエラーとする。
@@ -2424,7 +2450,8 @@ begin_backend_xact(void)
 }
 
 /*
- * Start a tsurugi transaction.
+ * tsurugi_start_transaction
+ *      Start the Tsurugi transaction.
  */
 static void
 tsurugi_start_transaction()
@@ -2453,7 +2480,8 @@ tsurugi_start_transaction()
 }
 
 /*
- * Commit a tsurugi transaction.
+ * tsurugi_commit_transaction
+ *      Commit the Tsurugi transaction.
  */
 static void 
 tsurugi_commit_transaction()
@@ -2478,7 +2506,8 @@ tsurugi_commit_transaction()
 }
 
 /*
- * Rollback a tsurugi transaction.
+ * tsurugi_rollback_transaction
+ *      Rollback the Tsurugi transaction.
  */
 static void 
 tsurugi_rollback_transaction()
@@ -2502,59 +2531,4 @@ tsurugi_rollback_transaction()
     fdw_info_.xact_level--;
     StubManager::end();
     elog(DEBUG1, "Transaction::end() done.");
-}
-
-/*
- * 	ogawayama_xact_callback
- *      Callback function for transaction events.
- *	    Transaction events. (See xact.h)
- */
-static void
-ogawayama_xact_callback(XactEvent event, void *arg)
-{
-    int local_xact_level = GetCurrentTransactionNestLevel();
-
-	elog(DEBUG1, "tsurugi_fdw : %s (event: %d)", __func__, (int) event);
-	elog(DEBUG3, "TG transaction level: (%d)", fdw_info_.xact_level);
-	elog(DEBUG3, "PG transaction level: (%d)", local_xact_level);
-
-	if (fdw_info_.xact_level > 0)
-	{
-		switch (event)
-		{
-			case XACT_EVENT_PRE_COMMIT:
-				elog(DEBUG1, "XACT_EVENT_PRE_COMMIT");
-				break;
-
-			case XACT_EVENT_COMMIT:
-				elog(LOG, "XACT_EVENT_COMMIT (TG transaction level: %d)",
-                    fdw_info_.xact_level);
-                tsurugi_commit_transaction();
-				break;
-
-			case XACT_EVENT_ABORT:
-				elog(LOG, "XACT_EVENT_ABORT (TG transaction level: %d)", 
-                    fdw_info_.xact_level);
-                tsurugi_rollback_transaction();
-				break;
-
-			case XACT_EVENT_PRE_PREPARE:
-				elog(DEBUG1, "XACT_EVENT_PRE_PREPARE");
-				break;
-
-			case XACT_EVENT_PREPARE:
-				elog(DEBUG1, "XACT_EVENT_PREPARE");
-				break;
-
-			case XACT_EVENT_PARALLEL_COMMIT:
-			case XACT_EVENT_PARALLEL_ABORT:
-			case XACT_EVENT_PARALLEL_PRE_COMMIT:
-				elog(WARNING, "Unexpected XACT event occurred. (%d)", event);
-				break;
-
-			default:
-				elog(WARNING, "Unexpected XACT event occurred. (%d)", event);
-				break;
-		}
-	}
 }
