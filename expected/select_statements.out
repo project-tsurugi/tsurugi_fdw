@@ -641,7 +641,7 @@ FROM
     t1
 WHERE
     c7 LIKE '%LMN%';
-ERROR:  Transaction::execute_query() failed. (9)
+ERROR:  Transaction::execute_query() failed. (10)
 -- WHERE #8
 -- PG
 SELECT
@@ -687,7 +687,7 @@ FROM
     t2
 WHERE
     c4 IN (1.1,3.3);
-ERROR:  Transaction::execute_query() failed. (9)
+ERROR:  Transaction::execute_query() failed. (10)
 -- GROUP BY #1
 -- PG
 SELECT
@@ -710,7 +710,7 @@ FROM
     t2
 GROUP BY
     c7;
-ERROR:  Transaction::execute_query() failed. (9)
+ERROR:  Transaction::execute_query() failed. (10)
 -- GROUP BY #2
 -- PG
 SELECT
@@ -735,7 +735,7 @@ GROUP BY
     c7
 HAVING 
     sum(c2) > 55;
-ERROR:  Transaction::execute_query() failed. (9)
+ERROR:  Transaction::execute_query() failed. (10)
 -- GROUP BY #3
 -- PG
 SELECT
