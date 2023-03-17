@@ -50,12 +50,6 @@ std::string make_tsurugi_query(std::string_view query_string)
         tsurugi_query.pop_back();
     }
 
-    // for deleting cast string
-    tsurugi_query = std::regex_replace(tsurugi_query, std::regex("(::[a-zA-Z]+)"), "");
-
-    // for ORDER BY
-    tsurugi_query = std::regex_replace(tsurugi_query, std::regex("(ASC|NULLS|LAST|FIRST)"), "");
-
     elog(DEBUG1, "tsurugi_fdw : tsurugi query string : \"%s\"", tsurugi_query.c_str());
 
     return tsurugi_query;

@@ -1606,18 +1606,11 @@ tsurugiIterateDirectModify(ForeignScanState* node)
 	TupleTableSlot* slot = nullptr;
 	ERROR_CODE error;
 
-	elog(DEBUG1, "statement string: \"%s\"", fdw_state->query_string);
-
-  	std::string query(fdw_state->query_string);
-	// trim terminal semi-column.
-	if (query.back() == ';')
-	{
-		query.pop_back();
-	}
-	elog(DEBUG1, "tsurugi_fdw: statement string: \"%s\"", query.c_str());
-	elog(DEBUG2, "transaction::execute_statement() start.");
-	error = fdw_info_.transaction->execute_statement(query);
-	elog(DEBUG2, "transaction::execute_statement() done.");
+    std::string tsurugi_query = make_tsurugi_query(fdw_state->query_string);
+    elog(LOG, "tsurugi_fdw : transaction::execute_query() start. \n\"%s\"", 
+        tsurugi_query.c_str());
+	error = fdw_info_.transaction->execute_statement(tsurugi_query);
+	elog(LOG, "transaction::execute_statement() done.");
 
     ERROR_CODE err;
 	if (error == ERROR_CODE::OK) 
@@ -2249,11 +2242,11 @@ tsurugi_create_cursor(ForeignScanState* node)
   elog(LOG, "tsurugi_fdw : transaction::execute_query() start. \n\"%s\"", 
       tsurugi_query.c_str());
 
-  /* dispatch query */
+  /* dispatch a query to tsurugi. */
   fdw_info_.result_set = nullptr;
   ERROR_CODE error = fdw_info_.transaction->execute_query(tsurugi_query, 
                                                           fdw_info_.result_set);
-  elog(DEBUG1, "tsurugi_fdw : transaction::execute_query() done.");
+  elog(LOG, "tsurugi_fdw : transaction::execute_query() done.");
   if (error != ERROR_CODE::OK)
   {
       elog(ERROR, "Transaction::execute_query() failed. (%d)", (int) error);
