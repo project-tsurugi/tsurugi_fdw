@@ -91,8 +91,6 @@ bool CreateTable::validate_syntax() const
 {
   assert(create_stmt() != nullptr);
 
-  elog(INFO, "tsurugi_fdw : %s", __func__);
-
   const CreateStmt* create_stmt = this->create_stmt();
   bool result{false};
   List* table_elts = create_stmt->tableElts;
@@ -248,8 +246,6 @@ bool CreateTable::validate_data_type() const
 {
   assert(create_stmt() != nullptr);
 
-  elog(INFO, "tsurugi_fdw : %s", __func__);
-
   bool result{true};
   CreateStmt* create_stmt = this->create_stmt();
   List *table_elts = create_stmt->tableElts;
@@ -364,9 +360,6 @@ bool CreateTable::generate_metadata(manager::metadata::Object& object) const
 	RangeVar* relation = (RangeVar*) create_stmt->relation;
 	if (relation != nullptr && relation->relname != nullptr) {
 		table.name = relation->relname;
-
-		elog(INFO, "tsurugi_fdw : %s, relname = %s", __func__, relation->relname);
-
 	} else {
 		show_syntax_error_msg("table name is not specified");
 		return result;
@@ -419,8 +412,6 @@ bool CreateTable::generate_column_metadata(ColumnDef* column_def,
 							metadata::Column& column) const
 {
 	assert(column_def != NULL);
-
-  elog(INFO, "tsurugi_fdw : %s, colname = %s", __func__, column_def->colname);
 
 	bool result = false;
 	auto datatypes = std::make_unique<metadata::DataTypes>("tsurugi");
@@ -501,8 +492,6 @@ bool CreateTable::generate_column_metadata(ColumnDef* column_def,
 	metadata::ObjectId id = data_type_id.get();
 	column.data_type_id = id;
 
-  elog(INFO, "tsurugi_fdw : %s, data_type_id = %d", __func__, (int)column.data_type_id);
-
 	/* put varying metadata if given type is varchar or char */
 	switch (static_cast<metadata::DataTypes::DataTypesId>(id)) {
 		case metadata:: DataTypes::DataTypesId::VARCHAR: {
@@ -569,8 +558,6 @@ bool CreateTable::get_data_lengths(List* typmods, std::vector<int64_t>& dataleng
 {
 	bool result{false};
 
-  elog(INFO, "tsurugi_fdw : %s", __func__);
-
 	ListCell *listptr;
 	foreach(listptr, typmods) {
 		Node* node = (Node*) lfirst(listptr);
@@ -610,8 +597,6 @@ bool CreateTable::get_constraint_metadata(Constraint* constr,
 							metadata::Constraint& constraint) const
 {
 	bool result{false};
-
-  elog(INFO, "tsurugi_fdw : %s", __func__);
 
 	if (constr->contype == CONSTR_CHECK) {
 
@@ -659,8 +644,6 @@ CreateTable::generate_constraint_metadata(metadata::Table& table) const
 	const CreateStmt* create_stmt = this->create_stmt();
 	assert(create_stmt != NULL);
 	metadata::ErrorCode result = metadata::ErrorCode::NOT_FOUND;
-
-  elog(INFO, "tsurugi_fdw : %s", __func__);
 
 	/* for table columns */
 	ListCell* listptr;

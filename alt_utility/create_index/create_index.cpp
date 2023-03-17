@@ -56,8 +56,6 @@ bool CreateIndex::validate_syntax() const
   IndexStmt* index_stmt = this->index_stmt();
   Assert(index_stmt != NULL);
 
-  elog(INFO, "tsurugi_fdw : %s", __func__);
-
   /* Check members of IndexStmt structure */
   if (index_stmt != nullptr) {
     if (index_stmt->excludeOpNames != nullptr) {
@@ -147,8 +145,6 @@ bool CreateIndex::generate_metadata(manager::metadata::Object& object) const
 	auto& index = static_cast<metadata::Index&>(object);
     auto tables = metadata::get_tables_ptr("tsurugi");
 
-  elog(INFO, "tsurugi_fdw : %s", __func__);
-
     metadata::Table table;
     tables->get(this->get_table_name(), table);
 
@@ -230,8 +226,6 @@ CreateIndex::generate_constraint_metadata(metadata::Table& table) const
 	IndexStmt* index_stmt{this->index_stmt()};
 	Assert(index_stmt != NULL);
 	metadata::ErrorCode result = metadata::ErrorCode::NOT_FOUND;
-
-  elog(INFO, "tsurugi_fdw : %s", __func__);
 
 	if (index_stmt->primary || index_stmt->unique) {
 		metadata::Constraint constraint;
@@ -347,8 +341,6 @@ manager::metadata::ErrorCode
 CreateIndex::generate_table_metadata(manager::metadata::Table& table) const
 {
 	IndexStmt* index_stmt = this->index_stmt();
-
-  elog(INFO, "tsurugi_fdw : %s", __func__);
 
 	bool success = get_primary_keys(index_stmt, table.primary_keys);
 	if (!success) {

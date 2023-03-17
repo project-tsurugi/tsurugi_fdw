@@ -218,7 +218,7 @@ SELECT * FROM update_delete_char1;
 (2 rows)
 
 UPDATE update_delete_char1 SET col2 = 'uvd' WHERE col2 = 'kl';
-ERROR:  transaction::execute_statement() failed. (9)
+ERROR:  transaction::execute_statement() failed. (10)
 SELECT * FROM update_delete_char1;
  col1 | col2 
 ------+------
@@ -268,7 +268,7 @@ SELECT * FROM update_delete_varchar1;
 (2 rows)
 
 UPDATE update_delete_varchar1 SET col2 = 'uvd' WHERE col2 = 'kl';
-ERROR:  transaction::execute_statement() failed. (9)
+ERROR:  transaction::execute_statement() failed. (10)
 SELECT * FROM update_delete_varchar1;
  col1 | col2 
 ------+------

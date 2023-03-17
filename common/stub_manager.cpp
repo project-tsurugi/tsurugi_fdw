@@ -59,20 +59,11 @@ ERROR_CODE StubManager::init()
 {
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
 
-    elog(INFO, "tsurugi_fdw : %s", __func__);
-
-    std::string shared_memory_name(get_shared_memory_name());
-	error = make_stub(stub_, shared_memory_name);	
     if (stub_ == nullptr)
 	{
-        elog(INFO, "tsurugi_fdw : --> Call make_stub");
-
+        std::string shared_memory_name(get_shared_memory_name());
 		error = make_stub(stub_, shared_memory_name);
-
-        elog(INFO, "tsurugi_fdw :     Return make_stub : %d", (int) error);
-
-		if (error != ERROR_CODE::OK)
-		{
+		if (error != ERROR_CODE::OK) {
 			std::cerr << "stub::make_stub() failed. " << (int) error << std::endl;
 			return error;
 		}
@@ -113,8 +104,6 @@ ERROR_CODE StubManager::get_connection(stub::Connection** connection)
 {
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
 
-  elog(INFO, "tsurugi_fdw : %s", __func__);
-
 	if (stub_ == nullptr) {
 		error = init();
 		if (error != ERROR_CODE::OK) {
@@ -124,13 +113,7 @@ ERROR_CODE StubManager::get_connection(stub::Connection** connection)
 	}
 
 	if (connection_ == nullptr) {
-
-  elog(INFO, "tsurugi_fdw : --> Call stub->get_connection");
-
 		ERROR_CODE error = stub_->get_connection(getpid() , connection_);
-
-  elog(INFO, "tsurugi_fdw :     Return stub->get_connection : %d", (int) error);
-
 		if (error != ERROR_CODE::OK)
 		{
 			std::cerr << "Stub::get_connection() failed. " << (int) error << std::endl;
@@ -138,12 +121,7 @@ ERROR_CODE StubManager::get_connection(stub::Connection** connection)
 		}
 	}
 
-  elog(INFO, "tsurugi_fdw : --> Call connection.get");
-
 	*connection = connection_.get();
-
-  elog(INFO, "tsurugi_fdw :     Return connection.get");
-
 	error = ERROR_CODE::OK;
 
 	return error;
