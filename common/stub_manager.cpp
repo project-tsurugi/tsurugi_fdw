@@ -34,17 +34,22 @@ StubPtr StubManager::stub_ = nullptr;
 ConnectionPtr StubManager::connection_ = nullptr;
 TransactionPtr StubManager::transaction_ = nullptr;
 
+/*
+ *  get_shared_memory_name
+ */
 std::string get_shared_memory_name()
 {
     std::string name(ogawayama::common::param::SHARED_MEMORY_NAME);  
     boost::property_tree::ptree pt;
     const boost::filesystem::path conf_file("tsurugi_fdw.conf");
     boost::system::error_code error;
-    if (boost::filesystem::exists(conf_file, error)) {
+    if (boost::filesystem::exists(conf_file, error)) 
+    {
         boost::property_tree::read_ini("tsurugi_fdw.conf", pt);
         boost::optional<std::string> str = 
             pt.get_optional<std::string>("Configurations.SHARED_MEMORY_NAME");
-        if (str) {
+        if (str) 
+        {
             name = str.get();
         }
     }
@@ -53,7 +58,7 @@ std::string get_shared_memory_name()
 }
 
 /*
- * 	@brief: 
+ *  init
  */
 ERROR_CODE StubManager::init()
 {
@@ -65,7 +70,8 @@ ERROR_CODE StubManager::init()
 		elog(LOG, "Try to make stub. (shared memory name: %s)", 
             shared_memory_name.c_str());
 		error = make_stub(stub_, shared_memory_name);
-		if (error != ERROR_CODE::OK) {
+		if (error != ERROR_CODE::OK) 
+        {
 			std::cerr << "stub::make_stub() failed. " << (int) error << std::endl;
 			return error;
 		}
@@ -79,40 +85,41 @@ ERROR_CODE StubManager::init()
 }
 
 /*
- *	@brief:
+ *  get_stub
  */
 ERROR_CODE StubManager::get_stub(stub::Stub** stub)
 {
 	ERROR_CODE error = ERROR_CODE::OK;
 
-	if (stub_ == nullptr) {
+	if (stub_ == nullptr) 
+    {
 		error = init();
-		if (error != ERROR_CODE::OK) {
-			std::cerr << "init() failed(). " << (int) error << std::endl;
+		if (error != ERROR_CODE::OK) 
+        {
 			return error;
 		}
 	}
 	*stub = stub_.get();
-
 	error = ERROR_CODE::OK;
 
 	return error;
 }
 
 /*
- * 	@brief: 
+ *  get_connection
  */
 ERROR_CODE StubManager::get_connection(stub::Connection** connection)
 {
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
+    ogawayama::stub::Stub* stub;
 
-	if (stub_ == nullptr) {
-		error = init();
-		if (error != ERROR_CODE::OK) {
-			std::cerr << "init() failed. " << (int) error << std::endl;
-			return error;
-		}
-	}
+    elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+
+    error = get_stub(&stub);
+    if (error != ERROR_CODE::OK)
+    {
+        return error;
+    }
 
 	if (connection_ == nullptr) {
 		ERROR_CODE error = stub_->get_connection(getpid() , connection_);
@@ -122,7 +129,6 @@ ERROR_CODE StubManager::get_connection(stub::Connection** connection)
 			return error;
 		}
 	}
-
 	*connection = connection_.get();
 	error = ERROR_CODE::OK;
 
@@ -130,30 +136,21 @@ ERROR_CODE StubManager::get_connection(stub::Connection** connection)
 }
 
 /*
- *	@brief:	
+ *	begin
  */
 ERROR_CODE StubManager::begin(stub::Transaction** transaction)
 {
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
+    ogawayama::stub::Connection* connection;
 
-	if (stub_ == nullptr) {
-		error = init();
-		if (error != ERROR_CODE::OK) {
-			std::cerr << "init() failed. " << (int) error << std::endl;
-			return error;
-		}
-	}
+    error = get_connection(&connection);
+    if (error != ERROR_CODE::OK)
+    {
+        return error;
+    }
 
-	if (connection_ == nullptr) {
-		ERROR_CODE error = stub_->get_connection(getpid() , connection_);
-		if (error != ERROR_CODE::OK)
-		{
-			std::cerr << "Stub::get_connection() failed. " << (int) error << std::endl;
-			return error;
-		}
-	}
-
-	if (transaction_ == nullptr) {
+	if (transaction_ == nullptr) 
+    {
 		ERROR_CODE error = connection_->begin(transaction_);
 		if (error != ERROR_CODE::OK)
 		{
@@ -162,17 +159,93 @@ ERROR_CODE StubManager::begin(stub::Transaction** transaction)
 		}
 	}
 	*transaction = transaction_.get();
+	error = ERROR_CODE::OK;
 
 	elog(LOG, "tsurugi-fdw : tsurugi-transaction started.");
-	error = ERROR_CODE::OK;
 
 	return error;
 }
 
 /*
- * end
+ *	begin
  */
-void StubManager::end()
+ERROR_CODE StubManager::start_transaction()
 {
-	transaction_ = nullptr;
+	ERROR_CODE error = ERROR_CODE::UNKNOWN;
+    ogawayama::stub::Connection* connection;
+
+    elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+
+    error = get_connection(&connection);
+    if (error != ERROR_CODE::OK)
+    {
+        return error;
+    }
+
+	if (transaction_ == nullptr) 
+    {
+		ERROR_CODE error = connection_->begin(transaction_);
+		if (error != ERROR_CODE::OK)
+		{
+			std::cerr << "Connection::begin() failed. " << (int) error << std::endl;
+			return error;
+		}
+    	elog(LOG, "tsurugi-fdw : tsurugi-transaction started.");
+      	error = ERROR_CODE::OK;
+	}
+    else
+    {
+        elog(WARNING, "there is already a transaction in progress");
+      	error = ERROR_CODE::TRANSACTION_ALREADY_STARTED;
+    }
+
+	return error;
+}
+
+/*
+ *  commit
+ */
+void StubManager::commit()
+{
+    elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+
+    if (transaction_ != nullptr) {
+        elog(LOG, "tsurugi_fdw : Try to commit the transaction.");
+        ERROR_CODE error = transaction_->commit();
+        if (error != ERROR_CODE::OK) 
+        {
+            elog(WARNING, "Transaction::commit() failed. (error: %d)",
+                (int) error);
+        }
+        elog(LOG, "tsurugi_fdw : tsurugi-transaction commited.");
+        transaction_ = nullptr;
+    }
+    else
+    {
+        elog(WARNING, "there is no transaction in progress");
+    }
+}
+
+/*
+ *  rollback
+ */
+void StubManager::rollback()
+{
+    elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+
+    if (transaction_ != nullptr) {
+        elog(LOG, "Tsurugi_fdw : Try to rollback the transaction.");
+        ERROR_CODE error = transaction_->rollback();
+        if (error != ERROR_CODE::OK)
+        {
+            elog(WARNING, "transaction::rollback() failed. (%d)", 
+                (int) error);
+        }
+        elog(LOG, "tsurugi_fdw : tsurugi-transaction rollbacked.");
+        transaction_ = nullptr;
+    }
+    else
+    {
+        elog(WARNING, "there is no transaction in progress");
+    }
 }

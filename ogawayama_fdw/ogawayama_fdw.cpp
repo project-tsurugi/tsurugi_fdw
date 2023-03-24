@@ -328,11 +328,6 @@ static void make_tuple_from_result_row(ResultSetPtr result_set,
                                         Datum* row,
                                         bool* is_null,
                                         tsurugiFdwState* fdw_state);
-static void begin_backend_xact(void);
-static void ogawayama_xact_callback (XactEvent event, void *arg);
-static void tsurugi_transaction_start();
-static void tsurugi_transaction_commit();
-static void tsurugi_transaction_rollback();
 
 extern PGDLLIMPORT PGPROC *MyProc;
 
@@ -1229,7 +1224,7 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 
     fdw_state->attinmeta = TupleDescGetAttInMetadata(fdw_state->tupdesc);
 
-    tsurugi_transaction_start();
+    StubManager::start_transaction();
     fdw_info_.success = true;
 }
 
@@ -1279,9 +1274,10 @@ tsurugiIterateForeignScan(ForeignScanState* node)
         }
         else
         {
-            elog(ERROR, "result_set::next() failed. (%d)", (int) error);
-            tsurugi_transaction_rollback();
+            StubManager::rollback();
             fdw_info_.success = false;
+            elog(ERROR, "Could NOT obtain result set from Tsurugi. (error: %d)",
+                (int) error);
         }
     }
 
@@ -1311,7 +1307,7 @@ tsurugiEndForeignScan(ForeignScanState* node)
     tsurugi_close_cursor();
     if (fdw_info_.success)
     {
-        tsurugi_transaction_commit();
+        StubManager::commit();
     }
 
 	if (fdw_state != nullptr) 
@@ -1342,8 +1338,8 @@ tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
  	fdw_state->query_string = estate->es_sourceText; 
     node->fdw_state = fdw_state;
 
+    StubManager::start_transaction();
     fdw_info_.success = true;
-    tsurugi_transaction_start();
 }
 
 /*
@@ -1363,14 +1359,15 @@ tsurugiIterateDirectModify(ForeignScanState* node)
 	ERROR_CODE error;
 
     std::string tsurugi_query = make_tsurugi_query(fdw_state->query_string);
-    elog(LOG, "tsurugi_fdw : transaction::execute_query() start. \n\"%s\"", 
+    elog(LOG, "tsurugi_fdw : transaction::execute_query() start. \n%s", 
         tsurugi_query.c_str());
-	error = fdw_info_.transaction->execute_statement(tsurugi_query);
-	elog(LOG, "transaction::execute_statement() done.");
 
+	error = StubManager::get_transaction()->execute_statement(tsurugi_query);
+	elog(LOG, "transaction::execute_statement() done.");
 	if (error != ERROR_CODE::OK)
     {
-        tsurugi_transaction_rollback();
+        StubManager::rollback();
+        fdw_info_.success = false;
         elog(ERROR, "transaction::execute_statement() failed. (%d)", 
             (int) error);
 	}
@@ -1389,7 +1386,7 @@ tsurugiEndDirectModify(ForeignScanState* node)
 
     if (fdw_info_.success)
     {
-        tsurugi_transaction_commit();
+        StubManager::commit();
     }
 
 	if (node->fdw_state != nullptr)
@@ -1682,7 +1679,7 @@ tsurugiEndForeignModify(EState *estate,
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
  
-    tsurugi_transaction_commit();
+    StubManager::commit();
 }
 
 /*
@@ -1763,8 +1760,7 @@ tsurugiBeginForeignInsert(ModifyTableState *mtstate,
  	fdw_state->query_string = sql.data;
     resultRelInfo->ri_FdwState = fdw_state;
 
-//	begin_backend_xact();
-    tsurugi_transaction_start();
+    StubManager::start_transaction();
 }
 
 /*
@@ -1796,9 +1792,9 @@ tsurugiExecForeignInsert(
 
 	if (error != ERROR_CODE::OK) 
     {
+        StubManager::rollback();
         elog(ERROR, "transaction::execute_statement() failed. (%d)", 
             (int) error);
-        tsurugi_transaction_rollback();
 	}
 	
 	slot = nullptr;
@@ -1999,18 +1995,21 @@ tsurugi_create_cursor(ForeignScanState* node)
 	tsurugiFdwState* fdw_state = (tsurugiFdwState*) node->fdw_state;
 
     std::string tsurugi_query = make_tsurugi_query(fdw_state->query_string);
-    elog(LOG, "tsurugi_fdw : transaction::execute_query() start. \n\"%s\"", 
+    elog(LOG, "tsurugi_fdw : transaction::execute_query() start. \n%s", 
         tsurugi_query.c_str());
 
     fdw_info_.result_set = nullptr;
-    ERROR_CODE error = fdw_info_.transaction->execute_query(tsurugi_query, 
-                                                            fdw_info_.result_set);
+//    ERROR_CODE error = fdw_info_.transaction->execute_query(tsurugi_query, 
+//                                                            fdw_info_.result_set);
+    ERROR_CODE error = StubManager::get_transaction()->execute_query(
+                            tsurugi_query, 
+                            fdw_info_.result_set);
     elog(LOG, "tsurugi_fdw : transaction::execute_query() done.");
     if (error != ERROR_CODE::OK)
     {
-        elog(ERROR, "Transaction::execute_query() failed. (%d)", (int) error);
-        tsurugi_transaction_rollback();
+        StubManager::rollback();
         fdw_info_.success = false;
+        elog(ERROR, "Transaction::execute_query() failed. (%d)", (int) error);
     }
 
     fdw_state->cursor_exists = true;
@@ -2418,7 +2417,6 @@ tsurugi_transaction_commit()
         }
         elog(LOG, "tsurugi_fdw : tsurugi-transaction end.");
         fdw_info_.transaction = nullptr;
-        StubManager::end();
         fdw_info_.xact_level--;
     }
     else
@@ -2445,7 +2443,6 @@ tsurugi_transaction_rollback()
         }
         elog(LOG, "tsurugi_fdw : tsurugi-transaction end.");
         fdw_info_.transaction = nullptr;
-        StubManager::end();
         fdw_info_.xact_level--;
     }
     else
