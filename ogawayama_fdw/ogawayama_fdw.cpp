@@ -157,12 +157,6 @@ typedef struct ogawayama_fdw_state_
 	decltype(tuples)::iterator      tuple_ite;
 
 	bool			eof_reached;        /* true if last fetch reached EOF */
-
-    /* working memory contextexts */
-	MemoryContext 	batch_cxt;
-    MemoryContext   temp_cxt;	
-
-	size_t			fetch_size;         /* number of tuples per fetch */
 } tsurugiFdwState;
 
 /*
@@ -174,6 +168,7 @@ typedef struct
  	ResultSetPtr 		result_set = nullptr;
 	MetadataPtr 		metadata = nullptr;
 	int 				xact_level = 0;		/* FDWが自認する現在のトランザクションレベル */
+    bool                success = false;
 } OgawayamaFdwInfo;
 
 /*
@@ -325,6 +320,7 @@ static void store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist);
 static bool confirm_columns(MetadataPtr metadata, ForeignScanState* node);
 static void tsurugi_create_cursor(ForeignScanState* node);
 static void tsurugi_fetch_more_data(ForeignScanState* node);
+static void tsurugi_close_cursor();
 static void make_virtual_tuple(TupleTableSlot* slot, ForeignScanState* node);
 static void make_tuple_from_result_row(ResultSetPtr result_set, 
                                         TupleDesc tupleDescriptor,
@@ -334,9 +330,9 @@ static void make_tuple_from_result_row(ResultSetPtr result_set,
                                         tsurugiFdwState* fdw_state);
 static void begin_backend_xact(void);
 static void ogawayama_xact_callback (XactEvent event, void *arg);
-static void tsurugi_start_transaction();
-static void tsurugi_commit_transaction();
-static void tsurugi_rollback_transaction();
+static void tsurugi_transaction_start();
+static void tsurugi_transaction_commit();
+static void tsurugi_transaction_rollback();
 
 extern PGDLLIMPORT PGPROC *MyProc;
 
@@ -399,6 +395,8 @@ ogawayama_fdw_handler(PG_FUNCTION_ARGS)
 	{
 		elog(ERROR, "StubManager::init() failed. (%d)", (int) error);
 	}
+    fdw_info_.transaction = nullptr;
+    fdw_info_.result_set = nullptr;
 
 	PG_RETURN_POINTER(routine);
 }
@@ -615,9 +613,10 @@ tsurugiGetForeignUpperPaths(PlannerInfo *root, UpperRelationKind stage,
 /*
  * tsurugiGetForeignPaths
  */
-static void tsurugiGetForeignPaths(PlannerInfo *root,
-									RelOptInfo *baserel,
-									Oid foreigntableid)
+static void 
+tsurugiGetForeignPaths(PlannerInfo *root,
+                        RelOptInfo *baserel,
+                        Oid foreigntableid)
 {
 	TgFdwRelationInfo *fpinfo = (TgFdwRelationInfo *) baserel->fdw_private;
 	ForeignPath *path;
@@ -1199,8 +1198,6 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
-	begin_backend_xact();
-
 	/*
 	 * We'll save private state in node->fdw_state.
 	 */
@@ -1213,8 +1210,7 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 									 FdwScanPrivateSelectSql));
     fdw_state->retrieved_attrs = (List*) list_nth(fsplan->fdw_private, 
                                                    FdwScanPrivateRetrievedAttrs);
-    fdw_state->cursor_exists = false;                                                  
-	fdw_state->fetch_size = DEFAULT_FETCH_SIZE;
+    fdw_state->cursor_exists = false;
 
    	/*
 	 * Get info we'll need for converting data fetched from the foreign server
@@ -1233,10 +1229,8 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 
     fdw_state->attinmeta = TupleDescGetAttInMetadata(fdw_state->tupdesc);
 
-	/* Create MemoryContext for tuple data */
-	fdw_state->batch_cxt = AllocSetContextCreate(estate->es_query_cxt, 
-                                                "tsurugi_fdw tuple data", 
-                                                ALLOCSET_DEFAULT_SIZES);
+    tsurugi_transaction_start();
+    fdw_info_.success = true;
 }
 
 /*
@@ -1256,7 +1250,7 @@ tsurugiIterateForeignScan(ForeignScanState* node)
 
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
-	if (!fdw_state->cursor_exists) 
+	if (!fdw_state->cursor_exists)
     {
         tsurugi_create_cursor(node);
     }
@@ -1266,14 +1260,36 @@ tsurugiIterateForeignScan(ForeignScanState* node)
     /* No point in another fetch if we already detected EOF, though. */
     if (!fdw_state->eof_reached) 
     {
-        tsurugi_fetch_more_data(node);
+        ERROR_CODE error = fdw_info_.result_set->next();
+        if (error == ERROR_CODE::OK)
+        {
+            make_tuple_from_result_row(fdw_info_.result_set, 
+                                        tupleSlot->tts_tupleDescriptor,
+                                        fdw_state->retrieved_attrs,
+                                        tupleSlot->tts_values,
+                                        tupleSlot->tts_isnull,
+                                        fdw_state);
+            ExecStoreVirtualTuple(tupleSlot);
+            fdw_state->num_tuples++;
+        }
+        else if (error == ERROR_CODE::END_OF_ROW) 
+        {
+            elog(LOG, "End of rows. (rows: %d)", (int) fdw_state->num_tuples);
+            fdw_state->eof_reached = true;
+        }
+        else
+        {
+            elog(ERROR, "result_set::next() failed. (%d)", (int) error);
+            tsurugi_transaction_rollback();
+            fdw_info_.success = false;
+        }
     }
 
 	return tupleSlot;
 }
 
 /*
- *	@note	Not in use.
+ *	@note	Not in used.
  */
 static void 
 tsurugiReScanForeignScan(ForeignScanState* node)
@@ -1282,28 +1298,31 @@ tsurugiReScanForeignScan(ForeignScanState* node)
 }
 
 /*
- *	@brief	Clean up for scanning foreign tables.
- *	@param	[in] Foreign scan information.
+ * tsurugiEndForeignScan
+ *      Clean up for scanning foreign tables.
  */
 static void 
 tsurugiEndForeignScan(ForeignScanState* node)
 {
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-
 	tsurugiFdwState* fdw_state = (tsurugiFdwState*) node->fdw_state;
 
-	/* close cursor */
-	fdw_info_.result_set = nullptr;
-	if (fdw_state != nullptr)
+	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+
+    tsurugi_close_cursor();
+    if (fdw_info_.success)
+    {
+        tsurugi_transaction_commit();
+    }
+
+	if (fdw_state != nullptr) 
+    {
 		free_fdwstate(fdw_state);
-	
-	/* MemoryContexts will be deleted automatically. */
+    }
 }
 
 /*
- * 	@brief	Preparation for modifying foreign tables.
- *	@param	[in] Foreign scan information.
- *	@param	[in] Some flags. (e.g. EXEC_FLAG_EXPLAIN_ONLY)
+ * tsurugiBeginDirectModify
+ *      Preparation for modifying foreign tables.
  */
 static void 
 tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
@@ -1320,17 +1339,16 @@ tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
 		elog(ERROR, "create_fdw_state() failed.");
 	}
 
-	begin_backend_xact();
+ 	fdw_state->query_string = estate->es_sourceText; 
+    node->fdw_state = fdw_state;
 
- 	fdw_state->query_string = estate->es_sourceText;
-	 
-	 node->fdw_state = fdw_state;
+    fdw_info_.success = true;
+    tsurugi_transaction_start();
 }
 
 /*
- *	@biref	Execute Insert/Upate/Delete command to foreign tables.
- *	@param	[in] Foreign scan information.
- *	@return	only nullptr.
+ * tsurugiIterateDirectModify
+ *      Execute Insert/Upate/Delete command to foreign tables.
  */
 static TupleTableSlot* 
 tsurugiIterateDirectModify(ForeignScanState* node)
@@ -1350,19 +1368,18 @@ tsurugiIterateDirectModify(ForeignScanState* node)
 	error = fdw_info_.transaction->execute_statement(tsurugi_query);
 	elog(LOG, "transaction::execute_statement() done.");
 
-    ERROR_CODE err;
-	if (error != ERROR_CODE::OK) 
+	if (error != ERROR_CODE::OK)
     {
+        tsurugi_transaction_rollback();
         elog(ERROR, "transaction::execute_statement() failed. (%d)", 
             (int) error);
-        tsurugi_rollback_transaction();
 	}
 	
 	return slot;	
 }
 
 /*
- * tsurugiEndDirectModify(ForeignScanState* node)
+ * tsurugiEndDirectModify
  *      Clean up for modifying foreign tables.
  */
 static void 
@@ -1370,8 +1387,15 @@ tsurugiEndDirectModify(ForeignScanState* node)
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
+    if (fdw_info_.success)
+    {
+        tsurugi_transaction_commit();
+    }
+
 	if (node->fdw_state != nullptr)
+    {
 		free_fdwstate((tsurugiFdwState*) node->fdw_state);
+    }
 }
 
 
@@ -1657,7 +1681,8 @@ tsurugiEndForeignModify(EState *estate,
                         ResultRelInfo *rinfo)
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-    return;
+ 
+    tsurugi_transaction_commit();
 }
 
 /*
@@ -1738,7 +1763,8 @@ tsurugiBeginForeignInsert(ModifyTableState *mtstate,
  	fdw_state->query_string = sql.data;
     resultRelInfo->ri_FdwState = fdw_state;
 
-	begin_backend_xact();
+//	begin_backend_xact();
+    tsurugi_transaction_start();
 }
 
 /*
@@ -1772,7 +1798,7 @@ tsurugiExecForeignInsert(
     {
         elog(ERROR, "transaction::execute_statement() failed. (%d)", 
             (int) error);
-        tsurugi_rollback_transaction();
+        tsurugi_transaction_rollback();
 	}
 	
 	slot = nullptr;
@@ -1788,20 +1814,12 @@ tsurugiEndForeignInsert(EState *estate,
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
-	StubManager::end();
-	fdw_info_.transaction = nullptr;
-	fdw_info_.xact_level--;
+    if (fdw_info_.transaction != nullptr) {
+    	fdw_info_.transaction = nullptr;
+    }
+
 	elog(DEBUG2, "xact_level: (%d)", fdw_info_.xact_level);
-
-    return;
 }
-
-
-/*
- * Functions to be implemented in the future are below.  
- * 
- */
-
 
 /*
  * tsurugiExplainForeignScan
@@ -1854,9 +1872,10 @@ tsurugiExplainDirectModify(ForeignScanState* node,
  * tsurugiAnalyzeForeignTable
  *      Not in use.
  */
-static bool tsurugiAnalyzeForeignTable(Relation relation,
-							AcquireSampleRowsFunc* func,
-							BlockNumber* totalpages)
+static bool 
+tsurugiAnalyzeForeignTable(Relation relation,
+    AcquireSampleRowsFunc* func,
+    BlockNumber* totalpages)
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
@@ -1958,7 +1977,7 @@ store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist)
 			else
 			{
 				elog(ERROR, "Unexpected data type in target list. (index: %d, type:%u)",
-					 i, (unsigned int)nodeTag(node));
+					 i, (unsigned int) nodeTag(node));
 			}
 			i++;
 		}
@@ -1990,11 +2009,21 @@ tsurugi_create_cursor(ForeignScanState* node)
     if (error != ERROR_CODE::OK)
     {
         elog(ERROR, "Transaction::execute_query() failed. (%d)", (int) error);
-        tsurugi_rollback_transaction();
+        tsurugi_transaction_rollback();
+        fdw_info_.success = false;
     }
 
     fdw_state->cursor_exists = true;
 	fdw_state->eof_reached = false;
+}
+
+/*
+ * tsurugi_close_cursor
+ */
+static void 
+tsurugi_close_cursor()
+{
+    fdw_info_.result_set = nullptr;
 }
 
 /*
@@ -2176,59 +2205,6 @@ confirm_columns(MetadataPtr metadata, ForeignScanState* node)
 }
 
 /*
- *	@breif	make virtual tuple from result set.
- */
-static void
-make_virtual_tuple(TupleTableSlot* slot, ForeignScanState* node)
-{
-	tsurugiFdwState* fdw_state = (tsurugiFdwState*) node->fdw_state;
-
-	TupleTableSlot* tuple = *fdw_state->tuple_ite;
-	for (size_t i = 0; i < fdw_state->number_of_columns + 1; i++)
-	{
-		slot->tts_values[i] = tuple->tts_values[i];
-		slot->tts_isnull[i] = tuple->tts_isnull[i];
-	}
-}
-
-/*
- * tsurugi_fetch_more_data
- *      Fetch result set from ogawayama in Tsurugi.
- */
-static void
-tsurugi_fetch_more_data(ForeignScanState* node)
-{
-	tsurugiFdwState* fdw_state = (tsurugiFdwState*) node->fdw_state;
-	TupleTableSlot *tupleSlot = node->ss.ss_ScanTupleSlot;
-	MemoryContext oldcontext = nullptr;
-
-	elog(DEBUG4, "tsurugi_fdw : %s", __func__);
-
-    ERROR_CODE error = fdw_info_.result_set->next();
-    if (error == ERROR_CODE::OK)
-    {
-        make_tuple_from_result_row(fdw_info_.result_set, 
-                                    tupleSlot->tts_tupleDescriptor,
-                                    fdw_state->retrieved_attrs,
-                                    tupleSlot->tts_values,
-                                    tupleSlot->tts_isnull,
-                                    fdw_state);
-        ExecStoreVirtualTuple(tupleSlot);
-        fdw_state->num_tuples++;
-    }
-    else if (error == ERROR_CODE::END_OF_ROW) 
-    {
-        elog(LOG, "End of row. (rows: %d)", (int) fdw_state->num_tuples);
-        fdw_state->eof_reached = true;
-    }
-    else
-    {
-        // Other than OK and END_OF_ROW
-        elog(ERROR, "result_set::next() failed. (%d)", (int) error);
-    }
-}
-
-/*
  * make_tuple_from_result_row
  *      Obtain tuple data from Ogawayama and convert data type.
  */
@@ -2404,131 +2380,76 @@ make_tuple_from_result_row(ResultSetPtr result_set,
 }
 
 /*
- * begin_backend_xact
- * 
- * V0版では、フロントエンド側のトランザクション(ローカルトランザクション)が
- * ネストされている場合はエラーとする。
+ * tsurugi_transaction_start
  */
 static void
-begin_backend_xact(void)
-{
-    int local_xact_level = GetCurrentTransactionNestLevel();
-
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
-	elog(DEBUG3, "PG transaction level: (%d)", local_xact_level);
-	elog(DEBUG3, "TG transaction level: (%d)", fdw_info_.xact_level);
-
-	if (local_xact_level <= 0)
-	{
-		elog(WARNING, "Illegal transaction level. (%d)", local_xact_level);
-	}
-	else if (local_xact_level == 1)
-	{
-        if (fdw_info_.transaction == nullptr)
-        {
-            ERROR_CODE error = StubManager::begin(&fdw_info_.transaction);
-            if (error != ERROR_CODE::OK) 
-            {
-                elog(ERROR, "Connection::begin() failed. (error: %d)", 
-                    (int) error);
-            }
-            fdw_info_.xact_level++;
-            elog(LOG, "Connection::begin() done. (TG xact_level: %d)", 
-                (int) fdw_info_.xact_level);
-        }
-        else
-        {
-            elog(ERROR, "TG transaction already exists.");
-        }
-	}
-	else if (local_xact_level >= 2)
-	{
-		elog(ERROR, "Nested transaction is NOT supported.");
-	}
-
-    elog(DEBUG4, "TG transaction level: (%d)", fdw_info_.xact_level);
-}
-
-/*
- * tsurugi_start_transaction
- *      Start the Tsurugi transaction.
- */
-static void
-tsurugi_start_transaction()
+tsurugi_transaction_start()
 {
     if (fdw_info_.transaction == nullptr)
     {
-        elog(LOG, "tsurugi_fdw : Try to start the transaction.");
         ERROR_CODE error = StubManager::begin(&fdw_info_.transaction);
-        if (error == ERROR_CODE::OK) 
-        {
-            elog(INFO, "START TSURUGI TRANSACTION");
-            fdw_info_.xact_level++;
-        }
-        else
+        if (error != ERROR_CODE::OK) 
         {
             elog(ERROR, "Connection::begin() failed. (error: %d)", 
                 (int) error);
         }
-        elog(LOG, "Connection::begin() done. (TG xact_level: %d)", 
-            (int) fdw_info_.xact_level);
     }
     else
     {
-        elog(ERROR, "Tsurugi transaction already exists.");
+        elog(WARNING, "there is already a transaction in progress");
     }
 }
 
 /*
- * tsurugi_commit_transaction
- *      Commit the Tsurugi transaction.
+ * tsurugi_transaction_commit
  */
 static void 
-tsurugi_commit_transaction()
+tsurugi_transaction_commit()
 {
-    Assert(fdw_info_.transaction != nullptr);
+    elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
-    elog(LOG, "tsurugi_fdw : Try to commit the transaction.");
-    ERROR_CODE error = fdw_info_.transaction->commit();
-    if (error == ERROR_CODE::OK) 
-    {
-        elog(INFO, "TSURUGI TRANSACTION COMMIT");
+    if (fdw_info_.transaction != nullptr) {
+        elog(LOG, "tsurugi_fdw : Try to commit the transaction.");
+        ERROR_CODE error = fdw_info_.transaction->commit();
+        if (error != ERROR_CODE::OK) 
+        {
+            elog(WARNING, "Transaction::commit() failed. (error: %d)",
+                (int) error);
+        }
+        elog(LOG, "tsurugi_fdw : tsurugi-transaction end.");
+        fdw_info_.transaction = nullptr;
+        StubManager::end();
+        fdw_info_.xact_level--;
     }
     else
     {
-        elog(WARNING, "Transaction::commit() failed. (error: %d)",
-            (int) error);
+        elog(WARNING, "there is no transaction in progress");
     }
-    fdw_info_.transaction = nullptr;
-    fdw_info_.xact_level--;
-    StubManager::end();
-    elog(DEBUG1, "Transaction::end() done.");
 }
 
 /*
- * tsurugi_rollback_transaction
- *      Rollback the Tsurugi transaction.
+ * tsurugi_transaction_rollback
  */
 static void 
-tsurugi_rollback_transaction()
+tsurugi_transaction_rollback()
 {
-    Assert(fdw_info_.transaction != nullptr);
+    elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
-    bool result = false;
-
-    elog(LOG, "Tsurugi_fdw : Try to rollback the transaction.");
-    ERROR_CODE error = fdw_info_.transaction->rollback();
-    if (error == ERROR_CODE::OK)
-    {
-        elog(INFO, "TSURUGI TRANSACTION ROLLBACK");
+    if (fdw_info_.transaction != nullptr) {
+        elog(LOG, "Tsurugi_fdw : Try to rollback the transaction.");
+        ERROR_CODE error = fdw_info_.transaction->rollback();
+        if (error != ERROR_CODE::OK)
+        {
+            elog(WARNING, "transaction::rollback() failed. (%d)", 
+                (int) error);
+        }
+        elog(LOG, "tsurugi_fdw : tsurugi-transaction end.");
+        fdw_info_.transaction = nullptr;
+        StubManager::end();
+        fdw_info_.xact_level--;
     }
     else
     {
-        elog(WARNING, "transaction::rollback() failed. (%d)", 
-            (int) error);
+        elog(WARNING, "there is no transaction in progress");
     }
-    fdw_info_.transaction = nullptr;
-    fdw_info_.xact_level--;
-    StubManager::end();
-    elog(DEBUG1, "Transaction::end() done.");
 }

@@ -62,6 +62,8 @@ ERROR_CODE StubManager::init()
     if (stub_ == nullptr)
 	{
         std::string shared_memory_name(get_shared_memory_name());
+		elog(LOG, "Try to make stub. (shared memory name: %s)", 
+            shared_memory_name.c_str());
 		error = make_stub(stub_, shared_memory_name);
 		if (error != ERROR_CODE::OK) {
 			std::cerr << "stub::make_stub() failed. " << (int) error << std::endl;
@@ -161,14 +163,14 @@ ERROR_CODE StubManager::begin(stub::Transaction** transaction)
 	}
 	*transaction = transaction_.get();
 
-	elog(DEBUG1, "Transaction started.");
+	elog(LOG, "tsurugi-fdw : tsurugi-transaction started.");
 	error = ERROR_CODE::OK;
 
 	return error;
 }
 
 /*
- * 	@brief: 
+ * end
  */
 void StubManager::end()
 {
