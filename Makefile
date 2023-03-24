@@ -16,6 +16,7 @@ OBJS = common/init.o common/stub_manager.o \
 		alt_utility/role_managercmds.o alt_utility/table_managercmds.o alt_utility/syscachecmds.o  \
         alt_utility/alter_table/alter_table_executor.o alt_utility/alter_table/alter_table.o \
 		alt_utility/alter_role/alter_role.o \
+        alt_function/alt_function.o \
         $(WIN32RES)
 
 EXTENSION = ogawayama_fdw
