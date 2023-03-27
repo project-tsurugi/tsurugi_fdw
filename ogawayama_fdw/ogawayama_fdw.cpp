@@ -108,16 +108,10 @@ enum FdwScanPrivateIndex
 	FdwScanPrivateRelations
 };
 
-#define DEFAULT_FETCH_SIZE (10000 * 20)
-typedef struct row_data_
-{
-	size_t 		number_of_columns;		/* SELECT対象の列数 */
-	Oid* 		column_data_types; 		/* SELECT予定の列のデータ型(Oid)用のポインタ */
-} RowData;
 /*
  *	@brief	クエリー実行毎のFDWの状態
  */
-typedef struct ogawayama_fdw_state_
+typedef struct tsurugiFdwState
 {
 	const char* 	query_string;		/* SQL Query Text */
     Relation        rel;                /* relcache entry for the foreign table */
@@ -162,9 +156,8 @@ typedef struct ogawayama_fdw_state_
 /*
  *	@brief 	セッションごとのFDWの状態
  */
-typedef struct
+typedef struct tsurugi_fdw_info_
 {
-	stub::Transaction*	transaction = nullptr;
  	ResultSetPtr 		result_set = nullptr;
 	MetadataPtr 		metadata = nullptr;
 	int 				xact_level = 0;		/* FDWが自認する現在のトランザクションレベル */
@@ -390,7 +383,6 @@ ogawayama_fdw_handler(PG_FUNCTION_ARGS)
 	{
 		elog(ERROR, "StubManager::init() failed. (%d)", (int) error);
 	}
-    fdw_info_.transaction = nullptr;
     fdw_info_.result_set = nullptr;
 
 	PG_RETURN_POINTER(routine);
@@ -505,14 +497,14 @@ static void tsurugiGetForeignRelSize(
 	 */
 
 	/*
-		* If the foreign table has never been ANALYZEd, it will have relpages
-		* and reltuples equal to zero, which most likely has nothing to do
-		* with reality.  We can't do a whole lot about that if we're not
-		* allowed to consult the remote server, but we can use a hack similar
-		* to plancat.c's treatment of empty relations: use a minimum size
-		* estimate of 10 pages, and divide by the column-datatype-based width
-		* estimate to get the corresponding number of tuples.
-		*/
+	 * If the foreign table has never been ANALYZEd, it will have relpages
+	 * and reltuples equal to zero, which most likely has nothing to do
+	 * with reality.  We can't do a whole lot about that if we're not
+	 * allowed to consult the remote server, but we can use a hack similar
+	 * to plancat.c's treatment of empty relations: use a minimum size
+	 * estimate of 10 pages, and divide by the column-datatype-based width
+	 * estimate to get the corresponding number of tuples.
+	 */
 	if (baserel->pages == 0 && baserel->tuples == 0)
 	{
 		baserel->pages = 10;
@@ -1787,7 +1779,7 @@ tsurugiExecForeignInsert(
 	elog(DEBUG1, "tsurugi_fdw: statement string: \"%s\"", query.c_str());
 
 	elog(DEBUG2, "transaction::execute_statement() start.");
-	error = fdw_info_.transaction->execute_statement(query);
+	error = StubManager::get_transaction()->execute_statement(query);
 	elog(DEBUG2, "transaction::execute_statement() done.");
 
 	if (error != ERROR_CODE::OK) 
@@ -1809,11 +1801,6 @@ tsurugiEndForeignInsert(EState *estate,
                         ResultRelInfo *rinfo)
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-
-    if (fdw_info_.transaction != nullptr) {
-    	fdw_info_.transaction = nullptr;
-    }
-
 	elog(DEBUG2, "xact_level: (%d)", fdw_info_.xact_level);
 }
 
@@ -2375,78 +2362,5 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                 elog(ERROR, "Invalid data type of PG. (%u)", pgtype);
                 break;
         }
-    }
-}
-
-/*
- * tsurugi_transaction_start
- */
-static void
-tsurugi_transaction_start()
-{
-    if (fdw_info_.transaction == nullptr)
-    {
-        ERROR_CODE error = StubManager::begin(&fdw_info_.transaction);
-        if (error != ERROR_CODE::OK) 
-        {
-            elog(ERROR, "Connection::begin() failed. (error: %d)", 
-                (int) error);
-        }
-    }
-    else
-    {
-        elog(WARNING, "there is already a transaction in progress");
-    }
-}
-
-/*
- * tsurugi_transaction_commit
- */
-static void 
-tsurugi_transaction_commit()
-{
-    elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-
-    if (fdw_info_.transaction != nullptr) {
-        elog(LOG, "tsurugi_fdw : Try to commit the transaction.");
-        ERROR_CODE error = fdw_info_.transaction->commit();
-        if (error != ERROR_CODE::OK) 
-        {
-            elog(WARNING, "Transaction::commit() failed. (error: %d)",
-                (int) error);
-        }
-        elog(LOG, "tsurugi_fdw : tsurugi-transaction end.");
-        fdw_info_.transaction = nullptr;
-        fdw_info_.xact_level--;
-    }
-    else
-    {
-        elog(WARNING, "there is no transaction in progress");
-    }
-}
-
-/*
- * tsurugi_transaction_rollback
- */
-static void 
-tsurugi_transaction_rollback()
-{
-    elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-
-    if (fdw_info_.transaction != nullptr) {
-        elog(LOG, "Tsurugi_fdw : Try to rollback the transaction.");
-        ERROR_CODE error = fdw_info_.transaction->rollback();
-        if (error != ERROR_CODE::OK)
-        {
-            elog(WARNING, "transaction::rollback() failed. (%d)", 
-                (int) error);
-        }
-        elog(LOG, "tsurugi_fdw : tsurugi-transaction end.");
-        fdw_info_.transaction = nullptr;
-        fdw_info_.xact_level--;
-    }
-    else
-    {
-        elog(WARNING, "there is no transaction in progress");
     }
 }
