@@ -34,6 +34,8 @@ StubPtr StubManager::stub_ = nullptr;
 ConnectionPtr StubManager::connection_ = nullptr;
 TransactionPtr StubManager::transaction_ = nullptr;
 
+extern bool GetTransactionOption(boost::property_tree::ptree&);
+
 /*
  *  get_shared_memory_name
  */
@@ -149,9 +151,18 @@ ERROR_CODE StubManager::begin(stub::Transaction** transaction)
         return error;
     }
 
-	if (transaction_ == nullptr) 
-    {
+	if (transaction_ == nullptr) {
+#if 1
+		boost::property_tree::ptree option;
+		if (GetTransactionOption(option) == false)
+		{
+			std::cerr << "GetTransactionOption() failed. " << (int) error << std::endl;
+			return error;
+		}
+		ERROR_CODE error = connection_->begin(option, transaction_);
+#else
 		ERROR_CODE error = connection_->begin(transaction_);
+#endif
 		if (error != ERROR_CODE::OK)
 		{
 			std::cerr << "Connection::begin() failed. " << (int) error << std::endl;
