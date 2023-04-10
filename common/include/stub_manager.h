@@ -6,34 +6,21 @@
 #include "ogawayama/stub/error_code.h"
 #include "ogawayama/stub/api.h"
 
-class StubManager {
+class Tsurugi {
 public:
 	static ERROR_CODE init();
-	static ERROR_CODE get_connection(ogawayama::stub::Connection** connection);
-	static ERROR_CODE begin(ogawayama::stub::Transaction** transaction);
+    static ERROR_CODE get_connection(ogawayama::stub::Connection** connection);
     static ERROR_CODE start_transaction();
-    static void commit();
-    static void rollback();
-	StubManager() = delete;
+    static ERROR_CODE execute_query(std::string_view query, 
+                                    ResultSetPtr& result_set);
+    static ERROR_CODE execute_statement(std::string_view statement);
+    static ERROR_CODE commit();
+    static ERROR_CODE rollback();
+	Tsurugi() = delete;
 
-    static ogawayama::stub::Stub* get_stub() {
-        return stub_.get();
-    }
-    static ogawayama::stub::Connection* get_connection() {
-        return connection_.get();
-    }
-    static ogawayama::stub::Transaction* get_transaction() {
-        return transaction_.get();
-    }
-    static ogawayama::stub::ResultSet* get_result_set() {
-        return result_set_.get();
-    }
 
 private:
 	static StubPtr stub_;
 	static ConnectionPtr connection_;
 	static TransactionPtr transaction_;
-    static ResultSetPtr result_set_;
-
-	static ERROR_CODE get_stub(ogawayama::stub::Stub** stub);
 };

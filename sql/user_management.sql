@@ -144,14 +144,14 @@ CREATE FOREIGN TABLE table2 (column1 INTEGER NOT NULL) SERVER ogawayama;
 
 CREATE ROLE sample_role1;
 CREATE ROLE sample_role1;
-SELECT rolname FROM pg_authid WHERE rolname like 'sample_role%';
+SELECT rolname FROM pg_authid WHERE rolname like 'sample_role%' Order By rolname;
 
 CREATE ROLE sample_role2, sample_role3;
-SELECT rolname FROM pg_authid WHERE rolname like 'sample_role%';
+SELECT rolname FROM pg_authid WHERE rolname like 'sample_role%' Order By rolname;
 
 CREATE ROLE sample_role2;
 ALTER ROLE sample_role1, sample_role2 LOGIN;
-SELECT rolname FROM pg_authid WHERE rolname like 'sample_role%';
+SELECT rolname FROM pg_authid WHERE rolname like 'sample_role%' Order By rolname;
 
 GRANT ROLE unknown_role TO sample_role1;
 GRANT ROLE unknown_role, sample_role2 TO sample_role1;

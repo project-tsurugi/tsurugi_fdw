@@ -378,12 +378,11 @@ ogawayama_fdw_handler(PG_FUNCTION_ARGS)
 	/* Support functions for join push-down */
 	routine->GetForeignJoinPaths = tsurugiGetForeignJoinPaths;
 
-	ERROR_CODE error = StubManager::init();
+	ERROR_CODE error = Tsurugi::init();
 	if (error != ERROR_CODE::OK) 
 	{
-		elog(ERROR, "StubManager::init() failed. (%d)", (int) error);
+		elog(ERROR, "Tsurugi::init() failed. (%d)", (int) error);
 	}
-    fdw_info_.result_set = nullptr;
 
 	PG_RETURN_POINTER(routine);
 }
@@ -1216,7 +1215,7 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 
     fdw_state->attinmeta = TupleDescGetAttInMetadata(fdw_state->tupdesc);
 
-    StubManager::start_transaction();
+    Tsurugi::start_transaction();
     fdw_info_.success = true;
 }
 
@@ -1239,7 +1238,18 @@ tsurugiIterateForeignScan(ForeignScanState* node)
 
 	if (!fdw_state->cursor_exists)
     {
-        tsurugi_create_cursor(node);
+        std::string query = make_tsurugi_query(fdw_state->query_string);
+        fdw_info_.result_set = nullptr;
+        ERROR_CODE error = Tsurugi::execute_query(query, fdw_info_.result_set);
+        if (error != ERROR_CODE::OK)
+        {
+            elog(ERROR, "Query execution failed. (%d)", (int) error);
+            Tsurugi::rollback();
+            fdw_info_.success = false;
+        }
+
+        fdw_state->cursor_exists = true;
+        fdw_state->eof_reached = false;
     }
 
 	ExecClearTuple(tupleSlot);
@@ -1262,11 +1272,12 @@ tsurugiIterateForeignScan(ForeignScanState* node)
         else if (error == ERROR_CODE::END_OF_ROW) 
         {
             elog(LOG, "End of rows. (rows: %d)", (int) fdw_state->num_tuples);
+            fdw_info_.result_set = nullptr;
             fdw_state->eof_reached = true;
         }
         else
         {
-            StubManager::rollback();
+            Tsurugi::rollback();
             fdw_info_.success = false;
             elog(ERROR, "Could NOT obtain result set from Tsurugi. (error: %d)",
                 (int) error);
@@ -1299,7 +1310,7 @@ tsurugiEndForeignScan(ForeignScanState* node)
     tsurugi_close_cursor();
     if (fdw_info_.success)
     {
-        StubManager::commit();
+        Tsurugi::commit();
     }
 
 	if (fdw_state != nullptr) 
@@ -1330,7 +1341,7 @@ tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
  	fdw_state->query_string = estate->es_sourceText; 
     node->fdw_state = fdw_state;
 
-    StubManager::start_transaction();
+    Tsurugi::start_transaction();
     fdw_info_.success = true;
 }
 
@@ -1350,17 +1361,13 @@ tsurugiIterateDirectModify(ForeignScanState* node)
 	TupleTableSlot* slot = nullptr;
 	ERROR_CODE error;
 
-    std::string tsurugi_query = make_tsurugi_query(fdw_state->query_string);
-    elog(LOG, "tsurugi_fdw : transaction::execute_query() start. \n%s", 
-        tsurugi_query.c_str());
-
-	error = StubManager::get_transaction()->execute_statement(tsurugi_query);
-	elog(LOG, "transaction::execute_statement() done.");
+    std::string statement = make_tsurugi_query(fdw_state->query_string);
+	error = Tsurugi::execute_statement(statement);
 	if (error != ERROR_CODE::OK)
     {
-        StubManager::rollback();
+        Tsurugi::rollback();
         fdw_info_.success = false;
-        elog(ERROR, "transaction::execute_statement() failed. (%d)", 
+        elog(ERROR, "Tsurugi::execute_statement() failed. (%d)", 
             (int) error);
 	}
 	
@@ -1378,7 +1385,7 @@ tsurugiEndDirectModify(ForeignScanState* node)
 
     if (fdw_info_.success)
     {
-        StubManager::commit();
+        Tsurugi::commit();
     }
 
 	if (node->fdw_state != nullptr)
@@ -1671,7 +1678,7 @@ tsurugiEndForeignModify(EState *estate,
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
  
-    StubManager::commit();
+    Tsurugi::commit();
 }
 
 /*
@@ -1752,7 +1759,7 @@ tsurugiBeginForeignInsert(ModifyTableState *mtstate,
  	fdw_state->query_string = sql.data;
     resultRelInfo->ri_FdwState = fdw_state;
 
-    StubManager::start_transaction();
+    Tsurugi::start_transaction();
 }
 
 /*
@@ -1776,15 +1783,11 @@ tsurugiExecForeignInsert(
  	std::string query(fdw_state->query_string);
     query = std::regex_replace(query, std::regex("\\$\\d"), "%s");
     query = (boost::format(query) % slot->tts_values[0] % slot->tts_values[1]).str();
-	elog(DEBUG1, "tsurugi_fdw: statement string: \"%s\"", query.c_str());
 
-	elog(DEBUG2, "transaction::execute_statement() start.");
-	error = StubManager::get_transaction()->execute_statement(query);
-	elog(DEBUG2, "transaction::execute_statement() done.");
-
+	error = Tsurugi::execute_statement(query);
 	if (error != ERROR_CODE::OK) 
     {
-        StubManager::rollback();
+        Tsurugi::rollback();
         elog(ERROR, "transaction::execute_statement() failed. (%d)", 
             (int) error);
 	}
@@ -1969,7 +1972,7 @@ store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist)
 		fdw_state->number_of_columns = count;
 	}
 }
-
+#if 0
 /*
  * tsurugi_create_cursor
  */
@@ -1980,36 +1983,28 @@ tsurugi_create_cursor(ForeignScanState* node)
     Assert(fdw_info_.transaction != nullptr);
 
 	tsurugiFdwState* fdw_state = (tsurugiFdwState*) node->fdw_state;
-
-    std::string tsurugi_query = make_tsurugi_query(fdw_state->query_string);
-    elog(LOG, "tsurugi_fdw : transaction::execute_query() start. \n%s", 
-        tsurugi_query.c_str());
-
+    std::string query = make_tsurugi_query(fdw_state->query_string);
     fdw_info_.result_set = nullptr;
-//    ERROR_CODE error = fdw_info_.transaction->execute_query(tsurugi_query, 
-//                                                            fdw_info_.result_set);
-    ERROR_CODE error = StubManager::get_transaction()->execute_query(
-                            tsurugi_query, 
-                            fdw_info_.result_set);
-    elog(LOG, "tsurugi_fdw : transaction::execute_query() done.");
+
+    ERROR_CODE error = Tsurugi::execute_query(query, fdw_info_.result_set);
     if (error != ERROR_CODE::OK)
     {
-        StubManager::rollback();
+        Tsurugi::rollback();
         fdw_info_.success = false;
-        elog(ERROR, "Transaction::execute_query() failed. (%d)", (int) error);
+        elog(ERROR, "Tsurugi::execute_query() failed. (%d)", (int) error);
     }
 
     fdw_state->cursor_exists = true;
 	fdw_state->eof_reached = false;
 }
-
+#endif
 /*
  * tsurugi_close_cursor
  */
 static void 
 tsurugi_close_cursor()
 {
-    fdw_info_.result_set = nullptr;
+//    fdw_info_.result_set = nullptr;
 }
 
 /*
@@ -2230,6 +2225,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                 {
                     std::int16_t value;
                     if (result_set->next_column(value) == ERROR_CODE::OK)
+//                    if (Tsurugi::next_column(value) == ERROR_CODE::OK)
                     {
                         is_null[attnum] = false;
                         row[attnum] = Int16GetDatum(value);
@@ -2241,6 +2237,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                 {
                     std::int32_t value;
                     if (result_set->next_column(value) == ERROR_CODE::OK)
+//                    if (Tsurugi::next_column(value) == ERROR_CODE::OK)
                     {
                         is_null[attnum] = false;
                         row[attnum] =  Int32GetDatum(value);
@@ -2252,6 +2249,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                 {
                     std::int64_t value;
                     if (result_set->next_column(value) == ERROR_CODE::OK)
+//                    if (Tsurugi::next_column(value) == ERROR_CODE::OK)
                     {
                         is_null[attnum] = false;
                         row[attnum] = Int64GetDatum(value);
@@ -2262,6 +2260,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case FLOAT4OID:
                 {
                     float4 value;
+//                    if (Tsurugi::next_column(value) == ERROR_CODE::OK)
                     if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         is_null[attnum] = false;
@@ -2273,6 +2272,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case FLOAT8OID:
                 {
                     float8 value;
+//                    if (Tsurugi::next_column(value) == ERROR_CODE::OK)
                     if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         is_null[attnum] = false;
@@ -2287,6 +2287,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                 {
                     std::string value;
                     Datum value_datum;
+//                    ERROR_CODE result = Tsurugi::next_column(value);
                     ERROR_CODE result = result_set->next_column(value);
                     if (result == ERROR_CODE::OK)
                     {
@@ -2308,6 +2309,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                 {
                     stub::date_type value;
                     if (result_set->next_column(value) == ERROR_CODE::OK)
+//                    if (Tsurugi::next_column(value) == ERROR_CODE::OK)
                     {
                         DateADT date;
                         date = value.days_since_epoch();
@@ -2322,6 +2324,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                 {
                     stub::time_type value;
                     if (result_set->next_column(value) == ERROR_CODE::OK)
+//                    if (Tsurugi::next_column(value) == ERROR_CODE::OK)
                     {
                         TimeADT time;
                         auto subsecond = value.subsecond().count();
@@ -2342,6 +2345,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                 {
                     stub::timestamp_type value;
                     if (result_set->next_column(value) == ERROR_CODE::OK)
+//                    if (Tsurugi::next_column(value) == ERROR_CODE::OK)
                     {
                         Timestamp timestamp;
                         auto subsecond = value.subsecond().count();

@@ -30,9 +30,9 @@ PG_MODULE_MAGIC;
 }
 #endif 
 
-StubPtr StubManager::stub_ = nullptr;
-ConnectionPtr StubManager::connection_ = nullptr;
-TransactionPtr StubManager::transaction_ = nullptr;
+StubPtr Tsurugi::stub_ = nullptr;
+ConnectionPtr Tsurugi::connection_ = nullptr;
+TransactionPtr Tsurugi::transaction_ = nullptr;
 
 extern bool GetTransactionOption(boost::property_tree::ptree&);
 
@@ -60,203 +60,185 @@ std::string get_shared_memory_name()
 }
 
 /*
- *  init
+ * init
  */
-ERROR_CODE StubManager::init()
+ERROR_CODE Tsurugi::init()
 {
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
 
     if (stub_ == nullptr)
 	{
         std::string shared_memory_name(get_shared_memory_name());
-		elog(LOG, "Try to make stub. (shared memory name: %s)", 
+		elog(LOG, "Trying to run make_stub(). (shared memory: %s)", 
             shared_memory_name.c_str());
+
 		error = make_stub(stub_, shared_memory_name);
 		if (error != ERROR_CODE::OK) 
         {
-			std::cerr << "stub::make_stub() failed. " << (int) error << std::endl;
+            elog(ERROR, "Failed to run make_stub(). (error: %d)",
+                (int) error);
+            stub_ = nullptr;
 			return error;
 		}
-		elog(LOG, "make_stub() succeeded. (shared memory name: %s)", 
+
+		elog(LOG, "make_stub() succeeded. (shared memory: %s)",
             shared_memory_name.c_str());
 	}
-	
-	error = ERROR_CODE::OK;
 
-	return error;
-}
-
-/*
- *  get_stub
- */
-ERROR_CODE StubManager::get_stub(stub::Stub** stub)
-{
-	ERROR_CODE error = ERROR_CODE::OK;
-
-	if (stub_ == nullptr) 
+	if (connection_ == nullptr) 
     {
-		error = init();
-		if (error != ERROR_CODE::OK) 
-        {
-			return error;
-		}
-	}
-	*stub = stub_.get();
-	error = ERROR_CODE::OK;
+		elog(LOG, "Trying to run Stub::get_connection(). (pid: %d)", getpid());
 
-	return error;
-}
-
-/*
- *  get_connection
- */
-ERROR_CODE StubManager::get_connection(stub::Connection** connection)
-{
-	ERROR_CODE error = ERROR_CODE::UNKNOWN;
-    ogawayama::stub::Stub* stub;
-
-    elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-
-    error = get_stub(&stub);
-    if (error != ERROR_CODE::OK)
-    {
-        return error;
-    }
-
-	if (connection_ == nullptr) {
-		ERROR_CODE error = stub_->get_connection(getpid() , connection_);
+		error = stub_->get_connection(getpid(), connection_);
 		if (error != ERROR_CODE::OK)
 		{
-			std::cerr << "Stub::get_connection() failed. " << (int) error << std::endl;
+            elog(ERROR, "Stub::get_connection() failed. (error: %d)",
+                (int) error);
+            connection_ = nullptr;
 			return error;
 		}
+
+        elog(LOG, "Stub::get_connection() succeeded. (pid: %d)", 
+            getpid());
 	}
-	*connection = connection_.get();
+
 	error = ERROR_CODE::OK;
 
 	return error;
 }
 
 /*
- *	begin
+ * get_connection
  */
-ERROR_CODE StubManager::begin(stub::Transaction** transaction)
+ERROR_CODE Tsurugi::get_connection(stub::Connection** connection) 
 {
-	ERROR_CODE error = ERROR_CODE::UNKNOWN;
-    ogawayama::stub::Connection* connection;
-
-    error = get_connection(&connection);
-    if (error != ERROR_CODE::OK)
+    ERROR_CODE error = init();
+    if (error == ERROR_CODE::OK)
     {
-        return error;
+        *connection = connection_.get();
     }
-
-	if (transaction_ == nullptr) {
-#if 1
-		boost::property_tree::ptree option;
-		if (GetTransactionOption(option) == false)
-		{
-			std::cerr << "GetTransactionOption() failed. " << (int) error << std::endl;
-			return error;
-		}
-		ERROR_CODE error = connection_->begin(option, transaction_);
-#else
-		ERROR_CODE error = connection_->begin(transaction_);
-#endif
-		if (error != ERROR_CODE::OK)
-		{
-			std::cerr << "Connection::begin() failed. " << (int) error << std::endl;
-			return error;
-		}
-	}
-	*transaction = transaction_.get();
-	error = ERROR_CODE::OK;
-
-	elog(LOG, "tsurugi-fdw : tsurugi-transaction started.");
-
-	return error;
+    return error;
 }
 
 /*
- *	begin
+ *	start_transaction
  */
-ERROR_CODE StubManager::start_transaction()
+ERROR_CODE Tsurugi::start_transaction()
 {
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
-    ogawayama::stub::Connection* connection;
 
-    elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-
-    error = get_connection(&connection);
-    if (error != ERROR_CODE::OK)
+    if (connection_ != nullptr)
     {
-        return error;
+        boost::property_tree::ptree option;
+        GetTransactionOption(option);
+
+        elog(LOG, "Trying to run Connection::begin(). (pid: %d)", getpid());
+
+        ERROR_CODE error = connection_->begin(option, transaction_);
+
+        elog(LOG, "Connection::begin() done. (error: %d)", (int) error);
     }
-
-	if (transaction_ == nullptr) 
-    {
-		ERROR_CODE error = connection_->begin(transaction_);
-		if (error != ERROR_CODE::OK)
-		{
-			std::cerr << "Connection::begin() failed. " << (int) error << std::endl;
-			return error;
-		}
-    	elog(LOG, "tsurugi-fdw : tsurugi-transaction started.");
-      	error = ERROR_CODE::OK;
-	}
     else
     {
-        elog(WARNING, "there is already a transaction in progress");
-      	error = ERROR_CODE::TRANSACTION_ALREADY_STARTED;
+        elog(WARNING, "there is no connection to Tsurugi.");
+        return error;
     }
 
 	return error;
 }
 
 /*
- *  commit
+ * execute_query
  */
-void StubManager::commit()
+ERROR_CODE 
+Tsurugi::execute_query(std::string_view query, ResultSetPtr& result_set)
 {
-    elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+    ERROR_CODE error = ERROR_CODE::UNKNOWN;
 
-    if (transaction_ != nullptr) {
-        elog(LOG, "tsurugi_fdw : Try to commit the transaction.");
+    elog(LOG, "Trying to run Transaction::execute_query(). \n%s", 
+        query.data());
+
+    result_set = nullptr;
+    error = transaction_->execute_query(query, result_set);
+
+    elog(LOG, "execute_query() done. (error: %d)", (int) error);
+
+    return error;
+}
+
+/*
+ * execute_statement
+ */
+ERROR_CODE 
+Tsurugi::execute_statement(std::string_view statement)
+{
+    ERROR_CODE error = ERROR_CODE::UNKNOWN;
+
+    if (transaction_ != nullptr)
+    {
+        elog(LOG, "tsurugi-fdw: Trying to execute the statement. \n%s", 
+            statement.data());
+
+        error = transaction_->execute_statement(statement);
+
+        elog(LOG, "tsurugi-fdw: execute_statement() done. (error: %d)",
+            (int) error);
+    }
+    else
+    {
+        elog(WARNING, "there is no transaction in progress.");
+      	error = ERROR_CODE::NO_TRANSACTION;
+    }
+
+    return error;
+}
+
+/*
+ * commit
+ */
+ERROR_CODE Tsurugi::commit()
+{
+    ERROR_CODE error = ERROR_CODE::UNKNOWN;
+
+    if (transaction_ != nullptr) 
+    {
+        elog(LOG, "Trying to run Transaction::commit().");
+
         ERROR_CODE error = transaction_->commit();
-        if (error != ERROR_CODE::OK) 
-        {
-            elog(WARNING, "Transaction::commit() failed. (error: %d)",
-                (int) error);
-        }
-        elog(LOG, "tsurugi_fdw : tsurugi-transaction commited.");
         transaction_ = nullptr;
+
+        elog(LOG, "Transaction::commit() done. (error: %d)", (int) error);
     }
     else
     {
         elog(WARNING, "there is no transaction in progress");
+        error = ERROR_CODE::NO_TRANSACTION;
     }
+
+    return error;
 }
 
 /*
- *  rollback
+ * rollback
  */
-void StubManager::rollback()
+ERROR_CODE Tsurugi::rollback()
 {
-    elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+    ERROR_CODE error = ERROR_CODE::UNKNOWN;
 
-    if (transaction_ != nullptr) {
-        elog(LOG, "Tsurugi_fdw : Try to rollback the transaction.");
+    if (transaction_ != nullptr) 
+    {
+        elog(LOG, "Trying to run Transaction::rollback().");
+
         ERROR_CODE error = transaction_->rollback();
-        if (error != ERROR_CODE::OK)
-        {
-            elog(WARNING, "transaction::rollback() failed. (%d)", 
-                (int) error);
-        }
-        elog(LOG, "tsurugi_fdw : tsurugi-transaction rollbacked.");
         transaction_ = nullptr;
+
+        elog(LOG, "Transaction::rollback() done. (error: %d)", (int) error);
     }
     else
     {
-        elog(WARNING, "there is no transaction in progress");
+        elog(WARNING, "there is no transaction in progress.");
+        error = ERROR_CODE::NO_TRANSACTION;
     }
+
+    return error;
 }
