@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 tsurugi project.
+ * Copyright 2021 tsurugi project.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,30 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	alt_function.c
- *	@brief	Tsurugi User-Defined Functions.
+ *	@file	grant_revoke_table.h
+ *	@brief  Dispatch the grant-table,revoke-table command to ogawayama.
  */
-#include "postgres.h"
-#include "fmgr.h"
 
-bool EnableLTx = false;
+#ifndef GRANT_REVOKE_TABLE_H
+#define GRANT_REVOKE_TABLE_H
 
-PG_FUNCTION_INFO_V1(tsurugi_ltx);
+#ifdef __cplusplus
+extern "C" {
 
-Datum
-tsurugi_ltx(PG_FUNCTION_ARGS)
-{
-	char	   *res = (char *) palloc(32);
+#endif
 
-	if (PG_NARGS() == 1) {
-	    EnableLTx = PG_GETARG_BOOL(0);
-	}
+bool after_grant_revoke_table(const GrantStmt* stmts);
 
-	if (EnableLTx) {
-		res = "Tsurugi LTx : Enable";
-	} else {
-		res = "Tsurugi LTx : Disable";
-	}
-
-	PG_RETURN_CSTRING(res);
+#ifdef __cplusplus
 }
+#endif
+
+#endif  // GRANT_REVOKE_TABLE_H

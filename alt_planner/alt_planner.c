@@ -69,7 +69,7 @@ void is_valid_targetentry(ForeignScan *scan, AltPlannerInfo *root);
 PlannedStmt *create_planned_stmt(AltPlannerInfo *root, Plan *plan);
 void preprocess_targetlist2(Query *parse, ForeignScan *scan);
 static List *expand_targetlist(List *tlist, int command_type, Index result_relation, Relation rel);
-bool include_foreign_tables(AltPlannerInfo *root, List *rtable);
+bool contain_foreign_tables(AltPlannerInfo *root, List *rtable);
 
 /*
  * alt_planner
@@ -95,12 +95,8 @@ alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
-	/*
-	 * 操作対象のSQLコマンドかどうかに応じて処理を行う
-	 * SQL文に含まれるオブジェクトがすべて同一サーバ上のRangeTblEntryであることを確認
-	 */
 	if ((root->parse != NULL && root->parse->rtable == NULL) || 
-		!include_foreign_tables(root, root->parse->rtable))
+		!contain_foreign_tables(root, root->parse->rtable))
 	{
 		return standard_planner(parse2, cursorOptions, boundParams);
 	}
@@ -130,17 +126,25 @@ alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 			{
 				elog(NOTICE, "PostgreSQL独自文法です。(UPDATEもしくはDELETEでのFROM句の使用)");
 			}
-			scan = create_foreign_scan(root);
-			modify = create_modify_table(root, scan);
-			plan = (Plan *) modify;
-    	elog(DEBUG2, "tsurugi_fdw : choose direct modify. %s", __func__);
+            
+            if (root->parse != NULL && root->parse->rtable != NULL &&
+                is_only_foreign_table(root, root->parse->rtable)) 
+            {
+                elog(LOG, "tsurugi_fdw : Execute direct modify. %s", __func__);
+                scan = create_foreign_scan(root);
+                modify = create_modify_table(root, scan);
+                plan = (Plan *) modify;
+            } 
+            else 
+            {
+        		return standard_planner(parse2, cursorOptions, boundParams);    
+            }
 			break;
 		}
 
 		case CMD_SELECT:
 		default:
 		{
-    	elog(DEBUG2, "tsurugi_fdw : call standard_planner(). %s", __func__);
 			return standard_planner(parse2, cursorOptions, boundParams);
 		}
 	}
@@ -303,11 +307,11 @@ is_only_foreign_table(AltPlannerInfo *root, List *rtable)
  *
  */
 bool
-include_foreign_tables(AltPlannerInfo *root, List *rtable)
+contain_foreign_tables(AltPlannerInfo *root, List *rtable)
 {
 	ListCell	*rtable_list_cell;
 	Oid			currentserverid;
-	bool included = false;
+	bool contained = false;
 
 	foreach(rtable_list_cell, rtable)
 	{
@@ -321,7 +325,7 @@ include_foreign_tables(AltPlannerInfo *root, List *rtable)
 					同一外部サーバをアクセスしているかを判定する */
 				if (range_table_entry->relkind == 'f')
 				{
-					included = true;
+					contained = true;
 					/* 現在チェックしているRTEの外部サーバのOIDを獲得 */
 					currentserverid = GetForeignServerIdByRelId(range_table_entry->relid);
 
@@ -355,9 +359,9 @@ include_foreign_tables(AltPlannerInfo *root, List *rtable)
 					/* サブクエリ内のRTEをis_only_foreign_tableにかける(再帰) */
 					Query	*subquery = range_table_entry->subquery;
 
-					if (include_foreign_tables(root, subquery->rtable))
+					if (contain_foreign_tables(root, subquery->rtable))
 					{
-						included = true;
+						contained = true;
 						break;
 					}
 				}
@@ -388,7 +392,7 @@ include_foreign_tables(AltPlannerInfo *root, List *rtable)
 		}
 	}
 
-	return included;
+	return contained;
 }
 
 /*

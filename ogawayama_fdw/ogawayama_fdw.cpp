@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2019 tsurugi project.
+ * Copyright 2019-2023 tsurugi project.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,36 +18,22 @@
  */
 #include <string>
 #include <memory>
+#include <regex>
+#include <boost/format.hpp>
 #include "ogawayama/stub/error_code.h"
 #include "ogawayama/stub/api.h"
 #include "stub_manager.h"
+#include "tsurugi_utils.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 #include "postgres.h"
-
 #include "ogawayama_fdw.h"
-
-#if 0
-#include "access/htup.h"
-#include "access/htup_details.h"
-#include "catalog/pg_type.h"
-#include "foreign/fdwapi.h"
-#include "optimizer/pathnode.h"
-#include "optimizer/planmain.h"
-#include "optimizer/restrictinfo.h"
-#include "optimizer/cost.h"
-#include "storage/proc.h"
-#include "utils/fmgrprotos.h"
-#include "utils/memutils.h"
-#endif
 
 #include "access/xact.h"
 #include "utils/syscache.h"
-
-// postgres_fdwから流用
+#include "utils/date.h"
 #include "access/htup_details.h"
 #include "access/sysattr.h"
 #include "access/table.h"
@@ -77,6 +63,8 @@ extern "C" {
 #include "utils/rel.h"
 #include "utils/sampling.h"
 #include "utils/selfuncs.h"
+#include "access/tupdesc.h"
+#include "nodes/pg_list.h"
 
 PG_MODULE_MAGIC;
 
@@ -85,6 +73,8 @@ PG_MODULE_MAGIC;
 #endif
 
 using namespace ogawayama;
+
+int unused PG_USED_FOR_ASSERTS_ONLY;
 
 /* Default CPU cost to start up a foreign query. */
 #define DEFAULT_FDW_STARTUP_COST	100.0
@@ -118,40 +108,60 @@ enum FdwScanPrivateIndex
 	FdwScanPrivateRelations
 };
 
-#define DEFAULT_FETCH_SIZE (10000)
-typedef struct row_data_
-{
-	size_t 		number_of_columns;		/* SELECT対象の列数 */
-	Oid* 		column_data_types; 		/* SELECT予定の列のデータ型(Oid)用のポインタ */
-} RowData;
 /*
  *	@brief	クエリー実行毎のFDWの状態
  */
-typedef struct ogawayama_fdw_state_
+typedef struct tsurugiFdwState
 {
-	bool 			cursor_exists;			
 	const char* 	query_string;		/* SQL Query Text */
+    Relation        rel;                /* relcache entry for the foreign table */
+    TupleDesc       tupdesc;            /* tuple descriptor of scan */
+    AttInMetadata*  attinmeta;          /* attribute datatype conversion */
+    List*           retrieved_attrs;    /* list of target attribute numbers */
+
+	bool 			cursor_exists;		/* have we created the cursor? */
+    int             numParams;          /* number of parameters passed to query */
+    FmgrInfo*       param_flinfo;       /* output conversion functions for them */
+    List*           param_exprs;        /* executable expressions for param values */
+    const char**    param_values;       /* textual values of query parameters */
+    Oid*            param_types;        /* type of query parameters */
+
 	size_t 			number_of_columns;	/* SELECT対象の列数 */
 	Oid* 			column_types; 		/* SELECT予定の列のデータ型(Oid)用のポインタ */
-	RowData			row;
-	MemoryContext 	batch_cxt;			
-	std::vector<TupleTableSlot*> tuples;
-	decltype(tuples)::iterator tuple_ite;
-	size_t			fetch_size;
-	size_t			num_tuples;
-	size_t			next_tuple;
-	bool			eof_reached;
-} OgawayamaFdwState;
+
+    int             p_nums;             /* number of parameters to transmit */
+    FmgrInfo*       p_flinfo;           /* output conversion functions for them */
+
+    /* batch operation stuff */
+    int             num_slots;          /* number of slots to insert */
+
+    List*           attr_list;          /* query attribute list */
+    List*           column_list;        /* Column list of Tsurugi Column structres */
+
+    size_t          row_nums;           /* number of rows */
+    Datum**         rows;               /* all rows of scan */
+    size_t          rowidx;             /* current index of rows */
+    bool**          rows_isnull;        /* is null*/
+    bool            for_update;         /* true if this scan is update target */
+    int             batch_size;         /* value of FDW option "batch_size" */
+
+	size_t			num_tuples;         /* # of tuples in array */
+	size_t			next_tuple;         /* index of next one to return */
+	std::vector<TupleTableSlot*>    tuples;
+	decltype(tuples)::iterator      tuple_ite;
+
+	bool			eof_reached;        /* true if last fetch reached EOF */
+} tsurugiFdwState;
 
 /*
  *	@brief 	セッションごとのFDWの状態
  */
-typedef struct
+typedef struct tsurugi_fdw_info_
 {
-	stub::Transaction*	transaction = nullptr;
  	ResultSetPtr 		result_set = nullptr;
 	MetadataPtr 		metadata = nullptr;
 	int 				xact_level = 0;		/* FDWが自認する現在のトランザクションレベル */
+    bool                success = false;
 } OgawayamaFdwInfo;
 
 /*
@@ -199,24 +209,6 @@ enum FdwPathPrivateIndex
 	/* has-limit flag (as an integer Value node) */
 	FdwPathPrivateHasLimit
 };
-
-/* Callback argument for ec_member_matches_foreign */
-typedef struct
-{
-	Expr	   *current;		/* current expr, or NULL if not yet found */
-	List	   *already_used;	/* expressions already dealt with */
-} ec_member_foreign_arg;
-
-/* Struct for extra information passed to estimate_path_cost_size() */
-typedef struct
-{
-	PathTarget *target;
-	bool		has_final_sort;
-	bool		has_limit;
-	double		limit_tuples;
-	int64		count_est;
-	int64		offset_est;
-} PgFdwPathExtraData;
 
 #ifdef __cplusplus
 extern "C" {
@@ -266,11 +258,11 @@ static bool tsurugiPlanDirectModify(PlannerInfo *root,
 static void tsurugiBeginDirectModify(ForeignScanState* node, int eflags);
 static TupleTableSlot* tsurugiIterateDirectModify(ForeignScanState* node);
 static void tsurugiEndDirectModify(ForeignScanState* node);
-static TupleTableSlot* tsurugiExecForeignInsert(EState *estate, 
-                                                ResultRelInfo *rinfo, 
-                                                TupleTableSlot *slot, 
-                                                TupleTableSlot *planSlot);
-
+static void tsurugiBeginForeignModify(ModifyTableState *mtstate,
+                                        ResultRelInfo *rinfo,
+                                        List *fdw_private,
+                                        int subplan_index,
+                                        int eflags);
 static TupleTableSlot* tsurugiExecForeignUpdate(EState *estate, 
                                                 ResultRelInfo *rinfo, 
                                                 TupleTableSlot *slot, 
@@ -280,6 +272,16 @@ static TupleTableSlot* tsurugiExecForeignDelete(EState *estate,
                                                 ResultRelInfo *rinfo, 
                                                 TupleTableSlot *slot, 
                                                 TupleTableSlot *planSlot);
+static void tsurugiEndForeignModify(EState *estate,
+                                    ResultRelInfo *rinfo);
+static void tsurugiBeginForeignInsert(ModifyTableState *mtstate,
+                                    ResultRelInfo *rinfo);
+static TupleTableSlot* tsurugiExecForeignInsert(EState *estate, 
+                                                ResultRelInfo *rinfo, 
+                                                TupleTableSlot *slot, 
+                                                TupleTableSlot *planSlot);
+static void tsurugiEndForeignInsert(EState *estate,
+                                    ResultRelInfo *rinfo);
 
 /*
  * FDW callback routines (Others)
@@ -292,7 +294,12 @@ static bool tsurugiAnalyzeForeignTable(
 	Relation relation, AcquireSampleRowsFunc* func, BlockNumber* totalpages);
 static List* tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt, 
 										  Oid serverOid);
-
+static void tsurugiGetForeignJoinPaths(PlannerInfo *root,
+										RelOptInfo *joinrel,
+										RelOptInfo *outerrel,
+										RelOptInfo *innerrel,
+										JoinType jointype,
+										JoinPathExtraData *extra);
 #ifdef __cplusplus
 }
 #endif
@@ -300,53 +307,20 @@ static List* tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt,
 /*
  * Helper functions
  */
-static OgawayamaFdwState* create_fdwstate();
-static void free_fdwstate(OgawayamaFdwState* fdw_state);
-static void store_pg_data_type(OgawayamaFdwState* fdw_state, List* tlist);
+static tsurugiFdwState* create_fdwstate();
+static void free_fdwstate(tsurugiFdwState* fdw_state);
+static void store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist);
 static bool confirm_columns(MetadataPtr metadata, ForeignScanState* node);
-static void create_cursor(ForeignScanState* node);
-static void fetch_more_data(ForeignScanState* node);
+static void tsurugi_create_cursor(ForeignScanState* node);
+static void tsurugi_fetch_more_data(ForeignScanState* node);
+static void tsurugi_close_cursor();
 static void make_virtual_tuple(TupleTableSlot* slot, ForeignScanState* node);
-static TupleTableSlot* make_tuple_from_result_set(ResultSetPtr result_set, 
-												  OgawayamaFdwState* fdw_state);
-static void begin_backend_xact(void);
-static void ogawayama_xact_callback (XactEvent event, void *arg);
-
-/* 
- * Helper functions of postgres_fdw 
- */
-static void estimate_path_cost_size(PlannerInfo *root,
-									RelOptInfo *foreignrel,
-									List *param_join_conds,
-									List *pathkeys,
-									PgFdwPathExtraData *fpextra,
-									double *p_rows, int *p_width,
-									Cost *p_startup_cost, Cost *p_total_cost);
-static bool ec_member_matches_foreign(PlannerInfo *root, RelOptInfo *rel,
-									  EquivalenceClass *ec, EquivalenceMember *em,
-									  void *arg);
-static List *get_useful_pathkeys_for_relation(PlannerInfo *root,
-											  RelOptInfo *rel);
-static void add_paths_with_pathkeys_for_rel(PlannerInfo *root, RelOptInfo *rel,
-											Path *epq_path);
-static void add_foreign_grouping_paths(PlannerInfo *root,
-									   RelOptInfo *input_rel,
-									   RelOptInfo *grouped_rel,
-									   GroupPathExtraData *extra);
-static void add_foreign_ordered_paths(PlannerInfo *root,
-									  RelOptInfo *input_rel,
-									  RelOptInfo *ordered_rel);
-static void add_foreign_final_paths(PlannerInfo *root,
-									RelOptInfo *input_rel,
-									RelOptInfo *final_rel,
-									FinalPathExtraData *extra);
-static void apply_table_options(tsurugiFdwRelationInfo *fpinfo);
-static void merge_fdw_options(tsurugiFdwRelationInfo *fpinfo,
-							  const tsurugiFdwRelationInfo *fpinfo_o,
-							  const tsurugiFdwRelationInfo *fpinfo_i);
-static List *build_remote_returning(Index rtindex, Relation rel,
-									List *returningList);
-static void rebuild_fdw_scan_tlist(ForeignScan *fscan, List *tlist);
+static void make_tuple_from_result_row(ResultSetPtr result_set, 
+                                        TupleDesc tupleDescriptor,
+                                        List* retrieved_attrs,
+                                        Datum* row,
+                                        bool* is_null,
+                                        tsurugiFdwState* fdw_state);
 
 extern PGDLLIMPORT PGPROC *MyProc;
 
@@ -393,16 +367,21 @@ ogawayama_fdw_handler(PG_FUNCTION_ARGS)
 	routine->ImportForeignSchema = tsurugiImportForeignSchema;
 
    /*Functions for foreign modify*/
-	routine->ExecForeignInsert = tsurugiExecForeignInsert;
+    routine->BeginForeignModify = tsurugiBeginForeignModify;
 	routine->ExecForeignUpdate = tsurugiExecForeignUpdate;
 	routine->ExecForeignDelete = tsurugiExecForeignDelete;
+    routine->EndForeignModify = tsurugiEndForeignModify;
+    routine->BeginForeignInsert = tsurugiBeginForeignInsert;
+	routine->ExecForeignInsert = tsurugiExecForeignInsert;
+    routine->EndForeignInsert = tsurugiEndForeignInsert;
 
-    RegisterXactCallback( ogawayama_xact_callback, NULL );
+	/* Support functions for join push-down */
+	routine->GetForeignJoinPaths = tsurugiGetForeignJoinPaths;
 
-	ERROR_CODE error = StubManager::init();
+	ERROR_CODE error = Tsurugi::init();
 	if (error != ERROR_CODE::OK) 
 	{
-		elog(ERROR, "StubManager::init() failed. (%d)", (int) error);
+		elog(ERROR, "Tsurugi::init() failed. (%d)", (int) error);
 	}
 
 	PG_RETURN_POINTER(routine);
@@ -411,12 +390,12 @@ ogawayama_fdw_handler(PG_FUNCTION_ARGS)
 /* FDW Plan functions */
 
 /*
- *	
+ * tsurugiGetForeignRelSize
  */
 static void tsurugiGetForeignRelSize(
 	PlannerInfo* root, RelOptInfo* baserel, Oid foreigntableid)
 {
-	tsurugiFdwRelationInfo *fpinfo;
+	TgFdwRelationInfo *fpinfo;
 	ListCell   *lc;
 	RangeTblEntry *rte = planner_rt_fetch(baserel->relid, root);
 	const char *namespace_string;
@@ -426,10 +405,10 @@ static void tsurugiGetForeignRelSize(
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
 	/*
-	 * We use tsurugiFdwRelationInfo to pass various information to subsequent
+	 * We use TgFdwRelationInfo to pass various information to subsequent
 	 * functions.
 	 */
-	fpinfo = (tsurugiFdwRelationInfo *) palloc0(sizeof(tsurugiFdwRelationInfo));
+	fpinfo = (TgFdwRelationInfo *) palloc0(sizeof(TgFdwRelationInfo));
 	baserel->fdw_private = (void *) fpinfo;
 
 	/* Base foreign tables need to be pushed down always. */
@@ -517,14 +496,14 @@ static void tsurugiGetForeignRelSize(
 	 */
 
 	/*
-		* If the foreign table has never been ANALYZEd, it will have relpages
-		* and reltuples equal to zero, which most likely has nothing to do
-		* with reality.  We can't do a whole lot about that if we're not
-		* allowed to consult the remote server, but we can use a hack similar
-		* to plancat.c's treatment of empty relations: use a minimum size
-		* estimate of 10 pages, and divide by the column-datatype-based width
-		* estimate to get the corresponding number of tuples.
-		*/
+	 * If the foreign table has never been ANALYZEd, it will have relpages
+	 * and reltuples equal to zero, which most likely has nothing to do
+	 * with reality.  We can't do a whole lot about that if we're not
+	 * allowed to consult the remote server, but we can use a hack similar
+	 * to plancat.c's treatment of empty relations: use a minimum size
+	 * estimate of 10 pages, and divide by the column-datatype-based width
+	 * estimate to get the corresponding number of tuples.
+	 */
 	if (baserel->pages == 0 && baserel->tuples == 0)
 	{
 		baserel->pages = 10;
@@ -566,238 +545,66 @@ static void tsurugiGetForeignRelSize(
 	fpinfo->relation_index = baserel->relid;
 }
 
-
 /*
- * get_useful_ecs_for_relation
- *		Determine which EquivalenceClasses might be involved in useful
- *		orderings of this relation.
- *
- * This function is in some respects a mirror image of the core function
- * pathkeys_useful_for_merging: for a regular table, we know what indexes
- * we have and want to test whether any of them are useful.  For a foreign
- * table, we don't know what indexes are present on the remote side but
- * want to speculate about which ones we'd like to use if they existed.
- *
- * This function returns a list of potentially-useful equivalence classes,
- * but it does not guarantee that an EquivalenceMember exists which contains
- * Vars only from the given relation.  For example, given ft1 JOIN t1 ON
- * ft1.x + t1.x = 0, this function will say that the equivalence class
- * containing ft1.x + t1.x is potentially useful.  Supposing ft1 is remote and
- * t1 is local (or on a different server), it will turn out that no useful
- * ORDER BY clause can be generated.  It's not our job to figure that out
- * here; we're only interested in identifying relevant ECs.
+ * tsurugiGetForeignUpperPaths
+ *		Add paths for post-join operations like aggregation, grouping etc. if
+ *		corresponding operations are safe to push down.
  */
-static List *
-get_useful_ecs_for_relation(PlannerInfo *root, RelOptInfo *rel)
+void
+tsurugiGetForeignUpperPaths(PlannerInfo *root, UpperRelationKind stage,
+							 RelOptInfo *input_rel, RelOptInfo *output_rel,
+							 void *extra)
 {
-	List	   *useful_eclass_list = NIL;
-	ListCell   *lc;
-	Relids		relids;
+	TgFdwRelationInfo *fpinfo;
 
 	/*
-	 * First, consider whether any active EC is potentially useful for a merge
-	 * join against this relation.
+	 * If input rel is not safe to pushdown, then simply return as we cannot
+	 * perform any post-join operations on the foreign server.
 	 */
-	if (rel->has_eclass_joins)
+	if (!input_rel->fdw_private ||
+		!((TgFdwRelationInfo *) input_rel->fdw_private)->pushdown_safe)
+		return;
+
+	/* Ignore stages we don't support; and skip any duplicate calls. */
+	if ((stage != UPPERREL_GROUP_AGG &&
+		 stage != UPPERREL_ORDERED &&
+		 stage != UPPERREL_FINAL) ||
+		output_rel->fdw_private)
+		return;
+
+	fpinfo = (TgFdwRelationInfo *) palloc0(sizeof(TgFdwRelationInfo));
+	fpinfo->pushdown_safe = false;
+	fpinfo->stage = stage;
+	output_rel->fdw_private = fpinfo;
+
+	switch (stage)
 	{
-		foreach(lc, root->eq_classes)
-		{
-			EquivalenceClass *cur_ec = (EquivalenceClass *) lfirst(lc);
-
-			if (eclass_useful_for_merging(root, cur_ec, rel))
-				useful_eclass_list = lappend(useful_eclass_list, cur_ec);
-		}
+		case UPPERREL_GROUP_AGG:
+			add_foreign_grouping_paths(root, input_rel, output_rel,
+									   (GroupPathExtraData *) extra);
+			break;
+		case UPPERREL_ORDERED:
+			add_foreign_ordered_paths(root, input_rel, output_rel);
+			break;
+		case UPPERREL_FINAL:
+			add_foreign_final_paths(root, input_rel, output_rel,
+									(FinalPathExtraData *) extra);
+			break;
+		default:
+			elog(ERROR, "unexpected upper relation: %d", (int) stage);
+			break;
 	}
-
-	/*
-	 * Next, consider whether there are any non-EC derivable join clauses that
-	 * are merge-joinable.  If the joininfo list is empty, we can exit
-	 * quickly.
-	 */
-	if (rel->joininfo == NIL)
-		return useful_eclass_list;
-
-	/* If this is a child rel, we must use the topmost parent rel to search. */
-	if (IS_OTHER_REL(rel))
-	{
-		Assert(!bms_is_empty(rel->top_parent_relids));
-		relids = rel->top_parent_relids;
-	}
-	else
-		relids = rel->relids;
-
-	/* Check each join clause in turn. */
-	foreach(lc, rel->joininfo)
-	{
-		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(lc);
-
-		/* Consider only mergejoinable clauses */
-		if (restrictinfo->mergeopfamilies == NIL)
-			continue;
-
-		/* Make sure we've got canonical ECs. */
-		update_mergeclause_eclasses(root, restrictinfo);
-
-		/*
-		 * restrictinfo->mergeopfamilies != NIL is sufficient to guarantee
-		 * that left_ec and right_ec will be initialized, per comments in
-		 * distribute_qual_to_rels.
-		 *
-		 * We want to identify which side of this merge-joinable clause
-		 * contains columns from the relation produced by this RelOptInfo. We
-		 * test for overlap, not containment, because there could be extra
-		 * relations on either side.  For example, suppose we've got something
-		 * like ((A JOIN B ON A.x = B.x) JOIN C ON A.y = C.y) LEFT JOIN D ON
-		 * A.y = D.y.  The input rel might be the joinrel between A and B, and
-		 * we'll consider the join clause A.y = D.y. relids contains a
-		 * relation not involved in the join class (B) and the equivalence
-		 * class for the left-hand side of the clause contains a relation not
-		 * involved in the input rel (C).  Despite the fact that we have only
-		 * overlap and not containment in either direction, A.y is potentially
-		 * useful as a sort column.
-		 *
-		 * Note that it's even possible that relids overlaps neither side of
-		 * the join clause.  For example, consider A LEFT JOIN B ON A.x = B.x
-		 * AND A.x = 1.  The clause A.x = 1 will appear in B's joininfo list,
-		 * but overlaps neither side of B.  In that case, we just skip this
-		 * join clause, since it doesn't suggest a useful sort order for this
-		 * relation.
-		 */
-		if (bms_overlap(relids, restrictinfo->right_ec->ec_relids))
-			useful_eclass_list = list_append_unique_ptr(useful_eclass_list,
-														restrictinfo->right_ec);
-		else if (bms_overlap(relids, restrictinfo->left_ec->ec_relids))
-			useful_eclass_list = list_append_unique_ptr(useful_eclass_list,
-														restrictinfo->left_ec);
-	}
-
-	return useful_eclass_list;
 }
 
 /*
- * get_useful_pathkeys_for_relation
- *		Determine which orderings of a relation might be useful.
- *
- * Getting data in sorted order can be useful either because the requested
- * order matches the final output ordering for the overall query we're
- * planning, or because it enables an efficient merge join.  Here, we try
- * to figure out which pathkeys to consider.
+ * tsurugiGetForeignPaths
  */
-static List *
-get_useful_pathkeys_for_relation(PlannerInfo *root, RelOptInfo *rel)
+static void 
+tsurugiGetForeignPaths(PlannerInfo *root,
+                        RelOptInfo *baserel,
+                        Oid foreigntableid)
 {
-	List	   *useful_pathkeys_list = NIL;
-	List	   *useful_eclass_list;
-	tsurugiFdwRelationInfo *fpinfo = (tsurugiFdwRelationInfo *) rel->fdw_private;
-	EquivalenceClass *query_ec = NULL;
-	ListCell   *lc;
-
-	/*
-	 * Pushing the query_pathkeys to the remote server is always worth
-	 * considering, because it might let us avoid a local sort.
-	 */
-	fpinfo->qp_is_pushdown_safe = false;
-	if (root->query_pathkeys)
-	{
-		bool		query_pathkeys_ok = true;
-
-		foreach(lc, root->query_pathkeys)
-		{
-			PathKey    *pathkey = (PathKey *) lfirst(lc);
-			EquivalenceClass *pathkey_ec = pathkey->pk_eclass;
-			Expr	   *em_expr;
-
-			/*
-			 * The planner and executor don't have any clever strategy for
-			 * taking data sorted by a prefix of the query's pathkeys and
-			 * getting it to be sorted by all of those pathkeys. We'll just
-			 * end up resorting the entire data set.  So, unless we can push
-			 * down all of the query pathkeys, forget it.
-			 *
-			 * is_foreign_expr would detect volatile expressions as well, but
-			 * checking ec_has_volatile here saves some cycles.
-			 */
-			if (pathkey_ec->ec_has_volatile ||
-				!(em_expr = find_em_expr_for_rel(pathkey_ec, rel)) ||
-				!is_foreign_expr(root, rel, em_expr))
-			{
-				query_pathkeys_ok = false;
-				break;
-			}
-		}
-
-		if (query_pathkeys_ok)
-		{
-			useful_pathkeys_list = list_make1(list_copy(root->query_pathkeys));
-			fpinfo->qp_is_pushdown_safe = true;
-		}
-	}
-
-	/*
-	 * Even if we're not using remote estimates, having the remote side do the
-	 * sort generally won't be any worse than doing it locally, and it might
-	 * be much better if the remote side can generate data in the right order
-	 * without needing a sort at all.  However, what we're going to do next is
-	 * try to generate pathkeys that seem promising for possible merge joins,
-	 * and that's more speculative.  A wrong choice might hurt quite a bit, so
-	 * bail out if we can't use remote estimates.
-	 */
-	if (!fpinfo->use_remote_estimate)
-		return useful_pathkeys_list;
-
-	/* Get the list of interesting EquivalenceClasses. */
-	useful_eclass_list = get_useful_ecs_for_relation(root, rel);
-
-	/* Extract unique EC for query, if any, so we don't consider it again. */
-	if (list_length(root->query_pathkeys) == 1)
-	{
-		PathKey    *query_pathkey = (PathKey *) linitial(root->query_pathkeys);
-
-		query_ec = query_pathkey->pk_eclass;
-	}
-
-	/*
-	 * As a heuristic, the only pathkeys we consider here are those of length
-	 * one.  It's surely possible to consider more, but since each one we
-	 * choose to consider will generate a round-trip to the remote side, we
-	 * need to be a bit cautious here.  It would sure be nice to have a local
-	 * cache of information about remote index definitions...
-	 */
-	foreach(lc, useful_eclass_list)
-	{
-		EquivalenceClass *cur_ec = (EquivalenceClass *) lfirst(lc);
-		Expr	   *em_expr;
-		PathKey    *pathkey;
-
-		/* If redundant with what we did above, skip it. */
-		if (cur_ec == query_ec)
-			continue;
-
-		/* If no pushable expression for this rel, skip it. */
-		em_expr = find_em_expr_for_rel(cur_ec, rel);
-		if (em_expr == NULL || !is_foreign_expr(root, rel, em_expr))
-			continue;
-
-		/* Looks like we can generate a pathkey, so let's do it. */
-		pathkey = make_canonical_pathkey(root, cur_ec,
-										 linitial_oid(cur_ec->ec_opfamilies),
-										 BTLessStrategyNumber,
-										 false);
-		useful_pathkeys_list = lappend(useful_pathkeys_list,
-									   list_make1(pathkey));
-	}
-
-	return useful_pathkeys_list;
-}
-
-/*
- *
- */
-static void tsurugiGetForeignPaths(PlannerInfo *root,
-									RelOptInfo *baserel,
-									Oid foreigntableid)
-{
-	tsurugiFdwRelationInfo *fpinfo = (tsurugiFdwRelationInfo *) baserel->fdw_private;
+	TgFdwRelationInfo *fpinfo = (TgFdwRelationInfo *) baserel->fdw_private;
 	ForeignPath *path;
 	List	   *ppi_list;
 	ListCell   *lc;
@@ -998,7 +805,8 @@ static void tsurugiGetForeignPaths(PlannerInfo *root,
 	}
 }
 
-/*	tsurugiGetForeignPlan
+/*	
+ * tsurugiGetForeignPlan
  *		Create ForeignScan plan node which implements selected best path.
  */
 static ForeignScan *
@@ -1010,7 +818,7 @@ tsurugiGetForeignPlan(PlannerInfo *root,
 					   List *scan_clauses,
 					   Plan *outer_plan)
 {
-	tsurugiFdwRelationInfo *fpinfo = (tsurugiFdwRelationInfo *) foreignrel->fdw_private;
+	TgFdwRelationInfo *fpinfo = (TgFdwRelationInfo *) foreignrel->fdw_private;
 	Index		scan_relid;
 	List	   *fdw_private;
 	List	   *remote_exprs = NIL;
@@ -1111,7 +919,7 @@ tsurugiGetForeignPlan(PlannerInfo *root,
 		/*
 		 * We leave fdw_recheck_quals empty in this case, since we never need
 		 * to apply EPQ recheck clauses.  In the case of a joinrel, EPQ
-		 * recheck is handled elsewhere --- see postgresGetForeignJoinPaths().
+		 * recheck is handled elsewhere --- see tsurugiGetForeignJoinPaths().
 		 * If we're planning an upperrel (ie, remote grouping or aggregation)
 		 * then there's no EPQ to do because SELECT FOR UPDATE wouldn't be
 		 * allowed, and indeed we *can't* put the remote clauses into
@@ -1219,90 +1027,268 @@ tsurugiGetForeignPlan(PlannerInfo *root,
 							outer_plan);
 }											
 
+/*
+ * tsurugiGetForeignJoinPaths
+ *		Add possible ForeignPath to joinrel, if join is safe to push down.
+ */
+static void
+tsurugiGetForeignJoinPaths(PlannerInfo *root,
+							RelOptInfo *joinrel,
+							RelOptInfo *outerrel,
+							RelOptInfo *innerrel,
+							JoinType jointype,
+							JoinPathExtraData *extra)
+{
+	TgFdwRelationInfo *fpinfo;
+	ForeignPath *joinpath;
+	double		rows;
+	int			width;
+	Cost		startup_cost;
+	Cost		total_cost;
+	Path	   *epq_path;		/* Path to create plan to be executed when
+								 * EvalPlanQual gets triggered. */
+
+	/*
+	 * Skip if this join combination has been considered already.
+	 */
+	if (joinrel->fdw_private)
+		return;
+
+	/*
+	 * This code does not work for joins with lateral references, since those
+	 * must have parameterized paths, which we don't generate yet.
+	 */
+	if (!bms_is_empty(joinrel->lateral_relids))
+		return;
+
+	/*
+	 * Create unfinished TgFdwRelationInfo entry which is used to indicate
+	 * that the join relation is already considered, so that we won't waste
+	 * time in judging safety of join pushdown and adding the same paths again
+	 * if found safe. Once we know that this join can be pushed down, we fill
+	 * the entry.
+	 */
+	fpinfo = (TgFdwRelationInfo *) palloc0(sizeof(TgFdwRelationInfo));
+	fpinfo->pushdown_safe = false;
+	joinrel->fdw_private = fpinfo;
+	/* attrs_used is only for base relations. */
+	fpinfo->attrs_used = NULL;
+
+	/*
+	 * If there is a possibility that EvalPlanQual will be executed, we need
+	 * to be able to reconstruct the row using scans of the base relations.
+	 * GetExistingLocalJoinPath will find a suitable path for this purpose in
+	 * the path list of the joinrel, if one exists.  We must be careful to
+	 * call it before adding any ForeignPath, since the ForeignPath might
+	 * dominate the only suitable local path available.  We also do it before
+	 * calling tsurugi_foreign_join_ok(), since that function updates fpinfo and marks
+	 * it as pushable if the join is found to be pushable.
+	 */
+	if (root->parse->commandType == CMD_DELETE ||
+		root->parse->commandType == CMD_UPDATE ||
+		root->rowMarks)
+	{
+		epq_path = GetExistingLocalJoinPath(joinrel);
+		if (!epq_path)
+		{
+			elog(DEBUG3, "could not push down foreign join because a local path suitable for EPQ checks was not found");
+			return;
+		}
+	}
+	else
+		epq_path = NULL;
+
+	if (!tsurugi_foreign_join_ok(root, joinrel, jointype, outerrel, innerrel, extra))
+	{
+		/* Free path required for EPQ if we copied one; we don't need it now */
+		if (epq_path)
+			pfree(epq_path);
+		return;
+	}
+
+	/*
+	 * Compute the selectivity and cost of the local_conds, so we don't have
+	 * to do it over again for each path. The best we can do for these
+	 * conditions is to estimate selectivity on the basis of local statistics.
+	 * The local conditions are applied after the join has been computed on
+	 * the remote side like quals in WHERE clause, so pass jointype as
+	 * JOIN_INNER.
+	 */
+	fpinfo->local_conds_sel = clauselist_selectivity(root,
+													 fpinfo->local_conds,
+													 0,
+													 JOIN_INNER,
+													 NULL);
+	cost_qual_eval(&fpinfo->local_conds_cost, fpinfo->local_conds, root);
+
+	/*
+	 * If we are going to estimate costs locally, estimate the join clause
+	 * selectivity here while we have special join info.
+	 */
+	if (!fpinfo->use_remote_estimate)
+		fpinfo->joinclause_sel = clauselist_selectivity(root, fpinfo->joinclauses,
+														0, fpinfo->jointype,
+														extra->sjinfo);
+
+	/* Estimate costs for bare join relation */
+	estimate_path_cost_size(root, joinrel, NIL, NIL, NULL,
+							&rows, &width, &startup_cost, &total_cost);
+	/* Now update this information in the joinrel */
+	joinrel->rows = rows;
+	joinrel->reltarget->width = width;
+	fpinfo->rows = rows;
+	fpinfo->width = width;
+	fpinfo->startup_cost = startup_cost;
+	fpinfo->total_cost = total_cost;
+
+	/*
+	 * Create a new join path and add it to the joinrel which represents a
+	 * join between foreign tables.
+	 */
+	joinpath = create_foreign_join_path(root,
+										joinrel,
+										NULL,	/* default pathtarget */
+										rows,
+										startup_cost,
+										total_cost,
+										NIL,	/* no pathkeys */
+										joinrel->lateral_relids,
+										epq_path,
+										NIL);	/* no fdw_private */
+
+	/* Add generated path into joinrel by add_path(). */
+	add_path(joinrel, (Path *) joinpath);
+
+	/* Consider pathkeys for the join relation */
+	add_paths_with_pathkeys_for_rel(root, joinrel, epq_path);
+
+	/* XXX Consider parameterized paths for the join relation */
+}                            
+
 /* 
- * 	FDW Executor functions 
+ * 	fdw executor functions 
  */
 
 /*
- *	@brief	Preparation for scanning foreign tables.
- *	@param	[in] Foreign scan inforamtion.
- *	@param	[in] Some flag parameters. (e.g. EXEC_FLAG_EXPLAIN_ONLY)
+ *  tsurugiBeginForeignScan
+ *	    Preparation for scanning foreign tables.
  */
 static void 
 tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 {
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-
 	Assert(node != nullptr);
 
 	ForeignScan* fsplan = (ForeignScan*) node->ss.ps.plan;
 	EState*	estate = node->ss.ps.state;
-	OgawayamaFdwState* fdw_state = create_fdwstate();
+	tsurugiFdwState* fdw_state = create_fdwstate();
 
-	fdw_state->fetch_size = DEFAULT_FETCH_SIZE;
+	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
-	/* Create MemoryContext for tuple data */
-	fdw_state->batch_cxt = AllocSetContextCreate(
-		estate->es_query_cxt, "ogawayama_fdw tuple data", ALLOCSET_DEFAULT_SIZES);
+	/*
+	 * We'll save private state in node->fdw_state.
+	 */
+    node->fdw_state = (void*) fdw_state;
+    fdw_state->rowidx = 0;
 
-	/* トランザクション開始 */
-	begin_backend_xact();
-
-	/* SELECT対象の列のデータ型を格納 */
 	store_pg_data_type(fdw_state, fsplan->scan.plan.targetlist);
-	
+
 	fdw_state->query_string = strVal(list_nth(fsplan->fdw_private,
 									 FdwScanPrivateSelectSql));
+    fdw_state->retrieved_attrs = (List*) list_nth(fsplan->fdw_private, 
+                                                   FdwScanPrivateRetrievedAttrs);
+    fdw_state->cursor_exists = false;
 
-	 /* fdw_stateをnode->fdw_stateに格納する */
-	 node->fdw_state = fdw_state;
+   	/*
+	 * Get info we'll need for converting data fetched from the foreign server
+	 * into local representation and error reporting during that process.
+	 */
+	if (fsplan->scan.scanrelid > 0)
+	{
+		fdw_state->rel = node->ss.ss_currentRelation;
+		fdw_state->tupdesc = RelationGetDescr(fdw_state->rel);
+	}
+	else
+	{
+		fdw_state->rel = NULL;
+		fdw_state->tupdesc = node->ss.ss_ScanTupleSlot->tts_tupleDescriptor;
+	} 
+
+    fdw_state->attinmeta = TupleDescGetAttInMetadata(fdw_state->tupdesc);
+
+    Tsurugi::start_transaction();
+    fdw_info_.success = true;
 }
 
 /*
- *	@briref	Scanning row data from foreign tables.
- *	@param	[in] Foreign scan inforamtion.
- *	@return	Scaned row data.
+ * tsurugiIterateForeignScan
+ *      Scanning row data from foreign tables.
  */
 static TupleTableSlot* 
 tsurugiIterateForeignScan(ForeignScanState* node)
 {
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG5, "tsurugi_fdw : %s", __func__);
 
 	Assert(node != nullptr);
 	Assert(fdw_info_.transaction != nullptr);
 
-	TupleTableSlot* slot = node->ss.ss_ScanTupleSlot;
-	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
+	tsurugiFdwState* fdw_state = (tsurugiFdwState*) node->fdw_state;
+	TupleTableSlot* tupleSlot = node->ss.ss_ScanTupleSlot;
+
+	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
 	if (!fdw_state->cursor_exists)
-		create_cursor(node);
+    {
+        std::string query = make_tsurugi_query(fdw_state->query_string);
+        fdw_info_.result_set = nullptr;
+        ERROR_CODE error = Tsurugi::execute_query(query, fdw_info_.result_set);
+        if (error != ERROR_CODE::OK)
+        {
+            elog(ERROR, "Query execution failed. (%d)", (int) error);
+            Tsurugi::rollback();
+            fdw_info_.success = false;
+        }
 
-	if (fdw_state->next_tuple >= fdw_state->num_tuples)
-	{
-		/* No point in another fetch if we already detected EOF, though. */
-		if (!fdw_state->eof_reached)
-			fetch_more_data(node);
+        fdw_state->cursor_exists = true;
+        fdw_state->eof_reached = false;
+    }
 
-		/* If we didn't get any tuples, must be end of data */		
-		if (fdw_state->next_tuple >= fdw_state->num_tuples)
-		{
-			ExecClearTuple(slot);
-			goto EXIT;
-		}
-	}
-	make_virtual_tuple(slot, node);
-	ExecStoreVirtualTuple(slot);
+	ExecClearTuple(tupleSlot);
 
-	fdw_state->tuple_ite++;
-	fdw_state->next_tuple = std::distance(
-		fdw_state->tuples.begin(), fdw_state->tuple_ite);
+    /* No point in another fetch if we already detected EOF, though. */
+    if (!fdw_state->eof_reached) 
+    {
+        ERROR_CODE error = fdw_info_.result_set->next();
+        if (error == ERROR_CODE::OK)
+        {
+            make_tuple_from_result_row(fdw_info_.result_set, 
+                                        tupleSlot->tts_tupleDescriptor,
+                                        fdw_state->retrieved_attrs,
+                                        tupleSlot->tts_values,
+                                        tupleSlot->tts_isnull,
+                                        fdw_state);
+            ExecStoreVirtualTuple(tupleSlot);
+            fdw_state->num_tuples++;
+        }
+        else if (error == ERROR_CODE::END_OF_ROW) 
+        {
+            elog(LOG, "End of rows. (rows: %d)", (int) fdw_state->num_tuples);
+            fdw_info_.result_set = nullptr;
+            fdw_state->eof_reached = true;
+        }
+        else
+        {
+            Tsurugi::rollback();
+            fdw_info_.success = false;
+            elog(ERROR, "Could NOT obtain result set from Tsurugi. (error: %d)",
+                (int) error);
+        }
+    }
 
-EXIT:
-	return slot;
+	return tupleSlot;
 }
 
 /*
- *	@note	Not in use.
+ *	@note	Not in used.
  */
 static void 
 tsurugiReScanForeignScan(ForeignScanState* node)
@@ -1311,45 +1297,31 @@ tsurugiReScanForeignScan(ForeignScanState* node)
 }
 
 /*
- *	@brief	Clean up for scanning foreign tables.
- *	@param	[in] Foreign scan information.
+ * tsurugiEndForeignScan
+ *      Clean up for scanning foreign tables.
  */
 static void 
 tsurugiEndForeignScan(ForeignScanState* node)
 {
+	tsurugiFdwState* fdw_state = (tsurugiFdwState*) node->fdw_state;
+
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
-	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
+    tsurugi_close_cursor();
+    if (fdw_info_.success)
+    {
+        Tsurugi::commit();
+    }
 
-	/* close cursor */
-	fdw_info_.result_set = nullptr;
-
-	ERROR_CODE error;
-
-	if (fdw_info_.transaction != nullptr)
-	{
-		error = fdw_info_.transaction->commit();
-        fdw_info_.transaction = nullptr;
-		if (error != ERROR_CODE::OK)
-		{
-			elog(ERROR, "transaction::commit() failed. (%d)", (int) error);
-		}
-	}
-
-	StubManager::end();
-	fdw_info_.xact_level--;
-	elog(DEBUG2, "FDW xact_level: (%d)", fdw_info_.xact_level);
-
-	if (fdw_state != nullptr)
+	if (fdw_state != nullptr) 
+    {
 		free_fdwstate(fdw_state);
-	
-	/* MemoryContexts will be deleted automatically. */
+    }
 }
 
 /*
- * 	@brief	Preparation for modifying foreign tables.
- *	@param	[in] Foreign scan information.
- *	@param	[in] Some flags. (e.g. EXEC_FLAG_EXPLAIN_ONLY)
+ * tsurugiBeginDirectModify
+ *      Preparation for modifying foreign tables.
  */
 static void 
 tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
@@ -1360,23 +1332,22 @@ tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
 
 	EState* estate = node->ss.ps.state;
 
-	OgawayamaFdwState* fdw_state = create_fdwstate();
+	tsurugiFdwState* fdw_state = create_fdwstate();
 	if (fdw_state == nullptr)
 	{
 		elog(ERROR, "create_fdw_state() failed.");
 	}
 
-	begin_backend_xact();
+ 	fdw_state->query_string = estate->es_sourceText; 
+    node->fdw_state = fdw_state;
 
- 	fdw_state->query_string = estate->es_sourceText;
-	 
-	 node->fdw_state = fdw_state;
+    Tsurugi::start_transaction();
+    fdw_info_.success = true;
 }
 
 /*
- *	@biref	Execute Insert/Upate/Delete command to foreign tables.
- *	@param	[in] Foreign scan information.
- *	@return	only nullptr.
+ * tsurugiIterateDirectModify
+ *      Execute Insert/Upate/Delete command to foreign tables.
  */
 static TupleTableSlot* 
 tsurugiIterateDirectModify(ForeignScanState* node)
@@ -1386,67 +1357,52 @@ tsurugiIterateDirectModify(ForeignScanState* node)
 	Assert(node != nullptr);
 	Assert(fdw_info_.transaction != nullptr);
 
-	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
+	tsurugiFdwState* fdw_state = (tsurugiFdwState*) node->fdw_state;
 	TupleTableSlot* slot = nullptr;
 	ERROR_CODE error;
 
-	elog(DEBUG1, "statement string: \"%s\"", fdw_state->query_string);
-
-  	std::string query(fdw_state->query_string);
-	// trim terminal semi-column.
-	if (query.back() == ';')
-	{
-		query.pop_back();
-	}
-	elog(DEBUG1, "tsurugi_fdw: statement string: \"%s\"", query.c_str());
-	elog(DEBUG2, "transaction::execute_statement() start.");
-	error = fdw_info_.transaction->execute_statement(query);
-	elog(DEBUG2, "transaction::execute_statement() done.");
-
-    ERROR_CODE err;
-	if (error == ERROR_CODE::OK) 
+    std::string statement = make_tsurugi_query(fdw_state->query_string);
+	error = Tsurugi::execute_statement(statement);
+	if (error != ERROR_CODE::OK)
     {
-        err = fdw_info_.transaction->commit();
-        if (err != ERROR_CODE::OK)
-        {
-            elog(ERROR, "transaction::commit() failed. (%d)", (int) err);
-        }        
-    } 
-    else 
-    {
-        err = fdw_info_.transaction->rollback();
-        if (err != ERROR_CODE::OK)
-        {
-            elog(ERROR, "transaction::rollback() failed. (%d)", (int) err);
-        }
-        elog(ERROR, "transaction::execute_statement() failed. (%d)", (int) error);	
+        Tsurugi::rollback();
+        fdw_info_.success = false;
+        elog(ERROR, "Tsurugi::execute_statement() failed. (%d)", 
+            (int) error);
 	}
 	
 	return slot;	
 }
 
 /*
- * 	@biref	Clean up for modifying foreign tables.
- *	@param	[in] foreign scan information.
+ * tsurugiEndDirectModify
+ *      Clean up for modifying foreign tables.
  */
 static void 
 tsurugiEndDirectModify(ForeignScanState* node)
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
-	StubManager::end();
-	fdw_info_.transaction = nullptr;
-	fdw_info_.xact_level--;
-	elog(DEBUG2, "xact_level: (%d)", fdw_info_.xact_level);
+    if (fdw_info_.success)
+    {
+        Tsurugi::commit();
+    }
 
 	if (node->fdw_state != nullptr)
-		free_fdwstate((OgawayamaFdwState*) node->fdw_state);
+    {
+		free_fdwstate((tsurugiFdwState*) node->fdw_state);
+    }
 }
 
+
+/*
+ * tsurugiAddForeignUpdateTargets
+ *      
+ */
 static void 
 tsurugiAddForeignUpdateTargets(Query *parsetree,
-											RangeTblEntry *target_rte,
-											Relation target_relation)
+								RangeTblEntry *target_rte,
+								Relation target_relation)
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
@@ -1469,7 +1425,7 @@ tsurugiPlanDirectModify(PlannerInfo *root,
 	Plan	   *subplan;
 	RelOptInfo *foreignrel;
 	RangeTblEntry *rte;
-	tsurugiFdwRelationInfo *fpinfo;
+	TgFdwRelationInfo *fpinfo;
 	Relation	rel;
 	StringInfoData sql;
 	ForeignScan *fscan;
@@ -1517,7 +1473,7 @@ tsurugiPlanDirectModify(PlannerInfo *root,
 	else
 		foreignrel = root->simple_rel_array[resultRelation];
 	rte = root->simple_rte_array[resultRelation];
-	fpinfo = (tsurugiFdwRelationInfo *) foreignrel->fdw_private;
+	fpinfo = (TgFdwRelationInfo *) foreignrel->fdw_private;
 
 	/*
 	 * It's unsafe to update a foreign table directly, if any expressions to
@@ -1656,28 +1612,36 @@ tsurugiPlanDirectModify(PlannerInfo *root,
 	return true;
 }
 
+/*
+ * tsurugiPlanForeignModify
+ */
 static List 
 *tsurugiPlanForeignModify(PlannerInfo *root,
-									   ModifyTable *plan,
-									   Index resultRelation,
-									   int subplan_index)
+						   ModifyTable *plan,
+						   Index resultRelation,
+						   int subplan_index)
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 	return NULL;
 }
 
-static TupleTableSlot*
-tsurugiExecForeignInsert(
-	EState *estate, 
-	ResultRelInfo *rinfo, 
-	TupleTableSlot *slot, 
-	TupleTableSlot *planSlot)
+/*
+ * tsurugiBeginForeignModify
+ */
+static void 
+tsurugiBeginForeignModify(ModifyTableState *mtstate,
+                        ResultRelInfo *rinfo,
+                        List *fdw_private,
+                        int subplan_index,
+                        int eflags)
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-	slot = nullptr;
-    return slot;
+	return;
 }
 
+/*
+ * tsurugiExecForeignUpdate
+ */
 static TupleTableSlot*
 tsurugiExecForeignUpdate(
 	EState *estate, 
@@ -1690,6 +1654,9 @@ tsurugiExecForeignUpdate(
     return slot;
 }
 
+/*
+ * tsurugiExecForeignDelete
+ */
 static TupleTableSlot*
 tsurugiExecForeignDelete(
 	EState *estate, 
@@ -1703,10 +1670,142 @@ tsurugiExecForeignDelete(
 }
 
 /*
- * Functions to be implemented in the future are below.  
- * 
+ * tsurugiEndForeignModify
  */
+static void 
+tsurugiEndForeignModify(EState *estate,
+                        ResultRelInfo *rinfo)
+{
+	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+ 
+    Tsurugi::commit();
+}
 
+/*
+ * tsurugiBeginForeignInsert
+ */
+static void 
+tsurugiBeginForeignInsert(ModifyTableState *mtstate,
+                        ResultRelInfo *resultRelInfo)
+{
+	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+
+	tsurugiFdwModifyState *fmstate;
+	ModifyTable *plan = castNode(ModifyTable, mtstate->ps.plan);
+	EState	   *estate = mtstate->ps.state;
+	Index		resultRelation = resultRelInfo->ri_RangeTableIndex;
+	Relation	rel = resultRelInfo->ri_RelationDesc;
+	RangeTblEntry *rte;
+	TupleDesc	tupdesc = RelationGetDescr(rel);
+	int			attnum;
+	StringInfoData sql;
+	List	   *targetAttrs = NIL;
+	List	   *retrieved_attrs = NIL;
+	bool		doNothing = false;
+
+	initStringInfo(&sql);
+
+	/* We transmit all columns that are defined in the foreign table. */
+	for (attnum = 1; attnum <= tupdesc->natts; attnum++)
+	{
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
+
+		if (!attr->attisdropped)
+			targetAttrs = lappend_int(targetAttrs, attnum);
+	}
+
+	/*
+	 * If the foreign table is a partition, we need to create a new RTE
+	 * describing the foreign table for use by deparseInsertSql and
+	 * create_foreign_modify() below, after first copying the parent's RTE and
+	 * modifying some fields to describe the foreign partition to work on.
+	 * However, if this is invoked by UPDATE, the existing RTE may already
+	 * correspond to this partition if it is one of the UPDATE subplan target
+	 * rels; in that case, we can just use the existing RTE as-is.
+	 */
+	rte = exec_rt_fetch(resultRelation, estate);
+	if (rte->relid != RelationGetRelid(rel))
+	{
+//		rte = copyObject(rte);
+        rte = (RangeTblEntry*) copyObjectImpl(rte);
+		rte->relid = RelationGetRelid(rel);
+		rte->relkind = RELKIND_FOREIGN_TABLE;
+
+		/*
+		 * For UPDATE, we must use the RT index of the first subplan target
+		 * rel's RTE, because the core code would have built expressions for
+		 * the partition, such as RETURNING, using that RT index as varno of
+		 * Vars contained in those expressions.
+		 */
+		if (plan && plan->operation == CMD_UPDATE &&
+			resultRelation == plan->rootRelation)
+			resultRelation = mtstate->resultRelInfo[0].ri_RangeTableIndex;
+	}
+
+	/* Construct the SQL command string. */
+	deparseInsertSql(&sql, rte, resultRelation, rel, targetAttrs, doNothing,
+					 resultRelInfo->ri_WithCheckOptions,
+					 resultRelInfo->ri_returningList,
+					 &retrieved_attrs);
+
+	tsurugiFdwState* fdw_state = create_fdwstate();
+	if (fdw_state == nullptr)
+	{
+		elog(ERROR, "create_fdw_state() failed.");
+	}
+
+    elog(DEBUG2, "deparse sql : %s", sql.data);
+
+ 	fdw_state->query_string = sql.data;
+    resultRelInfo->ri_FdwState = fdw_state;
+
+    Tsurugi::start_transaction();
+}
+
+/*
+ * tsurugiExecForeignInsert
+ */
+static TupleTableSlot*
+tsurugiExecForeignInsert(
+	EState *estate, 
+	ResultRelInfo *rinfo, 
+	TupleTableSlot *slot, 
+	TupleTableSlot *planSlot)
+{
+	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+
+	Assert(fdw_info_.transaction != nullptr);
+
+	ERROR_CODE error;
+
+	tsurugiFdwState* fdw_state = (tsurugiFdwState*) rinfo->ri_FdwState;
+
+ 	std::string query(fdw_state->query_string);
+    query = std::regex_replace(query, std::regex("\\$\\d"), "%s");
+    query = (boost::format(query) % slot->tts_values[0] % slot->tts_values[1]).str();
+
+	error = Tsurugi::execute_statement(query);
+	if (error != ERROR_CODE::OK) 
+    {
+        Tsurugi::rollback();
+        elog(ERROR, "transaction::execute_statement() failed. (%d)", 
+            (int) error);
+	}
+	
+	slot = nullptr;
+    return slot;
+}
+
+/*
+ * tsurugiEndForeignInsert
+ */
+static void 
+tsurugiEndForeignInsert(EState *estate,
+                        ResultRelInfo *rinfo)
+{
+	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG2, "xact_level: (%d)", fdw_info_.xact_level);
+}
 
 /*
  * tsurugiExplainForeignScan
@@ -1745,7 +1844,8 @@ tsurugiExplainForeignScan(ForeignScanState* node,
 }
 
 /*
- *	@note	Not in use.
+ * tsurugiExplainDirectModify
+ *      Not in use.
  */
 static void 
 tsurugiExplainDirectModify(ForeignScanState* node,
@@ -1755,11 +1855,13 @@ tsurugiExplainDirectModify(ForeignScanState* node,
 }
 
 /*
- *	@note	Not in use.
+ * tsurugiAnalyzeForeignTable
+ *      Not in use.
  */
-static bool tsurugiAnalyzeForeignTable(Relation relation,
-							AcquireSampleRowsFunc* func,
-							BlockNumber* totalpages)
+static bool 
+tsurugiAnalyzeForeignTable(Relation relation,
+    AcquireSampleRowsFunc* func,
+    BlockNumber* totalpages)
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
@@ -1780,13 +1882,18 @@ tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt,
 }
 
 /*
- *	@brief:	Create OgawayamaFdwState structure.
+ *  Helper functions.
  */
-static OgawayamaFdwState* 
+
+/*
+ *	create_fdwstate
+ *      Create tsurugiFdwState structure.
+ */
+static tsurugiFdwState* 
 create_fdwstate()
 {
-	OgawayamaFdwState* fdw_state = 
-		(OgawayamaFdwState*) palloc0(sizeof(OgawayamaFdwState));
+	tsurugiFdwState* fdw_state = 
+		(tsurugiFdwState*) palloc0(sizeof(tsurugiFdwState));
 	
 	fdw_state->cursor_exists = false;
 	fdw_state->number_of_columns = 0;
@@ -1796,11 +1903,11 @@ create_fdwstate()
 }
 
 /*
- *	@brief:	free allocated memories.
- *	@param:	[in] Ogawayama-fdw state.
+ * free_fdwstate
+ *      Free allocated memories.
  */
 static void 
-free_fdwstate(OgawayamaFdwState* fdw_state)
+free_fdwstate(tsurugiFdwState* fdw_state)
 {
 	if (fdw_state->column_types != nullptr) 
 	{
@@ -1832,34 +1939,31 @@ free_fdwstate(OgawayamaFdwState* fdw_state)
  * 	判断したため用意した関数。
  */
 static void 
-store_pg_data_type(OgawayamaFdwState* fdw_state, List* tlist)
+store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist)
 {
 	ListCell* lc;
 
 	if (tlist != NULL)
 	{
-		Oid *data_types = (Oid *)palloc(sizeof(Oid) * tlist->length);
+		Oid *data_types = (Oid *) palloc(sizeof(Oid) * tlist->length + 1);
 
 		int i = 0;
 		int count = 0;
 		foreach (lc, tlist)
 		{
-			TargetEntry *entry = (TargetEntry *)lfirst(lc);
-			Node *node = (Node *)entry->expr;
-			if (entry->resjunk == false)
-			{
-				count++;
-			}
+			TargetEntry *entry = (TargetEntry *) lfirst(lc);
+			Node *node = (Node *) entry->expr;
+			count++;
 
 			if (nodeTag(node) == T_Var)
 			{
-				Var *var = (Var *)node;
+				Var *var = (Var *) node;
 				data_types[i] = var->vartype;
 			}
 			else
 			{
 				elog(ERROR, "Unexpected data type in target list. (index: %d, type:%u)",
-					 i, (unsigned int)nodeTag(node));
+					 i, (unsigned int) nodeTag(node));
 			}
 			i++;
 		}
@@ -1868,71 +1972,52 @@ store_pg_data_type(OgawayamaFdwState* fdw_state, List* tlist)
 		fdw_state->number_of_columns = count;
 	}
 }
-
+#if 0
 /*
- *	@brief	dispatch the query to ogawayama stub.
+ * tsurugi_create_cursor
  */
 static void 
-create_cursor(ForeignScanState* node)
+tsurugi_create_cursor(ForeignScanState* node)
 {
 	Assert(node != nullptr);
     Assert(fdw_info_.transaction != nullptr);
 
-	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
+	tsurugiFdwState* fdw_state = (tsurugiFdwState*) node->fdw_state;
+    std::string query = make_tsurugi_query(fdw_state->query_string);
+    fdw_info_.result_set = nullptr;
 
-	elog(DEBUG2, "tsurugi_fdw : %s \"%s\"", __func__, fdw_state->query_string);
+    ERROR_CODE error = Tsurugi::execute_query(query, fdw_info_.result_set);
+    if (error != ERROR_CODE::OK)
+    {
+        Tsurugi::rollback();
+        fdw_info_.success = false;
+        elog(ERROR, "Tsurugi::execute_query() failed. (%d)", (int) error);
+    }
 
-	// trim terminal semi-column.
-	std::string query(fdw_state->query_string);
-	if (query.back() == ';') 
-	{
-		query.pop_back();	// trim the trailing colon.
-	}
-	fdw_info_.result_set = nullptr;
-
-	/* dispatch query */
-	elog(DEBUG1, "tsurugi_fdw : transaction::execute_query() start. \"%s\"", query.c_str());
-	ERROR_CODE error = fdw_info_.transaction->execute_query(query, fdw_info_.result_set);
-	elog(DEBUG1, "tsurugi_fdw : transaction::execute_query() done.");
-	if (error != ERROR_CODE::OK)
-	{
-		elog(ERROR, "Transaction::execute_query() failed. (%d)", (int) error);
-		fdw_info_.result_set = nullptr;
-		fdw_info_.transaction->commit();
-		fdw_info_.transaction = nullptr;
-		fdw_info_.xact_level--;
-	}
-	
-	error = fdw_info_.result_set->get_metadata(fdw_info_.metadata);
-	if (error != ERROR_CODE::OK)
-	{
-		elog(ERROR, "result_set::get_metadata() failed. (%d)", (int) error);
-	}
-#if 0    
-	if (!confirm_columns(fdw_info_.metadata, node))
-	{
-		elog(ERROR, "NOT matched columns between PostgreSQL and Ogawayama.");
-	}
-#endif
-	fdw_state->cursor_exists = true;
-	fdw_state->tuples.clear();
-	fdw_state->num_tuples = 0;
-	fdw_state->next_tuple = 0;
+    fdw_state->cursor_exists = true;
 	fdw_state->eof_reached = false;
+}
+#endif
+/*
+ * tsurugi_close_cursor
+ */
+static void 
+tsurugi_close_cursor()
+{
+//    fdw_info_.result_set = nullptr;
 }
 
 /*
- * 	@brief	Confirm column information between PostgreSQL and Ogawayama.
- * 	@param	[in] Ogawayama column information.
- * 	@param	[in] PostgreSQL column information.
- * 	@return true if matched column information.
- * 	@note	This function may be eliminated for performance improvement in the future.
+ * confirm_columns
+ * 	    Confirm column information between PostgreSQL and Ogawayama.
+ *
+ * 	This function may be eliminated for performance improvement in the future.
  */
 static bool
 confirm_columns(MetadataPtr metadata, ForeignScanState* node)
 {
 
-	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
+	tsurugiFdwState* fdw_state = (tsurugiFdwState*) node->fdw_state;
 	bool ret = true;
 
 	elog(DEBUG4, "tsurugi_fdw : %s", __func__);
@@ -2015,6 +2100,72 @@ confirm_columns(MetadataPtr metadata, ForeignScanState* node)
 				}
 				break;
 
+			case stub::Metadata::ColumnType::Type::DATE:
+				if (fdw_state->column_types[i] != DATEOID)
+				{
+					elog(ERROR,
+						"Don't match data type of the column. "
+						"(column: %lu) (og: %d) (pg: %u)",
+						i, (int) types.get_type(), fdw_state->column_types[i] );
+					ret = false;
+				}
+				break;
+
+			case stub::Metadata::ColumnType::Type::TIME:
+				if (fdw_state->column_types[i] != TIMEOID)
+				{
+					elog(ERROR,
+						"Don't match data type of the column. "
+						"(column: %lu) (og: %d) (pg: %u)",
+						i, (int) types.get_type(), fdw_state->column_types[i] );
+					ret = false;
+				}
+				break;
+
+			case stub::Metadata::ColumnType::Type::TIMESTAMP:
+				if (fdw_state->column_types[i] != TIMESTAMPOID)
+				{
+					elog(ERROR,
+						"Don't match data type of the column. "
+						"(column: %lu) (og: %d) (pg: %u)",
+						i, (int) types.get_type(), fdw_state->column_types[i] );
+					ret = false;
+				}
+				break;
+
+			case stub::Metadata::ColumnType::Type::TIMETZ:
+				if (fdw_state->column_types[i] != TIMETZOID)
+				{
+					elog(ERROR,
+						"Don't match data type of the column. "
+						"(column: %lu) (og: %d) (pg: %u)",
+						i, (int) types.get_type(), fdw_state->column_types[i] );
+					ret = false;
+				}
+				break;
+
+			case stub::Metadata::ColumnType::Type::TIMESTAMPTZ:
+				if (fdw_state->column_types[i] != TIMESTAMPTZOID)
+				{
+					elog(ERROR,
+						"Don't match data type of the column. "
+						"(column: %lu) (og: %d) (pg: %u)",
+						i, (int) types.get_type(), fdw_state->column_types[i] );
+					ret = false;
+				}
+				break;
+
+			case stub::Metadata::ColumnType::Type::DECIMAL:
+				if (fdw_state->column_types[i] != NUMERICOID)
+				{
+					elog(ERROR,
+						"Don't match data type of the column. "
+						"(column: %lu) (og: %d) (pg: %u)",
+						i, (int) types.get_type(), fdw_state->column_types[i] );
+					ret = false;
+				}
+				break;
+
 			case stub::Metadata::ColumnType::Type::NULL_VALUE:
 				elog(DEBUG1, "nullptr_VALUE found. (column: %lu)", i);
 				ret = false;
@@ -2035,1503 +2186,185 @@ confirm_columns(MetadataPtr metadata, ForeignScanState* node)
 }
 
 /*
- *	@breif	make virtual tuple from result set.
+ * make_tuple_from_result_row
+ *      Obtain tuple data from Ogawayama and convert data type.
  */
-static void
-make_virtual_tuple(TupleTableSlot* slot, ForeignScanState* node)
-{
-	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
-
-	TupleTableSlot* tuple = *fdw_state->tuple_ite;
-	for (size_t i = 0; i < fdw_state->number_of_columns; i++)
-	{
-		slot->tts_values[i] = tuple->tts_values[i];
-		slot->tts_isnull[i] = tuple->tts_isnull[i];
-	}
-}
-
-/*
- *	@brief	fetch result set from ogawayama stub.
- */
-static void
-fetch_more_data(ForeignScanState* node)
-{
-	OgawayamaFdwState* fdw_state = (OgawayamaFdwState*) node->fdw_state;
-	MemoryContext oldcontext = nullptr;
-
-	elog(DEBUG4, "tsurugi_fdw : %s", __func__);
-
-	fdw_state->tuples.clear();
-	MemoryContextReset(fdw_state->batch_cxt);
-	oldcontext = MemoryContextSwitchTo(fdw_state->batch_cxt);
-
-	PG_TRY();
-	{
-		/* fetch result set */
-		ERROR_CODE error = fdw_info_.result_set->next();
-		while (error == ERROR_CODE::OK)
-		{
-			TupleTableSlot* tuple = make_tuple_from_result_set(fdw_info_.result_set, fdw_state);
-			fdw_state->tuples.push_back(tuple);
-			error = fdw_info_.result_set->next();
-		}
-		if (error == ERROR_CODE::END_OF_ROW) 
-		{
-			elog(DEBUG2, "End of row.");
-		}
-		else
-		{
-			elog(ERROR, "result_set::next() failed. (%d)", (int) error);
-		}
-		fdw_state->tuple_ite = fdw_state->tuples.begin();
-		fdw_state->num_tuples = fdw_state->tuples.size();
-		fdw_state->eof_reached = (fdw_state->num_tuples < fdw_state->fetch_size);
-
-		elog(DEBUG1, "result set count: %d", (int) fdw_state->num_tuples);
-	}
-	PG_CATCH();
-	{
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
-
-	MemoryContextSwitchTo(oldcontext);
-}
-
-/*
- *	@breif	obtain tuple data from Ogawayama and convert data type.
- *	@param	[in] result set of query.
- *	@param	[in] FDW state.
- */
-static TupleTableSlot* 
-make_tuple_from_result_set(ResultSetPtr result_set, OgawayamaFdwState* fdw_state)
-{
-
-	TupleTableSlot* tuple = (TupleTableSlot*) palloc(sizeof(TupleTableSlot));
-	tuple->tts_values = (Datum *) palloc0(fdw_state->number_of_columns * sizeof(Datum));
-	tuple->tts_isnull = (bool *) palloc0(fdw_state->number_of_columns * sizeof(bool));
-
-	elog(DEBUG4, "tsurugi_fdw : %s", __func__);
-
-	for (size_t i = 0; i < fdw_state->number_of_columns; i++)
-	{
-		tuple->tts_values[i] = PointerGetDatum(nullptr);
-		tuple->tts_isnull[i] = true;
-
-		switch (fdw_state->column_types[i])
-		{
-			case INT2OID:
-				{
-					std::int16_t value;
-					if (result_set->next_column(value) == ERROR_CODE::OK)
-					{
-						tuple->tts_values[i] = Int16GetDatum(value);
-						tuple->tts_isnull[i] = false;
-					}
-				}
-				break;
-
-			case INT4OID:
-				{
-					std::int32_t value;
-					if (result_set->next_column(value) == ERROR_CODE::OK)
-					{
-						tuple->tts_values[i] = Int32GetDatum(value);
-						tuple->tts_isnull[i] = false;
-					}
-				}
-				break;
-
-			case INT8OID:
-				{
-					std::int64_t value;
-					if (result_set->next_column(value) == ERROR_CODE::OK) 
-					{
-						tuple->tts_values[i] = Int64GetDatum(value);
-						tuple->tts_isnull[i] = false;
-					}
-				}
-				break;
-
-			case FLOAT4OID:
-				{
-					float4 value;
-					if (result_set->next_column(value) == ERROR_CODE::OK)
-					{
-						tuple->tts_values[i] = Float4GetDatum(value);
-						tuple->tts_isnull[i] = false;
-					}
-				}
-				break;
-
-			case FLOAT8OID:
-				{
-					float8 value;
-					if (result_set->next_column(value) == ERROR_CODE::OK)
-					{
-						tuple->tts_values[i] = Float8GetDatum(value);
-						tuple->tts_isnull[i] = false;
-					}
-				}
-				break;
-			
-			case BPCHAROID:
-			case VARCHAROID:
-			case TEXTOID:
-				{
-					Datum dat;
-					std::string_view value;
-					result_set->next_column(value);
-					dat = CStringGetDatum(value.data());				
-					if (dat == (Datum) nullptr)
-					{
-						break;
-					}
-					else
-					{
-						HeapTuple 	heap_tuple;
-						regproc 	typinput;
-						int 		typemod;
-
-						heap_tuple = SearchSysCache1(
-							TYPEOID, ObjectIdGetDatum(fdw_state->column_types[i]));
-						if (!HeapTupleIsValid(heap_tuple))
-						{
-							elog(ERROR, "cache lookup failed for type %u",
-								 fdw_state->column_types[i]);
-						}
-						typinput = ((Form_pg_type)GETSTRUCT(heap_tuple))->typinput;
-						typemod = ((Form_pg_type)GETSTRUCT(heap_tuple))->typtypmod;
-						ReleaseSysCache(heap_tuple);
-						tuple->tts_values[i] = OidFunctionCall3(typinput, dat, ObjectIdGetDatum(InvalidOid), Int32GetDatum(typemod));
-						tuple->tts_isnull[i] = false;
-					}
-				}
-				break;
-				
-			default:
-				elog(ERROR, "Invalid data type of column.");
-				break;
-		}
-	}
-
-	elog(DEBUG4, "make_tuple_from_result_set() done.");
-
-	return tuple;
-}
-
-/*
- * @biref	Begin transaction.
- * 
- * V0版では、フロントエンド側のトランザクション(ローカルトランザクション)が
- * ネストされている場合はエラーとする。
- */
-static void
-begin_backend_xact(void)
-{
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-
-	/* ローカルトランザクションのネストレベルを取得する */
-    int local_xact_level = GetCurrentTransactionNestLevel();
-	elog(DEBUG1, "Local transaction level: (%d)", local_xact_level);
-
-	if (local_xact_level <= 0)
-	{
-		elog(WARNING, "local_xact_level (%d)", local_xact_level);
-	}
-	else if (local_xact_level == 1)
-	{
-		if (fdw_info_.xact_level == 0)
-		{	
-			if (fdw_info_.transaction == nullptr)
-			{
-				ERROR_CODE error = StubManager::begin(&fdw_info_.transaction);
-				if (error != ERROR_CODE::OK) 
-				{
-					elog(ERROR, "Connection::begin() failed. (%d)", (int) error);
-				}
-			}
-			else
-			{
-				elog(ERROR, "transaction alreayd started.");
-			}
-			fdw_info_.xact_level++;
-			elog(DEBUG1, "StubManager::begin() done. (xact_level: %d)", 
-			fdw_info_.xact_level);
-		}
-	}
-	else if (local_xact_level >= 2)
-	{
-		elog(ERROR, "Nested transaction is NOT supported.");
-	}
-
-    elog(DEBUG2, "FDW transaction level: (%d)", fdw_info_.xact_level);
-}
-
-/*
- * 	@biref	Callback function for transaction events.
- *	@param	Transaction event.
- */
-static void
-ogawayama_xact_callback (XactEvent event, void *arg)
-{
-    int local_xact_level = GetCurrentTransactionNestLevel();
-
-//	elog(DEBUG2, "tsurugi_fdw : %s (event: %d)", __func__, (int) event);
-//	elog(DEBUG1, "FDW transaction level: (%d)", fdw_info_.xact_level);
-//	elog(DEBUG1, "Local transaction level: (%d)", local_xact_level);
-
-	if (fdw_info_.xact_level > 0)
-	{
-		/* 入力されるeventの内容は、xact.hに記載あり */
-		switch (event)
-		{
-			case XACT_EVENT_PRE_COMMIT:
-				elog(DEBUG1, "XACT_EVENT_PRE_COMMIT");
-				break;
-
-			case XACT_EVENT_COMMIT:
-				elog(DEBUG1, "XACT_EVENT_COMMIT");
-				fdw_info_.transaction->commit();
-				fdw_info_.transaction = nullptr;
-				StubManager::end();
-				fdw_info_.xact_level--;
-				elog(DEBUG1, "Transaction::commit() done. (FDW xact_level: %d)", 
-					fdw_info_.xact_level);
-				break;
-
-			case XACT_EVENT_ABORT:
-				elog(DEBUG1, "XACT_EVENT_ABORT (xact_level: %d)", 
-                    fdw_info_.xact_level);
-				fdw_info_.transaction->rollback();
-				fdw_info_.transaction = nullptr;
-				StubManager::end();
-				fdw_info_.xact_level--;
-				elog(DEBUG1, "Transaction::rollback() done. (FDW xact_level: %d)", 
-					fdw_info_.xact_level);
-				break;
-
-			case XACT_EVENT_PRE_PREPARE:
-				elog(DEBUG1, "XACT_EVENT_PRE_PREPARE");
-				break;
-
-			case XACT_EVENT_PREPARE:
-				elog(DEBUG1, "XACT_EVENT_PREPARE");
-				break;
-
-			case XACT_EVENT_PARALLEL_COMMIT:
-			case XACT_EVENT_PARALLEL_ABORT:
-			case XACT_EVENT_PARALLEL_PRE_COMMIT:
-				elog(DEBUG1, "Unexpected XACT event occurred. (%d)", event);
-				break;
-
-			default:
-				elog(WARNING, "Unexpected XACT event occurred. (Unknown event)");
-				break;
-		}
-	}
-
-	elog(DEBUG4, "ogawayama_xact_callback() done.");
-}
-
-
-
-
-/*
- * Detect whether we want to process an EquivalenceClass member.
- *
- * This is a callback for use by generate_implied_equalities_for_column.
- */
-static bool
-ec_member_matches_foreign(PlannerInfo *root, RelOptInfo *rel,
-						  EquivalenceClass *ec, EquivalenceMember *em,
-						  void *arg)
-{
-	ec_member_foreign_arg *state = (ec_member_foreign_arg *) arg;
-	Expr	   *expr = em->em_expr;
-
-	/*
-	 * If we've identified what we're processing in the current scan, we only
-	 * want to match that expression.
-	 */
-	if (state->current != NULL)
-		return equal(expr, state->current);
-
-	/*
-	 * Otherwise, ignore anything we've already processed.
-	 */
-	if (list_member(state->already_used, expr))
-		return false;
-
-	/* This is the new target to process. */
-	state->current = expr;
-	return true;
-}
-
-/*
- * Force assorted GUC parameters to settings that ensure that we'll output
- * data values in a form that is unambiguous to the remote server.
- *
- * This is rather expensive and annoying to do once per row, but there's
- * little choice if we want to be sure values are transmitted accurately;
- * we can't leave the settings in place between rows for fear of affecting
- * user-visible computations.
- *
- * We use the equivalent of a function SET option to allow the settings to
- * persist only until the caller calls reset_transmission_modes().  If an
- * error is thrown in between, guc.c will take care of undoing the settings.
- *
- * The return value is the nestlevel that must be passed to
- * reset_transmission_modes() to undo things.
- */
-int
-set_transmission_modes(void)
-{
-	int			nestlevel = NewGUCNestLevel();
-
-	/*
-	 * The values set here should match what pg_dump does.  See also
-	 * configure_remote_session in connection.c.
-	 */
-	if (DateStyle != USE_ISO_DATES)
-		(void) set_config_option("datestyle", "ISO",
-								 PGC_USERSET, PGC_S_SESSION,
-								 GUC_ACTION_SAVE, true, 0, false);
-	if (IntervalStyle != INTSTYLE_POSTGRES)
-		(void) set_config_option("intervalstyle", "postgres",
-								 PGC_USERSET, PGC_S_SESSION,
-								 GUC_ACTION_SAVE, true, 0, false);
-	if (extra_float_digits < 3)
-		(void) set_config_option("extra_float_digits", "3",
-								 PGC_USERSET, PGC_S_SESSION,
-								 GUC_ACTION_SAVE, true, 0, false);
-
-	return nestlevel;
-}
-
-/*
- * Undo the effects of set_transmission_modes().
- */
-void
-reset_transmission_modes(int nestlevel)
-{
-	AtEOXact_GUC(true, nestlevel);
-}
-
-/*
- * build_remote_returning
- *		Build a RETURNING targetlist of a remote query for performing an
- *		UPDATE/DELETE .. RETURNING on a join directly
- */
-static List *
-build_remote_returning(Index rtindex, Relation rel, List *returningList)
-{
-	bool		have_wholerow = false;
-	List	   *tlist = NIL;
-	List	   *vars;
-	ListCell   *lc;
-
-	Assert(returningList);
-
-	vars = pull_var_clause((Node *) returningList, PVC_INCLUDE_PLACEHOLDERS);
-
-	/*
-	 * If there's a whole-row reference to the target relation, then we'll
-	 * need all the columns of the relation.
-	 */
-	foreach(lc, vars)
-	{
-		Var		   *var = (Var *) lfirst(lc);
-
-		if (IsA(var, Var) &&
-			var->varno == rtindex &&
-			var->varattno == InvalidAttrNumber)
-		{
-			have_wholerow = true;
-			break;
-		}
-	}
-
-	if (have_wholerow)
-	{
-		TupleDesc	tupdesc = RelationGetDescr(rel);
-		int			i;
-
-		for (i = 1; i <= tupdesc->natts; i++)
-		{
-			Form_pg_attribute attr = TupleDescAttr(tupdesc, i - 1);
-			Var		   *var;
-
-			/* Ignore dropped attributes. */
-			if (attr->attisdropped)
-				continue;
-
-			var = makeVar(rtindex,
-						  i,
-						  attr->atttypid,
-						  attr->atttypmod,
-						  attr->attcollation,
-						  0);
-
-			tlist = lappend(tlist,
-							makeTargetEntry((Expr *) var,
-											list_length(tlist) + 1,
-											NULL,
-											false));
-		}
-	}
-
-	/* Now add any remaining columns to tlist. */
-	foreach(lc, vars)
-	{
-		Var		   *var = (Var *) lfirst(lc);
-
-		/*
-		 * No need for whole-row references to the target relation.  We don't
-		 * need system columns other than ctid and oid either, since those are
-		 * set locally.
-		 */
-		if (IsA(var, Var) &&
-			var->varno == rtindex &&
-			var->varattno <= InvalidAttrNumber &&
-			var->varattno != SelfItemPointerAttributeNumber)
-			continue;			/* don't need it */
-
-		if (tlist_member((Expr *) var, tlist))
-			continue;			/* already got it */
-
-		tlist = lappend(tlist,
-						makeTargetEntry((Expr *) var,
-										list_length(tlist) + 1,
-										NULL,
-										false));
-	}
-
-	list_free(vars);
-
-	return tlist;
-}
-
-/*
- * rebuild_fdw_scan_tlist
- *		Build new fdw_scan_tlist of given foreign-scan plan node from given
- *		tlist
- *
- * There might be columns that the fdw_scan_tlist of the given foreign-scan
- * plan node contains that the given tlist doesn't.  The fdw_scan_tlist would
- * have contained resjunk columns such as 'ctid' of the target relation and
- * 'wholerow' of non-target relations, but the tlist might not contain them,
- * for example.  So, adjust the tlist so it contains all the columns specified
- * in the fdw_scan_tlist; else setrefs.c will get confused.
- */
-static void
-rebuild_fdw_scan_tlist(ForeignScan *fscan, List *tlist)
-{
-	List	   *new_tlist = tlist;
-	List	   *old_tlist = fscan->fdw_scan_tlist;
-	ListCell   *lc;
-
-	foreach(lc, old_tlist)
-	{
-		TargetEntry *tle = (TargetEntry *) lfirst(lc);
-
-		if (tlist_member(tle->expr, new_tlist))
-			continue;			/* already got it */
-
-		new_tlist = lappend(new_tlist,
-							makeTargetEntry(tle->expr,
-											list_length(new_tlist) + 1,
-											NULL,
-											false));
-	}
-	fscan->fdw_scan_tlist = new_tlist;
-}
-
-/*
- * Parse options from foreign table and apply them to fpinfo.
- *
- * New options might also require tweaking merge_fdw_options().
- */
-static void
-apply_table_options(tsurugiFdwRelationInfo *fpinfo)
-{
-	ListCell   *lc;
-
-	foreach(lc, fpinfo->table->options)
-	{
-		DefElem    *def = (DefElem *) lfirst(lc);
-
-		if (strcmp(def->defname, "use_remote_estimate") == 0)
-			fpinfo->use_remote_estimate = defGetBoolean(def);
-		else if (strcmp(def->defname, "fetch_size") == 0)
-			fpinfo->fetch_size = strtol(defGetString(def), NULL, 10);
-	}
-}
-
-/*
- * Merge FDW options from input relations into a new set of options for a join
- * or an upper rel.
- *
- * For a join relation, FDW-specific information about the inner and outer
- * relations is provided using fpinfo_i and fpinfo_o.  For an upper relation,
- * fpinfo_o provides the information for the input relation; fpinfo_i is
- * expected to NULL.
- */
-static void
-merge_fdw_options(tsurugiFdwRelationInfo *fpinfo,
-				  const tsurugiFdwRelationInfo *fpinfo_o,
-				  const tsurugiFdwRelationInfo *fpinfo_i)
-{
-	/* We must always have fpinfo_o. */
-	Assert(fpinfo_o);
-
-	/* fpinfo_i may be NULL, but if present the servers must both match. */
-	Assert(!fpinfo_i ||
-		   fpinfo_i->server->serverid == fpinfo_o->server->serverid);
-
-	/*
-	 * Copy the server specific FDW options.  (For a join, both relations come
-	 * from the same server, so the server options should have the same value
-	 * for both relations.)
-	 */
-	fpinfo->fdw_startup_cost = fpinfo_o->fdw_startup_cost;
-	fpinfo->fdw_tuple_cost = fpinfo_o->fdw_tuple_cost;
-	fpinfo->shippable_extensions = fpinfo_o->shippable_extensions;
-	fpinfo->use_remote_estimate = fpinfo_o->use_remote_estimate;
-	fpinfo->fetch_size = fpinfo_o->fetch_size;
-
-	/* Merge the table level options from either side of the join. */
-	if (fpinfo_i)
-	{
-		/*
-		 * We'll prefer to use remote estimates for this join if any table
-		 * from either side of the join is using remote estimates.  This is
-		 * most likely going to be preferred since they're already willing to
-		 * pay the price of a round trip to get the remote EXPLAIN.  In any
-		 * case it's not entirely clear how we might otherwise handle this
-		 * best.
-		 */
-		fpinfo->use_remote_estimate = fpinfo_o->use_remote_estimate ||
-			fpinfo_i->use_remote_estimate;
-
-		/*
-		 * Set fetch size to maximum of the joining sides, since we are
-		 * expecting the rows returned by the join to be proportional to the
-		 * relation sizes.
-		 */
-		fpinfo->fetch_size = Max(fpinfo_o->fetch_size, fpinfo_i->fetch_size);
-	}
-}
-
-/*
- * Assess whether the aggregation, grouping and having operations can be pushed
- * down to the foreign server.  As a side effect, save information we obtain in
- * this function to tsurugiFdwRelationInfo of the input relation.
- */
-static bool
-foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
-					Node *havingQual)
-{
-	Query	   *query = root->parse;
-	tsurugiFdwRelationInfo *fpinfo = (tsurugiFdwRelationInfo *) grouped_rel->fdw_private;
-	PathTarget *grouping_target = grouped_rel->reltarget;
-	tsurugiFdwRelationInfo *ofpinfo;
-	ListCell   *lc;
-	int			i;
-	List	   *tlist = NIL;
-
-	/* We currently don't support pushing Grouping Sets. */
-	if (query->groupingSets)
-		return false;
-
-	/* Get the fpinfo of the underlying scan relation. */
-	ofpinfo = (tsurugiFdwRelationInfo *) fpinfo->outerrel->fdw_private;
-
-	/*
-	 * If underlying scan relation has any local conditions, those conditions
-	 * are required to be applied before performing aggregation.  Hence the
-	 * aggregate cannot be pushed down.
-	 */
-	if (ofpinfo->local_conds)
-		return false;
-
-	/*
-	 * Examine grouping expressions, as well as other expressions we'd need to
-	 * compute, and check whether they are safe to push down to the foreign
-	 * server.  All GROUP BY expressions will be part of the grouping target
-	 * and thus there is no need to search for them separately.  Add grouping
-	 * expressions into target list which will be passed to foreign server.
-	 *
-	 * A tricky fine point is that we must not put any expression into the
-	 * target list that is just a foreign param (that is, something that
-	 * deparse.c would conclude has to be sent to the foreign server).  If we
-	 * do, the expression will also appear in the fdw_exprs list of the plan
-	 * node, and setrefs.c will get confused and decide that the fdw_exprs
-	 * entry is actually a reference to the fdw_scan_tlist entry, resulting in
-	 * a broken plan.  Somewhat oddly, it's OK if the expression contains such
-	 * a node, as long as it's not at top level; then no match is possible.
-	 */
-	i = 0;
-	foreach(lc, grouping_target->exprs)
-	{
-		Expr	   *expr = (Expr *) lfirst(lc);
-		Index		sgref = get_pathtarget_sortgroupref(grouping_target, i);
-		ListCell   *l;
-
-		/* Check whether this expression is part of GROUP BY clause */
-		if (sgref && get_sortgroupref_clause_noerr(sgref, query->groupClause))
-		{
-			TargetEntry *tle;
-
-			/*
-			 * If any GROUP BY expression is not shippable, then we cannot
-			 * push down aggregation to the foreign server.
-			 */
-			if (!is_foreign_expr(root, grouped_rel, expr))
-				return false;
-
-			/*
-			 * If it would be a foreign param, we can't put it into the tlist,
-			 * so we have to fail.
-			 */
-			if (is_foreign_param(root, grouped_rel, expr))
-				return false;
-
-			/*
-			 * Pushable, so add to tlist.  We need to create a TLE for this
-			 * expression and apply the sortgroupref to it.  We cannot use
-			 * add_to_flat_tlist() here because that avoids making duplicate
-			 * entries in the tlist.  If there are duplicate entries with
-			 * distinct sortgrouprefs, we have to duplicate that situation in
-			 * the output tlist.
-			 */
-			tle = makeTargetEntry(expr, list_length(tlist) + 1, NULL, false);
-			tle->ressortgroupref = sgref;
-			tlist = lappend(tlist, tle);
-		}
-		else
-		{
-			/*
-			 * Non-grouping expression we need to compute.  Can we ship it
-			 * as-is to the foreign server?
-			 */
-			if (is_foreign_expr(root, grouped_rel, expr) &&
-				!is_foreign_param(root, grouped_rel, expr))
-			{
-				/* Yes, so add to tlist as-is; OK to suppress duplicates */
-				tlist = add_to_flat_tlist(tlist, list_make1(expr));
-			}
-			else
-			{
-				/* Not pushable as a whole; extract its Vars and aggregates */
-				List	   *aggvars;
-
-				aggvars = pull_var_clause((Node *) expr,
-										  PVC_INCLUDE_AGGREGATES);
-
-				/*
-				 * If any aggregate expression is not shippable, then we
-				 * cannot push down aggregation to the foreign server.  (We
-				 * don't have to check is_foreign_param, since that certainly
-				 * won't return true for any such expression.)
-				 */
-				if (!is_foreign_expr(root, grouped_rel, (Expr *) aggvars))
-					return false;
-
-				/*
-				 * Add aggregates, if any, into the targetlist.  Plain Vars
-				 * outside an aggregate can be ignored, because they should be
-				 * either same as some GROUP BY column or part of some GROUP
-				 * BY expression.  In either case, they are already part of
-				 * the targetlist and thus no need to add them again.  In fact
-				 * including plain Vars in the tlist when they do not match a
-				 * GROUP BY column would cause the foreign server to complain
-				 * that the shipped query is invalid.
-				 */
-				foreach(l, aggvars)
-				{
-					Expr	   *expr = (Expr *) lfirst(l);
-
-					if (IsA(expr, Aggref))
-						tlist = add_to_flat_tlist(tlist, list_make1(expr));
-				}
-			}
-		}
-
-		i++;
-	}
-
-	/*
-	 * Classify the pushable and non-pushable HAVING clauses and save them in
-	 * remote_conds and local_conds of the grouped rel's fpinfo.
-	 */
-	if (havingQual)
-	{
-		ListCell   *lc;
-
-		foreach(lc, (List *) havingQual)
-		{
-			Expr	   *expr = (Expr *) lfirst(lc);
-			RestrictInfo *rinfo;
-
-			/*
-			 * Currently, the core code doesn't wrap havingQuals in
-			 * RestrictInfos, so we must make our own.
-			 */
-			Assert(!IsA(expr, RestrictInfo));
-			rinfo = make_restrictinfo(expr,
-									  true,
-									  false,
-									  false,
-									  root->qual_security_level,
-									  grouped_rel->relids,
-									  NULL,
-									  NULL);
-			if (is_foreign_expr(root, grouped_rel, expr))
-				fpinfo->remote_conds = lappend(fpinfo->remote_conds, rinfo);
-			else
-				fpinfo->local_conds = lappend(fpinfo->local_conds, rinfo);
-		}
-	}
-
-	/*
-	 * If there are any local conditions, pull Vars and aggregates from it and
-	 * check whether they are safe to pushdown or not.
-	 */
-	if (fpinfo->local_conds)
-	{
-		List	   *aggvars = NIL;
-		ListCell   *lc;
-
-		foreach(lc, fpinfo->local_conds)
-		{
-			RestrictInfo *rinfo = lfirst_node(RestrictInfo, lc);
-
-			aggvars = list_concat(aggvars,
-								  pull_var_clause((Node *) rinfo->clause,
-												  PVC_INCLUDE_AGGREGATES));
-		}
-
-		foreach(lc, aggvars)
-		{
-			Expr	   *expr = (Expr *) lfirst(lc);
-
-			/*
-			 * If aggregates within local conditions are not safe to push
-			 * down, then we cannot push down the query.  Vars are already
-			 * part of GROUP BY clause which are checked above, so no need to
-			 * access them again here.  Again, we need not check
-			 * is_foreign_param for a foreign aggregate.
-			 */
-			if (IsA(expr, Aggref))
-			{
-				if (!is_foreign_expr(root, grouped_rel, expr))
-					return false;
-
-				tlist = add_to_flat_tlist(tlist, list_make1(expr));
-			}
-		}
-	}
-
-	/* Store generated targetlist */
-	fpinfo->grouped_tlist = tlist;
-
-	/* Safe to pushdown */
-	fpinfo->pushdown_safe = true;
-
-	/*
-	 * Set # of retrieved rows and cached relation costs to some negative
-	 * value, so that we can detect when they are set to some sensible values,
-	 * during one (usually the first) of the calls to estimate_path_cost_size.
-	 */
-	fpinfo->retrieved_rows = -1;
-	fpinfo->rel_startup_cost = -1;
-	fpinfo->rel_total_cost = -1;
-
-	/*
-	 * Set the string describing this grouped relation to be used in EXPLAIN
-	 * output of corresponding ForeignScan.
-	 */
-	fpinfo->relation_name = makeStringInfo();
-	appendStringInfo(fpinfo->relation_name, "Aggregate on (%s)",
-					 ofpinfo->relation_name->data);
-
-	return true;
-}
-
-/*
- * tsurugiGetForeignUpperPaths
- *		Add paths for post-join operations like aggregation, grouping etc. if
- *		corresponding operations are safe to push down.
- */
-static void
-tsurugiGetForeignUpperPaths(PlannerInfo *root, UpperRelationKind stage,
-							 RelOptInfo *input_rel, RelOptInfo *output_rel,
-							 void *extra)
-{
-	tsurugiFdwRelationInfo *fpinfo;
-
-	/*
-	 * If input rel is not safe to pushdown, then simply return as we cannot
-	 * perform any post-join operations on the foreign server.
-	 */
-	if (!input_rel->fdw_private ||
-		!((tsurugiFdwRelationInfo *) input_rel->fdw_private)->pushdown_safe)
-		return;
-
-	/* Ignore stages we don't support; and skip any duplicate calls. */
-	if ((stage != UPPERREL_GROUP_AGG &&
-		 stage != UPPERREL_ORDERED &&
-		 stage != UPPERREL_FINAL) ||
-		output_rel->fdw_private)
-		return;
-
-	fpinfo = (tsurugiFdwRelationInfo *) palloc0(sizeof(tsurugiFdwRelationInfo));
-	fpinfo->pushdown_safe = false;
-	fpinfo->stage = stage;
-	output_rel->fdw_private = fpinfo;
-
-	switch (stage)
-	{
-		case UPPERREL_GROUP_AGG:
-			add_foreign_grouping_paths(root, input_rel, output_rel,
-									   (GroupPathExtraData *) extra);
-			break;
-		case UPPERREL_ORDERED:
-			add_foreign_ordered_paths(root, input_rel, output_rel);
-			break;
-		case UPPERREL_FINAL:
-			add_foreign_final_paths(root, input_rel, output_rel,
-									(FinalPathExtraData *) extra);
-			break;
-		default:
-			elog(ERROR, "unexpected upper relation: %d", (int) stage);
-			break;
-	}
-}
-
-/*
- * add_foreign_grouping_paths
- *		Add foreign path for grouping and/or aggregation.
- *
- * Given input_rel represents the underlying scan.  The paths are added to the
- * given grouped_rel.
- */
-static void
-add_foreign_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
-						   RelOptInfo *grouped_rel,
-						   GroupPathExtraData *extra)
-{
-	Query	   *parse = root->parse;
-	tsurugiFdwRelationInfo *ifpinfo = (tsurugiFdwRelationInfo *) input_rel->fdw_private;
-	tsurugiFdwRelationInfo *fpinfo = (tsurugiFdwRelationInfo *) grouped_rel->fdw_private;
-	ForeignPath *grouppath;
-	double		rows = 0;
-	int			width = 0;
-	Cost		startup_cost = 0;
-	Cost		total_cost = 0;
-
-	/* Nothing to be done, if there is no grouping or aggregation required. */
-	if (!parse->groupClause && !parse->groupingSets && !parse->hasAggs &&
-		!root->hasHavingQual)
-		return;
-
-	Assert(extra->patype == PARTITIONWISE_AGGREGATE_NONE ||
-		   extra->patype == PARTITIONWISE_AGGREGATE_FULL);
-
-	/* save the input_rel as outerrel in fpinfo */
-	fpinfo->outerrel = input_rel;
-
-	/*
-	 * Copy foreign table, foreign server, user mapping, FDW options etc.
-	 * details from the input relation's fpinfo.
-	 */
-	fpinfo->table = ifpinfo->table;
-	fpinfo->server = ifpinfo->server;
-	fpinfo->user = ifpinfo->user;
-	merge_fdw_options(fpinfo, ifpinfo, NULL);
-
-	/*
-	 * Assess if it is safe to push down aggregation and grouping.
-	 *
-	 * Use HAVING qual from extra. In case of child partition, it will have
-	 * translated Vars.
-	 */
-	if (!foreign_grouping_ok(root, grouped_rel, extra->havingQual))
-		return;
-
-	/*
-	 * Compute the selectivity and cost of the local_conds, so we don't have
-	 * to do it over again for each path.  (Currently we create just a single
-	 * path here, but in future it would be possible that we build more paths
-	 * such as pre-sorted paths as in postgresGetForeignPaths and
-	 * postgresGetForeignJoinPaths.)  The best we can do for these conditions
-	 * is to estimate selectivity on the basis of local statistics.
-	 */
-	fpinfo->local_conds_sel = clauselist_selectivity(root,
-													 fpinfo->local_conds,
-													 0,
-													 JOIN_INNER,
-													 NULL);
-
-	cost_qual_eval(&fpinfo->local_conds_cost, fpinfo->local_conds, root);
-
-	/* Estimate the cost of push down */
-	estimate_path_cost_size(root, grouped_rel, NIL, NIL, NULL,
-							&rows, &width, &startup_cost, &total_cost);
-
-	/* Now update this information in the fpinfo */
-	fpinfo->rows = rows;
-	fpinfo->width = width;
-	fpinfo->startup_cost = startup_cost;
-	fpinfo->total_cost = total_cost;
-
-
-	/* Create and add foreign path to the grouping relation. */
-	grouppath = create_foreign_upper_path(root,
-										  grouped_rel,
-										  grouped_rel->reltarget,
-										  rows,
-										  startup_cost,
-										  total_cost,
-										  NIL,	/* no pathkeys */
-										  NULL,
-										  NIL); /* no fdw_private */
-
-	/* Add generated path into grouped_rel by add_path(). */
-	add_path(grouped_rel, (Path *) grouppath);
-}
-
-/*
- * add_foreign_ordered_paths
- *		Add foreign paths for performing the final sort remotely.
- *
- * Given input_rel contains the source-data Paths.  The paths are added to the
- * given ordered_rel.
- */
-static void
-add_foreign_ordered_paths(PlannerInfo *root, RelOptInfo *input_rel,
-						  RelOptInfo *ordered_rel)
-{
-	Query	   *parse = root->parse;
-	tsurugiFdwRelationInfo *ifpinfo = (tsurugiFdwRelationInfo *) input_rel->fdw_private;
-	tsurugiFdwRelationInfo *fpinfo = (tsurugiFdwRelationInfo *) ordered_rel->fdw_private;
-	PgFdwPathExtraData *fpextra;
-	double		rows;
-	int			width = 0;
-	Cost		startup_cost;
-	Cost		total_cost;
-	List	   *fdw_private;
-	ForeignPath *ordered_path;
-	ListCell   *lc;
-
-	/* Shouldn't get here unless the query has ORDER BY */
-	Assert(parse->sortClause);
-
-	/* We don't support cases where there are any SRFs in the targetlist */
-	if (parse->hasTargetSRFs)
-		return;
-
-	/* Save the input_rel as outerrel in fpinfo */
-	fpinfo->outerrel = input_rel;
-
-	/*
-	 * Copy foreign table, foreign server, user mapping, FDW options etc.
-	 * details from the input relation's fpinfo.
-	 */
-	fpinfo->table = ifpinfo->table;
-	fpinfo->server = ifpinfo->server;
-	fpinfo->user = ifpinfo->user;
-	merge_fdw_options(fpinfo, ifpinfo, NULL);
-
-	/*
-	 * If the input_rel is a base or join relation, we would already have
-	 * considered pushing down the final sort to the remote server when
-	 * creating pre-sorted foreign paths for that relation, because the
-	 * query_pathkeys is set to the root->sort_pathkeys in that case (see
-	 * standard_qp_callback()).
-	 */
-	if (input_rel->reloptkind == RELOPT_BASEREL ||
-		input_rel->reloptkind == RELOPT_JOINREL)
-	{
-		Assert(root->query_pathkeys == root->sort_pathkeys);
-
-		/* Safe to push down if the query_pathkeys is safe to push down */
-		fpinfo->pushdown_safe = ifpinfo->qp_is_pushdown_safe;
-
-		return;
-	}
-
-	/* The input_rel should be a grouping relation */
-	Assert(input_rel->reloptkind == RELOPT_UPPER_REL &&
-		   ifpinfo->stage == UPPERREL_GROUP_AGG);
-
-	/*
-	 * We try to create a path below by extending a simple foreign path for
-	 * the underlying grouping relation to perform the final sort remotely,
-	 * which is stored into the fdw_private list of the resulting path.
-	 */
-
-	/* Assess if it is safe to push down the final sort */
-	foreach(lc, root->sort_pathkeys)
-	{
-		PathKey    *pathkey = (PathKey *) lfirst(lc);
-		EquivalenceClass *pathkey_ec = pathkey->pk_eclass;
-		Expr	   *sort_expr;
-
-		/*
-		 * is_foreign_expr would detect volatile expressions as well, but
-		 * checking ec_has_volatile here saves some cycles.
-		 */
-		if (pathkey_ec->ec_has_volatile)
-			return;
-
-		/* Get the sort expression for the pathkey_ec */
-		sort_expr = find_em_expr_for_input_target(root,
-												  pathkey_ec,
-												  input_rel->reltarget);
-
-		/* If it's unsafe to remote, we cannot push down the final sort */
-		if (!is_foreign_expr(root, input_rel, sort_expr))
-			return;
-	}
-
-	/* Safe to push down */
-	fpinfo->pushdown_safe = true;
-
-	/* Construct PgFdwPathExtraData */
-	fpextra = (PgFdwPathExtraData *) palloc0(sizeof(PgFdwPathExtraData));
-	fpextra->target = root->upper_targets[UPPERREL_ORDERED];
-	fpextra->has_final_sort = true;
-
-	/* Estimate the costs of performing the final sort remotely */
-	estimate_path_cost_size(root, input_rel, NIL, root->sort_pathkeys, fpextra,
-							&rows, &width, &startup_cost, &total_cost);
-
-	/*
-	 * Build the fdw_private list that will be used by postgresGetForeignPlan.
-	 * Items in the list must match order in enum FdwPathPrivateIndex.
-	 */
-	fdw_private = list_make2(makeInteger(true), makeInteger(false));
-
-	/* Create foreign ordering path */
-	ordered_path = create_foreign_upper_path(root,
-											 input_rel,
-											 root->upper_targets[UPPERREL_ORDERED],
-											 rows,
-											 startup_cost,
-											 total_cost,
-											 root->sort_pathkeys,
-											 NULL,	/* no extra plan */
-											 fdw_private);
-
-	/* and add it to the ordered_rel */
-	add_path(ordered_rel, (Path *) ordered_path);
-}
-
-/*
- * add_foreign_final_paths
- *		Add foreign paths for performing the final processing remotely.
- *
- * Given input_rel contains the source-data Paths.  The paths are added to the
- * given final_rel.
- */
-static void
-add_foreign_final_paths(PlannerInfo *root, RelOptInfo *input_rel,
-						RelOptInfo *final_rel,
-						FinalPathExtraData *extra)
-{
-	Query	   *parse = root->parse;
-	tsurugiFdwRelationInfo *ifpinfo = (tsurugiFdwRelationInfo *) input_rel->fdw_private;
-	tsurugiFdwRelationInfo *fpinfo = (tsurugiFdwRelationInfo *) final_rel->fdw_private;
-	bool		has_final_sort = false;
-	List	   *pathkeys = NIL;
-	PgFdwPathExtraData *fpextra;
-	bool		save_use_remote_estimate = false;
-	double		rows;
-	int			width;
-	Cost		startup_cost;
-	Cost		total_cost;
-	List	   *fdw_private;
-	ForeignPath *final_path;
-
-	/*
-	 * Currently, we only support this for SELECT commands
-	 */
-	if (parse->commandType != CMD_SELECT)
-		return;
-
-	/*
-	 * No work if there is no FOR UPDATE/SHARE clause and if there is no need
-	 * to add a LIMIT node
-	 */
-	if (!parse->rowMarks && !extra->limit_needed)
-		return;
-
-	/* We don't support cases where there are any SRFs in the targetlist */
-	if (parse->hasTargetSRFs)
-		return;
-
-	/* Save the input_rel as outerrel in fpinfo */
-	fpinfo->outerrel = input_rel;
-
-	/*
-	 * Copy foreign table, foreign server, user mapping, FDW options etc.
-	 * details from the input relation's fpinfo.
-	 */
-	fpinfo->table = ifpinfo->table;
-	fpinfo->server = ifpinfo->server;
-	fpinfo->user = ifpinfo->user;
-	merge_fdw_options(fpinfo, ifpinfo, NULL);
-
-	/*
-	 * If there is no need to add a LIMIT node, there might be a ForeignPath
-	 * in the input_rel's pathlist that implements all behavior of the query.
-	 * Note: we would already have accounted for the query's FOR UPDATE/SHARE
-	 * (if any) before we get here.
-	 */
-	if (!extra->limit_needed)
-	{
-		ListCell   *lc;
-
-		Assert(parse->rowMarks);
-
-		/*
-		 * Grouping and aggregation are not supported with FOR UPDATE/SHARE,
-		 * so the input_rel should be a base, join, or ordered relation; and
-		 * if it's an ordered relation, its input relation should be a base or
-		 * join relation.
-		 */
-		Assert(input_rel->reloptkind == RELOPT_BASEREL ||
-			   input_rel->reloptkind == RELOPT_JOINREL ||
-			   (input_rel->reloptkind == RELOPT_UPPER_REL &&
-				ifpinfo->stage == UPPERREL_ORDERED &&
-				(ifpinfo->outerrel->reloptkind == RELOPT_BASEREL ||
-				 ifpinfo->outerrel->reloptkind == RELOPT_JOINREL)));
-
-		foreach(lc, input_rel->pathlist)
-		{
-			Path	   *path = (Path *) lfirst(lc);
-
-			/*
-			 * apply_scanjoin_target_to_paths() uses create_projection_path()
-			 * to adjust each of its input paths if needed, whereas
-			 * create_ordered_paths() uses apply_projection_to_path() to do
-			 * that.  So the former might have put a ProjectionPath on top of
-			 * the ForeignPath; look through ProjectionPath and see if the
-			 * path underneath it is ForeignPath.
-			 */
-			if (IsA(path, ForeignPath) ||
-				(IsA(path, ProjectionPath) &&
-				 IsA(((ProjectionPath *) path)->subpath, ForeignPath)))
-			{
-				/*
-				 * Create foreign final path; this gets rid of a
-				 * no-longer-needed outer plan (if any), which makes the
-				 * EXPLAIN output look cleaner
-				 */
-				final_path = create_foreign_upper_path(root,
-													   path->parent,
-													   path->pathtarget,
-													   path->rows,
-													   path->startup_cost,
-													   path->total_cost,
-													   path->pathkeys,
-													   NULL,	/* no extra plan */
-													   NULL);	/* no fdw_private */
-
-				/* and add it to the final_rel */
-				add_path(final_rel, (Path *) final_path);
-
-				/* Safe to push down */
-				fpinfo->pushdown_safe = true;
-
-				return;
-			}
-		}
-
-		/*
-		 * If we get here it means no ForeignPaths; since we would already
-		 * have considered pushing down all operations for the query to the
-		 * remote server, give up on it.
-		 */
-		return;
-	}
-
-	Assert(extra->limit_needed);
-
-	/*
-	 * If the input_rel is an ordered relation, replace the input_rel with its
-	 * input relation
-	 */
-	if (input_rel->reloptkind == RELOPT_UPPER_REL &&
-		ifpinfo->stage == UPPERREL_ORDERED)
-	{
-		input_rel = ifpinfo->outerrel;
-		ifpinfo = (tsurugiFdwRelationInfo *) input_rel->fdw_private;
-		has_final_sort = true;
-		pathkeys = root->sort_pathkeys;
-	}
-
-	/* The input_rel should be a base, join, or grouping relation */
-	Assert(input_rel->reloptkind == RELOPT_BASEREL ||
-		   input_rel->reloptkind == RELOPT_JOINREL ||
-		   (input_rel->reloptkind == RELOPT_UPPER_REL &&
-			ifpinfo->stage == UPPERREL_GROUP_AGG));
-
-	/*
-	 * We try to create a path below by extending a simple foreign path for
-	 * the underlying base, join, or grouping relation to perform the final
-	 * sort (if has_final_sort) and the LIMIT restriction remotely, which is
-	 * stored into the fdw_private list of the resulting path.  (We
-	 * re-estimate the costs of sorting the underlying relation, if
-	 * has_final_sort.)
-	 */
-
-	/*
-	 * Assess if it is safe to push down the LIMIT and OFFSET to the remote
-	 * server
-	 */
-
-	/*
-	 * If the underlying relation has any local conditions, the LIMIT/OFFSET
-	 * cannot be pushed down.
-	 */
-	if (ifpinfo->local_conds)
-		return;
-
-	/*
-	 * Also, the LIMIT/OFFSET cannot be pushed down, if their expressions are
-	 * not safe to remote.
-	 */
-	if (!is_foreign_expr(root, input_rel, (Expr *) parse->limitOffset) ||
-		!is_foreign_expr(root, input_rel, (Expr *) parse->limitCount))
-		return;
-
-	/* Safe to push down */
-	fpinfo->pushdown_safe = true;
-
-	/* Construct PgFdwPathExtraData */
-	fpextra = (PgFdwPathExtraData *) palloc0(sizeof(PgFdwPathExtraData));
-	fpextra->target = root->upper_targets[UPPERREL_FINAL];
-	fpextra->has_final_sort = has_final_sort;
-	fpextra->has_limit = extra->limit_needed;
-	fpextra->limit_tuples = extra->limit_tuples;
-	fpextra->count_est = extra->count_est;
-	fpextra->offset_est = extra->offset_est;
-
-	/*
-	 * Estimate the costs of performing the final sort and the LIMIT
-	 * restriction remotely.  If has_final_sort is false, we wouldn't need to
-	 * execute EXPLAIN anymore if use_remote_estimate, since the costs can be
-	 * roughly estimated using the costs we already have for the underlying
-	 * relation, in the same way as when use_remote_estimate is false.  Since
-	 * it's pretty expensive to execute EXPLAIN, force use_remote_estimate to
-	 * false in that case.
-	 */
-	if (!fpextra->has_final_sort)
-	{
-		save_use_remote_estimate = ifpinfo->use_remote_estimate;
-		ifpinfo->use_remote_estimate = false;
-	}
-	estimate_path_cost_size(root, input_rel, NIL, pathkeys, fpextra,
-							&rows, &width, &startup_cost, &total_cost);
-	if (!fpextra->has_final_sort)
-		ifpinfo->use_remote_estimate = save_use_remote_estimate;
-
-	/*
-	 * Build the fdw_private list that will be used by postgresGetForeignPlan.
-	 * Items in the list must match order in enum FdwPathPrivateIndex.
-	 */
-	fdw_private = list_make2(makeInteger(has_final_sort),
-							 makeInteger(extra->limit_needed));
-
-	/*
-	 * Create foreign final path; this gets rid of a no-longer-needed outer
-	 * plan (if any), which makes the EXPLAIN output look cleaner
-	 */
-	final_path = create_foreign_upper_path(root,
-										   input_rel,
-										   root->upper_targets[UPPERREL_FINAL],
-										   rows,
-										   startup_cost,
-										   total_cost,
-										   pathkeys,
-										   NULL,	/* no extra plan */
-										   fdw_private);
-
-	/* and add it to the final_rel */
-	add_path(final_rel, (Path *) final_path);
-}
-
-/*
- * Find an equivalence class member expression, all of whose Vars, come from
- * the indicated relation.
- */
-Expr *
-find_em_expr_for_rel(EquivalenceClass *ec, RelOptInfo *rel)
-{
-	ListCell   *lc_em;
-
-	foreach(lc_em, ec->ec_members)
-	{
-		EquivalenceMember *em = (EquivalenceMember *) lfirst(lc_em);
-
-		if (bms_is_subset(em->em_relids, rel->relids) &&
-			!bms_is_empty(em->em_relids))
-		{
-			/*
-			 * If there is more than one equivalence member whose Vars are
-			 * taken entirely from this relation, we'll be content to choose
-			 * any one of those.
-			 */
-			return em->em_expr;
-		}
-	}
-
-	/* We didn't find any suitable equivalence class expression */
-	return NULL;
-}
-
-/*
- * Find an equivalence class member expression to be computed as a sort column
- * in the given target.
- */
-Expr *
-find_em_expr_for_input_target(PlannerInfo *root,
-							  EquivalenceClass *ec,
-							  PathTarget *target)
-{
-	ListCell   *lc1;
-	int			i;
-
-	i = 0;
-	foreach(lc1, target->exprs)
-	{
-		Expr	   *expr = (Expr *) lfirst(lc1);
-		Index		sgref = get_pathtarget_sortgroupref(target, i);
-		ListCell   *lc2;
-
-		/* Ignore non-sort expressions */
-		if (sgref == 0 ||
-			get_sortgroupref_clause_noerr(sgref,
-										  root->parse->sortClause) == NULL)
-		{
-			i++;
-			continue;
-		}
-
-		/* We ignore binary-compatible relabeling on both ends */
-		while (expr && IsA(expr, RelabelType))
-			expr = ((RelabelType *) expr)->arg;
-
-		/* Locate an EquivalenceClass member matching this expr, if any */
-		foreach(lc2, ec->ec_members)
-		{
-			EquivalenceMember *em = (EquivalenceMember *) lfirst(lc2);
-			Expr	   *em_expr;
-
-			/* Don't match constants */
-			if (em->em_is_const)
-				continue;
-
-			/* Ignore child members */
-			if (em->em_is_child)
-				continue;
-
-			/* Match if same expression (after stripping relabel) */
-			em_expr = em->em_expr;
-			while (em_expr && IsA(em_expr, RelabelType))
-				em_expr = ((RelabelType *) em_expr)->arg;
-
-			if (equal(em_expr, expr))
-				return em->em_expr;
-		}
-
-		i++;
-	}
-
-	elog(ERROR, "could not find pathkey item to sort");
-	return NULL;				/* keep compiler quiet */
-}
-
 static void 
-estimate_path_cost_size(PlannerInfo *root,
-						RelOptInfo *foreignrel,
-						List *param_join_conds,
-						List *pathkeys,
-						PgFdwPathExtraData *fpextra,
-						double *p_rows, int *p_width,
-						Cost *p_startup_cost, Cost *p_total_cost)
+make_tuple_from_result_row(ResultSetPtr result_set, 
+                            TupleDesc tupleDescriptor,
+                            List* retrieved_attrs,
+                            Datum* row,
+                            bool* is_null,
+                            tsurugiFdwState* fdw_state)
 {
-	// tentative values.
-	*p_rows = 0;
-	*p_width = 0;
-	*p_startup_cost = 0;
-	*p_total_cost = 0;
+    ListCell   *lc = NULL;
+    int         attid = 0;
 
-	return;
-}
+    foreach(lc, retrieved_attrs)
+    {
+        int     attnum = lfirst_int(lc) - 1;
+        Oid     pgtype = TupleDescAttr(tupleDescriptor, attnum)->atttypid;
+        HeapTuple 	heap_tuple;
+        regproc 	typinput;
+        int 		typemod;
 
+        heap_tuple = SearchSysCache1(TYPEOID, 
+                                    ObjectIdGetDatum(pgtype));
+        if (!HeapTupleIsValid(heap_tuple))
+        {
+            elog(ERROR, "cache lookup failed for type %u", pgtype);
+        }
+        typinput = ((Form_pg_type) GETSTRUCT(heap_tuple))->typinput;
+        typemod = ((Form_pg_type) GETSTRUCT(heap_tuple))->typtypmod;
+        ReleaseSysCache(heap_tuple);
 
-static void
-add_paths_with_pathkeys_for_rel(PlannerInfo *root, RelOptInfo *rel,
-								Path *epq_path)
-{
-	List	   *useful_pathkeys_list = NIL; /* List of all pathkeys */
-	ListCell   *lc;
+        is_null[attnum] = true;
+        switch (pgtype)
+        {
+            case INT2OID:
+                {
+                    std::int16_t value;
+                    if (result_set->next_column(value) == ERROR_CODE::OK)
+//                    if (Tsurugi::next_column(value) == ERROR_CODE::OK)
+                    {
+                        is_null[attnum] = false;
+                        row[attnum] = Int16GetDatum(value);
+                    }
+                }
+                break;
 
-	useful_pathkeys_list = get_useful_pathkeys_for_relation(root, rel);
+            case INT4OID:
+                {
+                    std::int32_t value;
+                    if (result_set->next_column(value) == ERROR_CODE::OK)
+//                    if (Tsurugi::next_column(value) == ERROR_CODE::OK)
+                    {
+                        is_null[attnum] = false;
+                        row[attnum] =  Int32GetDatum(value);
+                    }
+                }
+                break;
 
-	/* Create one path for each set of pathkeys we found above. */
-	foreach(lc, useful_pathkeys_list)
-	{
-		double		rows;
-		int			width;
-		Cost		startup_cost;
-		Cost		total_cost;
-		List	   *useful_pathkeys = (List *) lfirst(lc);
-		Path	   *sorted_epq_path;
+            case INT8OID:
+                {
+                    std::int64_t value;
+                    if (result_set->next_column(value) == ERROR_CODE::OK)
+//                    if (Tsurugi::next_column(value) == ERROR_CODE::OK)
+                    {
+                        is_null[attnum] = false;
+                        row[attnum] = Int64GetDatum(value);
+                    }
+                }
+                break;
 
-		estimate_path_cost_size(root, rel, NIL, useful_pathkeys, NULL,
-								&rows, &width, &startup_cost, &total_cost);
+            case FLOAT4OID:
+                {
+                    float4 value;
+//                    if (Tsurugi::next_column(value) == ERROR_CODE::OK)
+                    if (result_set->next_column(value) == ERROR_CODE::OK)
+                    {
+                        is_null[attnum] = false;
+                        row[attnum] = Float4GetDatum(value);
+                    }
+                }
+                break;
 
-		/*
-		 * The EPQ path must be at least as well sorted as the path itself, in
-		 * case it gets used as input to a mergejoin.
-		 */
-		sorted_epq_path = epq_path;
-		if (sorted_epq_path != NULL &&
-			!pathkeys_contained_in(useful_pathkeys,
-								   sorted_epq_path->pathkeys))
-			sorted_epq_path = (Path *)
-				create_sort_path(root,
-								 rel,
-								 sorted_epq_path,
-								 useful_pathkeys,
-								 -1.0);
+            case FLOAT8OID:
+                {
+                    float8 value;
+//                    if (Tsurugi::next_column(value) == ERROR_CODE::OK)
+                    if (result_set->next_column(value) == ERROR_CODE::OK)
+                    {
+                        is_null[attnum] = false;
+                        row[attnum] = Float8GetDatum(value);
+                    }
+                }
+                break;
 
-		if (IS_SIMPLE_REL(rel))
-			add_path(rel, (Path *)
-					 create_foreignscan_path(root, rel,
-											 NULL,
-											 rows,
-											 startup_cost,
-											 total_cost,
-											 useful_pathkeys,
-											 rel->lateral_relids,
-											 sorted_epq_path,
-											 NIL));
-		else
-			add_path(rel, (Path *)
-					 create_foreign_join_path(root, rel,
-											  NULL,
-											  rows,
-											  startup_cost,
-											  total_cost,
-											  useful_pathkeys,
-											  rel->lateral_relids,
-											  sorted_epq_path,
-											  NIL));
-	}
+            case BPCHAROID:
+            case VARCHAROID:
+            case TEXTOID:
+                {
+                    std::string value;
+                    Datum value_datum;
+//                    ERROR_CODE result = Tsurugi::next_column(value);
+                    ERROR_CODE result = result_set->next_column(value);
+                    if (result == ERROR_CODE::OK)
+                    {
+                        value_datum = CStringGetDatum(value.c_str());
+                        if (value_datum == (Datum) nullptr)
+                        {
+                            break;
+                        }
+                        is_null[attnum] = false;
+                        row[attnum] = (Datum) OidFunctionCall3(typinput,
+                                                    value_datum, 
+                                                    ObjectIdGetDatum(InvalidOid),
+                                                    Int32GetDatum(typemod));
+                    }
+                }
+                break;
+
+            case DATEOID:
+                {
+                    stub::date_type value;
+                    if (result_set->next_column(value) == ERROR_CODE::OK)
+//                    if (Tsurugi::next_column(value) == ERROR_CODE::OK)
+                    {
+                        DateADT date;
+                        date = value.days_since_epoch();
+                        date = date - (POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE);
+                        row[attnum] = DateADTGetDatum(date);
+                        is_null[attnum] = false;
+                    }
+                }
+                break;
+
+            case TIMEOID:
+                {
+                    stub::time_type value;
+                    if (result_set->next_column(value) == ERROR_CODE::OK)
+//                    if (Tsurugi::next_column(value) == ERROR_CODE::OK)
+                    {
+                        TimeADT time;
+                        auto subsecond = value.subsecond().count();
+                        time = (value.hour() * MINS_PER_HOUR) + value.minute();
+                        time = (time * SECS_PER_MINUTE) + value.second();
+                        time = time * USECS_PER_SEC;
+                        if (subsecond != 0) {
+                            subsecond /= 1000;
+                            time = time + subsecond;
+                        }
+                        row[attnum] = TimeADTGetDatum(time);
+                        is_null[attnum] = false;
+                    }
+                }
+                break;
+
+            case TIMESTAMPOID:
+                {
+                    stub::timestamp_type value;
+                    if (result_set->next_column(value) == ERROR_CODE::OK)
+//                    if (Tsurugi::next_column(value) == ERROR_CODE::OK)
+                    {
+                        Timestamp timestamp;
+                        auto subsecond = value.subsecond().count();
+                        timestamp = value.seconds_since_epoch().count() -
+                            ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
+                        timestamp = timestamp * USECS_PER_SEC;
+                        if (subsecond != 0) {
+                            subsecond /= 1000;
+                            timestamp = timestamp + subsecond;
+                        }
+                        row[attnum] = TimestampGetDatum(timestamp);
+                        is_null[attnum] = false;
+                    }
+                }
+                break;
+
+            default:
+                elog(ERROR, "Invalid data type of PG. (%u)", pgtype);
+                break;
+        }
+    }
 }

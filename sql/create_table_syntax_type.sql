@@ -1,9 +1,6 @@
 CREATE EXTENSION IF NOT EXISTS ogawayama_fdw;
 CREATE SERVER IF NOT EXISTS ogawayama FOREIGN DATA WRAPPER ogawayama_fdw;
 
-CREATE TABLE no_column (
-) tablespace tsurugi;
-
 CREATE TABLE customer_fifth (
   c_credit char(2) PRIMARY KEY
 ) tablespace tsurugi;
@@ -124,9 +121,6 @@ create table one_english_column_name (
   o int PRIMARY KEY
 ) tablespace tsurugi;
 
-CREATE FOREIGN TABLE no_column (
-) SERVER ogawayama;
-
 CREATE FOREIGN TABLE customer_fifth (
   c_credit char(2)
 ) SERVER ogawayama;
@@ -238,10 +232,6 @@ create foreign table japanese_column_name (
 create foreign table one_english_column_name (
   o int
 ) SERVER ogawayama;
-
-SELECT * FROM no_column;
-INSERT INTO no_column () VALUES ();
-SELECT * FROM no_column;
 
 SELECT * FROM customer_fifth;
 INSERT INTO customer_fifth (c_credit) VALUES ('TE');

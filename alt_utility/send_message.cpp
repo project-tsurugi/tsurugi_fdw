@@ -46,11 +46,13 @@ bool send_message(message::Message& message)
 
   // Get a receiver.
   stub::Connection* connection;
-  stub::ErrorCode error = StubManager::get_connection(&connection);
+//  stub::ErrorCode error = StubManager::get_connection(&connection);
+  ERROR_CODE error = Tsurugi::get_connection(&connection);
   if (error != ERROR_CODE::OK) {
     ereport(NOTICE,
             (errcode(ERRCODE_INTERNAL_ERROR),
-            errmsg("StubManager::get_connection() failed. (code: %d)", (int) error)));
+            errmsg("Tsurugi::get_connection() failed. (error: %d)"),
+            (int) error));
     return ret_value;
   }
 
