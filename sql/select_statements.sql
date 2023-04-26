@@ -67,8 +67,8 @@ CREATE TABLE pt2(
     c3 BIGINT,
     c4 REAL, 
     c5 DOUBLE PRECISION, 
-    c6 CHAR(10),
-    c7 VARCHAR(26)
+    c6 CHAR(10) COLLATE "es_ES",
+    c7 VARCHAR(26) COLLATE "es_ES"
 );
 
 CREATE TABLE pt3(
