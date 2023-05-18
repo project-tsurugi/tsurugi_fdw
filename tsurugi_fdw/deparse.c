@@ -33,7 +33,7 @@
  */
 #include "postgres.h"
 
-#include "ogawayama_fdw.h"
+#include "tsurugi_fdw.h"
 
 #include "access/htup_details.h"
 #include "access/sysattr.h"

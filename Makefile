@@ -1,26 +1,26 @@
-# contrib/frontend/ogawayama_fdw/Makefile
+# contrib/frontend/tsurugi_fdw/Makefile
 
-MODULE_big = ogawayama_fdw
+MODULE_big = tsurugi_fdw
 OBJS = common/init.o common/stub_manager.o \
-        ogawayama_fdw/deparse.o ogawayama_fdw/shippable.o ogawayama_fdw/helper_funcs.o \
-		ogawayama_fdw/tsurugi_utils.o ogawayama_fdw/ogawayama_fdw.o \
-        alt_planner/alt_planner.o \
-		alt_utility/send_message.o \
-        alt_utility/alt_utility.o alt_utility/create_stmt.o alt_utility/drop_stmt.o \
-        alt_utility/create_table/create_table_executor.o alt_utility/create_table/create_table.o \
-        alt_utility/create_index/create_index_executor.o alt_utility/create_index/create_index.o \
-		alt_utility/create_role/create_role.o \
-        alt_utility/drop_table/drop_table_executor.o alt_utility/drop_role/drop_role.o \
-		alt_utility/grant_revoke_role/grant_revoke_role.o \
-		alt_utility/grant_revoke_table/grant_revoke_table.o \
-		alt_utility/role_managercmds.o alt_utility/table_managercmds.o alt_utility/syscachecmds.o  \
-        alt_utility/alter_table/alter_table_executor.o alt_utility/alter_table/alter_table.o \
-		alt_utility/alter_role/alter_role.o \
+        tsurugi_fdw/deparse.o tsurugi_fdw/shippable.o tsurugi_fdw/helper_funcs.o \
+		tsurugi_fdw/tsurugi_utils.o tsurugi_fdw/tsurugi_fdw.o \
+        tsurugi_planner/tsurugi_planner.o \
+		tsurugi_utility/send_message.o \
+        tsurugi_utility/tsurugi_utility.o tsurugi_utility/create_stmt.o tsurugi_utility/drop_stmt.o \
+        tsurugi_utility/create_table/create_table_executor.o tsurugi_utility/create_table/create_table.o \
+        tsurugi_utility/create_index/create_index_executor.o tsurugi_utility/create_index/create_index.o \
+		tsurugi_utility/create_role/create_role.o \
+        tsurugi_utility/drop_table/drop_table_executor.o tsurugi_utility/drop_role/drop_role.o \
+		tsurugi_utility/grant_revoke_role/grant_revoke_role.o \
+		tsurugi_utility/grant_revoke_table/grant_revoke_table.o \
+		tsurugi_utility/role_managercmds.o tsurugi_utility/table_managercmds.o tsurugi_utility/syscachecmds.o  \
+        tsurugi_utility/alter_table/alter_table_executor.o tsurugi_utility/alter_table/alter_table.o \
+		tsurugi_utility/alter_role/alter_role.o \
         alt_function/alt_function.o \
         $(WIN32RES)
 
-EXTENSION = ogawayama_fdw
-DATA = ogawayama_fdw--0.1.sql
+EXTENSION = tsurugi_fdw
+DATA = tsurugi_fdw--0.1.sql
 
 # REGRESS_BASIC: variable used in frontend
 #REGRESS_BASIC = test_create_table otable_of_constr ch-benchmark-ddl create_table_syntax_type update_delete insert_select
@@ -33,10 +33,10 @@ else
 	REGRESS = $(REGRESS_BASIC)
 endif
 
-PGFILEDESC = "ogawayama_fdw - foregin data wrapper for ogawayama-server"
+PGFILEDESC = "tsurugi_fdw - foregin data wrapper for ogawayama-server"
 
 PG_CPPFLAGS = -Icommon/include \
-			  -Ialt_utility/include \
+			  -Itsurugi_utility/include \
               -Ithird_party/ogawayama/include \
               -Ithird_party/takatori/include \
               -Ithird_party/metadata-manager/include \
@@ -53,7 +53,7 @@ ifdef USE_PGXS
         PGXS := $(shell $(PG_CONFIG) --pgxs)
         include $(PGXS)
 else
-        subdir = contrib/frontend/ogawayama_fdw
+        subdir = contrib/frontend/tsurugi_fdw
         top_builddir = ../../
         include $(top_builddir)/src/Makefile.global
         include $(top_srcdir)/contrib/contrib-global.mk

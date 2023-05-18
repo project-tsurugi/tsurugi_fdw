@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 #include "postgres.h"
-#include "ogawayama_fdw.h"
+#include "tsurugi_fdw.h"
 
 #include "access/xact.h"
 #include "utils/syscache.h"

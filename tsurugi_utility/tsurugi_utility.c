@@ -18,7 +18,7 @@
  */
 /*-------------------------------------------------------------------------
  *
- * alt_utility.c
+ * tsurugi_utility.c
  *	  Contains functions which control the execution of the POSTGRES utility
  *	  commands.
  *

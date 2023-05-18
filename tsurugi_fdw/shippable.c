@@ -23,7 +23,7 @@
 
 #include "postgres.h"
 
-#include "ogawayama_fdw.h"
+#include "tsurugi_fdw.h"
 
 #include "access/transam.h"
 #include "catalog/dependency.h"

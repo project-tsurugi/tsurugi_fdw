@@ -19,7 +19,7 @@
 #include "tsurugi_utils.h"
 
 #include <regex>
-#include "ogawayama_fdw.h"
+#include "tsurugi_fdw.h"
 #include "ogawayama/stub/error_code.h"
 
 #ifdef __cplusplus
