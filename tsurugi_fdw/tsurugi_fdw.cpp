@@ -216,7 +216,7 @@ extern "C" {
 /*
  * SQL functions
  */
-PG_FUNCTION_INFO_V1(ogawayama_fdw_handler);
+PG_FUNCTION_INFO_V1(tsurugi_fdw_handler);
 
 /*
  * FDW callback routines (Scan)
@@ -331,7 +331,7 @@ static OgawayamaFdwInfo fdw_info_;
  * to my callback routines.
  */
 Datum
-ogawayama_fdw_handler(PG_FUNCTION_ARGS)
+tsurugi_fdw_handler(PG_FUNCTION_ARGS)
 {
 
 	FdwRoutine* routine = makeNode(FdwRoutine);
