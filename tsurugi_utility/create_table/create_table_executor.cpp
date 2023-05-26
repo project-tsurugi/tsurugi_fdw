@@ -38,7 +38,7 @@ extern "C" {
 }
 #endif
 
-#include "stub_manager.h"
+#include "tsurugi.h"
 #include "create_table.h"
 #include "send_message.h"
 #include "create_table_executor.h"

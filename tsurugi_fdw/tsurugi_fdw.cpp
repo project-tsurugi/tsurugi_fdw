@@ -22,7 +22,7 @@
 #include <boost/format.hpp>
 #include "ogawayama/stub/error_code.h"
 #include "ogawayama/stub/api.h"
-#include "stub_manager.h"
+#include "tsurugi.h"
 #include "tsurugi_utils.h"
 
 #ifdef __cplusplus

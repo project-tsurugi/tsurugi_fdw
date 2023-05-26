@@ -22,7 +22,6 @@
 #include <string_view>
 
 #include "ogawayama/stub/api.h"
-#include "stub_manager.h"
 
 #include "manager/message/ddl_message.h"
 #include "manager/message/broker.h"
@@ -124,8 +123,8 @@ static bool send_message(message::Message* message,
   Assert(message != nullptr);
 
   bool ret_value = false;
-  ERROR_CODE error = ERROR_CODE::UNKNOWN;
 #if 0
+  ERROR_CODE error = ERROR_CODE::UNKNOWN;
   /* sends message to ogawayama */
   stub::Transaction* transaction;
   error = StubManager::begin(&transaction);

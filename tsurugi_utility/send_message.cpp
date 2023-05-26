@@ -17,7 +17,7 @@
  *	@brief  Dispatch DDL message to ogawayama.
  */
 #include "send_message.h"
-#include "stub_manager.h"
+#include "tsurugi.h"
 #include "manager/message/ddl_message.h"
 #include "manager/message/status.h"
 #include "manager/message/broker.h"

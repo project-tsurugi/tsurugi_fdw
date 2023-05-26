@@ -22,7 +22,6 @@
 #include <string_view>
 
 #include "ogawayama/stub/api.h"
-#include "stub_manager.h"
 
 #include "manager/message/ddl_message.h"
 #include "manager/message/broker.h"
