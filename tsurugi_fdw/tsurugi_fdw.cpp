@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	ogawayama_fdw.cpp
- *	@brief 	Foreign Data Wrapper for Ogawayama.
+ *	@file	tsurugi_fdw.cpp
+ *	@brief 	Foreign Data Wrapper for Tsurugi.
  */
 #include <string>
 #include <memory>
@@ -160,9 +160,8 @@ typedef struct tsurugi_fdw_info_
 {
  	ResultSetPtr 		result_set = nullptr;
 	MetadataPtr 		metadata = nullptr;
-	int 				xact_level = 0;		/* FDWが自認する現在のトランザクションレベル */
     bool                success = false;
-} OgawayamaFdwInfo;
+} TsurugiFdwInfo;
 
 /*
  * Execution state of a foreign insert/update/delete operation.
@@ -173,7 +172,6 @@ typedef struct tsurugiFdwModifyState
 	AttInMetadata *attinmeta;	/* attribute datatype conversion metadata */
 
 	/* for remote query execution */
-//	PGconn	   *conn;			/* connection for the scan */
 	char	   *p_name;			/* name of prepared statement, if created */
 
 	/* extracted fdw_private data */
@@ -321,7 +319,7 @@ static void make_tuple_from_result_row(ResultSetPtr result_set,
 
 extern PGDLLIMPORT PGPROC *MyProc;
 
-static OgawayamaFdwInfo fdw_info_;
+static TsurugiFdwInfo fdw_info_;
 
 /*
  * Foreign-data wrapper handler function: return a struct with pointers
