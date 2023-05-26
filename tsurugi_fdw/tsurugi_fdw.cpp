@@ -311,10 +311,7 @@ static tsurugiFdwState* create_fdwstate();
 static void free_fdwstate(tsurugiFdwState* fdw_state);
 static void store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist);
 static bool confirm_columns(MetadataPtr metadata, ForeignScanState* node);
-static void tsurugi_create_cursor(ForeignScanState* node);
-static void tsurugi_fetch_more_data(ForeignScanState* node);
 static void tsurugi_close_cursor();
-static void make_virtual_tuple(TupleTableSlot* slot, ForeignScanState* node);
 static void make_tuple_from_result_row(ResultSetPtr result_set, 
                                         TupleDesc tupleDescriptor,
                                         List* retrieved_attrs,
@@ -1179,7 +1176,6 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 	Assert(node != nullptr);
 
 	ForeignScan* fsplan = (ForeignScan*) node->ss.ps.plan;
-	EState*	estate = node->ss.ps.state;
 	tsurugiFdwState* fdw_state = create_fdwstate();
 
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
@@ -1690,7 +1686,6 @@ tsurugiBeginForeignInsert(ModifyTableState *mtstate,
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
-	tsurugiFdwModifyState *fmstate;
 	ModifyTable *plan = castNode(ModifyTable, mtstate->ps.plan);
 	EState	   *estate = mtstate->ps.state;
 	Index		resultRelation = resultRelInfo->ri_RangeTableIndex;
@@ -2198,7 +2193,6 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                             tsurugiFdwState* fdw_state)
 {
     ListCell   *lc = NULL;
-    int         attid = 0;
 
     foreach(lc, retrieved_attrs)
     {

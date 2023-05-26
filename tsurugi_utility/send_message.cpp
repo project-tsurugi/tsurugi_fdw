@@ -51,8 +51,8 @@ bool send_message(message::Message& message)
   if (error != ERROR_CODE::OK) {
     ereport(NOTICE,
             (errcode(ERRCODE_INTERNAL_ERROR),
-            errmsg("Tsurugi::get_connection() failed. (error: %d)"),
-            (int) error));
+            errmsg("Tsurugi::get_connection() failed. (error: %d)",
+            (int) error)));
     return ret_value;
   }
 
