@@ -146,11 +146,7 @@ bool send_create_table_message(const int64_t object_id)
 
 	/* sends message to ogawayama */
 	manager::message::CreateTable create_table_message{object_id};
-#if 1
 	bool success = send_message(create_table_message);
-#else
-	bool success = true;
-#endif
 	if (!success) {
 		ereport(ERROR,
 			(errcode(ERRCODE_INTERNAL_ERROR), 

@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  *	@file	  send_message.h
- *	@brief  Dispatch DDL message to ogawayama.
+ *	@brief  Dispatch messages to ogawayama.
  */
 #include "send_message.h"
 #include "tsurugi.h"
@@ -44,9 +44,7 @@ bool send_message(message::Message& message)
 {
   bool ret_value = false;
 
-  // Get a receiver.
   stub::Connection* connection;
-//  stub::ErrorCode error = StubManager::get_connection(&connection);
   ERROR_CODE error = Tsurugi::get_connection(&connection);
   if (error != ERROR_CODE::OK) {
     ereport(NOTICE,

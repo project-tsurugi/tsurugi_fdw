@@ -1797,7 +1797,6 @@ tsurugiEndForeignInsert(EState *estate,
                         ResultRelInfo *rinfo)
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-	elog(DEBUG2, "xact_level: (%d)", fdw_info_.xact_level);
 }
 
 /*
