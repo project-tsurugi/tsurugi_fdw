@@ -17,7 +17,7 @@
 	sudo apt -y install libreadline-dev zlib1g-dev curl
 	```
 
-	Install required packages for building ogawayama_fdw.
+	Install required packages for building tsurugi_fdw.
 
 	```sh
 	sudo apt -y install make gcc g++ git
@@ -68,9 +68,9 @@
 
         See the README of each module.
 	
-1.  Build and Install ogawayama_fdw.
+1.  Build and Install tsurugi_fdw.
 
-	Add LIBRARY_PATH to tsurugi library to build ogawayama_fdw.  
+	Add LIBRARY_PATH to tsurugi library to build tsurugi_fdw.  
 	For example, if tsurugi install directory is \~/.local,  
 	export LIBRARY_PATH=$LIBRARY_PATH:\~/.local/lib  
 
@@ -78,7 +78,7 @@
 	export LIBRARY_PATH=$LIBRARY_PATH:<tsurugi install directory>/lib
 	```
 
-	Build and Install ogawayama_fdw.
+	Build and Install tsurugi_fdw.
 	```sh
 	make
 	make install
@@ -108,7 +108,7 @@
 
 1. Update **shared_preload_libraries** parameter in postgresql.conf as below.
 	```
-	shared_preload_libraries = 'ogawayama_fdw'
+	shared_preload_libraries = 'tsurugi_fdw'
 	```
 	* postgresql.conf exists in **\<PostgreSQL install directory>/data/**.
 
@@ -126,7 +126,7 @@
 1. Install frontend extension
 	* Execute **CREATE EXTENSION** command
 		```sql
-		CREATE EXTENSION ogawayama_fdw;
+		CREATE EXTENSION tsurugi_fdw;
 		```
 	* Check with the meta-command(\dew)
 		```sql
@@ -134,13 +134,13 @@
                         List of foreign-data wrappers
              Name      |  Owner   |        Handler        | Validator
 		---------------+----------+-----------------------+-----------
- 		 ogawayama_fdw | postgres | ogawayama_fdw_handler | -
+ 		 tsurugi_fdw   | postgres | tsurugi_fdw_handler   | -
 		```
 
 1. Define external-server
 	* Execute **CREATE SERVER** command
 		```sql
-		CREATE SERVER ogawayama FOREIGN DATA WRAPPER ogawayama_fdw;
+		CREATE SERVER tsurugi FOREIGN DATA WRAPPER tsurugi_fdw;
 		```
 	* Check with the meta-command(\des)
 		```sql
@@ -148,7 +148,7 @@
                     List of foreign servers
    		   Name    |  Owner   | Foreign-data wrapper
 		-----------+----------+----------------------
- 		 ogawayama | postgres | ogawayama_fdw
+ 		 tsurugi   | postgres | tsurugi_fdw
 		```
 
 1. Define TABLESPACE
@@ -232,7 +232,7 @@
 		* You must **NOT** specify PRIMARY KEY
 		* You must specify same server name as specified in CREATE SERVER
 			```sql
-			CREATE FOREIGN TABLE table1 (column1 INTEGER NOT NULL) SERVER ogawayama;
+			CREATE FOREIGN TABLE table1 (column1 INTEGER NOT NULL) SERVER tsurugi;
 			```
 	* A new foreign relation will be created, named same table name as specified in CREATE FOREIGN TABLE
 		* e.g. "table1"
