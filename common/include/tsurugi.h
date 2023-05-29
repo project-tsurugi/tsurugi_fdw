@@ -8,6 +8,7 @@
 
 class Tsurugi {
 public:
+    static constexpr const char* const DEFAULT_DB_NAME = "tsurugi";
 	static ERROR_CODE init();
     static ERROR_CODE get_connection(ogawayama::stub::Connection** connection);
     static ERROR_CODE start_transaction();

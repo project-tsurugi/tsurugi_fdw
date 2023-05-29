@@ -47,9 +47,6 @@ using namespace boost;
 using namespace ogawayama;
 using namespace manager;
 
-/* DB name metadata-manager manages */
-const std::string DBNAME = "Tsurugi";
-
 /**
  *  @brief Calls the function sending metadata to metadata-manager and creates parameters sended to ogawayama.
  *  @param [in] List of statements.
@@ -84,7 +81,7 @@ int64_t execute_create_table(CreateStmt* create_stmt)
 		return  object_id;
 	}
 
-	auto tables = metadata::get_tables_ptr(DBNAME);
+	auto tables = metadata::get_tables_ptr(Tsurugi::DEFAULT_DB_NAME);
 	metadata::ErrorCode error = tables->add(table, &object_id);
 	if (error != metadata::ErrorCode::OK ) {
 		if (error == metadata::ErrorCode::ALREADY_EXISTS) {
@@ -165,20 +162,20 @@ bool send_create_table_message(const int64_t object_id)
  */
 bool remove_table_metadata(const int64_t object_id)
 {
-  bool result{false};
-  auto tables = std::make_unique<metadata::Tables>(DBNAME);
+    bool result{false};
+    auto tables = std::make_unique<metadata::Tables>(Tsurugi::DEFAULT_DB_NAME);
 
-  if (tables->exists(object_id)) {
-    metadata::ErrorCode error = tables->remove(object_id);
-    if (error != metadata::ErrorCode::OK) {
-      ereport(WARNING,
-              (errcode(ERRCODE_INTERNAL_ERROR),
-              errmsg("remove table metadata() failed. (error: %d) (oid: %d)", 
-              (int) error, (int) object_id)));
-      return result;
+    if (tables->exists(object_id)) {
+        metadata::ErrorCode error = tables->remove(object_id);
+        if (error != metadata::ErrorCode::OK) {
+            ereport(WARNING,
+                    (errcode(ERRCODE_INTERNAL_ERROR),
+                    errmsg("remove table metadata() failed. (error: %d) (oid: %d)", 
+                    (int) error, (int) object_id)));
+            return result;
+        }
     }
-  }
-  result = true;
+    result = true;
 
-  return result;
+    return result;
 }

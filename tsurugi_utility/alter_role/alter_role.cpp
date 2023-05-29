@@ -48,15 +48,11 @@ extern "C" {
 using namespace manager;
 using namespace ogawayama;
 
+#include "tsurugi.h"
 #include "role_managercmds.h"
+#include "send_message.h"
 
 #include "alter_role.h"
-
-/* DB name metadata-manager manages */
-const std::string DBNAME = "Tsurugi";
-
-static bool send_message(message::Message* message,
-                  std::unique_ptr<metadata::Metadata>& objects);
 
 /**
  *  @brief Calls the function to get role ID and send alter role ID to ogawayama.
@@ -64,67 +60,28 @@ static bool send_message(message::Message* message,
  *  @return true if operation was successful, false otherwize.
  */
 bool after_alter_role(const AlterRoleStmt* stmts) {
-  Assert(stmts != nullptr);
+    Assert(stmts != nullptr);
+    bool result = false;
 
-  /* The object id stored if new table was successfully created */
-  metadata::ObjectId object_id = 0;
+    /* The object id stored if new table was successfully created */
+    metadata::ObjectId object_id = 0;
 
-  /* Call the function sending metadata to metadata-manager. */
-  bool success = get_roleid_by_rolename(DBNAME,stmts->role->rolename, &object_id);
+    /* Call the function sending metadata to metadata-manager. */
+    bool success = get_roleid_by_rolename(Tsurugi::DEFAULT_DB_NAME, stmts->role->rolename, &object_id);
+    if (!success) {
+        return result;
+    }
 
-  if (success) {
     message::AlterRole alter_role{object_id};
-    std::unique_ptr<metadata::Metadata> roles{new metadata::Roles(DBNAME)};
-    success = send_message(&alter_role, roles);
-  }
+    success = send_message(alter_role);
+    if (!success) {
+        ereport(ERROR,
+            (errcode(ERRCODE_INTERNAL_ERROR), 
+            errmsg("send_message() failed. (AlterRole)")));
+        return result;
+    }
 
-  return success;
+    result = true;
+
+    return result;
 }
-
-/**
- *  @brief Calls the function to send Message to ogawayama.
- *  @param [in] message Message object to be sent.
- *  @param [in] objects Role object to call funciton.
- *  @return true if operation was successful, false otherwize.
- */
-static bool send_message(message::Message* message,
-                  std::unique_ptr<metadata::Metadata>& objects) {
-  Assert(message != nullptr);
-
-  bool ret_value = false;
-#if 0
-  ERROR_CODE error = ERROR_CODE::UNKNOWN;
-  /* sends message to ogawayama */
-  stub::Transaction* transaction;
-  error = StubManager::begin(&transaction);
-  if (error != ERROR_CODE::OK) {
-    ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
-                    errmsg("StubManager::begin() failed.")));
-    return ret_value;
-  }
-
-  message::Broker broker;
-  message->set_receiver(transaction);
-  message::Status status = broker.send_message(message);
-
-  if (status.get_error_code() != message::ErrorCode::SUCCESS) {
-    ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
-                    errmsg("transaction::receive_message() %s failed. (%d)",
-                           message->get_message_type_name().c_str(),
-                           (int)status.get_sub_error_code())));
-
-    return ret_value;
-  }
-
-  error = transaction->commit();
-  if (error != ERROR_CODE::OK) {
-    elog(ERROR, "transaction::commit() failed. (%d)", (int)error);
-    return ret_value;
-  }
-  StubManager::end();
-#endif
-  ret_value = true;
-
-  return ret_value;
-}
-

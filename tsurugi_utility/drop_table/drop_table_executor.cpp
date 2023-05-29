@@ -34,13 +34,11 @@ extern "C"
 }
 #endif
 
+#include "tsurugi.h"
 #include "send_message.h"
 #include "drop_table_executor.h"
 #include "drop_table.h"
 #include "manager/metadata/metadata.h"
-
-/* DB name metadata-manager manages */
-const std::string DBNAME = "Tsurugi";
 
 using namespace boost;
 using namespace manager;
@@ -54,7 +52,7 @@ using namespace ogawayama;
  */
 bool table_exists_in_tsurugi(const char *relname)
 {
-  	auto tables = get_tables_ptr(DBNAME);
+  	auto tables = get_tables_ptr(Tsurugi::DEFAULT_DB_NAME);
   	return tables->exists(relname);
 }
 
@@ -80,7 +78,7 @@ bool execute_drop_table(DropStmt* drop_stmt, const char* relname)
 
     /* Get the object ID of the table to be deleted */
 	Table table;
-    auto tables = get_tables_ptr(DBNAME);
+    auto tables = get_tables_ptr(Tsurugi::DEFAULT_DB_NAME);
     metadata::ErrorCode error = tables->get(relname, table);
 	if (error != ErrorCode::OK) {
         if (error == ErrorCode::NAME_NOT_FOUND && drop_stmt->missing_ok) {
@@ -109,7 +107,7 @@ bool execute_drop_table(DropStmt* drop_stmt, const char* relname)
 
 	/* remove index metadata */
 #if 1
-	auto indexes = metadata::get_indexes_ptr(DBNAME);
+	auto indexes = metadata::get_indexes_ptr(Tsurugi::DEFAULT_DB_NAME);
 	std::vector<boost::property_tree::ptree> index_elements = {};
 	error = indexes->get_all(index_elements);
     if (error != ErrorCode::OK) {
