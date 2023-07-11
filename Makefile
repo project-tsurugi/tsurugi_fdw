@@ -15,6 +15,7 @@ OBJS = common/init.o common/stub_manager.o \
 		alt_utility/role_managercmds.o alt_utility/table_managercmds.o alt_utility/syscachecmds.o  \
         alt_utility/alter_table/alter_table_executor.o alt_utility/alter_table/alter_table.o \
 		alt_utility/alter_role/alter_role.o \
+        alt_function/alt_function.o \
         $(WIN32RES)
 
 EXTENSION = ogawayama_fdw
@@ -22,7 +23,8 @@ DATA = ogawayama_fdw--0.1.sql
 
 # REGRESS_BASIC: variable used in frontend
 #REGRESS_BASIC = test_create_table otable_of_constr ch-benchmark-ddl create_table_syntax_type update_delete insert_select
-REGRESS_BASIC = test_preparation create_table insert_select_happy update_delete select_statements user_management
+REGRESS_BASIC = test_preparation create_table insert_select_happy update_delete select_statements user_management \
+                udf_transaction
 ifdef REGRESS_EXTRA
 	# REGRESS: variable defined in PostgreSQL
 	REGRESS = $(REGRESS_BASIC) otable_of_constr2

@@ -34,6 +34,10 @@ StubPtr StubManager::stub_ = nullptr;
 ConnectionPtr StubManager::connection_ = nullptr;
 TransactionPtr StubManager::transaction_ = nullptr;
 
+bool GetTransactionOption(boost::property_tree::ptree&);
+bool IsTransactionProgress();
+extern ogawayama::stub::Transaction* udf_transaction;
+
 std::string get_shared_memory_name()
 {
     std::string name(ogawayama::common::param::SHARED_MEMORY_NAME);  
@@ -134,6 +138,12 @@ ERROR_CODE StubManager::begin(stub::Transaction** transaction)
 {
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
 
+	if (IsTransactionProgress()) {
+		elog(DEBUG1, "begin : there is tsurugi transaction block in progress.");
+		*transaction = udf_transaction;
+		return ERROR_CODE::OK;
+	}
+
 	if (stub_ == nullptr) {
 		error = init();
 		if (error != ERROR_CODE::OK) {
@@ -152,7 +162,9 @@ ERROR_CODE StubManager::begin(stub::Transaction** transaction)
 	}
 
 	if (transaction_ == nullptr) {
-		ERROR_CODE error = connection_->begin(transaction_);
+		boost::property_tree::ptree option;
+		GetTransactionOption(option);
+		ERROR_CODE error = connection_->begin(option, transaction_);
 		if (error != ERROR_CODE::OK)
 		{
 			std::cerr << "Connection::begin() failed. " << (int) error << std::endl;
@@ -172,5 +184,9 @@ ERROR_CODE StubManager::begin(stub::Transaction** transaction)
  */
 void StubManager::end()
 {
+	if (IsTransactionProgress()) {
+		elog(DEBUG1, "end : there is tsurugi transaction block in progress.");
+		return;
+	}
 	transaction_ = nullptr;
 }
