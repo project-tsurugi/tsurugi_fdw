@@ -47,24 +47,24 @@ PG_FUNCTION_INFO_V1(tg_rollback);
 }
 #endif
 
-const char* TYPE_SHORT = "short";
-const char* TYPE_SHORT_OCC = "OCC";
-const char* TYPE_SHORT_STX = "STX";
-const char* TYPE_LONG = "long";
-const char* TYPE_LONG_PCC = "PCC";
-const char* TYPE_LONG_LTX = "LTX";
-const char* TYPE_READ_ONLY = "read_only";
-const char* TYPE_READ_ONLY_READ = "read";
-const char* TYPE_READ_ONLY_RO = "RO";
-const char* TYPE_DEFAULT = "default";
+static constexpr const char* const TYPE_SHORT = "short";
+static constexpr const char* const TYPE_SHORT_OCC = "OCC";
+static constexpr const char* const TYPE_SHORT_STX = "STX";
+static constexpr const char* const TYPE_LONG = "long";
+static constexpr const char* const TYPE_LONG_PCC = "PCC";
+static constexpr const char* const TYPE_LONG_LTX = "LTX";
+static constexpr const char* const TYPE_READ_ONLY = "read_only";
+static constexpr const char* const TYPE_READ_ONLY_READ = "read";
+static constexpr const char* const TYPE_READ_ONLY_RO = "RO";
+static constexpr const char* const TYPE_DEFAULT = "default";
 
-const char* PRIORITY_INTERRUPT = "interrupt";
-const char* PRIORITY_WAIT = "wait";
-const char* PRIORITY_INTERRUPT_EXCLUDE = "interrupt_exclude";
-const char* PRIORITY_WAIT_EXCLUDE = "wait_exclude";
-const char* PRIORITY_DEFAULT = "default";
+static constexpr const char* const PRIORITY_INTERRUPT = "interrupt";
+static constexpr const char* const PRIORITY_WAIT = "wait";
+static constexpr const char* const PRIORITY_INTERRUPT_EXCLUDE = "interrupt_exclude";
+static constexpr const char* const PRIORITY_WAIT_EXCLUDE = "wait_exclude";
+static constexpr const char* const PRIORITY_DEFAULT = "default";
 
-const char* LABEL_DEFAULT = "pgsql-transaction";
+static constexpr const char* const LABEL_DEFAULT = "pgsql-transaction";
 
 static int64_t type = ogawayama::stub::TransactionType::SHORT;
 static int64_t priority = ogawayama::stub::TransactionPriority::TRANSACTION_PRIORITY_UNSPECIFIED;
