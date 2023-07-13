@@ -407,6 +407,8 @@ tsurugi_foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointyp
         				RelOptInfo *outerrel, RelOptInfo *innerrel,
 		        		JoinPathExtraData *extra);
 
+bool IsTransactionProgress();
+
 extern PGDLLIMPORT PGPROC *MyProc;
 
 static OgawayamaFdwInfo fdw_info_;
@@ -1544,12 +1546,14 @@ tsurugiEndForeignScan(ForeignScanState* node)
 
 	if (fdw_info_.transaction != nullptr)
 	{
-		error = fdw_info_.transaction->commit();
-        fdw_info_.transaction = nullptr;
-		if (error != ERROR_CODE::OK)
-		{
-			elog(ERROR, "transaction::commit() failed. (%d)", (int) error);
+		if (IsTransactionProgress() == false) {
+			error = fdw_info_.transaction->commit();
+			if (error != ERROR_CODE::OK)
+			{
+				elog(ERROR, "transaction::commit() failed. (%d)", (int) error);
+			}
 		}
+		fdw_info_.transaction = nullptr;
 	}
 
 	StubManager::end();
@@ -1615,20 +1619,24 @@ tsurugiIterateDirectModify(ForeignScanState* node)
     ERROR_CODE err;
 	if (error == ERROR_CODE::OK) 
     {
-        err = fdw_info_.transaction->commit();
-        if (err != ERROR_CODE::OK)
-        {
-            elog(ERROR, "transaction::commit() failed. (%d)", (int) err);
-        }        
+		if (IsTransactionProgress() == false) {
+			err = fdw_info_.transaction->commit();
+			if (err != ERROR_CODE::OK)
+			{
+				elog(ERROR, "transaction::commit() failed. (%d)", (int) err);
+			}
+		}
     } 
     else 
     {
-        err = fdw_info_.transaction->rollback();
-        if (err != ERROR_CODE::OK)
-        {
-            elog(ERROR, "transaction::rollback() failed. (%d)", (int) err);
-        }
-        elog(ERROR, "transaction::execute_statement() failed. (%d)", (int) error);	
+		if (IsTransactionProgress() == false) {
+			err = fdw_info_.transaction->rollback();
+			if (err != ERROR_CODE::OK)
+			{
+				elog(ERROR, "transaction::rollback() failed. (%d)", (int) err);
+			}
+		}
+		elog(ERROR, "transaction::execute_statement() failed. (%d)", (int) error);
 	}
 	
 	return slot;	
@@ -2024,20 +2032,24 @@ tsurugiExecForeignInsert(
     ERROR_CODE err;
 	if (error == ERROR_CODE::OK) 
     {
-        err = fdw_info_.transaction->commit();
-        if (err != ERROR_CODE::OK)
-        {
-            elog(ERROR, "transaction::commit() failed. (%d)", (int) err);
-        }        
+		if (IsTransactionProgress() == false) {
+			err = fdw_info_.transaction->commit();
+			if (err != ERROR_CODE::OK)
+			{
+				elog(ERROR, "transaction::commit() failed. (%d)", (int) err);
+			}
+		}
     } 
     else 
     {
-        err = fdw_info_.transaction->rollback();
-        if (err != ERROR_CODE::OK)
-        {
-            elog(ERROR, "transaction::rollback() failed. (%d)", (int) err);
-        }
-        elog(ERROR, "transaction::execute_statement() failed. (%d)", (int) error);	
+		if (IsTransactionProgress() == false) {
+			err = fdw_info_.transaction->rollback();
+			if (err != ERROR_CODE::OK)
+			{
+				elog(ERROR, "transaction::rollback() failed. (%d)", (int) err);
+			}
+		}
+		elog(ERROR, "transaction::execute_statement() failed. (%d)", (int) error);
 	}
 	
 	slot = nullptr;
@@ -2249,10 +2261,12 @@ tsurugi_create_cursor(ForeignScanState* node)
   elog(LOG, "tsurugi_fdw : transaction::execute_query() done.");
   if (error != ERROR_CODE::OK)
   {
-      elog(ERROR, "Transaction::execute_query() failed. (%d)", (int) error);
-      fdw_info_.transaction->commit();
-      fdw_info_.transaction = nullptr;
-      fdw_info_.xact_level--;
+		elog(ERROR, "Transaction::execute_query() failed. (%d)", (int) error);
+		if (IsTransactionProgress() == false) {
+			fdw_info_.transaction->commit();
+		}
+		fdw_info_.transaction = nullptr;
+		fdw_info_.xact_level--;
   }        
 	
 	fdw_state->cursor_exists = true;
@@ -2738,7 +2752,9 @@ ogawayama_xact_callback (XactEvent event, void *arg)
 
 			case XACT_EVENT_COMMIT:
 				elog(DEBUG1, "XACT_EVENT_COMMIT");
-				fdw_info_.transaction->commit();
+				if (IsTransactionProgress() == false) {
+					fdw_info_.transaction->commit();
+				}
 				fdw_info_.transaction = nullptr;
 				StubManager::end();
 				fdw_info_.xact_level--;
@@ -2749,7 +2765,9 @@ ogawayama_xact_callback (XactEvent event, void *arg)
 			case XACT_EVENT_ABORT:
 				elog(DEBUG1, "XACT_EVENT_ABORT (xact_level: %d)", 
                     fdw_info_.xact_level);
-				fdw_info_.transaction->rollback();
+				if (IsTransactionProgress() == false) {
+					fdw_info_.transaction->rollback();
+				}
 				fdw_info_.transaction = nullptr;
 				StubManager::end();
 				fdw_info_.xact_level--;
