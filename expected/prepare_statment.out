@@ -1,0 +1,260 @@
+/* SET DATASTYLE */
+SET datestyle TO ISO, ymd;
+/* preparation */
+-- table preparation
+CREATE TABLE trg_table (id INTEGER NOT NULL PRIMARY KEY, num INTEGER, name VARCHAR(10)) TABLESPACE tsurugi;
+CREATE FOREIGN TABLE trg_table (id INTEGER NOT NULL, num INTEGER, name VARCHAR(10)) SERVER ogawayama;
+CREATE TABLE trg_timedate (
+    id      INTEGER NOT NULL PRIMARY KEY,
+    col1    TIMESTAMP  default '2023-03-03 23:59:35.123456',
+    col2    DATE       default '1999-01-08',
+    col3    TIME       default '04:05:06.789012345',
+    col4    TIME       default '040506',
+    col5    TIME       default '04:05 AM'
+) TABLESPACE tsurugi;
+CREATE FOREIGN TABLE trg_timedate (
+    id      INTEGER NOT NULL,
+    col1    TIMESTAMP  default '2023-03-03 23:59:35.123456',
+    col2    DATE       default '1999-01-08',
+    col3    TIME       default '04:05:06.789012345',
+    col4    TIME       default '040506',
+    col5    TIME       default '04:05 AM'
+) SERVER ogawayama;
+PREPARE add_trg_table (int, int, varchar(80)) 		AS INSERT INTO trg_table (id, num, name) VALUES ($1, $2, $3);
+PREPARE add_trg_table_num (int, int) 				AS INSERT INTO trg_table (id, num, name) VALUES ($1, $2, 'zzz');
+PREPARE add_trg_table_name (int, varchar(80))		AS INSERT INTO trg_table (id, num, name) VALUES ($1, 99, $2);
+PREPARE chg_trg_table_name (int, varchar(80)) 		AS UPDATE trg_table SET name = $2 WHERE id = $1;
+PREPARE chg_trg_table_num (int, int)         		AS UPDATE trg_table SET num  = $2 WHERE id = $1;
+PREPARE chg_trg_table_88_name (int, varchar(80))	AS UPDATE trg_table SET num  = 88, name = $2 WHERE id = $1;
+PREPARE chg_trg_table_num_yyy (int, int)    		AS UPDATE trg_table SET num  = $2, name = 'yyy' WHERE id = $1;
+PREPARE all_chg_trg_table_name (varchar(80))      	AS UPDATE trg_table SET name = $1;
+PREPARE all_chg_trg_table_num (int)      			AS UPDATE trg_table SET num = $1;
+PREPARE del_trg_table_num  (int)              		AS DELETE FROM trg_table WHERE num = $1;
+PREPARE del_trg_table_name (varchar(80))      		AS DELETE FROM trg_table WHERE name = $1;
+PREPARE all_select_table							AS SELECT * FROM trg_table;
+PREPARE all_select_table_num (int)					AS SELECT * FROM trg_table WHERE num > $1;
+PREPARE all_select_table_num2 (int, int)			AS SELECT * FROM trg_table WHERE num > $1 AND num < $2;
+PREPARE all_select_table_name (varchar(80))			AS SELECT * FROM trg_table WHERE name = $1;
+select * from trg_table;
+ id | num | name 
+----+-----+------
+(0 rows)
+
+EXECUTE add_trg_table (1, 11, 'aaa');
+select * from trg_table;
+ id | num | name 
+----+-----+------
+  1 |  11 | aaa
+(1 row)
+
+EXECUTE add_trg_table (2, 22, 'bbb');
+select * from trg_table;
+ id | num | name 
+----+-----+------
+  1 |  11 | aaa
+  2 |  22 | bbb
+(2 rows)
+
+EXECUTE add_trg_table (3, 33, 'ccc');
+select * from trg_table;
+ id | num | name 
+----+-----+------
+  1 |  11 | aaa
+  2 |  22 | bbb
+  3 |  33 | ccc
+(3 rows)
+
+EXECUTE add_trg_table (4, 44, 'ddd');
+select * from trg_table;
+ id | num | name 
+----+-----+------
+  1 |  11 | aaa
+  2 |  22 | bbb
+  3 |  33 | ccc
+  4 |  44 | ddd
+(4 rows)
+
+EXECUTE add_trg_table_num (5, 55);
+select * from trg_table;
+ id | num | name 
+----+-----+------
+  1 |  11 | aaa
+  2 |  22 | bbb
+  3 |  33 | ccc
+  4 |  44 | ddd
+  5 |  55 | zzz
+(5 rows)
+
+EXECUTE add_trg_table_name (6, 'fff');
+select * from trg_table;
+ id | num | name 
+----+-----+------
+  1 |  11 | aaa
+  2 |  22 | bbb
+  3 |  33 | ccc
+  4 |  44 | ddd
+  5 |  55 | zzz
+  6 |  99 | fff
+(6 rows)
+
+EXECUTE all_select_table;
+ id | num | name 
+----+-----+------
+  1 |  11 | aaa
+  2 |  22 | bbb
+  3 |  33 | ccc
+  4 |  44 | ddd
+  5 |  55 | zzz
+  6 |  99 | fff
+(6 rows)
+
+select * from trg_table where num > 30;
+ id | num | name 
+----+-----+------
+  3 |  33 | ccc
+  4 |  44 | ddd
+  5 |  55 | zzz
+  6 |  99 | fff
+(4 rows)
+
+EXECUTE all_select_table_num(30);
+ id | num | name 
+----+-----+------
+  3 |  33 | ccc
+  4 |  44 | ddd
+  5 |  55 | zzz
+  6 |  99 | fff
+(4 rows)
+
+select * from trg_table where num > 20 and num < 50;
+ id | num | name 
+----+-----+------
+  2 |  22 | bbb
+  3 |  33 | ccc
+  4 |  44 | ddd
+(3 rows)
+
+EXECUTE all_select_table_num2(20, 50);
+ id | num | name 
+----+-----+------
+  2 |  22 | bbb
+  3 |  33 | ccc
+  4 |  44 | ddd
+(3 rows)
+
+select * from trg_table where name = 'fff';
+ id | num | name 
+----+-----+------
+  6 |  99 | fff
+(1 row)
+
+EXECUTE all_select_table_name('fff');
+ id | num | name 
+----+-----+------
+  6 |  99 | fff
+(1 row)
+
+EXECUTE chg_trg_table_name (1, 'xyz');
+select * from trg_table;
+ id | num | name 
+----+-----+------
+  1 |  11 | xyz
+  2 |  22 | bbb
+  3 |  33 | ccc
+  4 |  44 | ddd
+  5 |  55 | zzz
+  6 |  99 | fff
+(6 rows)
+
+EXECUTE chg_trg_table_num (2, 789);
+select * from trg_table;
+ id | num | name 
+----+-----+------
+  1 |  11 | xyz
+  2 | 789 | bbb
+  3 |  33 | ccc
+  4 |  44 | ddd
+  5 |  55 | zzz
+  6 |  99 | fff
+(6 rows)
+
+EXECUTE chg_trg_table_88_name (3, 'xyz');
+select * from trg_table;
+ id | num | name 
+----+-----+------
+  1 |  11 | xyz
+  2 | 789 | bbb
+  3 |  88 | xyz
+  4 |  44 | ddd
+  5 |  55 | zzz
+  6 |  99 | fff
+(6 rows)
+
+EXECUTE chg_trg_table_88_name (4, 'xyz');
+select * from trg_table;
+ id | num | name 
+----+-----+------
+  1 |  11 | xyz
+  2 | 789 | bbb
+  3 |  88 | xyz
+  4 |  88 | xyz
+  5 |  55 | zzz
+  6 |  99 | fff
+(6 rows)
+
+EXECUTE del_trg_table_num  (789);
+select * from trg_table;
+ id | num | name 
+----+-----+------
+  1 |  11 | xyz
+  3 |  88 | xyz
+  4 |  88 | xyz
+  5 |  55 | zzz
+  6 |  99 | fff
+(5 rows)
+
+EXECUTE del_trg_table_name ('xyz');
+select * from trg_table;
+ id | num | name 
+----+-----+------
+  5 |  55 | zzz
+  6 |  99 | fff
+(2 rows)
+
+EXECUTE all_chg_trg_table_name ('abc');
+select * from trg_table;
+ id | num | name 
+----+-----+------
+  5 |  55 | abc
+  6 |  99 | abc
+(2 rows)
+
+EXECUTE all_chg_trg_table_num (123);
+select * from trg_table;
+ id | num | name 
+----+-----+------
+  5 | 123 | abc
+  6 | 123 | abc
+(2 rows)
+
+PREPARE add_trg_timedate (int)   AS INSERT INTO trg_timedate (id) VALUES ($1);
+EXECUTE add_trg_timedate (1);
+EXECUTE add_trg_timedate (2);
+EXECUTE add_trg_timedate (3);
+EXECUTE add_trg_timedate (4);
+EXECUTE add_trg_timedate (5);
+select * from trg_timedate;
+ id |            col1            |    col2    |      col3       |   col4   |   col5   
+----+----------------------------+------------+-----------------+----------+----------
+  1 | 2023-03-03 23:59:35.123456 | 1999-01-08 | 04:05:06.789012 | 04:05:06 | 04:05:00
+  2 | 2023-03-03 23:59:35.123456 | 1999-01-08 | 04:05:06.789012 | 04:05:06 | 04:05:00
+  3 | 2023-03-03 23:59:35.123456 | 1999-01-08 | 04:05:06.789012 | 04:05:06 | 04:05:00
+  4 | 2023-03-03 23:59:35.123456 | 1999-01-08 | 04:05:06.789012 | 04:05:06 | 04:05:00
+  5 | 2023-03-03 23:59:35.123456 | 1999-01-08 | 04:05:06.789012 | 04:05:06 | 04:05:00
+(5 rows)
+
+/* clean up */
+DROP FOREIGN TABLE trg_timedate;
+DROP TABLE trg_timedate;
+DROP FOREIGN TABLE trg_table;
+DROP TABLE trg_table;
