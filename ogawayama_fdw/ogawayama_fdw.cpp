@@ -73,6 +73,8 @@ PG_MODULE_MAGIC;
 }
 #endif
 
+#include "tsurugi_prepare.h"
+
 using namespace ogawayama;
 
 int unused PG_USED_FOR_ASSERTS_ONLY;
@@ -410,6 +412,9 @@ tsurugi_foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointyp
 bool IsTransactionProgress();
 
 extern PGDLLIMPORT PGPROC *MyProc;
+
+extern PreparedStatementPtr prepared_statement;
+extern stub::parameters_type parameters;
 
 static OgawayamaFdwInfo fdw_info_;
 
@@ -1586,6 +1591,8 @@ tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
 		elog(ERROR, "create_fdw_state() failed.");
 	}
 
+	begin_prepare_processing(estate);
+
 	begin_backend_xact();
 
  	fdw_state->query_string = estate->es_sourceText;
@@ -1611,10 +1618,18 @@ tsurugiIterateDirectModify(ForeignScanState* node)
 	ERROR_CODE error;
 
     std::string tsurugi_query = make_tsurugi_query(fdw_state->query_string);
-    elog(LOG, "tsurugi_fdw : transaction::execute_query() start. \n\"%s\"", 
-        tsurugi_query.c_str());
-	error = fdw_info_.transaction->execute_statement(tsurugi_query);
-	elog(LOG, "transaction::execute_statement() done.");
+
+	if (prepared_statement.get() != nullptr) {
+		elog(LOG, "tsurugi_fdw : transaction::execute_statement(prepared_statement) start. \n\"%s\"",
+			tsurugi_query.c_str());
+		error = fdw_info_.transaction->execute_statement(prepared_statement, parameters);
+		elog(LOG, "transaction::execute_statement(prepared_statement) done.");
+	} else {
+		elog(LOG, "tsurugi_fdw : transaction::execute_statement() start. \n\"%s\"",
+			tsurugi_query.c_str());
+		error = fdw_info_.transaction->execute_statement(tsurugi_query);
+		elog(LOG, "transaction::execute_statement() done.");
+	}
 
     ERROR_CODE err;
 	if (error == ERROR_CODE::OK) 
@@ -1655,6 +1670,9 @@ tsurugiEndDirectModify(ForeignScanState* node)
 	fdw_info_.transaction = nullptr;
 	fdw_info_.xact_level--;
 	elog(DEBUG2, "xact_level: (%d)", fdw_info_.xact_level);
+
+	EState* estate = node->ss.ps.state;
+	end_prepare_processing(estate);
 
 	if (node->fdw_state != nullptr)
 		free_fdwstate((tsurugiFdwState*) node->fdw_state);
@@ -2023,11 +2041,16 @@ tsurugiExecForeignInsert(
  	std::string query(fdw_state->query_string);
     query = std::regex_replace(query, std::regex("\\$\\d"), "%s");
     query = (boost::format(query) % slot->tts_values[0] % slot->tts_values[1]).str();
-	elog(DEBUG1, "tsurugi_fdw: statement string: \"%s\"", query.c_str());
 
-	elog(DEBUG2, "transaction::execute_statement() start.");
-	error = fdw_info_.transaction->execute_statement(query);
-	elog(DEBUG2, "transaction::execute_statement() done.");
+	elog(DEBUG1, "tsurugi_fdw: statement string: \"%s\"", query.c_str());
+	if (prepared_statement.get() != nullptr) {
+		elog(DEBUG1, "tsurugi_fdw: statement string: \"%s\"", query.c_str());
+		error = fdw_info_.transaction->execute_statement(prepared_statement, parameters);
+		elog(DEBUG2, "transaction::execute_statement(prepared_statement) done.");
+	} else {
+		error = fdw_info_.transaction->execute_statement(query);
+		elog(DEBUG2, "transaction::execute_statement() done.");
+	}
 
     ERROR_CODE err;
 	if (error == ERROR_CODE::OK) 
@@ -2250,15 +2273,28 @@ tsurugi_create_cursor(ForeignScanState* node)
 
 	tsurugiFdwState* fdw_state = (tsurugiFdwState*) node->fdw_state;
 
-  std::string tsurugi_query = make_tsurugi_query(fdw_state->query_string);
-  elog(LOG, "tsurugi_fdw : transaction::execute_query() start. \n\"%s\"", 
-      tsurugi_query.c_str());
+	std::string tsurugi_query = make_tsurugi_query(fdw_state->query_string);
+	ERROR_CODE error;
+	if (prepared_statement.get() != nullptr) {
+		elog(LOG, "tsurugi_fdw : transaction::execute_query(prepared_statement) start. \n\"%s\"",
+			tsurugi_query.c_str());
 
-  /* dispatch a query to tsurugi. */
-  fdw_info_.result_set = nullptr;
-  ERROR_CODE error = fdw_info_.transaction->execute_query(tsurugi_query, 
-                                                          fdw_info_.result_set);
-  elog(LOG, "tsurugi_fdw : transaction::execute_query() done.");
+		/* dispatch a query to tsurugi. */
+		fdw_info_.result_set = nullptr;
+		error = fdw_info_.transaction->execute_query(prepared_statement, parameters,
+		                                             fdw_info_.result_set);
+		elog(LOG, "tsurugi_fdw : transaction::execute_query(prepared_statement) done.");
+	} else {
+		elog(LOG, "tsurugi_fdw : transaction::execute_query() start. \n\"%s\"",
+			tsurugi_query.c_str());
+
+		/* dispatch a query to tsurugi. */
+		fdw_info_.result_set = nullptr;
+		error = fdw_info_.transaction->execute_query(tsurugi_query,
+		                                             fdw_info_.result_set);
+		elog(LOG, "tsurugi_fdw : transaction::execute_query() done.");
+	}
+
   if (error != ERROR_CODE::OK)
   {
 		elog(ERROR, "Transaction::execute_query() failed. (%d)", (int) error);
