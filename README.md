@@ -123,11 +123,6 @@
 	psql postgres < <frontend clone directory>/third_party/metadata-manager/sql/ddl.sql
 	```
 
-1. Define a user-defined function provided by frontend.
-	``` sh
-	psql postgres < <frontend clone directory>/user-defined_function-0.1.sql
-	```
-
 1. Install frontend extension
 	* Execute **CREATE EXTENSION** command
 		```sql
