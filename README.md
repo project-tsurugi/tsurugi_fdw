@@ -1,4 +1,4 @@
-# tsurugi_fdw for Tsurugi (PostgreSQL add-on)
+# tsurugi_fdw (PostgreSQL add-on)
 
 ## Requirements
 * C++ Compiler `>= C++17`
