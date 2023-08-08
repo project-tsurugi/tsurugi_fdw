@@ -33,7 +33,7 @@ else
 	REGRESS = $(REGRESS_BASIC)
 endif
 
-PGFILEDESC = "tsurugi_fdw - foregin data wrapper for ogawayama-server"
+PGFILEDESC = "tsurugi_fdw - foregin data wrapper for Tsurugi"
 
 PG_CPPFLAGS = -Icommon/include \
 			  -Itsurugi_utility/include \
