@@ -1,5 +1,5 @@
-CREATE EXTENSION IF NOT EXISTS ogawayama_fdw;
-CREATE SERVER IF NOT EXISTS ogawayama FOREIGN DATA WRAPPER ogawayama_fdw;
+CREATE EXTENSION IF NOT EXISTS tsurugi_fdw;
+CREATE SERVER IF NOT EXISTS ogawayama FOREIGN DATA WRAPPER tsurugi_fdw;
 CREATE TABLE test13_0 (
 col0 int PRIMARY KEY,col1 int ,col2 int 
 ) tablespace tsurugi;
@@ -5185,8 +5185,8 @@ SELECT * from varchar_test13_35;
 INSERT INTO varchar_test13_35(col0,col1,col2) VALUES('6','6','2');
 SELECT * from varchar_test13_35;
 
-CREATE EXTENSION IF NOT EXISTS ogawayama_fdw;
-CREATE SERVER IF NOT EXISTS ogawayama FOREIGN DATA WRAPPER ogawayama_fdw;
+CREATE EXTENSION IF NOT EXISTS tsurugi_fdw;
+CREATE SERVER IF NOT EXISTS ogawayama FOREIGN DATA WRAPPER tsurugi_fdw;
 CREATE TABLE test14_0 (
 col0 int ,
 col1 int ,

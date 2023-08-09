@@ -1,7 +1,7 @@
 # contrib/frontend/tsurugi_fdw/Makefile
 
 MODULE_big = tsurugi_fdw
-OBJS = common/init.o common/stub_manager.o \
+OBJS = common/init.o common/tsurugi.o \
         tsurugi_fdw/deparse.o tsurugi_fdw/shippable.o tsurugi_fdw/helper_funcs.o \
 		tsurugi_fdw/tsurugi_utils.o tsurugi_fdw/tsurugi_fdw.o \
         tsurugi_planner/tsurugi_planner.o \
@@ -33,7 +33,7 @@ else
 	REGRESS = $(REGRESS_BASIC)
 endif
 
-PGFILEDESC = "tsurugi_fdw - foregin data wrapper for ogawayama-server"
+PGFILEDESC = "tsurugi_fdw - foregin data wrapper for Tsurugi"
 
 PG_CPPFLAGS = -Icommon/include \
 			  -Itsurugi_utility/include \

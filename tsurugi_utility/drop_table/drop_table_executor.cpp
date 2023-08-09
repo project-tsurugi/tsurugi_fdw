@@ -17,7 +17,6 @@
  *	@brief  Dispatch drop-message to ogawayama.
  */
 #include "ogawayama/stub/api.h"
-#include "stub_manager.h"
 
 #include "manager/message/ddl_message.h"
 #include "manager/metadata/datatypes.h"

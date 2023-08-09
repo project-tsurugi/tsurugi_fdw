@@ -1,5 +1,5 @@
-CREATE EXTENSION IF NOT EXISTS ogawayama_fdw;
-CREATE SERVER IF NOT EXISTS ogawayama FOREIGN DATA WRAPPER ogawayama_fdw;
+CREATE EXTENSION IF NOT EXISTS tsurugi_fdw;
+CREATE SERVER IF NOT EXISTS ogawayama FOREIGN DATA WRAPPER tsurugi_fdw;
 
 CREATE TABLE customer_fifth (
   c_credit char(2) PRIMARY KEY
@@ -2335,8 +2335,8 @@ create table tmp.same_table_name_test (
   ol_number int
 ) tablespace tsurugi;
 
-CREATE EXTENSION ogawayama_fdw;
-CREATE SERVER ogawayama FOREIGN DATA WRAPPER ogawayama_fdw;
+CREATE EXTENSION tsurugi_fdw;
+CREATE SERVER ogawayama FOREIGN DATA WRAPPER tsurugi_fdw;
 
 -- success to CREATE FOREIGN TABLE in the schema "tmp"
 CREATE FOREIGN TABLE same_table_name_test (

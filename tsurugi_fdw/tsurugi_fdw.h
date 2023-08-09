@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2019 tsurugi project.
+ * Copyright 2019-2023 tsurugi project.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	ogawayama_fdw.h
- *	@brief 	Foreign Data Wrapper for Ogawayama.
+ *	@file	tsurugi_fdw.h
+ *	@brief 	Foreign Data Wrapper for Tsurugi.
  */
-#ifndef OGAWAYAMA_FDW_H
-#define OGAWAYAMA_FDW_H
+#ifndef TSURUGI_FDW_H
+#define TSURUGI_FDW_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -256,4 +256,4 @@ extern bool is_shippable(Oid objectId, Oid classId, TgFdwRelationInfo *fpinfo);
 }
 #endif
 
-#endif // OGAWAYAMA_FDW_H
+#endif // TSURUGI_FDW_H

@@ -6,7 +6,7 @@
 
 #include "ogawayama/stub/error_code.h"
 #include "ogawayama/stub/api.h"
-#include "stub_manager.h"
+#include "tsurugi.h"
 
 using namespace ogawayama;
 

@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	tsurugi_query.c
- *	@brief 	Foreign Data Wrapper for tsurugi
  */
 #include "tsurugi_utils.h"
 

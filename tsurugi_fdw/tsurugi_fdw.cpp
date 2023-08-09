@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	ogawayama_fdw.cpp
- *	@brief 	Foreign Data Wrapper for Ogawayama.
+ *	@file	tsurugi_fdw.cpp
+ *	@brief 	Foreign Data Wrapper for Tsurugi.
  */
 #include <string>
 #include <memory>
@@ -22,7 +22,7 @@
 #include <boost/format.hpp>
 #include "ogawayama/stub/error_code.h"
 #include "ogawayama/stub/api.h"
-#include "stub_manager.h"
+#include "tsurugi.h"
 #include "tsurugi_utils.h"
 
 #ifdef __cplusplus
@@ -160,9 +160,8 @@ typedef struct tsurugi_fdw_info_
 {
  	ResultSetPtr 		result_set = nullptr;
 	MetadataPtr 		metadata = nullptr;
-	int 				xact_level = 0;		/* FDWが自認する現在のトランザクションレベル */
     bool                success = false;
-} OgawayamaFdwInfo;
+} TsurugiFdwInfo;
 
 /*
  * Execution state of a foreign insert/update/delete operation.
@@ -173,7 +172,6 @@ typedef struct tsurugiFdwModifyState
 	AttInMetadata *attinmeta;	/* attribute datatype conversion metadata */
 
 	/* for remote query execution */
-//	PGconn	   *conn;			/* connection for the scan */
 	char	   *p_name;			/* name of prepared statement, if created */
 
 	/* extracted fdw_private data */
@@ -311,10 +309,7 @@ static tsurugiFdwState* create_fdwstate();
 static void free_fdwstate(tsurugiFdwState* fdw_state);
 static void store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist);
 static bool confirm_columns(MetadataPtr metadata, ForeignScanState* node);
-static void tsurugi_create_cursor(ForeignScanState* node);
-static void tsurugi_fetch_more_data(ForeignScanState* node);
 static void tsurugi_close_cursor();
-static void make_virtual_tuple(TupleTableSlot* slot, ForeignScanState* node);
 static void make_tuple_from_result_row(ResultSetPtr result_set, 
                                         TupleDesc tupleDescriptor,
                                         List* retrieved_attrs,
@@ -324,7 +319,7 @@ static void make_tuple_from_result_row(ResultSetPtr result_set,
 
 extern PGDLLIMPORT PGPROC *MyProc;
 
-static OgawayamaFdwInfo fdw_info_;
+static TsurugiFdwInfo fdw_info_;
 
 /*
  * Foreign-data wrapper handler function: return a struct with pointers
@@ -1179,7 +1174,6 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 	Assert(node != nullptr);
 
 	ForeignScan* fsplan = (ForeignScan*) node->ss.ps.plan;
-	EState*	estate = node->ss.ps.state;
 	tsurugiFdwState* fdw_state = create_fdwstate();
 
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
@@ -1690,7 +1684,6 @@ tsurugiBeginForeignInsert(ModifyTableState *mtstate,
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
-	tsurugiFdwModifyState *fmstate;
 	ModifyTable *plan = castNode(ModifyTable, mtstate->ps.plan);
 	EState	   *estate = mtstate->ps.state;
 	Index		resultRelation = resultRelInfo->ri_RangeTableIndex;
@@ -1804,7 +1797,6 @@ tsurugiEndForeignInsert(EState *estate,
                         ResultRelInfo *rinfo)
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-	elog(DEBUG2, "xact_level: (%d)", fdw_info_.xact_level);
 }
 
 /*
@@ -2198,7 +2190,6 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                             tsurugiFdwState* fdw_state)
 {
     ListCell   *lc = NULL;
-    int         attid = 0;
 
     foreach(lc, retrieved_attrs)
     {

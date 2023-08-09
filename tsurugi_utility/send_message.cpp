@@ -14,10 +14,10 @@
  * limitations under the License.
  *
  *	@file	  send_message.h
- *	@brief  Dispatch DDL message to ogawayama.
+ *	@brief  Dispatch messages to ogawayama.
  */
 #include "send_message.h"
-#include "stub_manager.h"
+#include "tsurugi.h"
 #include "manager/message/ddl_message.h"
 #include "manager/message/status.h"
 #include "manager/message/broker.h"
@@ -44,15 +44,13 @@ bool send_message(message::Message& message)
 {
   bool ret_value = false;
 
-  // Get a receiver.
   stub::Connection* connection;
-//  stub::ErrorCode error = StubManager::get_connection(&connection);
   ERROR_CODE error = Tsurugi::get_connection(&connection);
   if (error != ERROR_CODE::OK) {
     ereport(NOTICE,
             (errcode(ERRCODE_INTERNAL_ERROR),
-            errmsg("Tsurugi::get_connection() failed. (error: %d)"),
-            (int) error));
+            errmsg("Tsurugi::get_connection() failed. (error: %d)",
+            (int) error)));
     return ret_value;
   }
 

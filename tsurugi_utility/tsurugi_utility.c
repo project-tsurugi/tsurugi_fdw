@@ -13,16 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	create_table.h
- *	@brief  Dispatch the create-table command to ogawayama.
- */
-/*-------------------------------------------------------------------------
- *
- * tsurugi_utility.c
- *	  Contains functions which control the execution of the POSTGRES utility
- *	  commands.
- *
- *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
@@ -92,16 +82,10 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
                        DestReceiver *dest, char *completionTag)
 {
 	Node	   *parsetree = pstmt->utilityStmt;
-//	bool		isTopLevel = (context == PROCESS_UTILITY_TOPLEVEL);
-	bool		isAtomicContext =
-                    (!(context == PROCESS_UTILITY_TOPLEVEL || context == PROCESS_UTILITY_QUERY_NONATOMIC)
-                    || IsTransactionBlock());
 	ParseState *pstate;
 
 	/* This can recurse, so check for excessive recursion */
 	check_stack_depth();
-
-//	check_xact_readonly(parsetree);
 
 	if (completionTag)
 		completionTag[0] = '\0';
@@ -327,7 +311,6 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
 				           char *completionTag)
 {
     Node	*parsetree = pstmt->utilityStmt;
-    bool	isTopLevel = (context == PROCESS_UTILITY_TOPLEVEL);
     bool	isCompleteQuery = (context <= PROCESS_UTILITY_QUERY);
     bool	needCleanup;
     bool	commandCollected = false;
