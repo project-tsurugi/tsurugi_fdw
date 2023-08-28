@@ -77,7 +77,7 @@ jobs:
         with:
           repository: project-tsurugi/jogasaki
           path: third_party/temp_jogasaki
-          ref: f671e3264e83cf008a1788b01430a8595e0cd63a
+          ref: 6033bd9774a8a1c6e749b2b48e96a10009ebf35d
           submodules: recursive
           token: ${{ secrets.GHA_PAT }}
 
