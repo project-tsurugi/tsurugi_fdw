@@ -167,17 +167,6 @@ jobs:
             -DCMAKE_PREFIX_PATH="${{ matrix.additional_prefix_path }};${GITHUB_WORKSPACE}/.local" ..
           cmake --build . --target install --clean-first -- -j
 
-      - id: Install_performance_tools
-        name: Install_performance_tools
-        run: |
-          cd third_party/temp_jogasaki/third_party/performance-tools
-          rm -rf build
-          mkdir -p build
-          cd build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=OFF -DBUILD_DOCUMENTS=OFF -DBUILD_EXAMPLES=OFF \
-            -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
-          cmake --build . --target install --clean-first -- -j
-
       - id: Install_moodycamel_concurrentqueue
         name: Install_moodycamel_concurrentqueue
         run: |
