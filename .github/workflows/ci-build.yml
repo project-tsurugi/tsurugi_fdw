@@ -1,4 +1,4 @@
-name: Frontend-CI
+name: Tsurugi_FDW-CI
 
 on: [push, pull_request]
 
@@ -20,8 +20,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        postgresql: [12.3]
-        container-tag: [ubuntu-20.04]
+        postgresql: [12.4]
+        container-tag: [ubuntu-22.04]
 
     steps:
       - id: Setup_PostgreSQL
@@ -37,43 +37,15 @@ jobs:
 
       - id: Checkout
         name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
-          path: postgresql-${{ matrix.postgresql }}/contrib/frontend
+          path: postgresql-${{ matrix.postgresql }}/contrib/tsurugi_fdw
           submodules: recursive
           token: ${{ secrets.GHA_PAT }}
 
-      - id: CMake_Build_metadata-manager
-        name: CMake_Build_metadata-manager
-        run: |
-          cd postgresql-${{ matrix.postgresql }}/contrib/frontend/third_party/metadata-manager
-          git clean -dfx
-          mkdir build
-          cd build
-          rm -f CMakeCache.txt
-          cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DFORCE_INSTALL_RPATH=ON -DBUILD_TESTS=OFF -DBUILD_DOCUMENTS=OFF \
-            -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
-          cmake --build . --target install --clean-first -- -j8
-          make
-          make install
-
-      - id: CMake_Build_message-manager
-        name: CMake_Build_message-manager
-        run: |
-          cd postgresql-${{ matrix.postgresql }}/contrib/frontend/third_party/message-manager
-          git clean -dfx
-          mkdir build
-          cd build
-          rm -f CMakeCache.txt
-          cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DFORCE_INSTALL_RPATH=ON \
-            -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
-          cmake --build . --target install --clean-first -- -j8
-          make
-          make install
-
       - id: Checkout_Jogasaki
         name: Checkout_Jogasaki
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: project-tsurugi/jogasaki
           path: third_party/temp_jogasaki
@@ -88,7 +60,7 @@ jobs:
           rm -rf build
           mkdir -p build
           cd build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_CPR=OFF -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
+          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER_LAUNCHER=${{ vars.compiler_launcher }} -DBUILD_TESTS=OFF -DBUILD_DOCUMENTS=OFF -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
           cmake --build . --target install --clean-first -- -j
 
       - id: Install_shirakami
@@ -98,7 +70,7 @@ jobs:
           rm -rf build
           mkdir -p build
           cd build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_CPR=OFF -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
+          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER_LAUNCHER=${{ vars.compiler_launcher }} -DBUILD_TESTS=OFF -DBUILD_DOCUMENTS=OFF -DBUILD_BENCHMARK=OFF -DBUILD_CPR=OFF -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
           cmake --build . --target install --clean-first -- -j
 
       - id: Install_sharksfin
@@ -108,8 +80,7 @@ jobs:
           rm -rf build
           mkdir -p build
           cd build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DFORCE_INSTALL_RPATH=ON -DBUILD_TESTS=OFF -DBUILD_DOCUMENTS=OFF \
-            -DBUILD_EXAMPLES=OFF -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
+          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER_LAUNCHER=${{ vars.compiler_launcher }} -DFORCE_INSTALL_RPATH=ON -DBUILD_TESTS=OFF -DBUILD_DOCUMENTS=OFF -DBUILD_EXAMPLES=OFF -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
           cmake --build . --target install --clean-first -- -j
 
       - id: Install_takatori
@@ -119,8 +90,7 @@ jobs:
           rm -rf build
           mkdir -p build
           cd build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=OFF -DBUILD_DOCUMENTS=OFF -DFORCE_INSTALL_RPATH=ON \
-            -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
+          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER_LAUNCHER=${{ vars.compiler_launcher }} -DBUILD_TESTS=OFF -DBUILD_DOCUMENTS=OFF -DFORCE_INSTALL_RPATH=ON -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
           cmake --build . --target install --clean-first -- -j
 
       - id: Install_hopscotch-map
@@ -130,7 +100,7 @@ jobs:
           rm -rf ../../build-hopscotch-map
           mkdir -p ../../build-hopscotch-map
           cd ../../build-hopscotch-map
-          cmake -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ../third_party/hopscotch-map
+          cmake -DCMAKE_CXX_COMPILER_LAUNCHER=${{ vars.compiler_launcher }} -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ../third_party/hopscotch-map
           cmake --build . --target install -- -j
 
       - id: Install_yugawara
@@ -140,8 +110,7 @@ jobs:
           rm -rf build
           mkdir -p build
           cd build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=OFF -DBUILD_DOCUMENTS=OFF -DFORCE_INSTALL_RPATH=ON \
-            -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
+          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER_LAUNCHER=${{ vars.compiler_launcher }} -DBUILD_TESTS=OFF -DBUILD_DOCUMENTS=OFF -DFORCE_INSTALL_RPATH=ON -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
           cmake --build . --target install --clean-first -- -j
 
       - id: Install_shakujo
@@ -151,8 +120,7 @@ jobs:
           rm -rf build
           mkdir -p build
           cd build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=OFF -DBUILD_DOCUMENTS=OFF -DBUILD_EXAMPLES=OFF \
-            -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
+          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER_LAUNCHER=${{ vars.compiler_launcher }} -DBUILD_TESTS=OFF -DBUILD_DOCUMENTS=OFF -DBUILD_EXAMPLES=OFF -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
           cmake --build . --target install --clean-first -- -j
 
       - id: Install_mizugaki
@@ -162,9 +130,7 @@ jobs:
           rm -rf build
           mkdir -p build
           cd build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=OFF -DBUILD_DOCUMENTS=OFF -DFORCE_INSTALL_RPATH=ON \
-            -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local \
-            -DCMAKE_PREFIX_PATH="${{ matrix.additional_prefix_path }};${GITHUB_WORKSPACE}/.local" ..
+          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER_LAUNCHER=${{ vars.compiler_launcher }} -DBUILD_TESTS=OFF -DBUILD_DOCUMENTS=OFF -DBUILD_EXAMPLES=OFF -DFORCE_INSTALL_RPATH=ON -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local -DCMAKE_PREFIX_PATH="${{ matrix.additional_prefix_path }};${GITHUB_WORKSPACE}/.local" ..
           cmake --build . --target install --clean-first -- -j
 
       - id: Install_moodycamel_concurrentqueue
@@ -174,7 +140,7 @@ jobs:
           rm -rf build
           mkdir -p build_debug
           cd build_debug
-          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
+          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER_LAUNCHER=${{ vars.compiler_launcher }} -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
           cmake --build . --target install --clean-first
 
       - id: Install_tateyama
@@ -184,9 +150,7 @@ jobs:
           rm -rf build
           mkdir -p build
           cd build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DSHARKSFIN_IMPLEMENTATION=shirakami -DBUILD_TESTS=OFF \
-            -DBUILD_DOCUMENTS=OFF -DFORCE_INSTALL_RPATH=ON -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local \
-            -DCMAKE_PREFIX_PATH="${{ matrix.additional_prefix_path }};${GITHUB_WORKSPACE}/.local" ..
+          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER_LAUNCHER=${{ vars.compiler_launcher }} -DSHARKSFIN_IMPLEMENTATION=shirakami -DBUILD_TESTS=OFF -DBUILD_DOCUMENTS=OFF -DFORCE_INSTALL_RPATH=ON -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local -DCMAKE_PREFIX_PATH="${{ matrix.additional_prefix_path }};${GITHUB_WORKSPACE}/.local" ..
           cmake --build . --target install --clean-first -- -j
 
       - id: Install_jogasaki
@@ -196,26 +160,52 @@ jobs:
           rm -rf build
           mkdir -p build
           cd build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DSHARKSFIN_IMPLEMENTATION=shirakami \
-            -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/.local \
-            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER_LAUNCHER=${{ vars.compiler_launcher }} -DSHARKSFIN_IMPLEMENTATION=shirakami -DBUILD_TESTS=OFF -DBUILD_DOCUMENTS=OFF -DBUILD_EXAMPLES=OFF -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/.local ..
           cmake --build . --target install --clean-first -- -j
+
+      - id: CMake_Build_metadata-manager
+        name: CMake_Build_metadata-manager
+        run: |
+          cd postgresql-${{ matrix.postgresql }}/contrib/tsurugi_fdw/third_party/metadata-manager
+          git clean -dfx
+          mkdir build
+          cd build
+          rm -f CMakeCache.txt
+          cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DFORCE_INSTALL_RPATH=ON -DBUILD_TESTS=OFF -DBUILD_DOCUMENTS=OFF \
+            -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
+          cmake --build . --target install --clean-first -- -j8
+          make
+          make install
+
+      - id: CMake_Build_message-manager
+        name: CMake_Build_message-manager
+        run: |
+          cd postgresql-${{ matrix.postgresql }}/contrib/tsurugi_fdw/third_party/message-manager
+          git clean -dfx
+          mkdir build
+          cd build
+          rm -f CMakeCache.txt
+          cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DFORCE_INSTALL_RPATH=ON \
+            -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
+          cmake --build . --target install --clean-first -- -j8
+          make
+          make install
 
       - id: CMake_Build_ogawayama
         name: CMake_Build_ogawayama
         run: |
-          cd postgresql-${{ matrix.postgresql }}/contrib/frontend/third_party/ogawayama
+          cd postgresql-${{ matrix.postgresql }}/contrib/tsurugi_fdw/third_party/ogawayama
           git clean -dfx
           mkdir build
           cd build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DSHARKSFIN_IMPLEMENTATION=shirakami \
-            -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/.local -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+          rm -f CMakeCache.txt
+          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER_LAUNCHER=${{ vars.compiler_launcher }} -DSHARKSFIN_IMPLEMENTATION=shirakami -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/.local -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
           cmake --build . --target install --clean-first -- -j
 
       - id: Make_Install
         name: Make_Build
         run: |
-          cd postgresql-${{ matrix.postgresql }}/contrib/frontend
+          cd postgresql-${{ matrix.postgresql }}/contrib/tsurugi_fdw
           export LIBRARY_PATH=$LIBRARY_PATH:${GITHUB_WORKSPACE}/.local/lib
           echo ${LIBRARY_PATH}
           make -j8
