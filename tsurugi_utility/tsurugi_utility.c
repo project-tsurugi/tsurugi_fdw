@@ -33,6 +33,7 @@
 #include "alter_role/alter_role.h"
 #include "grant_revoke_role/grant_revoke_role.h"
 #include "grant_revoke_table/grant_revoke_table.h"
+#include "prepare_execute/prepare_execute.h"
 
 #ifndef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
@@ -273,6 +274,32 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 			if (!after_grant_revoke_role((GrantRoleStmt*)parsetree))
 			{
 				elog(ERROR, "failed after_grant_revoke_role() function.");
+			}
+			break;
+		}
+
+		case T_PrepareStmt:
+		{
+			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
+									dest, completionTag);
+			if (!after_prepare_stmt((PrepareStmt*)parsetree, queryString))
+			{
+				elog(ERROR, "failed after_prepare_stmt() function.");
+			}
+			break;
+		}
+
+		case T_ExecuteStmt:
+		{
+			if (!befor_execute_stmt((ExecuteStmt*)parsetree))
+			{
+				elog(ERROR, "failed befor_execute_stmt() function.");
+			}
+			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
+									dest, completionTag);
+			if (!after_execute_stmt((ExecuteStmt*)parsetree))
+			{
+				elog(ERROR, "failed after_execute_stmt() function.");
 			}
 			break;
 		}

@@ -36,15 +36,15 @@ priorityには以下のいずれかが入ります。
 トランザクションの種別です。以下のいずれかを文字列を指定します。  
 かっこ内の数値は各種別に割り当てられたパラメータ値を示します。
 
-* **'short'**  (1)
+- **'short'**  (1)
 
     short transactions (optimistic concurrency control).
 
-* **'long'**  (2)
+- **'long'**  (2)
 
     long transactions (pessimistic concurrency control).
 
-* **'read_only'**  (3)
+- **'read_only'**  (3)
 
     read only transactions (may be abort-free).
 
@@ -53,25 +53,25 @@ priorityには以下のいずれかが入ります。
 トランザクションの優先度です。以下のいずれかの文字列を指定します。  
 かっこ内の数値は各優先度に割り当てられたパラメータ値を示します。
 
-  * **'default'** (0)
+- **'default'** (0)
 
-     use default transaction priority.
+   use default transaction priority.
 
-  * **'interrupt'**  (1)
+- **'interrupt'**  (1)
 
-     halts the running transactions immediately.
+   halts the running transactions immediately.
 
-  * **'wait'**  (2)
+- **'wait'**  (2)
 
-     prevents new transactions and waits for the running transactions will end.
+   prevents new transactions and waits for the running transactions will end.
 
-  * **'interrupt_exclude'**  (3)
+- **'interrupt_exclude'**  (3)
 
-     halts the running transactions immediately, and keep lock-out until its end.
+   halts the running transactions immediately, and keep lock-out until its end.
 
-  * **'wait_exclude'**  (4)
+- **'wait_exclude'**  (4)
 
-     prevents new transactions and waits for the running transactions will end, and keep lock-out until its end.
+   prevents new transactions and waits for the running transactions will end, and keep lock-out until its end.
 
 #### *label*  
 
@@ -88,7 +88,7 @@ PostgreSQLの`SET transaction`は**実行中の**トランザクションのト�
 
   ```sql
   postgres=# select tg_set_transaction('short', 'interrupt', 'pgsql-short-transaction');
-                tg_transaction
+                tg_set_transaction
   --------------------------------------------------
   {                                                +
       "transactionType": "1",                      +
@@ -99,15 +99,15 @@ PostgreSQLの`SET transaction`は**実行中の**トランザクションのト�
   (1 row)
   ```
 
-* `transactionType`はトランザクション種別を示します（"`1`"は`short`を意味します）
-* `transactionPriority`はトランザクションの優先度を示します（"`1`"は`interrupt`を意味します）
-* `transactionLabel`はトランザクションのラベル名を示します
+- `transactionType`はトランザクション種別を示します（"`1`"は`short`を意味します）
+- `transactionPriority`はトランザクションの優先度を示します（"`1`"は`interrupt`を意味します）
+- `transactionLabel`はトランザクションのラベル名を示します
 
 #### Longトランザクションを設定する
 
   ```sql
   postgres=# select tg_set_transaction('long');
-                tg_transaction
+                tg_set_transaction
   --------------------------------------------------
   {                                                +
       "transactionType": "2",                      +
@@ -119,9 +119,10 @@ PostgreSQLの`SET transaction`は**実行中の**トランザクションのト�
 
   (1 row)
   ```
-* `transactionType`はトランザクション種別を示します（"`2`"は`long`を意味します）
-* `transactionPriority`と`transactionLabel`にはデフォルト値が設定されます
-* Longトランザクションを指定した場合のみwritePreserveパラメータが追加されます
+
+- `transactionType`はトランザクション種別を示します（"`2`"は`long`を意味します）
+- `transactionPriority`と`transactionLabel`にはデフォルト値が設定されます
+- Longトランザクションを指定した場合のみwritePreserveパラメータが追加されます
   - write Preserveの対象となるテーブルを設定するには[`tg_set_write_preserve`](./tg_set_write_preserve.md)を使用します
 
 ---

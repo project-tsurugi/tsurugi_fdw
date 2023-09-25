@@ -24,6 +24,7 @@
 
 #include "ogawayama/stub/transaction_option.h"
 #include "manager/metadata/metadata_factory.h"
+#include "stub_manager.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,16 +37,73 @@ extern "C" {
 #include "utils/builtins.h"		// text_to_cstring
 
 PG_FUNCTION_INFO_V1(tg_set_transaction);
+PG_FUNCTION_INFO_V1(tg_set_write_preserve);
 PG_FUNCTION_INFO_V1(tg_show_transaction);
+PG_FUNCTION_INFO_V1(tg_start_transaction);
+PG_FUNCTION_INFO_V1(tg_commit);
+PG_FUNCTION_INFO_V1(tg_rollback);
 
 #ifdef __cplusplus
 }
 #endif
 
+static constexpr const char* const TYPE_SHORT = "short";
+static constexpr const char* const TYPE_SHORT_OCC = "OCC";
+static constexpr const char* const TYPE_SHORT_STX = "STX";
+static constexpr const char* const TYPE_LONG = "long";
+static constexpr const char* const TYPE_LONG_PCC = "PCC";
+static constexpr const char* const TYPE_LONG_LTX = "LTX";
+static constexpr const char* const TYPE_READ_ONLY = "read_only";
+static constexpr const char* const TYPE_READ_ONLY_READ = "read";
+static constexpr const char* const TYPE_READ_ONLY_RO = "RO";
+static constexpr const char* const TYPE_DEFAULT = "default";
+
+static constexpr const char* const PRIORITY_INTERRUPT = "interrupt";
+static constexpr const char* const PRIORITY_WAIT = "wait";
+static constexpr const char* const PRIORITY_INTERRUPT_EXCLUDE = "interrupt_exclude";
+static constexpr const char* const PRIORITY_WAIT_EXCLUDE = "wait_exclude";
+static constexpr const char* const PRIORITY_DEFAULT = "default";
+
+static constexpr const char* const LABEL_DEFAULT = "pgsql-transaction";
+
 static int64_t type = ogawayama::stub::TransactionType::SHORT;
 static int64_t priority = ogawayama::stub::TransactionPriority::TRANSACTION_PRIORITY_UNSPECIFIED;
-static std::string label = "pgsql-transaction";
-static std::vector<std::string> write_preserves;
+static std::string label = LABEL_DEFAULT;
+static std::vector<std::string> write_preserve;
+
+static bool specific_transaction = false;
+static bool transaction_block = false;
+
+static int64_t save_type;
+static int64_t save_priority;
+static std::string save_label;
+static std::vector<std::string> save_write_preserve;
+
+ogawayama::stub::Transaction* udf_transaction = nullptr;
+
+/**
+ * @brief Save current transaction options.
+ */
+void
+SaveTransactionOption()
+{
+	save_type = type;
+	save_priority = priority;
+	save_label = label;
+	save_write_preserve = write_preserve;
+}
+
+/**
+ * @brief Load current transaction options.
+ */
+void
+LoadTransactionOption()
+{
+	type = save_type;
+	priority = save_priority;
+	label = save_label;
+	write_preserve = save_write_preserve;
+}
 
 /**
  * @brief Convert text array to list of strings.
@@ -94,30 +152,32 @@ TransactionToJsonCharString(boost::property_tree::ptree& transaction)
  * @param column [in/out] transaction option.
  * @return true if success, otherwise fault.
  */
-bool
+void
 GetTransactionOption(boost::property_tree::ptree& transaction)
 {
-	bool result = false;
-	boost::property_tree::ptree pt_write_preserves;
-	boost::property_tree::ptree pt_table;
+	boost::property_tree::ptree pt_write_preserve;
+	boost::property_tree::ptree pt_tables;
 
 	transaction.clear();
 	transaction.put<int64_t>(ogawayama::stub::TRANSACTION_TYPE, type);
 	transaction.put<int64_t>(ogawayama::stub::TRANSACTION_PRIORITY, priority);
 	transaction.put<std::string>(ogawayama::stub::TRANSACTION_LABEL, label);
-	if (write_preserves.size()) {
-		for (std::string prev_table : write_preserves) {
-			pt_table.put<std::string>(ogawayama::stub::TABLE_NAME, prev_table);
-			pt_write_preserves.push_back(std::make_pair("", pt_table));
+	if (write_preserve.size()) {
+		for (std::string prev_table : write_preserve) {
+			pt_tables.put<std::string>(ogawayama::stub::TABLE_NAME, prev_table);
+			pt_write_preserve.push_back(std::make_pair("", pt_tables));
 		}
 	} else {
-		pt_table.put<std::string>(ogawayama::stub::TABLE_NAME, "");
-		pt_write_preserves.push_back(std::make_pair("", pt_table));
+		pt_tables.put<std::string>(ogawayama::stub::TABLE_NAME, "");
+		pt_write_preserve.push_back(std::make_pair("", pt_tables));
 	}
-	transaction.add_child(ogawayama::stub::WRITE_PRESERVE, pt_write_preserves);
+	transaction.add_child(ogawayama::stub::WRITE_PRESERVE, pt_write_preserve);
+}
 
-	result = true;
-	return result;
+bool
+IsTransactionProgress()
+{
+	return transaction_block;
 }
 
 /**
@@ -125,64 +185,73 @@ GetTransactionOption(boost::property_tree::ptree& transaction)
  * @param TransactionType [in] transaction type.
  * @param TransactionPriority [in] transaction priority.
  * @param TransactionLabel [in] transaction label.
+ * @return If you call ereport, the call will not return and
+ *         PostgreSQL will report the error information.
+ */
+void
+SetTransactionOption(char* TransactionType, char* TransactionPriority, char* TransactionLabel)
+{
+	if (TransactionType != nullptr) {
+		if (strcasecmp(TransactionType, TYPE_SHORT) == 0 ||
+				strcasecmp(TransactionType, TYPE_SHORT_OCC) == 0 ||
+				strcasecmp(TransactionType, TYPE_SHORT_STX) == 0) {
+			type = ogawayama::stub::TransactionType::SHORT;
+		} else if (strcasecmp(TransactionType, TYPE_LONG) == 0 ||
+					strcasecmp(TransactionType, TYPE_LONG_PCC) == 0 ||
+					strcasecmp(TransactionType, TYPE_LONG_LTX) == 0) {
+			type = ogawayama::stub::TransactionType::LONG;
+		} else if (strcasecmp(TransactionType, TYPE_READ_ONLY) == 0 ||
+					strcasecmp(TransactionType, TYPE_READ_ONLY_READ) == 0 ||
+					strcasecmp(TransactionType, TYPE_READ_ONLY_RO) == 0) {
+			type = ogawayama::stub::TransactionType::READ_ONLY;
+		} else {
+			type = ogawayama::stub::TransactionType::TRANSACTION_TYPE_UNSPECIFIED;
+		}
+	}
+
+	if (TransactionPriority != nullptr) {
+		if (strcasecmp(TransactionPriority, PRIORITY_INTERRUPT) == 0) {
+			priority = ogawayama::stub::TransactionPriority::INTERRUPT;
+		} else if (strcasecmp(TransactionPriority, PRIORITY_WAIT) == 0) {
+			priority = ogawayama::stub::TransactionPriority::WAIT;
+		} else if (strcasecmp(TransactionPriority, PRIORITY_INTERRUPT_EXCLUDE) == 0) {
+			priority = ogawayama::stub::TransactionPriority::INTERRUPT_EXCLUDE;
+		} else if (strcasecmp(TransactionPriority, PRIORITY_WAIT_EXCLUDE) == 0) {
+			priority = ogawayama::stub::TransactionPriority::WAIT_EXCLUDE;
+		} else {
+			priority = ogawayama::stub::TransactionPriority::TRANSACTION_PRIORITY_UNSPECIFIED;
+		}
+	}
+
+	if (TransactionLabel != nullptr) {
+		label = TransactionLabel;
+	} else {
+		label = LABEL_DEFAULT;
+	}
+
+	if (type != ogawayama::stub::TransactionType::LONG) {
+		write_preserve.clear();
+	}
+}
+
+/**
+ * @brief Set current write preserve tables options.
  * @param WritePreserveTables [in] list of write preserve tables.
  * @return If you call ereport, the call will not return and
  *         PostgreSQL will report the error information.
  */
 void
-SetTransactionOption(char* TransactionType, char* TransactionPriority, char* TransactionLabel, List* WritePreserveTables)
+SetWritePreserveTables(List* WritePreserveTables)
 {
-	assert(TransactionType != nullptr);
+	assert(WritePreserveTables != NIL);
 
-	type = ogawayama::stub::TransactionType::TRANSACTION_TYPE_UNSPECIFIED;
-	if (strcmp(TransactionType, "short") == 0 || strcmp(TransactionType, "OCC") == 0 || strcmp(TransactionType, "STX") == 0) {
-		if (WritePreserveTables != NIL) {
-			ereport(ERROR,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-					errmsg("Invalid Write Preserve Table specified in short transaction.")));
-		} else {
-			type = ogawayama::stub::TransactionType::SHORT;
-		}
-	} else if (strcmp(TransactionType, "long") == 0 || strcmp(TransactionType, "PCC") == 0 || strcmp(TransactionType, "LTX") == 0) {
-		type = ogawayama::stub::TransactionType::LONG;
-	} else if (strcmp(TransactionType, "read_only") == 0 || strcmp(TransactionType, "read") == 0 || strcmp(TransactionType, "RO") == 0) {
-		if (WritePreserveTables != NIL) {
-			ereport(ERROR,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-					errmsg("Invalid Write Preserve Table specified in read_only transaction.")));
-		} else {
-			type = ogawayama::stub::TransactionType::READ_ONLY;
-			write_preserves.clear();
-		}
-	}
-
-	priority = ogawayama::stub::TransactionPriority::TRANSACTION_PRIORITY_UNSPECIFIED;
-	if (TransactionPriority != nullptr) {
-		if (strcmp(TransactionPriority, "interrupt") == 0) {
-			priority = ogawayama::stub::TransactionPriority::INTERRUPT;
-		} else if (strcmp(TransactionPriority, "wait") == 0) {
-			priority = ogawayama::stub::TransactionPriority::WAIT;
-		} else if (strcmp(TransactionPriority, "interrupt_exclude") == 0) {
-			priority = ogawayama::stub::TransactionPriority::INTERRUPT_EXCLUDE;
-		} else if (strcmp(TransactionPriority, "wait_exclude") == 0) {
-			priority = ogawayama::stub::TransactionPriority::WAIT_EXCLUDE;
-		}
-	}
-
-	label = "pgsql-transaction";
-	if (TransactionLabel != nullptr) {
-		label = TransactionLabel;
-	}
-
-	write_preserves.clear();
-	if (WritePreserveTables != NIL) {
-		ListCell* listptr;
-		foreach(listptr, WritePreserveTables) {
-			Node* node = (Node *) lfirst(listptr);
-			if (IsA(node, String)) {
-				Value* write_preserve = (Value*) node;
-				write_preserves.emplace_back(strVal(write_preserve));
-			}
+	write_preserve.clear();
+	ListCell* listptr;
+	foreach(listptr, WritePreserveTables) {
+		Node* node = (Node *) lfirst(listptr);
+		if (IsA(node, String)) {
+			Value* table = (Value*) node;
+			write_preserve.emplace_back(strVal(table));
 		}
 	}
 }
@@ -199,22 +268,30 @@ SetTransactionOption(char* TransactionType, char* TransactionPriority, char* Tra
 void
 CheckTransactionArgs(char* TransactionType, char* TransactionPriority, char* TransactionLabel, List* WritePreserveTables)
 {
-	assert(TransactionType != nullptr);
-
-	if (strcmp(TransactionType, "short") != 0 && strcmp(TransactionType, "OCC") != 0 && strcmp(TransactionType, "STX") != 0 &&
-		strcmp(TransactionType, "long") != 0 && strcmp(TransactionType, "PCC") != 0 && strcmp(TransactionType, "LTX") != 0 &&
-		strcmp(TransactionType, "read_only") != 0 && strcmp(TransactionType, "read") != 0 && strcmp(TransactionType, "RO") != 0 &&
-		strcmp(TransactionType, "default") != 0) {
-		ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				errmsg("Invalid Transaction Type parameter. (type: %s)",
-				TransactionType)));
+	if (TransactionType != nullptr) {
+		if (strcasecmp(TransactionType, TYPE_SHORT) != 0 &&
+				strcasecmp(TransactionType, TYPE_SHORT_OCC) != 0 &&
+				strcasecmp(TransactionType, TYPE_SHORT_STX) != 0 &&
+				strcasecmp(TransactionType, TYPE_LONG) != 0 &&
+				strcasecmp(TransactionType, TYPE_LONG_PCC) != 0 &&
+				strcasecmp(TransactionType, TYPE_LONG_LTX) != 0 &&
+				strcasecmp(TransactionType, TYPE_READ_ONLY) != 0 &&
+				strcasecmp(TransactionType, TYPE_READ_ONLY_READ) != 0 &&
+				strcasecmp(TransactionType, TYPE_READ_ONLY_RO) != 0 &&
+				strcasecmp(TransactionType, TYPE_DEFAULT) != 0) {
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("Invalid Transaction Type parameter. (type: %s)",
+					TransactionType)));
+		}
 	}
 
 	if (TransactionPriority != nullptr) {
-		if (strcmp(TransactionPriority, "interrupt") != 0 && strcmp(TransactionPriority, "wait") != 0 &&
-			strcmp(TransactionPriority, "interrupt_exclude") != 0 && strcmp(TransactionPriority, "wait_exclude") != 0 &&
-			strcmp(TransactionPriority, "default") != 0) {
+		if (strcasecmp(TransactionPriority, PRIORITY_INTERRUPT) != 0 &&
+				strcasecmp(TransactionPriority, PRIORITY_WAIT) != 0 &&
+				strcasecmp(TransactionPriority, PRIORITY_INTERRUPT_EXCLUDE) != 0 &&
+				strcasecmp(TransactionPriority, PRIORITY_WAIT_EXCLUDE) != 0 &&
+				strcasecmp(TransactionPriority, PRIORITY_DEFAULT) != 0) {
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					errmsg("Invalid Transaction Priority parameter. (priority: %s)",
@@ -236,12 +313,12 @@ CheckTransactionArgs(char* TransactionType, char* TransactionPriority, char* Tra
 		foreach(listptr, WritePreserveTables) {
 			Node* node = (Node *) lfirst(listptr);
 			if (IsA(node, String)) {
-				Value* write_preserve = (Value*) node;
-				if (!tables->exists(strVal(write_preserve))) {
+				Value* table = (Value*) node;
+				if (!tables->exists(strVal(table))) {
 					ereport(ERROR,
 							(errcode(ERRCODE_INTERNAL_ERROR),
 							errmsg("Write Preserve Table is not exist in Tsurugi. (table: %s)",
-							strVal(write_preserve))));
+							strVal(table))));
 				}
 			}
 		}
@@ -254,12 +331,16 @@ tg_set_transaction(PG_FUNCTION_ARGS)
 	char* TransactionType = nullptr;
 	char* TransactionPriority = nullptr;
 	char* TransactionLabel = nullptr;
-	List* WritePreserveTables = NIL;
 	boost::property_tree::ptree transaction;
 
 	if (PG_NARGS() == 1) {
 		text* type = PG_GETARG_TEXT_PP(0);
 		TransactionType = text_to_cstring(type);
+	} else if (PG_NARGS() == 2) {
+		text* type = PG_GETARG_TEXT_PP(0);
+		text* priority = PG_GETARG_TEXT_PP(1);
+		TransactionType = text_to_cstring(type);
+		TransactionPriority = text_to_cstring(priority);
 	} else if (PG_NARGS() == 3) {
 		text* type = PG_GETARG_TEXT_PP(0);
 		text* priority = PG_GETARG_TEXT_PP(1);
@@ -267,14 +348,28 @@ tg_set_transaction(PG_FUNCTION_ARGS)
 		TransactionType = text_to_cstring(type);
 		TransactionPriority = text_to_cstring(priority);
 		TransactionLabel = text_to_cstring(label);
-	} else if (PG_NARGS() == 4) {
-		text* type = PG_GETARG_TEXT_PP(0);
-		text* priority = PG_GETARG_TEXT_PP(1);
-		text* label = PG_GETARG_TEXT_PP(2);
-		ArrayType* tables = PG_GETARG_ARRAYTYPE_P(3);
-		TransactionType = text_to_cstring(type);
-		TransactionPriority = text_to_cstring(priority);
-		TransactionLabel = text_to_cstring(label);
+	} else {
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("Invalid number of parameters.")));
+	}
+
+	CheckTransactionArgs(TransactionType, TransactionPriority, TransactionLabel, NIL);
+
+	SetTransactionOption(TransactionType, TransactionPriority, TransactionLabel);
+
+	GetTransactionOption(transaction);
+	PG_RETURN_CSTRING(TransactionToJsonCharString(transaction));
+}
+
+Datum
+tg_set_write_preserve(PG_FUNCTION_ARGS)
+{
+	List* WritePreserveTables = NIL;
+	boost::property_tree::ptree transaction;
+
+	if (PG_NARGS() == 1) {
+		ArrayType* tables = PG_GETARG_ARRAYTYPE_P(0);
 		WritePreserveTables = TextArrayToStringList(tables);
 	} else {
 		ereport(ERROR,
@@ -282,9 +377,9 @@ tg_set_transaction(PG_FUNCTION_ARGS)
 			 errmsg("Invalid number of parameters.")));
 	}
 
-	CheckTransactionArgs(TransactionType, TransactionPriority, TransactionLabel, WritePreserveTables);
+	CheckTransactionArgs(nullptr, nullptr, nullptr, WritePreserveTables);
 
-	SetTransactionOption(TransactionType, TransactionPriority, TransactionLabel, WritePreserveTables);
+	SetWritePreserveTables(WritePreserveTables);
 
 	GetTransactionOption(transaction);
 	PG_RETURN_CSTRING(TransactionToJsonCharString(transaction));
@@ -301,6 +396,117 @@ tg_show_transaction(PG_FUNCTION_ARGS)
 			 errmsg("Invalid number of parameters.")));
 	}
 
+	if (specific_transaction) {
+		elog(INFO, "there is a specific tsurugi transaction block is in progress.");
+	}
+
 	GetTransactionOption(transaction);
 	PG_RETURN_CSTRING(TransactionToJsonCharString(transaction));
+}
+
+Datum
+tg_start_transaction(PG_FUNCTION_ARGS)
+{
+	char* TransactionType = nullptr;
+	char* TransactionPriority = nullptr;
+	char* TransactionLabel = nullptr;
+	boost::property_tree::ptree transaction;
+
+	if (PG_NARGS() == 1) {
+		text* type = PG_GETARG_TEXT_PP(0);
+		TransactionType = text_to_cstring(type);
+	} else if (PG_NARGS() == 2) {
+		text* type = PG_GETARG_TEXT_PP(0);
+		text* priority = PG_GETARG_TEXT_PP(1);
+		TransactionType = text_to_cstring(type);
+		TransactionPriority = text_to_cstring(priority);
+	} else if (PG_NARGS() == 3) {
+		text* type = PG_GETARG_TEXT_PP(0);
+		text* priority = PG_GETARG_TEXT_PP(1);
+		text* label = PG_GETARG_TEXT_PP(2);
+		TransactionType = text_to_cstring(type);
+		TransactionPriority = text_to_cstring(priority);
+		TransactionLabel = text_to_cstring(label);
+	} else if (PG_NARGS() != 0) {
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("Invalid number of parameters.")));
+	}
+
+	if (IsTransactionProgress()) {
+        elog(WARNING, "there is already a tsurugi transaction in progress");
+		PG_RETURN_VOID();
+	}
+
+	if (PG_NARGS() != 0) {
+		specific_transaction = true;
+		CheckTransactionArgs(TransactionType, TransactionPriority, TransactionLabel, NIL);
+
+		SaveTransactionOption();
+		SetTransactionOption(TransactionType, TransactionPriority, TransactionLabel);
+	} else {
+		specific_transaction = false;
+	}
+
+	ERROR_CODE error = StubManager::begin(&udf_transaction);
+	if (error != ERROR_CODE::OK) 
+	{
+		elog(ERROR, "Connection::begin() failed. (%d)", (int) error);
+	}
+
+	transaction_block = true;
+
+	PG_RETURN_VOID();
+}
+
+Datum
+tg_commit(PG_FUNCTION_ARGS)
+{
+	if (PG_NARGS() != 0) {
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("Invalid number of parameters.")));
+	}
+
+	transaction_block = false;
+	if (udf_transaction != nullptr) {
+		udf_transaction->commit();
+		udf_transaction = nullptr;
+		StubManager::end();
+	} else {
+		elog(WARNING, "there is no tsurugi transaction in progress");
+	}
+
+	if (specific_transaction) {
+		LoadTransactionOption();
+		specific_transaction = false;
+	}
+
+    PG_RETURN_VOID();
+}
+
+Datum
+tg_rollback(PG_FUNCTION_ARGS)
+{
+	if (PG_NARGS() != 0) {
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("Invalid number of parameters.")));
+	}
+
+	transaction_block = false;
+	if (udf_transaction != nullptr) {
+		udf_transaction->rollback();
+		udf_transaction = nullptr;
+		StubManager::end();
+	} else {
+		elog(WARNING, "there is no tsurugi transaction in progress");
+	}
+
+	if (specific_transaction) {
+		LoadTransactionOption();
+		specific_transaction = false;
+	}
+
+    PG_RETURN_VOID();
 }

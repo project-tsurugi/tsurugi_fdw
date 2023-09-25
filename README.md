@@ -1,4 +1,4 @@
-# frontend for Tsurugi (PostgreSQL add-on)
+# tsurugi_fdw (PostgreSQL add-on)
 
 ## Requirements
 * C++ Compiler `>= C++17`
@@ -7,7 +7,7 @@
   * managers (metadata-manager, message-manager)
   * ogawayama
 
-## How to build frontend
+## How to build tsurugi_fdw
 
 1. Install required packages.
 
@@ -48,17 +48,17 @@
 	export PATH
 	```
 
-2.  Clone frontend.
+2.  Clone tsurugi_fdw.
 
 	Clone fronend to "contrib" directory in PostgreSQL.
 
 	```sh
 	cd contrib
-	git clone git@github.com:project-tsurugi/frontend.git
-	cd frontend
+	git clone git@github.com:project-tsurugi/tsurugi_fdw.git
+	cd tsurugi_fdw
 	git submodule update --init
 	```
-	* Hereafter, this directory is defined as **\<frontend clone directory>**.
+	* Hereafter, this directory is defined as **\<tsurugi_fdw clone directory>**.
 
 1. Build and Install tsurugi.
 
@@ -91,7 +91,7 @@
 	make install USE_PGXS=1
 	```
 
-## How to set up for frontend
+## How to set up for tsurugi_fdw
 
 1. Update the shared library search path for metadata-manager, message-manager and ogawayama.  
 	```
@@ -120,10 +120,10 @@
 
 1. Define metadata tables and load initial metadata.
 	```sh
-	psql postgres < <frontend clone directory>/third_party/metadata-manager/sql/ddl.sql
+	psql postgres < <tsurugi_fdw clone directory>/third_party/metadata-manager/sql/ddl.sql
 	```
 
-1. Install frontend extension
+1. Install tsurugi_fdw extension
 	* Execute **CREATE EXTENSION** command
 		```sql
 		CREATE EXTENSION tsurugi_fdw;
@@ -181,11 +181,11 @@
 * **sql/** all the tests
 
 ### How to execute the tests
-1. Build frontend
-	* [How to build frontend](#How-to-build-frontend)
+1. Build tsurugi_fdw
+	* [How to build tsurugi_fdw](#How-to-build-tsurugi_fdw)
 
-1. Set up frontend
-	* [How to set up for frontend](#How-to-set-up-for-frontend)
+1. Set up tsurugi_fdw
+	* [How to set up for tsurugi_fdw](#How-to-set-up-for-tsurugi_fdw)
 
 1. Execute the following command
 
@@ -250,7 +250,7 @@
 	oltp shutdown
 	```
 
-## PostgreSQLおよびfrontendのログ出力方法
+## PostgreSQLおよびtsurugi_fdwのログ出力方法
 
 1. postgresql.confを編集する
 
