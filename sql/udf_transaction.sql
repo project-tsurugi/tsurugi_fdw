@@ -2,6 +2,9 @@
 SELECT tg_show_transaction();
 
 /* set option */
+SELECT tg_set_transaction('OCC'); -- for Tsurugi Books
+SELECT tg_set_transaction('LTX'); -- for Tsurugi Books
+SELECT tg_set_transaction('RTX'); -- for Tsurugi Books
 SELECT tg_set_transaction('long');
 SELECT tg_set_transaction('read_only');
 SELECT tg_set_transaction('default');

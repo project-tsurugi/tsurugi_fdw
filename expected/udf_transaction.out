@@ -17,6 +17,54 @@ SELECT tg_show_transaction();
 
 
 /* set option */
+SELECT tg_set_transaction('OCC'); -- for Tsurugi Books
+              tg_set_transaction              
+----------------------------------------------
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_transaction('LTX'); -- for Tsurugi Books
+              tg_set_transaction              
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_transaction('RTX'); -- for Tsurugi Books
+              tg_set_transaction              
+----------------------------------------------
+ {                                           +
+     "transactionType": "3",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
 SELECT tg_set_transaction('long');
               tg_set_transaction              
 ----------------------------------------------
