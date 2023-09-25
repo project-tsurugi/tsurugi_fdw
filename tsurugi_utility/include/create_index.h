@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	create_index.h
- *	@brief  Generate metadata from index statement.
  */
 #pragma once
 

@@ -26,8 +26,10 @@
 
 #include <string.h>
 #include "create_stmt.h"
+#include "create_index_executor.h"
 #include "drop_stmt.h"
 #include "drop_table_executor.h"
+#include "drop_index_executor.h"
 #include "create_role/create_role.h"
 #include "drop_role/drop_role.h"
 #include "alter_role/alter_role.h"
@@ -124,6 +126,7 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 			}
 			break;
 		}
+
 		case T_IndexStmt: 
 		{
 			IndexStmt* index_stmt = (IndexStmt*) pstmt->utilityStmt;
@@ -147,32 +150,61 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 		{
 			RangeVar rel;
 			DropStmt *drop_stmt = (DropStmt *) parsetree;
-			if (drop_stmt->removeType == OBJECT_TABLE) 
+			switch (drop_stmt->removeType) 
 			{
-				bool in_tsurugi = false;
-				ListCell *listptr;
-				foreach(listptr, drop_stmt->objects) 
+				case OBJECT_TABLE:
 				{
-					List *names = (List *) lfirst(listptr);
-					get_relname(names, &rel);
-					if (table_exists_in_tsurugi(rel.relname)) 
+					bool exists_in_tsurugi = false;
+					ListCell *listptr;
+					foreach(listptr, drop_stmt->objects) 
 					{
-						in_tsurugi = true;
+						List *names = (List *) lfirst(listptr);
+						get_relname(names, &rel);
+						if (table_exists_in_tsurugi(rel.relname)) 
+						{
+							exists_in_tsurugi = true;
+							break;
+						}
+					}
+					if (exists_in_tsurugi) 
+					{
+						tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
+												context, params, queryEnv,
+												dest, completionTag);
+						break;
+					}
+					break;
+				}
+				case OBJECT_INDEX:
+				{
+					bool exists_in_tsurugi = false;
+					ListCell *listptr;
+					foreach(listptr, drop_stmt->objects) 
+					{
+						List *names = (List *) lfirst(listptr);
+						get_relname(names, &rel);
+//						if (index_exists_in_tsurugi(rel.relname)) 
+						{
+							exists_in_tsurugi = true;
+							break;
+						}
+					}
+					if (exists_in_tsurugi) 
+					{
+						tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
+												context, params, queryEnv,
+												dest, completionTag);
 						break;
 					}
 				}
-				if (in_tsurugi) 
+				default:
 				{
-					tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
-											context, params, queryEnv,
-											dest, completionTag);
+					standard_ProcessUtility(pstmt, queryString,
+								context, params, queryEnv,
+								dest, completionTag);
 					break;
 				}
 			}
-			standard_ProcessUtility(pstmt, queryString,
-						context, params, queryEnv,
-						dest, completionTag);
-			break;
 		}
 
 		case T_DropRoleStmt: 
@@ -342,6 +374,8 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
 
 			case T_IndexStmt:	/* CREATE INDEX */
 			{
+				IndexStmt* index_stmt = (IndexStmt*) pstmt->utilityStmt;
+				execute_create_index(index_stmt);
 				break;
 			}
 

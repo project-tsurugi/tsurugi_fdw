@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	  drop_table.cpp
- *	@brief  Dispatch drop-message to ogawayama.
  */
 #include "ogawayama/stub/api.h"
 
@@ -52,7 +50,7 @@ using namespace ogawayama;
  * @param
  * 
  */
-bool table_exists_in_tsurugi(const char *relname)
+bool table_exists_in_tsurugi(const char* relname)
 {
   	auto tables = get_tables_ptr(DBNAME);
   	return tables->exists(relname);
@@ -93,13 +91,9 @@ bool execute_drop_table(DropStmt* drop_stmt, const char* relname)
         return result;
     }
 
-    /* DROP_TABLE message to ogawayama */
+    /* Send DROP_TABLE message to ogawayama */
     message::DropTable drop_table_message{table.id};
-#if 1
     success = send_message(drop_table_message);
-#else
-	success = true;
-#endif
     if (!success) {
       ereport(ERROR,
               (errcode(ERRCODE_INTERNAL_ERROR), 

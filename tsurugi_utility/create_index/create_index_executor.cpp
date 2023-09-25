@@ -21,6 +21,8 @@
 #include "manager/metadata/index.h"
 #include "manager/metadata/indexes.h"
 #include "manager/metadata/metadata_factory.h"
+#include "manager/message/ddl_message.h"
+#include "send_message.h"
 #include "create_index.h"
 #include "create_index_executor.h"
 
@@ -128,4 +130,29 @@ int64_t execute_create_index(IndexStmt* index_stmt)
 #endif
 
 	return object_id;
+}
+
+/**
+ * @brief	Send create-index message to Ogawayama.
+ * 
+ */
+bool send_create_index_message(const int64_t object_id)
+{
+	bool result = false;
+
+	if (object_id == metadata::INVALID_OBJECT_ID) {
+		return result;
+	}
+
+	manager::message::CreateIndex create_index_message{object_id};
+	bool success = send_message(create_index_message);
+	if (!success) {
+		ereport(ERROR,
+			(errcode(ERRCODE_INTERNAL_ERROR), 
+			errmsg("send_message() failed. (CreateIndex Message)")));
+		return result;
+	}
+	result = true;
+
+	return result;  
 }

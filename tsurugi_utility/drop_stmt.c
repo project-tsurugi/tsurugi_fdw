@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	create_table.h
- *	@brief  Dispatch the create-table command to ogawayama.
  */
 #include "drop_stmt.h"
 #include "drop_table_executor.h"
+#include "drop_index_executor.h"
 
 /**
  * @brief	Extract table name to drop.
@@ -63,18 +62,38 @@ void get_relname(List *names, RangeVar *rel)
  */
 void execute_drop_stmt(DropStmt *drop_stmt)
 {
-	bool success;
 	RangeVar rel;
 	ListCell *cell;
 	foreach(cell, drop_stmt->objects)
 	{
 		List *names = (List *) lfirst(cell);
 		get_relname(names, &rel);
-		success = execute_drop_table(drop_stmt, rel.relname);
-		if (!success) {
-			elog(ERROR, "drop_table() failed.");
-		}
-	}
-//	RemoveRelations(drop);
 
+		switch (drop_stmt->removeType)
+		{
+			case OBJECT_TABLE:
+			{
+				bool success = execute_drop_table(drop_stmt, rel.relname);
+				if (!success) {
+					elog(ERROR, "execute_drop_table() failed.");
+				}	
+				break;
+			}
+			case OBJECT_INDEX:
+			{
+				bool success = execute_drop_index(drop_stmt, rel.relname);
+				if (!success) {
+					elog(ERROR, "execute_drop_index() failed.");
+				}	
+				break;
+			}
+			default:
+			{
+				elog(ERROR, "Unexpected removeType. (type: %x)", 
+					drop_stmt->removeType);
+				break;
+			}
+		}
+
+	}
 }

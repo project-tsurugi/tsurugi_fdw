@@ -25,9 +25,9 @@ extern "C" {
 }
 #endif
 
-class DropTable : public DropCommand {
+class DropIndex : public DropCommand {
  public:
-	DropTable(DropStmt* drop_stmt) : DropCommand(drop_stmt) {}
+	DropIndex(DropStmt* drop_stmt) : DropCommand(drop_stmt) {}
 
 	/**
 	 * @brief
@@ -53,7 +53,7 @@ class DropTable : public DropCommand {
 	 */
 	virtual bool validate_data_type() const { return true; }
 
-	DropTable() = delete;
-	DropTable(const DropTable&) = delete;
-  	DropTable& operator=(const DropTable&) = delete;
+	DropIndex() = delete;
+	DropIndex(const DropIndex&) = delete;
+  	DropIndex& operator=(const DropIndex&) = delete;
 };

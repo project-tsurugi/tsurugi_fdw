@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 tsurugi project.
+ * Copyright 2019-2022 tsurugi project.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  *
  */
-#ifndef DROP_TABLE_EXECUTOR_H
-#define DROP_TABLE_EXECUTOR_H
+#ifndef DROP_INDEX_EXECUTOR_H
+#define DROP_INDEX_EXECUTOR_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,11 +23,11 @@ extern "C" {
 
 #include "nodes/parsenodes.h"
 
-bool table_exists_in_tsurugi(const char* relname);
-bool execute_drop_table(DropStmt* drop_stmt, const char* relname);
+bool index_exists_in_tsurugi(const char* relname);
+bool execute_drop_index(DropStmt* drop_stmt, const char* relname);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // DROP_TABLE_EXECUTOR_H
+#endif // DROP_INDEX_EXECUTOR_H
