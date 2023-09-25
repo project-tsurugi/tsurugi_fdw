@@ -24,7 +24,7 @@
 
 #include "ogawayama/stub/transaction_option.h"
 #include "manager/metadata/metadata_factory.h"
-#include "stub_manager.h"
+#include "tsurugi.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -448,7 +448,7 @@ tg_start_transaction(PG_FUNCTION_ARGS)
 		specific_transaction = false;
 	}
 
-	ERROR_CODE error = StubManager::begin(&udf_transaction);
+	ERROR_CODE error = Tsurugi::begin(&udf_transaction);
 	if (error != ERROR_CODE::OK) 
 	{
 		elog(ERROR, "Connection::begin() failed. (%d)", (int) error);
@@ -472,7 +472,7 @@ tg_commit(PG_FUNCTION_ARGS)
 	if (udf_transaction != nullptr) {
 		udf_transaction->commit();
 		udf_transaction = nullptr;
-		StubManager::end();
+		Tsurugi::end();
 	} else {
 		elog(WARNING, "there is no tsurugi transaction in progress");
 	}
@@ -498,7 +498,7 @@ tg_rollback(PG_FUNCTION_ARGS)
 	if (udf_transaction != nullptr) {
 		udf_transaction->rollback();
 		udf_transaction = nullptr;
-		StubManager::end();
+		Tsurugi::end();
 	} else {
 		elog(WARNING, "there is no tsurugi transaction in progress");
 	}

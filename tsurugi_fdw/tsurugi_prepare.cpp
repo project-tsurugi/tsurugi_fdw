@@ -20,7 +20,7 @@
 #include <map>
 
 #include "ogawayama/stub/api.h"
-#include "stub_manager.h"
+#include "tsurugi.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -162,10 +162,10 @@ begin_prepare_processing(const EState* estate)
 
 #if 1
 		stub::Connection* connection;
-		ERROR_CODE error = StubManager::get_connection(&connection);
+		ERROR_CODE error = Tsurugi::get_connection(&connection);
 		if (error != ERROR_CODE::OK)
 		{
-			elog(ERROR, "StubManager::get_connection() failed. (code: %d)", (int) error);
+			elog(ERROR, "Tsurugi::get_connection() failed. (code: %d)", (int) error);
 			return;
 		}
 		error = connection->prepare(sql, placeholders, prepared_statement);

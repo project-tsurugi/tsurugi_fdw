@@ -4,7 +4,7 @@ MODULE_big = tsurugi_fdw
 OBJS = common/init.o common/tsurugi.o \
         tsurugi_fdw/deparse.o tsurugi_fdw/shippable.o tsurugi_fdw/helper_funcs.o \
 		tsurugi_fdw/tsurugi_utils.o tsurugi_fdw/tsurugi_fdw.o \
-		ogawayama_fdw/tsurugi_prepare.o \
+		tsurugi_fdw/tsurugi_prepare.o \
         tsurugi_planner/tsurugi_planner.o \
 		tsurugi_utility/send_message.o \
         tsurugi_utility/tsurugi_utility.o tsurugi_utility/create_stmt.o tsurugi_utility/drop_stmt.o \
@@ -17,8 +17,7 @@ OBJS = common/init.o common/tsurugi.o \
 		tsurugi_utility/role_managercmds.o tsurugi_utility/table_managercmds.o tsurugi_utility/syscachecmds.o  \
         tsurugi_utility/alter_table/alter_table_executor.o tsurugi_utility/alter_table/alter_table.o \
 		tsurugi_utility/alter_role/alter_role.o \
-		alt_utility/prepare_execute/prepare_execute.o \
-        alt_function/alt_function.o \
+		tsurugi_utility/prepare_execute/prepare_execute.o \
         alt_function/alt_function.o \
         $(WIN32RES)
 

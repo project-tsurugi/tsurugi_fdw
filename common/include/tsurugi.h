@@ -16,8 +16,10 @@ public:
     static ERROR_CODE execute_statement(std::string_view statement);
     static ERROR_CODE commit();
     static ERROR_CODE rollback();
-	Tsurugi() = delete;
 
+    static ERROR_CODE begin(ogawayama::stub::Transaction** transaction);
+    static void end();
+	Tsurugi() = delete;
 
 private:
 	static StubPtr stub_;

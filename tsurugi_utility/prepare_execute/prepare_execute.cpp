@@ -24,7 +24,7 @@
 
 #include "manager/metadata/metadata_factory.h"
 #include "ogawayama/stub/api.h"
-#include "stub_manager.h"
+#include "tsurugi.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -1272,10 +1272,10 @@ after_prepare_stmt(const PrepareStmt* stmts,
 
 #if 1
 	stub::Connection* connection;
-	ERROR_CODE error = StubManager::get_connection(&connection);
+	ERROR_CODE error = Tsurugi::get_connection(&connection);
 	if (error != ERROR_CODE::OK)
 	{
-		elog(ERROR, "StubManager::get_connection() failed. (code: %d)", (int) error);
+		elog(ERROR, "Tsurugi::get_connection() failed. (code: %d)", (int) error);
 		return false;
 	}
 	error = connection->prepare(sql.data, placeholders, prepared_statement);

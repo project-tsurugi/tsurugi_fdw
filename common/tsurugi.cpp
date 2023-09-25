@@ -34,7 +34,10 @@ StubPtr Tsurugi::stub_ = nullptr;
 ConnectionPtr Tsurugi::connection_ = nullptr;
 TransactionPtr Tsurugi::transaction_ = nullptr;
 
+bool GetTransactionOption(boost::property_tree::ptree&);
 extern bool GetTransactionOption(boost::property_tree::ptree&);
+bool IsTransactionProgress();
+extern ogawayama::stub::Transaction* udf_transaction;
 
 /*
  *  get_shared_memory_name
@@ -241,4 +244,64 @@ ERROR_CODE Tsurugi::rollback()
     }
 
     return error;
+}
+
+/*
+ *	@brief:	
+ */
+ERROR_CODE Tsurugi::begin(stub::Transaction** transaction)
+{
+	ERROR_CODE error = ERROR_CODE::UNKNOWN;
+
+	if (IsTransactionProgress()) {
+		elog(DEBUG1, "begin : there is tsurugi transaction block in progress.");
+		*transaction = udf_transaction;
+		return ERROR_CODE::OK;
+	}
+
+	if (stub_ == nullptr) {
+		error = init();
+		if (error != ERROR_CODE::OK) {
+			std::cerr << "init() failed. " << (int) error << std::endl;
+			return error;
+		}
+	}
+
+	if (connection_ == nullptr) {
+		ERROR_CODE error = stub_->get_connection(getpid() , connection_);
+		if (error != ERROR_CODE::OK)
+		{
+			std::cerr << "Stub::get_connection() failed. " << (int) error << std::endl;
+			return error;
+		}
+	}
+
+	if (transaction_ == nullptr) {
+		boost::property_tree::ptree option;
+		GetTransactionOption(option);
+		ERROR_CODE error = connection_->begin(option, transaction_);
+		if (error != ERROR_CODE::OK)
+		{
+			std::cerr << "Connection::begin() failed. " << (int) error << std::endl;
+			return error;
+		}
+	}
+	*transaction = transaction_.get();
+
+	elog(DEBUG1, "Transaction started.");
+	error = ERROR_CODE::OK;
+
+	return error;
+}
+
+/*
+ * 	@brief: 
+ */
+void Tsurugi::end()
+{
+	if (IsTransactionProgress()) {
+		elog(DEBUG1, "end : there is tsurugi transaction block in progress.");
+		return;
+	}
+	transaction_ = nullptr;
 }
