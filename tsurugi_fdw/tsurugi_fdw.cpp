@@ -72,6 +72,10 @@ PG_MODULE_MAGIC;
 }
 #endif
 
+#if 1
+#include "tsurugi_prepare.h"
+#endif
+
 using namespace ogawayama;
 
 int unused PG_USED_FOR_ASSERTS_ONLY;
@@ -1335,6 +1339,10 @@ tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
  	fdw_state->query_string = estate->es_sourceText; 
     node->fdw_state = fdw_state;
 
+#if 1
+	begin_prepare_processing(estate);
+#endif
+
     Tsurugi::start_transaction();
     fdw_info_.success = true;
 }
@@ -1381,6 +1389,11 @@ tsurugiEndDirectModify(ForeignScanState* node)
     {
         Tsurugi::commit();
     }
+
+#if 1
+	EState* estate = node->ss.ps.state;
+	end_prepare_processing(estate);
+#endif
 
 	if (node->fdw_state != nullptr)
     {

@@ -10,6 +10,9 @@ class Tsurugi {
 public:
 	static ERROR_CODE init();
     static ERROR_CODE get_connection(ogawayama::stub::Connection** connection);
+    static ERROR_CODE prepare(std::string_view sql,
+                              ogawayama::stub::placeholders_type& placeholders,
+                              PreparedStatementPtr& prepared_statement);
     static ERROR_CODE start_transaction();
     static ERROR_CODE execute_query(std::string_view query, 
                                     ResultSetPtr& result_set);

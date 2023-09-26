@@ -160,7 +160,7 @@ begin_prepare_processing(const EState* estate)
 			}
 		}
 
-#if 1
+#if 0
 		stub::Connection* connection;
 		ERROR_CODE error = Tsurugi::get_connection(&connection);
 		if (error != ERROR_CODE::OK)

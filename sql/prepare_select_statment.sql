@@ -20,7 +20,7 @@ CREATE FOREIGN TABLE t1(
     c5 DOUBLE PRECISION, 
     c6 CHAR(10),
     c7 VARCHAR(26)
-) SERVER ogawayama;
+) SERVER tsurugidb;
 
 CREATE TABLE t2(
     c1 INTEGER PRIMARY KEY, 
@@ -40,7 +40,7 @@ CREATE FOREIGN TABLE t2(
     c5 DOUBLE PRECISION, 
     c6 CHAR(10),
     c7 VARCHAR(26)
-) SERVER ogawayama;
+) SERVER tsurugidb;
 
 CREATE TABLE t3(
     c1 INTEGER PRIMARY KEY,
@@ -50,7 +50,7 @@ CREATE TABLE t3(
 CREATE FOREIGN TABLE t3(
     c1 INTEGER,
     c2 CHAR(10)
-) SERVER ogawayama;
+) SERVER tsurugidb;
 
 -- PG tables
 CREATE TABLE pt1(

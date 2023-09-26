@@ -40,6 +40,9 @@ bool IsTransactionProgress();
 extern ogawayama::stub::Transaction* udf_transaction;
 #endif
 
+extern PreparedStatementPtr prepared_statement;
+extern stub::parameters_type parameters;
+
 /*
  *  get_shared_memory_name
  */
@@ -125,6 +128,36 @@ ERROR_CODE Tsurugi::get_connection(stub::Connection** connection)
 }
 
 /*
+ *	prepare
+ */
+ERROR_CODE Tsurugi::prepare(std::string_view sql, stub::placeholders_type& placeholders, PreparedStatementPtr& prepared_statement)
+{
+    ERROR_CODE error = ERROR_CODE::UNKNOWN;
+
+    if (connection_ == nullptr)
+    {
+        elog(LOG, "Trying to run Tsurugi::init(). (pid: %d)", getpid());
+
+        error = init();
+
+        if (error != ERROR_CODE::OK)
+        {
+            elog(ERROR, "there can not connect to Tsurugi.");
+            return error;
+        }
+    }
+
+    elog(LOG, "Trying to run Connection::prepare(). (pid: %d)", getpid());
+    elog(LOG, "sql = \n%s", sql.data());
+
+    error = connection_->prepare(sql, placeholders, prepared_statement);
+
+    elog(LOG, "Connection::prepare() done. (error: %d)", (int) error);
+
+    return error;
+}
+
+/*
  *	start_transaction
  */
 ERROR_CODE Tsurugi::start_transaction()
@@ -164,11 +197,24 @@ Tsurugi::execute_query(std::string_view query, ResultSetPtr& result_set)
 {
     ERROR_CODE error = ERROR_CODE::UNKNOWN;
 
+    result_set = nullptr;
+#if 1
+	if (prepared_statement.get() != nullptr) {
+	    elog(LOG, "Trying to run Transaction::execute_query(prepared_statement). \n%s",
+	        query.data());
+	    error = transaction_->execute_query(prepared_statement, parameters, result_set);
+	} else {
+	    elog(LOG, "Trying to run Transaction::execute_query(query). \n%s",
+	        query.data());
+	    error = transaction_->execute_query(query, result_set);
+	}
+#else
     elog(LOG, "Trying to run Transaction::execute_query(). \n%s", 
         query.data());
 
     result_set = nullptr;
     error = transaction_->execute_query(query, result_set);
+#endif
 
     elog(LOG, "execute_query() done. (error: %d)", (int) error);
 
@@ -185,10 +231,22 @@ Tsurugi::execute_statement(std::string_view statement)
 
     if (transaction_ != nullptr)
     {
+#if 1
+		if (prepared_statement.get() != nullptr) {
+	        elog(LOG, "tsurugi-fdw: Trying to execute the prepared statement. \n%s",
+	            statement.data());
+	        error = transaction_->execute_statement(prepared_statement, parameters);
+		} else {
+	        elog(LOG, "tsurugi-fdw: Trying to execute the statement. \n%s",
+	            statement.data());
+	        error = transaction_->execute_statement(statement);
+		}
+#else
         elog(LOG, "tsurugi-fdw: Trying to execute the statement. \n%s", 
             statement.data());
 
         error = transaction_->execute_statement(statement);
+#endif
 
         elog(LOG, "tsurugi-fdw: execute_statement() done. (error: %d)",
             (int) error);
