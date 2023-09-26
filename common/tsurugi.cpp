@@ -35,9 +35,10 @@ ConnectionPtr Tsurugi::connection_ = nullptr;
 TransactionPtr Tsurugi::transaction_ = nullptr;
 
 bool GetTransactionOption(boost::property_tree::ptree&);
-extern bool GetTransactionOption(boost::property_tree::ptree&);
 bool IsTransactionProgress();
+#if 0
 extern ogawayama::stub::Transaction* udf_transaction;
+#endif
 
 /*
  *  get_shared_memory_name
@@ -130,6 +131,11 @@ ERROR_CODE Tsurugi::start_transaction()
 {
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
 
+	if (IsTransactionProgress()) {
+	    elog(LOG, "there is tsurugi transaction block in progress.");
+	    return ERROR_CODE::OK;
+	}
+
     if (connection_ != nullptr)
     {
         boost::property_tree::ptree option;
@@ -203,6 +209,11 @@ ERROR_CODE Tsurugi::commit()
 {
     ERROR_CODE error = ERROR_CODE::UNKNOWN;
 
+	if (IsTransactionProgress()) {
+	    elog(LOG, "there is tsurugi transaction block in progress.");
+	    return ERROR_CODE::OK;
+	}
+
     if (transaction_ != nullptr) 
     {
         elog(LOG, "Trying to run Transaction::commit().");
@@ -227,6 +238,11 @@ ERROR_CODE Tsurugi::commit()
 ERROR_CODE Tsurugi::rollback()
 {
     ERROR_CODE error = ERROR_CODE::UNKNOWN;
+
+	if (IsTransactionProgress()) {
+	    elog(LOG, "there is tsurugi transaction block in progress.");
+	    return ERROR_CODE::OK;
+	}
 
     if (transaction_ != nullptr) 
     {
@@ -255,7 +271,9 @@ ERROR_CODE Tsurugi::begin(stub::Transaction** transaction)
 
 	if (IsTransactionProgress()) {
 		elog(DEBUG1, "begin : there is tsurugi transaction block in progress.");
+#if 0
 		*transaction = udf_transaction;
+#endif
 		return ERROR_CODE::OK;
 	}
 
