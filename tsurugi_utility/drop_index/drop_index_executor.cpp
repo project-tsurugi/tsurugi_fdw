@@ -58,7 +58,6 @@ bool index_exists_in_tsurugi(const char* relname)
 
 /**
  *  @brief Calls the function sending metadata to metadata-manager and drops parameters sended to ogawayama.
- *  @param [in] Index name to remove.
  */
 bool execute_drop_index(DropStmt* drop_stmt, const char* relname)
 {
@@ -86,8 +85,8 @@ bool execute_drop_index(DropStmt* drop_stmt, const char* relname)
         } else {
             ereport(ERROR,
                     (errcode(ERRCODE_INTERNAL_ERROR),
-                     errmsg("drop_index() get metadata failed. (table name: %s)"), 
-                     relname));
+                     errmsg("drop_index() get metadata failed. (table name: %s)", 
+                     relname)));
         }
         return result;
     }

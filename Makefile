@@ -10,7 +10,7 @@ OBJS = common/init.o common/tsurugi.o \
         tsurugi_utility/create_table/create_table_executor.o tsurugi_utility/create_table/create_table.o \
         tsurugi_utility/create_index/create_index_executor.o tsurugi_utility/create_index/create_index.o \
 		tsurugi_utility/create_role/create_role.o \
-        tsurugi_utility/drop_table/drop_table_executor.o tsurugi_utility/drop_role/drop_role.o \
+        tsurugi_utility/drop_table/drop_table_executor.o tsurugi_utility/drop_index/drop_index_executor.o tsurugi_utility/drop_role/drop_role.o \
 		tsurugi_utility/grant_revoke_role/grant_revoke_role.o \
 		tsurugi_utility/grant_revoke_table/grant_revoke_table.o \
 		tsurugi_utility/role_managercmds.o tsurugi_utility/table_managercmds.o tsurugi_utility/syscachecmds.o  \
