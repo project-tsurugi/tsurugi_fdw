@@ -19,7 +19,7 @@ CREATE FOREIGN TABLE t1(
     c5 DOUBLE PRECISION, 
     c6 CHAR(10),
     c7 VARCHAR(26)
-) SERVER ogawayama;
+) SERVER tsurugidb;
 CREATE TABLE t2(
     c1 INTEGER PRIMARY KEY, 
     c2 INTEGER, 
@@ -37,7 +37,7 @@ CREATE FOREIGN TABLE t2(
     c5 DOUBLE PRECISION, 
     c6 CHAR(10),
     c7 VARCHAR(26)
-) SERVER ogawayama;
+) SERVER tsurugidb;
 CREATE TABLE t3(
     c1 INTEGER PRIMARY KEY,
     c2 CHAR(10)
@@ -45,7 +45,7 @@ CREATE TABLE t3(
 CREATE FOREIGN TABLE t3(
     c1 INTEGER,
     c2 CHAR(10)
-) SERVER ogawayama;
+) SERVER tsurugidb;
 -- PG tables
 CREATE TABLE pt1(
     c1 INTEGER PRIMARY KEY, 
@@ -132,7 +132,7 @@ PREPARE select_pt2_orderby2
 /* failed (10) because of ORDER BY 6 */
 PREPARE select_t2_orderby2
 	AS SELECT c1, c2, c3, c4, c5, c6, c7 FROM t2 ORDER BY 6;
-ERROR:  connection->prepare() failed. (10)
+ERROR:  Tsurugi::prepare() failed. (10)
 	sql:SELECT c1, c2, c3, c4, c5, c6, c7 FROM t2 ORDER BY 6 
 -- ORDER BY #3
 -- PG
@@ -191,7 +191,7 @@ PREPARE select_pt2_where6
 /* tsurugi-issue#69 */
 PREPARE select_t2_where6
 	AS SELECT * FROM t2 WHERE c4 BETWEEN 2.2 AND 5.5;
-ERROR:  connection->prepare() failed. (10)
+ERROR:  Tsurugi::prepare() failed. (10)
 	sql:SELECT * FROM t2 WHERE c4 BETWEEN 2.200000 AND 5.500000 
 -- WHERE #7
 -- PG
@@ -209,7 +209,7 @@ PREPARE select_pt1_where8
 /* not support EXISTS failed. (10) */
 PREPARE select_t1_where8
 	AS SELECT * FROM t1 WHERE EXISTS (SELECT * FROM t2 WHERE c2 = 22);
-ERROR:  connection->prepare() failed. (10)
+ERROR:  Tsurugi::prepare() failed. (10)
 	sql:SELECT * FROM t1 WHERE EXISTS (SELECT * FROM t2 WHERE c2 = 22 )
 -- WHERE #9
 -- PG
@@ -219,7 +219,7 @@ PREPARE select_pt2_where9
 /* tsurugi-issue#70 */
 PREPARE select_t2_where9
 	AS SELECT * FROM t2 WHERE c4 IN (1.1,3.3);
-ERROR:  connection->prepare() failed. (10)
+ERROR:  Tsurugi::prepare() failed. (10)
 	sql:SELECT * FROM t2 WHERE c4 IN (1.100000 , 3.300000 )
 -- GROUP BY #1
 -- PG
@@ -229,7 +229,7 @@ PREPARE select_pt2_group1
 /* aggregate functions alias not support failed. (10) */
 PREPARE select_t2_group1_ng
 	AS SELECT count(c1) AS "count(c1)", sum(c2) AS "sum(c2)", c7 FROM t2 GROUP BY c7;
-ERROR:  connection->prepare() failed. (10)
+ERROR:  Tsurugi::prepare() failed. (10)
 	sql:SELECT count(c1) AS 'count(c1)', sum(c2) AS 'sum(c2)', c7 FROM t2 GROUP BY c7
 PREPARE select_t2_group1
 	AS SELECT count(c1), sum(c2), c7 FROM t2 GROUP BY c7;
@@ -241,12 +241,12 @@ PREPARE select_pt2_group2
 /* aggregate functions alias not support failed. (10) */
 PREPARE select_t2_group2_ng1
 	AS SELECT count(c1) AS "count(c1)", sum(c2) AS "sum(c2)", c7 FROM t2 GROUP BY c7 HAVING sum(c2) > 55;
-ERROR:  connection->prepare() failed. (10)
+ERROR:  Tsurugi::prepare() failed. (10)
 	sql:SELECT count(c1) AS 'count(c1)', sum(c2) AS 'sum(c2)', c7 FROM t2 GROUP BY c7 HAVING sum(c2) > 55 
 /* having not support failed. (10) */
 PREPARE select_t2_group2_ng2
 	AS SELECT count(c1), sum(c2), c7 FROM t2 GROUP BY c7 HAVING sum(c2) > 55;
-ERROR:  connection->prepare() failed. (10)
+ERROR:  Tsurugi::prepare() failed. (10)
 	sql:SELECT count(c1), sum(c2), c7 FROM t2 GROUP BY c7 HAVING sum(c2) > 55 
 -- GROUP BY #3
 -- PG
@@ -263,7 +263,7 @@ PREPARE select_join1
 /* failed (10) : mismatched input 'USING' */
 PREPARE select_join2
 	AS SELECT a.c1, a.c2, b.c1, b.c7 FROM t1 a INNER JOIN t2 b USING (c1) ORDER BY b.c4 DESC;
-ERROR:  connection->prepare() failed. (10)
+ERROR:  Tsurugi::prepare() failed. (10)
 	sql:SELECT a.c1, a.c2, b.c1, b.c7 FROM t1 a CROSS JOIN t2 b USING (c1) ORDER BY b.c4 DESC
 -- TG JOIN #3
 PREPARE select_join3

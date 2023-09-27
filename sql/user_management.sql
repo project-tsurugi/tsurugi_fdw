@@ -81,9 +81,9 @@ ORDER BY
     auth1.rolname;
 
 CREATE TABLE table2 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
-CREATE FOREIGN TABLE table2 (column1 INTEGER NOT NULL) SERVER ogawayama;
+CREATE FOREIGN TABLE table2 (column1 INTEGER NOT NULL) SERVER tsurugidb;
 CREATE TABLE table3 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
-CREATE FOREIGN TABLE table3 (column1 INTEGER NOT NULL) SERVER ogawayama;
+CREATE FOREIGN TABLE table3 (column1 INTEGER NOT NULL) SERVER tsurugidb;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON table2 to sample_role2;
 GRANT SELECT, INSERT, UPDATE ON table2 to sample_role3, sample_role4;
@@ -140,18 +140,18 @@ WHERE
 
 -- unhappy case
 CREATE TABLE table2 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
-CREATE FOREIGN TABLE table2 (column1 INTEGER NOT NULL) SERVER ogawayama;
+CREATE FOREIGN TABLE table2 (column1 INTEGER NOT NULL) SERVER tsurugidb;
 
 CREATE ROLE sample_role1;
 CREATE ROLE sample_role1;
-SELECT rolname FROM pg_authid WHERE rolname like 'sample_role%';
+SELECT rolname FROM pg_authid WHERE rolname like 'sample_role%' Order By rolname;
 
 CREATE ROLE sample_role2, sample_role3;
-SELECT rolname FROM pg_authid WHERE rolname like 'sample_role%';
+SELECT rolname FROM pg_authid WHERE rolname like 'sample_role%' Order By rolname;
 
 CREATE ROLE sample_role2;
 ALTER ROLE sample_role1, sample_role2 LOGIN;
-SELECT rolname FROM pg_authid WHERE rolname like 'sample_role%';
+SELECT rolname FROM pg_authid WHERE rolname like 'sample_role%' Order By rolname;
 
 GRANT ROLE unknown_role TO sample_role1;
 GRANT ROLE unknown_role, sample_role2 TO sample_role1;

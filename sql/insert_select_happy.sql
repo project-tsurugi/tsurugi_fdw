@@ -69,40 +69,40 @@ col13 character(1000)         constraint nn13 not null,
 col14 varchar(1000)           constraint nn14 not null,
 col15 varchar(1000)           constraint nn15 not null,
 col16 character varying(1000) constraint nn16 not null 
-) SERVER ogawayama;
+) SERVER tsurugidb;
 
 create foreign table integer1 (
   ol_w_id int
-) SERVER ogawayama;
+) SERVER tsurugidb;
 
 create foreign table bigint1 (
   id int,
   ol_w_id bigint
-) SERVER ogawayama;
+) SERVER tsurugidb;
 
 create foreign table real1 (
   ol_w_id real
-) SERVER ogawayama;
+) SERVER tsurugidb;
 
 create foreign table double1 (
   ol_w_id double precision
-) SERVER ogawayama;
+) SERVER tsurugidb;
 
 create foreign table char_length_1 (
   ol_w_id char(1)
-) SERVER ogawayama;
+) SERVER tsurugidb;
 
 create foreign table varchar_length_1 (
   ol_w_id varchar(1)
-) SERVER ogawayama;
+) SERVER tsurugidb;
 
 create foreign table char_length_10 (
   ol_w_id char(10)
-) SERVER ogawayama;
+) SERVER tsurugidb;
 
 create foreign table varchar_length_10 (
   ol_w_id varchar(10)
-) SERVER ogawayama;
+) SERVER tsurugidb;
 
 SELECT * FROM insert_select_happy;
 --ok

@@ -4,7 +4,7 @@ SET datestyle TO ISO, ymd;
 /* preparation */
 -- table preparation
 CREATE TABLE trg_table (id INTEGER NOT NULL PRIMARY KEY, num INTEGER, name VARCHAR(10)) TABLESPACE tsurugi;
-CREATE FOREIGN TABLE trg_table (id INTEGER NOT NULL, num INTEGER, name VARCHAR(10)) SERVER ogawayama;
+CREATE FOREIGN TABLE trg_table (id INTEGER NOT NULL, num INTEGER, name VARCHAR(10)) SERVER tsurugidb;
 CREATE TABLE trg_timedate (
     id      INTEGER NOT NULL PRIMARY KEY,
     col1    TIMESTAMP  default '2023-03-03 23:59:35.123456',
@@ -21,7 +21,7 @@ CREATE FOREIGN TABLE trg_timedate (
     col3    TIME       default '04:05:06.789012345',
     col4    TIME       default '040506',
     col5    TIME       default '04:05 AM'
-) SERVER ogawayama;
+) SERVER tsurugidb;
 
 PREPARE add_trg_table (int, int, varchar(80)) 		AS INSERT INTO trg_table (id, num, name) VALUES ($1, $2, $3);
 PREPARE add_trg_table_num (int, int) 				AS INSERT INTO trg_table (id, num, name) VALUES ($1, $2, 'zzz');
