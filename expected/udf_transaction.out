@@ -225,9 +225,9 @@ ERROR:  Invalid Transaction Label parameter. (label: empty)
 CREATE TABLE table1 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
 CREATE TABLE wp_table1 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
 CREATE TABLE wp_table2 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
-CREATE FOREIGN TABLE table1 (column1 INTEGER NOT NULL) SERVER ogawayama;
-CREATE FOREIGN TABLE wp_table1 (column1 INTEGER NOT NULL) SERVER ogawayama;
-CREATE FOREIGN TABLE wp_table2 (column1 INTEGER NOT NULL) SERVER ogawayama;
+CREATE FOREIGN TABLE table1 (column1 INTEGER NOT NULL) SERVER tsurugidb;
+CREATE FOREIGN TABLE wp_table1 (column1 INTEGER NOT NULL) SERVER tsurugidb;
+CREATE FOREIGN TABLE wp_table2 (column1 INTEGER NOT NULL) SERVER tsurugidb;
 
 SELECT tg_set_write_preserve('wp_table1');
            tg_set_write_preserve            
@@ -330,7 +330,7 @@ SELECT tg_commit();
 
 /* commit */
 SELECT tg_commit(); -- warning
-WARNING:  there is no tsurugi transaction in progress
+WARNING:  there is no transaction in progress
  tg_commit 
 -----------
  
@@ -339,7 +339,7 @@ WARNING:  there is no tsurugi transaction in progress
 
 /* rollback */
 SELECT tg_rollback(); -- warning
-WARNING:  there is no tsurugi transaction in progress
+WARNING:  there is no transaction in progress.
  tg_rollback 
 -------------
  
@@ -540,7 +540,7 @@ SELECT tg_set_write_preserve('wp_table1', 'wp_table2');
 INSERT INTO wp_table1 (column1) VALUES (100);
 INSERT INTO wp_table2 (column1) VALUES (100);
 INSERT INTO table1 (column1) VALUES (500); -- error
-ERROR:  transaction::execute_statement() failed. (10)
+ERROR:  Tsurugi::execute_statement() failed. (10)
 SELECT * FROM wp_table1;
  column1 
 ---------
@@ -562,7 +562,7 @@ SELECT * FROM table1;
 UPDATE wp_table1 SET column1 = column1+1;
 UPDATE wp_table2 SET column1 = column1+1;
 UPDATE table1 SET column1 = column1+1; -- error
-ERROR:  transaction::execute_statement() failed. (10)
+ERROR:  Tsurugi::execute_statement() failed. (10)
 SELECT * FROM wp_table1;
  column1 
 ---------
@@ -584,7 +584,7 @@ SELECT * FROM table1;
 DELETE FROM wp_table1 WHERE column1 = 101;
 DELETE FROM wp_table2 WHERE column1 = 101;
 DELETE FROM table1 WHERE column1 = 400; -- error
-ERROR:  transaction::execute_statement() failed. (10)
+ERROR:  Tsurugi::execute_statement() failed. (10)
 SELECT * FROM wp_table1;
  column1 
 ---------
@@ -620,9 +620,9 @@ SELECT tg_set_write_preserve('wp_table1');
 
 INSERT INTO wp_table1 (column1) VALUES (200);
 INSERT INTO wp_table2 (column1) VALUES (200); -- error
-ERROR:  transaction::execute_statement() failed. (10)
+ERROR:  Tsurugi::execute_statement() failed. (10)
 INSERT INTO table1 (column1) VALUES (500); -- error
-ERROR:  transaction::execute_statement() failed. (10)
+ERROR:  Tsurugi::execute_statement() failed. (10)
 SELECT * FROM wp_table1;
  column1 
 ---------
@@ -642,7 +642,7 @@ SELECT * FROM table1;
 
 UPDATE wp_table1 SET column1 = column1+1;
 UPDATE table1 SET column1 = column1+1; -- error
-ERROR:  transaction::execute_statement() failed. (10)
+ERROR:  Tsurugi::execute_statement() failed. (10)
 SELECT * FROM wp_table1;
  column1 
 ---------
@@ -662,7 +662,7 @@ SELECT * FROM table1;
 
 DELETE FROM wp_table1 WHERE column1 = 201;
 DELETE FROM table1 WHERE column1 = 400; -- error
-ERROR:  transaction::execute_statement() failed. (10)
+ERROR:  Tsurugi::execute_statement() failed. (10)
 SELECT * FROM wp_table1;
  column1 
 ---------
@@ -720,7 +720,7 @@ SELECT tg_set_write_preserve('wp_table1', 'wp_table2');
 INSERT INTO wp_table1 (column1) VALUES (300);
 INSERT INTO wp_table2 (column1) VALUES (300);
 INSERT INTO table1 (column1) VALUES (600); -- error
-ERROR:  transaction::execute_statement() failed. (10)
+ERROR:  Tsurugi::execute_statement() failed. (10)
 SELECT * FROM wp_table1;
  column1 
 ---------
@@ -816,7 +816,7 @@ SELECT tg_show_transaction();
 INSERT INTO wp_table1 (column1) VALUES (500);
 INSERT INTO wp_table2 (column1) VALUES (500);
 INSERT INTO table1 (column1) VALUES (800); -- error
-ERROR:  transaction::execute_statement() failed. (10)
+ERROR:  Tsurugi::execute_statement() failed. (10)
 SELECT * FROM wp_table1;
  column1 
 ---------
@@ -860,7 +860,7 @@ SELECT tg_set_transaction('short');
 
 -- table preparation
 CREATE TABLE tg_table (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
-CREATE FOREIGN TABLE tg_table (column1 INTEGER NOT NULL) SERVER ogawayama;
+CREATE FOREIGN TABLE tg_table (column1 INTEGER NOT NULL) SERVER tsurugidb;
 	CREATE TABLE pg_table (column1 INTEGER NOT NULL PRIMARY KEY);
 INSERT INTO tg_table (column1) VALUES (999);
 -- Start the Tsurugi transaction

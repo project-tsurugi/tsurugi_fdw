@@ -1,27 +1,27 @@
 /* DDL */
 ---int
 CREATE TABLE update_delete_int1(col1 int PRIMARY KEY, col2 int) TABLESPACE tsurugi;
-CREATE FOREIGN TABLE update_delete_int1(col1 int, col2 int) SERVER ogawayama;
+CREATE FOREIGN TABLE update_delete_int1(col1 int, col2 int) SERVER tsurugidb;
 
 ---bigint
 CREATE TABLE update_delete_bigint1(col1 int PRIMARY KEY, col2 bigint) TABLESPACE tsurugi;
-CREATE FOREIGN TABLE update_delete_bigint1(col1 int, col2 bigint) SERVER ogawayama;
+CREATE FOREIGN TABLE update_delete_bigint1(col1 int, col2 bigint) SERVER tsurugidb;
 
 ---real
 CREATE TABLE update_delete_real1(col1 int PRIMARY KEY, col2 real) TABLESPACE tsurugi;
-CREATE FOREIGN TABLE update_delete_real1(col1 int, col2 real) SERVER ogawayama;
+CREATE FOREIGN TABLE update_delete_real1(col1 int, col2 real) SERVER tsurugidb;
 
 ---double precision
 CREATE TABLE update_delete_double1(col1 int PRIMARY KEY, col2 double precision) TABLESPACE tsurugi;
-CREATE FOREIGN TABLE update_delete_double1(col1 int, col2 double precision) SERVER ogawayama;
+CREATE FOREIGN TABLE update_delete_double1(col1 int, col2 double precision) SERVER tsurugidb;
 
 ---char
 CREATE TABLE update_delete_char1(col1 int PRIMARY KEY, col2 char(2)) TABLESPACE tsurugi;
-CREATE FOREIGN TABLE update_delete_char1(col1 int, col2 char(2)) SERVER ogawayama;
+CREATE FOREIGN TABLE update_delete_char1(col1 int, col2 char(2)) SERVER tsurugidb;
 
 ---varchar
 CREATE TABLE update_delete_varchar1(col1 int PRIMARY KEY, col2 varchar(2)) TABLESPACE tsurugi;
-CREATE FOREIGN TABLE update_delete_varchar1(col1 int, col2 varchar(2)) SERVER ogawayama;
+CREATE FOREIGN TABLE update_delete_varchar1(col1 int, col2 varchar(2)) SERVER tsurugidb;
 
 /* DML */
 ---int

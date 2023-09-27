@@ -26,9 +26,9 @@ SELECT tg_set_transaction('short', 'wait', '');
 CREATE TABLE table1 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
 CREATE TABLE wp_table1 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
 CREATE TABLE wp_table2 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
-CREATE FOREIGN TABLE table1 (column1 INTEGER NOT NULL) SERVER ogawayama;
-CREATE FOREIGN TABLE wp_table1 (column1 INTEGER NOT NULL) SERVER ogawayama;
-CREATE FOREIGN TABLE wp_table2 (column1 INTEGER NOT NULL) SERVER ogawayama;
+CREATE FOREIGN TABLE table1 (column1 INTEGER NOT NULL) SERVER tsurugidb;
+CREATE FOREIGN TABLE wp_table1 (column1 INTEGER NOT NULL) SERVER tsurugidb;
+CREATE FOREIGN TABLE wp_table2 (column1 INTEGER NOT NULL) SERVER tsurugidb;
 
 SELECT tg_set_write_preserve('wp_table1');
 SELECT tg_set_write_preserve('wp_table2');
@@ -168,7 +168,7 @@ SELECT * FROM table1;
 SELECT tg_set_transaction('short');
 -- table preparation
 CREATE TABLE tg_table (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
-CREATE FOREIGN TABLE tg_table (column1 INTEGER NOT NULL) SERVER ogawayama;
+CREATE FOREIGN TABLE tg_table (column1 INTEGER NOT NULL) SERVER tsurugidb;
 	CREATE TABLE pg_table (column1 INTEGER NOT NULL PRIMARY KEY);
 INSERT INTO tg_table (column1) VALUES (999);
 -- Start the Tsurugi transaction
