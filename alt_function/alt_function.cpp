@@ -56,6 +56,7 @@ static constexpr const char* const TYPE_LONG_LTX = "LTX";
 static constexpr const char* const TYPE_READ_ONLY = "read_only";
 static constexpr const char* const TYPE_READ_ONLY_READ = "read";
 static constexpr const char* const TYPE_READ_ONLY_RO = "RO";
+static constexpr const char* const TYPE_READ_ONLY_RTX = "RTX";
 static constexpr const char* const TYPE_DEFAULT = "default";
 
 static constexpr const char* const PRIORITY_INTERRUPT = "interrupt";
@@ -204,7 +205,8 @@ SetTransactionOption(char* TransactionType, char* TransactionPriority, char* Tra
 			type = ogawayama::stub::TransactionType::LONG;
 		} else if (strcasecmp(TransactionType, TYPE_READ_ONLY) == 0 ||
 					strcasecmp(TransactionType, TYPE_READ_ONLY_READ) == 0 ||
-					strcasecmp(TransactionType, TYPE_READ_ONLY_RO) == 0) {
+					strcasecmp(TransactionType, TYPE_READ_ONLY_RO) == 0 ||
+					strcasecmp(TransactionType, TYPE_READ_ONLY_RTX) == 0) {
 			type = ogawayama::stub::TransactionType::READ_ONLY;
 		} else {
 			type = ogawayama::stub::TransactionType::TRANSACTION_TYPE_UNSPECIFIED;
@@ -280,6 +282,7 @@ CheckTransactionArgs(char* TransactionType, char* TransactionPriority, char* Tra
 				strcasecmp(TransactionType, TYPE_READ_ONLY) != 0 &&
 				strcasecmp(TransactionType, TYPE_READ_ONLY_READ) != 0 &&
 				strcasecmp(TransactionType, TYPE_READ_ONLY_RO) != 0 &&
+				strcasecmp(TransactionType, TYPE_READ_ONLY_RTX) != 0 &&
 				strcasecmp(TransactionType, TYPE_DEFAULT) != 0) {
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
