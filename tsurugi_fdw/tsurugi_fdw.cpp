@@ -312,7 +312,6 @@ static void tsurugiGetForeignJoinPaths(PlannerInfo *root,
 static tsurugiFdwState* create_fdwstate();
 static void free_fdwstate(tsurugiFdwState* fdw_state);
 static void store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist);
-static bool confirm_columns(MetadataPtr metadata, ForeignScanState* node);
 static void tsurugi_close_cursor();
 static void make_tuple_from_result_row(ResultSetPtr result_set, 
                                         TupleDesc tupleDescriptor,
@@ -2012,6 +2011,7 @@ tsurugi_close_cursor()
 //    fdw_info_.result_set = nullptr;
 }
 
+#if 0
 /*
  * confirm_columns
  * 	    Confirm column information between PostgreSQL and Ogawayama.
@@ -2189,6 +2189,7 @@ confirm_columns(MetadataPtr metadata, ForeignScanState* node)
 
 	return ret;
 }
+#endif
 
 /*
  * make_tuple_from_result_row
