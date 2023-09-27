@@ -15,7 +15,6 @@ SELECT tg_show_transaction();
  
 (1 row)
 
-
 /* set option */
 SELECT tg_set_transaction('OCC'); -- for Tsurugi Books
               tg_set_transaction              
@@ -209,7 +208,6 @@ SELECT tg_set_transaction('long', 'interrupt', 'regression-test');
  
 (1 row)
 
-
 /* set option (error) */
 SELECT tg_set_transaction('short transaction');
 ERROR:  Invalid Transaction Type parameter. (type: short transaction)
@@ -219,7 +217,6 @@ SELECT tg_set_transaction('short', 'exlude');
 ERROR:  Invalid Transaction Priority parameter. (priority: exlude)
 SELECT tg_set_transaction('short', 'wait', '');
 ERROR:  Invalid Transaction Label parameter. (label: empty)
-
 /* set write preserve */
 -- table preparation
 CREATE TABLE table1 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
@@ -228,7 +225,6 @@ CREATE TABLE wp_table2 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi
 CREATE FOREIGN TABLE table1 (column1 INTEGER NOT NULL) SERVER tsurugidb;
 CREATE FOREIGN TABLE wp_table1 (column1 INTEGER NOT NULL) SERVER tsurugidb;
 CREATE FOREIGN TABLE wp_table2 (column1 INTEGER NOT NULL) SERVER tsurugidb;
-
 SELECT tg_set_write_preserve('wp_table1');
            tg_set_write_preserve            
 --------------------------------------------
@@ -296,7 +292,6 @@ SELECT tg_set_transaction('short'); -- reset write preserve
  
 (1 row)
 
-
 /* set write preserve (error) */
 SELECT tg_set_write_preserve('wp_table3');
 ERROR:  Write Preserve Table is not exist in Tsurugi. (table: wp_table3)
@@ -306,7 +301,6 @@ SELECT tg_set_write_preserve(NULL);
 ERROR:  Write Preserve Table lists may not contain nulls.
 SELECT tg_set_write_preserve('wp_table1', 'wp_table2', NULL);
 ERROR:  Write Preserve Table lists may not contain nulls.
-
 /* start transaction */
 SELECT tg_start_transaction();
  tg_start_transaction 
@@ -327,7 +321,6 @@ SELECT tg_commit();
  
 (1 row)
 
-
 /* commit */
 SELECT tg_commit(); -- warning
 WARNING:  there is no transaction in progress
@@ -335,7 +328,6 @@ WARNING:  there is no transaction in progress
 -----------
  
 (1 row)
-
 
 /* rollback */
 SELECT tg_rollback(); -- warning
@@ -356,7 +348,6 @@ SELECT tg_rollback();
 -------------
  
 (1 row)
-
 
 /* Implicit transaction */
 INSERT INTO table1 (column1) VALUES (100);
@@ -379,7 +370,6 @@ SELECT * from table1;
 ---------
 (0 rows)
 
-
 /* Explicit transaction (commit) */
 SELECT tg_start_transaction();
  tg_start_transaction 
@@ -400,7 +390,6 @@ SELECT * FROM table1;
      200
 (1 row)
 
-
 SELECT tg_start_transaction();
  tg_start_transaction 
 ----------------------
@@ -420,7 +409,6 @@ SELECT * FROM table1;
      201
 (1 row)
 
-
 SELECT tg_start_transaction();
  tg_start_transaction 
 ----------------------
@@ -438,7 +426,6 @@ SELECT * from table1;
  column1 
 ---------
 (0 rows)
-
 
 /* Explicit transaction (rollback) */
 SELECT tg_start_transaction();
@@ -458,7 +445,6 @@ SELECT * FROM table1;
  column1 
 ---------
 (0 rows)
-
 
 INSERT INTO table1 (column1) VALUES (400);
 SELECT tg_start_transaction();
@@ -499,7 +485,6 @@ SELECT * FROM table1;
      400
 (1 row)
 
-
 /* Long transaction */
 SELECT tg_set_transaction('long');
               tg_set_transaction              
@@ -516,7 +501,6 @@ SELECT tg_set_transaction('long');
  }                                           +
  
 (1 row)
-
 
 SELECT tg_set_write_preserve('wp_table1', 'wp_table2');
             tg_set_write_preserve             
@@ -601,7 +585,6 @@ SELECT * FROM table1;
      400
 (1 row)
 
-
 SELECT tg_set_write_preserve('wp_table1');
             tg_set_write_preserve             
 ----------------------------------------------
@@ -679,7 +662,6 @@ SELECT * FROM table1;
      400
 (1 row)
 
-
 /* Explicit specific transaction */
 /* Execute a specific Short transaction during a Long transaction */
 SELECT tg_set_transaction('long');
@@ -739,7 +721,6 @@ SELECT * FROM table1;
      400
 (1 row)
 
-
 SELECT tg_start_transaction('short', 'default', 'specific-transaction');
  tg_start_transaction 
 ----------------------
@@ -793,7 +774,6 @@ SELECT tg_commit();
  
 (1 row)
 
-
 SELECT tg_show_transaction();
              tg_show_transaction              
 ----------------------------------------------
@@ -839,7 +819,6 @@ SELECT * FROM table1;
      400
      700
 (2 rows)
-
 
 /* Cooperation with PostgreSQL table */
 SELECT tg_set_transaction('short');
@@ -896,7 +875,6 @@ SELECT * from tg_table;
 ---------
     1000
 (1 row)
-
 
 /* clean up */
 DROP FOREIGN TABLE tg_table;
