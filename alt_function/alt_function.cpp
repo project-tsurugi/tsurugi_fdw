@@ -19,6 +19,7 @@
 
 #include <boost/foreach.hpp>
 #include <boost/property_tree/ptree.hpp>
+#define BOOST_BIND_GLOBAL_PLACEHOLDERS
 #include <boost/property_tree/json_parser.hpp>
 #include <iostream>
 
