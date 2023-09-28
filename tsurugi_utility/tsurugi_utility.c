@@ -171,7 +171,12 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 						tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
 												context, params, queryEnv,
 												dest, completionTag);
-						break;
+					}
+					else
+					{
+						standard_ProcessUtility(pstmt, queryString,
+									context, params, queryEnv,
+									dest, completionTag);
 					}
 					break;
 				}
@@ -183,7 +188,7 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 					{
 						List *names = (List *) lfirst(listptr);
 						get_relname(names, &rel);
-//						if (index_exists_in_tsurugi(rel.relname)) 
+						if (index_exists_in_tsurugi(rel.relname)) 
 						{
 							exists_in_tsurugi = true;
 							break;
@@ -194,8 +199,14 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 						tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
 												context, params, queryEnv,
 												dest, completionTag);
-						break;
 					}
+					else
+					{
+						standard_ProcessUtility(pstmt, queryString,
+									context, params, queryEnv,
+									dest, completionTag);
+					}
+					break;
 				}
 				default:
 				{
@@ -205,6 +216,7 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 					break;
 				}
 			}
+			break;
 		}
 
 		case T_DropRoleStmt: 
