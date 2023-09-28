@@ -32,6 +32,7 @@ extern "C"
 }
 #endif
 
+#include "tg_common.h"
 #include "send_message.h"
 #include "drop_table_executor.h"
 #include "drop_table.h"

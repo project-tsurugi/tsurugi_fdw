@@ -17,6 +17,7 @@
  *	@brief  Dispatch the create-table command to ogawayama.
  */
 #include <memory>
+#include "tg_common.h"
 #include "manager/metadata/tables.h"
 #include "manager/metadata/index.h"
 #include "manager/metadata/indexes.h"

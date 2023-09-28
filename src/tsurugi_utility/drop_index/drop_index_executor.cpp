@@ -14,6 +14,7 @@
  * limitations under the License.
  *
  */
+#include "tg_common.h"
 #include "ogawayama/stub/api.h"
 
 #include "manager/message/ddl_message.h"
