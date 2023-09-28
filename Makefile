@@ -18,7 +18,7 @@ OBJS = common/init.o common/tsurugi.o \
         tsurugi_utility/alter_table/alter_table_executor.o tsurugi_utility/alter_table/alter_table.o \
 		tsurugi_utility/alter_role/alter_role.o \
 		tsurugi_utility/prepare_execute/prepare_execute.o \
-        alt_function/alt_function.o \
+        tsurugi_udf/tsurugi_udf.o \
         $(WIN32RES)
 
 EXTENSION = tsurugi_fdw
