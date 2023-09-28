@@ -5,7 +5,7 @@ tg_show_transaction - デフォルトのトランザクション特性の値を�
 ## 概要
 
 ```
-tg_show_transaction([transaction_type [, priority [, label ] ] ])
+tg_show_transaction()
 ```
 
 ## 説明
@@ -22,16 +22,19 @@ tsurugiトランザクションのデフォルトのトランザクション特�
 
 ```sql
 postgres=# SELECT tg_show_transaction();
-              tg_transaction
+             tg_show_transaction              
 ----------------------------------------------
-{                                           +
-    "transactionType": "1",                 +
-    "transactionPriority": "0",             +
-    "transactionLabel": "pgsql-transaction",+
-    "writePreserve": [                      +
-    ]                                       +
-}                                           +
-
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
 (1 row)
 ```
 

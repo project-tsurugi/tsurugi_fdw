@@ -26,7 +26,7 @@ TsurugiのLongトランザクションでは、トランザクションの実行
 
 ```sql
 SELECT tg_set_transaction('long');
-              tg_transaction
+              tg_set_transaction
 --------------------------------------------------
 {                                                +
     "transactionType": "2",                      +
@@ -39,7 +39,7 @@ SELECT tg_set_transaction('long');
 (1 row)
 
 SELECT tg_set_write_preserve('tg_table1', 'tg_table2', 'tg_table3');
-              tg_transaction
+              tg_set_write_preserve
 --------------------------------------------------
 {                                                +
     "transactionType": "2",                      +
@@ -65,7 +65,7 @@ SELECT tg_set_write_preserve('tg_table1', 'tg_table2', 'tg_table3');
 
 ```sql
 SELECT tg_set_write_preserve('tg_another_table1', 'tg_another_table2');
-              tg_set_transaction
+              tg_set_write_preserve
 --------------------------------------------------
 {                                                +
     "transactionType": "2",                      +

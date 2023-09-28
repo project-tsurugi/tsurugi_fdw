@@ -1,0 +1,888 @@
+/* show default option */
+SELECT tg_show_transaction();
+             tg_show_transaction              
+----------------------------------------------
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+/* set option */
+SELECT tg_set_transaction('OCC'); -- for Tsurugi Books
+              tg_set_transaction              
+----------------------------------------------
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_transaction('LTX'); -- for Tsurugi Books
+              tg_set_transaction              
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_transaction('RTX'); -- for Tsurugi Books
+              tg_set_transaction              
+----------------------------------------------
+ {                                           +
+     "transactionType": "3",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_transaction('long');
+              tg_set_transaction              
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_transaction('read_only');
+              tg_set_transaction              
+----------------------------------------------
+ {                                           +
+     "transactionType": "3",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_transaction('default');
+              tg_set_transaction              
+----------------------------------------------
+ {                                           +
+     "transactionType": "0",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_transaction('Short', 'interrupt');
+              tg_set_transaction              
+----------------------------------------------
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "1",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_transaction('Long', 'wait');
+              tg_set_transaction              
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "2",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_transaction('Read_Only', 'interrupt_exclude');
+              tg_set_transaction              
+----------------------------------------------
+ {                                           +
+     "transactionType": "3",                 +
+     "transactionPriority": "3",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_transaction('DEFAULT', 'wait_exclude');
+              tg_set_transaction              
+----------------------------------------------
+ {                                           +
+     "transactionType": "0",                 +
+     "transactionPriority": "4",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_transaction('short', 'default');
+              tg_set_transaction              
+----------------------------------------------
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_transaction('long', 'interrupt', 'regression-test');
+             tg_set_transaction             
+--------------------------------------------
+ {                                         +
+     "transactionType": "2",               +
+     "transactionPriority": "1",           +
+     "transactionLabel": "regression-test",+
+     "writePreserve": [                    +
+         {                                 +
+             "tableName": ""               +
+         }                                 +
+     ]                                     +
+ }                                         +
+ 
+(1 row)
+
+/* set option (error) */
+SELECT tg_set_transaction('short transaction');
+ERROR:  Invalid Transaction Type parameter. (type: short transaction)
+SELECT tg_set_transaction('wait');
+ERROR:  Invalid Transaction Type parameter. (type: wait)
+SELECT tg_set_transaction('short', 'exlude');
+ERROR:  Invalid Transaction Priority parameter. (priority: exlude)
+SELECT tg_set_transaction('short', 'wait', '');
+ERROR:  Invalid Transaction Label parameter. (label: empty)
+/* set write preserve */
+-- table preparation
+CREATE TABLE table1 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
+CREATE TABLE wp_table1 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
+CREATE TABLE wp_table2 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
+CREATE FOREIGN TABLE table1 (column1 INTEGER NOT NULL) SERVER tsurugidb;
+CREATE FOREIGN TABLE wp_table1 (column1 INTEGER NOT NULL) SERVER tsurugidb;
+CREATE FOREIGN TABLE wp_table2 (column1 INTEGER NOT NULL) SERVER tsurugidb;
+SELECT tg_set_write_preserve('wp_table1');
+           tg_set_write_preserve            
+--------------------------------------------
+ {                                         +
+     "transactionType": "2",               +
+     "transactionPriority": "1",           +
+     "transactionLabel": "regression-test",+
+     "writePreserve": [                    +
+         {                                 +
+             "tableName": "wp_table1"      +
+         }                                 +
+     ]                                     +
+ }                                         +
+ 
+(1 row)
+
+SELECT tg_set_write_preserve('wp_table2');
+           tg_set_write_preserve            
+--------------------------------------------
+ {                                         +
+     "transactionType": "2",               +
+     "transactionPriority": "1",           +
+     "transactionLabel": "regression-test",+
+     "writePreserve": [                    +
+         {                                 +
+             "tableName": "wp_table2"      +
+         }                                 +
+     ]                                     +
+ }                                         +
+ 
+(1 row)
+
+SELECT tg_set_write_preserve('wp_table1', 'wp_table2');
+           tg_set_write_preserve            
+--------------------------------------------
+ {                                         +
+     "transactionType": "2",               +
+     "transactionPriority": "1",           +
+     "transactionLabel": "regression-test",+
+     "writePreserve": [                    +
+         {                                 +
+             "tableName": "wp_table1"      +
+         },                                +
+         {                                 +
+             "tableName": "wp_table2"      +
+         }                                 +
+     ]                                     +
+ }                                         +
+ 
+(1 row)
+
+SELECT tg_set_transaction('short'); -- reset write preserve
+              tg_set_transaction              
+----------------------------------------------
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "1",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+/* set write preserve (error) */
+SELECT tg_set_write_preserve('wp_table3');
+ERROR:  Write Preserve Table is not exist in Tsurugi. (table: wp_table3)
+SELECT tg_set_write_preserve('wp_table1', 'wp_table2', 'wp_table3');
+ERROR:  Write Preserve Table is not exist in Tsurugi. (table: wp_table3)
+SELECT tg_set_write_preserve(NULL);
+ERROR:  Write Preserve Table lists may not contain nulls.
+SELECT tg_set_write_preserve('wp_table1', 'wp_table2', NULL);
+ERROR:  Write Preserve Table lists may not contain nulls.
+/* start transaction */
+SELECT tg_start_transaction();
+ tg_start_transaction 
+----------------------
+ 
+(1 row)
+
+SELECT tg_start_transaction(); -- warning
+WARNING:  there is already a tsurugi transaction in progress
+ tg_start_transaction 
+----------------------
+ 
+(1 row)
+
+SELECT tg_commit();
+ tg_commit 
+-----------
+ 
+(1 row)
+
+/* commit */
+SELECT tg_commit(); -- warning
+WARNING:  there is no transaction in progress
+ tg_commit 
+-----------
+ 
+(1 row)
+
+/* rollback */
+SELECT tg_rollback(); -- warning
+WARNING:  there is no transaction in progress.
+ tg_rollback 
+-------------
+ 
+(1 row)
+
+SELECT tg_start_transaction();
+ tg_start_transaction 
+----------------------
+ 
+(1 row)
+
+SELECT tg_rollback();
+ tg_rollback 
+-------------
+ 
+(1 row)
+
+/* Implicit transaction */
+INSERT INTO table1 (column1) VALUES (100);
+SELECT * FROM table1;
+ column1 
+---------
+     100
+(1 row)
+
+UPDATE table1 SET column1 = column1+1;
+SELECT * FROM table1;
+ column1 
+---------
+     101
+(1 row)
+
+DELETE FROM table1 WHERE column1 = 101;
+SELECT * from table1;
+ column1 
+---------
+(0 rows)
+
+/* Explicit transaction (commit) */
+SELECT tg_start_transaction();
+ tg_start_transaction 
+----------------------
+ 
+(1 row)
+
+INSERT INTO table1 (column1) VALUES (200);
+SELECT tg_commit();
+ tg_commit 
+-----------
+ 
+(1 row)
+
+SELECT * FROM table1;
+ column1 
+---------
+     200
+(1 row)
+
+SELECT tg_start_transaction();
+ tg_start_transaction 
+----------------------
+ 
+(1 row)
+
+UPDATE table1 SET column1 = column1+1;
+SELECT tg_commit();
+ tg_commit 
+-----------
+ 
+(1 row)
+
+SELECT * FROM table1;
+ column1 
+---------
+     201
+(1 row)
+
+SELECT tg_start_transaction();
+ tg_start_transaction 
+----------------------
+ 
+(1 row)
+
+DELETE FROM table1 WHERE column1 = 201;
+SELECT tg_commit();
+ tg_commit 
+-----------
+ 
+(1 row)
+
+SELECT * from table1;
+ column1 
+---------
+(0 rows)
+
+/* Explicit transaction (rollback) */
+SELECT tg_start_transaction();
+ tg_start_transaction 
+----------------------
+ 
+(1 row)
+
+INSERT INTO table1 (column1) VALUES (300);
+SELECT tg_rollback();
+ tg_rollback 
+-------------
+ 
+(1 row)
+
+SELECT * FROM table1;
+ column1 
+---------
+(0 rows)
+
+INSERT INTO table1 (column1) VALUES (400);
+SELECT tg_start_transaction();
+ tg_start_transaction 
+----------------------
+ 
+(1 row)
+
+UPDATE table1 SET column1 = column1+1;
+SELECT tg_rollback();
+ tg_rollback 
+-------------
+ 
+(1 row)
+
+SELECT * FROM table1;
+ column1 
+---------
+     400
+(1 row)
+
+SELECT tg_start_transaction();
+ tg_start_transaction 
+----------------------
+ 
+(1 row)
+
+DELETE FROM table1 WHERE column1 = 400;
+SELECT tg_rollback();
+ tg_rollback 
+-------------
+ 
+(1 row)
+
+SELECT * FROM table1;
+ column1 
+---------
+     400
+(1 row)
+
+/* Long transaction */
+SELECT tg_set_transaction('long');
+              tg_set_transaction              
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "1",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_write_preserve('wp_table1', 'wp_table2');
+            tg_set_write_preserve             
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "1",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": "wp_table1"        +
+         },                                  +
+         {                                   +
+             "tableName": "wp_table2"        +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+INSERT INTO wp_table1 (column1) VALUES (100);
+INSERT INTO wp_table2 (column1) VALUES (100);
+INSERT INTO table1 (column1) VALUES (500); -- error
+ERROR:  Tsurugi::execute_statement() failed. (10)
+SELECT * FROM wp_table1;
+ column1 
+---------
+     100
+(1 row)
+
+SELECT * FROM wp_table2;
+ column1 
+---------
+     100
+(1 row)
+
+SELECT * FROM table1;
+ column1 
+---------
+     400
+(1 row)
+
+UPDATE wp_table1 SET column1 = column1+1;
+UPDATE wp_table2 SET column1 = column1+1;
+UPDATE table1 SET column1 = column1+1; -- error
+ERROR:  Tsurugi::execute_statement() failed. (10)
+SELECT * FROM wp_table1;
+ column1 
+---------
+     101
+(1 row)
+
+SELECT * FROM wp_table2;
+ column1 
+---------
+     101
+(1 row)
+
+SELECT * FROM table1;
+ column1 
+---------
+     400
+(1 row)
+
+DELETE FROM wp_table1 WHERE column1 = 101;
+DELETE FROM wp_table2 WHERE column1 = 101;
+DELETE FROM table1 WHERE column1 = 400; -- error
+ERROR:  Tsurugi::execute_statement() failed. (10)
+SELECT * FROM wp_table1;
+ column1 
+---------
+(0 rows)
+
+SELECT * FROM wp_table2;
+ column1 
+---------
+(0 rows)
+
+SELECT * FROM table1;
+ column1 
+---------
+     400
+(1 row)
+
+SELECT tg_set_write_preserve('wp_table1');
+            tg_set_write_preserve             
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "1",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": "wp_table1"        +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+INSERT INTO wp_table1 (column1) VALUES (200);
+INSERT INTO wp_table2 (column1) VALUES (200); -- error
+ERROR:  Tsurugi::execute_statement() failed. (10)
+INSERT INTO table1 (column1) VALUES (500); -- error
+ERROR:  Tsurugi::execute_statement() failed. (10)
+SELECT * FROM wp_table1;
+ column1 
+---------
+     200
+(1 row)
+
+SELECT * FROM wp_table2;
+ column1 
+---------
+(0 rows)
+
+SELECT * FROM table1;
+ column1 
+---------
+     400
+(1 row)
+
+UPDATE wp_table1 SET column1 = column1+1;
+UPDATE table1 SET column1 = column1+1; -- error
+ERROR:  Tsurugi::execute_statement() failed. (10)
+SELECT * FROM wp_table1;
+ column1 
+---------
+     201
+(1 row)
+
+SELECT * FROM wp_table2;
+ column1 
+---------
+(0 rows)
+
+SELECT * FROM table1;
+ column1 
+---------
+     400
+(1 row)
+
+DELETE FROM wp_table1 WHERE column1 = 201;
+DELETE FROM table1 WHERE column1 = 400; -- error
+ERROR:  Tsurugi::execute_statement() failed. (10)
+SELECT * FROM wp_table1;
+ column1 
+---------
+(0 rows)
+
+SELECT * FROM wp_table2;
+ column1 
+---------
+(0 rows)
+
+SELECT * FROM table1;
+ column1 
+---------
+     400
+(1 row)
+
+/* Explicit specific transaction */
+/* Execute a specific Short transaction during a Long transaction */
+SELECT tg_set_transaction('long');
+              tg_set_transaction              
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "1",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": "wp_table1"        +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_write_preserve('wp_table1', 'wp_table2');
+            tg_set_write_preserve             
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "1",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": "wp_table1"        +
+         },                                  +
+         {                                   +
+             "tableName": "wp_table2"        +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+INSERT INTO wp_table1 (column1) VALUES (300);
+INSERT INTO wp_table2 (column1) VALUES (300);
+INSERT INTO table1 (column1) VALUES (600); -- error
+ERROR:  Tsurugi::execute_statement() failed. (10)
+SELECT * FROM wp_table1;
+ column1 
+---------
+     300
+(1 row)
+
+SELECT * FROM wp_table2;
+ column1 
+---------
+     300
+(1 row)
+
+SELECT * FROM table1;
+ column1 
+---------
+     400
+(1 row)
+
+SELECT tg_start_transaction('short', 'default', 'specific-transaction');
+ tg_start_transaction 
+----------------------
+ 
+(1 row)
+
+SELECT tg_show_transaction();
+INFO:  there is a specific tsurugi transaction block is in progress.
+               tg_show_transaction               
+-------------------------------------------------
+ {                                              +
+     "transactionType": "1",                    +
+     "transactionPriority": "0",                +
+     "transactionLabel": "specific-transaction",+
+     "writePreserve": [                         +
+         {                                      +
+             "tableName": ""                    +
+         }                                      +
+     ]                                          +
+ }                                              +
+ 
+(1 row)
+
+INSERT INTO wp_table1 (column1) VALUES (400);
+INSERT INTO wp_table2 (column1) VALUES (400);
+INSERT INTO table1 (column1) VALUES (700);
+SELECT * FROM wp_table1;
+ column1 
+---------
+     300
+     400
+(2 rows)
+
+SELECT * FROM wp_table2;
+ column1 
+---------
+     300
+     400
+(2 rows)
+
+SELECT * FROM table1;
+ column1 
+---------
+     400
+     700
+(2 rows)
+
+SELECT tg_commit();
+ tg_commit 
+-----------
+ 
+(1 row)
+
+SELECT tg_show_transaction();
+             tg_show_transaction              
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "1",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": "wp_table1"        +
+         },                                  +
+         {                                   +
+             "tableName": "wp_table2"        +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+INSERT INTO wp_table1 (column1) VALUES (500);
+INSERT INTO wp_table2 (column1) VALUES (500);
+INSERT INTO table1 (column1) VALUES (800); -- error
+ERROR:  Tsurugi::execute_statement() failed. (10)
+SELECT * FROM wp_table1;
+ column1 
+---------
+     300
+     400
+     500
+(3 rows)
+
+SELECT * FROM wp_table2;
+ column1 
+---------
+     300
+     400
+     500
+(3 rows)
+
+SELECT * FROM table1;
+ column1 
+---------
+     400
+     700
+(2 rows)
+
+/* Cooperation with PostgreSQL table */
+SELECT tg_set_transaction('short');
+              tg_set_transaction              
+----------------------------------------------
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "1",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+-- table preparation
+CREATE TABLE tg_table (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
+CREATE FOREIGN TABLE tg_table (column1 INTEGER NOT NULL) SERVER tsurugidb;
+	CREATE TABLE pg_table (column1 INTEGER NOT NULL PRIMARY KEY);
+INSERT INTO tg_table (column1) VALUES (999);
+-- Start the Tsurugi transaction
+SELECT tg_start_transaction();
+ tg_start_transaction 
+----------------------
+ 
+(1 row)
+
+-- Update the Tsurugi table
+UPDATE tg_table SET column1 = column1+1;
+	BEGIN;
+	-- Insert pre-commit Tsurugi table into PostgreSQL table
+	INSERT INTO pg_table SELECT column1 from tg_table;
+-- Abort the Tsuguri transaction
+SELECT tg_rollback();
+ tg_rollback 
+-------------
+ 
+(1 row)
+
+	COMMIT;
+-- Updates to the Tsurugi table are discarded(999)
+SELECT * from tg_table;
+ column1 
+---------
+     999
+(1 row)
+
+	-- Do not discard updates to PostgreSQL tables(1000)
+	SELECT * from pg_table;
+ column1 
+---------
+    1000
+(1 row)
+
+/* clean up */
+DROP FOREIGN TABLE tg_table;
+DROP FOREIGN TABLE table1;
+DROP FOREIGN TABLE wp_table1;
+DROP FOREIGN TABLE wp_table2;
+DROP TABLE tg_table;
+DROP TABLE pg_table;
+DROP TABLE table1;
+DROP TABLE wp_table1;
+DROP TABLE wp_table2;
