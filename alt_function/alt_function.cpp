@@ -25,6 +25,7 @@
 
 #include "ogawayama/stub/transaction_option.h"
 #include "manager/metadata/metadata_factory.h"
+#include "tg_common.h"
 #include "tsurugi.h"
 
 #ifdef __cplusplus
@@ -314,7 +315,7 @@ CheckTransactionArgs(char* TransactionType, char* TransactionPriority, char* Tra
 	}
 
 	if (WritePreserveTables != NIL) {
-		auto tables = manager::metadata::get_tables_ptr("Tsurugi");
+		auto tables = manager::metadata::get_tables_ptr(TG_DATABASE_NAME);
 		ListCell* listptr;
 		foreach(listptr, WritePreserveTables) {
 			Node* node = (Node *) lfirst(listptr);

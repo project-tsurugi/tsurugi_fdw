@@ -53,9 +53,6 @@ extern "C" {
 
 #include "drop_role.h"
 
-/* DB name metadata-manager manages */
-const std::string DBNAME = "Tsurugi";
-
 static bool send_message(message::Message* message,
                          std::unique_ptr<metadata::Metadata>& objects);
 
@@ -119,7 +116,7 @@ bool after_drop_role(const DropRoleStmt* stmts, const int64_t objectIdList[]) {
 
   for (auto i = 0; i < stmts->roles->length; i++) {
     message::DropRole drop_table{objectIdList[i]};
-    std::unique_ptr<metadata::Metadata> roles{new metadata::Roles(DBNAME)};
+    std::unique_ptr<metadata::Metadata> roles{new metadata::Roles(TG_DATABASE_NAME)};
     if (!send_message(&drop_table, roles)) {
       send_message_success = false;
     }

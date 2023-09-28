@@ -22,6 +22,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include "manager/metadata/metadata.h"
 #include "manager/metadata/tables.h"
+#include "tg_common.h"
 #include "command/index_command.h"
 
 class CreateIndex : public IndexCommand {

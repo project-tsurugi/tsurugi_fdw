@@ -18,6 +18,7 @@
  */
 #pragma once
 
+#include "tg_common.h"
 #include "command/alter_table_command.h"
 
 class AlterTable : public AlterTableCommand {

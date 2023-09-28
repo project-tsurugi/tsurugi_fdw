@@ -20,6 +20,8 @@
 #ifndef PREPARE_EXECUTE_H
 #define PREPARE_EXECUTE_H
 
+#include "tg_common.h"
+
 #ifdef __cplusplus
 extern "C" {
 

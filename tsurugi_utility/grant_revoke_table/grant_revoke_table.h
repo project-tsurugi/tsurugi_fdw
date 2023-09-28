@@ -20,6 +20,8 @@
 #ifndef GRANT_REVOKE_TABLE_H
 #define GRANT_REVOKE_TABLE_H
 
+#include "tg_common.h"
+
 #ifdef __cplusplus
 extern "C" {
 

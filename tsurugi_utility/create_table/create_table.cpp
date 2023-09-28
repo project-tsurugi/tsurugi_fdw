@@ -250,7 +250,7 @@ bool CreateTable::validate_data_type() const
   CreateStmt* create_stmt = this->create_stmt();
   List *table_elts = create_stmt->tableElts;
   ListCell *l;
-  auto datatypes = std::make_unique<metadata::DataTypes>("tsurugi");
+  auto datatypes = std::make_unique<metadata::DataTypes>(TG_DATABASE_NAME);
 
   /*
     * List of TypeName structure's member "names" not supported by Tsurugi.
@@ -414,7 +414,7 @@ bool CreateTable::generate_column_metadata(ColumnDef* column_def,
 	assert(column_def != NULL);
 
 	bool result = false;
-	auto datatypes = std::make_unique<metadata::DataTypes>("tsurugi");
+	auto datatypes = std::make_unique<metadata::DataTypes>(TG_DATABASE_NAME);
 
 	/* ordinalPosition  */
 	column.column_number = ordinal_position;

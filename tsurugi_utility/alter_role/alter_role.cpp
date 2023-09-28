@@ -52,9 +52,6 @@ using namespace ogawayama;
 
 #include "alter_role.h"
 
-/* DB name metadata-manager manages */
-const std::string DBNAME = "Tsurugi";
-
 static bool send_message(message::Message* message,
                   std::unique_ptr<metadata::Metadata>& objects);
 
@@ -70,11 +67,11 @@ bool after_alter_role(const AlterRoleStmt* stmts) {
   metadata::ObjectId object_id = 0;
 
   /* Call the function sending metadata to metadata-manager. */
-  bool success = get_roleid_by_rolename(DBNAME,stmts->role->rolename, &object_id);
+  bool success = get_roleid_by_rolename(TG_DATABASE_NAME,stmts->role->rolename, &object_id);
 
   if (success) {
     message::AlterRole alter_role{object_id};
-    std::unique_ptr<metadata::Metadata> roles{new metadata::Roles(DBNAME)};
+    std::unique_ptr<metadata::Metadata> roles{new metadata::Roles(TG_DATABASE_NAME)};
     success = send_message(&alter_role, roles);
   }
 

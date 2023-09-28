@@ -1,3 +1,4 @@
+#include "tg_common.h"
 #include "command/drop_command.h"
 
 #ifdef __cplusplus
