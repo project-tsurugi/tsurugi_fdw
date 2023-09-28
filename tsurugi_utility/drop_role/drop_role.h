@@ -20,6 +20,8 @@
 #ifndef DROP_ROLE_H
 #define DROP_ROLE_H
 
+#include "tg_common.h"
+
 #ifdef __cplusplus
 extern "C" {
 

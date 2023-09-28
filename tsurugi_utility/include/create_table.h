@@ -20,6 +20,7 @@
 #include <vector>
 #include <unordered_set>
 #include <boost/property_tree/ptree.hpp>
+#include "tg_common.h"
 #include "command/create_command.h"
 #include "manager/metadata/tables.h"
 

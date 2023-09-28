@@ -20,6 +20,8 @@
 #ifndef ALTER_ROLE_H
 #define ALTER_ROLE_H
 
+#include "tg_common.h"
+
 #ifdef __cplusplus
 extern "C" {
 

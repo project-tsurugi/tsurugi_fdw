@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 tsurugi project.
+ * Copyright 2023 tsurugi project.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	create_role.h
- *	@brief  Dispatch the create-role command to ogawayama.
+ *	@file	fe_common.h
+ *	@brief  Common definitions referenced.
  */
+#pragma once
 
-#ifndef CREATE_ROLE_H
-#define CREATE_ROLE_H
+static const char* const TG_DATABASE_NAME = "tsurugi";
 
-#include "tg_common.h"
-
-#ifdef __cplusplus
-extern "C" {
-
-#endif
-
-bool after_create_role(const CreateRoleStmt* stmts);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif  // CREATE_ROLE_H

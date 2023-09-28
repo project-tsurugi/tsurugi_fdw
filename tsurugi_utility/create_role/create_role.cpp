@@ -51,9 +51,6 @@ using namespace ogawayama;
 #include "syscachecmds.h"
 #include "create_role.h"
 
-/* DB name metadata-manager manages */
-const std::string DBNAME = "Tsurugi";
-
 static bool send_message(message::Message* message,
                   std::unique_ptr<metadata::Metadata>& objects);
 
@@ -73,7 +70,7 @@ bool after_create_role(const CreateRoleStmt* stmts) {
 
   if (success) {
     message::CreateRole cr_msg{object_id};
-    std::unique_ptr<metadata::Metadata> roles{new metadata::Roles(DBNAME)};
+    std::unique_ptr<metadata::Metadata> roles{new metadata::Roles(TG_DATABASE_NAME)};
     success = send_message(&cr_msg, roles);
   }
 
