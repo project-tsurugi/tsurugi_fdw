@@ -315,7 +315,7 @@ CheckTransactionArgs(char* TransactionType, char* TransactionPriority, char* Tra
 	}
 
 	if (WritePreserveTables != NIL) {
-		auto tables = manager::metadata::get_tables_ptr(TG_DATABASE_NAME);
+		auto tables = manager::metadata::get_tables_ptr(TSURUGI_DB_NAME);
 		ListCell* listptr;
 		foreach(listptr, WritePreserveTables) {
 			Node* node = (Node *) lfirst(listptr);

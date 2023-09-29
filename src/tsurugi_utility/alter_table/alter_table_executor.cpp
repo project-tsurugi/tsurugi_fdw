@@ -38,7 +38,7 @@ int64_t execute_alter_table(AlterTableStmt* alter_table_stmt)
 	assert(alter_table_stmt != NULL);
 
 	ObjectId object_id = metadata::INVALID_OBJECT_ID;
-	auto tables = metadata::get_tables_ptr(TG_DATABASE_NAME);
+	auto tables = metadata::get_tables_ptr(TSURUGI_DB_NAME);
     AlterTable alter_table{alter_table_stmt};
 
     alter_table.validate_syntax();

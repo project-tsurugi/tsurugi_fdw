@@ -18,5 +18,5 @@
  */
 #pragma once
 
-static const char* const TG_DATABASE_NAME = "tsurugi";
+static const char* const TSURUGI_DB_NAME = "tsurugi";
 
