@@ -282,7 +282,7 @@
 
 	- 修正後
 
-		`loggin_collector`を`on`に、`log_min_messages`は目的に合わせて適切な値を選択する。  
+		`logging_collector`を`on`に、`log_min_messages`は目的に合わせて適切な値を選択する。  
     		コメント開始記号("#")を削除する。
 		
 
