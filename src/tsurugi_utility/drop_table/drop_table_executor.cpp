@@ -51,7 +51,7 @@ using namespace ogawayama;
  */
 bool table_exists_in_tsurugi(const char *relname)
 {
-  	auto tables = get_tables_ptr(TG_DATABASE_NAME);
+  	auto tables = get_tables_ptr(TSURUGI_DB_NAME);
   	return tables->exists(relname);
 }
 
@@ -77,7 +77,7 @@ bool execute_drop_table(DropStmt* drop_stmt, const char* relname)
 
     /* Get the object ID of the table to be deleted */
 	Table table;
-    auto tables = get_tables_ptr(TG_DATABASE_NAME);
+    auto tables = get_tables_ptr(TSURUGI_DB_NAME);
     metadata::ErrorCode error = tables->get(relname, table);
 	if (error != ErrorCode::OK) {
         if (error == ErrorCode::NAME_NOT_FOUND && drop_stmt->missing_ok) {
@@ -106,7 +106,7 @@ bool execute_drop_table(DropStmt* drop_stmt, const char* relname)
 
 	/* remove index metadata */
 #if 1
-	auto indexes = metadata::get_indexes_ptr(TG_DATABASE_NAME);
+	auto indexes = metadata::get_indexes_ptr(TSURUGI_DB_NAME);
 	std::vector<boost::property_tree::ptree> index_elements = {};
 	error = indexes->get_all(index_elements);
     if (error != ErrorCode::OK) {
@@ -133,7 +133,7 @@ bool execute_drop_table(DropStmt* drop_stmt, const char* relname)
 		}
 	}
 #else
-	auto indexes = metadata::get_index_metadata(TG_DATABASE_NAME);
+	auto indexes = metadata::get_index_metadata(TSURUGI_DB_NAME);
 	std::vector<metadata::Index> index_elements = {};
 	error = indexes->get_all(index_elements);
     if (error != ErrorCode::OK) {

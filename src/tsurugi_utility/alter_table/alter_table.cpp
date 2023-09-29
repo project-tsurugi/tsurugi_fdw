@@ -89,7 +89,7 @@ bool AlterTable::get_constraint_metadata(Constraint* constr,
 	bool result{false};
 
 	if (constr->contype == CONSTR_FOREIGN) {
-		auto tables = metadata::get_tables_ptr(TG_DATABASE_NAME);
+		auto tables = metadata::get_tables_ptr(TSURUGI_DB_NAME);
 		metadata::ErrorCode error = metadata::ErrorCode::NOT_FOUND;
 
 		/* put constraint name metadata */

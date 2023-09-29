@@ -81,7 +81,7 @@ int64_t execute_create_table(CreateStmt* create_stmt)
 		return  object_id;
 	}
 
-	auto tables = metadata::get_tables_ptr(TG_DATABASE_NAME);
+	auto tables = metadata::get_tables_ptr(TSURUGI_DB_NAME);
 	metadata::ErrorCode error = tables->add(table, &object_id);
 	if (error != metadata::ErrorCode::OK ) {
 		if (error == metadata::ErrorCode::ALREADY_EXISTS) {
@@ -163,7 +163,7 @@ bool send_create_table_message(const int64_t object_id)
 bool remove_table_metadata(const int64_t object_id)
 {
   bool result{false};
-  auto tables = std::make_unique<metadata::Tables>(TG_DATABASE_NAME);
+  auto tables = std::make_unique<metadata::Tables>(TSURUGI_DB_NAME);
 
   if (tables->exists(object_id)) {
     metadata::ErrorCode error = tables->remove(object_id);
