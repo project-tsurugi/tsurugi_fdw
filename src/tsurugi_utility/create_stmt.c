@@ -50,7 +50,7 @@ void execute_create_stmt(PlannedStmt *pstmt,
     ListCell  *l;
     ObjectAddress address;
     ObjectAddress secondaryObject = InvalidObjectAddress;
-    int64_t  object_id = -1;
+    int64_t  table_id = -1;
 	bool success;
 
     /* ... and do it */
@@ -63,15 +63,24 @@ void execute_create_stmt(PlannedStmt *pstmt,
               table, foreign table, partition table, TOAST table, 
               index, partioned index, 
               view, materialized-view, complex type, */
-            object_id = do_create_stmt(pstmt, queryString, (CreateStmt *) stmt);
+            table_id = do_create_stmt(pstmt, queryString, (CreateStmt *) stmt);
+            if (table_id == -1)
+            {
+                elog(ERROR, "Failed to create a table.");
+            }
         }
         else if (IsA(stmt, IndexStmt))
         {
-            object_id = execute_create_index((IndexStmt*) stmt);
+            int64_t index_id = -1;
+            index_id = execute_create_index((IndexStmt*) stmt);
+            if (index_id == -1)
+            {
+                elog(ERROR, "Failed to create a index in creating a table.");
+            }
         }
         else if (IsA(stmt, AlterTableStmt))
         {
-            object_id = execute_alter_table((AlterTableStmt*) stmt);
+            table_id = execute_alter_table((AlterTableStmt*) stmt);
         }
         else if (IsA(stmt, CreateForeignTableStmt))
         {
@@ -94,9 +103,9 @@ void execute_create_stmt(PlannedStmt *pstmt,
                   	errdetail("Tsurugi does not support FOREIGN KEY table constraint")));
         }
     }
-    success = send_create_table_message(object_id);
+    success = send_create_table_message(table_id);
 	if (!success) {
-		remove_table_metadata(object_id);
+		remove_table_metadata(table_id);
 	}
 }
 

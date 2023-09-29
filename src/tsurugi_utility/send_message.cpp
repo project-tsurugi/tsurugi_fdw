@@ -44,6 +44,11 @@ bool send_message(message::Message& message)
 {
   bool ret_value = false;
 
+  elog(LOG,
+        "tsurugi_fdw send a message to ogawayama. " \
+        "(%s, param1: %ld, param2: %ld)",
+        message.string(), message.param1(), message.param2());
+
   stub::Connection* connection;
   ERROR_CODE error = Tsurugi::get_connection(&connection);
   if (error != ERROR_CODE::OK) {

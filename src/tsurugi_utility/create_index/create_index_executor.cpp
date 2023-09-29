@@ -40,58 +40,61 @@ int64_t execute_create_index(IndexStmt* index_stmt)
 {
 	assert(index_stmt != NULL);
 
-	ObjectId object_id = metadata::INVALID_OBJECT_ID;
+	ObjectId idnex_id = metadata::INVALID_OBJECT_ID;
     auto indexes = metadata::get_indexes_ptr(TG_DATABASE_NAME);
     CreateIndex create_index{index_stmt};
 
     create_index.validate_syntax();
 	create_index.validate_data_type();
 
+	// Create index metadata.
 	metadata::Index index;
 	bool success = create_index.generate_metadata(index);
 	if (!success) {
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				errmsg("Create Table command failed to create indexes." \
-				" (name: %s)",
+				errmsg("Failed to generate index metadata. " \
+				" (table name: %s)",
 				(const char*) create_index.get_table_name())));
 	}
-	ErrorCode error = indexes->add(index, &object_id);
+	ErrorCode error = indexes->add(index, &idnex_id);
 	if (error != ErrorCode::OK) {
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				errmsg("Create Table command failed to create indexes. " \
+				errmsg("Failed to add index metadata. " \
 				"(table name: %s) (index name: %s) (error:%d)",
 				(const char*) create_index.get_table_name(), 
 				index.name.c_str(), (int) error)));
 	}
 
-	// Constraint metadata
+	// Create constraint metadata.
 	auto tables = metadata::get_tables_ptr(TG_DATABASE_NAME);
 	metadata::Table table_constraint;
+	ObjectId constraint_id = metadata::INVALID_OBJECT_ID;
 	error = tables->get(create_index.get_table_name(), table_constraint);
 	if (error != metadata::ErrorCode::OK) {
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				errmsg("The table is not found when registing constraints. (name: %s) (error:%d)",
 				(char*) create_index.get_table_name(), (int) error)));
-		return object_id;
+		return constraint_id;
 	}
-	object_id = table_constraint.id;
+	constraint_id = table_constraint.id;
 	error = create_index.generate_constraint_metadata(table_constraint);
 	if (error != metadata::ErrorCode::NOT_FOUND) {
 		if (error != metadata::ErrorCode::OK) {
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					errmsg("CreateIndex::generate_constraint_metadata() failed.")));
-			return object_id;
+			return constraint_id;
 		}
-		error = tables->update(object_id, table_constraint);
+		error = tables->update(constraint_id, table_constraint);
 		if (error != metadata::ErrorCode::OK) {
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					errmsg("Update a table metadata failed when registing constraints. " \
 					"(name: %s) (error:%d)", table_constraint.name.data(), (int) error)));
+			return constraint_id;
 		}
 	}
 
@@ -130,30 +133,19 @@ int64_t execute_create_index(IndexStmt* index_stmt)
 	}
 #endif
 
-	return object_id;
-}
-
-/**
- * @brief	Send create-index message to Ogawayama.
- * 
- */
-bool send_create_index_message(const int64_t object_id)
-{
-	bool result = false;
-
-	if (object_id == metadata::INVALID_OBJECT_ID) {
-		return result;
+	// Send a message to ogawayama.
+	metadata::Table table;
+	tables->get(create_index.get_table_name(), table);
+	if (!index.is_primary) {
+		manager::message::CreateIndex create_index_message{idnex_id};
+		success = send_message(create_index_message);
+		if (!success) {
+			ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR), 
+				errmsg("Failed to send a message to tsurugi. (CreateIndex)")));
+			idnex_id = metadata::INVALID_OBJECT_ID;
+		}
 	}
 
-	manager::message::CreateIndex create_index_message{object_id};
-	bool success = send_message(create_index_message);
-	if (!success) {
-		ereport(ERROR,
-			(errcode(ERRCODE_INTERNAL_ERROR), 
-			errmsg("send_message() failed. (CreateIndex Message)")));
-		return result;
-	}
-	result = true;
-
-	return result;  
+	return idnex_id;
 }

@@ -68,11 +68,7 @@ int64_t execute_create_table(CreateStmt* create_stmt)
 		return object_id;
 	}
 
-#if 0
-	property_tree::ptree table;
-#else
 	metadata::Table table;
-#endif
 	bool success = create_table.generate_metadata(table);
 	if (!success) {
 		ereport(ERROR,
@@ -87,13 +83,13 @@ int64_t execute_create_table(CreateStmt* create_stmt)
 		if (error == metadata::ErrorCode::ALREADY_EXISTS) {
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					errmsg("The table is already exists. (name: %s)",
+					errmsg("Table already exists. (name: %s)",
 					(char*) create_table.get_table_name())));
 		} else {
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
-					errmsg("Tsurugi could not add metadata to " \
-					"metadata-manager. (error: %d)", (int) error)));
+					errmsg("Failed to store a table metadata." \
+							" (error: %d)", (int) error)));
 			return object_id;
 		}
 	}
@@ -104,8 +100,8 @@ int64_t execute_create_table(CreateStmt* create_stmt)
 	if (error != metadata::ErrorCode::OK) {
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				errmsg("The table is not found when registing constraints. (name: %s)",
-				(char*) create_table.get_table_name())));
+				errmsg("Table metadata not found. (name: %s) (id: %ld) (error: %d)",
+				(char*) create_table.get_table_name(), object_id, (int) error)));
 		return object_id;
 	}
 	object_id = table_constraint.id;

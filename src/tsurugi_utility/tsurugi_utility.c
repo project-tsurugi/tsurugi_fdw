@@ -71,7 +71,6 @@ static void tsurugi_ProcessUtilitySlow(ParseState *pstate,
 				                       char *completionTag);
 
 const char *TSURUGI_TABLESPACE_NAME = "tsurugi";
-const char *TSURUGI_TABLE_SUFFIX = "_tsurugi";
 
 /*
  *  @brief:
@@ -429,9 +428,11 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
 			}
 
             default:
+			{
 				elog(ERROR, "unrecognized node type: %d",
 					 (int) nodeTag(parsetree));
                 break;
+			}
         }
 		/*
 		 * Remember the object so that ddl_command_end event triggers have
