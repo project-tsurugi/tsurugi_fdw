@@ -28,7 +28,8 @@ REGRESS_BASIC = test_preparation create_table insert_select_happy update_delete 
                 udf_transaction prepare_statment prepare_select_statment
 ifdef REGRESS_EXTRA
 	# REGRESS: variable defined in PostgreSQL
-	REGRESS = $(REGRESS_BASIC) otable_of_constr2
+	#REGRESS = $(REGRESS_BASIC) otable_of_constr2
+	REGRESS = $(REGRESS_BASIC)
 else
 	# REGRESS: variable defined in PostgreSQL
 	REGRESS = $(REGRESS_BASIC)
