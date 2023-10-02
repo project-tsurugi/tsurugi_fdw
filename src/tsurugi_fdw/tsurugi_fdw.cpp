@@ -113,7 +113,7 @@ enum FdwScanPrivateIndex
 };
 
 /*
- *	@brief	クエリー実行毎のFDWの状態
+ *	@brief	FDW status for each query execution
  */
 typedef struct tsurugiFdwState
 {
@@ -130,8 +130,8 @@ typedef struct tsurugiFdwState
     const char**    param_values;       /* textual values of query parameters */
     Oid*            param_types;        /* type of query parameters */
 
-	size_t 			number_of_columns;	/* SELECT対象の列数 */
-	Oid* 			column_types; 		/* SELECT予定の列のデータ型(Oid)用のポインタ */
+	size_t 			number_of_columns;	/* Number of columns to SELECT */
+	Oid* 			column_types; 		/* Pointer to the data type (Oid) of the column to be SELECT */
 
     int             p_nums;             /* number of parameters to transmit */
     FmgrInfo*       p_flinfo;           /* output conversion functions for them */
@@ -158,7 +158,7 @@ typedef struct tsurugiFdwState
 } tsurugiFdwState;
 
 /*
- *	@brief 	セッションごとのFDWの状態
+ *	@brief 	FDW status per session
  */
 typedef struct tsurugi_fdw_info_
 {
@@ -1936,11 +1936,11 @@ free_fdwstate(tsurugiFdwState* fdw_state)
 /*
  * 	@biref	Scanning data type of target list from PG tables.
  * 	@param	[in/out] Store data type information.
- * 	@param	[in] target list. (TargetEntry->Exprは全てVarとなっている前提)
- * 	@note	target list: SELECT対象の列
+ * 	@param	[in] target list. (Assuming that TargetEntry->Expr are all Vars)
+ * 	@note	target list: Column to SELECT
  *
- * 	oracle_fdwのconvertTupleに影響を受け、PostgreSQLでのデータ型も把握した方が良いと
- * 	判断したため用意した関数。
+ * 	This function was prepared because we decided that it would be better to
+ * 	understand PostgreSQL data types.
  */
 static void 
 store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist)

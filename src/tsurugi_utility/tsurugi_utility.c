@@ -228,7 +228,7 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 			if (objectIdList == NULL) 
 			{
 				/*
-				 * mallocに失敗した場合、エラーメッセージを表示して終了。
+				 * If malloc fails, display an error message and exit.
 				 */
 				elog(ERROR,
 					"abort DROP ROLE statement because malloc function failed.");
@@ -242,16 +242,18 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 				elog(ERROR, "failed before_drop_role() function.");
 			}
 			/*
- 			 * 前処理で失敗した場合も、PostgreSQLの処理をスキップしない。
-			 * PostgreSQLでのエラーメッセージが出力されなくなるため。
+ 			 * No skip PostgreSQL processing even if preprocessing fails.
+			 * Because PostgreSQL error messages are no longer output.
 			 */
 			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
 									dest, completionTag);
 
 			/*
-			 * メッセージは、後処理で送信する。
-			 * DROPに失敗したのに、DROPのメッセージを送信していると問題になる可能性があるため。
-			 * 前処理で失敗した場合は、オブジェクトIDを取得できていないため、後処理をスキップ。
+			 * The message is sent in post-processing.
+			 * Because sending a DROP message even though DROP has failed
+			 * may cause problems.
+			 * If pre-processing fails, the object ID cannot be obtained,
+			 * so post-processing is skipped.
 			 */
 			if (befor_function_success) 
 			{
@@ -259,7 +261,7 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 				elog(ERROR, "failed after_drop_role() function.");
 			}
 			/*
-			* 動的に確保した領域を削除する。
+			* Delete dynamically allocated area.
 			*/
 			free(objectIdList);
 			break;
@@ -270,7 +272,7 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
 									dest, completionTag);
 			/*
-			* メッセージは、後処理で送信する。
+			* The message will be sent in post-processing.
 			*/
 			if (!after_alter_role((AlterRoleStmt*)parsetree))
 				elog(ERROR, "failed after_alter_role() function.");
@@ -281,13 +283,12 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 		{
 			/*
 			* GRANT/REVOKE
-			* TABLEについては、外部テーブルにPostgreSQLの機能で権限を付与する。
-			* そのため、GRANT/REVOKE
-			* ROLEと同じように後処理でメッセージを送信する。
+			* For TABLE, grant privileges to the foreign table using PostgreSQL functionality.
+			* Therefore, similar to GRANT/REVOKE ROLE, send the message in post-processing.
 			*/
 			GrantStmt* stmts = (GrantStmt*) parsetree;
 
-			/*ACL_TARGET_OBJECTかつ、OBJECT_TABLE以外の時は通常の動作のみ*/
+			/* When ACL_TARGET_OBJECT and other than OBJECT_TABLE, normal operation only */
 			if (stmts->targtype == ACL_TARGET_OBJECT &&
 				stmts->objtype == OBJECT_TABLE) 
 			{
@@ -309,8 +310,8 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 		case T_GrantRoleStmt: 
 		{
 			/*
-			 * GRANT/REVOKE両方ともに変更のため同一の関数としている。
-			 * 内部でstmt->is_grantで送信するメッセージを変更する。
+			 * Both GRANT and REVOKE are the same function.
+			 * Judge the message sent with stmt->is_grant.
 			 */
 			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
 									dest, completionTag);
