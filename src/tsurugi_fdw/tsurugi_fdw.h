@@ -30,7 +30,7 @@ extern "C" {
 #include "utils/relcache.h"
 
 /*
- * Note: postgres_fdwから流用
+ * Note: Diverted from postgres_fdw
  */
 typedef struct tsurugi_fdw_relation_info_
 {
