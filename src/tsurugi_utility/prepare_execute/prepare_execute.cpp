@@ -144,7 +144,7 @@ is_tsurugi_table(Node* query,
 			return result;
 	}
 
-	auto tables = manager::metadata::get_tables_ptr(TG_DATABASE_NAME);
+	auto tables = manager::metadata::get_tables_ptr(TSURUGI_DB_NAME);
 	for(std::size_t i = 0; i < target_tables.size(); i++) {
 		if (tables->exists(target_tables[i])) {
 			is_tsurugi = true;

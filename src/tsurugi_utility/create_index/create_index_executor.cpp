@@ -41,7 +41,7 @@ int64_t execute_create_index(IndexStmt* index_stmt)
 	assert(index_stmt != NULL);
 
 	ObjectId idnex_id = metadata::INVALID_OBJECT_ID;
-    auto indexes = metadata::get_indexes_ptr(TG_DATABASE_NAME);
+    auto indexes = metadata::get_indexes_ptr(TSURUGI_DB_NAME);
     CreateIndex create_index{index_stmt};
 
     create_index.validate_syntax();
@@ -68,7 +68,7 @@ int64_t execute_create_index(IndexStmt* index_stmt)
 	}
 
 	// Create constraint metadata.
-	auto tables = metadata::get_tables_ptr(TG_DATABASE_NAME);
+	auto tables = metadata::get_tables_ptr(TSURUGI_DB_NAME);
 	metadata::Table table_constraint;
 	ObjectId constraint_id = metadata::INVALID_OBJECT_ID;
 	error = tables->get(create_index.get_table_name(), table_constraint);
@@ -100,7 +100,7 @@ int64_t execute_create_index(IndexStmt* index_stmt)
 
 #if 0
 	// Primary Keys
-	auto tables = metadata::get_table_metadata(TG_DATABASE_NAME);
+	auto tables = metadata::get_table_metadata(TSURUGI_DB_NAME);
 	metadata::Table table;
 	ErrorCode error = tables->get(create_index.get_table_name(), table);
 	if (error != metadata::ErrorCode::OK) {

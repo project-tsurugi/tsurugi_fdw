@@ -70,7 +70,7 @@ bool after_create_role(const CreateRoleStmt* stmts) {
 
   if (success) {
     message::CreateRole cr_msg{object_id};
-    std::unique_ptr<metadata::Metadata> roles{new metadata::Roles(TG_DATABASE_NAME)};
+    std::unique_ptr<metadata::Metadata> roles{new metadata::Roles(TSURUGI_DB_NAME)};
     success = send_message(&cr_msg, roles);
   }
 

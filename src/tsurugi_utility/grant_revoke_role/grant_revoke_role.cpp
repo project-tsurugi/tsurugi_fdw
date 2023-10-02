@@ -83,7 +83,7 @@ bool after_grant_revoke_role(const GrantRoleStmt* stmts) {
       ereport(ERROR,
               (errcode(ERRCODE_INVALID_GRANT_OPERATION),
                errmsg("column names cannot be included in GRANT/REVOKE ROLE")));
-    if (get_roleid_by_rolename(TG_DATABASE_NAME, rolename, &object_id)) {
+    if (get_roleid_by_rolename(TSURUGI_DB_NAME, rolename, &object_id)) {
       objectIds.push_back(object_id);
     } else {
       /* Failed getting role id.*/
@@ -95,13 +95,13 @@ bool after_grant_revoke_role(const GrantRoleStmt* stmts) {
   for (auto object_id : objectIds) {
     if (stmts->is_grant) {
       message::GrantRole grant_role{object_id};
-      std::unique_ptr<metadata::Metadata> roles{new metadata::Roles(TG_DATABASE_NAME)};
+      std::unique_ptr<metadata::Metadata> roles{new metadata::Roles(TSURUGI_DB_NAME)};
       if (!send_message(&grant_role, roles)) {
         send_message_success = false;
       }
     } else {
       message::RevokeRole revoke_role{object_id};
-      std::unique_ptr<metadata::Metadata> roles{new metadata::Roles(TG_DATABASE_NAME)};
+      std::unique_ptr<metadata::Metadata> roles{new metadata::Roles(TSURUGI_DB_NAME)};
       if (!send_message(&revoke_role, roles)) {
         send_message_success = false;
       }

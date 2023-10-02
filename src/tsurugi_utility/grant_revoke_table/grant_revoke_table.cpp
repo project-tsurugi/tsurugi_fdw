@@ -69,7 +69,7 @@ bool after_grant_revoke_table(const GrantStmt* stmts) {
     RangeVar* relvar = (RangeVar*) lfirst(item);
     metadata::ObjectId object_id;
 
-    if (get_tableid_by_tablename(TG_DATABASE_NAME, relvar->relname, &object_id)) {
+    if (get_tableid_by_tablename(TSURUGI_DB_NAME, relvar->relname, &object_id)) {
       objectIds.push_back(object_id);
     }
   }
@@ -78,13 +78,13 @@ bool after_grant_revoke_table(const GrantStmt* stmts) {
   for (auto object_id : objectIds) {
     if (stmts->is_grant) {
       message::GrantTable grant_table{object_id};
-      std::unique_ptr<metadata::Metadata> tables{new metadata::Tables(TG_DATABASE_NAME)};
+      std::unique_ptr<metadata::Metadata> tables{new metadata::Tables(TSURUGI_DB_NAME)};
       if (!send_message(&grant_table, tables)) {
         send_message_success = false;
       }
     } else {
       message::RevokeTable revoke_table{object_id};
-      std::unique_ptr<metadata::Metadata> tables{new metadata::Tables(TG_DATABASE_NAME)};
+      std::unique_ptr<metadata::Metadata> tables{new metadata::Tables(TSURUGI_DB_NAME)};
       if (!send_message(&revoke_table, tables)) {
         send_message_success = false;
       }
