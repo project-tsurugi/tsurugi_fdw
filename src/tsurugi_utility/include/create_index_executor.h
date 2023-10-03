@@ -23,6 +23,7 @@ extern "C" {
 #include "nodes/parsenodes.h"
 
 int64_t execute_create_index(IndexStmt* index_stmt);
+void send_create_index_message(int64_t index_id);
 
 #ifdef __cplusplus
 }

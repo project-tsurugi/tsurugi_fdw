@@ -133,19 +133,21 @@ int64_t execute_create_index(IndexStmt* index_stmt)
 	}
 #endif
 
-	// Send a message to ogawayama.
-	metadata::Table table;
-	tables->get(create_index.get_table_name(), table);
-	if (!index.is_primary) {
-		manager::message::CreateIndex create_index_message{idnex_id};
-		success = send_message(create_index_message);
-		if (!success) {
-			ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR), 
-				errmsg("Failed to send a message to tsurugi. (CreateIndex)")));
-			idnex_id = metadata::INVALID_OBJECT_ID;
-		}
-	}
+
 
 	return idnex_id;
+}
+
+void send_create_index_message(int64_t index_id)
+{
+	message::CreateIndex create_index_message{index_id};
+	bool success = send_message(create_index_message);
+	if (!success) {
+		ereport(ERROR,
+			(errcode(ERRCODE_INTERNAL_ERROR), 
+			errmsg("Communication error occurred. (send_message:CreateIndex)")));
+		metadata::Index index;
+		auto indexes = metadata::get_indexes_ptr(TSURUGI_DB_NAME);
+		indexes->remove(index_id);
+	}
 }

@@ -76,7 +76,7 @@ void execute_create_stmt(PlannedStmt *pstmt,
             if (index_id == -1)
             {
                 elog(ERROR, "Failed to create a index in creating a table.");
-            }
+            }           
         }
         else if (IsA(stmt, AlterTableStmt))
         {

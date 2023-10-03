@@ -413,8 +413,14 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
 
 			case T_IndexStmt:	/* CREATE INDEX */
 			{
+				int64_t index_id = -1;
 				IndexStmt* index_stmt = (IndexStmt*) pstmt->utilityStmt;
-				execute_create_index(index_stmt);
+				index_id = execute_create_index(index_stmt);
+				if (index_id > 0)
+				{
+					/* Send a DDL message to ogawayama. */
+					send_create_index_message(index_id);
+				}
 				break;
 			}
 
