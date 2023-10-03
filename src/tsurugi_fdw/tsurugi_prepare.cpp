@@ -160,28 +160,12 @@ begin_prepare_processing(const EState* estate)
 			}
 		}
 
-#if 0
-		stub::Connection* connection;
-		ERROR_CODE error = Tsurugi::get_connection(&connection);
-		if (error != ERROR_CODE::OK)
-		{
-			elog(ERROR, "Tsurugi::get_connection() failed. (code: %d)", (int) error);
-			return;
-		}
-		error = connection->prepare(sql, placeholders, prepared_statement);
-		if (error != ERROR_CODE::OK)
-		{
-			elog(ERROR, "connection->prepare() failed. (%d)\n\tsql:%s", (int) error, sql.c_str());
-			return;
-		}
-#else
 		ERROR_CODE error = Tsurugi::prepare(sql, placeholders, prepared_statement);
 		if (error != ERROR_CODE::OK)
 		{
 			elog(ERROR, "Tsurugi::prepare() failed. (%d)\n\tsql:%s", (int) error, sql.c_str());
 			return;
 		}
-#endif
 	} else {
 		// Restore the Data Required for Prepared SQL Execution.
 		std::string prepare_name = stored_prepare_name[sql];
