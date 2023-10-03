@@ -1,31 +1,42 @@
-name: Frontend-CI
+name: Tsurugi_FDW-CI
 
 on: [push, pull_request]
 
 jobs:
   Build:
-    name: Build with PosgreSQL ${{ matrix.postgresql }} ( ${{ matrix.container-tag }} ) 
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04]
+        postgresql: [12.4]
+    name: Build with PosgreSQL ${{ matrix.postgresql }} ( ${{ matrix.os }} )
     runs-on: [self-hosted, docker]
     timeout-minutes: 30
     container:
-      image:  ghcr.io/project-tsurugi/oltp-sandbox:${{ matrix.container-tag }}
-      credentials:
-        username: ${{ github.repository_owner }}
-        password: ${{ secrets.GHCR_PAT }}
+      image: ghcr.io/project-tsurugi/tsurugi-ci:${{ matrix.os }}
+      volumes:
+        - ${{ vars.ccache_dir }}:${{ vars.ccache_dir }}
     defaults:
       run:
         shell: bash
     env:
-      BUILD_TYPE: ''
-    strategy:
-      fail-fast: false
-      matrix:
-        postgresql: [12.3]
-        container-tag: [ubuntu-20.04]
+      CCACHE_CONFIGPATH: ${{ vars.ccache_dir }}/ccache.conf
+      CCACHE_DIR: ${{ vars.ccache_dir }}/${{ matrix.os }}
 
     steps:
-      - id: Setup_PostgreSQL
-        name: Setup_PostgreSQL
+      - name: Checkout_Actions
+        uses: actions/checkout@v3
+        with:
+          sparse-checkout: .github
+          token: ${{ secrets.GHA_PAT }}
+
+      - name: Install_Dependencies
+        uses: ./.github/actions/install-dependencies
+        with:
+          token: ${{ secrets.GHA_PAT }}
+          sharksfin-implementation: shirakami
+
+      - name: Setup_PostgreSQL
         run: |
           if [ ! -e ./postgresql-${{ matrix.postgresql }} ]; then
             curl -sL https://ftp.postgresql.org/pub/source/v${{ matrix.postgresql }}/postgresql-${{ matrix.postgresql }}.tar.bz2 | tar -xj
@@ -35,204 +46,21 @@ jobs:
           make -j8
           make install
 
-      - id: Checkout
-        name: Checkout
-        uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v3
         with:
-          path: postgresql-${{ matrix.postgresql }}/contrib/frontend
-          submodules: recursive
+          path: postgresql-${{ matrix.postgresql }}/contrib/tsurugi_fdw
+          submodules: true
           token: ${{ secrets.GHA_PAT }}
 
-      - id: CMake_Build_metadata-manager
-        name: CMake_Build_metadata-manager
+      - name: Make_Build
         run: |
-          cd postgresql-${{ matrix.postgresql }}/contrib/frontend/third_party/metadata-manager
-          git clean -dfx
-          mkdir build
-          cd build
-          rm -f CMakeCache.txt
-          cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DFORCE_INSTALL_RPATH=ON -DBUILD_TESTS=OFF -DBUILD_DOCUMENTS=OFF \
-            -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
-          cmake --build . --target install --clean-first -- -j8
-          make
-          make install
-
-      - id: CMake_Build_message-manager
-        name: CMake_Build_message-manager
-        run: |
-          cd postgresql-${{ matrix.postgresql }}/contrib/frontend/third_party/message-manager
-          git clean -dfx
-          mkdir build
-          cd build
-          rm -f CMakeCache.txt
-          cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DFORCE_INSTALL_RPATH=ON \
-            -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
-          cmake --build . --target install --clean-first -- -j8
-          make
-          make install
-
-      - id: Checkout_Jogasaki
-        name: Checkout_Jogasaki
-        uses: actions/checkout@v2
-        with:
-          repository: project-tsurugi/jogasaki
-          path: third_party/temp_jogasaki
-          ref: caae5b51824ef42a7bbfc8cb10068254b9ac5b4d
-          submodules: recursive
-          token: ${{ secrets.GHA_PAT }}
-
-      - id: Install_limestone
-        name: Install_limestone
-        run: |
-          cd third_party/temp_jogasaki/third_party/tateyama/third_party/sharksfin/third_party/shirakami/third_party/limestone
-          rm -rf build
-          mkdir -p build
-          cd build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_CPR=OFF -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
-          cmake --build . --target install --clean-first -- -j
-
-      - id: Install_shirakami
-        name: Install_shirakami
-        run: |
-          cd third_party/temp_jogasaki/third_party/tateyama/third_party/sharksfin/third_party/shirakami
-          rm -rf build
-          mkdir -p build
-          cd build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_CPR=OFF -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
-          cmake --build . --target install --clean-first -- -j
-
-      - id: Install_sharksfin
-        name: Install_sharksfin
-        run: |
-          cd third_party/temp_jogasaki/third_party/tateyama/third_party/sharksfin
-          rm -rf build
-          mkdir -p build
-          cd build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DFORCE_INSTALL_RPATH=ON -DBUILD_TESTS=OFF -DBUILD_DOCUMENTS=OFF \
-            -DBUILD_EXAMPLES=OFF -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
-          cmake --build . --target install --clean-first -- -j
-
-      - id: Install_takatori
-        name: Install_takatori
-        run: |
-          cd third_party/temp_jogasaki/third_party/mizugaki/third_party/yugawara/third_party/takatori
-          rm -rf build
-          mkdir -p build
-          cd build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=OFF -DBUILD_DOCUMENTS=OFF -DFORCE_INSTALL_RPATH=ON \
-            -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
-          cmake --build . --target install --clean-first -- -j
-
-      - id: Install_hopscotch-map
-        name: Install_hopscotch-map
-        run: |
-          cd third_party/temp_jogasaki/third_party/mizugaki/third_party/hopscotch-map
-          rm -rf ../../build-hopscotch-map
-          mkdir -p ../../build-hopscotch-map
-          cd ../../build-hopscotch-map
-          cmake -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ../third_party/hopscotch-map
-          cmake --build . --target install -- -j
-
-      - id: Install_yugawara
-        name: Install_yugawara
-        run: |
-          cd third_party/temp_jogasaki/third_party/mizugaki/third_party/yugawara
-          rm -rf build
-          mkdir -p build
-          cd build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=OFF -DBUILD_DOCUMENTS=OFF -DFORCE_INSTALL_RPATH=ON \
-            -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
-          cmake --build . --target install --clean-first -- -j
-
-      - id: Install_shakujo
-        name: Install_shakujo
-        run: |
-          cd third_party/temp_jogasaki/third_party/mizugaki/third_party/shakujo
-          rm -rf build
-          mkdir -p build
-          cd build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=OFF -DBUILD_DOCUMENTS=OFF -DBUILD_EXAMPLES=OFF \
-            -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
-          cmake --build . --target install --clean-first -- -j
-
-      - id: Install_mizugaki
-        name: Install_mizugaki
-        run: |
-          cd third_party/temp_jogasaki/third_party/mizugaki
-          rm -rf build
-          mkdir -p build
-          cd build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=OFF -DBUILD_DOCUMENTS=OFF -DFORCE_INSTALL_RPATH=ON \
-            -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local \
-            -DCMAKE_PREFIX_PATH="${{ matrix.additional_prefix_path }};${GITHUB_WORKSPACE}/.local" ..
-          cmake --build . --target install --clean-first -- -j
-
-      - id: Install_performance_tools
-        name: Install_performance_tools
-        run: |
-          cd third_party/temp_jogasaki/third_party/performance-tools
-          rm -rf build
-          mkdir -p build
-          cd build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=OFF -DBUILD_DOCUMENTS=OFF -DBUILD_EXAMPLES=OFF \
-            -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
-          cmake --build . --target install --clean-first -- -j
-
-      - id: Install_moodycamel_concurrentqueue
-        name: Install_moodycamel_concurrentqueue
-        run: |
-          cd third_party/temp_jogasaki/third_party/concurrentqueue
-          rm -rf build
-          mkdir -p build_debug
-          cd build_debug
-          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local ..
-          cmake --build . --target install --clean-first
-
-      - id: Install_tateyama
-        name: Install_tateyama
-        run: |
-          cd third_party/temp_jogasaki/third_party/tateyama
-          rm -rf build
-          mkdir -p build
-          cd build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DSHARKSFIN_IMPLEMENTATION=shirakami -DBUILD_TESTS=OFF \
-            -DBUILD_DOCUMENTS=OFF -DFORCE_INSTALL_RPATH=ON -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local \
-            -DCMAKE_PREFIX_PATH="${{ matrix.additional_prefix_path }};${GITHUB_WORKSPACE}/.local" ..
-          cmake --build . --target install --clean-first -- -j
-
-      - id: Install_jogasaki
-        name: Install_jogasaki
-        run: |
-          cd third_party/temp_jogasaki
-          rm -rf build
-          mkdir -p build
-          cd build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DSHARKSFIN_IMPLEMENTATION=shirakami \
-            -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/.local -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/.local \
-            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
-          cmake --build . --target install --clean-first -- -j
-
-      - id: CMake_Build_ogawayama
-        name: CMake_Build_ogawayama
-        run: |
-          cd postgresql-${{ matrix.postgresql }}/contrib/frontend/third_party/ogawayama
-          git clean -dfx
-          mkdir build
-          cd build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DSHARKSFIN_IMPLEMENTATION=shirakami \
-            -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/.local -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
-          cmake --build . --target install --clean-first -- -j
-
-      - id: Make_Install
-        name: Make_Build
-        run: |
-          cd postgresql-${{ matrix.postgresql }}/contrib/frontend
+          cd postgresql-${{ matrix.postgresql }}/contrib/tsurugi_fdw
           export LIBRARY_PATH=$LIBRARY_PATH:${GITHUB_WORKSPACE}/.local/lib
           echo ${LIBRARY_PATH}
           make -j8
           make install
 
-      - id: Cleanup
-        name: Cleanup
+      - name: Cleanup
         run: |
           rm -rf ${GITHUB_WORKSPACE}/.local/

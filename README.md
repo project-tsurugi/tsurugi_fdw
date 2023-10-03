@@ -1,4 +1,4 @@
-# frontend for Tsurugi (PostgreSQL add-on)
+# tsurugi_fdw (PostgreSQL add-on)
 
 ## Requirements
 * C++ Compiler `>= C++17`
@@ -7,7 +7,7 @@
   * managers (metadata-manager, message-manager)
   * ogawayama
 
-## How to build frontend
+## How to build tsurugi_fdw
 
 1. Install required packages.
 
@@ -48,17 +48,17 @@
 	export PATH
 	```
 
-2.  Clone frontend.
+2.  Clone tsurugi_fdw.
 
 	Clone fronend to "contrib" directory in PostgreSQL.
 
 	```sh
 	cd contrib
-	git clone git@github.com:project-tsurugi/frontend.git
-	cd frontend
+	git clone git@github.com:project-tsurugi/tsurugi_fdw.git
+	cd tsurugi_fdw
 	git submodule update --init
 	```
-	* Hereafter, this directory is defined as **\<frontend clone directory>**.
+	* Hereafter, this directory is defined as **\<tsurugi_fdw clone directory>**.
 
 1. Build and Install tsurugi.
 
@@ -91,7 +91,7 @@
 	make install USE_PGXS=1
 	```
 
-## How to set up for frontend
+## How to set up for tsurugi_fdw
 
 1. Update the shared library search path for metadata-manager, message-manager and ogawayama.  
 	```
@@ -120,10 +120,10 @@
 
 1. Define metadata tables and load initial metadata.
 	```sh
-	psql postgres < <frontend clone directory>/third_party/metadata-manager/sql/ddl.sql
+	psql postgres < <tsurugi_fdw clone directory>/third_party/metadata-manager/sql/ddl.sql
 	```
 
-1. Install frontend extension
+1. Install tsurugi_fdw extension
 	* Execute **CREATE EXTENSION** command
 		```sql
 		CREATE EXTENSION tsurugi_fdw;
@@ -181,11 +181,11 @@
 * **sql/** all the tests
 
 ### How to execute the tests
-1. Build frontend
-	* [How to build frontend](#How-to-build-frontend)
+1. Build tsurugi_fdw
+	* [How to build tsurugi_fdw](#How-to-build-tsurugi_fdw)
 
-1. Set up frontend
-	* [How to set up for frontend](#How-to-set-up-for-frontend)
+1. Set up tsurugi_fdw
+	* [How to set up for tsurugi_fdw](#How-to-set-up-for-tsurugi_fdw)
 
 1. Execute the following command
 
@@ -248,73 +248,4 @@
 1. If you want to stop oltp, use
 	```sh
 	oltp shutdown
-	```
-
-## PostgreSQLおよびfrontendのログ出力方法
-
-1. postgresql.confを編集する
-
-	`<PostgreSQL install directory>/data/postgresql.conf`
-
-	- 修正前
-
-		```
-		# This is used when logging to stderr:
-		#logging_collector = off          	# Enable capturing of stderr and csvlog
-		
-		<中略>	
-		
-		#log_min_messages = warning             # values in order of decreasing detail:
-							#   debug5
-							#   debug4
-							#   debug3
-							#   debug2
-							#   debug1
-							#   info
-							#   notice
-							#   warning
-							#   error
-							#   log
-							#   fatal
-							#   panic		
-
-		```
-
-	- 修正後
-
-		`loggin_collector`を`on`に、`log_min_messages`は目的に合わせて適切な値を選択する。  
-    		コメント開始記号("#")を削除する。
-		
-
-		```
-		# This is used when logging to stderr:
-		logging_collector = on          	# Enable capturing of stderr and csvlog
-		
-		<中略>	
-		
-		log_min_messages = notice         	# values in order of decreasing detail:
-							#   debug5
-							#   debug4
-							#   debug3
-							#   debug2
-							#   debug1
-							#   info
-							#   notice
-							#   warning
-							#   error
-							#   log
-							#   fatal
-							#   panic		
-		
-		```
-2. PostgreSQLを再起動する
-
-	```
-	pg_ctl restart
-	```
-
-3. ログが出力されることを確認する
-
-	```
-	ls <PostgreSQL install directory>/data/log
 	```
