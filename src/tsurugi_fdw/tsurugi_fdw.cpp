@@ -72,9 +72,7 @@ PG_MODULE_MAGIC;
 }
 #endif
 
-#if 1
 #include "tsurugi_prepare.h"
-#endif
 
 using namespace ogawayama;
 
@@ -312,7 +310,6 @@ static void tsurugiGetForeignJoinPaths(PlannerInfo *root,
 static tsurugiFdwState* create_fdwstate();
 static void free_fdwstate(tsurugiFdwState* fdw_state);
 static void store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist);
-static void tsurugi_close_cursor();
 static void make_tuple_from_result_row(ResultSetPtr result_set, 
                                         TupleDesc tupleDescriptor,
                                         List* retrieved_attrs,
@@ -1304,7 +1301,6 @@ tsurugiEndForeignScan(ForeignScanState* node)
 
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
-    tsurugi_close_cursor();
     if (fdw_info_.success)
     {
         Tsurugi::commit();
@@ -1338,9 +1334,7 @@ tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
  	fdw_state->query_string = estate->es_sourceText; 
     node->fdw_state = fdw_state;
 
-#if 1
 	begin_prepare_processing(estate);
-#endif
 
     Tsurugi::start_transaction();
     fdw_info_.success = true;
@@ -1389,10 +1383,8 @@ tsurugiEndDirectModify(ForeignScanState* node)
         Tsurugi::commit();
     }
 
-#if 1
 	EState* estate = node->ss.ps.state;
 	end_prepare_processing(estate);
-#endif
 
 	if (node->fdw_state != nullptr)
     {
@@ -1976,220 +1968,6 @@ store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist)
 		fdw_state->number_of_columns = count;
 	}
 }
-#if 0
-/*
- * tsurugi_create_cursor
- */
-static void 
-tsurugi_create_cursor(ForeignScanState* node)
-{
-	Assert(node != nullptr);
-    Assert(fdw_info_.transaction != nullptr);
-
-	tsurugiFdwState* fdw_state = (tsurugiFdwState*) node->fdw_state;
-    std::string query = make_tsurugi_query(fdw_state->query_string);
-    fdw_info_.result_set = nullptr;
-
-    ERROR_CODE error = Tsurugi::execute_query(query, fdw_info_.result_set);
-    if (error != ERROR_CODE::OK)
-    {
-        Tsurugi::rollback();
-        fdw_info_.success = false;
-        elog(ERROR, "Tsurugi::execute_query() failed. (%d)", (int) error);
-    }
-
-    fdw_state->cursor_exists = true;
-	fdw_state->eof_reached = false;
-}
-#endif
-/*
- * tsurugi_close_cursor
- */
-static void 
-tsurugi_close_cursor()
-{
-//    fdw_info_.result_set = nullptr;
-}
-
-#if 0
-/*
- * confirm_columns
- * 	    Confirm column information between PostgreSQL and Ogawayama.
- *
- * 	This function may be eliminated for performance improvement in the future.
- */
-static bool
-confirm_columns(MetadataPtr metadata, ForeignScanState* node)
-{
-
-	tsurugiFdwState* fdw_state = (tsurugiFdwState*) node->fdw_state;
-	bool ret = true;
-
-	elog(DEBUG4, "tsurugi_fdw : %s", __func__);
-
-	if (metadata->get_types().size() != fdw_state->number_of_columns)
-	{
-		elog(ERROR, "Number of columns do NOT match. (og: %d), (pg: %lu)",
-			(int) metadata->get_types().size(), fdw_state->number_of_columns);
-	}
-
-	Size i = 0;
-	for (auto types: metadata->get_types())
-	{
-		switch (static_cast<stub::Metadata::ColumnType::Type>(types.get_type()))
-		{
-			case stub::Metadata::ColumnType::Type::INT16:
-				if (fdw_state->column_types[i] != INT2OID)
-				{
-					elog(ERROR, 
-						"Don't match data type of the column. " 
-						"(column: %lu) (og: %d) (pg: %u)", 
-						i, (int) types.get_type(), fdw_state->column_types[i] );
-					ret = false;
-				}
-				break;
-
-			case stub::Metadata::ColumnType::Type::INT32:
-				if (fdw_state->column_types[i] != INT4OID)
-				{
-					elog(ERROR, 
-						"Don't match data type of the column. " 
-						"(column: %lu) (og: %d) (pg: %u)", 
-						i, (int) types.get_type(), fdw_state->column_types[i] );
-					ret = false;
-				}
-				break;
-
-			case stub::Metadata::ColumnType::Type::INT64:
-				if (fdw_state->column_types[i] != INT8OID)
-				{
-					elog(ERROR, 
-						"Don't match data type of the column. " 
-						"(column: %lu) (og: %d) (pg: %u)", 
-						i, (int) types.get_type(), fdw_state->column_types[i] );
-					ret = false;
-				}
-				break;
-
-			case stub::Metadata::ColumnType::Type::FLOAT32:
-				if (fdw_state->column_types[i] != FLOAT4OID)
-				{
-					elog(ERROR, 
-						"Don't match data type of the column. " 
-						"(column: %lu) (og: %d) (pg: %u)", 
-						i, (int) types.get_type(), fdw_state->column_types[i] );
-					ret = false;
-				}
-				break;
-
-			case stub::Metadata::ColumnType::Type::FLOAT64:
-				if (fdw_state->column_types[i] != FLOAT8OID)
-				{
-					elog(ERROR, 
-						"Don't match data type of the column. " 
-						"(column: %lu) (og: %d) (pg: %u)", 
-						i, (int) types.get_type(), fdw_state->column_types[i] );
-				}
-				break;
-
-			case stub::Metadata::ColumnType::Type::TEXT:
-				if (fdw_state->column_types[i] != BPCHAROID &&
-					fdw_state->column_types[i] != VARCHAROID &&
-					fdw_state->column_types[i] != TEXTOID)
-				{
-					elog(ERROR, 
-						"Don't match data type of the column. " 
-						"(column: %lu) (og: %d) (pg: %u)", 
-						i, (int) types.get_type(), fdw_state->column_types[i] );
-					ret = false;
-				}
-				break;
-
-			case stub::Metadata::ColumnType::Type::DATE:
-				if (fdw_state->column_types[i] != DATEOID)
-				{
-					elog(ERROR,
-						"Don't match data type of the column. "
-						"(column: %lu) (og: %d) (pg: %u)",
-						i, (int) types.get_type(), fdw_state->column_types[i] );
-					ret = false;
-				}
-				break;
-
-			case stub::Metadata::ColumnType::Type::TIME:
-				if (fdw_state->column_types[i] != TIMEOID)
-				{
-					elog(ERROR,
-						"Don't match data type of the column. "
-						"(column: %lu) (og: %d) (pg: %u)",
-						i, (int) types.get_type(), fdw_state->column_types[i] );
-					ret = false;
-				}
-				break;
-
-			case stub::Metadata::ColumnType::Type::TIMESTAMP:
-				if (fdw_state->column_types[i] != TIMESTAMPOID)
-				{
-					elog(ERROR,
-						"Don't match data type of the column. "
-						"(column: %lu) (og: %d) (pg: %u)",
-						i, (int) types.get_type(), fdw_state->column_types[i] );
-					ret = false;
-				}
-				break;
-
-			case stub::Metadata::ColumnType::Type::TIMETZ:
-				if (fdw_state->column_types[i] != TIMETZOID)
-				{
-					elog(ERROR,
-						"Don't match data type of the column. "
-						"(column: %lu) (og: %d) (pg: %u)",
-						i, (int) types.get_type(), fdw_state->column_types[i] );
-					ret = false;
-				}
-				break;
-
-			case stub::Metadata::ColumnType::Type::TIMESTAMPTZ:
-				if (fdw_state->column_types[i] != TIMESTAMPTZOID)
-				{
-					elog(ERROR,
-						"Don't match data type of the column. "
-						"(column: %lu) (og: %d) (pg: %u)",
-						i, (int) types.get_type(), fdw_state->column_types[i] );
-					ret = false;
-				}
-				break;
-
-			case stub::Metadata::ColumnType::Type::DECIMAL:
-				if (fdw_state->column_types[i] != NUMERICOID)
-				{
-					elog(ERROR,
-						"Don't match data type of the column. "
-						"(column: %lu) (og: %d) (pg: %u)",
-						i, (int) types.get_type(), fdw_state->column_types[i] );
-					ret = false;
-				}
-				break;
-
-			case stub::Metadata::ColumnType::Type::NULL_VALUE:
-				elog(DEBUG1, "nullptr_VALUE found. (column: %lu)", i);
-				ret = false;
-				break;
-
-			default:
-				elog(ERROR, "Unexpected data type of the column. " 
-					"(column: %lu, Og type: %u)", i, (int) types.get_type());
-				ret = false;
-				break;
-		}
-		i++;
-	}
-
-	elog(DEBUG4, "confirm_columns() done.");
-
-	return ret;
-}
-#endif
 
 /*
  * make_tuple_from_result_row
@@ -2230,7 +2008,6 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                 {
                     std::int16_t value;
                     if (result_set->next_column(value) == ERROR_CODE::OK)
-//                    if (Tsurugi::next_column(value) == ERROR_CODE::OK)
                     {
                         is_null[attnum] = false;
                         row[attnum] = Int16GetDatum(value);
@@ -2242,7 +2019,6 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                 {
                     std::int32_t value;
                     if (result_set->next_column(value) == ERROR_CODE::OK)
-//                    if (Tsurugi::next_column(value) == ERROR_CODE::OK)
                     {
                         is_null[attnum] = false;
                         row[attnum] =  Int32GetDatum(value);
@@ -2254,7 +2030,6 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                 {
                     std::int64_t value;
                     if (result_set->next_column(value) == ERROR_CODE::OK)
-//                    if (Tsurugi::next_column(value) == ERROR_CODE::OK)
                     {
                         is_null[attnum] = false;
                         row[attnum] = Int64GetDatum(value);
@@ -2265,7 +2040,6 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case FLOAT4OID:
                 {
                     float4 value;
-//                    if (Tsurugi::next_column(value) == ERROR_CODE::OK)
                     if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         is_null[attnum] = false;
@@ -2277,7 +2051,6 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case FLOAT8OID:
                 {
                     float8 value;
-//                    if (Tsurugi::next_column(value) == ERROR_CODE::OK)
                     if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         is_null[attnum] = false;
@@ -2292,7 +2065,6 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                 {
                     std::string value;
                     Datum value_datum;
-//                    ERROR_CODE result = Tsurugi::next_column(value);
                     ERROR_CODE result = result_set->next_column(value);
                     if (result == ERROR_CODE::OK)
                     {
@@ -2314,7 +2086,6 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                 {
                     stub::date_type value;
                     if (result_set->next_column(value) == ERROR_CODE::OK)
-//                    if (Tsurugi::next_column(value) == ERROR_CODE::OK)
                     {
                         DateADT date;
                         date = value.days_since_epoch();
@@ -2329,7 +2100,6 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                 {
                     stub::time_type value;
                     if (result_set->next_column(value) == ERROR_CODE::OK)
-//                    if (Tsurugi::next_column(value) == ERROR_CODE::OK)
                     {
                         TimeADT time;
                         auto subsecond = value.subsecond().count();
@@ -2350,7 +2120,6 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                 {
                     stub::timestamp_type value;
                     if (result_set->next_column(value) == ERROR_CODE::OK)
-//                    if (Tsurugi::next_column(value) == ERROR_CODE::OK)
                     {
                         Timestamp timestamp;
                         auto subsecond = value.subsecond().count();
