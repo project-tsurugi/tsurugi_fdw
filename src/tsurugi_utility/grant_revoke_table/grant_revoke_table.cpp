@@ -44,11 +44,8 @@ using namespace manager;
 using namespace ogawayama;
 
 #include "table_managercmds.h"
-
+#include "send_message.h"
 #include "grant_revoke_table.h"
-
-static bool send_message(message::Message* message,
-                         std::unique_ptr<metadata::Metadata>& objects);
 
 /**
  *  @brief Calls the function sending metadata of created role parameters sended
@@ -63,7 +60,7 @@ bool after_grant_revoke_table(const GrantStmt* stmts) {
   ListCell* item;
   std::vector<metadata::ObjectId> objectIds;
   bool send_message_success = true;
-  bool ret_value = false;
+  bool result = false;
 
   foreach (item, stmts->objects) {
     RangeVar* relvar = (RangeVar*) lfirst(item);
@@ -78,66 +75,17 @@ bool after_grant_revoke_table(const GrantStmt* stmts) {
   for (auto object_id : objectIds) {
     if (stmts->is_grant) {
       message::GrantTable grant_table{object_id};
-      std::unique_ptr<metadata::Metadata> tables{new metadata::Tables(TSURUGI_DB_NAME)};
-      if (!send_message(&grant_table, tables)) {
+      if (!send_message(grant_table)) {
         send_message_success = false;
       }
     } else {
       message::RevokeTable revoke_table{object_id};
-      std::unique_ptr<metadata::Metadata> tables{new metadata::Tables(TSURUGI_DB_NAME)};
-      if (!send_message(&revoke_table, tables)) {
+      if (!send_message(revoke_table)) {
         send_message_success = false;
       }
     }
   }
 
-  ret_value = send_message_success;
-  return ret_value;
-}
-
-/**
- *  @brief Calls the function to send Message to ogawayama.
- *  @param [in] message Message object to be sent.
- *  @param [in] objects Table object to call funciton.
- *  @return true if operation was successful, false otherwize.
- */
-static bool send_message(message::Message* message,
-                         std::unique_ptr<metadata::Metadata>& objects) {
-  Assert(message != nullptr);
-
-  bool ret_value = false;
-#if 0
-  ERROR_CODE error = ERROR_CODE::UNKNOWN;
-  /* sends message to ogawayama */
-  stub::Transaction* transaction;
-  error = StubManager::begin(&transaction);
-  if (error != ERROR_CODE::OK) {
-    ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
-                    errmsg("StubManager::begin() failed.")));
-    return ret_value;
-  }
-
-  message::MessageBroker broker;
-  message->set_receiver(transaction);
-  message::Status status = broker.send_message(message);
-
-  if (status.get_error_code() != message::ErrorCode::SUCCESS) {
-    ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
-                    errmsg("transaction::receive_message() %s failed. (%d)",
-                           message->get_message_type_name().c_str(),
-                           (int)status.get_sub_error_code())));
-
-    return ret_value;
-  }
-
-  error = transaction->commit();
-  if (error != ERROR_CODE::OK) {
-    elog(ERROR, "transaction::commit() failed. (%d)", (int)error);
-    return ret_value;
-  }
-  StubManager::end();
-#endif
-  ret_value = true;
-
-  return ret_value;
+  result = send_message_success;
+  return result;
 }

@@ -50,7 +50,7 @@ extern "C" {
 
 #include "role_managercmds.h"
 #include "syscachecmds.h"
-
+#include "send_message.h"
 #include "drop_role.h"
 
 static bool send_message(message::Message* message,
@@ -101,8 +101,7 @@ bool before_drop_role(const DropRoleStmt* stmts, int64_t objectIdList[]) {
 bool after_drop_role(const DropRoleStmt* stmts, const int64_t objectIdList[]) {
   Assert(stmts != nullptr);
 
-  bool send_message_success = true;
-  bool ret_value = false;
+  bool result = false;
 
   /* Confirm that all ROLEs are dropped. */
   for (auto i = 0; i < stmts->roles->length; i++) {
@@ -110,65 +109,18 @@ bool after_drop_role(const DropRoleStmt* stmts, const int64_t objectIdList[]) {
       ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
                       errmsg("canceled to send message because DROP ROLE "
                              "statements failed.")));
-      return ret_value;
+      return result;
     }
   }
 
+  bool send_message_success = true;
   for (auto i = 0; i < stmts->roles->length; i++) {
-    message::DropRole drop_table{objectIdList[i]};
-    std::unique_ptr<metadata::Metadata> roles{new metadata::Roles(TSURUGI_DB_NAME)};
-    if (!send_message(&drop_table, roles)) {
+    message::DropRole drop_role{objectIdList[i]};
+    if (!send_message(drop_role)) {
       send_message_success = false;
     }
   }
 
-  ret_value = send_message_success;
-  return ret_value;
-}
-
-/**
- *  @brief Calls the function to send Message to ogawayama.
- *  @param [in] message Message object to be sent.
- *  @param [in] objects Role object to call funciton.
- *  @return true if operation was successful, false otherwize.
- */
-static bool send_message(message::Message* message,
-                         std::unique_ptr<metadata::Metadata>& objects) {
-  Assert(message != nullptr);
-
-  bool ret_value = false;
-#if 0
-  ERROR_CODE error = ERROR_CODE::UNKNOWN;
-  /* sends message to ogawayama */
-  stub::Transaction* transaction;
-  error = StubManager::begin(&transaction);
-  if (error != ERROR_CODE::OK) {
-    ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
-                    errmsg("StubManager::begin() failed.")));
-    return ret_value;
-  }
-
-  message::MessageBroker broker;
-  message->set_receiver(transaction);
-  message::Status status = broker.send_message(message);
-
-  if (status.get_error_code() != message::ErrorCode::SUCCESS) {
-    ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
-                    errmsg("transaction::receive_message() %s failed. (%d)",
-                           message->get_message_type_name().c_str(),
-                           (int)status.get_sub_error_code())));
-
-    return ret_value;
-  }
-
-  error = transaction->commit();
-  if (error != ERROR_CODE::OK) {
-    elog(ERROR, "transaction::commit() failed. (%d)", (int)error);
-    return ret_value;
-  }
-  StubManager::end();
-#endif
-  ret_value = true;
-
-  return ret_value;
+  result = send_message_success;
+  return result;
 }
