@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	create_table.h
- *	@brief  Dispatch the create-table command to ogawayama.
+ *	@file	create_index_executor.h
  */
 #pragma once
 

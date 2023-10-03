@@ -14,11 +14,10 @@
  * limitations under the License.
  *
  *	@file	create_command.h
- *	@brief  For creation commands in DDL.
+ *	@brief  For create commands in DDL.
  */
 #pragma once
 
-// #include <boost/property_tree/ptree.hpp>
 #include "command/ddl_command.h"
 #include "manager/metadata/metadata.h"
 
@@ -50,9 +49,6 @@ class CreateCommand : public DDLCommand{
 	 *  @return true if supported
 	 *  @return false otherwise.
 	 */
-#if 0
-	virtual bool generate_metadata(boost::property_tree::ptree& metadata) const = 0;
-#endif
 	virtual bool generate_metadata(manager::metadata::Object& object) const = 0;
 
 	CreateCommand() = delete;
