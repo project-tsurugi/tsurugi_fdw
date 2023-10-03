@@ -82,10 +82,6 @@ static int64_t save_priority;
 static std::string save_label;
 static std::vector<std::string> save_write_preserve;
 
-#if 0
-ogawayama::stub::Transaction* udf_transaction = nullptr;
-#endif
-
 /**
  * @brief Save current transaction options.
  */
@@ -455,15 +451,7 @@ tg_start_transaction(PG_FUNCTION_ARGS)
 		specific_transaction = false;
 	}
 
-#if 1
 	Tsurugi::start_transaction();
-#else
-	ERROR_CODE error = Tsurugi::begin(&udf_transaction);
-	if (error != ERROR_CODE::OK) 
-	{
-		elog(ERROR, "Connection::begin() failed. (%d)", (int) error);
-	}
-#endif
 	transaction_block = true;
 
 	PG_RETURN_VOID();
@@ -479,17 +467,7 @@ tg_commit(PG_FUNCTION_ARGS)
 	}
 
 	transaction_block = false;
-#if 1
 	Tsurugi::commit();
-#else
-	if (udf_transaction != nullptr) {
-		udf_transaction->commit();
-		udf_transaction = nullptr;
-		Tsurugi::end();
-	} else {
-		elog(WARNING, "there is no tsurugi transaction in progress");
-	}
-#endif
 
 	if (specific_transaction) {
 		LoadTransactionOption();
@@ -509,17 +487,7 @@ tg_rollback(PG_FUNCTION_ARGS)
 	}
 
 	transaction_block = false;
-#if 1
 	Tsurugi::rollback();
-#else
-	if (udf_transaction != nullptr) {
-		udf_transaction->rollback();
-		udf_transaction = nullptr;
-		Tsurugi::end();
-	} else {
-		elog(WARNING, "there is no tsurugi transaction in progress");
-	}
-#endif
 
 	if (specific_transaction) {
 		LoadTransactionOption();
