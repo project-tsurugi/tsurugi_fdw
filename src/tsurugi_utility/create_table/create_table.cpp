@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	  table_metadata.h
- *	@brief  TABLE metadata operations.
+ *	@file	  create_table.cpp
  */
 #include <unordered_set>
 #include <boost/property_tree/ptree.hpp>
@@ -656,29 +655,6 @@ CreateTable::generate_constraint_metadata(metadata::Table& table) const
 			result = metadata::ErrorCode::OK;
 		}
 	}
-
-#if 0
-	/* for each columns */
-	List* table_elts = create_stmt->tableElts;
-	foreach(listptr, table_elts) {
-		Node* node = (Node *) lfirst(listptr);
-		if (IsA(node, ColumnDef)) {
-			// for column constraints
-			ColumnDef* column_def = (ColumnDef*) node;
-			List* column_constraints = column_def->constraints;
-			ListCell* listptr;
-			foreach(listptr, column_constraints) {
-				Constraint* constr = (Constraint*) lfirst(listptr);
-				metadata::Constraint constraint;
-				bool success = get_constraint_metadata(constr, table, column_def, constraint);
-				if (success) {
-					table.constraints.emplace_back(constraint);
-					result = metadata::ErrorCode::OK;
-				}
-			}
-		}
-	}
-#endif
 
 	return result;
 }

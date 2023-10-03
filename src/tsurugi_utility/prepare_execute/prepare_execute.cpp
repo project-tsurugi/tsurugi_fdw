@@ -1270,21 +1270,6 @@ after_prepare_stmt(const PrepareStmt* stmts,
 			break;
 	}
 
-#if 0
-	stub::Connection* connection;
-	ERROR_CODE error = Tsurugi::get_connection(&connection);
-	if (error != ERROR_CODE::OK)
-	{
-		elog(ERROR, "Tsurugi::get_connection() failed. (code: %d)", (int) error);
-		return false;
-	}
-	error = connection->prepare(sql.data, placeholders, prepared_statement);
-	if (error != ERROR_CODE::OK)
-	{
-		elog(ERROR, "connection->prepare() failed. (%d)\n\tsql:%s", (int) error, sql.data);
-		return false;
-	}
-#else
 	PreparedStatementPtr prepared_statement;
 	ERROR_CODE error = Tsurugi::prepare(sql.data, placeholders, prepared_statement);
 	if (error != ERROR_CODE::OK)
@@ -1292,7 +1277,6 @@ after_prepare_stmt(const PrepareStmt* stmts,
 		elog(ERROR, "Tsurugi::prepare() failed. (%d)\n\tsql:%s", (int) error, sql.data);
 		return false;
 	}
-#endif
 
 	char* name = stmts->name;
 	stored_prepare_statment[std::string(name)] = std::move(prepared_statement);
@@ -1355,35 +1339,7 @@ deparse_execute_param(const ExecuteStmt* stmts,
 						}
 						break;
 					case T_String:
-#if 1
 						parameters.emplace_back(col_name, strVal(val));
-#else
-						switch (target_param->paramtype)
-						{
-							case BPCHAROID:
-							case VARCHAROID:
-							case TEXTOID:
-								parameters.emplace_back(col_name, strVal(val));
-								break;
-							case DATEOID:
-								stub::date_type value;
-								// ToDo: Transform strVal to takatori::datetime::date
-								break;
-							case TIMEOID:
-								stub::time_type value;
-								// ToDo: Transform strVal to takatori::datetime::time_of_day
-								break;
-							case TIMESTAMPOID:
-								stub::timestamp_type value;
-								// ToDo: Transform strVal to takatori::datetime::time_point
-								break;
-							default:
-								/* should not reach here */
-								elog(ERROR, "execute_param: unrecognized T_String paramtype oid: %d",
-									 (int) target_param->paramtype);
-								break;
-						}
-#endif
 						break;
 					case T_Null:
 						{

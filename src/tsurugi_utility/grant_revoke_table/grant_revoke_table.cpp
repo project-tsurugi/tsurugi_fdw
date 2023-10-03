@@ -106,37 +106,6 @@ static bool send_message(message::Message* message,
   Assert(message != nullptr);
 
   bool ret_value = false;
-#if 0
-  ERROR_CODE error = ERROR_CODE::UNKNOWN;
-  /* sends message to ogawayama */
-  stub::Transaction* transaction;
-  error = StubManager::begin(&transaction);
-  if (error != ERROR_CODE::OK) {
-    ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
-                    errmsg("StubManager::begin() failed.")));
-    return ret_value;
-  }
-
-  message::MessageBroker broker;
-  message->set_receiver(transaction);
-  message::Status status = broker.send_message(message);
-
-  if (status.get_error_code() != message::ErrorCode::SUCCESS) {
-    ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
-                    errmsg("transaction::receive_message() %s failed. (%d)",
-                           message->get_message_type_name().c_str(),
-                           (int)status.get_sub_error_code())));
-
-    return ret_value;
-  }
-
-  error = transaction->commit();
-  if (error != ERROR_CODE::OK) {
-    elog(ERROR, "transaction::commit() failed. (%d)", (int)error);
-    return ret_value;
-  }
-  StubManager::end();
-#endif
   ret_value = true;
 
   return ret_value;

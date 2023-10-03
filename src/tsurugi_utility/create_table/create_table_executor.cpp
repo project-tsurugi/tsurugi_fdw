@@ -68,11 +68,7 @@ int64_t execute_create_table(CreateStmt* create_stmt)
 		return object_id;
 	}
 
-#if 0
-	property_tree::ptree table;
-#else
 	metadata::Table table;
-#endif
 	bool success = create_table.generate_metadata(table);
 	if (!success) {
 		ereport(ERROR,

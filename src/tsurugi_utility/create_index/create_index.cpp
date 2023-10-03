@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	create_index.h
+ *	@file	create_index.cpp
  *	@brief  Generate index metadata from index statement.
  */
 #include <memory>
@@ -330,23 +330,3 @@ bool get_primary_keys(IndexStmt* index_stmt, std::vector<int64_t>& primary_keys)
 	
 	return result;
 }
-
-#if 0
-/**
- * @brief  	Create table metadata from query tree.
- * @return 	true if success, otherwise fault.
- * @note	Add metadata of Primary-keys.
- */
-manager::metadata::ErrorCode 
-CreateIndex::generate_table_metadata(manager::metadata::Table& table) const
-{
-	IndexStmt* index_stmt = this->index_stmt();
-
-	bool success = get_primary_keys(index_stmt, table.primary_keys);
-	if (!success) {
-		return metadata::ErrorCode::NOT_FOUND;
-	}
-
-	return metadata::ErrorCode::OK;
-}
-#endif
