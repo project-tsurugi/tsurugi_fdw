@@ -175,3 +175,42 @@ bool remove_table_metadata(const int64_t object_id)
 
   return result;
 }
+
+/**
+ * @brief   Add index metadata to table metadata.
+ * @param	
+ * @return	
+ */
+bool add_index_to_table(const int64_t table_id, const int64_t index_id)
+{
+	auto tables = metadata::get_tables_ptr(TSURUGI_DB_NAME);
+	metadata::Table table;
+	auto indexes = metadata::get_indexes_ptr(TSURUGI_DB_NAME);
+	metadata::Index index;
+	bool result = false;
+
+	metadata::ErrorCode error = tables->get(table_id, table);
+	if (error != metadata::ErrorCode::OK) {
+		elog(ERROR, "Internal error occurred. " \
+			"(add_index_metadata_to_table_metadata) (TABLES::get())");
+		return false;
+	}
+
+	error = indexes->get(index_id, index);
+	if (error != metadata::ErrorCode::OK) {
+		elog(ERROR, "Internal error occurred. " \
+			"(add_index_metadata_to_table_metadata) (INDEXES::get())");
+		return false;
+	}
+
+	table.indexes.emplace_back(index);
+	error = tables->update(table_id, table);
+	if (error != metadata::ErrorCode::OK) {
+		elog(ERROR, "Internal error occurred. " \
+			"(add_index_metadata_to_table_metadata) (TABLES::update())");
+		return false;
+	}
+	result = true;
+
+	return result;
+}

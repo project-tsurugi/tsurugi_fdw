@@ -27,6 +27,7 @@ extern "C" {
 int64_t execute_create_table(CreateStmt* stmt);
 bool send_create_table_message(const int64_t object_id);
 bool remove_table_metadata(const int64_t object_id);
+bool add_index_to_table(const int64_t table_id, const int64_t index_id);
 
 #ifdef __cplusplus
 }
