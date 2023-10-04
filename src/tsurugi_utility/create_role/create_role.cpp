@@ -49,10 +49,8 @@ using namespace manager;
 using namespace ogawayama;
 
 #include "syscachecmds.h"
+#include "send_message.h"
 #include "create_role.h"
-
-static bool send_message(message::Message* message,
-                  std::unique_ptr<metadata::Metadata>& objects);
 
 /**
  *  @brief Calls the function to get ID and send created role ID to ogawayama.
@@ -62,33 +60,27 @@ static bool send_message(message::Message* message,
 bool after_create_role(const CreateRoleStmt* stmts) {
   Assert(stmts != nullptr);
 
+  bool result = false;
+
   /* The object id stored if new table was successfully created */
   metadata::ObjectId object_id = 0;
 
   /* Call the function sending metadata to metadata-manager. */
   bool success = get_roleid_by_rolename_from_syscache(stmts->role, &object_id);
-
-  if (success) {
-    message::CreateRole cr_msg{object_id};
-    std::unique_ptr<metadata::Metadata> roles{new metadata::Roles(TSURUGI_DB_NAME)};
-    success = send_message(&cr_msg, roles);
+  if (!success) {
+    return result;
   }
 
-  return success;
-}
+  message::CreateRole create_role{object_id};
+  success = send_message(create_role);
+  if (!success) {
+      ereport(ERROR,
+          (errcode(ERRCODE_INTERNAL_ERROR), 
+          errmsg("Communication error occurred. (send_message:CreateRole)")));
+      return result;
+  }
 
-/**
- *  @brief Calls the function to send Message to ogawayama.
- *  @param [in] message Message object to be sent.
- *  @param [in] objects Role object to call funciton.
- *  @return true if operation was successful, false otherwize.
- */
-static bool send_message(message::Message* message,
-                  std::unique_ptr<metadata::Metadata>& objects) {
-  Assert(message != nullptr);
+  result = true;
 
-  bool ret_value = false;
-  ret_value = true;
-
-  return ret_value;
+  return result;
 }
