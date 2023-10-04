@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
+ *	@file	drop_table_executor.h
  */
+
 #ifndef DROP_TABLE_EXECUTOR_H
 #define DROP_TABLE_EXECUTOR_H
 

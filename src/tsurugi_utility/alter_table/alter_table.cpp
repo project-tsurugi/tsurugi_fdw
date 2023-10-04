@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	alter_table.h
- *	@brief  Create constraint metadata from alter table statement.
+ *	@file	alter_table.cpp
  */
 #include <memory>
 #include <vector>

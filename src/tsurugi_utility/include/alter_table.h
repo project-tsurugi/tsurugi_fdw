@@ -28,7 +28,6 @@ class AlterTable : public AlterTableCommand {
 	/**
 	 * @brief
 	 */
-//	virtual bool validate_syntax() const { return true; }
 	virtual bool validate_syntax() const override;
 
 	/**
