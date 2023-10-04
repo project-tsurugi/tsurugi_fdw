@@ -52,9 +52,6 @@ using namespace ogawayama;
 #include "send_message.h"
 #include "create_role.h"
 
-static bool send_message(message::Message* message,
-                  std::unique_ptr<metadata::Metadata>& objects);
-
 /**
  *  @brief Calls the function to get ID and send created role ID to ogawayama.
  *  @param [in] stmts of statements.

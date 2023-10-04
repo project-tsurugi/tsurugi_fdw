@@ -53,9 +53,6 @@ extern "C" {
 #include "send_message.h"
 #include "drop_role.h"
 
-static bool send_message(message::Message* message,
-                         std::unique_ptr<metadata::Metadata>& objects);
-
 /**
  *  @brief Call the function to get the IDs of DROP ROLE.
  *  @param [in] stmts DROP ROLE statements.
