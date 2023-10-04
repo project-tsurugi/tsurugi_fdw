@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	drop_table.h
- *	@brief  Dispatch the create-table command to ogawayama.
+ *	@file	drop_table_executor.h
  */
 
-#ifndef DROP_TABLE_H
-#define DROP_TABLE_H
+#ifndef DROP_TABLE_EXECUTOR_H
+#define DROP_TABLE_EXECUTOR_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,4 +32,4 @@ bool table_exists_in_tsurugi(const char *relname);
 }
 #endif
 
-#endif // DROP_TABLE_H
+#endif // DROP_TABLE_EXECUTOR_H

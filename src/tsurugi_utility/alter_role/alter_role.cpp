@@ -81,6 +81,5 @@ bool after_alter_role(const AlterRoleStmt* stmts) {
   }
 
   result = true;
-
   return result;
 }

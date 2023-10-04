@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	  drop_table.cpp
+ *	@file	  drop_table_executor.cpp
  *	@brief  Dispatch drop-message to ogawayama.
  */
 #include "ogawayama/stub/api.h"
@@ -92,11 +92,7 @@ bool execute_drop_table(DropStmt* drop_stmt, const char* relname)
 
     /* DROP_TABLE message to ogawayama */
     message::DropTable drop_table_message{table.id};
-#if 1
     success = send_message(drop_table_message);
-#else
-	success = true;
-#endif
     if (!success) {
       ereport(ERROR,
               (errcode(ERRCODE_INTERNAL_ERROR), 
@@ -105,7 +101,6 @@ bool execute_drop_table(DropStmt* drop_stmt, const char* relname)
     }
 
 	/* remove index metadata */
-#if 1
 	auto indexes = metadata::get_indexes_ptr(TSURUGI_DB_NAME);
 	std::vector<boost::property_tree::ptree> index_elements = {};
 	error = indexes->get_all(index_elements);
@@ -132,32 +127,6 @@ bool execute_drop_table(DropStmt* drop_stmt, const char* relname)
 			}
 		}
 	}
-#else
-	auto indexes = metadata::get_index_metadata(TSURUGI_DB_NAME);
-	std::vector<metadata::Index> index_elements = {};
-	error = indexes->get_all(index_elements);
-    if (error != ErrorCode::OK) {
-		ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("drop_table() get remove all index metadata failed. (error:%d)",
-				 (int) error)));
-		return result;
-	}
-	if (index_elements.size() != 0) {
-		for (size_t i=0; i<index_elements.size(); i++) {
-			if (table.id == index_elements[i].table_id) {
-				error = indexes->remove(index_elements[i].id);
-			    if (error != ErrorCode::OK) {
-					ereport(ERROR,
-							(errcode(ERRCODE_INTERNAL_ERROR),
-							 errmsg("drop_table() remove index metadata failed. (error:%d)",
-							 (int) error)));
-					return result;
-				}
-			}
-		}
-	}
-#endif
 
     /* remove metadata */
     error = tables->remove(table.id);

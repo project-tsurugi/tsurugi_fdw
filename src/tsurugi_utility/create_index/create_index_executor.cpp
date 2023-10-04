@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	create_table.h
- *	@brief  Dispatch the create-table command to ogawayama.
+ *	@file	create_index_executor.cpp
  */
 #include <memory>
 #include "manager/metadata/tables.h"
@@ -91,41 +90,6 @@ int64_t execute_create_index(IndexStmt* index_stmt)
 					"(name: %s) (error:%d)", table_constraint.name.data(), (int) error)));
 		}
 	}
-
-#if 0
-	// Primary Keys
-	auto tables = metadata::get_table_metadata(TSURUGI_DB_NAME);
-	metadata::Table table;
-	ErrorCode error = tables->get(create_index.get_table_name(), table);
-	if (error != metadata::ErrorCode::OK) {
-		ereport(NOTICE,
-				errmsg("Table not found. (name: %s)", 
-				create_index.get_table_name()));
-		return object_id;
-	}
-	object_id = table.id;
-
-	if (table.primary_keys.size() == 0) {
-		// Primary keys specified in table constraints.
-		auto error = create_index.generate_table_metadata(table);
-		if (error != metadata::ErrorCode::OK) {
-			ereport(NOTICE,	errmsg("Primary keys not found."));
-			return object_id;
-		}
-		error = tables->remove(table.id);
-		if (error != metadata::ErrorCode::OK) {
-			ereport(NOTICE,	
-					errmsg("Remove a table metadata failed. (name: %s) (error:%d)",
-					table.name.data(), (int) error));
-		}
-		error = tables->add(table, &object_id);
-		if (error != metadata::ErrorCode::OK) {
-			ereport(NOTICE,	
-					errmsg("Add a table metadata failed. (name: %s) (error:%d)",
-					table.name.data(), (int) error));
-		}
-	}
-#endif
 
 	return object_id;
 }
