@@ -28,6 +28,7 @@
 #include "create_stmt.h"
 #include "drop_stmt.h"
 #include "drop_table_executor.h"
+#include "drop_index_executor.h"
 #include "create_role/create_role.h"
 #include "drop_role/drop_role.h"
 #include "alter_role/alter_role.h"
@@ -131,9 +132,9 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 			if (index_stmt->tableSpace != NULL && 
 					!strcmp(index_stmt->tableSpace, TSURUGI_TABLESPACE_NAME))
 			{
-				tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
-										context, params, queryEnv,
-										dest, completionTag);
+				ereport(ERROR,
+						(errcode(ERRCODE_INTERNAL_ERROR),
+						errmsg("CREATE INDEX is not yet supported in tsurugi_fdw.")));
 			}
 			else
 			{
@@ -148,31 +149,72 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 		{
 			RangeVar rel;
 			DropStmt *drop_stmt = (DropStmt *) parsetree;
-			if (drop_stmt->removeType == OBJECT_TABLE) 
+			switch (drop_stmt->removeType)
 			{
-				bool in_tsurugi = false;
-				ListCell *listptr;
-				foreach(listptr, drop_stmt->objects) 
+				case OBJECT_TABLE:
 				{
-					List *names = (List *) lfirst(listptr);
-					get_relname(names, &rel);
-					if (table_exists_in_tsurugi(rel.relname)) 
+					bool exists_in_tsurugi = false;
+					ListCell *listptr;
+					foreach(listptr, drop_stmt->objects)
 					{
-						in_tsurugi = true;
-						break;
+						List *names = (List *) lfirst(listptr);
+						get_relname(names, &rel);
+						if (table_exists_in_tsurugi(rel.relname))
+						{
+							exists_in_tsurugi = true;
+							break;
+						}
 					}
+					if (exists_in_tsurugi)
+					{
+						tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
+												context, params, queryEnv,
+												dest, completionTag);
+					}
+					else
+					{
+						standard_ProcessUtility(pstmt, queryString,
+									context, params, queryEnv,
+									dest, completionTag);
+					}
+					break;
 				}
-				if (in_tsurugi) 
+				case OBJECT_INDEX:
 				{
-					tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
-											context, params, queryEnv,
-											dest, completionTag);
+					bool exists_in_tsurugi = false;
+					ListCell *listptr;
+					foreach(listptr, drop_stmt->objects)
+					{
+						List *names = (List *) lfirst(listptr);
+						get_relname(names, &rel);
+						if (index_exists_in_tsurugi(rel.relname))
+						{
+							exists_in_tsurugi = true;
+							break;
+						}
+					}
+					if (exists_in_tsurugi)
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_INTERNAL_ERROR),
+								errmsg("DROP INDEX is not yet supported in tsurugi_fdw.")));
+					}
+					else
+					{
+						standard_ProcessUtility(pstmt, queryString,
+									context, params, queryEnv,
+									dest, completionTag);
+					}
+					break;
+				}
+				default:
+				{
+					standard_ProcessUtility(pstmt, queryString,
+								context, params, queryEnv,
+								dest, completionTag);
 					break;
 				}
 			}
-			standard_ProcessUtility(pstmt, queryString,
-						context, params, queryEnv,
-						dest, completionTag);
 			break;
 		}
 
