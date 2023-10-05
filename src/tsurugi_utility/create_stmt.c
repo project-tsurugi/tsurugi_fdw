@@ -50,7 +50,6 @@ void execute_create_stmt(PlannedStmt *pstmt,
     ObjectAddress address;
     ObjectAddress secondaryObject = InvalidObjectAddress;
     int64_t  table_id = -1;
-	bool success;
 
     /* ... and do it */
     foreach(l, stmts)
@@ -102,10 +101,7 @@ void execute_create_stmt(PlannedStmt *pstmt,
                   	errdetail("Tsurugi does not support FOREIGN KEY table constraint")));
         }
     }
-    success = send_create_table_message(table_id);
-	if (!success) {
-		remove_table_metadata(table_id);
-	}
+    send_create_table_message(table_id);
 }
 
 /**

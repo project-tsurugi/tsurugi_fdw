@@ -105,11 +105,11 @@ void send_create_index_message(int64_t index_id)
 	message::CreateIndex create_index_message{index_id};
 	bool success = send_message(create_index_message);
 	if (!success) {
-		ereport(ERROR,
-			(errcode(ERRCODE_INTERNAL_ERROR), 
-			errmsg("Communication error occurred. (send_message:CreateIndex)")));
 		metadata::Index index;
 		auto indexes = metadata::get_indexes_ptr(TSURUGI_DB_NAME);
 		indexes->remove(index_id);
+		ereport(ERROR,
+			(errcode(ERRCODE_INTERNAL_ERROR), 
+			errmsg("Communication error occurred. (send_message:CreateIndex)")));
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 tsurugi project.
+ * Copyright 2021 tsurugi project.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
+ *	@file	table_managercmds.h
+ *	@brief  Utility command to operate Table through metadata-manager.
  */
-#ifndef DROP_INDEX_EXECUTOR_H
-#define DROP_INDEX_EXECUTOR_H
+#pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include "nodes/parsenodes.h"
-
-bool index_exists_in_tsurugi(const char* index_name);
-bool execute_drop_index(DropStmt* drop_stmt, const char* index_name);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif // DROP_INDEX_EXECUTOR_H
+typedef struct _object_name {
+    char *database_name;
+    char *schema_name;
+    char *object_name;
+} ObjectName;

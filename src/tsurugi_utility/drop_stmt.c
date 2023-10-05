@@ -15,9 +15,46 @@
  *
  *	@file	drop_stmt.c
  */
+#include "utility_common.h"
 #include "drop_stmt.h"
 #include "drop_table_executor.h"
 #include "drop_index_executor.h"
+
+void get_object_name(List *names, ObjectName *obj);
+
+void get_object_name(
+	List *names, ObjectName *obj)
+{
+	switch (list_length(names))
+	{
+		case 1:
+		{
+			// object name only. e.g. table, index, ...
+			obj->object_name = strVal(linitial(names));
+			break;
+		}
+		case 2:
+		{
+			// schema name and object name.
+			obj->schema_name = strVal(linitial(names));
+			obj->object_name = strVal(lsecond(names));
+			break;
+		}
+		case 3:
+		{
+			// database name, schema name and object name.
+			obj->database_name = strVal(linitial(names));
+			obj->schema_name = strVal(lsecond(names));
+			obj->object_name = strVal(lthird(names));
+			break;
+		}
+		default:
+		{
+			elog(ERROR, "improper names (too many dotted names).");
+			break;
+		}
+	}
+}
 
 /**
  * @brief	Extract table name to drop.
@@ -43,7 +80,7 @@ void get_relname(List *names, RangeVar *rel)
 		}
 		case 3:
 		{
-			// database naem, schema name and table name.
+			// database name, schema name and table name.
 			rel->catalogname = strVal(linitial(names));
 			rel->schemaname = strVal(lsecond(names));
 			rel->relname = strVal(lthird(names));
@@ -63,18 +100,20 @@ void get_relname(List *names, RangeVar *rel)
  */
 void execute_drop_stmt(DropStmt *drop_stmt)
 {
-	RangeVar rel;
+	ObjectName obj;
+//	RangeVar rel;
 	ListCell *cell;
 	foreach(cell, drop_stmt->objects)
 	{
 		List *names = (List *) lfirst(cell);
-		get_relname(names, &rel);
-
+//		get_relname(names, &rel);
+		get_object_name(names, &obj);
+		
 		switch (drop_stmt->removeType)
 		{
 			case OBJECT_TABLE:
 			{
-				bool success = execute_drop_table(drop_stmt, rel.relname);
+				bool success = execute_drop_table(drop_stmt, obj.object_name);
 				if (!success) {
 					elog(ERROR, "execute_drop_table() failed.");
 				}	
@@ -82,7 +121,7 @@ void execute_drop_stmt(DropStmt *drop_stmt)
 			}
 			case OBJECT_INDEX:
 			{
-				bool success = execute_drop_index(drop_stmt, rel.relname);
+				bool success = execute_drop_index(drop_stmt, obj.object_name);
 				if (!success) {
 					elog(ERROR, "execute_drop_index() failed.");
 				}	

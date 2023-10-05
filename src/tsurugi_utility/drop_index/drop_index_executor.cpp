@@ -34,13 +34,11 @@ extern "C"
 }
 #endif
 
+#include "tsurugi.h"
 #include "send_message.h"
 #include "drop_index_executor.h"
 #include "drop_index.h"
 #include "manager/metadata/metadata.h"
-
-/* DB name metadata-manager manages */
-const std::string DBNAME = "Tsurugi";
 
 using namespace boost;
 using namespace manager;
@@ -51,21 +49,28 @@ using namespace ogawayama;
  *  @brief
  *  @param
  */
-bool index_exists_in_tsurugi(const char* relname)
+bool index_exists_in_tsurugi(const char* index_name)
 {
-  	auto indexes = get_indexes_ptr(DBNAME);
-  	return indexes->exists(relname);
+  	auto indexes = get_indexes_ptr(TSURUGI_DB_NAME);
+  	return indexes->exists(index_name);
 }
 
 /**
  *  @brief Calls the function sending metadata to metadata-manager and drops parameters sended to ogawayama.
  */
-bool execute_drop_index(DropStmt* drop_stmt, const char* relname)
+bool execute_drop_index(DropStmt* drop_stmt, const char* index_name)
 {
     Assert(drop_stmt != nullptr);
+
+	elog(LOG, "execute_drop_index() started.");
+
 	bool result{false};
 	DropIndex drop_index(drop_stmt);
-
+#if 0
+	ereport(ERROR,
+			(errcode(ERRCODE_INTERNAL_ERROR),
+			errmsg("DROP INDEX is not yet supported in tsurugi_fdw.")));
+#endif
 	bool success = drop_index.validate_syntax();
 	if (!success) {
 		return result;
@@ -78,8 +83,8 @@ bool execute_drop_index(DropStmt* drop_stmt, const char* relname)
 
     /* Get the object ID of the index to be deleted */
 	manager::metadata::Index index;
-    auto indexes = get_indexes_ptr(DBNAME);
-    metadata::ErrorCode error = indexes->get(relname, index);
+    auto indexes = get_indexes_ptr(TSURUGI_DB_NAME);
+    metadata::ErrorCode error = indexes->get(index_name, index);
 	if (error != ErrorCode::OK) {
         if (error == ErrorCode::NAME_NOT_FOUND && drop_stmt->missing_ok) {
             result = true;
@@ -87,14 +92,14 @@ bool execute_drop_index(DropStmt* drop_stmt, const char* relname)
             ereport(ERROR,
                     (errcode(ERRCODE_INTERNAL_ERROR),
                      errmsg("drop_index() get metadata failed. (table name: %s)", 
-                     relname)));
+                     index_name)));
         }
         return result;
     }
 
 	// check constraint
 	Table table;
-	auto tables = get_tables_ptr(DBNAME);
+	auto tables = get_tables_ptr(TSURUGI_DB_NAME);
 	error = tables->get(index.table_id, table);
 	if (error != ErrorCode::OK) {
 		ereport(ERROR,

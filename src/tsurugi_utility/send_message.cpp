@@ -44,11 +44,6 @@ bool send_message(message::Message& message)
 {
   bool ret_value = false;
 
-  elog(LOG,
-        "tsurugi_fdw send a message to ogawayama. " \
-        "(%s, param1: %ld, param2: %ld)",
-        message.string(), message.param1(), message.param2());
-
   stub::Connection* connection;
   ERROR_CODE error = Tsurugi::get_connection(&connection);
   if (error != ERROR_CODE::OK) {
@@ -75,16 +70,23 @@ bool send_message(message::Message& message)
     return ret_value;
   }
 
+  elog(LOG,
+        "tsurugi_fdw send a message to ogawayama. " \
+        "(%s, param1: %ld, param2: %ld)",
+        message.string(), message.param1(), message.param2());
+
   status = message::Broker::send_message(&message);
   if (status.get_error_code() == message::ErrorCode::FAILURE) {
     ereport(NOTICE,
             (errcode(ERRCODE_INTERNAL_ERROR),
             errmsg("Broker::send_message() failed. (msg: %s, code: %d)", 
             message.string(), status.get_sub_error_code())));
-    // ToDo: Add rollback process.
     message::Broker::send_message(&end_ddl);
     return ret_value;
   }
+
+  elog(LOG, "Ogawayama returned a value. (code: %d)", 
+      (int) status.get_error_code());
 
   status = message::Broker::send_message(&end_ddl);
   if (status.get_error_code() == message::ErrorCode::FAILURE) {

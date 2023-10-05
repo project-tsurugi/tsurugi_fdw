@@ -141,6 +141,7 @@ bool send_create_table_message(const int64_t object_id)
 	manager::message::CreateTable create_table_message{object_id};
 	bool success = send_message(create_table_message);
 	if (!success) {
+		remove_table_metadata(object_id);
 		ereport(ERROR,
 			(errcode(ERRCODE_INTERNAL_ERROR), 
 			errmsg("send_message() failed. (CreateTable Message)")));
