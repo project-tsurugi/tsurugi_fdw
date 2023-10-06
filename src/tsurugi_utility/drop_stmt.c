@@ -20,80 +20,6 @@
 #include "drop_table_executor.h"
 #include "drop_index_executor.h"
 
-void get_object_name(List *names, ObjectName *obj);
-
-void get_object_name(
-	List *names, ObjectName *obj)
-{
-	switch (list_length(names))
-	{
-		case 1:
-		{
-			// object name only. e.g. table, index, ...
-			obj->object_name = strVal(linitial(names));
-			break;
-		}
-		case 2:
-		{
-			// schema name and object name.
-			obj->schema_name = strVal(linitial(names));
-			obj->object_name = strVal(lsecond(names));
-			break;
-		}
-		case 3:
-		{
-			// database name, schema name and object name.
-			obj->database_name = strVal(linitial(names));
-			obj->schema_name = strVal(lsecond(names));
-			obj->object_name = strVal(lthird(names));
-			break;
-		}
-		default:
-		{
-			elog(ERROR, "improper names (too many dotted names).");
-			break;
-		}
-	}
-}
-
-/**
- * @brief	Extract table name to drop.
- * @param	names [in] namespace list.
- * @param	rel [out] structre for storing table name.
- */
-void get_relname(List *names, RangeVar *rel)
-{
-	switch (list_length(names))
-	{
-		case 1:
-		{
-			// table name only.
-			rel->relname = strVal(linitial(names));
-			break;
-		}
-		case 2:
-		{
-			// schema name and table name.
-			rel->schemaname = strVal(linitial(names));
-			rel->relname = strVal(lsecond(names));
-			break;
-		}
-		case 3:
-		{
-			// database name, schema name and table name.
-			rel->catalogname = strVal(linitial(names));
-			rel->schemaname = strVal(lsecond(names));
-			rel->relname = strVal(lthird(names));
-			break;
-		}
-		default:
-		{
-			elog(ERROR, "improper relation name (too many dotted names).");
-			break;
-		}
-	}
-}
-
 /**
  * @brief 	Drop statment processing.
  * @param	drop_stmt [in] Pointer of drop statement structure.
@@ -101,12 +27,10 @@ void get_relname(List *names, RangeVar *rel)
 void execute_drop_stmt(DropStmt *drop_stmt)
 {
 	ObjectName obj;
-//	RangeVar rel;
 	ListCell *cell;
 	foreach(cell, drop_stmt->objects)
 	{
 		List *names = (List *) lfirst(cell);
-//		get_relname(names, &rel);
 		get_object_name(names, &obj);
 		
 		switch (drop_stmt->removeType)
@@ -134,6 +58,5 @@ void execute_drop_stmt(DropStmt *drop_stmt)
 				break;
 			}
 		}
-
 	}
 }

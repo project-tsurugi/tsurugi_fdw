@@ -62,15 +62,8 @@ bool execute_drop_index(DropStmt* drop_stmt, const char* index_name)
 {
     Assert(drop_stmt != nullptr);
 
-	elog(LOG, "execute_drop_index() started.");
-
 	bool result{false};
 	DropIndex drop_index(drop_stmt);
-#if 0
-	ereport(ERROR,
-			(errcode(ERRCODE_INTERNAL_ERROR),
-			errmsg("DROP INDEX is not yet supported in tsurugi_fdw.")));
-#endif
 	bool success = drop_index.validate_syntax();
 	if (!success) {
 		return result;

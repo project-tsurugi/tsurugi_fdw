@@ -36,6 +36,7 @@
 #include "grant_revoke_role/grant_revoke_role.h"
 #include "grant_revoke_table/grant_revoke_table.h"
 #include "prepare_execute/prepare_execute.h"
+#include "utility_common.h"
 
 #ifndef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
@@ -148,7 +149,7 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 
         case T_DropStmt:
 		{
-			RangeVar rel;
+			ObjectName obj;
 			DropStmt *drop_stmt = (DropStmt *) parsetree;
 			switch (drop_stmt->removeType) 
 			{
@@ -159,8 +160,8 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 					foreach(listptr, drop_stmt->objects) 
 					{
 						List *names = (List *) lfirst(listptr);
-						get_relname(names, &rel);
-						if (table_exists_in_tsurugi(rel.relname)) 
+						get_object_name(names, &obj);
+						if (table_exists_in_tsurugi(obj.object_name)) 
 						{
 							exists_in_tsurugi = true;
 							break;
@@ -187,8 +188,8 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 					foreach(listptr, drop_stmt->objects) 
 					{
 						List *names = (List *) lfirst(listptr);
-						get_relname(names, &rel);
-						if (index_exists_in_tsurugi(rel.relname)) 
+						get_object_name(names, &obj);
+						if (index_exists_in_tsurugi(obj.object_name)) 
 						{
 							exists_in_tsurugi = true;
 							break;
