@@ -116,7 +116,7 @@ bool execute_drop_index(DropStmt* drop_stmt, const char* index_name)
     if (!success) {
       ereport(ERROR,
               (errcode(ERRCODE_INTERNAL_ERROR), 
-              errmsg("send_message() failed. (DROP_INDEX)")));
+              errmsg("DROP INDEX failed.")));
       return result;
     }
 
