@@ -16,10 +16,16 @@
  *	@file	table_managercmds.h
  *	@brief  Utility command to operate Table through metadata-manager.
  */
-#pragma once
+#ifndef UTILITY_COMMON_H
+#define UTILITY_COMMON_H
 
 typedef struct _object_name {
     char *database_name;
     char *schema_name;
     char *object_name;
 } ObjectName;
+
+void get_object_name(
+	List *names, ObjectName *obj);
+ 
+#endif // UTILITY_COMMON_H
