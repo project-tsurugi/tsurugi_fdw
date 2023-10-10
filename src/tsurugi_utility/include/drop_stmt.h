@@ -15,8 +15,12 @@
  *
  *	@file	drop_stmt.h
  */
+#ifndef DROP_STMT_H
+#define DROP_STMT_H
+
 #include "postgres.h"
 #include "nodes/parsenodes.h"
 
 void execute_drop_stmt(DropStmt *drop_stmt);
 
+#endif /* DROP_STMT_H */
