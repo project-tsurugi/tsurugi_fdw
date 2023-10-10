@@ -15,7 +15,7 @@
  *
  */
 #include "postgres.h"
-#include "nodes/parsenodes.h"
+#include "nodes/value.h"
 #include "utility_common.h"
 
 void get_object_name(

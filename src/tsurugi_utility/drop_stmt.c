@@ -16,9 +16,9 @@
  *	@file	drop_stmt.c
  */
 #include "utility_common.h"
-#include "drop_stmt.h"
 #include "drop_table_executor.h"
 #include "drop_index_executor.h"
+#include "drop_stmt.h"
 
 /**
  * @brief 	Drop statment processing.

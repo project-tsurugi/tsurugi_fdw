@@ -19,6 +19,9 @@
 #ifndef UTILITY_COMMON_H
 #define UTILITY_COMMON_H
 
+#include "postgres.h"
+#include "nodes/pg_list.h"
+
 typedef struct _object_name {
     char *database_name;
     char *schema_name;
@@ -28,4 +31,4 @@ typedef struct _object_name {
 void get_object_name(
 	List *names, ObjectName *obj);
  
-#endif // UTILITY_COMMON_H
+#endif /* UTILITY_COMMON_H */
