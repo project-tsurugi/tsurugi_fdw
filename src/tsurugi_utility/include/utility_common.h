@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 tsurugi project.
+ * Copyright 2021-2023 Project Tsurugi.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	table_managercmds.h
+ *	@file	utility_common.h
  *	@brief  Utility command to operate Table through metadata-manager.
  */
 #ifndef UTILITY_COMMON_H

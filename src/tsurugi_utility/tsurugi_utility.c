@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 tsurugi project.
+ * Copyright 2019-2023 Project Tsurugi.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -151,23 +151,23 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 		{
 			ObjectName obj;
 			DropStmt *drop_stmt = (DropStmt *) parsetree;
-			switch (drop_stmt->removeType) 
+			switch (drop_stmt->removeType)
 			{
 				case OBJECT_TABLE:
 				{
 					bool exists_in_tsurugi = false;
 					ListCell *listptr;
-					foreach(listptr, drop_stmt->objects) 
+					foreach(listptr, drop_stmt->objects)
 					{
 						List *names = (List *) lfirst(listptr);
 						get_object_name(names, &obj);
-						if (table_exists_in_tsurugi(obj.object_name)) 
+						if (table_exists_in_tsurugi(obj.object_name))
 						{
 							exists_in_tsurugi = true;
 							break;
 						}
 					}
-					if (exists_in_tsurugi) 
+					if (exists_in_tsurugi)
 					{
 						tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
 												context, params, queryEnv,
@@ -185,17 +185,17 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 				{
 					bool exists_in_tsurugi = false;
 					ListCell *listptr;
-					foreach(listptr, drop_stmt->objects) 
+					foreach(listptr, drop_stmt->objects)
 					{
 						List *names = (List *) lfirst(listptr);
 						get_object_name(names, &obj);
-						if (index_exists_in_tsurugi(obj.object_name)) 
+						if (index_exists_in_tsurugi(obj.object_name))
 						{
 							exists_in_tsurugi = true;
 							break;
 						}
 					}
-					if (exists_in_tsurugi) 
+					if (exists_in_tsurugi)
 					{
 						tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
 												context, params, queryEnv,
