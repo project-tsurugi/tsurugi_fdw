@@ -75,7 +75,7 @@ bool execute_drop_index(DropStmt* drop_stmt, const char* index_name)
 	}
 
     /* Get the object ID of the index to be deleted */
-	manager::metadata::Index index;
+	metadata::Index index;
     auto indexes = get_indexes_ptr(TSURUGI_DB_NAME);
     metadata::ErrorCode error = indexes->get(index_name, index);
 	if (error != ErrorCode::OK) {
@@ -100,14 +100,28 @@ bool execute_drop_index(DropStmt* drop_stmt, const char* index_name)
 			 errmsg("drop_index() get table metadata failed.")));
 		return result;
 	}
-	for (const auto& constraint : table.constraints) {
-		if (index.id == constraint.index_id) {
-			ereport(ERROR,
-					(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
-					 errmsg("cannot drop index because constraint %s on table %s requires it",
-					 index.name.data(), table.name.data())));
-			return result;
-		}
+	for (auto constraint = table.constraints.begin(); constraint != table.constraints.end();) {
+		if (constraint->index_id == index.id) {
+			if (constraint->type == metadata::Constraint::ConstraintType::UNIQUE) {
+				// remove a unique constraint from a table metadata.
+				constraint = table.constraints.erase(constraint);
+				error = tables->update(table.id, table);
+				if (error != metadata::ErrorCode::OK) {
+					ereport(ERROR,
+						(errcode(ERRCODE_INTERNAL_ERROR),
+						errmsg("Cannot update a table metadata. (name: %s)", 
+						table.name.data())));
+				}
+			} else {
+				ereport(ERROR,
+						(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+						errmsg("cannot drop index because constraint %s on table %s requires it",
+						index.name.data(), table.name.data())));
+				return result;
+			}
+		} else {
+			++constraint;
+		}		
 	}
 
     /* Send DROP_INDEX message to ogawayama */
