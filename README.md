@@ -213,11 +213,6 @@
 
 ## Define table
 
-1. Start oltp
-	```sh
-	oltp start
-	```
-
 1. Define table
 	* Execute **CREATE TABLE** command
 		* You must add "TABLESPACE tsurugi"
@@ -244,8 +239,3 @@
 	INSERT INTO table1 (column1) VALUES (100);
 	```
 	Notes: In the current version, specify the column name in the INSERT statement.
-
-1. If you want to stop oltp, use
-	```sh
-	oltp shutdown
-	```
