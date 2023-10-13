@@ -91,16 +91,6 @@ bool execute_drop_table(DropStmt* drop_stmt, const char* relname)
         return result;
     }
 
-    /* Send DROP_TABLE message to ogawayama */
-    message::DropTable drop_table_message{table.id};
-    success = send_message(drop_table_message);
-    if (!success) {
-      ereport(ERROR,
-              (errcode(ERRCODE_INTERNAL_ERROR), 
-              errmsg("send_message() failed. (DROP_TABLE)")));
-      return result;
-    }
-
 	/* remove index metadata */
 	auto indexes = metadata::get_indexes_ptr(TSURUGI_DB_NAME);
 	std::vector<boost::property_tree::ptree> index_elements = {};
@@ -117,6 +107,21 @@ bool execute_drop_table(DropStmt* drop_stmt, const char* relname)
 			auto index_table_id = index_elements[i].get_optional<ObjectIdType>(metadata::Index::TABLE_ID);
 			if (table.id == index_table_id.get()) {
 				auto remove_id = index_elements[i].get_optional<ObjectIdType>(metadata::Index::ID);
+				/* check secondary index */
+				auto index_is_primary = index_elements[i].get_optional<bool>(metadata::Index::IS_PRIMARY);
+				if (index_is_primary == false) {
+					/* For secondary index only */
+					/* Send DROP_INDEX message to ogawayama */
+					message::DropIndex drop_index_message{remove_id.get()};
+					success = send_message(drop_index_message);
+					if (!success) {
+						ereport(ERROR,
+								(errcode(ERRCODE_INTERNAL_ERROR),
+								errmsg("drop_table() send drop index message failed.")));
+						return result;
+					}
+				}
+				/* remove index metadata */
 				error = indexes->remove(remove_id.get());
 			    if (error != ErrorCode::OK) {
 					ereport(ERROR,
@@ -128,6 +133,16 @@ bool execute_drop_table(DropStmt* drop_stmt, const char* relname)
 			}
 		}
 	}
+
+    /* Send DROP_TABLE message to ogawayama */
+    message::DropTable drop_table_message{table.id};
+    success = send_message(drop_table_message);
+    if (!success) {
+      ereport(ERROR,
+              (errcode(ERRCODE_INTERNAL_ERROR),
+              errmsg("send_message() failed. (DROP_TABLE)")));
+      return result;
+    }
 
     /* remove metadata */
     error = tables->remove(table.id);
