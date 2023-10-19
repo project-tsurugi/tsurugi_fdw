@@ -210,6 +210,10 @@ bool CreateIndex::generate_metadata(manager::metadata::Object& object) const
 		}
     }
 
+	if (index_stmt->tableSpace == nullptr) {
+		index.name = index.name + std::string("_tg_create_table");
+	}
+
     result = true;
 
   	return result;
@@ -270,6 +274,10 @@ CreateIndex::generate_constraint_metadata(metadata::Table& table) const
 			} else {
 				index_name = std::string(table.name + column_name + "_key");
 			}
+		}
+
+		if (index_stmt->tableSpace == nullptr) {
+			index_name = index_name + std::string("_tg_create_table");
 		}
 
 		auto indexes = metadata::get_indexes_ptr(TSURUGI_DB_NAME);
