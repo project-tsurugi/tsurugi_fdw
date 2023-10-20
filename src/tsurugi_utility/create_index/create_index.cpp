@@ -210,10 +210,6 @@ bool CreateIndex::generate_metadata(manager::metadata::Object& object) const
 		}
     }
 
-	if (index_stmt->tableSpace == nullptr) {
-		index.name = index.name + std::string("_tg_create_table");
-	}
-
     result = true;
 
   	return result;
@@ -234,11 +230,6 @@ CreateIndex::generate_constraint_metadata(metadata::Table& table) const
 	if (index_stmt->primary || index_stmt->unique) {
 		metadata::Constraint constraint;
 		std::string column_name;
-
-		/* put constraint name metadata */
-		if (index_stmt->idxname != NULL) {
-			constraint.name = index_stmt->idxname;
-		}
 
 		/* put constraint type metadata */
 		if (index_stmt->primary) {
@@ -276,10 +267,6 @@ CreateIndex::generate_constraint_metadata(metadata::Table& table) const
 			}
 		}
 
-		if (index_stmt->tableSpace == nullptr) {
-			index_name = index_name + std::string("_tg_create_table");
-		}
-
 		auto indexes = metadata::get_indexes_ptr(TSURUGI_DB_NAME);
 		metadata::Index index;
 		auto error = indexes->get(index_name, index);
@@ -294,6 +281,9 @@ CreateIndex::generate_constraint_metadata(metadata::Table& table) const
 			elog(NOTICE, "Index not found. (index name:%s)", index_name.data());
 			return result;
 		}
+
+		/* put constraint name metadata */
+		constraint.name = index_name;
 
 		table.constraints.emplace_back(constraint);
 		result = metadata::ErrorCode::OK;
