@@ -90,13 +90,28 @@ PostgreSQLの`SET transaction`は**実行中の**トランザクションのト�
 
   ```sql
   postgres=# select tg_set_transaction('short', 'interrupt', 'pgsql-short-transaction');
-                tg_transaction
-  --------------------------------------------------
-  {                                                +
-      "transactionType": "1",                      +
-      "transactionPriority": "1",                  +
-      "transactionLabel": "pgsql-short-transaction"+
-  }                                                +
+                  tg_set_transaction
+  ----------------------------------------------------
+  {                                                 +
+      "transactionType": "1",                       +
+      "transactionPriority": "1",                   +
+      "transactionLabel": "pgsql-short-transaction",+
+      "writePreserve": [                            +
+          {                                         +
+              "tableName": ""                       +
+          }                                         +
+      ],                                            +
+      "inclusiveReadArea": [                        +
+          {                                         +
+              "tableName": ""                       +
+          }                                         +
+      ],                                            +
+      "exclusiveReadArea": [                        +
+          {                                         +
+              "tableName": ""                       +
+          }                                         +
+      ]                                             +
+  }                                                 +
 
   (1 row)
   ```
@@ -109,22 +124,37 @@ PostgreSQLの`SET transaction`は**実行中の**トランザクションのト�
 
   ```sql
   postgres=# select tg_set_transaction('long');
-                tg_transaction
-  --------------------------------------------------
-  {                                                +
-      "transactionType": "2",                      +
-      "transactionPriority": "0",                  +
-      "transactionLabel": "pgsql-transaction",     +
-      "writePreserve": [                           +
-      ]                                            +
-  }                                                +
+                tg_set_transaction
+  ----------------------------------------------
+   {                                           +
+       "transactionType": "2",                 +
+       "transactionPriority": "0",             +
+       "transactionLabel": "pgsql-transaction",+
+       "writePreserve": [                      +
+           {                                   +
+               "tableName": ""                 +
+           }                                   +
+       ],                                      +
+       "inclusiveReadArea": [                  +
+           {                                   +
+               "tableName": ""                 +
+           }                                   +
+       ],                                      +
+       "exclusiveReadArea": [                  +
+           {                                   +
+               "tableName": ""                 +
+           }                                   +
+       ]                                       +
+   }                                           +
 
   (1 row)
   ```
 
 - `transactionType`はトランザクション種別を示します（"`2`"は`long`を意味します）
 - `transactionPriority`と`transactionLabel`にはデフォルト値が設定されます
-- Longトランザクションを指定した場合のみwritePreserveパラメータが追加されます
-  - write Preserveの対象となるテーブルを設定するには[`tg_set_write_preserve`](./tg_set_write_preserve.md)を使用します
+- Longトランザクションを指定した場合のみ`writePreserve`と`inclusiveReadArea`と`exclusiveReadArea`パラメータが有効になります
+  - `writePreserve`の対象となるテーブルを設定するには[`tg_set_write_preserve`](./tg_set_write_preserve.md)を使用します
+  - `inclusiveReadArea`の対象となるテーブルを設定するには[`tg_set_inclusive_read_areas`](./tg_set_inclusive_read_areas.md)を使用します
+  - `exclusiveReadArea`の対象となるテーブルを設定するには[`tg_set_exclusive_read_areas`](./tg_set_exclusive_read_areas.md)を使用します
 
 ---
