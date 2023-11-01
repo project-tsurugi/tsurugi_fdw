@@ -133,6 +133,34 @@ int64_t get_direction(IndexElem* elem)
 }
 
 /**
+ * @brief	If index name is not specified, generate index name
+ *          from table name and column name.
+ * @param	index_stmt_idxname	Name of new index in the Create Index Statement.
+ * @param	table_name			Table name that has this index.
+ * @param	column_name			Column name that has this index.
+ * @param	is_primary			Primary Key is true, otherwise false.
+ * @return 	Index name to be registered in metadata.
+ */
+std::string generate_index_name(char* index_stmt_idxname,
+								std::string table_name,
+								std::string column_name,
+								bool is_primary)
+{
+	std::string index_name;
+	if (index_stmt_idxname != nullptr) {
+		index_name = index_stmt_idxname;
+	} else {
+		// default index names.
+		if (is_primary) {
+			index_name = table_name + std::string("_pkey");
+		} else {
+			index_name = std::string(table_name + column_name + "_key");
+		}
+	}
+	return index_name;
+}
+
+/**
  *  @brief  Generate index metadata from query tree.
  *  @return true if success.
  *  @return false otherwise.
@@ -199,16 +227,8 @@ bool CreateIndex::generate_metadata(manager::metadata::Object& object) const
 	}
     index.number_of_columns = index.keys.size();
 
-    if (index_stmt->idxname != nullptr) {
-		index.name = index_stmt->idxname;
-	} else {
-		// default index names.
-		if (index.is_primary) {
-	        index.name = table.name + std::string("_pkey");
-		} else {
-	        index.name = std::string(table.name + column_name + "_key");
-		}
-    }
+	index.name = generate_index_name(index_stmt->idxname,
+								table.name, column_name, index.is_primary);
 
     result = true;
 
@@ -254,18 +274,23 @@ CreateIndex::generate_constraint_metadata(metadata::Table& table) const
 			}
 		}
 
-		/* put constraint index_id metadata */
-		std::string index_name;
-		if (index_stmt->idxname != nullptr) {
-			index_name = index_stmt->idxname;
-		} else {
-			// default index names.
-			if (index_stmt->primary) {
-				index_name = table.name + std::string("_pkey");
-			} else {
-				index_name = std::string(table.name + column_name + "_key");
+		/* Generate column_name based on index include parameter */
+		foreach(listptr, index_stmt->indexIncludingParams) {
+			Node* node = (Node*) lfirst(listptr);
+			if (IsA(node, IndexElem)) {
+				IndexElem* elem = (IndexElem*) node;
+				for (const auto& column : table.columns) {
+					if (column.name == elem->name) {
+						column_name += '_' + column.name;
+					}
+				}
 			}
 		}
+
+		/* put constraint index_id metadata */
+		std::string index_name;
+		index_name = generate_index_name(index_stmt->idxname,
+									table.name, column_name, index_stmt->primary);
 
 		auto indexes = metadata::get_indexes_ptr(TSURUGI_DB_NAME);
 		metadata::Index index;

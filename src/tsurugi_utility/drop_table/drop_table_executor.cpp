@@ -102,38 +102,36 @@ bool execute_drop_table(DropStmt* drop_stmt, const char* relname)
 				 (int) error)));
 		return result;
 	}
-	if (index_elements.size() != 0) {
-		for (size_t i=0; i<index_elements.size(); i++) {
-			auto index_table_id = index_elements[i].get_optional<ObjectIdType>(metadata::Index::TABLE_ID);
-			if (table.id == index_table_id.get()) {
-				auto remove_id = index_elements[i].get_optional<ObjectIdType>(metadata::Index::ID);
-				/* check secondary index */
-				auto index_is_primary = index_elements[i].get_optional<bool>(metadata::Index::IS_PRIMARY);
-				auto index_is_primary_value = index_is_primary.value();
-				if (index_is_primary_value == false) {
-					/* For secondary index only */
+	for (size_t i=0; i<index_elements.size(); i++) {
+		auto index_table_id = index_elements[i].get_optional<ObjectIdType>(metadata::Index::TABLE_ID);
+		if (table.id == index_table_id.get()) {
+			auto remove_id = index_elements[i].get_optional<ObjectIdType>(metadata::Index::ID);
+			/* check secondary index */
+			auto index_is_primary = index_elements[i].get_optional<bool>(metadata::Index::IS_PRIMARY);
+			auto index_is_primary_value = index_is_primary.value();
+			if (index_is_primary_value == false) {
+				/* For secondary index only */
+				/* Send DROP_INDEX message to ogawayama */
+				message::DropIndex drop_index_message{remove_id.get()};
+				success = send_message(drop_index_message);
+				if (!success) {
 					auto index_name = index_elements[i].get_optional<std::string>(metadata::Index::NAME);
 					auto index_name_value = index_name.value();
-					/* Send DROP_INDEX message to ogawayama */
-					message::DropIndex drop_index_message{remove_id.get()};
-					success = send_message(drop_index_message);
-					if (!success) {
-						ereport(ERROR,
-								(errcode(ERRCODE_INTERNAL_ERROR),
-								errmsg("drop_table() send drop index message failed. index name = %s",
-								index_name_value.c_str())));
-						return result;
-					}
-				}
-				/* remove index metadata */
-				error = indexes->remove(remove_id.get());
-			    if (error != ErrorCode::OK) {
 					ereport(ERROR,
 							(errcode(ERRCODE_INTERNAL_ERROR),
-							 errmsg("drop_table() remove index metadata failed. (error:%d)",
-							 (int) error)));
+							errmsg("drop_table() send drop index message failed. index name = %s",
+							index_name_value.c_str())));
 					return result;
 				}
+			}
+			/* remove index metadata */
+			error = indexes->remove(remove_id.get());
+		    if (error != ErrorCode::OK) {
+				ereport(ERROR,
+						(errcode(ERRCODE_INTERNAL_ERROR),
+						 errmsg("drop_table() remove index metadata failed. (error:%d)",
+						 (int) error)));
+				return result;
 			}
 		}
 	}

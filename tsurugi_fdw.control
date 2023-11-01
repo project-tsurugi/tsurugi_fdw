@@ -1,5 +1,5 @@
 # tsurugi_fdw extension
 comment = 'foreign-data wrapper for tsurugi'
-default_version = '1.0.0'
+default_version = '1.0.0-BETA1'
 module_pathname = '$libdir/tsurugi_fdw'
 relocatable = false
