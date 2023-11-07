@@ -186,14 +186,13 @@ ERROR_CODE Tsurugi::start_transaction()
 
         elog(LOG, "Trying to run Connection::begin(). (pid: %d)", getpid());
 
-        ERROR_CODE error = connection_->begin(option, transaction_);
+        error = connection_->begin(option, transaction_);
 
         elog(LOG, "Connection::begin() done. (error: %d)", (int) error);
     }
     else
     {
         elog(WARNING, "there is no connection to Tsurugi.");
-        return error;
     }
 
 	return error;
@@ -271,7 +270,7 @@ ERROR_CODE Tsurugi::commit()
     {
         elog(LOG, "Trying to run Transaction::commit().");
 
-        ERROR_CODE error = transaction_->commit();
+        error = transaction_->commit();
         transaction_ = nullptr;
 
         elog(LOG, "Transaction::commit() done. (error: %d)", (int) error);
@@ -301,7 +300,7 @@ ERROR_CODE Tsurugi::rollback()
     {
         elog(LOG, "Trying to run Transaction::rollback().");
 
-        ERROR_CODE error = transaction_->rollback();
+        error = transaction_->rollback();
         transaction_ = nullptr;
 
         elog(LOG, "Transaction::rollback() done. (error: %d)", (int) error);

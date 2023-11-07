@@ -20,6 +20,12 @@ CREATE FUNCTION tg_set_transaction(text) RETURNS cstring
 CREATE FUNCTION tg_set_write_preserve(variadic text[]) RETURNS cstring
   AS 'tsurugi_fdw' LANGUAGE C STRICT;
 
+CREATE FUNCTION tg_set_inclusive_read_areas(variadic text[]) RETURNS cstring
+  AS 'tsurugi_fdw' LANGUAGE C STRICT;
+
+CREATE FUNCTION tg_set_exclusive_read_areas(variadic text[]) RETURNS cstring
+  AS 'tsurugi_fdw' LANGUAGE C STRICT;
+
 CREATE FUNCTION tg_show_transaction() RETURNS cstring
   AS 'tsurugi_fdw' LANGUAGE C STRICT;
 
