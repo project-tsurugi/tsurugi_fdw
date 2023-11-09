@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Project Tsurugi.
+ * Copyright 2021-2023 Project Tsurugi.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	drop_stmt.h
+ *	@file	utility_common.h
+ *	@brief  Utility command to operate Table through metadata-manager.
  */
+#ifndef UTILITY_COMMON_H
+#define UTILITY_COMMON_H
+
 #include "postgres.h"
-#include "nodes/parsenodes.h"
+#include "nodes/pg_list.h"
 
-void get_relname(List *names, RangeVar *rel);
-void execute_drop_stmt(DropStmt *drop_stmt);
+typedef struct _object_name {
+    char *database_name;
+    char *schema_name;
+    char *object_name;
+} ObjectName;
 
+void get_object_name(
+	List *names, ObjectName *obj);
+ 
+#endif /* UTILITY_COMMON_H */

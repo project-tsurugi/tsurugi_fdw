@@ -34,6 +34,7 @@ extern "C"
 }
 #endif
 
+#include "tg_common.h"
 #include "send_message.h"
 #include "drop_table_executor.h"
 #include "drop_table.h"
@@ -49,7 +50,7 @@ using namespace ogawayama;
  * @param
  * 
  */
-bool table_exists_in_tsurugi(const char *relname)
+bool table_exists_in_tsurugi(const char* relname)
 {
   	auto tables = get_tables_ptr(TSURUGI_DB_NAME);
   	return tables->exists(relname);
@@ -90,16 +91,6 @@ bool execute_drop_table(DropStmt* drop_stmt, const char* relname)
         return result;
     }
 
-    /* DROP_TABLE message to ogawayama */
-    message::DropTable drop_table_message{table.id};
-    success = send_message(drop_table_message);
-    if (!success) {
-      ereport(ERROR,
-              (errcode(ERRCODE_INTERNAL_ERROR), 
-              errmsg("send_message() failed. (DROP_TABLE)")));
-      return result;
-    }
-
 	/* remove index metadata */
 	auto indexes = metadata::get_indexes_ptr(TSURUGI_DB_NAME);
 	std::vector<boost::property_tree::ptree> index_elements = {};
@@ -111,22 +102,49 @@ bool execute_drop_table(DropStmt* drop_stmt, const char* relname)
 				 (int) error)));
 		return result;
 	}
-	if (index_elements.size() != 0) {
-		for (size_t i=0; i<index_elements.size(); i++) {
-			auto index_table_id = index_elements[i].get_optional<ObjectIdType>(metadata::Index::TABLE_ID);
-			if (table.id == index_table_id.get()) {
-				auto remove_id = index_elements[i].get_optional<ObjectIdType>(metadata::Index::ID);
-				error = indexes->remove(remove_id.get());
-			    if (error != ErrorCode::OK) {
+	for (size_t i=0; i<index_elements.size(); i++) {
+		auto index_table_id = index_elements[i].get_optional<ObjectIdType>(metadata::Index::TABLE_ID);
+		if (table.id == index_table_id.get()) {
+			auto remove_id = index_elements[i].get_optional<ObjectIdType>(metadata::Index::ID);
+			/* check secondary index */
+			auto index_is_primary = index_elements[i].get_optional<bool>(metadata::Index::IS_PRIMARY);
+			auto index_is_primary_value = index_is_primary.value();
+			if (index_is_primary_value == false) {
+				/* For secondary index only */
+				/* Send DROP_INDEX message to ogawayama */
+				message::DropIndex drop_index_message{remove_id.get()};
+				success = send_message(drop_index_message);
+				if (!success) {
+					auto index_name = index_elements[i].get_optional<std::string>(metadata::Index::NAME);
+					auto index_name_value = index_name.value();
 					ereport(ERROR,
 							(errcode(ERRCODE_INTERNAL_ERROR),
-							 errmsg("drop_table() remove index metadata failed. (error:%d)",
-							 (int) error)));
+							errmsg("drop_table() send drop index message failed. index name = %s",
+							index_name_value.c_str())));
 					return result;
 				}
 			}
+			/* remove index metadata */
+			error = indexes->remove(remove_id.get());
+		    if (error != ErrorCode::OK) {
+				ereport(ERROR,
+						(errcode(ERRCODE_INTERNAL_ERROR),
+						 errmsg("drop_table() remove index metadata failed. (error:%d)",
+						 (int) error)));
+				return result;
+			}
 		}
 	}
+
+    /* Send DROP_TABLE message to ogawayama */
+    message::DropTable drop_table_message{table.id};
+    success = send_message(drop_table_message);
+    if (!success) {
+      ereport(ERROR,
+              (errcode(ERRCODE_INTERNAL_ERROR),
+              errmsg("send_message() failed. (DROP_TABLE)")));
+      return result;
+    }
 
     /* remove metadata */
     error = tables->remove(table.id);

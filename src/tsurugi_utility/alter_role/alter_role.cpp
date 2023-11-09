@@ -49,8 +49,11 @@ using namespace manager;
 using namespace ogawayama;
 
 #include "role_managercmds.h"
-#include "send_message.h"
+
 #include "alter_role.h"
+
+static bool send_message(message::Message* message,
+                  std::unique_ptr<metadata::Metadata>& objects);
 
 /**
  *  @brief Calls the function to get role ID and send alter role ID to ogawayama.
@@ -60,26 +63,34 @@ using namespace ogawayama;
 bool after_alter_role(const AlterRoleStmt* stmts) {
   Assert(stmts != nullptr);
 
-  bool result = false;
-
   /* The object id stored if new table was successfully created */
   metadata::ObjectId object_id = 0;
 
   /* Call the function sending metadata to metadata-manager. */
   bool success = get_roleid_by_rolename(TSURUGI_DB_NAME,stmts->role->rolename, &object_id);
-  if (!success) {
-      return result;
+
+  if (success) {
+    message::AlterRole alter_role{object_id};
+    std::unique_ptr<metadata::Metadata> roles{new metadata::Roles(TSURUGI_DB_NAME)};
+    success = send_message(&alter_role, roles);
   }
 
-  message::AlterRole alter_role{object_id};
-  success = send_message(alter_role);
-  if (!success) {
-      ereport(ERROR,
-          (errcode(ERRCODE_INTERNAL_ERROR), 
-          errmsg("send_message() failed. (AlterRole)")));
-      return result;
-  }
-
-  result = true;
-  return result;
+  return success;
 }
+
+/**
+ *  @brief Calls the function to send Message to ogawayama.
+ *  @param [in] message Message object to be sent.
+ *  @param [in] objects Role object to call funciton.
+ *  @return true if operation was successful, false otherwize.
+ */
+static bool send_message(message::Message* message,
+                  std::unique_ptr<metadata::Metadata>& objects) {
+  Assert(message != nullptr);
+
+  bool ret_value = false;
+  ret_value = true;
+
+  return ret_value;
+}
+

@@ -20,11 +20,11 @@ SHLIB_LINK_INTERNAL = $(libpq)
 SHLIB_LINK = -logawayama-stub -lmetadata-manager -lmessage-manager -lboost_filesystem
 
 EXTENSION = tsurugi_fdw
-DATA = tsurugi_fdw--0.1.sql
+DATA = tsurugi_fdw--1.0.0-BETA1.sql
 
 # REGRESS_BASIC: variable used in frontend
 #REGRESS_BASIC = test_create_table otable_of_constr ch-benchmark-ddl create_table_syntax_type update_delete insert_select
-REGRESS_BASIC = test_preparation create_table insert_select_happy update_delete select_statements user_management \
+REGRESS_BASIC = test_preparation create_table create_index insert_select_happy update_delete select_statements user_management \
                 udf_transaction prepare_statment prepare_select_statment
 ifdef REGRESS_EXTRA
 	# REGRESS: variable defined in PostgreSQL

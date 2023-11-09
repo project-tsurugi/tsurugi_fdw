@@ -15,46 +15,10 @@
  *
  *	@file	drop_stmt.c
  */
-#include "drop_stmt.h"
+#include "utility_common.h"
 #include "drop_table_executor.h"
-
-/**
- * @brief	Extract table name to drop.
- * @param	names [in] namespace list.
- * @param	rel [out] structre for storing table name.
- */
-void get_relname(List *names, RangeVar *rel)
-{
-	switch (list_length(names))
-	{
-		case 1:
-		{
-			// table name only.
-			rel->relname = strVal(linitial(names));
-			break;
-		}
-		case 2:
-		{
-			// schema name and table name.
-			rel->schemaname = strVal(linitial(names));
-			rel->relname = strVal(lsecond(names));
-			break;
-		}
-		case 3:
-		{
-			// database naem, schema name and table name.
-			rel->catalogname = strVal(linitial(names));
-			rel->schemaname = strVal(lsecond(names));
-			rel->relname = strVal(lthird(names));
-			break;
-		}
-		default:
-		{
-			elog(ERROR, "improper relation name (too many dotted names).");
-			break;
-		}
-	}
-}
+#include "drop_index_executor.h"
+#include "drop_stmt.h"
 
 /**
  * @brief 	Drop statment processing.
@@ -62,16 +26,37 @@ void get_relname(List *names, RangeVar *rel)
  */
 void execute_drop_stmt(DropStmt *drop_stmt)
 {
-	bool success;
-	RangeVar rel;
+	ObjectName obj;
 	ListCell *cell;
 	foreach(cell, drop_stmt->objects)
 	{
 		List *names = (List *) lfirst(cell);
-		get_relname(names, &rel);
-		success = execute_drop_table(drop_stmt, rel.relname);
-		if (!success) {
-			elog(ERROR, "drop_table() failed.");
+		get_object_name(names, &obj);
+		
+		switch (drop_stmt->removeType)
+		{
+			case OBJECT_TABLE:
+			{
+				bool success = execute_drop_table(drop_stmt, obj.object_name);
+				if (!success) {
+					elog(ERROR, "execute_drop_table() failed.");
+				}	
+				break;
+			}
+			case OBJECT_INDEX:
+			{
+				bool success = execute_drop_index(drop_stmt, obj.object_name);
+				if (!success) {
+					elog(ERROR, "execute_drop_index() failed.");
+				}	
+				break;
+			}
+			default:
+			{
+				elog(ERROR, "Unexpected removeType. (type: %x)", 
+					drop_stmt->removeType);
+				break;
+			}
 		}
 	}
 }

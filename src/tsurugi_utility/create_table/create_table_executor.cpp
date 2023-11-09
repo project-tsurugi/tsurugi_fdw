@@ -83,13 +83,13 @@ int64_t execute_create_table(CreateStmt* create_stmt)
 		if (error == metadata::ErrorCode::ALREADY_EXISTS) {
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					errmsg("The table is already exists. (name: %s)",
+					errmsg("Table already exists. (name: %s)",
 					(char*) create_table.get_table_name())));
 		} else {
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
-					errmsg("Tsurugi could not add metadata to " \
-					"metadata-manager. (error: %d)", (int) error)));
+					errmsg("Failed to store a table metadata." \
+							" (error: %d)", (int) error)));
 			return object_id;
 		}
 	}
@@ -100,8 +100,8 @@ int64_t execute_create_table(CreateStmt* create_stmt)
 	if (error != metadata::ErrorCode::OK) {
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				errmsg("The table is not found when registing constraints. (name: %s)",
-				(char*) create_table.get_table_name())));
+				errmsg("Table metadata not found. (name: %s) (id: %ld) (error: %d)",
+				(char*) create_table.get_table_name(), object_id, (int) error)));
 		return object_id;
 	}
 	object_id = table_constraint.id;
@@ -141,6 +141,7 @@ bool send_create_table_message(const int64_t object_id)
 	manager::message::CreateTable create_table_message{object_id};
 	bool success = send_message(create_table_message);
 	if (!success) {
+		remove_table_metadata(object_id);
 		ereport(ERROR,
 			(errcode(ERRCODE_INTERNAL_ERROR), 
 			errmsg("send_message() failed. (CreateTable Message)")));
@@ -174,4 +175,43 @@ bool remove_table_metadata(const int64_t object_id)
   result = true;
 
   return result;
+}
+
+/**
+ * @brief   Add index metadata to table metadata.
+ * @param	
+ * @return	
+ */
+bool add_index_to_table(const int64_t table_id, const int64_t index_id)
+{
+	auto tables = metadata::get_tables_ptr(TSURUGI_DB_NAME);
+	metadata::Table table;
+	auto indexes = metadata::get_indexes_ptr(TSURUGI_DB_NAME);
+	metadata::Index index;
+	bool result = false;
+
+	metadata::ErrorCode error = tables->get(table_id, table);
+	if (error != metadata::ErrorCode::OK) {
+		elog(ERROR, "Internal error occurred. " \
+			"(add_index_metadata_to_table_metadata) (TABLES::get())");
+		return false;
+	}
+
+	error = indexes->get(index_id, index);
+	if (error != metadata::ErrorCode::OK) {
+		elog(ERROR, "Internal error occurred. " \
+			"(add_index_metadata_to_table_metadata) (INDEXES::get())");
+		return false;
+	}
+
+	table.indexes.emplace_back(index);
+	error = tables->update(table_id, table);
+	if (error != metadata::ErrorCode::OK) {
+		elog(ERROR, "Internal error occurred. " \
+			"(add_index_metadata_to_table_metadata) (TABLES::update())");
+		return false;
+	}
+	result = true;
+
+	return result;
 }
