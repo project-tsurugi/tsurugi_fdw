@@ -1,2 +1,4 @@
 CREATE EXTENSION IF NOT EXISTS tsurugi_fdw;
 CREATE SERVER IF NOT EXISTS tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
+
+\dx tsurugi_fdw

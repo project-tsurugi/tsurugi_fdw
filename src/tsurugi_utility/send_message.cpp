@@ -34,6 +34,24 @@ extern "C"
 using namespace ogawayama;
 using namespace manager;
 
+void show_error_message(stub::ErrorCode error)
+{
+  switch (error) {
+    case stub::ErrorCode::INVALID_PARAMETER: {
+      ereport(NOTICE, 
+              (errcode(ERRCODE_INTERNAL_ERROR),
+              errmsg("Invalid parameter or the object already exists.")));
+      break;
+    }
+    default: {
+      ereport(NOTICE, 
+              (errcode(ERRCODE_INTERNAL_ERROR),
+              errmsg("Tsurugi returned error. (code: %d)", (int) error)));
+      break;
+    }
+  }
+}
+
 /**
  * @brief Send messages to ogawayama.
  * @param messages [in] message list without BeginDDL and EndDDL.
@@ -70,16 +88,22 @@ bool send_message(message::Message& message)
     return ret_value;
   }
 
+  elog(LOG,
+        "tsurugi_fdw send a message to ogawayama. " \
+        "(%s, param1: %ld, param2: %ld)",
+        message.string(), message.param1(), message.param2());
+
   status = message::Broker::send_message(&message);
   if (status.get_error_code() == message::ErrorCode::FAILURE) {
-    ereport(NOTICE,
-            (errcode(ERRCODE_INTERNAL_ERROR),
-            errmsg("Broker::send_message() failed. (msg: %s, code: %d)", 
-            message.string(), status.get_sub_error_code())));
-    // ToDo: Add rollback process.
+    elog(LOG, "message::Broker::send_message() failed. (msg: %s, code: %d)", 
+            message.string(), status.get_sub_error_code());
+    show_error_message((stub::ErrorCode) status.get_sub_error_code());
     message::Broker::send_message(&end_ddl);
     return ret_value;
   }
+
+  elog(LOG, "Ogawayama returned a value. (code: %d)", 
+      (int) status.get_error_code());
 
   status = message::Broker::send_message(&end_ddl);
   if (status.get_error_code() == message::ErrorCode::FAILURE) {

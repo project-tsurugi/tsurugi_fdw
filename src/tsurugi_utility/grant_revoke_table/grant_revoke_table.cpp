@@ -44,8 +44,11 @@ using namespace manager;
 using namespace ogawayama;
 
 #include "table_managercmds.h"
-#include "send_message.h"
+
 #include "grant_revoke_table.h"
+
+static bool send_message(message::Message* message,
+                         std::unique_ptr<metadata::Metadata>& objects);
 
 /**
  *  @brief Calls the function sending metadata of created role parameters sended
@@ -60,7 +63,7 @@ bool after_grant_revoke_table(const GrantStmt* stmts) {
   ListCell* item;
   std::vector<metadata::ObjectId> objectIds;
   bool send_message_success = true;
-  bool result = false;
+  bool ret_value = false;
 
   foreach (item, stmts->objects) {
     RangeVar* relvar = (RangeVar*) lfirst(item);
@@ -75,17 +78,35 @@ bool after_grant_revoke_table(const GrantStmt* stmts) {
   for (auto object_id : objectIds) {
     if (stmts->is_grant) {
       message::GrantTable grant_table{object_id};
-      if (!send_message(grant_table)) {
+      std::unique_ptr<metadata::Metadata> tables{new metadata::Tables(TSURUGI_DB_NAME)};
+      if (!send_message(&grant_table, tables)) {
         send_message_success = false;
       }
     } else {
       message::RevokeTable revoke_table{object_id};
-      if (!send_message(revoke_table)) {
+      std::unique_ptr<metadata::Metadata> tables{new metadata::Tables(TSURUGI_DB_NAME)};
+      if (!send_message(&revoke_table, tables)) {
         send_message_success = false;
       }
     }
   }
 
-  result = send_message_success;
-  return result;
+  ret_value = send_message_success;
+  return ret_value;
+}
+
+/**
+ *  @brief Calls the function to send Message to ogawayama.
+ *  @param [in] message Message object to be sent.
+ *  @param [in] objects Table object to call funciton.
+ *  @return true if operation was successful, false otherwize.
+ */
+static bool send_message(message::Message* message,
+                         std::unique_ptr<metadata::Metadata>& objects) {
+  Assert(message != nullptr);
+
+  bool ret_value = false;
+  ret_value = true;
+
+  return ret_value;
 }

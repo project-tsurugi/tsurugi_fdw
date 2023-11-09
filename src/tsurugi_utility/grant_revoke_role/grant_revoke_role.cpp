@@ -52,8 +52,11 @@ using namespace manager;
 using namespace ogawayama;
 
 #include "role_managercmds.h"
-#include "send_message.h"
+
 #include "grant_revoke_role.h"
+
+static bool send_message(message::Message* message,
+                  std::unique_ptr<metadata::Metadata>& objects);
 
 /**
  *  @brief Calls the function sending metadata of created role parameters sended
@@ -68,7 +71,7 @@ bool after_grant_revoke_role(const GrantRoleStmt* stmts) {
   ListCell* item;
   std::vector<metadata::ObjectId> objectIds;
   bool send_message_success = true;
-  bool result = false;
+  bool ret_value = false;
 
   /* Get granted role IDs.*/
   foreach (item, stmts->granted_roles) {
@@ -84,7 +87,7 @@ bool after_grant_revoke_role(const GrantRoleStmt* stmts) {
       objectIds.push_back(object_id);
     } else {
       /* Failed getting role id.*/
-      return result;
+      return ret_value;
     }
   }
 
@@ -92,17 +95,34 @@ bool after_grant_revoke_role(const GrantRoleStmt* stmts) {
   for (auto object_id : objectIds) {
     if (stmts->is_grant) {
       message::GrantRole grant_role{object_id};
-      if (!send_message(grant_role)) {
+      std::unique_ptr<metadata::Metadata> roles{new metadata::Roles(TSURUGI_DB_NAME)};
+      if (!send_message(&grant_role, roles)) {
         send_message_success = false;
       }
     } else {
       message::RevokeRole revoke_role{object_id};
-      if (!send_message(revoke_role)) {
+      std::unique_ptr<metadata::Metadata> roles{new metadata::Roles(TSURUGI_DB_NAME)};
+      if (!send_message(&revoke_role, roles)) {
         send_message_success = false;
       }
     }
   }
+  ret_value = send_message_success;
+  return ret_value;
+}
 
-  result = send_message_success;
-  return result;
+/**
+ *  @brief Calls the function to send Message to ogawayama.
+ *  @param [in] message Message object to be sent.
+ *  @param [in] objects Role object to call funciton.
+ *  @return true if operation was successful, false otherwize.
+ */
+static bool send_message(message::Message* message,
+                  std::unique_ptr<metadata::Metadata>& objects) {
+  Assert(message != nullptr);
+
+  bool ret_value = false;
+  ret_value = true;
+
+  return ret_value;
 }

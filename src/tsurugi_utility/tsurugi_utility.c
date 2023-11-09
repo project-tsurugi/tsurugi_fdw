@@ -26,6 +26,7 @@
 
 #include <string.h>
 #include "create_stmt.h"
+#include "create_index_executor.h"
 #include "drop_stmt.h"
 #include "drop_table_executor.h"
 #include "drop_index_executor.h"
@@ -35,6 +36,7 @@
 #include "grant_revoke_role/grant_revoke_role.h"
 #include "grant_revoke_table/grant_revoke_table.h"
 #include "prepare_execute/prepare_execute.h"
+#include "utility_common.h"
 
 #ifndef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
@@ -70,7 +72,6 @@ static void tsurugi_ProcessUtilitySlow(ParseState *pstate,
 				                       char *completionTag);
 
 const char *TSURUGI_TABLESPACE_NAME = "tsurugi";
-const char *TSURUGI_TABLE_SUFFIX = "_tsurugi";
 
 /*
  *  @brief:
@@ -126,15 +127,16 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 			}
 			break;
 		}
+
 		case T_IndexStmt: 
 		{
 			IndexStmt* index_stmt = (IndexStmt*) pstmt->utilityStmt;
 			if (index_stmt->tableSpace != NULL && 
 					!strcmp(index_stmt->tableSpace, TSURUGI_TABLESPACE_NAME))
 			{
-				ereport(ERROR,
-						(errcode(ERRCODE_INTERNAL_ERROR),
-						errmsg("CREATE INDEX is not yet supported in tsurugi_fdw.")));
+				tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
+										context, params, queryEnv,
+										dest, completionTag);
 			}
 			else
 			{
@@ -147,7 +149,7 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 
         case T_DropStmt:
 		{
-			RangeVar rel;
+			ObjectName obj;
 			DropStmt *drop_stmt = (DropStmt *) parsetree;
 			switch (drop_stmt->removeType)
 			{
@@ -158,8 +160,8 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 					foreach(listptr, drop_stmt->objects)
 					{
 						List *names = (List *) lfirst(listptr);
-						get_relname(names, &rel);
-						if (table_exists_in_tsurugi(rel.relname))
+						get_object_name(names, &obj);
+						if (table_exists_in_tsurugi(obj.object_name))
 						{
 							exists_in_tsurugi = true;
 							break;
@@ -186,8 +188,8 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 					foreach(listptr, drop_stmt->objects)
 					{
 						List *names = (List *) lfirst(listptr);
-						get_relname(names, &rel);
-						if (index_exists_in_tsurugi(rel.relname))
+						get_object_name(names, &obj);
+						if (index_exists_in_tsurugi(obj.object_name))
 						{
 							exists_in_tsurugi = true;
 							break;
@@ -195,9 +197,9 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 					}
 					if (exists_in_tsurugi)
 					{
-						ereport(ERROR,
-								(errcode(ERRCODE_INTERNAL_ERROR),
-								errmsg("DROP INDEX is not yet supported in tsurugi_fdw.")));
+						tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
+												context, params, queryEnv,
+												dest, completionTag);
 					}
 					else
 					{
@@ -412,6 +414,14 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
 
 			case T_IndexStmt:	/* CREATE INDEX */
 			{
+				int64_t index_id = -1;
+				IndexStmt* index_stmt = (IndexStmt*) pstmt->utilityStmt;
+				index_id = execute_create_index(index_stmt);
+				if (index_id > 0)
+				{
+					/* Send a DDL message to ogawayama. */
+					send_create_index_message(index_id);
+				}
 				break;
 			}
 
@@ -426,9 +436,11 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
 			}
 
             default:
+			{
 				elog(ERROR, "unrecognized node type: %d",
 					 (int) nodeTag(parsetree));
                 break;
+			}
         }
 		/*
 		 * Remember the object so that ddl_command_end event triggers have
