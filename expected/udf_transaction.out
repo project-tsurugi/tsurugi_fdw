@@ -352,9 +352,17 @@ ERROR:  Invalid Transaction Label parameter. (label: empty)
 CREATE TABLE table1 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
 CREATE TABLE wp_table1 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
 CREATE TABLE wp_table2 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
+CREATE TABLE ri_table1 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
+CREATE TABLE ri_table2 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
+CREATE TABLE re_table1 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
+CREATE TABLE re_table2 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
 CREATE FOREIGN TABLE table1 (column1 INTEGER NOT NULL) SERVER tsurugidb;
 CREATE FOREIGN TABLE wp_table1 (column1 INTEGER NOT NULL) SERVER tsurugidb;
 CREATE FOREIGN TABLE wp_table2 (column1 INTEGER NOT NULL) SERVER tsurugidb;
+CREATE FOREIGN TABLE ri_table1 (column1 INTEGER NOT NULL) SERVER tsurugidb;
+CREATE FOREIGN TABLE ri_table2 (column1 INTEGER NOT NULL) SERVER tsurugidb;
+CREATE FOREIGN TABLE re_table1 (column1 INTEGER NOT NULL) SERVER tsurugidb;
+CREATE FOREIGN TABLE re_table2 (column1 INTEGER NOT NULL) SERVER tsurugidb;
 SELECT tg_set_write_preserve('wp_table1');
            tg_set_write_preserve            
 --------------------------------------------
@@ -462,6 +470,342 @@ SELECT tg_set_transaction('short'); -- reset write preserve
  
 (1 row)
 
+SELECT tg_set_inclusive_read_areas('ri_table1');
+         tg_set_inclusive_read_areas          
+----------------------------------------------
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "1",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": "ri_table1"        +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_inclusive_read_areas('ri_table2');
+         tg_set_inclusive_read_areas          
+----------------------------------------------
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "1",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": "ri_table2"        +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_inclusive_read_areas('ri_table1', 'ri_table2');
+         tg_set_inclusive_read_areas          
+----------------------------------------------
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "1",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": "ri_table1"        +
+         },                                  +
+         {                                   +
+             "tableName": "ri_table2"        +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_transaction('short'); -- reset inclusiveReadArea
+              tg_set_transaction              
+----------------------------------------------
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "1",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_exclusive_read_areas('re_table1');
+         tg_set_exclusive_read_areas          
+----------------------------------------------
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "1",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": "re_table1"        +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_exclusive_read_areas('re_table2');
+         tg_set_exclusive_read_areas          
+----------------------------------------------
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "1",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": "re_table2"        +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_exclusive_read_areas('re_table1', 're_table2');
+         tg_set_exclusive_read_areas          
+----------------------------------------------
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "1",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": "re_table1"        +
+         },                                  +
+         {                                   +
+             "tableName": "re_table2"        +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_transaction('short'); -- reset exclusiveReadArea
+              tg_set_transaction              
+----------------------------------------------
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "1",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_write_preserve('wp_table1', 'wp_table2');
+            tg_set_write_preserve             
+----------------------------------------------
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "1",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": "wp_table1"        +
+         },                                  +
+         {                                   +
+             "tableName": "wp_table2"        +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_inclusive_read_areas('ri_table1', 'ri_table2');
+         tg_set_inclusive_read_areas          
+----------------------------------------------
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "1",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": "wp_table1"        +
+         },                                  +
+         {                                   +
+             "tableName": "wp_table2"        +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": "ri_table1"        +
+         },                                  +
+         {                                   +
+             "tableName": "ri_table2"        +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_exclusive_read_areas('re_table1', 're_table2');
+         tg_set_exclusive_read_areas          
+----------------------------------------------
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "1",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": "wp_table1"        +
+         },                                  +
+         {                                   +
+             "tableName": "wp_table2"        +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": "ri_table1"        +
+         },                                  +
+         {                                   +
+             "tableName": "ri_table2"        +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": "re_table1"        +
+         },                                  +
+         {                                   +
+             "tableName": "re_table2"        +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_transaction('short'); -- reset tableName
+              tg_set_transaction              
+----------------------------------------------
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "1",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
 /* set write preserve (error) */
 SELECT tg_set_write_preserve('wp_table3');
 ERROR:  Table is not exist in Tsurugi. (table: wp_table3)
@@ -470,6 +814,24 @@ ERROR:  Table is not exist in Tsurugi. (table: wp_table3)
 SELECT tg_set_write_preserve(NULL);
 ERROR:  Table lists may not contain nulls.
 SELECT tg_set_write_preserve('wp_table1', 'wp_table2', NULL);
+ERROR:  Table lists may not contain nulls.
+/* set inclusive read areas (error) */
+SELECT tg_set_inclusive_read_areas('ri_table3');
+ERROR:  Table is not exist in Tsurugi. (table: ri_table3)
+SELECT tg_set_inclusive_read_areas('ri_table1', 'ri_table2', 'ri_table3');
+ERROR:  Table is not exist in Tsurugi. (table: ri_table3)
+SELECT tg_set_inclusive_read_areas(NULL);
+ERROR:  Table lists may not contain nulls.
+SELECT tg_set_inclusive_read_areas('ri_table1', 'ri_table2', NULL);
+ERROR:  Table lists may not contain nulls.
+/* set exclusive read areas (error) */
+SELECT tg_set_exclusive_read_areas('re_table3');
+ERROR:  Table is not exist in Tsurugi. (table: re_table3)
+SELECT tg_set_exclusive_read_areas('re_table1', 're_table2', 're_table3');
+ERROR:  Table is not exist in Tsurugi. (table: re_table3)
+SELECT tg_set_exclusive_read_areas(NULL);
+ERROR:  Table lists may not contain nulls.
+SELECT tg_set_exclusive_read_areas('re_table1', 're_table2', NULL);
 ERROR:  Table lists may not contain nulls.
 /* start transaction */
 SELECT tg_start_transaction();
@@ -862,6 +1224,115 @@ SELECT * FROM table1;
      400
 (1 row)
 
+SELECT tg_set_inclusive_read_areas('ri_table1');
+         tg_set_inclusive_read_areas          
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "1",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": "wp_table1"        +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": "ri_table1"        +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_exclusive_read_areas('re_table1');
+         tg_set_exclusive_read_areas          
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "1",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": "wp_table1"        +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": "ri_table1"        +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": "re_table1"        +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT * FROM ri_table1;
+ column1 
+---------
+(0 rows)
+
+SELECT * FROM ri_table2; -- error
+ERROR:  Tsurugi::commit() failed. (10)
+SELECT * FROM re_table1; -- error
+ERROR:  Tsurugi::commit() failed. (10)
+SELECT * FROM re_table2; -- error
+ERROR:  Tsurugi::commit() failed. (10)
+SELECT tg_set_transaction('short');
+              tg_set_transaction              
+----------------------------------------------
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "1",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT * FROM ri_table1;
+ column1 
+---------
+(0 rows)
+
+SELECT * FROM ri_table2; -- success
+ column1 
+---------
+(0 rows)
+
+SELECT * FROM re_table1; -- success
+ column1 
+---------
+(0 rows)
+
+SELECT * FROM re_table2; -- success
+ column1 
+---------
+(0 rows)
+
 /* Explicit specific transaction */
 /* Execute a specific Short transaction during a Long transaction */
 SELECT tg_set_transaction('long');
@@ -873,7 +1344,7 @@ SELECT tg_set_transaction('long');
      "transactionLabel": "pgsql-transaction",+
      "writePreserve": [                      +
          {                                   +
-             "tableName": "wp_table1"        +
+             "tableName": ""                 +
          }                                   +
      ],                                      +
      "inclusiveReadArea": [                  +
@@ -1131,8 +1602,16 @@ DROP FOREIGN TABLE tg_table;
 DROP FOREIGN TABLE table1;
 DROP FOREIGN TABLE wp_table1;
 DROP FOREIGN TABLE wp_table2;
+DROP FOREIGN TABLE ri_table1;
+DROP FOREIGN TABLE ri_table2;
+DROP FOREIGN TABLE re_table1;
+DROP FOREIGN TABLE re_table2;
 DROP TABLE tg_table;
 DROP TABLE pg_table;
 DROP TABLE table1;
 DROP TABLE wp_table1;
 DROP TABLE wp_table2;
+DROP TABLE ri_table1;
+DROP TABLE ri_table2;
+DROP TABLE re_table1;
+DROP TABLE re_table2;
