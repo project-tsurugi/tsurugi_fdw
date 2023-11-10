@@ -51,6 +51,8 @@
       - tg_show_transaction -- デフォルトのトランザクション特性の値を表示する
       - tg_set_transaction -- デフォルトのトランザクション特性を設定する
       - tg_set_write_preserve -- Longトランザクションにおける書き込み予約テーブルを設定する
+      - tg_set_inclusive_read_areas -- Longトランザクションにおける読み込み予約テーブルを設定する
+      - tg_set_exclusive_read_areas -- Longトランザクションにおける読み込み制約テーブルを設定する
 
     なお、上記以外の機能は利用できません。例えば、以下のような機能となります。
 

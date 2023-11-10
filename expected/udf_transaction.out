@@ -1224,6 +1224,59 @@ SELECT * FROM table1;
      400
 (1 row)
 
+SELECT tg_set_transaction('short'); -- reset tableName
+              tg_set_transaction              
+----------------------------------------------
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "1",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+/* inclusive read areasを指定した場合は、そのLTXがreadするのは指定したtableのみである */
+SELECT tg_set_transaction('long');
+              tg_set_transaction              
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "1",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
 SELECT tg_set_inclusive_read_areas('ri_table1');
          tg_set_inclusive_read_areas          
 ----------------------------------------------
@@ -1233,12 +1286,77 @@ SELECT tg_set_inclusive_read_areas('ri_table1');
      "transactionLabel": "pgsql-transaction",+
      "writePreserve": [                      +
          {                                   +
-             "tableName": "wp_table1"        +
+             "tableName": ""                 +
          }                                   +
      ],                                      +
      "inclusiveReadArea": [                  +
          {                                   +
              "tableName": "ri_table1"        +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT * FROM ri_table1; -- success
+ column1 
+---------
+(0 rows)
+
+SELECT * FROM ri_table2; -- error
+ERROR:  Tsurugi::commit() failed. (10)
+SELECT * FROM re_table1; -- error
+ERROR:  Tsurugi::commit() failed. (10)
+SELECT * FROM re_table2; -- error
+ERROR:  Tsurugi::commit() failed. (10)
+SELECT tg_set_transaction('short'); -- reset tableName
+              tg_set_transaction              
+----------------------------------------------
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "1",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+/* exclusive read areasは、そのLTXがreadしないtableを宣言する */
+/* リストアップされているtableをreadした場合はエラーになりそれ以外のtableはread可能 */
+SELECT tg_set_transaction('long');
+              tg_set_transaction              
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "1",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
          }                                   +
      ],                                      +
      "exclusiveReadArea": [                  +
@@ -1259,7 +1377,51 @@ SELECT tg_set_exclusive_read_areas('re_table1');
      "transactionLabel": "pgsql-transaction",+
      "writePreserve": [                      +
          {                                   +
-             "tableName": "wp_table1"        +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": "re_table1"        +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT * FROM ri_table1; -- success
+ column1 
+---------
+(0 rows)
+
+SELECT * FROM ri_table2; -- success
+ column1 
+---------
+(0 rows)
+
+SELECT * FROM re_table1; -- error
+ERROR:  Tsurugi::commit() failed. (10)
+SELECT * FROM re_table2; -- success
+ column1 
+---------
+(0 rows)
+
+/* 通常はどちらか一方のみを指定する使い方になることを想定 */
+SELECT tg_set_inclusive_read_areas('ri_table1');
+         tg_set_inclusive_read_areas          
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "1",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
          }                                   +
      ],                                      +
      "inclusiveReadArea": [                  +
@@ -1276,7 +1438,33 @@ SELECT tg_set_exclusive_read_areas('re_table1');
  
 (1 row)
 
-SELECT * FROM ri_table1;
+SELECT tg_set_exclusive_read_areas('re_table1');
+         tg_set_exclusive_read_areas          
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "1",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": "ri_table1"        +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": "re_table1"        +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT * FROM ri_table1; -- success
  column1 
 ---------
 (0 rows)
@@ -1313,7 +1501,7 @@ SELECT tg_set_transaction('short');
  
 (1 row)
 
-SELECT * FROM ri_table1;
+SELECT * FROM ri_table1; -- success
  column1 
 ---------
 (0 rows)

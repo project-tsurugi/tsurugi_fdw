@@ -170,17 +170,41 @@ SELECT * FROM wp_table1;
 SELECT * FROM wp_table2;
 SELECT * FROM table1;
 
+SELECT tg_set_transaction('short'); -- reset tableName
+
+/* inclusive read areasを指定した場合は、そのLTXがreadするのは指定したtableのみである */
+SELECT tg_set_transaction('long');
+SELECT tg_set_inclusive_read_areas('ri_table1');
+
+SELECT * FROM ri_table1; -- success
+SELECT * FROM ri_table2; -- error
+SELECT * FROM re_table1; -- error
+SELECT * FROM re_table2; -- error
+
+SELECT tg_set_transaction('short'); -- reset tableName
+
+/* exclusive read areasは、そのLTXがreadしないtableを宣言する */
+/* リストアップされているtableをreadした場合はエラーになりそれ以外のtableはread可能 */
+SELECT tg_set_transaction('long');
+SELECT tg_set_exclusive_read_areas('re_table1');
+
+SELECT * FROM ri_table1; -- success
+SELECT * FROM ri_table2; -- success
+SELECT * FROM re_table1; -- error
+SELECT * FROM re_table2; -- success
+
+/* 通常はどちらか一方のみを指定する使い方になることを想定 */
 SELECT tg_set_inclusive_read_areas('ri_table1');
 SELECT tg_set_exclusive_read_areas('re_table1');
 
-SELECT * FROM ri_table1;
+SELECT * FROM ri_table1; -- success
 SELECT * FROM ri_table2; -- error
 SELECT * FROM re_table1; -- error
 SELECT * FROM re_table2; -- error
 
 SELECT tg_set_transaction('short');
 
-SELECT * FROM ri_table1;
+SELECT * FROM ri_table1; -- success
 SELECT * FROM ri_table2; -- success
 SELECT * FROM re_table1; -- success
 SELECT * FROM re_table2; -- success
