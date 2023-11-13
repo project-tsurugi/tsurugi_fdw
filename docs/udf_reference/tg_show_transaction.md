@@ -23,16 +23,29 @@ tsurugiトランザクションのデフォルトのトランザクション特�
 現在設定されているトランザクション特性の値を表示します。
 
 ```sql
-postgres=# SELECT tg_show_transaction();
-              tg_transaction
+SELECT tg_show_transaction();
+             tg_show_transaction
 ----------------------------------------------
-{                                           +
-    "transactionType": "1",                 +
-    "transactionPriority": "0",             +
-    "transactionLabel": "pgsql-transaction",+
-    "writePreserve": [                      +
-    ]                                       +
-}                                           +
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
 
 (1 row)
 ```

@@ -1209,7 +1209,12 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 
     fdw_state->attinmeta = TupleDescGetAttInMetadata(fdw_state->tupdesc);
 
-    Tsurugi::start_transaction();
+	ERROR_CODE error = Tsurugi::start_transaction();
+	if (error != ERROR_CODE::OK)
+	{
+		elog(ERROR, "Tsurugi::start_transaction() failed. (%d)", (int) error);
+	}
+
     fdw_info_.success = true;
 }
 
@@ -1303,7 +1308,11 @@ tsurugiEndForeignScan(ForeignScanState* node)
 
     if (fdw_info_.success)
     {
-        Tsurugi::commit();
+        ERROR_CODE error = Tsurugi::commit();
+		if (error != ERROR_CODE::OK)
+		{
+			elog(ERROR, "Tsurugi::commit() failed. (%d)", (int) error);
+		}
     }
 
 	if (fdw_state != nullptr) 
@@ -1336,7 +1345,12 @@ tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
 
 	begin_prepare_processing(estate);
 
-    Tsurugi::start_transaction();
+	ERROR_CODE error = Tsurugi::start_transaction();
+	if (error != ERROR_CODE::OK)
+	{
+		elog(ERROR, "Tsurugi::start_transaction() failed. (%d)", (int) error);
+	}
+
     fdw_info_.success = true;
 }
 
@@ -1380,7 +1394,11 @@ tsurugiEndDirectModify(ForeignScanState* node)
 
     if (fdw_info_.success)
     {
-        Tsurugi::commit();
+        ERROR_CODE error = Tsurugi::commit();
+		if (error != ERROR_CODE::OK)
+		{
+			elog(ERROR, "Tsurugi::commit() failed. (%d)", (int) error);
+		}
     }
 
 	EState* estate = node->ss.ps.state;
@@ -1676,7 +1694,11 @@ tsurugiEndForeignModify(EState *estate,
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
  
-    Tsurugi::commit();
+    ERROR_CODE error = Tsurugi::commit();
+	if (error != ERROR_CODE::OK)
+	{
+		elog(ERROR, "Tsurugi::commit() failed. (%d)", (int) error);
+	}
 }
 
 /*
@@ -1756,7 +1778,11 @@ tsurugiBeginForeignInsert(ModifyTableState *mtstate,
  	fdw_state->query_string = sql.data;
     resultRelInfo->ri_FdwState = fdw_state;
 
-    Tsurugi::start_transaction();
+	ERROR_CODE error = Tsurugi::start_transaction();
+	if (error != ERROR_CODE::OK)
+	{
+		elog(ERROR, "Tsurugi::start_transaction() failed. (%d)", (int) error);
+	}
 }
 
 /*

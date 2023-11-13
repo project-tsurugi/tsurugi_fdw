@@ -28,37 +28,60 @@ TsurugiのLongトランザクションでは、トランザクションの実行
 
 ```sql
 SELECT tg_set_transaction('long');
-              tg_transaction
+              tg_set_transaction
 --------------------------------------------------
 {                                                +
     "transactionType": "2",                      +
     "transactionPriority": "0",                  +
     "transactionLabel": "pgsql-transaction",     +
     "writePreserve": [                           +
+         {                                       +
+             "tableName": ""                     +
+         }                                       +
+    ],                                           +
+    "inclusiveReadArea": [                       +
+         {                                       +
+             "tableName": ""                     +
+         }                                       +
+    ],                                           +
+    "exclusiveReadArea": [                       +
+         {                                       +
+             "tableName": ""                     +
+         }                                       +
     ]                                            +
 }                                                +
 
 (1 row)
 
 SELECT tg_set_write_preserve('tg_table1', 'tg_table2', 'tg_table3');
-              tg_transaction
---------------------------------------------------
-{                                                +
-    "transactionType": "2",                      +
-    "transactionPriority": "0",                  +
-    "transactionLabel": "pgsql-transaction",     +
-    "writePreserve": [                           +
-        {                                        +
-            "tableName": "tg_table1"             +
-        },                                       +
-        {                                        +
-            "tableName": "tg_table2"             +
-        },                                       +
-        {                                        +
-            "tableName": "tg_table3"             +
-        }                                        +
-    ]                                            +
-}                                                +
+            tg_set_write_preserve
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": "tg_table1"        +
+         },                                  +
+         {                                   +
+             "tableName": "tg_table2"        +
+         },                                  +
+         {                                   +
+             "tableName": "tg_table3"        +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
 
 (1 row)
 ```
@@ -67,21 +90,31 @@ SELECT tg_set_write_preserve('tg_table1', 'tg_table2', 'tg_table3');
 
 ```sql
 SELECT tg_set_write_preserve('tg_another_table1', 'tg_another_table2');
-              tg_set_transaction
---------------------------------------------------
-{                                                +
-    "transactionType": "2",                      +
-    "transactionPriority": "0",                  +
-    "transactionLabel": "pgsql-transaction",     +
-    "writePreserve": [                           +
-        {                                        +
-            "tableName": "tg_another_table1"     +
-        },                                       +
-        {                                        +
-            "tableName": "tg_another_table2"     +
-        }                                        +
-    ]                                            +
-}                                                +
+            tg_set_write_preserve
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": "tg_another_table1"+
+         },                                  +
+         {                                   +
+             "tableName": "tg_another_table2"+
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
 
 (1 row)
 ```

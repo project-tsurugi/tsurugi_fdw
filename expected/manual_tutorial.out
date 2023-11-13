@@ -127,6 +127,16 @@ SELECT tg_set_transaction('short', 'interrupt');    /*  デフォルトのトラ
          {                                   +
              "tableName": ""                 +
          }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
      ]                                       +
  }                                           +
  
@@ -265,6 +275,16 @@ SELECT tg_set_transaction('long');      --  Longトランザクションをデ�
          {                                   +
              "tableName": ""                 +
          }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
      ]                                       +
  }                                           +
  
@@ -280,6 +300,16 @@ SELECT tg_set_write_preserve('weather');    --  書き込みを予約するテ�
      "writePreserve": [                      +
          {                                   +
              "tableName": "weather"          +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
          }                                   +
      ]                                       +
  }                                           +

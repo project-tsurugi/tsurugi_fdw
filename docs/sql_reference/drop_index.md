@@ -2,7 +2,7 @@
 
 ## DROP INDEX
 
-  DROP INDEX － Tsurugi OLTPのインデックスを削除する。
+  DROP INDEX － Tsurugiのインデックスを削除する。
 
 ### 概要
 
@@ -12,7 +12,7 @@
 
 ### 説明
 
-  DROP INDEXはOLTPのテーブルを削除します。  
+  DROP INDEXはTsurugiのインデックスを削除します。  
   テーブル所有者、スーパーユーザのみがテーブルを削除することができます。
 
   DROP INDEXのリファレンスは、PostgreSQLのDROP INDEXに準じます。  

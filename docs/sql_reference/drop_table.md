@@ -2,7 +2,7 @@
 
 ## DROP TABLE
 
-  DROP TABLE － Tsurugi OLTPのテーブルを削除する。
+  DROP TABLE － Tsurugiのテーブルを削除する。
 
 ### 概要
 
@@ -12,7 +12,7 @@
 
 ### 説明
 
-  DROP TABLEはTsurugi OLTPのテーブルを削除します。  
+  DROP TABLEはTsurugiのテーブルを削除します。  
   テーブル所有者、スーパーユーザのみがテーブルを削除することができます。
 
   DROP TABLEのリファレンスは、PostgreSQLのDROP TABLEに準じます。  

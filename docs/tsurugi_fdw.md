@@ -52,6 +52,8 @@
 
 - tg_commit
 - tg_rollback
+- tg_set_exclusive_read_areas
+- tg_set_inclusive_read_areas
 - tg_set_transaction
 - tg_set_write_preserve
 - tg_show_transaction

@@ -26,20 +26,55 @@ SELECT tg_set_transaction('short', 'wait', '');
 CREATE TABLE table1 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
 CREATE TABLE wp_table1 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
 CREATE TABLE wp_table2 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
+CREATE TABLE ri_table1 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
+CREATE TABLE ri_table2 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
+CREATE TABLE re_table1 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
+CREATE TABLE re_table2 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
 CREATE FOREIGN TABLE table1 (column1 INTEGER NOT NULL) SERVER tsurugidb;
 CREATE FOREIGN TABLE wp_table1 (column1 INTEGER NOT NULL) SERVER tsurugidb;
 CREATE FOREIGN TABLE wp_table2 (column1 INTEGER NOT NULL) SERVER tsurugidb;
+CREATE FOREIGN TABLE ri_table1 (column1 INTEGER NOT NULL) SERVER tsurugidb;
+CREATE FOREIGN TABLE ri_table2 (column1 INTEGER NOT NULL) SERVER tsurugidb;
+CREATE FOREIGN TABLE re_table1 (column1 INTEGER NOT NULL) SERVER tsurugidb;
+CREATE FOREIGN TABLE re_table2 (column1 INTEGER NOT NULL) SERVER tsurugidb;
 
 SELECT tg_set_write_preserve('wp_table1');
 SELECT tg_set_write_preserve('wp_table2');
 SELECT tg_set_write_preserve('wp_table1', 'wp_table2');
 SELECT tg_set_transaction('short'); -- reset write preserve
 
+SELECT tg_set_inclusive_read_areas('ri_table1');
+SELECT tg_set_inclusive_read_areas('ri_table2');
+SELECT tg_set_inclusive_read_areas('ri_table1', 'ri_table2');
+SELECT tg_set_transaction('short'); -- reset inclusiveReadArea
+
+SELECT tg_set_exclusive_read_areas('re_table1');
+SELECT tg_set_exclusive_read_areas('re_table2');
+SELECT tg_set_exclusive_read_areas('re_table1', 're_table2');
+SELECT tg_set_transaction('short'); -- reset exclusiveReadArea
+
+SELECT tg_set_write_preserve('wp_table1', 'wp_table2');
+SELECT tg_set_inclusive_read_areas('ri_table1', 'ri_table2');
+SELECT tg_set_exclusive_read_areas('re_table1', 're_table2');
+SELECT tg_set_transaction('short'); -- reset tableName
+
 /* set write preserve (error) */
 SELECT tg_set_write_preserve('wp_table3');
 SELECT tg_set_write_preserve('wp_table1', 'wp_table2', 'wp_table3');
 SELECT tg_set_write_preserve(NULL);
 SELECT tg_set_write_preserve('wp_table1', 'wp_table2', NULL);
+
+/* set inclusive read areas (error) */
+SELECT tg_set_inclusive_read_areas('ri_table3');
+SELECT tg_set_inclusive_read_areas('ri_table1', 'ri_table2', 'ri_table3');
+SELECT tg_set_inclusive_read_areas(NULL);
+SELECT tg_set_inclusive_read_areas('ri_table1', 'ri_table2', NULL);
+
+/* set exclusive read areas (error) */
+SELECT tg_set_exclusive_read_areas('re_table3');
+SELECT tg_set_exclusive_read_areas('re_table1', 're_table2', 're_table3');
+SELECT tg_set_exclusive_read_areas(NULL);
+SELECT tg_set_exclusive_read_areas('re_table1', 're_table2', NULL);
 
 /* start transaction */
 SELECT tg_start_transaction();
@@ -135,6 +170,45 @@ SELECT * FROM wp_table1;
 SELECT * FROM wp_table2;
 SELECT * FROM table1;
 
+SELECT tg_set_transaction('short'); -- reset tableName
+
+/* inclusive read areasを指定した場合は、そのLTXがreadするのは指定したtableのみである */
+SELECT tg_set_transaction('long');
+SELECT tg_set_inclusive_read_areas('ri_table1');
+
+SELECT * FROM ri_table1; -- success
+SELECT * FROM ri_table2; -- error
+SELECT * FROM re_table1; -- error
+SELECT * FROM re_table2; -- error
+
+SELECT tg_set_transaction('short'); -- reset tableName
+
+/* exclusive read areasは、そのLTXがreadしないtableを宣言する */
+/* リストアップされているtableをreadした場合はエラーになりそれ以外のtableはread可能 */
+SELECT tg_set_transaction('long');
+SELECT tg_set_exclusive_read_areas('re_table1');
+
+SELECT * FROM ri_table1; -- success
+SELECT * FROM ri_table2; -- success
+SELECT * FROM re_table1; -- error
+SELECT * FROM re_table2; -- success
+
+/* 通常はどちらか一方のみを指定する使い方になることを想定 */
+SELECT tg_set_inclusive_read_areas('ri_table1');
+SELECT tg_set_exclusive_read_areas('re_table1');
+
+SELECT * FROM ri_table1; -- success
+SELECT * FROM ri_table2; -- error
+SELECT * FROM re_table1; -- error
+SELECT * FROM re_table2; -- error
+
+SELECT tg_set_transaction('short');
+
+SELECT * FROM ri_table1; -- success
+SELECT * FROM ri_table2; -- success
+SELECT * FROM re_table1; -- success
+SELECT * FROM re_table2; -- success
+
 /* Explicit specific transaction */
 /* Execute a specific Short transaction during a Long transaction */
 SELECT tg_set_transaction('long');
@@ -191,8 +265,16 @@ DROP FOREIGN TABLE tg_table;
 DROP FOREIGN TABLE table1;
 DROP FOREIGN TABLE wp_table1;
 DROP FOREIGN TABLE wp_table2;
+DROP FOREIGN TABLE ri_table1;
+DROP FOREIGN TABLE ri_table2;
+DROP FOREIGN TABLE re_table1;
+DROP FOREIGN TABLE re_table2;
 DROP TABLE tg_table;
 DROP TABLE pg_table;
 DROP TABLE table1;
 DROP TABLE wp_table1;
 DROP TABLE wp_table2;
+DROP TABLE ri_table1;
+DROP TABLE ri_table2;
+DROP TABLE re_table1;
+DROP TABLE re_table2;
