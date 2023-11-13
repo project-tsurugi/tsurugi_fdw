@@ -69,15 +69,7 @@
         ~~~ sh
         $ cd <PostgreSQL build directory>/contrib/
         $ git clone https://github.com/project-tsurugi/tsurugi_fdw
-        ~~~
-
-    1. サブモジュールの更新
-
-        Tsurugi FDWのサブモジュールを更新します。
-
-        ~~~ sh
         $ cd <PostgreSQL build directory>/contrib/tsurugi_fdw
-        $ git submodule update --init
         ~~~
 
         - 以降、このディレクトリを`<tsurugi_fdw build directory>`と定義します。
