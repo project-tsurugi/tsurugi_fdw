@@ -12,6 +12,7 @@ PG_CPPFLAGS = -Isrc/common/include \
               -I$(TSURUGI_HOME)/include/ogawayama \
               -I$(TSURUGI_HOME)/include/takatori \
               -I$(TSURUGI_HOME)/include/manager \
+              -I$(TSURUGI_HOME)/include \
               -std=c++17 -fPIC -Dregister= -O0 \
               -I$(libpq_srcdir)
 
