@@ -24,7 +24,8 @@
  * with collations that match the remote table's columns, which we can
  * consider to be user error.
  *
- * Portions Copyright (c) 2012-2019, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, The Regents of the University of California
  *
  * IDENTIFICATION
  *		  contrib/postgres_fdw/deparse.c
