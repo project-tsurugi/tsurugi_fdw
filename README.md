@@ -56,6 +56,7 @@
 	cd contrib
 	git clone git@github.com:project-tsurugi/tsurugi_fdw.git
 	cd tsurugi_fdw
+	git submodule update --init
 	```
 	* Hereafter, this directory is defined as **\<tsurugi_fdw clone directory>**.
 
