@@ -266,15 +266,15 @@ PostgreSQLレイヤーからTsurugiを利用する簡単な操作方法を説明
         PREPAREコマンドを実行して、INSERT文のプリペアド文を作成します。
 
         ~~~sql
-        PREPARE add_weather (int, varchar(80), int, int, real)
-            AS INSERT INTO weather (id, city, temp_lo, temp_hi, prcp)
-                    VALUES (?, ?, ?, ?, ?);
+        PREPARE add_weather (int, varchar(80), int, int, real, date)
+            AS INSERT INTO weather (id, city, temp_lo, temp_hi, prcp, the_date)
+                    VALUES ($1, $2, $3, $4, $5, $6);
         ~~~
 
         EXECUTコマンドを実行して、プリペアド文を実行します。
 
         ~~~sql
-        EXECUTE add_weather (8, 'San Diego', 41, 57, 0.25);
+        EXECUTE add_weather (8, 'San Diego', 41, 57, 0.25, current_date);
         ~~~
 
     2. PreparedStatement（java.sql.PreparedStatement）
@@ -347,7 +347,7 @@ PostgreSQLレイヤーからTsurugiを利用する簡単な操作方法を説明
 
 1. トランザクション
 
-    PostgreSQLからレイヤーからTsurugiのトランザクションを制御する操作方法を説明します。  
+    PostgreSQLのレイヤーからTsurugiのトランザクションを制御する操作方法を説明します。  
 
    1. 明示的にトランザクションブロックを開始する
 
