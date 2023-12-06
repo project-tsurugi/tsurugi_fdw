@@ -34,8 +34,15 @@ extern "C" {
 #include "catalog/pg_type.h"
 #include "commands/prepare.h"
 #include "lib/stringinfo.h"
+#include "nodes/nodeFuncs.h"		// exprType
 #include "nodes/parsenodes.h"
+#include "parser/parse_coerce.h"	// coerce_to_target_type
+#include "parser/parse_expr.h"		// transformExpr
 #include "parser/parse_type.h"
+#include "utils/builtins.h"			// format_type_be
+#include "utils/date.h"
+#include "utils/datetime.h"
+#include "utils/timestamp.h"
 
 #ifdef __cplusplus
 }
@@ -47,6 +54,7 @@ using namespace ogawayama;
 
 PreparedStatementPtr prepared_statement;
 stub::parameters_type parameters{};
+ParamListInfo paramLI;
 
 std::map<std::string, PreparedStatementPtr> stored_prepare_statment;
 std::map<std::string, std::vector<Oid>> stored_argtypes;
@@ -1286,6 +1294,161 @@ after_prepare_stmt(const PrepareStmt* stmts,
 }
 
 void
+generate_execute_parameters(const Value* param_value,
+							const Oid param_type,
+							const std::string param_name,
+							const int param_id)
+{
+	switch (nodeTag(param_value))
+	{
+		case T_Integer:
+		case T_Float:
+			{
+				switch (param_type)
+				{
+					case INT2OID:
+						parameters.emplace_back(param_name,
+										static_cast<std::int16_t>(intVal(param_value)));
+						break;
+					case INT4OID:
+						parameters.emplace_back(param_name,
+										static_cast<std::int32_t>(intVal(param_value)));
+						break;
+					case INT8OID:
+						parameters.emplace_back(param_name,
+										static_cast<std::int64_t>(intVal(param_value)));
+						break;
+					case FLOAT4OID:
+						parameters.emplace_back(param_name,
+										static_cast<float>(floatVal(param_value)));
+						break;
+					case FLOAT8OID:
+						parameters.emplace_back(param_name,
+										static_cast<double>(floatVal(param_value)));
+						break;
+					default:
+						/* should not reach here */
+						elog(ERROR, "execute_param: unrecognized T_Integer paramtype oid: %d",
+							 (int) param_type);
+						break;
+				}
+			}
+			break;
+		case T_String:
+			{
+				switch (param_type)
+				{
+					case BPCHAROID:
+					case VARCHAROID:
+					case TEXTOID:
+						parameters.emplace_back(param_name, strVal(param_value));
+						break;
+					case DATEOID:
+						{
+							Datum value = paramLI->params[param_id-1].value;
+							DateADT date = DatumGetDateADT(value);
+							struct pg_tm tm;
+							j2date(date + POSTGRES_EPOCH_JDATE,
+									&(tm.tm_year), &(tm.tm_mon), &(tm.tm_mday));
+							auto tg_date = takatori::datetime::date(
+													static_cast<std::int32_t>(tm.tm_year),
+													static_cast<std::int32_t>(tm.tm_mon),
+													static_cast<std::int32_t>(tm.tm_mday));
+							parameters.emplace_back(param_name, tg_date);
+						}
+						break;
+					case TIMEOID:
+						{
+							Oid ptype = paramLI->params[param_id-1].ptype;
+							Datum value = paramLI->params[param_id-1].value;
+							TimeADT time;
+							if (ptype == TIMEOID) {
+								time = DatumGetTimeADT(value);
+							} else if (ptype == TIMETZOID) {
+								TimeTzADT* timetz = DatumGetTimeTzADTP(value);
+								time = DatumGetTimeADT(timetz->time);
+							}
+							struct pg_tm tt, *tm = &tt;
+							fsec_t fsec;
+							time2tm(time, tm, &fsec);
+							auto tg_time_of_day = takatori::datetime::time_of_day(
+													static_cast<std::int64_t>(tm->tm_hour),
+													static_cast<std::int64_t>(tm->tm_min),
+													static_cast<std::int64_t>(tm->tm_sec),
+													std::chrono::nanoseconds(fsec*1000));
+							parameters.emplace_back(param_name, tg_time_of_day);
+						}
+						break;
+					case TIMESTAMPOID:
+						{
+							Oid ptype = paramLI->params[param_id-1].ptype;
+							Datum value = paramLI->params[param_id-1].value;
+							Timestamp timestamp;
+							if (ptype == TIMESTAMPOID) {
+								timestamp = DatumGetTimestamp(value);
+							} else if (ptype == TIMESTAMPTZOID) {
+								TimestampTz timestamptz = DatumGetTimestampTz(value);
+								struct pg_tm tt, *tm = &tt;
+								fsec_t fsec;
+								int tz;
+
+								if (TIMESTAMP_NOT_FINITE(timestamptz))
+									timestamp = timestamptz;
+								else
+								{
+									if (timestamp2tm(timestamptz, &tz, tm, &fsec, NULL, NULL) != 0)
+										ereport(ERROR,
+												(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+												 errmsg("timestamp out of range")));
+									if (tm2timestamp(tm, fsec, NULL, &timestamp) != 0)
+										ereport(ERROR,
+												(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+												 errmsg("timestamp out of range")));
+								}
+							}
+							struct pg_tm tt, *tm = &tt;
+							fsec_t fsec;
+							if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0) {
+								elog(ERROR, "timestamp out of range");
+							}
+							auto tg_date = takatori::datetime::date(
+													static_cast<std::int32_t>(tm->tm_year),
+													static_cast<std::int32_t>(tm->tm_mon),
+													static_cast<std::int32_t>(tm->tm_mday));
+							auto tg_time_of_day = takatori::datetime::time_of_day(
+													static_cast<std::int64_t>(tm->tm_hour),
+													static_cast<std::int64_t>(tm->tm_min),
+													static_cast<std::int64_t>(tm->tm_sec),
+													std::chrono::nanoseconds(fsec*1000));
+							auto tg_time_point = takatori::datetime::time_point(
+													tg_date,
+													tg_time_of_day);
+							parameters.emplace_back(param_name, tg_time_point);
+						}
+						break;
+					default:
+						/* should not reach here */
+						elog(ERROR, "execute_param: unrecognized T_String paramtype oid: %d",
+							 (int) param_type);
+						break;
+				}
+			}
+			break;
+		case T_Null:
+			{
+				std::monostate monostate;
+				parameters.emplace_back(param_name, monostate);
+			}
+			break;
+		default:
+			/* should not reach here */
+			elog(ERROR, "execute_param: unrecognized a_const value node type: %d",
+				 (int) nodeTag(param_value));
+			break;
+	}
+}
+
+void
 deparse_execute_param(const ExecuteStmt* stmts,
 					  const Param* target_param,
 					  const char* resname)
@@ -1298,61 +1461,31 @@ deparse_execute_param(const ExecuteStmt* stmts,
 		param_count++;
 		if (target_param->paramid == param_count) {
 			Node* stmt_param = (Node *) lfirst(lcp);
-			if (IsA(stmt_param, A_Const)) {
-				A_Const* con = (A_Const *)stmt_param;
-				Value* val = &con->val;
-				std::string col_name = resname;
-				col_name += "_" + std::to_string(target_param->paramid);
-				switch (nodeTag(val))
-				{
-					case T_Integer:
-					case T_Float:
-						{
-							switch (target_param->paramtype)
-							{
-								case INT2OID:
-									parameters.emplace_back(col_name,
-													static_cast<std::int16_t>(intVal(val)));
-									break;
-								case INT4OID:
-									parameters.emplace_back(col_name,
-													static_cast<std::int32_t>(intVal(val)));
-									break;
-								case INT8OID:
-									parameters.emplace_back(col_name,
-													static_cast<std::int64_t>(intVal(val)));
-									break;
-								case FLOAT4OID:
-									parameters.emplace_back(col_name,
-													static_cast<float>(floatVal(val)));
-									break;
-								case FLOAT8OID:
-									parameters.emplace_back(col_name,
-													static_cast<double>(floatVal(val)));
-									break;
-								default:
-									/* should not reach here */
-									elog(ERROR, "execute_param: unrecognized T_Integer paramtype oid: %d",
-										 (int) target_param->paramtype);
-									break;
-							}
-						}
-						break;
-					case T_String:
-						parameters.emplace_back(col_name, strVal(val));
-						break;
-					case T_Null:
-						{
-							std::monostate monostate;
-							parameters.emplace_back(col_name, monostate);
-						}
-						break;
-					default:
-						/* should not reach here */
-						elog(ERROR, "execute_param: unrecognized a_const value node type: %d",
-							 (int) nodeTag(val));
-						break;
-				}
+			std::string col_name = resname;
+			col_name += "_" + std::to_string(param_count);
+
+			switch (nodeTag(stmt_param))
+			{
+				case T_A_Const:
+					{
+						A_Const* con = (A_Const *)stmt_param;
+						generate_execute_parameters(&con->val, target_param->paramtype,
+													col_name, param_count);
+					}
+					break;
+				case T_SQLValueFunction:
+					{
+						Value* val = makeNode(Value);
+						val->type = T_String;
+						generate_execute_parameters(val, target_param->paramtype,
+													col_name, param_count);
+					}
+					break;
+				default:
+					/* should not reach here */
+					elog(ERROR, "unrecognized execute param node type: %d",
+						 (int) nodeTag(stmt_param));
+					break;
 			}
 		}
 	}
@@ -1395,56 +1528,31 @@ deparse_execute_paramref(const ParamRef* param_ref,
 		param_count++;
 		if (param_ref->number == param_count) {
 			Node* stmt_param = (Node *) lfirst(lcp);
-			if (IsA(stmt_param, A_Const)) {
-				A_Const* con = (A_Const *)stmt_param;
-				Value* val = &con->val;
-				col_name += "_" + std::to_string(param_ref->number);
-				switch (nodeTag(val))
-				{
-					case T_Integer:
-					case T_Float:
-						{
-							std::vector<Oid> argtypes_v;
-							argtypes_v = stored_argtypes[stmts->name];
-							switch (argtypes_v[param_ref->number-1])
-							{
-								case INT2OID:
-									parameters.emplace_back(col_name,
-													static_cast<std::int16_t>(intVal(val)));
-									break;
-								case INT4OID:
-									parameters.emplace_back(col_name,
-													static_cast<std::int32_t>(intVal(val)));
-									break;
-								case INT8OID:
-									parameters.emplace_back(col_name,
-													static_cast<std::int64_t>(intVal(val)));
-									break;
-								case FLOAT4OID:
-									parameters.emplace_back(col_name,
-													static_cast<float>(floatVal(val)));
-									break;
-								case FLOAT8OID:
-									parameters.emplace_back(col_name,
-													static_cast<double>(floatVal(val)));
-									break;
-								default:
-									/* should not reach here */
-									elog(ERROR, "execute_paramref: unrecognized paramtype oid: %d",
-										 (int) argtypes_v[param_ref->number-1]);
-									break;
-							}
-						}
-						break;
-					case T_String:
-						parameters.emplace_back(col_name, strVal(val));
-						break;
-					default:
-						/* should not reach here */
-						elog(ERROR, "execute_paramref: unrecognized a_const value node type: %d",
-							 (int) nodeTag(val));
-						break;
-				}
+			std::vector<Oid> argtypes_v;
+			argtypes_v = stored_argtypes[stmts->name];
+			col_name += "_" + std::to_string(param_count);
+			switch (nodeTag(stmt_param))
+			{
+				case T_A_Const:
+					{
+						A_Const* con = (A_Const *)stmt_param;
+						generate_execute_parameters(&con->val, argtypes_v[param_count-1],
+													col_name, param_count);
+					}
+					break;
+				case T_SQLValueFunction:
+					{
+						Value* val = makeNode(Value);
+						val->type = T_String;
+						generate_execute_parameters(val, argtypes_v[param_count-1],
+													col_name, param_count);
+					}
+					break;
+				default:
+					/* should not reach here */
+					elog(ERROR, "unrecognized execute paramref node type: %d",
+						 (int) nodeTag(stmt_param));
+					break;
 			}
 		}
 	}
@@ -1745,8 +1853,143 @@ deparse_execute_where_clause(const Node* expr,
 	}
 }
 
+void
+transform_sqlvalue_to_externdata(SQLValueFunction* svf,
+								 ParamExternData* prm)
+{
+	switch (svf->op)
+	{
+		case SVFOP_CURRENT_TIME:
+		case SVFOP_CURRENT_TIME_N:
+			prm->ptype = TIMETZOID;
+			prm->value = TimeTzADTPGetDatum(GetSQLCurrentTime(svf->typmod));
+			break;
+		case SVFOP_CURRENT_TIMESTAMP:
+		case SVFOP_CURRENT_TIMESTAMP_N:
+			prm->ptype = TIMESTAMPTZOID;
+			prm->value = TimestampTzGetDatum(GetCurrentTimestamp());
+			break;
+		case SVFOP_CURRENT_DATE:
+			prm->ptype = DATEOID;
+			prm->value = DateADTGetDatum(GetSQLCurrentDate());
+			break;
+		case SVFOP_LOCALTIME:
+		case SVFOP_LOCALTIME_N:
+			prm->ptype = TIMEOID;
+			prm->value = TimeADTGetDatum(GetSQLLocalTime(svf->typmod));
+			break;
+		case SVFOP_LOCALTIMESTAMP:
+		case SVFOP_LOCALTIMESTAMP_N:
+			prm->ptype = TIMESTAMPOID;
+			prm->value = TimestampGetDatum(GetSQLLocalTimestamp(svf->typmod));
+			break;
+		default:
+			/* should not reach here */
+			elog(ERROR, "unrecognized SQLValueFunctionOp: %d", svf->op);
+			break;
+	}
+}
+
+void
+analyze_execut_parameters(const ExecuteStmt* stmts,
+						  const PreparedStatement* entry,
+						  const char* queryString)
+{
+	Oid* param_types = entry->plansource->param_types;
+	int num_params = entry->plansource->num_params;
+	ParseState* pstate;
+	int i;
+	ListCell* l;
+
+	pstate = make_parsestate(NULL);
+	pstate->p_sourcetext = queryString;
+	paramLI = makeParamList(num_params);
+
+	i = 0;
+	foreach(l, stmts->params)
+	{
+		Node* expr = (Node*)lfirst(l);
+		Oid expected_type_id = param_types[i];
+		Oid given_type_id;
+		ParamExternData* prm = &paramLI->params[i];
+
+		expr = transformExpr(pstate, expr, EXPR_KIND_EXECUTE_PARAMETER);
+		given_type_id = exprType(expr);
+		expr = coerce_to_target_type(pstate, expr, given_type_id,
+									 expected_type_id, -1,
+									 COERCION_ASSIGNMENT,
+									 COERCE_IMPLICIT_CAST,
+									 -1);
+		if (expr == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("parameter $%d of type %s cannot be coerced to the expected type %s",
+							i + 1,
+							format_type_be(given_type_id),
+							format_type_be(expected_type_id)),
+					 errhint("You will need to rewrite or cast the expression.")));
+
+		switch (nodeTag(expr))
+		{
+			case T_Const:
+				{
+					Const* con = (Const *)expr;
+					prm->ptype = con->consttype;
+					prm->value = con->constvalue;
+				}
+				break;
+			case T_FuncExpr:
+				{
+					FuncExpr* func_expr = (FuncExpr *) expr;
+					List* args = func_expr->args;
+					ListCell* lca;
+					foreach(lca, args)
+					{
+						Node* arg = (Node *) lfirst(lca);
+						switch (nodeTag(arg))
+						{
+							case T_SQLValueFunction:
+								{
+									SQLValueFunction* svf = (SQLValueFunction *) arg;
+									transform_sqlvalue_to_externdata(svf, prm);
+								}
+								break;
+							case T_Const:
+								{
+									Const* con = (Const *) arg;
+									prm->ptype = con->consttype;
+									prm->value = con->constvalue;
+								}
+								break;
+							default:
+								/* should not reach here */
+								elog(ERROR, "unrecognized FuncExpr arg type: %d",
+									 (int) nodeTag(arg));
+								break;
+						}
+					}
+				}
+				break;
+			case T_SQLValueFunction:
+				{
+					SQLValueFunction* svf = (SQLValueFunction *) expr;
+					transform_sqlvalue_to_externdata(svf, prm);
+				}
+				break;
+			default:
+				/* should not reach here */
+				elog(ERROR, "unrecognized expression node type: %d",
+					 (int) nodeTag(expr));
+				break;
+		}
+
+		i++;
+	}
+}
+
 bool
-befor_execute_stmt(const ExecuteStmt* stmts)
+befor_execute_stmt(const ExecuteStmt* stmts,
+				   const char* queryString)
 {
 	PreparedStatement* entry;
 	List* query_list;
@@ -1759,6 +2002,8 @@ befor_execute_stmt(const ExecuteStmt* stmts)
 	if (!is_tsurugi_table(query, false)) {
 		return true;
 	}
+
+	analyze_execut_parameters(stmts, entry, queryString);
 
 	query_list = entry->plansource->query_list;
 	foreach(l, query_list)

@@ -20,6 +20,7 @@
 #include <map>
 
 #include "ogawayama/stub/api.h"
+#include "takatori/value/time_point.h"
 #include "tsurugi.h"
 
 #ifdef __cplusplus
@@ -30,6 +31,9 @@ extern "C" {
 #include "catalog/pg_type.h"
 #include "nodes/params.h"
 #include "nodes/execnodes.h"
+#include "utils/date.h"
+#include "utils/datetime.h"
+#include "utils/timestamp.h"
 
 extern void getTypeOutputInfo(Oid type, Oid *typOutput, bool *typIsVarlena);
 #ifdef __cplusplus
@@ -208,6 +212,56 @@ begin_prepare_processing(const EState* estate)
 				pstring = OidOutputFunctionCall(typoutput, param.value);
 				parameters.emplace_back(param_name, pstring);
 				pfree(pstring);
+				break;
+			case DATEOID:
+				{
+					DateADT date = DatumGetDateADT(param.value);
+					struct pg_tm tm;
+					j2date(date + POSTGRES_EPOCH_JDATE,
+							&(tm.tm_year), &(tm.tm_mon), &(tm.tm_mday));
+					auto tg_date = takatori::datetime::date(
+											static_cast<std::int32_t>(tm.tm_year),
+											static_cast<std::int32_t>(tm.tm_mon),
+											static_cast<std::int32_t>(tm.tm_mday));
+					parameters.emplace_back(param_name, tg_date);
+				}
+				break;
+			case TIMEOID:
+				{
+					TimeADT time = DatumGetTimeADT(param.value);
+					struct pg_tm tt, *tm = &tt;
+					fsec_t fsec;
+					time2tm(time, tm, &fsec);
+					auto tg_time_of_day = takatori::datetime::time_of_day(
+											static_cast<std::int64_t>(tm->tm_hour),
+											static_cast<std::int64_t>(tm->tm_min),
+											static_cast<std::int64_t>(tm->tm_sec),
+											std::chrono::nanoseconds(fsec*1000));
+					parameters.emplace_back(param_name, tg_time_of_day);
+				}
+				break;
+			case TIMESTAMPOID:
+				{
+					Timestamp timestamp = DatumGetTimestamp(param.value);
+					struct pg_tm tt, *tm = &tt;
+					fsec_t fsec;
+					if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0) {
+						elog(ERROR, "timestamp out of range");
+					}
+					auto tg_date = takatori::datetime::date(
+											static_cast<std::int32_t>(tm->tm_year),
+											static_cast<std::int32_t>(tm->tm_mon),
+											static_cast<std::int32_t>(tm->tm_mday));
+					auto tg_time_of_day = takatori::datetime::time_of_day(
+											static_cast<std::int64_t>(tm->tm_hour),
+											static_cast<std::int64_t>(tm->tm_min),
+											static_cast<std::int64_t>(tm->tm_sec),
+											std::chrono::nanoseconds(fsec*1000));
+					auto tg_time_point = takatori::datetime::time_point(
+											tg_date,
+											tg_time_of_day);
+					parameters.emplace_back(param_name, tg_time_point);
+				}
 				break;
 			default:
 				elog(ERROR, "unrecognized type oid: %d", (int) param.ptype);

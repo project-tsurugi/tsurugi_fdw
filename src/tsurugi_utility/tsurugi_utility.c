@@ -336,7 +336,7 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 
 		case T_ExecuteStmt:
 		{
-			if (!befor_execute_stmt((ExecuteStmt*)parsetree))
+			if (!befor_execute_stmt((ExecuteStmt*)parsetree, queryString))
 			{
 				elog(ERROR, "failed befor_execute_stmt() function.");
 			}
