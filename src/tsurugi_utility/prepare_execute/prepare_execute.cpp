@@ -1474,6 +1474,7 @@ deparse_execute_param(const ExecuteStmt* stmts,
 					}
 					break;
 				case T_SQLValueFunction:
+				case T_TypeCast:
 					{
 						Value* val = makeNode(Value);
 						val->type = T_String;
@@ -1541,6 +1542,7 @@ deparse_execute_paramref(const ParamRef* param_ref,
 					}
 					break;
 				case T_SQLValueFunction:
+				case T_TypeCast:
 					{
 						Value* val = makeNode(Value);
 						val->type = T_String;

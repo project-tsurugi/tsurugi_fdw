@@ -122,10 +122,10 @@ SELECT * FROM weather;
 SELECT tg_commit();             -- Longトランザクション終了
 
 /* プリペアド文 */
-PREPARE add_weather (int, varchar(80), int, int, real)
-    AS INSERT INTO weather (id, city, temp_lo, temp_hi, prcp)
-            VALUES ($1, $2, $3, $4, $5);
-EXECUTE add_weather (8, 'San Diego', 41, 57, 0.25);
+PREPARE add_weather (int, varchar(80), int, int, real, date)
+    AS INSERT INTO weather (id, city, temp_lo, temp_hi, prcp, the_date)
+            VALUES ($1, $2, $3, $4, $5, $6);
+EXECUTE add_weather (8, 'San Diego', 41, 57, 0.25, '2023-11-24'); -- 日付固定
 SELECT * FROM weather;  -- レグレッションテスト確認用
 
 /* 外部テーブルの削除 */
