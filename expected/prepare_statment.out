@@ -442,6 +442,62 @@ select * from trg_timedate;
   1 | 2023-03-03 23:59:35.123456 | 2023-03-03 | 23:59:35.123457
 (1 row)
 
+-- Can't test with regression EXECUTE add_trg_timedate_tms (9901, clock_timestamp());
+-- Can't test with regression EXECUTE add_trg_timedate_dt  (9902, current_date);
+-- Can't test with regression EXECUTE add_trg_timedate_tm  (9903, current_time);
+-- Can't test with regression EXECUTE add_trg_timedate_tms (9904, current_timestamp);
+EXECUTE add_trg_timedate_tms (10, date_trunc('hour', timestamp '2001-02-16 20:38:40'));
+EXECUTE add_trg_timedate_tms (11, date_trunc('day', timestamptz '2001-02-16 20:38:40+00', 'Australia/Sydney'));
+-- Can't test with regression EXECUTE add_trg_timedate_tm  (9905, localtime);
+-- Can't test with regression EXECUTE add_trg_timedate_tms (9906, localtimestamp);
+EXECUTE add_trg_timedate_dt  (12, make_date(2013, 7, 15));
+EXECUTE add_trg_timedate_tm  (13, make_time(8, 15, 23.5));
+EXECUTE add_trg_timedate_tms (14, make_timestamp(2013, 7, 15, 8, 15, 23.5));
+EXECUTE add_trg_timedate_tms (15, make_timestamptz(2013, 7, 15, 8, 15, 23.5));
+-- Can't test with regression EXECUTE add_trg_timedate_tms (9907, now());
+-- Can't test with regression EXECUTE add_trg_timedate_tms (9908, statement_timestamp());
+-- Can't test with regression EXECUTE add_trg_timedate_tms (9909, transaction_timestamp());
+EXECUTE add_trg_timedate_tms (16, to_timestamp(1284352323));
+select * from trg_timedate;
+ id |            tms             |     dt     |       tm        
+----+----------------------------+------------+-----------------
+  1 | 2023-03-03 23:59:35.123456 | 2023-03-03 | 23:59:35.123457
+ 10 | 2001-02-16 20:00:00        | 2023-03-03 | 23:59:35.123457
+ 11 | 2001-02-16 05:00:00        | 2023-03-03 | 23:59:35.123457
+ 12 | 2023-03-03 23:59:35.123456 | 2013-07-15 | 23:59:35.123457
+ 13 | 2023-03-03 23:59:35.123456 | 2023-03-03 | 08:15:23.5
+ 14 | 2013-07-15 08:15:23.5      | 2023-03-03 | 23:59:35.123457
+ 15 | 2013-07-15 08:15:23.5      | 2023-03-03 | 23:59:35.123457
+ 16 | 2010-09-12 21:32:03        | 2023-03-03 | 23:59:35.123457
+(8 rows)
+
+EXECUTE trg_timedate_where_tms (date_trunc('hour', timestamp '2001-02-16 20:38:40'));
+EXECUTE trg_timedate_where_tms (date_trunc('day', timestamptz '2001-02-16 20:38:40+00', 'Australia/Sydney'));
+EXECUTE trg_timedate_where_tms (make_timestamp(2013, 7, 15, 8, 15, 23.5));
+EXECUTE trg_timedate_where_tms (to_timestamp(1284352323));
+select * from trg_timedate;
+ id |            tms             |     dt     |       tm        
+----+----------------------------+------------+-----------------
+  1 | 2023-03-03 23:59:35.123456 | 2023-03-03 | 23:59:35.123457
+ 12 | 2023-03-03 23:59:35.123456 | 2013-07-15 | 23:59:35.123457
+ 13 | 2023-03-03 23:59:35.123456 | 2023-03-03 | 08:15:23.5
+(3 rows)
+
+EXECUTE trg_timedate_where_dt (make_date(2013, 7, 15));
+select * from trg_timedate;
+ id |            tms             |     dt     |       tm        
+----+----------------------------+------------+-----------------
+  1 | 2023-03-03 23:59:35.123456 | 2023-03-03 | 23:59:35.123457
+ 13 | 2023-03-03 23:59:35.123456 | 2023-03-03 | 08:15:23.5
+(2 rows)
+
+EXECUTE trg_timedate_where_tm (make_time(8, 15, 23.5));
+select * from trg_timedate;
+ id |            tms             |     dt     |       tm        
+----+----------------------------+------------+-----------------
+  1 | 2023-03-03 23:59:35.123456 | 2023-03-03 | 23:59:35.123457
+(1 row)
+
 /* clean up */
 DROP FOREIGN TABLE trg_timedate;
 DROP TABLE trg_timedate;

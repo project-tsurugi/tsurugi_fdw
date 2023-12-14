@@ -149,6 +149,36 @@ EXECUTE trg_timedate_where_tm ('04:05');
 EXECUTE trg_timedate_where_tm ('04:05 PM');
 select * from trg_timedate;
 
+-- Can't test with regression EXECUTE add_trg_timedate_tms (9901, clock_timestamp());
+-- Can't test with regression EXECUTE add_trg_timedate_dt  (9902, current_date);
+-- Can't test with regression EXECUTE add_trg_timedate_tm  (9903, current_time);
+-- Can't test with regression EXECUTE add_trg_timedate_tms (9904, current_timestamp);
+EXECUTE add_trg_timedate_tms (10, date_trunc('hour', timestamp '2001-02-16 20:38:40'));
+EXECUTE add_trg_timedate_tms (11, date_trunc('day', timestamptz '2001-02-16 20:38:40+00', 'Australia/Sydney'));
+-- Can't test with regression EXECUTE add_trg_timedate_tm  (9905, localtime);
+-- Can't test with regression EXECUTE add_trg_timedate_tms (9906, localtimestamp);
+EXECUTE add_trg_timedate_dt  (12, make_date(2013, 7, 15));
+EXECUTE add_trg_timedate_tm  (13, make_time(8, 15, 23.5));
+EXECUTE add_trg_timedate_tms (14, make_timestamp(2013, 7, 15, 8, 15, 23.5));
+EXECUTE add_trg_timedate_tms (15, make_timestamptz(2013, 7, 15, 8, 15, 23.5));
+-- Can't test with regression EXECUTE add_trg_timedate_tms (9907, now());
+-- Can't test with regression EXECUTE add_trg_timedate_tms (9908, statement_timestamp());
+-- Can't test with regression EXECUTE add_trg_timedate_tms (9909, transaction_timestamp());
+EXECUTE add_trg_timedate_tms (16, to_timestamp(1284352323));
+select * from trg_timedate;
+
+EXECUTE trg_timedate_where_tms (date_trunc('hour', timestamp '2001-02-16 20:38:40'));
+EXECUTE trg_timedate_where_tms (date_trunc('day', timestamptz '2001-02-16 20:38:40+00', 'Australia/Sydney'));
+EXECUTE trg_timedate_where_tms (make_timestamp(2013, 7, 15, 8, 15, 23.5));
+EXECUTE trg_timedate_where_tms (to_timestamp(1284352323));
+select * from trg_timedate;
+
+EXECUTE trg_timedate_where_dt (make_date(2013, 7, 15));
+select * from trg_timedate;
+
+EXECUTE trg_timedate_where_tm (make_time(8, 15, 23.5));
+select * from trg_timedate;
+
 /* clean up */
 DROP FOREIGN TABLE trg_timedate;
 DROP TABLE trg_timedate;

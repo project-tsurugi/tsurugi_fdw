@@ -1361,10 +1361,8 @@ generate_execute_parameters(const Value* param_value,
 						{
 							Oid ptype = paramLI->params[param_id-1].ptype;
 							Datum value = paramLI->params[param_id-1].value;
-							TimeADT time;
-							if (ptype == TIMEOID) {
-								time = DatumGetTimeADT(value);
-							} else if (ptype == TIMETZOID) {
+							TimeADT time = DatumGetTimeADT(value);
+							if (ptype == TIMETZOID) {
 								TimeTzADT* timetz = DatumGetTimeTzADTP(value);
 								time = DatumGetTimeADT(timetz->time);
 							}
@@ -1383,15 +1381,12 @@ generate_execute_parameters(const Value* param_value,
 						{
 							Oid ptype = paramLI->params[param_id-1].ptype;
 							Datum value = paramLI->params[param_id-1].value;
-							Timestamp timestamp;
-							if (ptype == TIMESTAMPOID) {
-								timestamp = DatumGetTimestamp(value);
-							} else if (ptype == TIMESTAMPTZOID) {
+							Timestamp timestamp = DatumGetTimestamp(value);
+							struct pg_tm tt, *tm = &tt;
+							fsec_t fsec;
+							if (ptype == TIMESTAMPTZOID) {
 								TimestampTz timestamptz = DatumGetTimestampTz(value);
-								struct pg_tm tt, *tm = &tt;
-								fsec_t fsec;
 								int tz;
-
 								if (TIMESTAMP_NOT_FINITE(timestamptz))
 									timestamp = timestamptz;
 								else
@@ -1406,8 +1401,6 @@ generate_execute_parameters(const Value* param_value,
 												 errmsg("timestamp out of range")));
 								}
 							}
-							struct pg_tm tt, *tm = &tt;
-							fsec_t fsec;
 							if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0) {
 								elog(ERROR, "timestamp out of range");
 							}
@@ -1473,8 +1466,9 @@ deparse_execute_param(const ExecuteStmt* stmts,
 													col_name, param_count);
 					}
 					break;
-				case T_SQLValueFunction:
-				case T_TypeCast:
+				case T_SQLValueFunction:	// for Date/Time Functions
+				case T_FuncCall:			// for Date/Time Functions
+				case T_TypeCast:			// for TIMESTAMP 'yyyy-mm-dd hh:mm:ss'
 					{
 						Value* val = makeNode(Value);
 						val->type = T_String;
@@ -1541,8 +1535,9 @@ deparse_execute_paramref(const ParamRef* param_ref,
 													col_name, param_count);
 					}
 					break;
-				case T_SQLValueFunction:
-				case T_TypeCast:
+				case T_SQLValueFunction:	// for Date/Time Functions
+				case T_FuncCall:			// for Date/Time Functions
+				case T_TypeCast:			// for TIMESTAMP '2004-10-19 10:23:54'
 					{
 						Value* val = makeNode(Value);
 						val->type = T_String;
@@ -1855,41 +1850,131 @@ deparse_execute_where_clause(const Node* expr,
 	}
 }
 
-void
-transform_sqlvalue_to_externdata(SQLValueFunction* svf,
-								 ParamExternData* prm)
+Datum
+get_datum_sqlvaluefunction(SQLValueFunction* svf)
 {
+	Datum result = (Datum) 0;
+
 	switch (svf->op)
 	{
 		case SVFOP_CURRENT_TIME:
 		case SVFOP_CURRENT_TIME_N:
-			prm->ptype = TIMETZOID;
-			prm->value = TimeTzADTPGetDatum(GetSQLCurrentTime(svf->typmod));
+			result = TimeTzADTPGetDatum(GetSQLCurrentTime(svf->typmod));
 			break;
 		case SVFOP_CURRENT_TIMESTAMP:
 		case SVFOP_CURRENT_TIMESTAMP_N:
-			prm->ptype = TIMESTAMPTZOID;
-			prm->value = TimestampTzGetDatum(GetCurrentTimestamp());
+			result = TimestampTzGetDatum(GetSQLCurrentTimestamp(svf->typmod));
 			break;
 		case SVFOP_CURRENT_DATE:
-			prm->ptype = DATEOID;
-			prm->value = DateADTGetDatum(GetSQLCurrentDate());
+			result = DateADTGetDatum(GetSQLCurrentDate());
 			break;
 		case SVFOP_LOCALTIME:
 		case SVFOP_LOCALTIME_N:
-			prm->ptype = TIMEOID;
-			prm->value = TimeADTGetDatum(GetSQLLocalTime(svf->typmod));
+			result = TimeADTGetDatum(GetSQLLocalTime(svf->typmod));
 			break;
 		case SVFOP_LOCALTIMESTAMP:
 		case SVFOP_LOCALTIMESTAMP_N:
-			prm->ptype = TIMESTAMPOID;
-			prm->value = TimestampGetDatum(GetSQLLocalTimestamp(svf->typmod));
+			result = TimestampGetDatum(GetSQLLocalTimestamp(svf->typmod));
 			break;
 		default:
 			/* should not reach here */
 			elog(ERROR, "unrecognized SQLValueFunctionOp: %d", svf->op);
 			break;
 	}
+
+	return result;
+}
+
+Datum
+get_datum_funcexpr(FuncExpr* func_expr)
+{
+
+	FmgrInfo flinfo;
+	Datum result = (Datum) 0;
+
+	fmgr_info(func_expr->funcid, &flinfo);
+
+	if (flinfo.fn_nargs == 0) {
+		result = OidFunctionCall0(func_expr->funcid);
+	} else {
+		ParamListInfo pli = makeParamList(flinfo.fn_nargs);
+		int i = 0;
+		ListCell* l;
+		foreach(l, func_expr->args)
+		{
+			Node* arg = (Node *) lfirst(l);
+			switch (nodeTag(arg))
+			{
+				case T_Const:
+					{
+						Const* con = (Const *) arg;
+						pli->params[i].value = con->constvalue;
+					}
+					break;
+				case T_SQLValueFunction:
+					{
+						SQLValueFunction* svf = (SQLValueFunction *) arg;
+						pli->params[i].value = get_datum_sqlvaluefunction(svf);
+					}
+					break;
+				case T_FuncExpr:
+					{
+						FuncExpr* fexpr = (FuncExpr *) arg;
+						pli->params[i].value = get_datum_funcexpr(fexpr);
+					}
+					break;
+				default:
+					/* should not reach here */
+					elog(ERROR, "unrecognized funcexpr arg node type: %d",
+						 (int) nodeTag(arg));
+					break;
+			}
+			i++;
+		}
+
+		switch (flinfo.fn_nargs)
+		{
+			case 1:
+				{
+					result = OidFunctionCall1(func_expr->funcid,
+												pli->params[0].value);
+				}
+				break;
+			case 2:
+				{
+					result = OidFunctionCall2(func_expr->funcid,
+												pli->params[0].value,
+												pli->params[1].value);
+				}
+				break;
+			case 3:
+				{
+					result = OidFunctionCall3(func_expr->funcid,
+												pli->params[0].value,
+												pli->params[1].value,
+												pli->params[2].value);
+				}
+				break;
+			case 6:
+				{
+					result = OidFunctionCall6(func_expr->funcid,
+												pli->params[0].value,
+												pli->params[1].value,
+												pli->params[2].value,
+												pli->params[3].value,
+												pli->params[4].value,
+												pli->params[5].value);
+				}
+				break;
+			default:
+				/* should not reach here */
+				elog(ERROR, "unrecognized flinfo fn_nargs: %d",
+					flinfo.fn_nargs);
+				break;
+		}
+	}
+
+	return result;
 }
 
 void
@@ -1943,39 +2028,15 @@ analyze_execut_parameters(const ExecuteStmt* stmts,
 			case T_FuncExpr:
 				{
 					FuncExpr* func_expr = (FuncExpr *) expr;
-					List* args = func_expr->args;
-					ListCell* lca;
-					foreach(lca, args)
-					{
-						Node* arg = (Node *) lfirst(lca);
-						switch (nodeTag(arg))
-						{
-							case T_SQLValueFunction:
-								{
-									SQLValueFunction* svf = (SQLValueFunction *) arg;
-									transform_sqlvalue_to_externdata(svf, prm);
-								}
-								break;
-							case T_Const:
-								{
-									Const* con = (Const *) arg;
-									prm->ptype = con->consttype;
-									prm->value = con->constvalue;
-								}
-								break;
-							default:
-								/* should not reach here */
-								elog(ERROR, "unrecognized FuncExpr arg type: %d",
-									 (int) nodeTag(arg));
-								break;
-						}
-					}
+					prm->ptype = func_expr->funcresulttype;
+					prm->value = get_datum_funcexpr(func_expr);
 				}
 				break;
 			case T_SQLValueFunction:
 				{
 					SQLValueFunction* svf = (SQLValueFunction *) expr;
-					transform_sqlvalue_to_externdata(svf, prm);
+					prm->ptype = svf->type;
+					prm->value = get_datum_sqlvaluefunction(svf);
 				}
 				break;
 			default:
