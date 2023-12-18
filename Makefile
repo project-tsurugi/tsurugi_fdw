@@ -9,10 +9,10 @@ DATA 		= tsurugi_fdw--0.1.sql
 
 PG_CPPFLAGS = -Isrc/common/include \
               -Isrc/tsurugi_utility/include \
-              -Ithird_party/ogawayama/include \
-              -Ithird_party/takatori/include \
-              -Ithird_party/metadata-manager/include \
-              -Ithird_party/message-manager/include \
+              -I$(TSURUGI_HOME)/include/ogawayama \
+              -I$(TSURUGI_HOME)/include/takatori \
+              -I$(TSURUGI_HOME)/include/manager \
+              -I$(TSURUGI_HOME)/include \
               -std=c++17 -fPIC -Dregister= -O0 \
               -I$(libpq_srcdir)
 
