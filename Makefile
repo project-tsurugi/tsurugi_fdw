@@ -5,7 +5,6 @@ SRCDIR 		= ./src
 C_SRCS 		= $(shell find $(SRCDIR) -name *.c)
 CPP_SRCS	= $(shell find $(SRCDIR) -name *.cpp)
 OBJS 		= $(C_SRCS:.c=.o) $(CPP_SRCS:.cpp=.o)
-DATA 		= tsurugi_fdw--0.1.sql
 
 PG_CPPFLAGS = -Isrc/common/include \
               -Isrc/tsurugi_utility/include \
@@ -20,7 +19,7 @@ SHLIB_LINK_INTERNAL = $(libpq)
 SHLIB_LINK = -logawayama-stub -lmetadata-manager -lmessage-manager -lboost_filesystem
 
 EXTENSION = tsurugi_fdw
-DATA = tsurugi_fdw--1.0.0-BETA2.sql
+DATA = tsurugi_fdw--1.0.0-BETA3.sql
 
 # REGRESS_BASIC: variable used in frontend
 #REGRESS_BASIC = test_create_table otable_of_constr ch-benchmark-ddl create_table_syntax_type update_delete insert_select

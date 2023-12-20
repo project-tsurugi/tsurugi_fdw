@@ -1297,149 +1297,124 @@ after_prepare_stmt(const PrepareStmt* stmts,
 }
 
 void
-generate_execute_parameters(const Value* param_value,
-							const Oid param_type,
-							const std::string param_name,
-							const int param_id)
+make_execute_parameters(const Value* param_value,
+						const Oid param_type,
+						const std::string param_name,
+						const int param_id)
 {
-	switch (nodeTag(param_value))
+	if (IsA(param_value, Null)) {
+		std::monostate monostate;
+		parameters.emplace_back(param_name, monostate);
+		return;
+	}
+
+	switch (param_type)
 	{
-		case T_Integer:
-		case T_Float:
+		case INT2OID:
+			parameters.emplace_back(param_name,
+							static_cast<std::int16_t>(intVal(param_value)));
+			break;
+		case INT4OID:
+			parameters.emplace_back(param_name,
+							static_cast<std::int32_t>(intVal(param_value)));
+			break;
+		case INT8OID:
+			parameters.emplace_back(param_name,
+							static_cast<std::int64_t>(intVal(param_value)));
+			break;
+		case FLOAT4OID:
+			parameters.emplace_back(param_name,
+							static_cast<float>(floatVal(param_value)));
+			break;
+		case FLOAT8OID:
+			parameters.emplace_back(param_name,
+							static_cast<double>(floatVal(param_value)));
+			break;
+		case BPCHAROID:
+		case VARCHAROID:
+		case TEXTOID:
+			parameters.emplace_back(param_name, strVal(param_value));
+			break;
+		case DATEOID:
 			{
-				switch (param_type)
-				{
-					case INT2OID:
-						parameters.emplace_back(param_name,
-										static_cast<std::int16_t>(intVal(param_value)));
-						break;
-					case INT4OID:
-						parameters.emplace_back(param_name,
-										static_cast<std::int32_t>(intVal(param_value)));
-						break;
-					case INT8OID:
-						parameters.emplace_back(param_name,
-										static_cast<std::int64_t>(intVal(param_value)));
-						break;
-					case FLOAT4OID:
-						parameters.emplace_back(param_name,
-										static_cast<float>(floatVal(param_value)));
-						break;
-					case FLOAT8OID:
-						parameters.emplace_back(param_name,
-										static_cast<double>(floatVal(param_value)));
-						break;
-					default:
-						/* should not reach here */
-						elog(ERROR, "execute_param: unrecognized T_Integer paramtype oid: %d",
-							 (int) param_type);
-						break;
-				}
+				Datum value = paramLI->params[param_id-1].value;
+				DateADT date = DatumGetDateADT(value);
+				struct pg_tm tm;
+				j2date(date + POSTGRES_EPOCH_JDATE,
+						&(tm.tm_year), &(tm.tm_mon), &(tm.tm_mday));
+				auto tg_date = takatori::datetime::date(
+										static_cast<std::int32_t>(tm.tm_year),
+										static_cast<std::int32_t>(tm.tm_mon),
+										static_cast<std::int32_t>(tm.tm_mday));
+				parameters.emplace_back(param_name, tg_date);
 			}
 			break;
-		case T_String:
+		case TIMEOID:
 			{
-				switch (param_type)
-				{
-					case BPCHAROID:
-					case VARCHAROID:
-					case TEXTOID:
-						parameters.emplace_back(param_name, strVal(param_value));
-						break;
-					case DATEOID:
-						{
-							Datum value = paramLI->params[param_id-1].value;
-							DateADT date = DatumGetDateADT(value);
-							struct pg_tm tm;
-							j2date(date + POSTGRES_EPOCH_JDATE,
-									&(tm.tm_year), &(tm.tm_mon), &(tm.tm_mday));
-							auto tg_date = takatori::datetime::date(
-													static_cast<std::int32_t>(tm.tm_year),
-													static_cast<std::int32_t>(tm.tm_mon),
-													static_cast<std::int32_t>(tm.tm_mday));
-							parameters.emplace_back(param_name, tg_date);
-						}
-						break;
-					case TIMEOID:
-						{
-							Oid ptype = paramLI->params[param_id-1].ptype;
-							Datum value = paramLI->params[param_id-1].value;
-							TimeADT time = DatumGetTimeADT(value);
-							if (ptype == TIMETZOID) {
-								TimeTzADT* timetz = DatumGetTimeTzADTP(value);
-								time = DatumGetTimeADT(timetz->time);
-							}
-							struct pg_tm tt, *tm = &tt;
-							fsec_t fsec;
-							time2tm(time, tm, &fsec);
-							auto tg_time_of_day = takatori::datetime::time_of_day(
-													static_cast<std::int64_t>(tm->tm_hour),
-													static_cast<std::int64_t>(tm->tm_min),
-													static_cast<std::int64_t>(tm->tm_sec),
-													std::chrono::nanoseconds(fsec*1000));
-							parameters.emplace_back(param_name, tg_time_of_day);
-						}
-						break;
-					case TIMESTAMPOID:
-						{
-							Oid ptype = paramLI->params[param_id-1].ptype;
-							Datum value = paramLI->params[param_id-1].value;
-							Timestamp timestamp = DatumGetTimestamp(value);
-							struct pg_tm tt, *tm = &tt;
-							fsec_t fsec;
-							if (ptype == TIMESTAMPTZOID) {
-								TimestampTz timestamptz = DatumGetTimestampTz(value);
-								int tz;
-								if (TIMESTAMP_NOT_FINITE(timestamptz))
-									timestamp = timestamptz;
-								else
-								{
-									if (timestamp2tm(timestamptz, &tz, tm, &fsec, NULL, NULL) != 0)
-										ereport(ERROR,
-												(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-												 errmsg("timestamp out of range")));
-									if (tm2timestamp(tm, fsec, NULL, &timestamp) != 0)
-										ereport(ERROR,
-												(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-												 errmsg("timestamp out of range")));
-								}
-							}
-							if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0) {
-								elog(ERROR, "timestamp out of range");
-							}
-							auto tg_date = takatori::datetime::date(
-													static_cast<std::int32_t>(tm->tm_year),
-													static_cast<std::int32_t>(tm->tm_mon),
-													static_cast<std::int32_t>(tm->tm_mday));
-							auto tg_time_of_day = takatori::datetime::time_of_day(
-													static_cast<std::int64_t>(tm->tm_hour),
-													static_cast<std::int64_t>(tm->tm_min),
-													static_cast<std::int64_t>(tm->tm_sec),
-													std::chrono::nanoseconds(fsec*1000));
-							auto tg_time_point = takatori::datetime::time_point(
-													tg_date,
-													tg_time_of_day);
-							parameters.emplace_back(param_name, tg_time_point);
-						}
-						break;
-					default:
-						/* should not reach here */
-						elog(ERROR, "execute_param: unrecognized T_String paramtype oid: %d",
-							 (int) param_type);
-						break;
+				Oid ptype = paramLI->params[param_id-1].ptype;
+				Datum value = paramLI->params[param_id-1].value;
+				TimeADT time = DatumGetTimeADT(value);
+				if (ptype == TIMETZOID) {
+					TimeTzADT* timetz = DatumGetTimeTzADTP(value);
+					time = DatumGetTimeADT(timetz->time);
 				}
+				struct pg_tm tt, *tm = &tt;
+				fsec_t fsec;
+				time2tm(time, tm, &fsec);
+				auto tg_time_of_day = takatori::datetime::time_of_day(
+										static_cast<std::int64_t>(tm->tm_hour),
+										static_cast<std::int64_t>(tm->tm_min),
+										static_cast<std::int64_t>(tm->tm_sec),
+										std::chrono::nanoseconds(fsec*1000));
+				parameters.emplace_back(param_name, tg_time_of_day);
 			}
 			break;
-		case T_Null:
+		case TIMESTAMPOID:
 			{
-				std::monostate monostate;
-				parameters.emplace_back(param_name, monostate);
+				Oid ptype = paramLI->params[param_id-1].ptype;
+				Datum value = paramLI->params[param_id-1].value;
+				Timestamp timestamp = DatumGetTimestamp(value);
+				struct pg_tm tt, *tm = &tt;
+				fsec_t fsec;
+				if (ptype == TIMESTAMPTZOID) {
+					TimestampTz timestamptz = DatumGetTimestampTz(value);
+					int tz;
+					if (TIMESTAMP_NOT_FINITE(timestamptz))
+						timestamp = timestamptz;
+					else
+					{
+						if (timestamp2tm(timestamptz, &tz, tm, &fsec, NULL, NULL) != 0)
+							ereport(ERROR,
+									(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+									 errmsg("timestamp out of range")));
+						if (tm2timestamp(tm, fsec, NULL, &timestamp) != 0)
+							ereport(ERROR,
+									(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+									 errmsg("timestamp out of range")));
+					}
+				}
+				if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0) {
+					elog(ERROR, "timestamp out of range");
+				}
+				auto tg_date = takatori::datetime::date(
+										static_cast<std::int32_t>(tm->tm_year),
+										static_cast<std::int32_t>(tm->tm_mon),
+										static_cast<std::int32_t>(tm->tm_mday));
+				auto tg_time_of_day = takatori::datetime::time_of_day(
+										static_cast<std::int64_t>(tm->tm_hour),
+										static_cast<std::int64_t>(tm->tm_min),
+										static_cast<std::int64_t>(tm->tm_sec),
+										std::chrono::nanoseconds(fsec*1000));
+				auto tg_time_point = takatori::datetime::time_point(
+										tg_date,
+										tg_time_of_day);
+				parameters.emplace_back(param_name, tg_time_point);
 			}
 			break;
 		default:
 			/* should not reach here */
-			elog(ERROR, "execute_param: unrecognized a_const value node type: %d",
-				 (int) nodeTag(param_value));
+			elog(ERROR, "execute_param: unrecognized T_String paramtype oid: %d",
+				 (int) param_type);
 			break;
 	}
 }
@@ -1465,18 +1440,17 @@ deparse_execute_param(const ExecuteStmt* stmts,
 				case T_A_Const:
 					{
 						A_Const* con = (A_Const *)stmt_param;
-						generate_execute_parameters(&con->val, target_param->paramtype,
-													col_name, param_count);
+						make_execute_parameters(&con->val, target_param->paramtype,
+												col_name, param_count);
 					}
 					break;
 				case T_SQLValueFunction:	// for Date/Time Functions
 				case T_FuncCall:			// for Date/Time Functions
 				case T_TypeCast:			// for TIMESTAMP 'yyyy-mm-dd hh:mm:ss'
 					{
-						Value* val = makeNode(Value);
-						val->type = T_String;
-						generate_execute_parameters(val, target_param->paramtype,
-													col_name, param_count);
+						Value* val_dummy = makeNode(Value);
+						make_execute_parameters(val_dummy, target_param->paramtype,
+												col_name, param_count);
 					}
 					break;
 				default:
@@ -1534,18 +1508,17 @@ deparse_execute_paramref(const ParamRef* param_ref,
 				case T_A_Const:
 					{
 						A_Const* con = (A_Const *)stmt_param;
-						generate_execute_parameters(&con->val, argtypes_v[param_count-1],
-													col_name, param_count);
+						make_execute_parameters(&con->val, argtypes_v[param_count-1],
+												col_name, param_count);
 					}
 					break;
 				case T_SQLValueFunction:	// for Date/Time Functions
 				case T_FuncCall:			// for Date/Time Functions
 				case T_TypeCast:			// for TIMESTAMP '2004-10-19 10:23:54'
 					{
-						Value* val = makeNode(Value);
-						val->type = T_String;
-						generate_execute_parameters(val, argtypes_v[param_count-1],
-													col_name, param_count);
+						Value* val_dummy = makeNode(Value);
+						make_execute_parameters(val_dummy, argtypes_v[param_count-1],
+												col_name, param_count);
 					}
 					break;
 				default:
