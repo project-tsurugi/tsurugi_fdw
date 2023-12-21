@@ -1,5 +1,6 @@
 /* java.sql パッケージをインポート */
 import java.sql.*;
+import java.time.*;
 
 class transaction_sample {
     public static void main(String[] args) throws Exception {
@@ -31,13 +32,15 @@ class transaction_sample {
             try {
                 st.execute(
                             "CREATE TABLE tg_sample ("
-                                + "col INTEGER NOT NULL PRIMARY KEY"
+                                + "col INTEGER NOT NULL PRIMARY KEY,"
+                                + "tm TIME"
                                 + ") TABLESPACE tsurugi"
                           );
                 st.execute(
                             "CREATE FOREIGN TABLE tg_sample ("
-                                + "col INTEGER NOT NULL"
-                                + ") SERVER ogawayama"
+                                + "col INTEGER NOT NULL,"
+                                + "tm TIME"
+                                + ") SERVER tsurugi"
                           );
             } catch (SQLException e) {
                 System.out.println("Create Table error");
@@ -45,9 +48,10 @@ class transaction_sample {
             }
 
             /* PreparedStatementを使用してTsurugiのテーブルにデータを挿入する */
-            String sql = "INSERT INTO tg_sample (col) VALUES (?)";
+            String sql = "INSERT INTO tg_sample (col, tm) VALUES (?, ?)";
             PreparedStatement ps = conn.prepareStatement(sql);
 
+            System.out.print("実行中 ");
             for (int i=0; i<9; i++) {
 
                 /* Tsurugiのトランザクションを開始する */
@@ -55,6 +59,8 @@ class transaction_sample {
 
                 /* Tsurugiのテーブルにデータ(i)を挿入する */
                 ps.setInt(1, i);
+                /* Tsurugiのテーブルに現在時間を挿入する */
+                ps.setTime(2, Time.valueOf(LocalTime.now()));
                 ps.executeUpdate();
 
                 /* 挿入した値(i)が偶数か奇数か判定 */
@@ -66,13 +72,17 @@ class transaction_sample {
                     st.execute("SELECT tg_rollback()");
                 }
 
+                System.out.print(".");
+                Thread.sleep(1000);
             }
+            System.out.println(".");
 
             /* 実行結果を確認する */
             ResultSet rs = st.executeQuery("SELECT * FROM tg_sample");
             System.out.println("--- 実行結果：奇数は破棄(ロールバック)される ---");
             while (rs.next()) {
-                System.out.println("  " + rs.getString(1));
+                System.out.println("  " + rs.getString(1) + ",  " + 
+                                          rs.getString(2));
             }
 
             ps.close();

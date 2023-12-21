@@ -344,10 +344,10 @@ SELECT tg_commit();             -- Longトランザクション終了
 (1 row)
 
 /* プリペアド文 */
-PREPARE add_weather (int, varchar(80), int, int, real)
-    AS INSERT INTO weather (id, city, temp_lo, temp_hi, prcp)
-            VALUES ($1, $2, $3, $4, $5);
-EXECUTE add_weather (8, 'San Diego', 41, 57, 0.25);
+PREPARE add_weather (int, varchar(80), int, int, real, date)
+    AS INSERT INTO weather (id, city, temp_lo, temp_hi, prcp, the_date)
+            VALUES ($1, $2, $3, $4, $5, $6);
+EXECUTE add_weather (8, 'San Diego', 41, 57, 0.25, '2023-11-24'); -- 日付固定
 SELECT * FROM weather;  -- レグレッションテスト確認用
  id |     city      | temp_lo | temp_hi | prcp |  the_date  
 ----+---------------+---------+---------+------+------------
@@ -357,7 +357,7 @@ SELECT * FROM weather;  -- レグレッションテスト確認用
   5 | Oakland       |      48 |      58 |  0.5 | 2023-04-01
   6 | San Jose      |      46 |      55 |    0 | 2023-04-01
   7 | Sacramento    |      48 |      60 | 0.25 | 2023-04-01
-  8 | San Diego     |      41 |      57 | 0.25 | 2023-04-01
+  8 | San Diego     |      41 |      57 | 0.25 | 2023-11-24
 (7 rows)
 
 /* 外部テーブルの削除 */
