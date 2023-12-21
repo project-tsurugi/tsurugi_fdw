@@ -60,8 +60,8 @@ CREATE TABLE pt2(
     c3 BIGINT,
     c4 REAL, 
     c5 DOUBLE PRECISION, 
-    c6 CHAR(10),
-    c7 VARCHAR(26)
+    c6 CHAR(10) COLLATE "en_US.utf8",
+    c7 VARCHAR(26) COLLATE "en_US.utf8"
 );
 CREATE TABLE pt3(
     c1 INTEGER PRIMARY KEY,
