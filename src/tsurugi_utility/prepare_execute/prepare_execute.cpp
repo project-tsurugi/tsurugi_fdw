@@ -45,6 +45,7 @@ extern "C" {
 #include "utils/builtins.h"			// format_type_be
 #include "utils/date.h"
 #include "utils/datetime.h"
+#include "utils/numeric.h"
 #include "utils/timestamp.h"
 
 #ifdef __cplusplus
@@ -1296,6 +1297,123 @@ after_prepare_stmt(const PrepareStmt* stmts,
 	return true;
 }
 
+#if 1
+#define NBASE		10000
+#define HALF_NBASE	5000
+#define DEC_DIGITS	4			/* decimal digits per NBASE digit */
+#define MUL_GUARD_DIGITS	2	/* these are measured in NBASE digits */
+#define DIV_GUARD_DIGITS	4
+
+typedef int16 NumericDigit;
+#endif
+
+struct NumericShort
+{
+	uint16		n_header;		/* Sign + display scale + weight */
+	NumericDigit n_data[FLEXIBLE_ARRAY_MEMBER]; /* Digits */
+};
+
+struct NumericLong
+{
+	uint16		n_sign_dscale;	/* Sign + display scale */
+	int16		n_weight;		/* Weight of 1st digit	*/
+	NumericDigit n_data[FLEXIBLE_ARRAY_MEMBER]; /* Digits */
+};
+
+union NumericChoice
+{
+	uint16		n_header;		/* Header word */
+	struct NumericLong n_long;	/* Long form (4-byte header) */
+	struct NumericShort n_short;	/* Short form (2-byte header) */
+};
+
+struct NumericData
+{
+	int32		vl_len_;		/* varlena header (do not touch directly!) */
+	union NumericChoice choice; /* choice of format */
+};
+
+#define NUMERIC_SIGN_MASK	0xC000
+#define NUMERIC_POS			0x0000
+#define NUMERIC_NEG			0x4000
+#define NUMERIC_SHORT		0x8000
+#define NUMERIC_NAN			0xC000
+
+#define NUMERIC_SHORT_SIGN_MASK			0x2000
+
+#define NUMERIC_SHORT_DSCALE_MASK		0x1F80
+#define NUMERIC_SHORT_DSCALE_SHIFT		7
+#define NUMERIC_DSCALE_MASK			0x3FFF
+
+#define NUMERIC_SHORT_WEIGHT_SIGN_MASK	0x0040
+#define NUMERIC_SHORT_WEIGHT_MASK		0x003F
+#define NUMERIC_SHORT_WEIGHT_MAX		NUMERIC_SHORT_WEIGHT_MASK
+#define NUMERIC_SHORT_WEIGHT_MIN		(-(NUMERIC_SHORT_WEIGHT_MASK+1))
+
+#if 0
+/*
+ * dump_numeric() - Dump a value in the db storage format for debugging
+ */
+static void
+dump_numeric(Numeric num)
+{
+	NumericDigit* digits;
+	bool num_is_short = num->choice.n_header & 0x8000;
+	int ndigits;
+	int header_size;
+	int weight;
+	int dscale;
+	int sign;
+	int i;
+
+	if (num_is_short) {
+		digits = num->choice.n_short.n_data;
+		header_size = VARHDRSZ + sizeof(uint16);
+		ndigits = (VARSIZE(num) - header_size) / sizeof(NumericDigit);
+		weight = (num->choice.n_short.n_header & NUMERIC_SHORT_WEIGHT_SIGN_MASK ?
+						~NUMERIC_SHORT_WEIGHT_MASK : 0) |
+				 (num->choice.n_short.n_header & NUMERIC_SHORT_WEIGHT_MASK);
+		dscale = (num->choice.n_short.n_header & NUMERIC_SHORT_DSCALE_MASK) >>
+						NUMERIC_SHORT_DSCALE_SHIFT;
+		if (num->choice.n_short.n_header & NUMERIC_SHORT_SIGN_MASK)
+			sign = NUMERIC_NEG;
+		else
+			sign = NUMERIC_POS;
+	} else {
+		digits = num->choice.n_long.n_data;
+		header_size = VARHDRSZ + sizeof(uint16) + sizeof(int16);
+		ndigits = (VARSIZE(num) - header_size) / sizeof(NumericDigit);
+		weight = num->choice.n_long.n_weight;
+		dscale = num->choice.n_long.n_sign_dscale & NUMERIC_DSCALE_MASK;
+		sign = num->choice.n_header & NUMERIC_SIGN_MASK;
+	}
+
+	switch (sign)
+	{
+		case NUMERIC_POS:
+			elog(INFO, "NUMERIC(%s) weight=%d, display scale=%d, Sign=Positive",
+							num_is_short ? "short" : "long", weight, dscale);
+			break;
+		case NUMERIC_NEG:
+			elog(INFO, "NUMERIC(%s) weight=%d, display scale=%d, Sign=Negative",
+							num_is_short ? "short" : "long", weight, dscale);
+			break;
+		case NUMERIC_NAN:
+			elog(INFO, "NUMERIC(%s) weight=%d, display scale=%d, Sign=NaN",
+							num_is_short ? "short" : "long", weight, dscale);
+			break;
+		default:
+			elog(INFO, "NUMERIC(%s) weight=%d, display scale=%d, Sign=0x%x",
+							num_is_short ? "short" : "long", weight, dscale, sign);
+			break;
+	}
+
+	elog(INFO, "  number of Digits(NumericDigit)=%d", ndigits);
+	for (i = 0; i < ndigits; i++)
+		elog(INFO, "    %0*d", DEC_DIGITS, digits[i]);
+}
+#endif
+
 void
 make_execute_parameters(const Value* param_value,
 						const Oid param_type,
@@ -1409,6 +1527,64 @@ make_execute_parameters(const Value* param_value,
 										tg_date,
 										tg_time_of_day);
 				parameters.emplace_back(param_name, tg_time_point);
+			}
+			break;
+		case NUMERICOID:
+			{
+				Datum value = paramLI->params[param_id-1].value;
+				Datum num_out = DirectFunctionCall1(numeric_out, value);
+				std::string num_str = DatumGetCString(num_out);
+				auto pos_period = num_str.find(".");
+				if (pos_period != std::string::npos) {
+					num_str.erase(pos_period, 1);
+				}
+
+				Numeric num = DatumGetNumeric(value);
+				bool num_is_short = num->choice.n_header & 0x8000;
+				int num_dscale;
+				int num_sign;
+				if (num_is_short) {
+					num_dscale = (num->choice.n_short.n_header & NUMERIC_SHORT_DSCALE_MASK) >>
+									NUMERIC_SHORT_DSCALE_SHIFT;
+					if (num->choice.n_short.n_header & NUMERIC_SHORT_SIGN_MASK)
+						num_sign = NUMERIC_NEG;
+					else
+						num_sign = NUMERIC_POS;
+				} else {
+					num_dscale = num->choice.n_long.n_sign_dscale & NUMERIC_DSCALE_MASK;
+					num_sign = num->choice.n_header & NUMERIC_SIGN_MASK;
+				}
+
+				std::int64_t sign = 0;
+				switch (num_sign)
+				{
+					case NUMERIC_POS:
+						sign = 1;
+						break;
+					case NUMERIC_NEG:
+						sign = -1;
+						break;
+					case NUMERIC_NAN:
+						sign = 0;
+						break;
+					default:
+						elog(ERROR, "unrecognized numeric sign = 0x%x", num_sign);
+						break;
+				}
+
+				std::uint64_t coefficient_high = 0;
+				std::uint64_t coefficient_low = std::stoull(num_str);
+				if (num_sign == NUMERIC_NEG) {
+					coefficient_low = -coefficient_low;
+				}
+				std::int32_t exponent = -num_dscale;
+
+				elog(INFO, "triple(%ld, %lu(0x%lX), %lu(0x%lX), %d)",
+										sign, coefficient_high, coefficient_high, 
+										coefficient_low, coefficient_low, exponent);
+
+				auto tg_decimal = takatori::decimal::triple{sign, coefficient_high, coefficient_low, exponent};
+				parameters.emplace_back(param_name, tg_decimal);
 			}
 			break;
 		default:

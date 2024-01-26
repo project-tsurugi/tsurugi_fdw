@@ -63,6 +63,7 @@ extern "C" {
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/numeric.h"
 #include "utils/rel.h"
 #include "utils/sampling.h"
 #include "utils/selfuncs.h"
@@ -2161,6 +2162,50 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                         }
                         row[attnum] = TimestampGetDatum(timestamp);
                         is_null[attnum] = false;
+                    }
+                }
+                break;
+
+            case NUMERICOID:
+                {
+                    stub::decimal_type value;
+                    auto error_code = result_set->next_column(value);
+                    if (error_code == ERROR_CODE::OK)
+                    {
+                        const auto sign = value.sign();
+                        const auto high = value.coefficient_high();
+                        const auto low = value.coefficient_low();
+                        const auto exponent = value.exponent();
+
+                        elog(INFO, "triple(%d, %lu(0x%lX), %lu(0x%lX), %d)",
+                                                sign, high, high, low, low, exponent);
+
+                        std::string coefficient; 
+                        int scale = 0;
+                        if (exponent < 0) {
+                            scale =- exponent;
+                        }
+                        if (sign < 0) {
+                            coefficient = "-";
+                        }
+                        if (high != 0) {
+                            // Todo
+                            coefficient += std::to_string(high);
+                        }
+                        coefficient += std::to_string(low);
+                        if (exponent != 0) {
+                            coefficient.insert(coefficient.end() + exponent, '.');
+                        }
+                        elog(INFO, "numeric_in(%s)", coefficient.c_str());
+
+                        Datum numstr = CStringGetDatum(coefficient.c_str());
+                        Datum result = DirectFunctionCall3(numeric_in,
+                                                     numstr,
+                                                     ObjectIdGetDatum(InvalidOid),
+                                                     Int32GetDatum(((NUMERIC_MAX_PRECISION << 16) | scale) + VARHDRSZ));
+                        row[attnum] = result;
+                        is_null[attnum] = false;
+
                     }
                 }
                 break;
