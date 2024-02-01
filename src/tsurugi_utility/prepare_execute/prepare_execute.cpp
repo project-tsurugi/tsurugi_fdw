@@ -24,6 +24,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <boost/multiprecision/cpp_int.hpp>
 
 #include "manager/metadata/metadata_factory.h"
 #include "ogawayama/stub/api.h"
@@ -1538,6 +1539,10 @@ make_execute_parameters(const Value* param_value,
 				if (pos_period != std::string::npos) {
 					num_str.erase(pos_period, 1);
 				}
+				auto pos_negative = num_str.find("-");
+				if (pos_negative != std::string::npos) {
+					num_str.erase(pos_negative, 1);
+				}
 
 				Numeric num = DatumGetNumeric(value);
 				bool num_is_short = num->choice.n_header & 0x8000;
@@ -1572,11 +1577,10 @@ make_execute_parameters(const Value* param_value,
 						break;
 				}
 
-				std::uint64_t coefficient_high = 0;
-				std::uint64_t coefficient_low = std::stoull(num_str);
-				if (num_sign == NUMERIC_NEG) {
-					coefficient_low = -coefficient_low;
-				}
+				boost::multiprecision::uint128_t mp_coefficient(num_str);
+				std::uint64_t coefficient_high = static_cast<std::uint64_t>(mp_coefficient >> 64);
+				std::uint64_t coefficient_low  = static_cast<std::uint64_t>(mp_coefficient);
+
 				std::int32_t exponent = -num_dscale;
 
 				elog(INFO, "triple(%ld, %lu(0x%lX), %lu(0x%lX), %d)",

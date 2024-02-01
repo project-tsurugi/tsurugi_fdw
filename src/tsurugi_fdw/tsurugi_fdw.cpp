@@ -23,6 +23,7 @@
 #include <memory>
 #include <regex>
 #include <boost/format.hpp>
+#include <boost/multiprecision/cpp_int.hpp>
 #include "ogawayama/stub/error_code.h"
 #include "ogawayama/stub/api.h"
 #include "tsurugi.h"
@@ -2188,11 +2189,13 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                         if (sign < 0) {
                             coefficient = "-";
                         }
-                        if (high != 0) {
-                            // Todo
-                            coefficient += std::to_string(high);
-                        }
-                        coefficient += std::to_string(low);
+
+                        boost::multiprecision::uint128_t mp_coefficient;
+                        boost::multiprecision::uint128_t mp_high = high;
+                        mp_coefficient = mp_high << 64;
+                        mp_coefficient |= low;
+                        coefficient += mp_coefficient.str();
+
                         if (exponent != 0) {
                             coefficient.insert(coefficient.end() + exponent, '.');
                         }
