@@ -19,11 +19,11 @@
  *	@file	tsurugi_fdw.cpp
  *	@brief 	Foreign Data Wrapper for Tsurugi.
  */
-#include <string>
-#include <memory>
-#include <regex>
 #include <boost/format.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
+#include <memory>
+#include <regex>
+#include <string>
 #include "ogawayama/stub/error_code.h"
 #include "ogawayama/stub/api.h"
 #include "tsurugi.h"
@@ -2178,28 +2178,34 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                         const auto low = value.coefficient_low();
                         const auto exponent = value.exponent();
 
-                        elog(INFO, "triple(%d, %lu(0x%lX), %lu(0x%lX), %d)",
+                        elog(DEBUG5, "triple(%d, %lu(0x%lX), %lu(0x%lX), %d)",
                                                 sign, high, high, low, low, exponent);
 
-                        std::string coefficient; 
                         int scale = 0;
                         if (exponent < 0) {
                             scale =- exponent;
-                        }
-                        if (sign < 0) {
-                            coefficient = "-";
                         }
 
                         boost::multiprecision::uint128_t mp_coefficient;
                         boost::multiprecision::uint128_t mp_high = high;
                         mp_coefficient = mp_high << 64;
                         mp_coefficient |= low;
-                        coefficient += mp_coefficient.str();
 
+                        std::string coefficient;
+                        coefficient = mp_coefficient.str();
                         if (exponent != 0) {
+                            if (scale >= (int)coefficient.size()) {
+                                // padding decimal point with zero
+                                std::stringstream ss;
+                                ss << std::setw(scale+1) << std::setfill('0') << coefficient;
+                                coefficient = ss.str();
+                            }
                             coefficient.insert(coefficient.end() + exponent, '.');
                         }
-                        elog(INFO, "numeric_in(%s)", coefficient.c_str());
+                        if (sign < 0) {
+                            coefficient = "-" + coefficient;
+                        }
+                        elog(DEBUG5, "numeric_in(%s)", coefficient.c_str());
 
                         Datum numstr = CStringGetDatum(coefficient.c_str());
                         Datum result = DirectFunctionCall3(numeric_in,
