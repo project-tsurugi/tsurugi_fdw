@@ -1381,6 +1381,10 @@ tsurugiIterateDirectModify(ForeignScanState* node)
     {
         Tsurugi::rollback();
         fdw_info_.success = false;
+
+        EState* estate = node->ss.ps.state;
+        end_prepare_processing(estate);
+
         elog(ERROR, "Tsurugi::execute_statement() failed. (%d)", 
             (int) error);
 	}

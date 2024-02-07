@@ -60,6 +60,8 @@ using namespace ogawayama;
 
 PreparedStatementPtr prepared_statement;
 stub::parameters_type parameters{};
+std::string stmts_name;
+
 ParamListInfo paramLI;
 
 std::map<std::string, PreparedStatementPtr> stored_prepare_statment;
@@ -2174,6 +2176,7 @@ befor_execute_stmt(const ExecuteStmt* stmts,
 	}
 
 	prepared_statement = std::move(stored_prepare_statment.at(stmts->name));
+	stmts_name = stmts->name;
 
 	return true;
 }
@@ -2189,6 +2192,7 @@ after_execute_stmt(const ExecuteStmt* stmts)
 	}
 
 	stored_prepare_statment[stmts->name] = std::move(prepared_statement);
+	stmts_name = {};
 	parameters = {};
 	return true;
 }
