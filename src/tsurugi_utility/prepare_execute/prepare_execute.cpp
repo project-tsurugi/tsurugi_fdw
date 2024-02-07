@@ -2007,6 +2007,15 @@ get_datum_funcexpr(FuncExpr* func_expr)
 												pli->params[2].value);
 				}
 				break;
+			case 4:
+				{
+					result = OidFunctionCall4(func_expr->funcid,
+												pli->params[0].value,
+												pli->params[1].value,
+												pli->params[2].value,
+												pli->params[3].value);
+				}
+				break;
 			case 6:
 				{
 					result = OidFunctionCall6(func_expr->funcid,
@@ -2089,6 +2098,19 @@ analyze_execut_parameters(const ExecuteStmt* stmts,
 					SQLValueFunction* svf = (SQLValueFunction *) expr;
 					prm->ptype = svf->type;
 					prm->value = get_datum_sqlvaluefunction(svf);
+				}
+				break;
+			case T_RelabelType:
+				{
+					RelabelType* relabel = (RelabelType *) expr;
+					if (IsA(relabel->arg, FuncExpr)) {
+						FuncExpr* func_expr = (FuncExpr *) relabel->arg;
+						prm->ptype = relabel->resulttype;
+						prm->value = get_datum_funcexpr(func_expr);
+					} else {
+						elog(ERROR, "unrecognized RelabelType arg type: %d",
+							 (int) nodeTag(relabel->arg));
+					}
 				}
 				break;
 			default:
