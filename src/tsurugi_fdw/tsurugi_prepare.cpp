@@ -325,7 +325,10 @@ begin_prepare_processing(const EState* estate)
 							break;
 					}
 
-					boost::multiprecision::uint128_t mp_coefficient(num_str);
+					boost::multiprecision::cpp_int mp_coefficient(num_str);
+					if (mp_coefficient > std::numeric_limits<boost::multiprecision::uint128_t>::max()) {
+						elog(ERROR, "numeric coefficient field overflow");
+					}
 					std::uint64_t coefficient_high = static_cast<std::uint64_t>(mp_coefficient >> 64);
 					std::uint64_t coefficient_low  = static_cast<std::uint64_t>(mp_coefficient);
 
