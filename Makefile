@@ -24,7 +24,7 @@ DATA = tsurugi_fdw--1.0.0-BETA3.sql
 # REGRESS_BASIC: variable used in frontend
 #REGRESS_BASIC = test_create_table otable_of_constr ch-benchmark-ddl create_table_syntax_type update_delete insert_select
 REGRESS_BASIC = test_preparation create_table create_index insert_select_happy update_delete select_statements user_management \
-                udf_transaction prepare_statment prepare_select_statment
+                udf_transaction prepare_statment prepare_select_statment prepare_decimal
 ifdef REGRESS_EXTRA
 	# REGRESS: variable defined in PostgreSQL
 	#REGRESS = $(REGRESS_BASIC) otable_of_constr2
