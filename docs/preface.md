@@ -31,6 +31,8 @@
     - データ型　※ 括弧内は（`SQL標準データ型`/`TsurugiDBデータ型`）を示す
       - integer （INT / int4）
       - bigint （BIGINT / int8）
+      - decimal （DECIMAL / decimal）
+      - numeric （NUMERIC / decimal）
       - real （REAL / froat4）
       - double precision （DOUBLE / froat8）
       - character [ (n) ] （CHAR / character）
