@@ -28,16 +28,18 @@
       - PREPARE
       - EXECUTE
 
-    - データ型　※ 括弧内は（`SQL標準データ型`/`TsurugiDBデータ型`）を示す
-      - integer （INT / int4）
-      - bigint （BIGINT / int8）
-      - real （REAL / froat4）
-      - double precision （DOUBLE / froat8）
-      - character [ (n) ] （CHAR / character）
-      - character varying [ (n) ] （VARCHAR / character）
-      - date（DATE / date）
-      - time [ (p) ] [ without time zone ] （TIME / time_of_day）
-      - timestamp [ (p) ] [ without time zone ] （TIMESTAMP / time_point）
+    - データ型　※ 括弧内は（`TsurugiDBデータ型`）を示す
+      - integer （int4）
+      - bigint （int8）
+      - decimal [ (p [, s]) ] （decimal）
+      - numeric [ (p [, s]) ] （decimal）
+      - real （froat4）
+      - double precision （froat8）
+      - character [ (n) ] （character）
+      - character varying [ (n) ] （character）
+      - date（date）
+      - time [ (p) ] [ without time zone ] （time_of_day）
+      - timestamp [ (p) ] [ without time zone ] （time_point）
 
     - クライアントインタフェース
       - JDBC（タイプ4 JDBCドライバ）

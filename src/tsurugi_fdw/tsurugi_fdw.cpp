@@ -19,10 +19,11 @@
  *	@file	tsurugi_fdw.cpp
  *	@brief 	Foreign Data Wrapper for Tsurugi.
  */
-#include <string>
+#include <boost/format.hpp>
+#include <boost/multiprecision/cpp_int.hpp>
 #include <memory>
 #include <regex>
-#include <boost/format.hpp>
+#include <string>
 #include "ogawayama/stub/error_code.h"
 #include "ogawayama/stub/api.h"
 #include "tsurugi.h"
@@ -63,6 +64,7 @@ extern "C" {
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/numeric.h"
 #include "utils/rel.h"
 #include "utils/sampling.h"
 #include "utils/selfuncs.h"
@@ -1379,6 +1381,10 @@ tsurugiIterateDirectModify(ForeignScanState* node)
     {
         Tsurugi::rollback();
         fdw_info_.success = false;
+
+        EState* estate = node->ss.ps.state;
+        end_prepare_processing(estate);
+
         elog(ERROR, "Tsurugi::execute_statement() failed. (%d)", 
             (int) error);
 	}
@@ -2161,6 +2167,57 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                         }
                         row[attnum] = TimestampGetDatum(timestamp);
                         is_null[attnum] = false;
+                    }
+                }
+                break;
+
+            case NUMERICOID:
+                {
+                    stub::decimal_type value;
+                    auto error_code = result_set->next_column(value);
+                    if (error_code == ERROR_CODE::OK)
+                    {
+                        const auto sign = value.sign();
+                        const auto coefficient_high = value.coefficient_high();
+                        const auto coefficient_low = value.coefficient_low();
+                        const auto exponent = value.exponent();
+                        elog(DEBUG5, "triple(%d, %lu(0x%lX), %lu(0x%lX), %d)",
+                                                sign, coefficient_high, coefficient_high,
+                                                coefficient_low, coefficient_low, exponent);
+
+                        int scale = 0;
+                        if (exponent < 0) {
+                            scale =- exponent;
+                        }
+
+                        boost::multiprecision::uint128_t mp_coefficient;
+                        boost::multiprecision::uint128_t mp_high = coefficient_high;
+                        mp_coefficient = mp_high << 64;
+                        mp_coefficient |= coefficient_low;
+
+                        std::string coefficient;
+                        coefficient = mp_coefficient.str();
+                        if (exponent != 0) {
+                            if (scale >= (int)coefficient.size()) {
+                                // padding decimal point with zero
+                                std::stringstream ss;
+                                ss << std::setw(scale+1) << std::setfill('0') << coefficient;
+                                coefficient = ss.str();
+                            }
+                            coefficient.insert(coefficient.end() + exponent, '.');
+                        }
+                        if (sign < 0) {
+                            coefficient = "-" + coefficient;
+                        }
+                        elog(DEBUG5, "numeric_in(%s)", coefficient.c_str());
+
+                        row[attnum] = DirectFunctionCall3(numeric_in,
+                                                     CStringGetDatum(coefficient.c_str()),
+                                                     ObjectIdGetDatum(InvalidOid),
+                                                     Int32GetDatum(((NUMERIC_MAX_PRECISION << 16) |
+                                                                             scale) + VARHDRSZ));
+                        is_null[attnum] = false;
+
                     }
                 }
                 break;

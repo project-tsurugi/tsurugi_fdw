@@ -52,6 +52,8 @@ bool IsTransactionProgress();
 
 extern PreparedStatementPtr prepared_statement;
 extern stub::parameters_type parameters;
+extern std::string stmts_name;
+extern std::map<std::string, PreparedStatementPtr> stored_prepare_statment;
 
 /*
  *  get_shared_memory_name
@@ -219,6 +221,14 @@ Tsurugi::execute_query(std::string_view query, ResultSetPtr& result_set)
 
     elog(LOG, "execute_query() done. (error: %d)", (int) error);
 
+    if (error != ERROR_CODE::OK) {
+        if (stmts_name.size() != 0) {
+            stored_prepare_statment[stmts_name] = std::move(prepared_statement);
+            stmts_name = {};
+            parameters = {};
+        }
+    }
+
     return error;
 }
 
@@ -244,6 +254,14 @@ Tsurugi::execute_statement(std::string_view statement)
 
         elog(LOG, "tsurugi-fdw: execute_statement() done. (error: %d)",
             (int) error);
+
+        if (error != ERROR_CODE::OK) {
+            if (stmts_name.size() != 0) {
+                stored_prepare_statment[stmts_name] = std::move(prepared_statement);
+                stmts_name = {};
+                parameters = {};
+            }
+        }
     }
     else
     {
