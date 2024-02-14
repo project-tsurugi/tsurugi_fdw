@@ -2178,12 +2178,12 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                     if (error_code == ERROR_CODE::OK)
                     {
                         const auto sign = value.sign();
-                        const auto high = value.coefficient_high();
-                        const auto low = value.coefficient_low();
+                        const auto coefficient_high = value.coefficient_high();
+                        const auto coefficient_low = value.coefficient_low();
                         const auto exponent = value.exponent();
-
                         elog(DEBUG5, "triple(%d, %lu(0x%lX), %lu(0x%lX), %d)",
-                                                sign, high, high, low, low, exponent);
+                                                sign, coefficient_high, coefficient_high,
+                                                coefficient_low, coefficient_low, exponent);
 
                         int scale = 0;
                         if (exponent < 0) {
@@ -2191,9 +2191,9 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                         }
 
                         boost::multiprecision::uint128_t mp_coefficient;
-                        boost::multiprecision::uint128_t mp_high = high;
+                        boost::multiprecision::uint128_t mp_high = coefficient_high;
                         mp_coefficient = mp_high << 64;
-                        mp_coefficient |= low;
+                        mp_coefficient |= coefficient_low;
 
                         std::string coefficient;
                         coefficient = mp_coefficient.str();
@@ -2211,12 +2211,11 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                         }
                         elog(DEBUG5, "numeric_in(%s)", coefficient.c_str());
 
-                        Datum numstr = CStringGetDatum(coefficient.c_str());
-                        Datum result = DirectFunctionCall3(numeric_in,
-                                                     numstr,
+                        row[attnum] = DirectFunctionCall3(numeric_in,
+                                                     CStringGetDatum(coefficient.c_str()),
                                                      ObjectIdGetDatum(InvalidOid),
-                                                     Int32GetDatum(((NUMERIC_MAX_PRECISION << 16) | scale) + VARHDRSZ));
-                        row[attnum] = result;
+                                                     Int32GetDatum(((NUMERIC_MAX_PRECISION << 16) |
+                                                                             scale) + VARHDRSZ));
                         is_null[attnum] = false;
 
                     }
