@@ -24,6 +24,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <boost/multiprecision/cpp_int.hpp>
 
 #include "manager/metadata/metadata_factory.h"
 #include "ogawayama/stub/api.h"
@@ -45,18 +46,22 @@ extern "C" {
 #include "utils/builtins.h"			// format_type_be
 #include "utils/date.h"
 #include "utils/datetime.h"
+#include "utils/numeric.h"
 #include "utils/timestamp.h"
 
 #ifdef __cplusplus
 }
 #endif
 
+#include "tg_numeric.h"
 #include "prepare_execute.h"
 
 using namespace ogawayama;
 
 PreparedStatementPtr prepared_statement;
 stub::parameters_type parameters{};
+std::string stmts_name;
+
 ParamListInfo paramLI;
 
 std::map<std::string, PreparedStatementPtr> stored_prepare_statment;
@@ -1411,6 +1416,79 @@ make_execute_parameters(const Value* param_value,
 				parameters.emplace_back(param_name, tg_time_point);
 			}
 			break;
+		case NUMERICOID:
+			{
+				Datum value = paramLI->params[param_id-1].value;
+
+				// Convert PostgreSQL NUMERIC type to string.
+				std::string pg_numeric = DatumGetCString(DirectFunctionCall1(numeric_out, value));
+				elog(DEBUG5, "orignal: pg_numeric = %s", pg_numeric.c_str());
+				auto pos_period = pg_numeric.find(".");
+				if (pos_period != std::string::npos) {
+					pg_numeric.erase(pos_period, 1);
+				}
+				auto pos_negative = pg_numeric.find("-");
+				if (pos_negative != std::string::npos) {
+					pg_numeric.erase(pos_negative, 1);
+				}
+				while (pg_numeric.at(0) == '0' && pg_numeric.size() > 1) {
+					// The first zero is deleted. Because identified as an octal number.
+					pg_numeric.erase(0, 1);
+				}
+				elog(DEBUG5, "after: pg_numeric = %s", pg_numeric.c_str());
+
+				// Get display scale and sign from NumericData.
+				Numeric numeric_data = DatumGetNumeric(value);
+				bool numeric_is_short = numeric_data->choice.n_header & 0x8000;
+				int numeric_dscale;
+				int numeric_sign;
+				if (numeric_is_short) {
+					numeric_dscale = (numeric_data->choice.n_short.n_header & NUMERIC_SHORT_DSCALE_MASK) >>
+									NUMERIC_SHORT_DSCALE_SHIFT;
+					if (numeric_data->choice.n_short.n_header & NUMERIC_SHORT_SIGN_MASK)
+						numeric_sign = NUMERIC_NEG;
+					else
+						numeric_sign = NUMERIC_POS;
+				} else {
+					numeric_dscale = numeric_data->choice.n_long.n_sign_dscale & NUMERIC_DSCALE_MASK;
+					numeric_sign = numeric_data->choice.n_header & NUMERIC_SIGN_MASK;
+				}
+
+				// Generate parameters for takatori::decimal::triple.
+				std::int64_t sign = 0;
+				switch (numeric_sign)
+				{
+					case NUMERIC_POS:
+						sign = 1;
+						break;
+					case NUMERIC_NEG:
+						sign = -1;
+						break;
+					case NUMERIC_NAN:
+						sign = 0;
+						break;
+					default:
+						elog(ERROR, "unrecognized numeric sign = 0x%x", numeric_sign);
+						break;
+				}
+
+				boost::multiprecision::cpp_int mp_coefficient(pg_numeric);
+				if (mp_coefficient > std::numeric_limits<boost::multiprecision::uint128_t>::max()) {
+					elog(ERROR, "numeric coefficient field overflow");
+				}
+				std::uint64_t coefficient_high = static_cast<std::uint64_t>(mp_coefficient >> 64);
+				std::uint64_t coefficient_low  = static_cast<std::uint64_t>(mp_coefficient);
+
+				std::int32_t exponent = -numeric_dscale;
+
+				elog(DEBUG5, "triple(%ld, %lu(0x%lX), %lu(0x%lX), %d)",
+										sign, coefficient_high, coefficient_high, 
+										coefficient_low, coefficient_low, exponent);
+
+				auto tg_decimal = takatori::decimal::triple{sign, coefficient_high, coefficient_low, exponent};
+				parameters.emplace_back(param_name, tg_decimal);
+			}
+			break;
 		default:
 			/* should not reach here */
 			elog(ERROR, "execute_param: unrecognized T_String paramtype oid: %d",
@@ -1931,6 +2009,15 @@ get_datum_funcexpr(FuncExpr* func_expr)
 												pli->params[2].value);
 				}
 				break;
+			case 4:
+				{
+					result = OidFunctionCall4(func_expr->funcid,
+												pli->params[0].value,
+												pli->params[1].value,
+												pli->params[2].value,
+												pli->params[3].value);
+				}
+				break;
 			case 6:
 				{
 					result = OidFunctionCall6(func_expr->funcid,
@@ -2013,6 +2100,19 @@ analyze_execut_parameters(const ExecuteStmt* stmts,
 					SQLValueFunction* svf = (SQLValueFunction *) expr;
 					prm->ptype = svf->type;
 					prm->value = get_datum_sqlvaluefunction(svf);
+				}
+				break;
+			case T_RelabelType:
+				{
+					RelabelType* relabel = (RelabelType *) expr;
+					if (IsA(relabel->arg, FuncExpr)) {
+						FuncExpr* func_expr = (FuncExpr *) relabel->arg;
+						prm->ptype = relabel->resulttype;
+						prm->value = get_datum_funcexpr(func_expr);
+					} else {
+						elog(ERROR, "unrecognized RelabelType arg type: %d",
+							 (int) nodeTag(relabel->arg));
+					}
 				}
 				break;
 			default:
@@ -2100,6 +2200,7 @@ befor_execute_stmt(const ExecuteStmt* stmts,
 	}
 
 	prepared_statement = std::move(stored_prepare_statment.at(stmts->name));
+	stmts_name = stmts->name;
 
 	return true;
 }
@@ -2115,6 +2216,7 @@ after_execute_stmt(const ExecuteStmt* stmts)
 	}
 
 	stored_prepare_statment[stmts->name] = std::move(prepared_statement);
+	stmts_name = {};
 	parameters = {};
 	return true;
 }

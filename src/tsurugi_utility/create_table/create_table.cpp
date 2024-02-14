@@ -40,6 +40,7 @@ extern "C" {
 }
 #endif
 
+#include "tg_numeric.h"
 #include "create_table.h"
 
 using boost::property_tree::ptree;
@@ -541,6 +542,27 @@ bool CreateTable::generate_column_metadata(ColumnDef* column_def,
 				/* put a data type length metadata */
 				column.data_length.emplace_back(typemod);
 			}
+
+			if (static_cast<metadata::DataTypes::DataTypesId>(id)
+						== metadata::DataTypes::DataTypesId::NUMERIC) {
+				if (typmods == NIL) {
+					ereport(WARNING,
+							(errcode(ERRCODE_WARNING),
+							errmsg("Numeric types of tsurugi supports max precision up to %d.",
+										(int)decimal_max_precision)));
+					column.data_length.emplace_back(decimal_max_precision);
+				} else {
+					auto precision = column.data_length.at(0);
+					if (precision > (int64_t)decimal_max_precision || precision < (int64_t)decimal_min_precision) {
+						ereport(WARNING,
+								(errcode(ERRCODE_WARNING),
+								errmsg("NUMERIC precision of tsurugi supports between %d and %d.",
+										(int)decimal_min_precision, (int)decimal_max_precision)));
+						column.data_length.at(0) = decimal_max_precision;
+					}
+				}
+			}
+
 			break;
 		}
 		default: {

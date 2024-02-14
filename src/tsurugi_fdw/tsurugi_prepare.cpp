@@ -20,6 +20,7 @@
  *	@brief 	Dispatch the prepare statement to ogawayama.
  */
 
+#include <boost/multiprecision/cpp_int.hpp>
 #include <map>
 
 #include "ogawayama/stub/api.h"
@@ -34,8 +35,10 @@ extern "C" {
 #include "catalog/pg_type.h"
 #include "nodes/params.h"
 #include "nodes/execnodes.h"
+#include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/datetime.h"
+#include "utils/numeric.h"
 #include "utils/timestamp.h"
 
 extern void getTypeOutputInfo(Oid type, Oid *typOutput, bool *typIsVarlena);
@@ -43,6 +46,7 @@ extern void getTypeOutputInfo(Oid type, Oid *typOutput, bool *typIsVarlena);
 }
 #endif
 
+#include "tg_numeric.h"
 #include "tsurugi_prepare.h"
 
 using namespace ogawayama;
@@ -264,6 +268,77 @@ begin_prepare_processing(const EState* estate)
 											tg_date,
 											tg_time_of_day);
 					parameters.emplace_back(param_name, tg_time_point);
+				}
+				break;
+			case NUMERICOID:
+				{
+					// Convert PostgreSQL NUMERIC type to string.
+					std::string pg_numeric = DatumGetCString(DirectFunctionCall1(numeric_out, param.value));
+					elog(DEBUG5, "orignal: pg_numeric = %s", pg_numeric.c_str());
+					auto pos_period = pg_numeric.find(".");
+					if (pos_period != std::string::npos) {
+						pg_numeric.erase(pos_period, 1);
+					}
+					auto pos_negative = pg_numeric.find("-");
+					if (pos_negative != std::string::npos) {
+						pg_numeric.erase(pos_negative, 1);
+					}
+					while (pg_numeric.at(0) == '0' && pg_numeric.size() > 1) {
+						// The first zero is deleted. Because identified as an octal number.
+						pg_numeric.erase(0, 1);
+					}
+					elog(DEBUG5, "after: pg_numeric = %s", pg_numeric.c_str());
+
+					// Get display scale and sign from NumericData.
+					Numeric numeric_data = DatumGetNumeric(param.value);
+					bool numeric_is_short = numeric_data->choice.n_header & 0x8000;
+					int numeric_dscale;
+					int numeric_sign;
+					if (numeric_is_short) {
+						numeric_dscale = (numeric_data->choice.n_short.n_header & NUMERIC_SHORT_DSCALE_MASK) >>
+										NUMERIC_SHORT_DSCALE_SHIFT;
+						if (numeric_data->choice.n_short.n_header & NUMERIC_SHORT_SIGN_MASK)
+							numeric_sign = NUMERIC_NEG;
+						else
+							numeric_sign = NUMERIC_POS;
+					} else {
+						numeric_dscale = numeric_data->choice.n_long.n_sign_dscale & NUMERIC_DSCALE_MASK;
+						numeric_sign = numeric_data->choice.n_header & NUMERIC_SIGN_MASK;
+					}
+
+					// Generate parameters for takatori::decimal::triple.
+					std::int64_t sign = 0;
+					switch (numeric_sign)
+					{
+						case NUMERIC_POS:
+							sign = 1;
+							break;
+						case NUMERIC_NEG:
+							sign = -1;
+							break;
+						case NUMERIC_NAN:
+							sign = 0;
+							break;
+						default:
+							elog(ERROR, "unrecognized numeric sign = 0x%x", numeric_sign);
+							break;
+					}
+
+					boost::multiprecision::cpp_int mp_coefficient(pg_numeric);
+					if (mp_coefficient > std::numeric_limits<boost::multiprecision::uint128_t>::max()) {
+						elog(ERROR, "numeric coefficient field overflow");
+					}
+					std::uint64_t coefficient_high = static_cast<std::uint64_t>(mp_coefficient >> 64);
+					std::uint64_t coefficient_low  = static_cast<std::uint64_t>(mp_coefficient);
+
+					std::int32_t exponent = -numeric_dscale;
+
+					elog(DEBUG5, "triple(%ld, %lu(0x%lX), %lu(0x%lX), %d)",
+											sign, coefficient_high, coefficient_high, 
+											coefficient_low, coefficient_low, exponent);
+
+					auto tg_decimal = takatori::decimal::triple{sign, coefficient_high, coefficient_low, exponent};
+					parameters.emplace_back(param_name, tg_decimal);
 				}
 				break;
 			default:
