@@ -236,7 +236,7 @@ Tsurugi::execute_query(std::string_view query, ResultSetPtr& result_set)
  * execute_statement
  */
 ERROR_CODE 
-Tsurugi::execute_statement(std::string_view statement)
+Tsurugi::execute_statement(std::string_view statement, std::size_t& num_rows)
 {
     ERROR_CODE error = ERROR_CODE::UNKNOWN;
 
@@ -245,11 +245,11 @@ Tsurugi::execute_statement(std::string_view statement)
 		if (prepared_statement.get() != nullptr) {
 	        elog(LOG, "tsurugi-fdw: Trying to execute the prepared statement. \n%s",
 	            statement.data());
-	        error = transaction_->execute_statement(prepared_statement, parameters);
+	        error = transaction_->execute_statement(prepared_statement, parameters, num_rows);
 		} else {
 	        elog(LOG, "tsurugi-fdw: Trying to execute the statement. \n%s",
 	            statement.data());
-	        error = transaction_->execute_statement(statement);
+	        error = transaction_->execute_statement(statement, num_rows);
 		}
 
         elog(LOG, "tsurugi-fdw: execute_statement() done. (error: %d)",

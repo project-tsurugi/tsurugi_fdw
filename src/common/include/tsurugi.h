@@ -33,7 +33,7 @@ public:
     static ERROR_CODE start_transaction();
     static ERROR_CODE execute_query(std::string_view query, 
                                     ResultSetPtr& result_set);
-    static ERROR_CODE execute_statement(std::string_view statement);
+    static ERROR_CODE execute_statement(std::string_view statement, std::size_t& num_rows);
     static ERROR_CODE commit();
     static ERROR_CODE rollback();
 

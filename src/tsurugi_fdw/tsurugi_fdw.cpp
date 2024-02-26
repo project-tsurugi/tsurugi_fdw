@@ -1373,20 +1373,24 @@ tsurugiIterateDirectModify(ForeignScanState* node)
 
 	tsurugiFdwState* fdw_state = (tsurugiFdwState*) node->fdw_state;
 	TupleTableSlot* slot = nullptr;
+	EState* estate = node->ss.ps.state;
 	ERROR_CODE error;
 
     std::string statement = make_tsurugi_query(fdw_state->query_string);
-	error = Tsurugi::execute_statement(statement);
+	std::size_t num_rows = 0;
+	error = Tsurugi::execute_statement(statement, num_rows);
 	if (error != ERROR_CODE::OK)
     {
         Tsurugi::rollback();
         fdw_info_.success = false;
 
-        EState* estate = node->ss.ps.state;
         end_prepare_processing(estate);
 
         elog(ERROR, "Tsurugi::execute_statement() failed. (%d)", 
             (int) error);
+	} else {
+		/* Increment the command es_processed count if necessary. */
+		estate->es_processed += num_rows;
 	}
 	
 	return slot;	
@@ -1813,10 +1817,11 @@ tsurugiExecForeignInsert(
 	tsurugiFdwState* fdw_state = (tsurugiFdwState*) rinfo->ri_FdwState;
 
  	std::string query(fdw_state->query_string);
+	std::size_t num_rows = 0;
     query = std::regex_replace(query, std::regex("\\$\\d"), "%s");
     query = (boost::format(query) % slot->tts_values[0] % slot->tts_values[1]).str();
 
-	error = Tsurugi::execute_statement(query);
+	error = Tsurugi::execute_statement(query, num_rows);
 	if (error != ERROR_CODE::OK) 
     {
         Tsurugi::rollback();
