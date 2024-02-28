@@ -29,6 +29,30 @@ SELECT * FROM t1;
 DELETE FROM t1 WHERE c1 = 10;
 SELECT * FROM t1;
 
+/* Fix tsurugi-issues#568 */
+INSERT INTO public.t1 (c1) VALUES (1000);
+INSERT INTO PuBlIc.t1 (c1) VALUES (2000);
+INSERT INTO PUBLIC.t1 (c1) VALUES (3000);
+INSERT INTO "public"."t1" (c1) VALUES (4000);
+
+SELECT * FROM public.t1;
+
+UPDATE public.t1 SET c1 = c1+100;
+UPDATE PuBlIc.t1 SET c1 = c1+100 WHERE c1 > 1000;
+UPDATE public.t1 SET c1 = c1+100 WHERE c1 > 2000;
+UPDATE "public"."t1" SET c1 = c1+100 WHERE c1 > 3000;
+
+SELECT * FROM "public"."t1";
+
+DELETE FROM public.t1 WHERE c1 = 200;
+DELETE FROM "public"."t1" WHERE c1 > 1000;
+
+SELECT * FROM Public.t1;
+
+INSERT INTO "puBlIc"."t1" (c1) VALUES (999); -- error
+UPDATE "PUBLIC"."t1" SET c1 = c1+100; -- error
+DELETE FROM "Public"."t1" WHERE c1 > 1000; -- error
+
 /* DDL */
 DROP TABLE t1;
 DROP TABLE t2;

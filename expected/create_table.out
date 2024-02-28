@@ -78,6 +78,57 @@ SELECT * FROM t1;
  100
 (2 rows)
 
+/* Fix tsurugi-issues#568 */
+INSERT INTO public.t1 (c1) VALUES (1000);
+INSERT INTO PuBlIc.t1 (c1) VALUES (2000);
+INSERT INTO PUBLIC.t1 (c1) VALUES (3000);
+INSERT INTO "public"."t1" (c1) VALUES (4000);
+SELECT * FROM public.t1;
+  c1  
+------
+    1
+  100
+ 1000
+ 2000
+ 3000
+ 4000
+(6 rows)
+
+UPDATE public.t1 SET c1 = c1+100;
+UPDATE PuBlIc.t1 SET c1 = c1+100 WHERE c1 > 1000;
+UPDATE public.t1 SET c1 = c1+100 WHERE c1 > 2000;
+UPDATE "public"."t1" SET c1 = c1+100 WHERE c1 > 3000;
+SELECT * FROM "public"."t1";
+  c1  
+------
+  101
+  200
+ 1200
+ 2300
+ 3400
+ 4400
+(6 rows)
+
+DELETE FROM public.t1 WHERE c1 = 200;
+DELETE FROM "public"."t1" WHERE c1 > 1000;
+SELECT * FROM Public.t1;
+ c1  
+-----
+ 101
+(1 row)
+
+INSERT INTO "puBlIc"."t1" (c1) VALUES (999); -- error
+ERROR:  relation "puBlIc.t1" does not exist
+LINE 1: INSERT INTO "puBlIc"."t1" (c1) VALUES (999);
+                    ^
+UPDATE "PUBLIC"."t1" SET c1 = c1+100; -- error
+ERROR:  relation "PUBLIC.t1" does not exist
+LINE 1: UPDATE "PUBLIC"."t1" SET c1 = c1+100;
+               ^
+DELETE FROM "Public"."t1" WHERE c1 > 1000; -- error
+ERROR:  relation "Public.t1" does not exist
+LINE 1: DELETE FROM "Public"."t1" WHERE c1 > 1000;
+                    ^
 /* DDL */
 DROP TABLE t1;
 DROP TABLE t2;
