@@ -33,8 +33,8 @@ extern "C" {
 
 using namespace ogawayama;
 
-static const std::string PIBLIC_SCHEMA_NAME = "public\\.";
-static const std::string PIBLIC_DOUBLE_QUOTATION = "\"public\"\\.";
+static const std::string PUBLIC_SCHEMA_NAME = "public\\.";
+static const std::string PUBLIC_DOUBLE_QUOTATION = "\"public\"\\.";
 
 /*
  *  
@@ -47,13 +47,13 @@ std::string make_tsurugi_query(std::string_view query_string)
 
 	// erase public schema.
 	std::smatch regex_match;
-	std::regex regex_public(PIBLIC_SCHEMA_NAME, std::regex_constants::icase);
+	std::regex regex_public(PUBLIC_SCHEMA_NAME, std::regex_constants::icase);
 	while(std::regex_search(tsurugi_query, regex_match, regex_public)) {
 		std::string::size_type erase_pos = tsurugi_query.find(regex_match.str(0));
 		std::size_t erase_size = regex_match.str(0).size();
 		tsurugi_query.erase(erase_pos, erase_size);
 	}
-	std::regex regex_double_quotation(PIBLIC_DOUBLE_QUOTATION);
+	std::regex regex_double_quotation(PUBLIC_DOUBLE_QUOTATION);
 	while(std::regex_search(tsurugi_query, regex_match, regex_double_quotation)) {
 		std::string::size_type erase_pos = tsurugi_query.find(regex_match.str(0));
 		std::size_t erase_size = regex_match.str(0).size();
