@@ -1393,7 +1393,7 @@ make_execute_parameters(const Value* param_value,
 				auto tg_time_of_day_with_time_zone =
 					std::pair<takatori::datetime::time_of_day, std::int32_t>{tg_time_of_day, tg_time_zone};
 
-				elog(INFO, "time_of_day = %d:%d:%d.%d, time_zone = %d",
+				elog(DEBUG5, "time_of_day = %d:%d:%d.%d, time_zone = %d",
 								tm->tm_hour, tm->tm_min, tm->tm_sec, fsec, tg_time_zone);
 
 				parameters.emplace_back(param_name, tg_time_of_day_with_time_zone);
@@ -1429,7 +1429,7 @@ make_execute_parameters(const Value* param_value,
 				auto tg_time_point_with_time_zone =
 					std::pair<takatori::datetime::time_point, std::int32_t>{tg_time_point, tg_time_zone};
 
-				elog(INFO, "date = %d/%d/%d, time_of_day = %d:%d:%d.%d, time_zone = %d",
+				elog(DEBUG5, "date = %d/%d/%d, time_of_day = %d:%d:%d.%d, time_zone = %d",
 								tm->tm_year, tm->tm_mon, tm->tm_mday,
 								tm->tm_hour, tm->tm_min, tm->tm_sec, fsec, tg_time_zone);
 

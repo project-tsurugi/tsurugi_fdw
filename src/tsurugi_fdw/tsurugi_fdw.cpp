@@ -2151,7 +2151,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                             time = time + subsecond;
                         }
 
-                        elog(INFO, "time_of_day = %d:%d:%d.%d",
+                        elog(DEBUG5, "time_of_day = %d:%d:%d.%d",
                                         value.hour(), value.minute(), value.second(),
                                         subsecond);
 
@@ -2177,7 +2177,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                         }
                         timetz.zone = -value.second * SECS_PER_MINUTE;
 
-                        elog(INFO, "time_of_day = %d:%d:%d.%d, time_zone = %d",
+                        elog(DEBUG5, "time_of_day = %d:%d:%d.%d, time_zone = %d",
                                         value.first.hour(), value.first.minute(), value.first.second(),
                                         subsecond, value.second);
 
@@ -2202,9 +2202,9 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                             timestamp = timestamp + subsecond;
                         }
                         auto time_zone = value.second * SECS_PER_MINUTE;
-                        timestamp = timestamp - (-time_zone * USECS_PER_SEC);
+                        timestamp = timestamp - (time_zone * USECS_PER_SEC);
 
-                        elog(INFO, "seconds_since_epoch = %ld, subsecond = %d, time_zone = %d",
+                        elog(DEBUG5, "seconds_since_epoch = %ld, subsecond = %d, time_zone = %d",
                                         value.first.seconds_since_epoch().count(),
                                         value.first.subsecond().count(),
                                         value.second);
@@ -2230,7 +2230,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                             timestamp = timestamp + subsecond;
                         }
 
-                        elog(INFO, "seconds_since_epoch = %ld, subsecond = %d",
+                        elog(DEBUG5, "seconds_since_epoch = %ld, subsecond = %d",
                                         value.seconds_since_epoch().count(),
                                         value.subsecond().count());
 

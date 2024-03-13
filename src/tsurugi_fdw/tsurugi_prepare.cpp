@@ -247,6 +247,66 @@ begin_prepare_processing(const EState* estate)
 					parameters.emplace_back(param_name, tg_time_of_day);
 				}
 				break;
+			case TIMETZOID:
+				{
+					TimeTzADT* timetz = DatumGetTimeTzADTP(param.value);
+					struct pg_tm tt, *tm = &tt;
+					fsec_t fsec;
+					time2tm(timetz->time, tm, &fsec);
+					auto tg_time_of_day = takatori::datetime::time_of_day(
+											static_cast<std::int64_t>(tm->tm_hour),
+											static_cast<std::int64_t>(tm->tm_min),
+											static_cast<std::int64_t>(tm->tm_sec),
+											std::chrono::nanoseconds(fsec*1000));
+					std::int32_t tg_time_zone = 0;
+					if (timetz->zone != 0) {
+						tg_time_zone = -timetz->zone / SECS_PER_MINUTE;
+					}
+					auto tg_time_of_day_with_time_zone =
+						std::pair<takatori::datetime::time_of_day, std::int32_t>{tg_time_of_day, tg_time_zone};
+
+					elog(DEBUG5, "time_of_day = %d:%d:%d.%d, time_zone = %d",
+									tm->tm_hour, tm->tm_min, tm->tm_sec, fsec, tg_time_zone);
+
+					parameters.emplace_back(param_name, tg_time_of_day_with_time_zone);
+				}
+				break;
+			case TIMESTAMPTZOID:
+				{
+					TimestampTz timestamptz = DatumGetTimestampTz(param.value);
+					struct pg_tm tt, *tm = &tt;
+					fsec_t fsec;
+					int tz;
+					if (timestamp2tm(timestamptz, &tz, tm, &fsec, NULL, NULL) != 0)
+						ereport(ERROR,
+								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+								 errmsg("timestamp out of range")));
+					auto tg_date = takatori::datetime::date(
+											static_cast<std::int32_t>(tm->tm_year),
+											static_cast<std::int32_t>(tm->tm_mon),
+											static_cast<std::int32_t>(tm->tm_mday));
+					auto tg_time_of_day = takatori::datetime::time_of_day(
+											static_cast<std::int64_t>(tm->tm_hour),
+											static_cast<std::int64_t>(tm->tm_min),
+											static_cast<std::int64_t>(tm->tm_sec),
+											std::chrono::nanoseconds(fsec*1000));
+					auto tg_time_point = takatori::datetime::time_point(
+											tg_date,
+											tg_time_of_day);
+					std::int32_t tg_time_zone = 0;
+					if (tz != 0) {
+						tg_time_zone = -tz / SECS_PER_MINUTE;
+					}
+					auto tg_time_point_with_time_zone =
+						std::pair<takatori::datetime::time_point, std::int32_t>{tg_time_point, tg_time_zone};
+
+					elog(DEBUG5, "date = %d/%d/%d, time_of_day = %d:%d:%d.%d, time_zone = %d",
+									tm->tm_year, tm->tm_mon, tm->tm_mday,
+									tm->tm_hour, tm->tm_min, tm->tm_sec, fsec, tg_time_zone);
+
+					parameters.emplace_back(param_name, tg_time_point_with_time_zone);
+				}
+				break;
 			case TIMESTAMPOID:
 				{
 					Timestamp timestamp = DatumGetTimestamp(param.value);
