@@ -123,21 +123,9 @@ SELECT tg_set_transaction('short', 'interrupt');    /*  デフォルトのトラ
      "transactionType": "1",                 +
      "transactionPriority": "1",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -271,21 +259,9 @@ SELECT tg_set_transaction('long');      --  Longトランザクションをデ�
      "transactionType": "2",                 +
      "transactionPriority": "1",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -302,16 +278,8 @@ SELECT tg_set_write_preserve('weather');    --  書き込みを予約するテ�
              "tableName": "weather"          +
          }                                   +
      ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)

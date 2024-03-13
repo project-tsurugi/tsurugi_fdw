@@ -183,9 +183,6 @@ GetTransactionOption(boost::property_tree::ptree& transaction)
 			pt_tables.put<std::string>(ogawayama::stub::TABLE_NAME, prev_table);
 			pt_write_preserve.push_back(std::make_pair("", pt_tables));
 		}
-	} else {
-		pt_tables.put<std::string>(ogawayama::stub::TABLE_NAME, "");
-		pt_write_preserve.push_back(std::make_pair("", pt_tables));
 	}
 	transaction.add_child(ogawayama::stub::WRITE_PRESERVE, pt_write_preserve);
 	if (inclusive_read_areas.size()) {
@@ -193,9 +190,6 @@ GetTransactionOption(boost::property_tree::ptree& transaction)
 			pt_tables.put<std::string>(ogawayama::stub::TABLE_NAME, prev_table);
 			pt_inclusive_read_areas.push_back(std::make_pair("", pt_tables));
 		}
-	} else {
-		pt_tables.put<std::string>(ogawayama::stub::TABLE_NAME, "");
-		pt_inclusive_read_areas.push_back(std::make_pair("", pt_tables));
 	}
 	transaction.add_child(ogawayama::stub::INCLUSIVE_READ_AREA, pt_inclusive_read_areas);
 	if (exclusive_read_areas.size()) {
@@ -203,9 +197,6 @@ GetTransactionOption(boost::property_tree::ptree& transaction)
 			pt_tables.put<std::string>(ogawayama::stub::TABLE_NAME, prev_table);
 			pt_exclusive_read_areas.push_back(std::make_pair("", pt_tables));
 		}
-	} else {
-		pt_tables.put<std::string>(ogawayama::stub::TABLE_NAME, "");
-		pt_exclusive_read_areas.push_back(std::make_pair("", pt_tables));
 	}
 	transaction.add_child(ogawayama::stub::EXCLUSIVE_READ_AREA, pt_exclusive_read_areas);
 }
