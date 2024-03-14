@@ -6,21 +6,9 @@ SELECT tg_show_transaction();
      "transactionType": "1",                 +
      "transactionPriority": "0",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -33,21 +21,9 @@ SELECT tg_set_transaction('OCC'); -- for Tsurugi Books
      "transactionType": "1",                 +
      "transactionPriority": "0",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -59,21 +35,9 @@ SELECT tg_set_transaction('LTX'); -- for Tsurugi Books
      "transactionType": "2",                 +
      "transactionPriority": "0",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -85,21 +49,9 @@ SELECT tg_set_transaction('RTX'); -- for Tsurugi Books
      "transactionType": "3",                 +
      "transactionPriority": "0",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -111,21 +63,9 @@ SELECT tg_set_transaction('long');
      "transactionType": "2",                 +
      "transactionPriority": "0",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -137,21 +77,9 @@ SELECT tg_set_transaction('read_only');
      "transactionType": "3",                 +
      "transactionPriority": "0",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -163,21 +91,9 @@ SELECT tg_set_transaction('default');
      "transactionType": "0",                 +
      "transactionPriority": "0",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -189,21 +105,9 @@ SELECT tg_set_transaction('Short', 'interrupt');
      "transactionType": "1",                 +
      "transactionPriority": "1",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -215,21 +119,9 @@ SELECT tg_set_transaction('Long', 'wait');
      "transactionType": "2",                 +
      "transactionPriority": "2",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -241,21 +133,9 @@ SELECT tg_set_transaction('Read_Only', 'interrupt_exclude');
      "transactionType": "3",                 +
      "transactionPriority": "3",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -267,21 +147,9 @@ SELECT tg_set_transaction('DEFAULT', 'wait_exclude');
      "transactionType": "0",                 +
      "transactionPriority": "4",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -293,21 +161,9 @@ SELECT tg_set_transaction('short', 'default');
      "transactionType": "1",                 +
      "transactionPriority": "0",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -319,21 +175,9 @@ SELECT tg_set_transaction('long', 'interrupt', 'regression-test');
      "transactionType": "2",               +
      "transactionPriority": "1",           +
      "transactionLabel": "regression-test",+
-     "writePreserve": [                    +
-         {                                 +
-             "tableName": ""               +
-         }                                 +
-     ],                                    +
-     "inclusiveReadArea": [                +
-         {                                 +
-             "tableName": ""               +
-         }                                 +
-     ],                                    +
-     "exclusiveReadArea": [                +
-         {                                 +
-             "tableName": ""               +
-         }                                 +
-     ]                                     +
+     "writePreserve": "",                  +
+     "inclusiveReadArea": "",              +
+     "exclusiveReadArea": ""               +
  }                                         +
  
 (1 row)
@@ -375,16 +219,8 @@ SELECT tg_set_write_preserve('wp_table1');
              "tableName": "wp_table1"      +
          }                                 +
      ],                                    +
-     "inclusiveReadArea": [                +
-         {                                 +
-             "tableName": ""               +
-         }                                 +
-     ],                                    +
-     "exclusiveReadArea": [                +
-         {                                 +
-             "tableName": ""               +
-         }                                 +
-     ]                                     +
+     "inclusiveReadArea": "",              +
+     "exclusiveReadArea": ""               +
  }                                         +
  
 (1 row)
@@ -401,16 +237,8 @@ SELECT tg_set_write_preserve('wp_table2');
              "tableName": "wp_table2"      +
          }                                 +
      ],                                    +
-     "inclusiveReadArea": [                +
-         {                                 +
-             "tableName": ""               +
-         }                                 +
-     ],                                    +
-     "exclusiveReadArea": [                +
-         {                                 +
-             "tableName": ""               +
-         }                                 +
-     ]                                     +
+     "inclusiveReadArea": "",              +
+     "exclusiveReadArea": ""               +
  }                                         +
  
 (1 row)
@@ -430,16 +258,8 @@ SELECT tg_set_write_preserve('wp_table1', 'wp_table2');
              "tableName": "wp_table2"      +
          }                                 +
      ],                                    +
-     "inclusiveReadArea": [                +
-         {                                 +
-             "tableName": ""               +
-         }                                 +
-     ],                                    +
-     "exclusiveReadArea": [                +
-         {                                 +
-             "tableName": ""               +
-         }                                 +
-     ]                                     +
+     "inclusiveReadArea": "",              +
+     "exclusiveReadArea": ""               +
  }                                         +
  
 (1 row)
@@ -451,21 +271,9 @@ SELECT tg_set_transaction('short'); -- reset write preserve
      "transactionType": "1",                 +
      "transactionPriority": "1",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -477,21 +285,13 @@ SELECT tg_set_inclusive_read_areas('ri_table1');
      "transactionType": "1",                 +
      "transactionPriority": "1",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
+     "writePreserve": "",                    +
      "inclusiveReadArea": [                  +
          {                                   +
              "tableName": "ri_table1"        +
          }                                   +
      ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -503,21 +303,13 @@ SELECT tg_set_inclusive_read_areas('ri_table2');
      "transactionType": "1",                 +
      "transactionPriority": "1",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
+     "writePreserve": "",                    +
      "inclusiveReadArea": [                  +
          {                                   +
              "tableName": "ri_table2"        +
          }                                   +
      ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -529,11 +321,7 @@ SELECT tg_set_inclusive_read_areas('ri_table1', 'ri_table2');
      "transactionType": "1",                 +
      "transactionPriority": "1",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
+     "writePreserve": "",                    +
      "inclusiveReadArea": [                  +
          {                                   +
              "tableName": "ri_table1"        +
@@ -542,11 +330,7 @@ SELECT tg_set_inclusive_read_areas('ri_table1', 'ri_table2');
              "tableName": "ri_table2"        +
          }                                   +
      ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -558,21 +342,9 @@ SELECT tg_set_transaction('short'); -- reset inclusiveReadArea
      "transactionType": "1",                 +
      "transactionPriority": "1",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -584,16 +356,8 @@ SELECT tg_set_exclusive_read_areas('re_table1');
      "transactionType": "1",                 +
      "transactionPriority": "1",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
      "exclusiveReadArea": [                  +
          {                                   +
              "tableName": "re_table1"        +
@@ -610,16 +374,8 @@ SELECT tg_set_exclusive_read_areas('re_table2');
      "transactionType": "1",                 +
      "transactionPriority": "1",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
      "exclusiveReadArea": [                  +
          {                                   +
              "tableName": "re_table2"        +
@@ -636,16 +392,8 @@ SELECT tg_set_exclusive_read_areas('re_table1', 're_table2');
      "transactionType": "1",                 +
      "transactionPriority": "1",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
      "exclusiveReadArea": [                  +
          {                                   +
              "tableName": "re_table1"        +
@@ -665,21 +413,9 @@ SELECT tg_set_transaction('short'); -- reset exclusiveReadArea
      "transactionType": "1",                 +
      "transactionPriority": "1",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -699,16 +435,8 @@ SELECT tg_set_write_preserve('wp_table1', 'wp_table2');
              "tableName": "wp_table2"        +
          }                                   +
      ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -736,11 +464,7 @@ SELECT tg_set_inclusive_read_areas('ri_table1', 'ri_table2');
              "tableName": "ri_table2"        +
          }                                   +
      ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -787,21 +511,9 @@ SELECT tg_set_transaction('short'); -- reset tableName
      "transactionType": "1",                 +
      "transactionPriority": "1",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -1025,21 +737,9 @@ SELECT tg_set_transaction('long');
      "transactionType": "2",                 +
      "transactionPriority": "1",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -1059,16 +759,8 @@ SELECT tg_set_write_preserve('wp_table1', 'wp_table2');
              "tableName": "wp_table2"        +
          }                                   +
      ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -1149,16 +841,8 @@ SELECT tg_set_write_preserve('wp_table1');
              "tableName": "wp_table1"        +
          }                                   +
      ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -1231,21 +915,9 @@ SELECT tg_set_transaction('short'); -- reset tableName
      "transactionType": "1",                 +
      "transactionPriority": "1",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -1258,21 +930,9 @@ SELECT tg_set_transaction('long');
      "transactionType": "2",                 +
      "transactionPriority": "1",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -1284,21 +944,13 @@ SELECT tg_set_inclusive_read_areas('ri_table1');
      "transactionType": "2",                 +
      "transactionPriority": "1",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
+     "writePreserve": "",                    +
      "inclusiveReadArea": [                  +
          {                                   +
              "tableName": "ri_table1"        +
          }                                   +
      ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -1321,21 +973,9 @@ SELECT tg_set_transaction('short'); -- reset tableName
      "transactionType": "1",                 +
      "transactionPriority": "1",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -1349,21 +989,9 @@ SELECT tg_set_transaction('long');
      "transactionType": "2",                 +
      "transactionPriority": "1",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -1375,16 +1003,8 @@ SELECT tg_set_exclusive_read_areas('re_table1');
      "transactionType": "2",                 +
      "transactionPriority": "1",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
      "exclusiveReadArea": [                  +
          {                                   +
              "tableName": "re_table1"        +
@@ -1419,11 +1039,7 @@ SELECT tg_set_inclusive_read_areas('ri_table1');
      "transactionType": "2",                 +
      "transactionPriority": "1",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
+     "writePreserve": "",                    +
      "inclusiveReadArea": [                  +
          {                                   +
              "tableName": "ri_table1"        +
@@ -1445,11 +1061,7 @@ SELECT tg_set_exclusive_read_areas('re_table1');
      "transactionType": "2",                 +
      "transactionPriority": "1",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
+     "writePreserve": "",                    +
      "inclusiveReadArea": [                  +
          {                                   +
              "tableName": "ri_table1"        +
@@ -1482,21 +1094,9 @@ SELECT tg_set_transaction('short');
      "transactionType": "1",                 +
      "transactionPriority": "1",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -1530,21 +1130,9 @@ SELECT tg_set_transaction('long');
      "transactionType": "2",                 +
      "transactionPriority": "1",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -1564,16 +1152,8 @@ SELECT tg_set_write_preserve('wp_table1', 'wp_table2');
              "tableName": "wp_table2"        +
          }                                   +
      ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -1614,21 +1194,9 @@ INFO:  there is a specific tsurugi transaction block is in progress.
      "transactionType": "1",                    +
      "transactionPriority": "0",                +
      "transactionLabel": "specific-transaction",+
-     "writePreserve": [                         +
-         {                                      +
-             "tableName": ""                    +
-         }                                      +
-     ],                                         +
-     "inclusiveReadArea": [                     +
-         {                                      +
-             "tableName": ""                    +
-         }                                      +
-     ],                                         +
-     "exclusiveReadArea": [                     +
-         {                                      +
-             "tableName": ""                    +
-         }                                      +
-     ]                                          +
+     "writePreserve": "",                       +
+     "inclusiveReadArea": "",                   +
+     "exclusiveReadArea": ""                    +
  }                                              +
  
 (1 row)
@@ -1678,16 +1246,8 @@ SELECT tg_show_transaction();
              "tableName": "wp_table2"        +
          }                                   +
      ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)
@@ -1727,21 +1287,9 @@ SELECT tg_set_transaction('short');
      "transactionType": "1",                 +
      "transactionPriority": "1",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
  
 (1 row)

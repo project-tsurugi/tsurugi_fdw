@@ -96,21 +96,9 @@ PostgreSQLの`SET transaction`は**実行中の**トランザクションのト�
       "transactionType": "1",                       +
       "transactionPriority": "1",                   +
       "transactionLabel": "pgsql-short-transaction",+
-      "writePreserve": [                            +
-          {                                         +
-              "tableName": ""                       +
-          }                                         +
-      ],                                            +
-      "inclusiveReadArea": [                        +
-          {                                         +
-              "tableName": ""                       +
-          }                                         +
-      ],                                            +
-      "exclusiveReadArea": [                        +
-          {                                         +
-              "tableName": ""                       +
-          }                                         +
-      ]                                             +
+      "writePreserve": "",                          +
+      "inclusiveReadArea": "",                      +
+      "exclusiveReadArea": ""                       +
   }                                                 +
 
   (1 row)
@@ -130,21 +118,9 @@ PostgreSQLの`SET transaction`は**実行中の**トランザクションのト�
        "transactionType": "2",                 +
        "transactionPriority": "0",             +
        "transactionLabel": "pgsql-transaction",+
-       "writePreserve": [                      +
-           {                                   +
-               "tableName": ""                 +
-           }                                   +
-       ],                                      +
-       "inclusiveReadArea": [                  +
-           {                                   +
-               "tableName": ""                 +
-           }                                   +
-       ],                                      +
-       "exclusiveReadArea": [                  +
-           {                                   +
-               "tableName": ""                 +
-           }                                   +
-       ]                                       +
+       "writePreserve": "",                    +
+       "inclusiveReadArea": "",                +
+       "exclusiveReadArea": ""                 +
    }                                           +
 
   (1 row)

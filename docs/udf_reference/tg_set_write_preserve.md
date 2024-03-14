@@ -34,21 +34,9 @@ SELECT tg_set_transaction('long');
     "transactionType": "2",                      +
     "transactionPriority": "0",                  +
     "transactionLabel": "pgsql-transaction",     +
-    "writePreserve": [                           +
-         {                                       +
-             "tableName": ""                     +
-         }                                       +
-    ],                                           +
-    "inclusiveReadArea": [                       +
-         {                                       +
-             "tableName": ""                     +
-         }                                       +
-    ],                                           +
-    "exclusiveReadArea": [                       +
-         {                                       +
-             "tableName": ""                     +
-         }                                       +
-    ]                                            +
+    "writePreserve": "",                         +
+    "inclusiveReadArea": "",                     +
+    "exclusiveReadArea": ""                      +
 }                                                +
 
 (1 row)
@@ -71,16 +59,8 @@ SELECT tg_set_write_preserve('tg_table1', 'tg_table2', 'tg_table3');
              "tableName": "tg_table3"        +
          }                                   +
      ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
 
 (1 row)
@@ -104,16 +84,8 @@ SELECT tg_set_write_preserve('tg_another_table1', 'tg_another_table2');
              "tableName": "tg_another_table2"+
          }                                   +
      ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
 
 (1 row)
