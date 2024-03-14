@@ -30,21 +30,9 @@ SELECT tg_show_transaction();
      "transactionType": "1",                 +
      "transactionPriority": "0",             +
      "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ],                                      +
-     "exclusiveReadArea": [                  +
-         {                                   +
-             "tableName": ""                 +
-         }                                   +
-     ]                                       +
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
  }                                           +
 
 (1 row)

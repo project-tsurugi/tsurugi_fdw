@@ -34,21 +34,9 @@ SELECT tg_set_transaction('long');
     "transactionType": "2",                      +
     "transactionPriority": "0",                  +
     "transactionLabel": "pgsql-transaction",     +
-    "writePreserve": [                           +
-         {                                       +
-             "tableName": ""                     +
-         }                                       +
-    ],                                           +
-    "inclusiveReadArea": [                       +
-         {                                       +
-             "tableName": ""                     +
-         }                                       +
-    ],                                           +
-    "exclusiveReadArea": [                       +
-         {                                       +
-             "tableName": ""                     +
-         }                                       +
-    ]                                            +
+    "writePreserve": "",                         +
+    "inclusiveReadArea": "",                     +
+    "exclusiveReadArea": ""                      +
 }                                                +
 
 (1 row)
@@ -60,16 +48,8 @@ SELECT tg_set_exclusive_read_areas('tg_table8', 'tg_table9');
     "transactionType": "2",                      +
     "transactionPriority": "0",                  +
     "transactionLabel": "pgsql-transaction",     +
-    "writePreserve": [                           +
-         {                                       +
-             "tableName": ""                     +
-         }                                       +
-    ],                                           +
-    "inclusiveReadArea": [                       +
-        {                                        +
-            "tableName": ""                      +
-        }                                        +
-    ],                                           +
+    "writePreserve": "",                         +
+    "inclusiveReadArea": "",                     +
     "exclusiveReadArea": [                       +
         {                                        +
             "tableName": "tg_table8"             +
@@ -93,16 +73,8 @@ SELECT tg_set_exclusive_read_areas('tg_another_table9');
     "transactionType": "2",                      +
     "transactionPriority": "0",                  +
     "transactionLabel": "pgsql-transaction",     +
-    "writePreserve": [                           +
-        {                                        +
-            "tableName": ""                      +
-        }                                        +
-    ],                                           +
-    "inclusiveReadArea": [                       +
-        {                                        +
-            "tableName": ""                      +
-        }                                        +
-    ],                                           +
+    "writePreserve": "",                         +
+    "inclusiveReadArea": "",                     +
     "exclusiveReadArea": [                       +
         {                                        +
             "tableName": "tg_another_table9"     +
