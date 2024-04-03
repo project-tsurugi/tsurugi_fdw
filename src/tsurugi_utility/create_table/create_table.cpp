@@ -161,9 +161,15 @@ bool CreateTable::validate_syntax() const
 
     /* Check column constraints */
     if (column_def_constraints != NIL) {
+#if PG_VERSION_NUM >= 160000
+      ListCell   *lc_constraints;
+      foreach(lc_constraints, column_def_constraints) {
+        Constraint *constr = (Constraint *) lfirst(lc_constraints);
+#else
       ListCell   *l;
       foreach(l, column_def_constraints) {
         Constraint *constr = (Constraint *) lfirst(l);
+#endif
         switch (constr->contype)
         {
             case CONSTR_IDENTITY:
@@ -281,9 +287,15 @@ bool CreateTable::validate_data_type() const
       if (type_names != NIL) {
         bool is_supported{false};
 
+#if PG_VERSION_NUM >= 160000
+        ListCell   *lc_names;
+        foreach(lc_names, type_names) {
+          String* type_name_value = (String *)lfirst(lc_names);
+#else
         ListCell   *l;
         foreach(l, type_names) {
           Value *type_name_value = (Value *)lfirst(l);
+#endif
           std::string type_name{std::string(strVal(type_name_value))};
 
           ptree datatype;
@@ -462,7 +474,11 @@ bool CreateTable::generate_column_metadata(ColumnDef* column_def,
 	*/
 	ListCell* listptr;
 	foreach(listptr, type_names) {
+#if PG_VERSION_NUM >= 160000
+		String* type_name_value = (String*) lfirst(listptr);
+#else
 		Value* type_name_value = (Value*) lfirst(listptr);
+#endif
 		std::string type_name{std::string(strVal(type_name_value))};
 
 		// PG data type qualified name
@@ -592,7 +608,11 @@ bool CreateTable::get_data_lengths(List* typmods, std::vector<int64_t>& dataleng
 				* get data type lengths from typmods of TypeName structure.
 				* The given data type length must be constant integer value.
 				*/
+#if PG_VERSION_NUM >= 160000
+				datalengths.emplace_back(intVal(&a_const->val));
+#else
 				datalengths.emplace_back(a_const->val.val.ival);
+#endif
 			} else {
 				this->show_syntax_error_msg("can use only integer value in data length");
 				return result;
@@ -724,7 +744,11 @@ bool CreateTable::get_expr_recurse(Node* expr, StringInfoData* buf) const
 		case T_A_Const:
 			{
 				A_Const* con = (A_Const *) expr;
+#if PG_VERSION_NUM >= 160000
+				ValUnion* val = &con->val;
+#else
 				Value* val = &con->val;
+#endif
 				result = get_a_const(val, buf);
 				break;
 			}
@@ -837,7 +861,11 @@ bool CreateTable::get_column_ref(ColumnRef* cref, StringInfoData* buf) const
  * @param	buf [in] StringInfoData.
  * @return	true if success, otherwise fault.
  */
+#if PG_VERSION_NUM >= 160000
+bool CreateTable::get_a_const(ValUnion* value, StringInfoData* buf) const
+#else
 bool CreateTable::get_a_const(Value* value, StringInfoData* buf) const
+#endif
 {
 	bool result{true};
 

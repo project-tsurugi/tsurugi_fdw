@@ -280,7 +280,11 @@ SetWritePreserveTables(List* WritePreserveTables)
 	foreach(listptr, WritePreserveTables) {
 		Node* node = (Node *) lfirst(listptr);
 		if (IsA(node, String)) {
+#if PG_VERSION_NUM >= 160000
+			ValUnion* table = (ValUnion*) node;
+#else
 			Value* table = (Value*) node;
+#endif
 			write_preserve.emplace_back(strVal(table));
 		}
 	}
@@ -302,7 +306,11 @@ SetInclusiveReadAreasTables(List* InclusiveReadAreasTables)
 	foreach(listptr, InclusiveReadAreasTables) {
 		Node* node = (Node *) lfirst(listptr);
 		if (IsA(node, String)) {
+#if PG_VERSION_NUM >= 160000
+			ValUnion* table = (ValUnion*) node;
+#else
 			Value* table = (Value*) node;
+#endif
 			inclusive_read_areas.emplace_back(strVal(table));
 		}
 	}
@@ -324,7 +332,11 @@ SetExclusiveReadAreasTables(List* ExclusiveReadAreasTables)
 	foreach(listptr, ExclusiveReadAreasTables) {
 		Node* node = (Node *) lfirst(listptr);
 		if (IsA(node, String)) {
+#if PG_VERSION_NUM >= 160000
+			ValUnion* table = (ValUnion*) node;
+#else
 			Value* table = (Value*) node;
+#endif
 			exclusive_read_areas.emplace_back(strVal(table));
 		}
 	}
@@ -397,7 +409,11 @@ CheckTransactionTables(List* CheckTables)
 		foreach(listptr, CheckTables) {
 			Node* node = (Node *) lfirst(listptr);
 			if (IsA(node, String)) {
+#if PG_VERSION_NUM >= 160000
+				ValUnion* table = (ValUnion*) node;
+#else
 				Value* table = (Value*) node;
+#endif
 				if (!tables->exists(strVal(table))) {
 					ereport(ERROR,
 							(errcode(ERRCODE_INTERNAL_ERROR),

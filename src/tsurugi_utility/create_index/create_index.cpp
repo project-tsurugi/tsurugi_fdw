@@ -190,9 +190,15 @@ bool CreateIndex::generate_metadata(manager::metadata::Object& object) const
     	Node* node = (Node*)lfirst(listptr);
       	if (IsA(node, IndexElem)) {
         	IndexElem* elem = (IndexElem*) node;
+#if PG_VERSION_NUM >= 160000
+            metadata::Table table_key;
+            tables->get(index_stmt->relation->relname, table_key);
+            for (const auto& column : table_key.columns) {
+#else
         	metadata::Table table;
         	tables->get(index_stmt->relation->relname, table);
         	for (const auto& column : table.columns) {
+#endif
           		if (column.name == elem->name) {
             		index.keys.emplace_back(column.column_number);
             		index.keys_id.emplace_back(column.id);
@@ -213,9 +219,15 @@ bool CreateIndex::generate_metadata(manager::metadata::Object& object) const
 		Node* node = (Node*) lfirst(listptr);
 		if (IsA(node, IndexElem)) {
 			IndexElem* elem = (IndexElem*) node;
+#if PG_VERSION_NUM >= 160000
+			metadata::Table table_included;
+			tables->get(index_stmt->relation->relname, table_included);
+			for (const auto& column : table_included.columns) {
+#else
 			metadata::Table table;
 			tables->get(index_stmt->relation->relname, table);
 			for (const auto& column : table.columns) {
+#endif
 				if (column.name == elem->name) {
 					index.keys.emplace_back(column.column_number);
 					index.keys_id.emplace_back(column.id);

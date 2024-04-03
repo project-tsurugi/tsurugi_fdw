@@ -55,7 +55,11 @@ PG_MODULE_MAGIC;
 #endif
 
 /* planner_hook function */
+#if PG_VERSION_NUM >= 160000
+PlannedStmt *alt_planner(Query *parse2, const char *query_string, int cursorOptions, ParamListInfo boundParams);
+#else
 PlannedStmt *alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams);
+#endif
 bool is_only_foreign_table(AltPlannerInfo *root, List *rtable);
 AltPlannerInfo *init_altplannerinfo(Query *parse);
 ForeignScan *create_foreign_scan(AltPlannerInfo *root); 
@@ -78,7 +82,11 @@ bool contain_foreign_tables(AltPlannerInfo *root, List *rtable);
  * PlannedStmt stmt          ...
  */
 struct PlannedStmt *
+#if PG_VERSION_NUM >= 160000
+alt_planner(Query *parse2, const char *query_string, int cursorOptions, ParamListInfo boundParams)
+#else
 alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
+#endif
 {
 	Query *parse = copyObject(parse2);
 	AltPlannerInfo *root = init_altplannerinfo(parse);
@@ -92,7 +100,11 @@ alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 	if ((root->parse != NULL && root->parse->rtable == NULL) || 
 		!contain_foreign_tables(root, root->parse->rtable))
 	{
+#if PG_VERSION_NUM >= 160000
+		return standard_planner(parse2, query_string, cursorOptions, boundParams);
+#else
 		return standard_planner(parse2, cursorOptions, boundParams);
+#endif
 	}
 
 	if (parse->hasAggs)
@@ -123,7 +135,11 @@ alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
             } 
             else 
             {
+#if PG_VERSION_NUM >= 160000
+				return standard_planner(parse2, query_string, cursorOptions, boundParams);
+#else
         		return standard_planner(parse2, cursorOptions, boundParams);    
+#endif
             }
 			break;
 		}
@@ -131,7 +147,11 @@ alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 		case CMD_SELECT:
 		default:
 		{
+#if PG_VERSION_NUM >= 160000
+			return standard_planner(parse2, query_string, cursorOptions, boundParams);
+#else
 			return standard_planner(parse2, cursorOptions, boundParams);
+#endif
 		}
 	}
 
@@ -398,10 +418,18 @@ create_modify_table(AltPlannerInfo *root, ForeignScan *scan)
 	List *fdwPrivLists = NIL;
 	Bitmapset  *direct_modify_plans = NULL;
 
+#if PG_VERSION_NUM >= 160000
+	List *resultRelations = NIL;
+#endif
+
 	List *subplan = NIL;
 	subplan = lappend(subplan, scan);
 
+#if PG_VERSION_NUM >= 160000
+	modify->plan.lefttree = (Plan *)scan;
+#else
 	modify->plan.lefttree = NULL;
+#endif
 	modify->plan.righttree = NULL;
 	modify->plan.qual = NIL;
 	modify->plan.targetlist = NIL;
@@ -415,9 +443,11 @@ create_modify_table(AltPlannerInfo *root, ForeignScan *scan)
 #endif
 	modify->partColsUpdated = false;
 	modify->resultRelations = 0;
+#if PG_VERSION_NUM < 160000
 	modify->resultRelIndex = 0;
 	modify->rootResultRelIndex = -1;
 	modify->plans = subplan;
+#endif
 	modify->withCheckOptionLists = NIL;
 	modify->returningLists = NIL;
 	modify->fdwPrivLists = NIL;
@@ -436,6 +466,11 @@ create_modify_table(AltPlannerInfo *root, ForeignScan *scan)
 
 	direct_modify_plans = bms_add_member(direct_modify_plans, 0);
 	modify->fdwDirectModifyPlans = direct_modify_plans;
+
+#if PG_VERSION_NUM >= 160000
+	resultRelations = lappend_int(resultRelations, root->parse->resultRelation);
+	modify->resultRelations = resultRelations;
+#endif
 
 	return modify;
 }
@@ -491,7 +526,9 @@ is_valid_targetentry(ForeignScan *scan, AltPlannerInfo *root)
 						       0);
 
 				newvar->varno = INDEX_VAR;
+#if PG_VERSION_NUM < 160000
 				newvar->varoattno = var->varoattno;
+#endif
 				newvar->location = var->location;
 
 				newte = makeTargetEntry((Expr *) newvar,
@@ -601,7 +638,9 @@ create_planned_stmt(AltPlannerInfo *root, Plan *plan)
 #if PG_VERSION_NUM < 120000
 	stmt->nonleafResultRelations = NIL;
 #endif
+#if PG_VERSION_NUM < 160000
 	stmt->rootResultRelations = NIL;
+#endif
 	stmt->subplans = NIL;
 	stmt->rewindPlanIDs = NULL;
 	stmt->rowMarks = NIL;
@@ -636,6 +675,10 @@ preprocess_targetlist2(Query *parse, ForeignScan *scan)
 	RangeTblEntry	*target_rte = NULL;
 	Relation		target_relation = NULL;
 	List			*tlist;
+#if PG_VERSION_NUM >= 160000
+	Var		   *var;
+	TargetEntry *tle;
+#endif
 
 	target_rte = rt_fetch(parse->resultRelation, parse->rtable);
 
@@ -644,6 +687,15 @@ preprocess_targetlist2(Query *parse, ForeignScan *scan)
 	tlist = parse->targetList;
 	tlist = expand_targetlist(tlist, parse->commandType, 
 							parse->resultRelation, target_relation);
+
+#if PG_VERSION_NUM >= 160000
+	var = makeWholeRowVar(target_rte, parse->resultRelation, 0, false);
+	tle = makeTargetEntry((Expr *) var,
+						  list_length(parse->targetList) + 1,
+						  pstrdup("wholerow"),
+						  true);
+	tlist = lappend(tlist, tle);
+#endif
 
 	scan->scan.plan.targetlist = tlist;
 
@@ -690,7 +742,11 @@ expand_targetlist(List *tlist, int command_type,
 			if (!old_tle->resjunk && old_tle->resno == attrno)
 			{
 				new_tle = old_tle;
+#if PG_VERSION_NUM >= 160000
+				tlist_item = lnext(tlist, tlist_item);
+#else
 				tlist_item = lnext(tlist_item);
+#endif
 			}
 		}
 
@@ -815,7 +871,11 @@ expand_targetlist(List *tlist, int command_type,
 		}
 		new_tlist = lappend(new_tlist, old_tle);
 		attrno++;
+#if PG_VERSION_NUM >= 160000
+		tlist_item = lnext(tlist, tlist_item);
+#else
 		tlist_item = lnext(tlist_item);
+#endif
 	}
 
 	return new_tlist;

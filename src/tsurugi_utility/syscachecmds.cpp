@@ -78,7 +78,11 @@ bool confirm_roleid_from_syscache(const int64_t object_id) {
   /* return value */
   bool ret_value = false;
   HeapTuple tuple;
+#if PG_VERSION_NUM >= 160000
+  tuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(object_id));
+#else
   tuple = SearchSysCache1(AUTHOID, PointerGetDatum(object_id));
+#endif
 
   if (!HeapTupleIsValid(tuple)) {
     return ret_value;

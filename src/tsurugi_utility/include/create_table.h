@@ -59,7 +59,11 @@ class CreateTable : public CreateCommand {
 	char* get_check_expression(Node* expr) const;
 	bool get_expr_recurse(Node* expr, StringInfoData* buf) const;
 	bool get_column_ref(ColumnRef* cref, StringInfoData* buf) const;
+#if PG_VERSION_NUM >= 160000
+	bool get_a_const(ValUnion* value, StringInfoData* buf) const;
+#else
 	bool get_a_const(Value *value, StringInfoData* buf) const;
+#endif
 	bool get_aexpr_op(A_Expr* a, StringInfoData* buf) const;
 	bool get_bool_expr(BoolExpr* a, StringInfoData* buf) const;
 };

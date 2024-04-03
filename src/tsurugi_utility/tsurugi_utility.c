@@ -25,6 +25,9 @@
 #include "catalog/pg_class_d.h"
 #include "commands/event_trigger.h"
 #include "commands/tablecmds.h"
+#if PG_VERSION_NUM >= 160000
+#include "parser/parse_utilcmd.h"
+#endif
 #include "tcop/utility.h"
 
 #include <string.h>
@@ -46,10 +49,18 @@ PG_MODULE_MAGIC;
 #endif
 
 /* ProcessUtility_hook function */
+#if PG_VERSION_NUM >= 160000
+void tsurugi_ProcessUtility(PlannedStmt* pstmt, const char* queryString,
+						    bool readOnlyTree,
+						    ProcessUtilityContext context, ParamListInfo params,
+						    QueryEnvironment* queryEnv,
+						    DestReceiver* dest, QueryCompletion* qc);
+#else
 void tsurugi_ProcessUtility(PlannedStmt* pstmt, const char* query_string,
                             ProcessUtilityContext context, ParamListInfo params,
                             QueryEnvironment* queryEnv, DestReceiver* dest,
                             char* completionTag);
+#endif
 
 extern bool IsTransactionBlock(void);
 extern void check_stack_depth(void);
@@ -57,6 +68,7 @@ extern void check_xact_readonly(Node* parsetree);
 extern ParseState* make_parsestate(ParseState* parentParseState);
 extern int CommandCounterIncrement(void);
 extern List *transformCreateStmt(CreateStmt *stmt, const char *queryString);
+#if PG_VERSION_NUM < 160000
 extern void standard_ProcessUtility(PlannedStmt *pstmt,
 					            	const char *queryString,
 						            ProcessUtilityContext context,
@@ -64,7 +76,19 @@ extern void standard_ProcessUtility(PlannedStmt *pstmt,
 						            QueryEnvironment *queryEnv,
 						            DestReceiver *dest,
 						            char *completionTag);
+#endif
 
+#if PG_VERSION_NUM >= 160000
+static void tsurugi_ProcessUtilitySlow(ParseState *pstate,
+                                       PlannedStmt *pstmt,
+                                       const char *queryString,
+                                       bool readOnlyTree,
+                                       ProcessUtilityContext context,
+                                       ParamListInfo params,
+                                       QueryEnvironment *queryEnv,
+                                       DestReceiver *dest,
+                                       QueryCompletion* qc);
+#else
 static void tsurugi_ProcessUtilitySlow(ParseState *pstate,
 			        	               PlannedStmt *pstmt,
 				                       const char *queryString,
@@ -73,12 +97,22 @@ static void tsurugi_ProcessUtilitySlow(ParseState *pstate,
 				                       QueryEnvironment *queryEnv,
 				                       DestReceiver *dest,
 				                       char *completionTag);
+#endif
 
 const char *TSURUGI_TABLESPACE_NAME = "tsurugi";
 
 /*
  *  @brief:
  */
+#if PG_VERSION_NUM >= 160000
+void
+tsurugi_ProcessUtility(PlannedStmt* pstmt,
+					   const char* queryString,
+					   bool readOnlyTree,
+					   ProcessUtilityContext context, ParamListInfo params,
+					   QueryEnvironment* queryEnv,
+					   DestReceiver* dest, QueryCompletion* qc)
+#else
 void
 tsurugi_ProcessUtility(PlannedStmt *pstmt,
                        const char *queryString, 
@@ -86,6 +120,7 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
                        ParamListInfo params,
                        QueryEnvironment *queryEnv,
                        DestReceiver *dest, char *completionTag)
+#endif
 {
 	Node	   *parsetree = pstmt->utilityStmt;
 	ParseState *pstate;
@@ -93,8 +128,10 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 	/* This can recurse, so check for excessive recursion */
 	check_stack_depth();
 
+#if PG_VERSION_NUM < 160000
 	if (completionTag)
 		completionTag[0] = '\0';
+#endif
 
 	pstate = make_parsestate(NULL);
 	pstate->p_sourcetext = queryString;
@@ -107,23 +144,39 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 			if (create_stmt->tablespacename != NULL && 
 					!strcmp(create_stmt->tablespacename, TSURUGI_TABLESPACE_NAME))
 			{
+#if PG_VERSION_NUM >= 160000
+				tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
+										readOnlyTree, context, params,
+										queryEnv, dest, qc);
+#else
 				tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
 										context, params, queryEnv,
 										dest, completionTag);
+#endif
 			}
 			else
 			{
+#if PG_VERSION_NUM >= 160000
+				standard_ProcessUtility(pstmt, queryString, readOnlyTree,
+										context, params, queryEnv, dest, qc);
+#else
 				standard_ProcessUtility(pstmt, queryString,
 										context, params, queryEnv,
 										dest, completionTag);
+#endif
 			}
             break;
 		}
 
 		case T_CreateRoleStmt:
 		{
+#if PG_VERSION_NUM >= 160000
+			standard_ProcessUtility(pstmt, queryString, readOnlyTree,
+									context, params, queryEnv, dest, qc);
+#else
 			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
 									dest, completionTag);
+#endif
 			if (!after_create_role((CreateRoleStmt*)parsetree)) 
 			{
 				elog(ERROR, "failed after_create_role() function.");
@@ -137,15 +190,26 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 			if (index_stmt->tableSpace != NULL && 
 					!strcmp(index_stmt->tableSpace, TSURUGI_TABLESPACE_NAME))
 			{
+#if PG_VERSION_NUM >= 160000
+				tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
+										readOnlyTree, context, params,
+										queryEnv, dest, qc);
+#else
 				tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
 										context, params, queryEnv,
 										dest, completionTag);
+#endif
 			}
 			else
 			{
+#if PG_VERSION_NUM >= 160000
+				standard_ProcessUtility(pstmt, queryString, readOnlyTree,
+										context, params, queryEnv, dest, qc);
+#else
 				standard_ProcessUtility(pstmt, queryString,
 										context, params, queryEnv,
 										dest, completionTag);
+#endif
 			}
 			break;
 		}
@@ -172,15 +236,26 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 					}
 					if (exists_in_tsurugi)
 					{
+#if PG_VERSION_NUM >= 160000
+						tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
+												readOnlyTree, context, params,
+												queryEnv, dest, qc);
+#else
 						tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
 												context, params, queryEnv,
 												dest, completionTag);
+#endif
 					}
 					else
 					{
+#if PG_VERSION_NUM >= 160000
+						standard_ProcessUtility(pstmt, queryString, readOnlyTree,
+												context, params, queryEnv, dest, qc);
+#else
 						standard_ProcessUtility(pstmt, queryString,
 									context, params, queryEnv,
 									dest, completionTag);
+#endif
 					}
 					break;
 				}
@@ -200,23 +275,39 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 					}
 					if (exists_in_tsurugi)
 					{
+#if PG_VERSION_NUM >= 160000
+						tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
+												readOnlyTree, context, params,
+												queryEnv, dest, qc);
+#else
 						tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
 												context, params, queryEnv,
 												dest, completionTag);
+#endif
 					}
 					else
 					{
+#if PG_VERSION_NUM >= 160000
+						standard_ProcessUtility(pstmt, queryString, readOnlyTree,
+												context, params, queryEnv, dest, qc);
+#else
 						standard_ProcessUtility(pstmt, queryString,
 									context, params, queryEnv,
 									dest, completionTag);
+#endif
 					}
 					break;
 				}
 				default:
 				{
+#if PG_VERSION_NUM >= 160000
+					standard_ProcessUtility(pstmt, queryString, readOnlyTree,
+											context, params, queryEnv, dest, qc);
+#else
 					standard_ProcessUtility(pstmt, queryString,
 								context, params, queryEnv,
 								dest, completionTag);
+#endif
 					break;
 				}
 			}
@@ -249,8 +340,13 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
  			 * No skip PostgreSQL processing even if preprocessing fails.
 			 * Because PostgreSQL error messages are no longer output.
 			 */
+#if PG_VERSION_NUM >= 160000
+			standard_ProcessUtility(pstmt, queryString, readOnlyTree,
+									context, params, queryEnv, dest, qc);
+#else
 			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
 									dest, completionTag);
+#endif
 
 			/*
 			 * The message is sent in post-processing.
@@ -273,8 +369,13 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 
 		case T_AlterRoleStmt:
 		{
+#if PG_VERSION_NUM >= 160000
+			standard_ProcessUtility(pstmt, queryString, readOnlyTree,
+									context, params, queryEnv, dest, qc);
+#else
 			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
 									dest, completionTag);
+#endif
 			/*
 			* The message will be sent in post-processing.
 			*/
@@ -296,8 +397,13 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 			if (stmts->targtype == ACL_TARGET_OBJECT &&
 				stmts->objtype == OBJECT_TABLE) 
 			{
+#if PG_VERSION_NUM >= 160000
+				standard_ProcessUtility(pstmt, queryString, readOnlyTree,
+										context, params, queryEnv, dest, qc);
+#else
 				standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
 										dest, completionTag);
+#endif
 				if (!after_grant_revoke_table((GrantStmt*)parsetree))
 				{
 					elog(ERROR, "failed after_grant_revoke_table() function.");
@@ -305,8 +411,13 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 			} 
 			else 
 			{
+#if PG_VERSION_NUM >= 160000
+				standard_ProcessUtility(pstmt, queryString, readOnlyTree,
+										context, params, queryEnv, dest, qc);
+#else
 				standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
 										dest, completionTag);
+#endif
 			}
 			break;
 		}
@@ -317,8 +428,13 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 			 * Both GRANT and REVOKE are the same function.
 			 * Judge the message sent with stmt->is_grant.
 			 */
+#if PG_VERSION_NUM >= 160000
+			standard_ProcessUtility(pstmt, queryString, readOnlyTree,
+									context, params, queryEnv, dest, qc);
+#else
 			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
 									dest, completionTag);
+#endif
 			if (!after_grant_revoke_role((GrantRoleStmt*)parsetree))
 			{
 				elog(ERROR, "failed after_grant_revoke_role() function.");
@@ -328,8 +444,13 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 
 		case T_PrepareStmt:
 		{
+#if PG_VERSION_NUM >= 160000
+			standard_ProcessUtility(pstmt, queryString, readOnlyTree,
+									context, params, queryEnv, dest, qc);
+#else
 			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
 									dest, completionTag);
+#endif
 			if (!after_prepare_stmt((PrepareStmt*)parsetree, queryString))
 			{
 				elog(ERROR, "failed after_prepare_stmt() function.");
@@ -343,8 +464,13 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 			{
 				elog(ERROR, "failed befor_execute_stmt() function.");
 			}
+#if PG_VERSION_NUM >= 160000
+			standard_ProcessUtility(pstmt, queryString, readOnlyTree,
+									context, params, queryEnv, dest, qc);
+#else
 			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
 									dest, completionTag);
+#endif
 			if (!after_execute_stmt((ExecuteStmt*)parsetree))
 			{
 				elog(ERROR, "failed after_execute_stmt() function.");
@@ -354,9 +480,14 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 
 		default:
 		{
+#if PG_VERSION_NUM >= 160000
+			standard_ProcessUtility(pstmt, queryString, readOnlyTree,
+									context, params, queryEnv, dest, qc);
+#else
 		    standard_ProcessUtility(pstmt, queryString,
 			    					context, params, queryEnv,
 				    				dest, completionTag);
+#endif
 			break;
 		}
 	}
@@ -375,6 +506,18 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
  * @param	dest
  * @param	completionTag
  */
+#if PG_VERSION_NUM >= 160000
+static void
+tsurugi_ProcessUtilitySlow(ParseState *pstate,
+				           PlannedStmt *pstmt,
+				           const char *queryString,
+						   bool readOnlyTree,
+				           ProcessUtilityContext context,
+				           ParamListInfo params,
+				           QueryEnvironment *queryEnv,
+				           DestReceiver *dest,
+	                       QueryCompletion* qc)
+#else
 static void
 tsurugi_ProcessUtilitySlow(ParseState *pstate,
 				           PlannedStmt *pstmt,
@@ -384,6 +527,7 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
 				           QueryEnvironment *queryEnv,
 				           DestReceiver *dest,
 				           char *completionTag)
+#endif
 {
     Node	*parsetree = pstmt->utilityStmt;
     bool	isCompleteQuery = (context <= PROCESS_UTILITY_QUERY);
@@ -405,7 +549,9 @@ tsurugi_ProcessUtilitySlow(ParseState *pstate,
 		{
 			case T_CreateStmt:
 			{
+#if PG_VERSION_NUM < 160000
 				Node	  *parsetree = pstmt->utilityStmt;    
+#endif
 				List      *stmts;
 
 				/* Run parse analysis ... */

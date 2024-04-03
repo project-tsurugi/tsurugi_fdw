@@ -674,10 +674,17 @@ tsurugi_foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 				 */
 				foreach(l, aggvars)
 				{
+#if PG_VERSION_NUM >= 160000
+					Expr	   *aggref = (Expr *) lfirst(l);
+
+					if (IsA(aggref, Aggref))
+						tlist = add_to_flat_tlist(tlist, list_make1(aggref));
+#else
 					Expr	   *expr = (Expr *) lfirst(l);
 
 					if (IsA(expr, Aggref))
 						tlist = add_to_flat_tlist(tlist, list_make1(expr));
+#endif
 				}
 			}
 		}
@@ -691,7 +698,9 @@ tsurugi_foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 	 */
 	if (havingQual)
 	{
+#if PG_VERSION_NUM < 160000
 		ListCell   *lc;
+#endif
 
 		foreach(lc, (List *) havingQual)
 		{
@@ -703,6 +712,18 @@ tsurugi_foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 			 * RestrictInfos, so we must make our own.
 			 */
 			Assert(!IsA(expr, RestrictInfo));
+#if PG_VERSION_NUM >= 160000
+			rinfo = make_restrictinfo(root,
+									  expr,
+									  true,
+									  false,
+									  false,
+									  false,
+									  root->qual_security_level,
+									  grouped_rel->relids,
+									  NULL,
+									  NULL);
+#else
 			rinfo = make_restrictinfo(expr,
 									  true,
 									  false,
@@ -711,6 +732,7 @@ tsurugi_foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 									  grouped_rel->relids,
 									  NULL,
 									  NULL);
+#endif
 			if (is_foreign_expr(root, grouped_rel, expr))
 				fpinfo->remote_conds = lappend(fpinfo->remote_conds, rinfo);
 			else
@@ -725,7 +747,9 @@ tsurugi_foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 	if (fpinfo->local_conds)
 	{
 		List	   *aggvars = NIL;
+#if PG_VERSION_NUM < 160000
 		ListCell   *lc;
+#endif
 
 		foreach(lc, fpinfo->local_conds)
 		{

@@ -345,7 +345,11 @@ deparse_value_ref(const Node* value,
 		case T_A_Const:
 			{
 				A_Const* con = (A_Const *)value;
+#if PG_VERSION_NUM >= 160000
+				ValUnion* val = &con->val;
+#else
 				Value* val = &con->val;
+#endif
 				switch (nodeTag(val))
 				{
 					case T_Integer:
@@ -520,9 +524,15 @@ deparse_column_ref(ColumnRef* cref,
 	return result;
 }
 
+#if PG_VERSION_NUM >= 160000
+bool
+deparse_a_const(ValUnion* value,
+				StringInfo buf)
+#else
 bool
 deparse_a_const(Value* value,
 				StringInfo buf)
+#endif
 {
 	bool result{true};
 
@@ -781,7 +791,11 @@ deparse_expr_recurse(Node* expr,
 		case T_A_Const:
 			{
 				A_Const* con = (A_Const *) expr;
+#if PG_VERSION_NUM >= 160000
+				ValUnion* val = &con->val;
+#else
 				Value* val = &con->val;
+#endif
 				result = deparse_a_const(val, buf);
 				break;
 			}
@@ -904,10 +918,14 @@ deparse_where_clause(Node* expr,
 
 		case T_SubLink:
 			{
+#if PG_VERSION_NUM >= 160000
+				// todo
+#else
 				SubLink* sub_link = (SubLink *) expr;
 				appendStringInfoString(buf, "EXISTS (");
 				deparse_select_query((SelectStmt*) sub_link->subselect, argtypes, placeholders, buf);
 				appendStringInfoString(buf, ")");
+#endif
 			}
 			break;
 
@@ -938,7 +956,11 @@ deparse_sort_clause(List* sortClause,
 			}
 			if (IsA(sortby->node, A_Const)) {
 				A_Const* con = (A_Const *) sortby->node;
+#if PG_VERSION_NUM >= 160000
+				ValUnion* val = &con->val;
+#else
 				Value* val = &con->val;
+#endif
 				deparse_a_const(val, buf);
 			}
 			switch (sortby->sortby_dir)
@@ -1112,7 +1134,11 @@ deparse_update_query(const UpdateStmt* stmt,
 		}
 		if (IsA(col->val, A_Const)) {
 			A_Const* con = (A_Const *) col->val;
+#if PG_VERSION_NUM >= 160000
+			ValUnion* val = &con->val;
+#else
 			Value* val = &con->val;
+#endif
 			deparse_a_const(val, buf);
 		}
 	}
@@ -1301,13 +1327,26 @@ after_prepare_stmt(const PrepareStmt* stmts,
 	return true;
 }
 
+#if PG_VERSION_NUM >= 160000
+void
+make_execute_parameters(const ValUnion* param_value,
+						const bool param_isnull,
+						const Oid param_type,
+						const std::string param_name,
+						const int param_id)
+#else
 void
 make_execute_parameters(const Value* param_value,
 						const Oid param_type,
 						const std::string param_name,
 						const int param_id)
+#endif
 {
+#if PG_VERSION_NUM >= 160000
+	if (param_isnull) {
+#else
 	if (IsA(param_value, Null)) {
+#endif
 		std::monostate monostate;
 		parameters.emplace_back(param_name, monostate);
 		return;
@@ -1518,17 +1557,28 @@ deparse_execute_param(const ExecuteStmt* stmts,
 				case T_A_Const:
 					{
 						A_Const* con = (A_Const *)stmt_param;
+#if PG_VERSION_NUM >= 160000
+						make_execute_parameters(&con->val, con->isnull, target_param->paramtype,
+												col_name, param_count);
+#else
 						make_execute_parameters(&con->val, target_param->paramtype,
 												col_name, param_count);
+#endif
 					}
 					break;
 				case T_SQLValueFunction:	// for Date/Time Functions
 				case T_FuncCall:			// for Date/Time Functions
 				case T_TypeCast:			// for TIMESTAMP 'yyyy-mm-dd hh:mm:ss'
 					{
+#if PG_VERSION_NUM >= 160000
+						ValUnion* val_dummy = (ValUnion *)makeNode(String);
+						make_execute_parameters(val_dummy, false, target_param->paramtype,
+												col_name, param_count);
+#else
 						Value* val_dummy = makeNode(Value);
 						make_execute_parameters(val_dummy, target_param->paramtype,
 												col_name, param_count);
+#endif
 					}
 					break;
 				default:
@@ -1586,17 +1636,28 @@ deparse_execute_paramref(const ParamRef* param_ref,
 				case T_A_Const:
 					{
 						A_Const* con = (A_Const *)stmt_param;
+#if PG_VERSION_NUM >= 160000
+						make_execute_parameters(&con->val, con->isnull, argtypes_v[param_count-1],
+												col_name, param_count);
+#else
 						make_execute_parameters(&con->val, argtypes_v[param_count-1],
 												col_name, param_count);
+#endif
 					}
 					break;
 				case T_SQLValueFunction:	// for Date/Time Functions
 				case T_FuncCall:			// for Date/Time Functions
 				case T_TypeCast:			// for TIMESTAMP '2004-10-19 10:23:54'
 					{
+#if PG_VERSION_NUM >= 160000
+						ValUnion* val_dummy = (ValUnion *)makeNode(String);
+						make_execute_parameters(val_dummy, false, argtypes_v[param_count-1],
+												col_name, param_count);
+#else
 						Value* val_dummy = makeNode(Value);
 						make_execute_parameters(val_dummy, argtypes_v[param_count-1],
 												col_name, param_count);
+#endif
 					}
 					break;
 				default:
@@ -2178,10 +2239,17 @@ befor_execute_stmt(const ExecuteStmt* stmts,
 				SelectStmt* stmt = (SelectStmt *) raw_stmt->stmt;
 
 				if (stmt->fromClause != NULL) {
+#if PG_VERSION_NUM >= 160000
+					ListCell* lc_fromClause;
+					foreach(lc_fromClause, stmt->fromClause)
+					{
+						Node* from = (Node *) lfirst(lc_fromClause);
+#else
 					ListCell* l;
 					foreach(l, stmt->fromClause)
 					{
 						Node* from = (Node *) lfirst(l);
+#endif
 						if (IsA(from, JoinExpr)) {
 							JoinExpr* join = (JoinExpr *) from;
 							deparse_execute_where_clause(join->quals, stmts);

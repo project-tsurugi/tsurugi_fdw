@@ -353,7 +353,11 @@ ERROR_CODE Tsurugi::begin(stub::Transaction** transaction)
 	}
 
 	if (connection_ == nullptr) {
+#if PG_VERSION_NUM >= 160000
+		error = stub_->get_connection(getpid() , connection_);
+#else
 		ERROR_CODE error = stub_->get_connection(getpid() , connection_);
+#endif
 		if (error != ERROR_CODE::OK)
 		{
 			std::cerr << "Stub::get_connection() failed. " << (int) error << std::endl;
@@ -364,7 +368,11 @@ ERROR_CODE Tsurugi::begin(stub::Transaction** transaction)
 	if (transaction_ == nullptr) {
 		boost::property_tree::ptree option;
 		GetTransactionOption(option);
+#if PG_VERSION_NUM >= 160000
+		error = connection_->begin(option, transaction_);
+#else
 		ERROR_CODE error = connection_->begin(option, transaction_);
+#endif
 		if (error != ERROR_CODE::OK)
 		{
 			std::cerr << "Connection::begin() failed. " << (int) error << std::endl;
