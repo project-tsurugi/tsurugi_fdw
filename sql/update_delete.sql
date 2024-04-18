@@ -62,13 +62,13 @@ INSERT INTO update_delete_real1 (col1, col2) VALUES (3, 3.4);
 SELECT * FROM update_delete_real1;
 
 UPDATE update_delete_real1 SET col2 = col2+1;
-SELECT * FROM update_delete_real1;
+SELECT * FROM update_delete_real1;  -- fix Tsurugi1.0.0-BETA4
 
-DELETE FROM update_delete_real1 WHERE col2 = 4.4;
-SELECT * FROM update_delete_real1;
+DELETE FROM update_delete_real1 WHERE col2 = cast(4.4 as real);  -- see tsurugi-issues#736
+SELECT * FROM update_delete_real1;  -- fix Tsurugi1.0.0-BETA4
 
 DELETE FROM update_delete_real1 WHERE col3 = 0.1;
-SELECT * FROM update_delete_real1;
+SELECT * FROM update_delete_real1;  -- fix Tsurugi1.0.0-BETA4
 
 ---double precision
 SELECT * FROM update_delete_double1;
