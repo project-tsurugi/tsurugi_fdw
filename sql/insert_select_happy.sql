@@ -134,9 +134,11 @@ SELECT * FROM integer1;
 INSERT INTO integer1 (ol_w_id) VALUES (-2147483648); --min
 SELECT * FROM integer1;
 
-INSERT INTO integer1 (ol_w_id) VALUES (1.1);
+INSERT INTO integer1 (ol_w_id) VALUES (1.1);  -- see tsurugi-issues#736
+INSERT INTO integer1 (ol_w_id) VALUES (cast(1.1 as int));
 SELECT * FROM integer1;
-INSERT INTO integer1 (ol_w_id) VALUES (0.1);
+INSERT INTO integer1 (ol_w_id) VALUES (0.1);  -- see tsurugi-issues#736
+INSERT INTO integer1 (ol_w_id) VALUES (cast(0.1 as int));
 SELECT * FROM integer1;
 
 --- bigint
@@ -159,9 +161,11 @@ SELECT * FROM bigint1;
 INSERT INTO bigint1 (id, ol_w_id) VALUES (11, -9223372036854775807-1); --min
 SELECT * FROM bigint1;
 
-INSERT INTO bigint1 (id, ol_w_id) VALUES (15, 1.1);
+INSERT INTO bigint1 (id, ol_w_id) VALUES (15, 1.1);  -- see tsurugi-issues#736
+INSERT INTO bigint1 (id, ol_w_id) VALUES (15, cast(1.1 as bigint));
 SELECT * FROM bigint1;
-INSERT INTO bigint1 (id, ol_w_id) VALUES (16, 0.1);
+INSERT INTO bigint1 (id, ol_w_id) VALUES (16, 0.1);  -- see tsurugi-issues#736
+INSERT INTO bigint1 (id, ol_w_id) VALUES (16, cast(0.1 as bigint));
 SELECT * FROM bigint1;
 
 --- real
