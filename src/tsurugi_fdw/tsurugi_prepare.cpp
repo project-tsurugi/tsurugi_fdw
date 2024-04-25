@@ -26,6 +26,7 @@
 #include "ogawayama/stub/api.h"
 #include "takatori/value/time_point.h"
 #include "tsurugi.h"
+#include "tsurugi_utils.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -54,6 +55,9 @@ using namespace ogawayama;
 static constexpr const char* const PREPARE_NAME = "tsurugi_prep_";
 static constexpr const char* const PREPARE_PARAM_NAME = "param_";
 static constexpr const char* const PREPARE_PARAM_NAME_SQL = ":param_";
+static constexpr const char* const COMMA_CHAR = ",";
+static constexpr const char* const SPACE_CHAR = " ";
+static constexpr const char* const RIGHT_PARENTHESIS_CHAR = ")";
 
 // Name of the stored Prepared Statement.
 std::map<std::string, std::string> stored_prepare_name;
@@ -87,7 +91,6 @@ begin_prepare_processing(const EState* estate)
 	}
 
 	std::string sql = estate->es_sourceText;
-
 	// Determine Tsurugi::prepare execution from stored prepared statement name.
 	std::map<std::string, std::string>::iterator itr = stored_prepare_name.find(sql);
 	if (itr == stored_prepare_name.end()) {
@@ -104,6 +107,31 @@ begin_prepare_processing(const EState* estate)
 				elog(ERROR, "Unrecognized parameter position in SQL text.");
 				return;
 			}
+			// Search for PostgreSQL-specific a type casts(expression::type).
+			std::size_t cast_exists = sql.find(serch_param + "::", param_pos);
+			if (cast_exists != std::string::npos) {
+				std::size_t sql_length = sql.length();
+				// Calculate length including type cast(expression::type+comma).
+				std::size_t cast_param_len = sql_length;
+				std::size_t comma_char_pos = sql.find(COMMA_CHAR, param_pos);
+				if (comma_char_pos != std::string::npos) {
+					cast_param_len = std::min(comma_char_pos, cast_param_len);
+				}
+				// Calculate length including type cast(expression::type+space).
+				std::size_t space_char_pos = sql.find(SPACE_CHAR, param_pos);
+				if (space_char_pos != std::string::npos) {
+					cast_param_len = std::min(space_char_pos, cast_param_len);
+				}
+				// Calculate length including type cast(expression::type+right parenthesis).
+				std::size_t right_parenthesis_char_pos = sql.find(RIGHT_PARENTHESIS_CHAR, param_pos);
+				if (right_parenthesis_char_pos != std::string::npos) {
+					cast_param_len = std::min(right_parenthesis_char_pos, cast_param_len);
+				}
+				serch_param_len = cast_param_len - param_pos;
+			}
+
+			// replace prepare string.
+			// ex) "$1" -> ":param_0", "$2::int4" -> ":param_1"
 			std::string param_name = PREPARE_PARAM_NAME_SQL + std::to_string(i);
 			sql = sql.replace(param_pos, serch_param_len, param_name);
 		}
@@ -171,6 +199,7 @@ begin_prepare_processing(const EState* estate)
 			}
 		}
 
+		sql = make_tsurugi_query(sql);
 		ERROR_CODE error = Tsurugi::prepare(sql, placeholders, prepared_statement);
 		if (error != ERROR_CODE::OK)
 		{
