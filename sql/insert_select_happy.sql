@@ -134,6 +134,8 @@ SELECT * FROM integer1;
 INSERT INTO integer1 (ol_w_id) VALUES (-2147483648); --min
 SELECT * FROM integer1;
 
+INSERT INTO integer1 (ol_w_id) VALUES (9), (8), (7);  -- see tsurugi-issues#770
+
 INSERT INTO integer1 (ol_w_id) VALUES (1.1);  -- see tsurugi-issues#736
 INSERT INTO integer1 (ol_w_id) VALUES (cast(1.1 as int));
 SELECT * FROM integer1;

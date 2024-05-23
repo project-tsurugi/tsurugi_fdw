@@ -248,6 +248,7 @@ is_only_foreign_table(AltPlannerInfo *root, List *rtable)
 			case RTE_TABLEFUNC:
 			case RTE_VALUES:
 			case RTE_NAMEDTUPLESTORE:
+			default:
 			{
                 elog(LOG, "tsurugi_fdw : Whether or not support is provided will be " \
 						"determined by Tsurugi. rtekind = %d", range_table_entry->rtekind);
