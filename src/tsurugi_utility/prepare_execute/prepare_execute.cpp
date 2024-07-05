@@ -1290,6 +1290,9 @@ after_prepare_stmt(const PrepareStmt* stmts,
 	ERROR_CODE error = Tsurugi::prepare(sql.data, placeholders, prepared_statement);
 	if (error != ERROR_CODE::OK)
 	{
+		/* Drop entry from the PostgreSQL hash table and plancache */
+		DropPreparedStatement(stmts->name, false);
+
 		elog(ERROR, "Tsurugi::prepare() failed. (%d)\n\tsql:%s", (int) error, sql.data);
 		return false;
 	}
@@ -2199,7 +2202,13 @@ befor_execute_stmt(const ExecuteStmt* stmts,
 			break;
 	}
 
-	prepared_statement = std::move(stored_prepare_statment.at(stmts->name));
+	try {
+		prepared_statement = std::move(stored_prepare_statment.at(stmts->name));
+	} catch (std::out_of_range&) {
+		/* should not reach here */
+		elog(ERROR, "exception std::out_of_range: prepared statement \"%s\"", stmts->name);
+		return false;
+	}
 	stmts_name = stmts->name;
 
 	return true;
