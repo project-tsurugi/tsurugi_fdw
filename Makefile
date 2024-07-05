@@ -22,9 +22,14 @@ EXTENSION = tsurugi_fdw
 DATA = tsurugi_fdw--1.0.0-BETA5.sql
 
 # REGRESS_BASIC: variable used in frontend
-#REGRESS_BASIC = test_create_table otable_of_constr ch-benchmark-ddl create_table_syntax_type update_delete insert_select
+ifdef REGRESS_SHAKUJO
+REGRESS_BASIC = test_preparation create_table create_index insert_select_happy_shakujo update_delete select_statements_shakujo user_management \
+                udf_transaction prepare_statment prepare_select_statment_shakujo prepare_decimal manual_tutorial data_types
+else
 REGRESS_BASIC = test_preparation create_table create_index insert_select_happy update_delete select_statements user_management \
                 udf_transaction prepare_statment prepare_select_statment prepare_decimal manual_tutorial data_types
+endif
+
 ifdef REGRESS_EXTRA
 	# REGRESS: variable defined in PostgreSQL
 	# REGRESS = $(REGRESS_BASIC) otable_of_constr2
