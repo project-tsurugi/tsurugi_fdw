@@ -207,7 +207,7 @@ PREPARE select_t2_where6
 PREPARE select_pt1_where7
 	AS SELECT * FROM pt1 WHERE c7 LIKE '%LMN%';
 -- TG
-/* tsurugi-issue#103 */
+/* tsurugi-issue#103 (no longer supports) */
 PREPARE select_t1_where7
 	AS SELECT * FROM t1 WHERE c7 LIKE '%LMN%';
 -- WHERE #8
@@ -461,7 +461,7 @@ EXECUTE select_t2_where6;
 -- PG
 EXECUTE select_pt1_where7;
 -- TG
-/* tsurugi-issue#103 */
+/* tsurugi-issue#103 (no longer supports) */
 EXECUTE select_t1_where7;
 -- WHERE #8
 -- PG
