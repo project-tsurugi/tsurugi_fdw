@@ -245,8 +245,8 @@ PREPARE select_pt2_group2
 /* aggregate functions alias not support failed. (10) */
 PREPARE select_t2_group2_ng1
 	AS SELECT count(c1) AS "count(c1)", sum(c2) AS "sum(c2)", c7 FROM t2 GROUP BY c7 HAVING sum(c2) > 55;
-/* having not support failed. (10) */
-PREPARE select_t2_group2_ng2
+/* having support. (tsurugi-issue#739) */
+PREPARE select_t2_group2
 	AS SELECT count(c1), sum(c2), c7 FROM t2 GROUP BY c7 HAVING sum(c2) > 55;
 -- GROUP BY #3
 -- PG
@@ -493,9 +493,8 @@ EXECUTE select_pt2_group2;
 /* aggregate functions alias not support failed. (10)
 EXECUTE select_t2_group2_ng1;
 */
-/* having not support failed. (10)
-EXECUTE select_t2_group2_ng2;
-*/
+/* having support. (tsurugi-issue#739) */
+EXECUTE select_t2_group2;
 -- GROUP BY #3
 -- PG
 EXECUTE select_pt2_group3;
