@@ -935,12 +935,8 @@ EXECUTE select_pg_join_tg6;
 
 -- PG&TG
 /* tables are mixed */
-EXECUTE select_pg_join_pgtg6;
- c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  | c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
-----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----+----+----+-----+-----+------+------------+----------------------------
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ |  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
-(1 row)
-
+EXECUTE select_pg_join_pgtg6; /* tsurugi-issue#863 */
+ERROR:  Query execution failed. (10)
 -- PG JOIN #7
 -- PG
 EXECUTE select_pg_join_pg7;

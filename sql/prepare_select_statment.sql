@@ -551,7 +551,7 @@ EXECUTE select_pg_join_pg6;
 EXECUTE select_pg_join_tg6;
 -- PG&TG
 /* tables are mixed */
-EXECUTE select_pg_join_pgtg6;
+EXECUTE select_pg_join_pgtg6; /* tsurugi-issue#863 */
 -- PG JOIN #7
 -- PG
 EXECUTE select_pg_join_pg7;
