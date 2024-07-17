@@ -2202,13 +2202,7 @@ befor_execute_stmt(const ExecuteStmt* stmts,
 			break;
 	}
 
-	try {
-		prepared_statement = std::move(stored_prepare_statment.at(stmts->name));
-	} catch (std::out_of_range&) {
-		/* should not reach here */
-		elog(ERROR, "exception std::out_of_range: prepared statement \"%s\"", stmts->name);
-		return false;
-	}
+	prepared_statement = std::move(stored_prepare_statment.at(stmts->name));
 	stmts_name = stmts->name;
 
 	return true;
