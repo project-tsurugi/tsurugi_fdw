@@ -510,7 +510,7 @@ GROUP BY
     c7;
 
 -- FOREIGN TABLE JOIN
--- TG JOIN #1 /* tsurugi-issue#863 */
+-- TG JOIN #1
 SELECT 
     *
 FROM 
@@ -518,7 +518,7 @@ FROM
 WHERE
     b.c1 > 1;
 
--- TG JOIN #2 /* tsurugi-issue#863 */
+-- TG JOIN #2
 SELECT 
     a.c1, a.c2, b.c1, b.c7
 FROM 
@@ -526,7 +526,7 @@ FROM
 ORDER BY
     b.c4 DESC;   
 
--- TG JOIN #3 /* tsurugi-issue#863 */
+-- TG JOIN #3
 SELECT 
     a.c1, a.c3, b.c1, b.c6
 FROM 
@@ -623,7 +623,7 @@ FROM
 WHERE
     a.c2=22;
 
--- TG /* tsurugi-issue#863 */
+-- TG
 SELECT
     *
 FROM
@@ -631,7 +631,7 @@ FROM
 WHERE
     a.c2=22;
 
--- PG&TG /* tsurugi-issue#863 */
+-- PG&TG
 SELECT
     *
 FROM
@@ -648,7 +648,7 @@ FROM
 ORDER BY
     b.c1;
 
--- TG /* tsurugi-issue#863 */
+-- TG
 SELECT
     *
 FROM
@@ -671,7 +671,7 @@ SELECT
 FROM
     pt1 AS a JOIN pt1 AS b ON a.c3=b.c3;
 
--- TG /* tsurugi-issue#863 */
+-- TG
 SELECT
     *
 FROM

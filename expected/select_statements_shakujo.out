@@ -766,28 +766,54 @@ GROUP BY
 (3 rows)
 
 -- FOREIGN TABLE JOIN
--- TG JOIN #1 /* tsurugi-issue#863 */
+-- TG JOIN #1
 SELECT 
     *
 FROM 
     t1 a INNER JOIN t2 b ON a.c1 = b.c1
 WHERE
     b.c1 > 1;
-ERROR:  Query execution failed. (10)
--- TG JOIN #2 /* tsurugi-issue#863 */
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
+----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
+(2 rows)
+
+-- TG JOIN #2
 SELECT 
     a.c1, a.c2, b.c1, b.c7
 FROM 
     t1 a INNER JOIN t2 b USING (c1)
 ORDER BY
     b.c4 DESC;   
-ERROR:  Query execution failed. (10)
--- TG JOIN #3 /* tsurugi-issue#863 */
+ c1 | c2 | c1 | c7  
+----+----+----+-----
+  3 | 33 |  3 | ABC
+  2 | 22 |  2 | XYZ
+  1 | 11 |  1 | ABC
+(3 rows)
+
+-- TG JOIN #3
 SELECT 
     a.c1, a.c3, b.c1, b.c6
 FROM 
     t1 a INNER JOIN t2 b ON a.c1 != b.c1;
-ERROR:  Query execution failed. (10)
+ c1 | c3  | c1 |     c6     
+----+-----+----+------------
+  1 | 111 |  2 | two       
+  1 | 111 |  3 | three     
+  1 | 111 |  4 | NULL      
+  1 | 111 |  5 | five      
+  2 | 222 |  1 | one       
+  2 | 222 |  3 | three     
+  2 | 222 |  4 | NULL      
+  2 | 222 |  5 | five      
+  3 | 333 |  1 | one       
+  3 | 333 |  2 | two       
+  3 | 333 |  4 | NULL      
+  3 | 333 |  5 | five      
+(12 rows)
+
 -- POSTGRESQL TABLE JOIN
 -- PG JOIN #1
 -- PG
@@ -939,22 +965,30 @@ WHERE
   2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ |  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
 (1 row)
 
--- TG /* tsurugi-issue#863 */
+-- TG
 SELECT
     *
 FROM
     t1 AS a JOIN t2 AS b ON a.c4=b.c4 JOIN t1 AS c ON b.c4=c.c4
 WHERE
     a.c2=22;
-ERROR:  Query execution failed. (10)
--- PG&TG /* tsurugi-issue#863 */
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  | c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
+----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----+----+----+-----+-----+------+------------+----------------------------
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ |  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+(1 row)
+
+-- PG&TG
 SELECT
     *
 FROM
     t1 AS a JOIN pt2 AS b ON a.c4=b.c4 JOIN t1 AS c ON b.c4=c.c4
 WHERE
     a.c2=22;
-ERROR:  Query execution failed. (10)
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  | c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
+----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----+----+----+-----+-----+------+------------+----------------------------
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ |  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+(1 row)
+
 -- PG JOIN #7
 -- PG
 SELECT
@@ -982,14 +1016,32 @@ ORDER BY
   3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
 (15 rows)
 
--- TG /* tsurugi-issue#863 */
+-- TG
 SELECT
     *
 FROM
     t1 AS a CROSS JOIN t2 AS b
 ORDER BY
     b.c1;
-ERROR:  Query execution failed. (10)
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
+----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       | 
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       | 
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       | 
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
+(15 rows)
+
 -- PG&TG
 SELECT
     *
@@ -1029,12 +1081,18 @@ FROM
   3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
 (3 rows)
 
--- TG /* tsurugi-issue#863 */
+-- TG
 SELECT
     *
 FROM
     t1 AS a JOIN t1 AS b ON a.c3=b.c3;
-ERROR:  Query execution failed. (10)
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
+----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+----------------------------
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+(3 rows)
+
 /* DDL */
 DROP TABLE t1;
 DROP FOREIGN TABLE t1;

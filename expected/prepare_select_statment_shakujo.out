@@ -1,4 +1,6 @@
-/* DDL */
+/***********/
+/*** DDL ***/
+/***********/
 -- TG tables
 CREATE TABLE t1(
     c1 INTEGER PRIMARY KEY, 
@@ -67,21 +69,290 @@ CREATE TABLE pt3(
     c1 INTEGER PRIMARY KEY,
     c2 CHAR(10)
 );
-/* DML */
+/***************/
+/*** PREPARE ***/
+/***************/
 -- TG tables
-INSERT INTO 
-    t1(c1, c2, c3, c4, c5, c6, c7)
-VALUES
-    (1, 11, 111, 1.1, 1.11, 'first', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
-INSERT INTO 
-    t1(c1, c2, c3, c4, c5, c6, c7)
-VALUES
-    (2, 22, 222, 2.2, 2.22, 'second', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
-INSERT INTO 
-    t1(c1, c2, c3, c4, c5, c6, c7)
-VALUES
-    (3, 33, 333, 3.3, 3.33, 'third', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
-SELECT * FROM t1;
+PREPARE insert_t1 (INTEGER, INTEGER, BIGINT, REAL, DOUBLE PRECISION, CHAR(10), VARCHAR(26)) 
+    AS INSERT INTO t1 (c1, c2, c3, c4, c5, c6, c7) VALUES ($1, $2, $3, $4, $5, $6, $7);
+PREPARE select_t1_all 
+	AS SELECT * FROM t1;
+PREPARE insert_t2 (INTEGER, INTEGER, BIGINT, REAL, DOUBLE PRECISION, CHAR(10), VARCHAR(26)) 
+    AS INSERT INTO t2 (c1, c2, c3, c4, c5, c6, c7) VALUES ($1, $2, $3, $4, $5, $6, $7);
+PREPARE select_t2_all 
+	AS SELECT * FROM t2;
+PREPARE insert_t3 (INTEGER, CHAR(10)) 
+    AS INSERT INTO t3 (c1, c2) VALUES ($1, $2);
+PREPARE select_t3_all 
+	AS SELECT * FROM t3;
+-- PG tables
+PREPARE insert_pt1 (INTEGER, INTEGER, BIGINT, REAL, DOUBLE PRECISION, CHAR(10), VARCHAR(26)) 
+    AS INSERT INTO pt1 (c1, c2, c3, c4, c5, c6, c7) VALUES ($1, $2, $3, $4, $5, $6, $7);
+PREPARE select_pt1_all 
+	AS SELECT * FROM pt1;
+PREPARE insert_pt2 (INTEGER, INTEGER, BIGINT, REAL, DOUBLE PRECISION, CHAR(10), VARCHAR(26)) 
+    AS INSERT INTO pt2 (c1, c2, c3, c4, c5, c6, c7) VALUES ($1, $2, $3, $4, $5, $6, $7);
+PREPARE select_pt2_all 
+	AS SELECT * FROM pt2;
+PREPARE insert_pt3 (INTEGER, CHAR(10)) 
+    AS INSERT INTO pt3 (c1, c2) VALUES ($1, $2);
+PREPARE select_pt3_all 
+	AS SELECT * FROM pt3;
+-- SELECT
+-- PG
+PREPARE select_pt2_c2_c4_c6
+	AS SELECT c2, c4, c6 FROM pt2;
+-- TG
+PREPARE select_t2_c2_c4_c6
+	AS SELECT c2, c4, c6 FROM t2;
+-- PG
+PREPARE select_pt2_c6
+	AS SELECT c6 FROM pt2;
+-- TG
+PREPARE select_t2_c6
+	AS SELECT c6 FROM t2;
+-- PG
+PREPARE select_pt2_c1_c2_seisu
+	AS SELECT c1, c2 AS seisu FROM pt2;
+-- TG
+PREPARE select_t2_c1_c2_seisu
+	AS SELECT c1, c2 AS seisu FROM t2;
+-- ORDER BY #1
+-- PG
+PREPARE select_pt2_orderby1
+	AS SELECT * FROM pt2 ORDER BY c6;
+-- TG
+PREPARE select_t2_orderby1
+	AS SELECT * FROM t2 ORDER BY c6;
+-- ORDER BY #2
+-- PG
+PREPARE select_pt2_orderby2
+	AS SELECT c1, c2, c3, c4, c5, c6, c7 FROM pt2 ORDER BY 6;
+-- TG
+/* failed (10) because of ORDER BY 6 */
+PREPARE select_t2_orderby2
+	AS SELECT c1, c2, c3, c4, c5, c6, c7 FROM t2 ORDER BY 6;
+ERROR:  Tsurugi::prepare() failed. (10)
+	sql:SELECT c1, c2, c3, c4, c5, c6, c7 FROM t2 ORDER BY 6 
+-- ORDER BY #3
+-- PG
+PREPARE select_pt2_orderby3
+	AS SELECT c1, c4, c5, c6, c7 FROM pt2 WHERE c1 > 2 ORDER BY c7;
+-- TG
+PREPARE select_t2_orderby3
+	AS SELECT c1, c4, c5, c6, c7 FROM t2 WHERE c1 > 2 ORDER BY c7;
+-- ORDER BY #4
+-- PG
+PREPARE select_pt2_orderby4
+	AS SELECT c1, c2 FROM pt2 WHERE c2 * 2 > 50 ORDER BY c3 DESC;
+-- TG
+PREPARE select_t2_orderby4
+	AS SELECT c1, c2 FROM t2 WHERE c2 * 2 > 50 ORDER BY c3 DESC;
+-- WHERE #1
+-- PG
+PREPARE select_pt2_where1
+	AS SELECT * FROM pt2 WHERE c3 > 2 ORDER BY c1;
+-- TG
+PREPARE select_t2_where1
+	AS SELECT * FROM t2 WHERE c3 > 2 ORDER BY c1;
+-- WHERE #2
+-- PG
+PREPARE select_pt2_where2
+	AS SELECT * FROM pt2 WHERE c7 = 'XYZ' ORDER BY c1;
+-- TG
+PREPARE select_t2_where2
+	AS SELECT * FROM t2 WHERE c7 = 'XYZ' ORDER BY c1;
+-- WHERE #3
+-- PG
+PREPARE select_pt1_where3
+	AS SELECT c1, c2, c6, c7 FROM pt1 WHERE c1 = 1 OR c1 = 3;
+-- TG
+PREPARE select_t1_where3
+	AS SELECT c1, c2, c6, c7 FROM t1 WHERE c1 = 1 OR c1 = 3;
+-- WHERE #4
+-- PG
+PREPARE select_pt1_where4
+	AS SELECT c1, c3, c5, c7 FROM pt1 WHERE c1 = 2;
+-- TG
+PREPARE select_t1_where4
+	AS SELECT c1, c3, c5, c7 FROM t1 WHERE c1 = 2;
+-- WHERE #5
+-- PG
+PREPARE select_pt1_where5
+	AS SELECT * FROM pt1 WHERE c4 >= 2.2 AND c4 < 5.5;
+-- TG
+PREPARE select_t1_where5
+	AS SELECT * FROM t1 WHERE c4 >= 2.2 AND c4 < 5.5;
+-- WHERE #6
+-- PG
+PREPARE select_pt2_where6
+	AS SELECT * FROM pt2 WHERE c4 BETWEEN 2.2 AND 5.5;
+-- TG
+/* tsurugi-issue#69 */
+PREPARE select_t2_where6
+	AS SELECT * FROM t2 WHERE c4 BETWEEN 2.2 AND 5.5;
+ERROR:  Tsurugi::prepare() failed. (10)
+	sql:SELECT * FROM t2 WHERE c4 BETWEEN 2.200000 AND 5.500000 
+-- WHERE #7
+-- PG
+PREPARE select_pt1_where7
+	AS SELECT * FROM pt1 WHERE c7 LIKE '%LMN%';
+-- TG
+/* tsurugi-issue#103 */
+PREPARE select_t1_where7
+	AS SELECT * FROM t1 WHERE c7 LIKE '%LMN%';
+-- WHERE #8
+-- PG
+PREPARE select_pt1_where8
+	AS SELECT * FROM pt1 WHERE EXISTS (SELECT * FROM pt2 WHERE c2 = 22);
+-- TG
+/* not support EXISTS failed. (10) */
+PREPARE select_t1_where8
+	AS SELECT * FROM t1 WHERE EXISTS (SELECT * FROM t2 WHERE c2 = 22);
+ERROR:  Tsurugi::prepare() failed. (10)
+	sql:SELECT * FROM t1 WHERE EXISTS (SELECT * FROM t2 WHERE c2 = 22 )
+-- WHERE #9
+-- PG
+PREPARE select_pt2_where9
+	AS SELECT * FROM pt2 WHERE c4 IN (1.1,3.3);
+-- TG
+/* tsurugi-issue#70 */
+PREPARE select_t2_where9
+	AS SELECT * FROM t2 WHERE c4 IN (1.1,3.3);
+ERROR:  Tsurugi::prepare() failed. (10)
+	sql:SELECT * FROM t2 WHERE c4 IN (1.100000 , 3.300000 )
+-- GROUP BY #1
+-- PG
+PREPARE select_pt2_group1
+	AS SELECT count(c1) AS "count(c1)", sum(c2) AS "sum(c2)", c7 FROM pt2 GROUP BY c7;
+-- TG
+/* aggregate functions alias not support failed. (10) */
+PREPARE select_t2_group1_ng
+	AS SELECT count(c1) AS "count(c1)", sum(c2) AS "sum(c2)", c7 FROM t2 GROUP BY c7;
+ERROR:  Tsurugi::prepare() failed. (10)
+	sql:SELECT count(c1) AS 'count(c1)', sum(c2) AS 'sum(c2)', c7 FROM t2 GROUP BY c7
+PREPARE select_t2_group1
+	AS SELECT count(c1), sum(c2), c7 FROM t2 GROUP BY c7;
+-- GROUP BY #2
+-- PG
+PREPARE select_pt2_group2
+	AS SELECT count(c1) AS "count(c1)", sum(c2) AS "sum(c2)", c7 FROM pt2 GROUP BY c7 HAVING sum(c2) > 55;
+-- TG
+/* aggregate functions alias not support failed. (10) */
+PREPARE select_t2_group2_ng1
+	AS SELECT count(c1) AS "count(c1)", sum(c2) AS "sum(c2)", c7 FROM t2 GROUP BY c7 HAVING sum(c2) > 55;
+ERROR:  Tsurugi::prepare() failed. (10)
+	sql:SELECT count(c1) AS 'count(c1)', sum(c2) AS 'sum(c2)', c7 FROM t2 GROUP BY c7 HAVING sum(c2) > 55 
+/* having not support failed. (10) */
+PREPARE select_t2_group2_ng2
+	AS SELECT count(c1), sum(c2), c7 FROM t2 GROUP BY c7 HAVING sum(c2) > 55;
+ERROR:  Tsurugi::prepare() failed. (10)
+	sql:SELECT count(c1), sum(c2), c7 FROM t2 GROUP BY c7 HAVING sum(c2) > 55 
+-- GROUP BY #3
+-- PG
+PREPARE select_pt2_group3
+	AS SELECT c7, count(c1), sum(c2), avg(c3), min(c4), max(c5) FROM pt2 GROUP BY c7;
+-- TG
+PREPARE select_t2_group3_exe_ng1
+	AS SELECT c7, count(c1), sum(c2), avg(c3), min(c4), max(c5) FROM t2 GROUP BY c7;
+-- FOREIGN TABLE JOIN
+-- TG JOIN #1
+PREPARE select_join1
+	AS SELECT * FROM t1 a INNER JOIN t2 b ON a.c1 = b.c1 WHERE b.c1 > 1;
+-- TG JOIN #2
+/* failed (10) : mismatched input 'USING' */
+PREPARE select_join2
+	AS SELECT a.c1, a.c2, b.c1, b.c7 FROM t1 a INNER JOIN t2 b USING (c1) ORDER BY b.c4 DESC;
+ERROR:  Tsurugi::prepare() failed. (10)
+	sql:SELECT a.c1, a.c2, b.c1, b.c7 FROM t1 a CROSS JOIN t2 b USING (c1) ORDER BY b.c4 DESC
+-- TG JOIN #3
+PREPARE select_join3
+	AS SELECT a.c1, a.c3, b.c1, b.c6 FROM t1 a INNER JOIN t2 b ON a.c1 != b.c1;
+-- POSTGRESQL TABLE JOIN
+-- PG JOIN #1
+-- PG
+PREPARE select_pg_join_pg1
+	AS SELECT * FROM pt1 a INNER JOIN pt2 b ON a.c4 = b.c4 WHERE a.c1 > 1;
+-- TG
+/* tables are mixed */
+PREPARE select_pg_join_tg1
+	AS SELECT * FROM t1 a INNER JOIN pt2 b ON a.c4 = b.c4 WHERE a.c1 > 1;
+WARNING:  If Tsurugi and non-Tsurugi tables are mixed, do not PREPARE to Tsurugi
+-- PG JOIN #2
+-- PG
+PREPARE select_pg_join_pg2
+	AS SELECT a.c1, a.c2, b.c4, b.c6 FROM pt1 a INNER JOIN pt2 b USING (c1) ORDER BY b.c4 DESC;
+-- TG
+/* tables are mixed */
+PREPARE select_pg_join_tg2
+	AS SELECT a.c1, a.c2, b.c4, b.c6 FROM t1 a INNER JOIN pt2  b USING (c1) ORDER BY b.c4 DESC;
+WARNING:  If Tsurugi and non-Tsurugi tables are mixed, do not PREPARE to Tsurugi
+-- PG JOIN  #3
+-- PG
+PREPARE select_pg_join_pg3
+	AS SELECT a.c1, a.c3, b.c5, b.c7 FROM pt2 a LEFT OUTER JOIN pt1 b ON a.c1 = b.c1;
+-- TG
+/* tables are mixed */
+PREPARE select_pg_join_tg3
+	AS SELECT a.c1, a.c3, b.c5, b.c7 FROM t2 a LEFT OUTER JOIN pt1 b ON a.c1 = b.c1;
+WARNING:  If Tsurugi and non-Tsurugi tables are mixed, do not PREPARE to Tsurugi
+-- PG JOIN #4
+-- PG
+PREPARE select_pg_join_pg4
+	AS SELECT * FROM pt1 a INNER JOIN pt2 b ON a.c4 = b.c4 WHERE a.c1 > 1 AND a.c1 < 3;
+-- TG
+/* tables are mixed */
+PREPARE select_pg_join_tg4
+	AS SELECT * FROM pt1 a INNER JOIN t2 b ON a.c4 = b.c4 WHERE a.c1 > 1 AND a.c1 < 3;
+WARNING:  If Tsurugi and non-Tsurugi tables are mixed, do not PREPARE to Tsurugi
+-- PG JOIN #5
+-- PG
+PREPARE select_pg_join_pg5
+	AS SELECT count(a.c1), sum(b.c2), b.c7 FROM pt1 a INNER JOIN pt2 b USING (c2) GROUP BY b.c7;
+-- TG
+/* tables are mixed */
+PREPARE select_pg_join_tg5
+	AS SELECT count(a.c1), sum(b.c2), b.c7 FROM pt1 a INNER JOIN t2 b USING (c2) GROUP BY b.c7;
+WARNING:  If Tsurugi and non-Tsurugi tables are mixed, do not PREPARE to Tsurugi
+-- PG JOIN #6
+-- PG
+PREPARE select_pg_join_pg6
+	AS SELECT * FROM pt1 AS a JOIN pt2 AS b ON a.c4=b.c4 JOIN pt1 AS c ON b.c4=c.c4 WHERE a.c2=22;
+-- TG
+PREPARE select_pg_join_tg6
+	AS SELECT * FROM t1 AS a JOIN t2 AS b ON a.c4=b.c4 JOIN t1 AS c ON b.c4=c.c4 WHERE a.c2=22;
+-- PG&TG
+/* tables are mixed */
+PREPARE select_pg_join_pgtg6
+	AS SELECT * FROM t1 AS a JOIN pt2 AS b ON a.c4=b.c4 JOIN t1 AS c ON b.c4=c.c4 WHERE a.c2=22;
+WARNING:  If Tsurugi and non-Tsurugi tables are mixed, do not PREPARE to Tsurugi
+-- PG JOIN #7
+-- PG
+PREPARE select_pg_join_pg7
+	AS SELECT * FROM pt1 AS a CROSS JOIN pt2 AS b ORDER BY b.c1;
+-- TG
+PREPARE select_pg_join_tg7
+	AS SELECT * FROM t1 AS a CROSS JOIN t2 AS b ORDER BY b.c1;
+-- PG&TG
+/* tables are mixed */
+PREPARE select_pg_join_pgtg7
+	AS SELECT * FROM pt1 AS a CROSS JOIN t2 AS b ORDER BY b.c1;
+WARNING:  If Tsurugi and non-Tsurugi tables are mixed, do not PREPARE to Tsurugi
+-- PG JOIN #8
+-- PG
+PREPARE select_pg_join_pg8
+	AS SELECT * FROM pt1 AS a JOIN pt1 AS b ON a.c3=b.c3;
+-- TG
+PREPARE select_pg_join_tg8
+	AS SELECT * FROM t1 AS a JOIN t1 AS b ON a.c3=b.c3;
+/***************/
+/*** EXECUTE ***/
+/***************/
+-- TG tables
+EXECUTE insert_t1 (1, 11, 111, 1.1, 1.11, 'first', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+EXECUTE insert_t1 (2, 22, 222, 2.2, 2.22, 'second', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+EXECUTE insert_t1 (3, 33, 333, 3.3, 3.33, 'third', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+EXECUTE select_t1_all;
  c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
 ----+----+-----+-----+------+------------+----------------------------
   1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
@@ -89,27 +360,12 @@ SELECT * FROM t1;
   3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
 (3 rows)
 
-INSERT INTO 
-    t2(c1, c2, c3, c4, c5, c6, c7)
-VALUES
-    (1, 11, 111, 1.1, 1.11, 'one', 'ABC');
-INSERT INTO 
-    t2(c1, c2, c3, c4, c5, c6, c7)
-VALUES
-    (2, 22, 222, 2.2, 2.22, 'two', 'XYZ');
-INSERT INTO 
-    t2(c1, c2, c3, c4, c5, c6, c7)
-VALUES
-    (3, 33, 333, 3.3, 3.33, 'three', 'ABC');
-INSERT INTO 
-    t2(c1, c2, c3, c4, c5, c6, c7)
-VALUES
-    (4, NULL, NULL, NULL, NULL, 'NULL', NULL);
-INSERT INTO 
-    t2(c1, c2, c3, c4, c5, c6, c7)
-VALUES
-    (5, 55, 555, 5.5, 5.55, 'five', 'XYZ');
-SELECT * FROM t2;
+EXECUTE insert_t2 (1, 11, 111, 1.1, 1.11, 'one', 'ABC');
+EXECUTE insert_t2 (2, 22, 222, 2.2, 2.22, 'two', 'XYZ');
+EXECUTE insert_t2 (3, 33, 333, 3.3, 3.33, 'three', 'ABC');
+EXECUTE insert_t2 (4, NULL, NULL, NULL, NULL, 'NULL', NULL);
+EXECUTE insert_t2 (5, 55, 555, 5.5, 5.55, 'five', 'XYZ');
+EXECUTE select_t2_all;
  c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
 ----+----+-----+-----+------+------------+-----
   1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
@@ -119,27 +375,12 @@ SELECT * FROM t2;
   5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
 (5 rows)
 
-INSERT INTO
-    t3(c1, c2)
-VALUES
-    (1, 'ichi');
-INSERT INTO
-    t3(c1, c2)
-VALUES
-    (2, 'ni');
-INSERT INTO
-    t3(c1, c2)
-VALUES
-    (3, 'san');
-INSERT INTO
-    t3(c1, c2)
-VALUES
-    (4, 'si');
-INSERT INTO
-    t3(c1, c2)
-VALUES
-    (5, 'go');
-SELECT * FROM t3;
+EXECUTE insert_t3 (1, 'ichi');
+EXECUTE insert_t3 (2, 'ni');
+EXECUTE insert_t3 (3, 'san');
+EXECUTE insert_t3 (4, 'si');
+EXECUTE insert_t3 (5, 'go');
+EXECUTE select_t3_all;
  c1 |     c2     
 ----+------------
   1 | ichi      
@@ -150,19 +391,10 @@ SELECT * FROM t3;
 (5 rows)
 
 -- PG tables
-INSERT INTO 
-    pt1 
-VALUES
-    (1, 11, 111, 1.1, 1.11, 'first', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
-INSERT INTO 
-    pt1 
-VALUES
-    (2, 22, 222, 2.2, 2.22, 'second', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
-INSERT INTO 
-    pt1 
-VALUES
-    (3, 33, 333, 3.3, 3.33, 'third', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
-SELECT * FROM pt1;
+EXECUTE insert_pt1 (1, 11, 111, 1.1, 1.11, 'first', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+EXECUTE insert_pt1 (2, 22, 222, 2.2, 2.22, 'second', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+EXECUTE insert_pt1 (3, 33, 333, 3.3, 3.33, 'third', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+EXECUTE select_pt1_all;
  c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
 ----+----+-----+-----+------+------------+----------------------------
   1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
@@ -170,27 +402,12 @@ SELECT * FROM pt1;
   3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
 (3 rows)
 
-INSERT INTO 
-    pt2 
-VALUES
-    (1, 11, 111, 1.1, 1.11, 'one', 'ABC');
-INSERT INTO 
-    pt2 
-VALUES
-    (2, 22, 222, 2.2, 2.22, 'two', 'XYZ');
-INSERT INTO 
-    pt2 
-VALUES
-    (3, 33, 333, 3.3, 3.33, 'three', 'ABC');
-INSERT INTO 
-    pt2(c1, c2, c3, c4, c5, c6, c7)
-VALUES
-    (4, NULL, NULL, NULL, NULL, 'NULL', NULL);
-INSERT INTO 
-    pt2(c1, c2, c3, c4, c5, c6, c7)
-VALUES
-    (5, 55, 555, 5.5, 5.55, 'five', 'XYZ');
-SELECT * FROM pt2;
+EXECUTE insert_pt2 (1, 11, 111, 1.1, 1.11, 'one', 'ABC');
+EXECUTE insert_pt2 (2, 22, 222, 2.2, 2.22, 'two', 'XYZ');
+EXECUTE insert_pt2 (3, 33, 333, 3.3, 3.33, 'three', 'ABC');
+EXECUTE insert_pt2 (4, NULL, NULL, NULL, NULL, 'NULL', NULL);
+EXECUTE insert_pt2 (5, 55, 555, 5.5, 5.55, 'five', 'XYZ');
+EXECUTE select_pt2_all;
  c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
 ----+----+-----+-----+------+------------+-----
   1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
@@ -200,27 +417,12 @@ SELECT * FROM pt2;
   5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
 (5 rows)
 
-INSERT INTO
-    pt3(c1, c2)
-VALUES
-    (1, 'ichi');
-INSERT INTO
-    pt3(c1, c2)
-VALUES
-    (2, 'ni');
-INSERT INTO
-    pt3(c1, c2)
-VALUES
-    (3, 'san');
-INSERT INTO
-    pt3(c1, c2)
-VALUES
-    (4, 'si');
-INSERT INTO
-    pt3(c1, c2)
-VALUES
-    (5, 'go');
-SELECT * FROM pt3;
+EXECUTE insert_pt3 (1, 'ichi');
+EXECUTE insert_pt3 (2, 'ni');
+EXECUTE insert_pt3 (3, 'san');
+EXECUTE insert_pt3 (4, 'si');
+EXECUTE insert_pt3 (5, 'go');
+EXECUTE select_pt3_all;
  c1 |     c2     
 ----+------------
   1 | ichi      
@@ -232,7 +434,7 @@ SELECT * FROM pt3;
 
 -- SELECT
 -- PG
-SELECT * FROM pt1;
+EXECUTE select_pt1_all;
  c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
 ----+----+-----+-----+------+------------+----------------------------
   1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
@@ -241,7 +443,7 @@ SELECT * FROM pt1;
 (3 rows)
 
 -- TG
-SELECT * FROM t1;
+EXECUTE select_t1_all;
  c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
 ----+----+-----+-----+------+------------+----------------------------
   1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
@@ -250,7 +452,7 @@ SELECT * FROM t1;
 (3 rows)
 
 -- PG
-SELECT c2, c4, c6 FROM pt2;
+EXECUTE select_pt2_c2_c4_c6;
  c2 | c4  |     c6     
 ----+-----+------------
  11 | 1.1 | one       
@@ -261,7 +463,7 @@ SELECT c2, c4, c6 FROM pt2;
 (5 rows)
 
 -- TG
-SELECT c2, c4, c6 FROM t2;
+EXECUTE select_t2_c2_c4_c6;
  c2 | c4  |     c6     
 ----+-----+------------
  11 | 1.1 | one       
@@ -272,7 +474,7 @@ SELECT c2, c4, c6 FROM t2;
 (5 rows)
 
 -- PG
-SELECT c6 FROM pt2;
+EXECUTE select_pt2_c6;
      c6     
 ------------
  one       
@@ -283,7 +485,7 @@ SELECT c6 FROM pt2;
 (5 rows)
 
 -- TG
-SELECT c6 FROM t2;
+EXECUTE select_t2_c6;
      c6     
 ------------
  one       
@@ -294,7 +496,7 @@ SELECT c6 FROM t2;
 (5 rows)
 
 -- PG
-SELECT c1, c2 AS seisu FROM pt2;
+EXECUTE select_pt2_c1_c2_seisu;
  c1 | seisu 
 ----+-------
   1 |    11
@@ -305,7 +507,7 @@ SELECT c1, c2 AS seisu FROM pt2;
 (5 rows)
 
 -- TG
-SELECT c1, c2 AS seisu  FROM t2;
+EXECUTE select_t2_c1_c2_seisu;
  c1 | seisu 
 ----+-------
   1 |    11
@@ -317,12 +519,7 @@ SELECT c1, c2 AS seisu  FROM t2;
 
 -- ORDER BY #1
 -- PG
-SELECT
-    *
-FROM
-    pt2
-ORDER BY 
-    c6;
+EXECUTE select_pt2_orderby1;
  c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
 ----+----+-----+-----+------+------------+-----
   5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
@@ -333,12 +530,7 @@ ORDER BY
 (5 rows)
 
 -- TG
-SELECT
-    *
-FROM
-    t2
-ORDER BY 
-    c6;
+EXECUTE select_t2_orderby1;
  c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
 ----+----+-----+-----+------+------------+-----
   4 |    |     |     |      | NULL       | 
@@ -350,12 +542,7 @@ ORDER BY
 
 -- ORDER BY #2
 -- PG
-SELECT
-    c1, c2, c3, c4, c5, c6, c7
-FROM
-    pt2
-ORDER BY 
-    6;
+EXECUTE select_pt2_orderby2;
  c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
 ----+----+-----+-----+------+------------+-----
   5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
@@ -366,31 +553,12 @@ ORDER BY
 (5 rows)
 
 -- TG
-SELECT
-    c1, c2, c3, c4, c5, c6, c7
-FROM
-    t2
-ORDER BY 
-    6;
- c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
-----+----+-----+-----+------+------------+-----
-  4 |    |     |     |      | NULL       | 
-  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
-  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
-  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
-  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
-(5 rows)
-
+/* failed (10) because of ORDER BY 6
+EXECUTE select_t2_orderby2;
+*/
 -- ORDER BY #3
 -- PG
-SELECT
-    c1, c4, c5, c6, c7
-FROM
-    pt2
-WHERE
-    c1 > 2
-ORDER BY
-    c7;
+EXECUTE select_pt2_orderby3;
  c1 | c4  |  c5  |     c6     | c7  
 ----+-----+------+------------+-----
   3 | 3.3 | 3.33 | three      | ABC
@@ -399,14 +567,7 @@ ORDER BY
 (3 rows)
 
 -- TG
-SELECT
-    c1, c4, c5, c6, c7
-FROM
-    t2
-WHERE
-    c1 > 2
-ORDER BY
-    c7;
+EXECUTE select_t2_orderby3;
  c1 | c4  |  c5  |     c6     | c7  
 ----+-----+------+------------+-----
   4 |     |      | NULL       | 
@@ -416,14 +577,7 @@ ORDER BY
 
 -- ORDER BY #4
 -- PG
-SELECT
-    c1, c2
-FROM
-    pt2
-WHERE
-    c2 * 2 > 50
-ORDER BY
-    c3 DESC;
+EXECUTE select_pt2_orderby4;
  c1 | c2 
 ----+----
   5 | 55
@@ -431,14 +585,7 @@ ORDER BY
 (2 rows)
 
 -- TG
-SELECT
-    c1, c2
-FROM
-    t2
-WHERE
-    c2 * 2 > 50
-ORDER BY
-    c3 DESC;
+EXECUTE select_t2_orderby4;
  c1 | c2 
 ----+----
   5 | 55
@@ -446,15 +593,9 @@ ORDER BY
 (2 rows)
 
 -- WHERE #1
+-- WHERE #1
 -- PG
-SELECT
-    *
-FROM
-    pt2
-WHERE
-    c3 > 2
-ORDER BY
-    c1;
+EXECUTE select_pt2_where1;
  c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
 ----+----+-----+-----+------+------------+-----
   1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
@@ -464,14 +605,7 @@ ORDER BY
 (4 rows)
 
 -- TG
-SELECT
-    *
-FROM
-    t2
-WHERE
-    c3 > 2
-ORDER BY
-    c1;
+EXECUTE select_t2_where1;
  c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
 ----+----+-----+-----+------+------------+-----
   1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
@@ -482,14 +616,7 @@ ORDER BY
 
 -- WHERE #2
 -- PG
-SELECT
-    *
-FROM
-    pt2
-WHERE
-    c7 = 'XYZ'
-ORDER BY
-    c1;
+EXECUTE select_pt2_where2;
  c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
 ----+----+-----+-----+------+------------+-----
   2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
@@ -497,14 +624,7 @@ ORDER BY
 (2 rows)
 
 -- TG
-SELECT
-    *
-FROM
-    t2
-WHERE
-    c7 = 'XYZ'
-ORDER BY
-    c1;
+EXECUTE select_t2_where2;
  c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
 ----+----+-----+-----+------+------------+-----
   2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
@@ -513,12 +633,7 @@ ORDER BY
 
 -- WHERE #3
 -- PG
-SELECT 
-    c1, c2, c6, c7
-FROM
-    pt1
-WHERE
-    c1 = 1 OR c1 = 3;
+EXECUTE select_pt1_where3;
  c1 | c2 |     c6     |             c7             
 ----+----+------------+----------------------------
   1 | 11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
@@ -526,12 +641,7 @@ WHERE
 (2 rows)
 
 -- TG
-SELECT 
-    c1, c2, c6, c7
-FROM
-    t1
-WHERE
-    c1 = 1 OR c1 = 3;
+EXECUTE select_t1_where3;
  c1 | c2 |     c6     |             c7             
 ----+----+------------+----------------------------
   1 | 11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
@@ -540,24 +650,14 @@ WHERE
 
 -- WHERE #4
 -- PG
-SELECT 
-    c1, c3, c5, c7 
-FROM 
-    pt1 
-WHERE 
-    c1 = 2;
+EXECUTE select_pt1_where4;
  c1 | c3  |  c5  |             c7             
 ----+-----+------+----------------------------
   2 | 222 | 2.22 | ABCDEFGHIJKLMNOPQRSTUVWXYZ
 (1 row)
 
 -- TG
-SELECT 
-    c1, c3, c5, c7 
-FROM 
-    t1 
-WHERE 
-    c1 = 2;
+EXECUTE select_t1_where4;
  c1 | c3  |  c5  |             c7             
 ----+-----+------+----------------------------
   2 | 222 | 2.22 | ABCDEFGHIJKLMNOPQRSTUVWXYZ
@@ -565,12 +665,7 @@ WHERE
 
 -- WHERE #5
 -- PG
-SELECT
-    *
-FROM
-    pt1
-WHERE
-    c4 >= 2.2 AND c4 < 5.5;
+EXECUTE select_pt1_where5;
  c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
 ----+----+-----+-----+------+------------+----------------------------
   2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
@@ -578,12 +673,7 @@ WHERE
 (2 rows)
 
 -- TG
-SELECT
-    *
-FROM
-    t1
-WHERE
-    c4 >= 2.2 AND c4 < 5.5;
+EXECUTE select_t1_where5;
  c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
 ----+----+-----+-----+------+------------+----------------------------
   2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
@@ -592,12 +682,7 @@ WHERE
 
 -- WHERE #6
 -- PG
-SELECT
-    *
-FROM
-    pt2
-WHERE
-    c4 BETWEEN 2.2 AND 5.5;
+EXECUTE select_pt2_where6;
  c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
 ----+----+-----+-----+------+------------+-----
   2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
@@ -606,27 +691,12 @@ WHERE
 (3 rows)
 
 -- TG
-SELECT
-    *
-FROM
-    t2
-WHERE
-    c4 BETWEEN 2.2 AND 5.5;
- c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
-----+----+-----+-----+------+------------+-----
-  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
-  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
-  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
-(3 rows)
-
+/* tsurugi-issue#69
+EXECUTE select_t2_where6;
+*/
 -- WHERE #7
 -- PG
-SELECT
-    *
-FROM
-    pt1
-WHERE
-    c7 LIKE '%LMN%';
+EXECUTE select_pt1_where7;
  c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
 ----+----+-----+-----+------+------------+----------------------------
   1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
@@ -635,21 +705,15 @@ WHERE
 (3 rows)
 
 -- TG
-SELECT
-    *
-FROM
-    t1
-WHERE
-    c7 LIKE '%LMN%';
-ERROR:  Query execution failed. (10)
+/* tsurugi-issue#103 */
+EXECUTE select_t1_where7;
+ c1 | c2 | c3 | c4 | c5 | c6 | c7 
+----+----+----+----+----+----+----
+(0 rows)
+
 -- WHERE #8
 -- PG
-SELECT
-    *
-FROM
-    pt1
-WHERE
-    EXISTS (SELECT * FROM pt2 WHERE c2 = 22);
+EXECUTE select_pt1_where8;
  c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
 ----+----+-----+-----+------+------------+----------------------------
   1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
@@ -658,22 +722,12 @@ WHERE
 (3 rows)
 
 -- TG
-/*
-SELECT
-    *
-FROM
-    t1
-WHERE
-    EXISTS (SELECT * FROM t2 WHERE c2 = 22);
+/* not support EXISTS failed. (10)
+EXECUTE select_t1_where8;
 */
 -- WHERE #9
 -- PG
-SELECT
-    *
-FROM
-    pt2
-WHERE
-    c4 IN (1.1,3.3);
+EXECUTE select_pt2_where9;
  c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
 ----+----+-----+-----+------+------------+-----
   1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
@@ -681,21 +735,12 @@ WHERE
 (2 rows)
 
 -- TG
-SELECT
-    *
-FROM
-    t2
-WHERE
-    c4 IN (1.1,3.3);
-ERROR:  Query execution failed. (10)
+/* tsurugi-issue#70
+EXECUTE select_t2_where9;
+*/
 -- GROUP BY #1
 -- PG
-SELECT
-    count(c1) AS "count(c1)", sum(c2) AS "sum(c2)", c7
-FROM 
-    pt2
-GROUP BY
-    c7;
+EXECUTE select_pt2_group1;
  count(c1) | sum(c2) | c7  
 -----------+---------+-----
          1 |         | 
@@ -704,46 +749,35 @@ GROUP BY
 (3 rows)
 
 -- TG
-SELECT
-    count(c1) AS "count(c1)", sum(c2) AS "sum(c2)", c7
-FROM 
-    t2
-GROUP BY
-    c7;
-ERROR:  Query execution failed. (10)
+/* aggregate functions alias not support failed. (10)
+EXECUTE select_t2_group1_ng;
+*/
+EXECUTE select_t2_group1;
+ count | sum | c7  
+-------+-----+-----
+     1 |     | 
+     2 |  44 | ABC
+     2 |  77 | XYZ
+(3 rows)
+
 -- GROUP BY #2
 -- PG
-SELECT
-    count(c1) AS "count(c1)", sum(c2) AS "sum(c2)", c7
-FROM 
-    pt2
-GROUP BY
-    c7
-HAVING 
-    sum(c2) > 55;
+EXECUTE select_pt2_group2;
  count(c1) | sum(c2) | c7  
 -----------+---------+-----
          2 |      77 | XYZ
 (1 row)
 
 -- TG
-SELECT
-    count(c1) AS "count(c1)", sum(c2) AS "sum(c2)", c7
-FROM 
-    t2
-GROUP BY
-    c7
-HAVING 
-    sum(c2) > 55;
-ERROR:  Query execution failed. (10)
+/* aggregate functions alias not support failed. (10)
+EXECUTE select_t2_group2_ng1;
+*/
+/* having not support failed. (10)
+EXECUTE select_t2_group2_ng2;
+*/
 -- GROUP BY #3
 -- PG
-SELECT
-    c7, count(c1), sum(c2), avg(c3), min(c4), max(c5)
-FROM
-    pt2
-GROUP BY
-    c7;
+EXECUTE select_pt2_group3;
  c7  | count | sum |         avg          | min | max  
 -----+-------+-----+----------------------+-----+------
      |     1 |     |                      |     |     
@@ -752,51 +786,44 @@ GROUP BY
 (3 rows)
 
 -- TG
-SELECT
-    c7, count(c1), sum(c2), avg(c3), min(c4), max(c5)
-FROM
-    pt2
-GROUP BY
-    c7;
- c7  | count | sum |         avg          | min | max  
------+-------+-----+----------------------+-----+------
-     |     1 |     |                      |     |     
- ABC |     2 |  44 | 222.0000000000000000 | 1.1 | 3.33
- XYZ |     2 |  77 | 388.5000000000000000 | 2.2 | 5.55
-(3 rows)
-
+/* not support avg return data type 1700: NUMERICOID
+EXECUTE select_t2_group3_exe_ng1;
+*/
 -- FOREIGN TABLE JOIN
--- TG JOIN #1 /* tsurugi-issue#863 */
-SELECT 
-    *
-FROM 
-    t1 a INNER JOIN t2 b ON a.c1 = b.c1
-WHERE
-    b.c1 > 1;
-ERROR:  Query execution failed. (10)
--- TG JOIN #2 /* tsurugi-issue#863 */
-SELECT 
-    a.c1, a.c2, b.c1, b.c7
-FROM 
-    t1 a INNER JOIN t2 b USING (c1)
-ORDER BY
-    b.c4 DESC;   
-ERROR:  Query execution failed. (10)
--- TG JOIN #3 /* tsurugi-issue#863 */
-SELECT 
-    a.c1, a.c3, b.c1, b.c6
-FROM 
-    t1 a INNER JOIN t2 b ON a.c1 != b.c1;
-ERROR:  Query execution failed. (10)
+-- TG JOIN #1
+EXECUTE select_join1;
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
+----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
+(2 rows)
+
+-- TG JOIN #2
+/* failed (10) : mismatched input 'USING'
+EXECUTE select_join2;
+*/
+-- TG JOIN #3
+EXECUTE select_join3;
+ c1 | c3  | c1 |     c6     
+----+-----+----+------------
+  1 | 111 |  2 | two       
+  1 | 111 |  3 | three     
+  1 | 111 |  4 | NULL      
+  1 | 111 |  5 | five      
+  2 | 222 |  1 | one       
+  2 | 222 |  3 | three     
+  2 | 222 |  4 | NULL      
+  2 | 222 |  5 | five      
+  3 | 333 |  1 | one       
+  3 | 333 |  2 | two       
+  3 | 333 |  4 | NULL      
+  3 | 333 |  5 | five      
+(12 rows)
+
 -- POSTGRESQL TABLE JOIN
 -- PG JOIN #1
 -- PG
-SELECT
-    *
-FROM 
-    pt1 a INNER JOIN pt2 b ON a.c4 = b.c4
-WHERE
-    a.c1 > 1;
+EXECUTE select_pg_join_pg1;
  c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
 ----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----
   2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
@@ -804,12 +831,8 @@ WHERE
 (2 rows)
 
 -- TG
-SELECT 
-    *
-FROM 
-    t1 a INNER JOIN pt2 b ON a.c4 = b.c4
-WHERE
-    a.c1 > 1;
+/* tables are mixed */
+EXECUTE select_pg_join_tg1;
  c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
 ----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----
   2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
@@ -818,12 +841,7 @@ WHERE
 
 -- PG JOIN #2
 -- PG
-SELECT 
-    a.c1, a.c2, b.c4, b.c6
-FROM 
-    pt1 a INNER JOIN pt2  b USING (c1)
-ORDER BY
-    b.c4 DESC;
+EXECUTE select_pg_join_pg2;
  c1 | c2 | c4  |     c6     
 ----+----+-----+------------
   3 | 33 | 3.3 | three     
@@ -832,12 +850,8 @@ ORDER BY
 (3 rows)
 
 -- TG
-SELECT 
-    a.c1, a.c2, b.c4, b.c6
-FROM 
-    t1 a INNER JOIN pt2  b USING (c1)
-ORDER BY
-    b.c4 DESC;
+/* tables are mixed */
+EXECUTE select_pg_join_tg2;
  c1 | c2 | c4  |     c6     
 ----+----+-----+------------
   3 | 33 | 3.3 | three     
@@ -847,10 +861,7 @@ ORDER BY
 
 -- PG JOIN  #3
 -- PG
-SELECT 
-    a.c1, a.c3, b.c5, b.c7
-FROM 
-    pt2 a LEFT OUTER JOIN pt1 b ON a.c1 = b.c1;
+EXECUTE select_pg_join_pg3;
  c1 | c3  |  c5  |             c7             
 ----+-----+------+----------------------------
   1 | 111 | 1.11 | ABCDEFGHIJKLMNOPQRSTUVWXYZ
@@ -861,10 +872,8 @@ FROM
 (5 rows)
 
 -- TG
-SELECT 
-    a.c1, a.c3, b.c5, b.c7
-FROM 
-    t2 a LEFT OUTER JOIN pt1 b ON a.c1 = b.c1;
+/* tables are mixed */
+EXECUTE select_pg_join_tg3;
  c1 | c3  |  c5  |             c7             
 ----+-----+------+----------------------------
   1 | 111 | 1.11 | ABCDEFGHIJKLMNOPQRSTUVWXYZ
@@ -876,24 +885,15 @@ FROM
 
 -- PG JOIN #4
 -- PG
-SELECT 
-    *
-FROM 
-    pt1 a INNER JOIN pt2 b ON a.c4 = b.c4
-WHERE
-    a.c1 > 1 AND a.c1 < 3;
+EXECUTE select_pg_join_pg4;
  c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
 ----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----
   2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
 (1 row)
 
 -- TG
-SELECT 
-    *
-FROM 
-    pt1 a INNER JOIN t2 b ON a.c4 = b.c4
-WHERE
-    a.c1 > 1 AND a.c1 < 3;
+/* tables are mixed */
+EXECUTE select_pg_join_tg4;
  c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
 ----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----
   2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
@@ -901,12 +901,7 @@ WHERE
 
 -- PG JOIN #5
 -- PG
-SELECT
-    count(a.c1), sum(b.c2), b.c7
-FROM 
-    pt1 a INNER JOIN pt2 b USING (c2)
-GROUP BY
-    b.c7;
+EXECUTE select_pg_join_pg5;
  count | sum | c7  
 -------+-----+-----
      2 |  44 | ABC
@@ -914,12 +909,8 @@ GROUP BY
 (2 rows)
 
 -- TG
-SELECT
-    count(a.c1), sum(b.c2), b.c7
-FROM 
-    pt1 a INNER JOIN t2 b USING (c2)
-GROUP BY
-    b.c7;
+/* tables are mixed */
+EXECUTE select_pg_join_tg5;
  count | sum | c7  
 -------+-----+-----
      2 |  44 | ABC
@@ -928,75 +919,30 @@ GROUP BY
 
 -- PG JOIN #6
 -- PG
-SELECT
-    *
-FROM
-    pt1 AS a JOIN pt2 AS b ON a.c4=b.c4 JOIN pt1 AS c ON b.c4=c.c4
-WHERE
-    a.c2=22;
+EXECUTE select_pg_join_pg6;
  c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  | c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
 ----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----+----+----+-----+-----+------+------------+----------------------------
   2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ |  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
 (1 row)
 
--- TG /* tsurugi-issue#863 */
-SELECT
-    *
-FROM
-    t1 AS a JOIN t2 AS b ON a.c4=b.c4 JOIN t1 AS c ON b.c4=c.c4
-WHERE
-    a.c2=22;
-ERROR:  Query execution failed. (10)
--- PG&TG /* tsurugi-issue#863 */
-SELECT
-    *
-FROM
-    t1 AS a JOIN pt2 AS b ON a.c4=b.c4 JOIN t1 AS c ON b.c4=c.c4
-WHERE
-    a.c2=22;
-ERROR:  Query execution failed. (10)
--- PG JOIN #7
--- PG
-SELECT
-    *
-FROM
-    pt1 AS a CROSS JOIN pt2 AS b
-ORDER BY
-    b.c1;
- c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
-----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----
-  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
-  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
-  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
-  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
-  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
-  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
-  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       | 
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       | 
-  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       | 
-  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
-  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
-(15 rows)
+-- TG
+EXECUTE select_pg_join_tg6;
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  | c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
+----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----+----+----+-----+-----+------+------------+----------------------------
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ |  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+(1 row)
 
--- TG /* tsurugi-issue#863 */
-SELECT
-    *
-FROM
-    t1 AS a CROSS JOIN t2 AS b
-ORDER BY
-    b.c1;
-ERROR:  Query execution failed. (10)
 -- PG&TG
-SELECT
-    *
-FROM
-    pt1 AS a CROSS JOIN t2 AS b
-ORDER BY
-    b.c1;
+/* tables are mixed */
+EXECUTE select_pg_join_pgtg6;
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  | c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
+----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----+----+----+-----+-----+------+------------+----------------------------
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ |  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+(1 row)
+
+-- PG JOIN #7
+-- PG
+EXECUTE select_pg_join_pg7;
  c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
 ----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----
   1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
@@ -1016,12 +962,52 @@ ORDER BY
   3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
 (15 rows)
 
--- PG JOIN #7
+-- TG
+EXECUTE select_pg_join_tg7;
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
+----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       | 
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       | 
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       | 
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
+(15 rows)
+
+-- PG&TG
+/* tables are mixed */
+EXECUTE select_pg_join_pgtg7;
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
+----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       | 
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       | 
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       | 
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
+(15 rows)
+
+-- PG JOIN #8
 -- PG
-SELECT
-    *
-FROM
-    pt1 AS a JOIN pt1 AS b ON a.c3=b.c3;
+EXECUTE select_pg_join_pg8;
  c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
 ----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+----------------------------
   1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
@@ -1029,13 +1015,18 @@ FROM
   3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
 (3 rows)
 
--- TG /* tsurugi-issue#863 */
-SELECT
-    *
-FROM
-    t1 AS a JOIN t1 AS b ON a.c3=b.c3;
-ERROR:  Query execution failed. (10)
-/* DDL */
+-- TG
+EXECUTE select_pg_join_tg8;
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
+----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+----------------------------
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+(3 rows)
+
+/***********/
+/*** DDL ***/
+/***********/
 DROP TABLE t1;
 DROP FOREIGN TABLE t1;
 DROP TABLE t2;
