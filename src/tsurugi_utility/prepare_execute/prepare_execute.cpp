@@ -1290,6 +1290,9 @@ after_prepare_stmt(const PrepareStmt* stmts,
 	ERROR_CODE error = Tsurugi::prepare(sql.data, placeholders, prepared_statement);
 	if (error != ERROR_CODE::OK)
 	{
+		/* Drop entry from the PostgreSQL hash table and plancache */
+		DropPreparedStatement(stmts->name, false);
+
 		elog(ERROR, "Tsurugi::prepare() failed. (%d)\n\tsql:%s", (int) error, sql.data);
 		return false;
 	}

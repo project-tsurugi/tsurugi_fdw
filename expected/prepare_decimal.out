@@ -144,7 +144,7 @@ SELECT * FROM trg_numeric_s0;
 (9 rows)
 
 -- correct value
-EXECUTE trg_insval_s38 ( 1, 0);
+EXECUTE trg_insval_s38 ( 1, 0);  -- see tsurugi-issues#736
 EXECUTE trg_insval_s38 ( 2, 0.00000000000000000000000000000000000001);
 EXECUTE trg_insval_s38 ( 3, 0.00000000000000000018446744073709551615);
 EXECUTE trg_insval_s38 ( 4, 0.00000000000000000018446744073709551616);

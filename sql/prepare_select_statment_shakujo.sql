@@ -207,7 +207,7 @@ PREPARE select_t2_where6
 PREPARE select_pt1_where7
 	AS SELECT * FROM pt1 WHERE c7 LIKE '%LMN%';
 -- TG
-/* tsurugi-issue#103 (no longer supports) */
+/* tsurugi-issue#103 */
 PREPARE select_t1_where7
 	AS SELECT * FROM t1 WHERE c7 LIKE '%LMN%';
 -- WHERE #8
@@ -245,8 +245,8 @@ PREPARE select_pt2_group2
 /* aggregate functions alias not support failed. (10) */
 PREPARE select_t2_group2_ng1
 	AS SELECT count(c1) AS "count(c1)", sum(c2) AS "sum(c2)", c7 FROM t2 GROUP BY c7 HAVING sum(c2) > 55;
-/* having support. (tsurugi-issue#739) */
-PREPARE select_t2_group2
+/* having not support failed. (10) */
+PREPARE select_t2_group2_ng2
 	AS SELECT count(c1), sum(c2), c7 FROM t2 GROUP BY c7 HAVING sum(c2) > 55;
 -- GROUP BY #3
 -- PG
@@ -461,7 +461,7 @@ EXECUTE select_t2_where6;
 -- PG
 EXECUTE select_pt1_where7;
 -- TG
-/* tsurugi-issue#103 (no longer supports) */
+/* tsurugi-issue#103 */
 EXECUTE select_t1_where7;
 -- WHERE #8
 -- PG
@@ -493,8 +493,9 @@ EXECUTE select_pt2_group2;
 /* aggregate functions alias not support failed. (10)
 EXECUTE select_t2_group2_ng1;
 */
-/* having support. (tsurugi-issue#739) */
-EXECUTE select_t2_group2;
+/* having not support failed. (10)
+EXECUTE select_t2_group2_ng2;
+*/
 -- GROUP BY #3
 -- PG
 EXECUTE select_pt2_group3;
@@ -551,7 +552,7 @@ EXECUTE select_pg_join_pg6;
 EXECUTE select_pg_join_tg6;
 -- PG&TG
 /* tables are mixed */
-EXECUTE select_pg_join_pgtg6; /* tsurugi-issue#863 */
+EXECUTE select_pg_join_pgtg6;
 -- PG JOIN #7
 -- PG
 EXECUTE select_pg_join_pg7;

@@ -1214,6 +1214,10 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 
     fdw_state->attinmeta = TupleDescGetAttInMetadata(fdw_state->tupdesc);
 
+	/* Prepare processing when via ODBC */
+	EState* estate = node->ss.ps.state;
+	begin_prepare_processing(estate);
+
 	ERROR_CODE error = Tsurugi::start_transaction();
 	if (error != ERROR_CODE::OK)
 	{
@@ -1247,9 +1251,12 @@ tsurugiIterateForeignScan(ForeignScanState* node)
         ERROR_CODE error = Tsurugi::execute_query(query, fdw_info_.result_set);
         if (error != ERROR_CODE::OK)
         {
-            elog(ERROR, "Query execution failed. (%d)", (int) error);
             Tsurugi::rollback();
             fdw_info_.success = false;
+            /* Prepare processing when via ODBC */
+            EState* estate = node->ss.ps.state;
+            end_prepare_processing(estate);
+            elog(ERROR, "Query execution failed. (%d)", (int) error);
         }
 
         fdw_state->cursor_exists = true;
@@ -1283,6 +1290,9 @@ tsurugiIterateForeignScan(ForeignScanState* node)
         {
             Tsurugi::rollback();
             fdw_info_.success = false;
+            /* Prepare processing when via ODBC */
+            EState* estate = node->ss.ps.state;
+            end_prepare_processing(estate);
             elog(ERROR, "Could NOT obtain result set from Tsurugi. (error: %d)",
                 (int) error);
         }
@@ -1320,6 +1330,10 @@ tsurugiEndForeignScan(ForeignScanState* node)
 		}
     }
 
+	/* Prepare processing when via ODBC */
+	EState* estate = node->ss.ps.state;
+	end_prepare_processing(estate);
+
 	if (fdw_state != nullptr) 
     {
 		free_fdwstate(fdw_state);
@@ -1348,6 +1362,7 @@ tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
  	fdw_state->query_string = estate->es_sourceText; 
     node->fdw_state = fdw_state;
 
+	/* Prepare processing when via JDBC and ODBC */
 	begin_prepare_processing(estate);
 
 	ERROR_CODE error = Tsurugi::start_transaction();
@@ -1384,6 +1399,7 @@ tsurugiIterateDirectModify(ForeignScanState* node)
         Tsurugi::rollback();
         fdw_info_.success = false;
 
+        /* Prepare processing when via JDBC and ODBC */
         end_prepare_processing(estate);
 
         elog(ERROR, "Tsurugi::execute_statement() failed. (%d)", 
@@ -1414,6 +1430,7 @@ tsurugiEndDirectModify(ForeignScanState* node)
 		}
     }
 
+	/* Prepare processing when via JDBC and ODBC */
 	EState* estate = node->ss.ps.state;
 	end_prepare_processing(estate);
 
