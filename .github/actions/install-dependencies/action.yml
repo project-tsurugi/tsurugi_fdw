@@ -105,6 +105,7 @@ runs:
         repository: project-tsurugi/ogawayama
         path: ${{ inputs.path }}/ogawayama
         ref: master
+        submodules: recursive
 
     - name: Checkout_Metadata_Manager
       uses: actions/checkout@v3
