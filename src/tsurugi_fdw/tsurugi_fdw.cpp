@@ -2167,11 +2167,6 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                             subsecond /= 1000;
                             time = time + subsecond;
                         }
-
-                        elog(DEBUG5, "time_of_day = %d:%d:%d.%d",
-                                        value.hour(), value.minute(), value.second(),
-                                        subsecond);
-
                         row[attnum] = TimeADTGetDatum(time);
                         is_null[attnum] = false;
                     }
@@ -2246,11 +2241,6 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                             subsecond /= 1000;
                             timestamp = timestamp + subsecond;
                         }
-
-                        elog(DEBUG5, "seconds_since_epoch = %ld, subsecond = %d",
-                                        value.seconds_since_epoch().count(),
-                                        value.subsecond().count());
-
                         row[attnum] = TimestampGetDatum(timestamp);
                         is_null[attnum] = false;
                     }

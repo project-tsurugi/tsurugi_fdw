@@ -19,6 +19,42 @@ CREATE FOREIGN TABLE trg_timedate (
     tm      TIME       default '23:59:35.123456789'
 ) SERVER tsurugidb;
 
+CREATE TABLE pg_timetz_reference (
+    id      INTEGER NOT NULL PRIMARY KEY,
+    tm      TIME,
+    tmtz    TIME WITH TIME ZONE
+);
+
+CREATE TABLE pg_timestamptz_reference (
+    id      INTEGER NOT NULL PRIMARY KEY,
+    tms     TIMESTAMP,
+    tmstz   TIMESTAMP WITH TIME ZONE
+);
+
+CREATE TABLE trg_timetz (
+    id      INTEGER NOT NULL PRIMARY KEY,
+    tm      TIME,
+    tmtz    TIME WITH TIME ZONE
+) TABLESPACE tsurugi;
+
+CREATE FOREIGN TABLE trg_timetz (
+    id      INTEGER NOT NULL,
+    tm      TIME,
+    tmtz    TIME WITH TIME ZONE
+) SERVER tsurugidb;
+
+CREATE TABLE trg_timestamptz (
+    id      INTEGER NOT NULL PRIMARY KEY,
+    tms     TIMESTAMP,
+    tmstz   TIMESTAMP WITH TIME ZONE
+) TABLESPACE tsurugi;
+
+CREATE FOREIGN TABLE trg_timestamptz (
+    id      INTEGER NOT NULL,
+    tms     TIMESTAMP,
+    tmstz   TIMESTAMP WITH TIME ZONE
+) SERVER tsurugidb;
+
 PREPARE add_trg_table (int, int, varchar(80)) 		AS INSERT INTO trg_table (id, num, name) VALUES ($1, $2, $3);
 PREPARE add_trg_table_num (int, int) 				AS INSERT INTO trg_table (id, num, name) VALUES ($1, $2, 'zzz');
 PREPARE add_trg_table_name (int, varchar(80))		AS INSERT INTO trg_table (id, num, name) VALUES ($1, 99, $2);
@@ -179,7 +215,104 @@ select * from trg_timedate;
 EXECUTE trg_timedate_where_tm (make_time(8, 15, 23.5));
 select * from trg_timedate;
 
+/* PostgreSQL Time Zone Reference */
+
+INSERT INTO pg_timetz_reference (id, tm, tmtz) VALUES  -- UTC-8
+        (1, '00:01:23.456789', '00:01:23.456789 PST');
+INSERT INTO pg_timetz_reference (id, tm, tmtz) VALUES  -- UTC-8
+        (2, '00:01:23.456789', '00:01:23.456789 -8:00');
+INSERT INTO pg_timetz_reference (id, tm, tmtz) VALUES  -- UTC-8
+        (3, '00:01:23.456789', '00:01:23.456789 -800');
+INSERT INTO pg_timetz_reference (id, tm, tmtz) VALUES  -- UTC-8
+        (4, '00:01:23.456789', '00:01:23.456789 -8');
+INSERT INTO pg_timetz_reference (id, tm, tmtz) VALUES  -- UTC
+        (5, '00:01:23.456789', '00:01:23.456789 zulu');
+INSERT INTO pg_timetz_reference (id, tm, tmtz) VALUES  -- UTC
+        (6, '00:01:23.456789', '00:01:23.456789 z');
+
+INSERT INTO pg_timestamptz_reference (id, tms, tmstz) VALUES  -- UTC-8
+        (1, '2023-08-02 00:01:23.456789', '2023-08-02 00:01:23.456789 PST');
+INSERT INTO pg_timestamptz_reference (id, tms, tmstz) VALUES  -- UTC-4(Daylight Saving Time)
+        (2, '2023-08-02 00:01:23.456789', '2023-08-02 00:01:23.456789 America/New_York');
+INSERT INTO pg_timestamptz_reference (id, tms, tmstz) VALUES  -- UTC-5
+        (3, '2023-03-02 00:01:23.456789', '2023-03-02 00:01:23.456789 America/New_York');
+INSERT INTO pg_timestamptz_reference (id, tms, tmstz) VALUES  -- UTC-7(Daylight Saving Time)
+        (4, '2023-08-02 00:01:23.456789', '2023-08-02 00:01:23.456789 PST8PDT');
+INSERT INTO pg_timestamptz_reference (id, tms, tmstz) VALUES  -- UTC-8
+        (5, '2023-03-02 00:01:23.456789', '2023-03-02 00:01:23.456789 PST8PDT');
+INSERT INTO pg_timestamptz_reference (id, tms, tmstz) VALUES  -- UTC-8
+        (6, '2023-08-02 00:01:23.456789', '2023-08-02 00:01:23.456789 -8:00');
+INSERT INTO pg_timestamptz_reference (id, tms, tmstz) VALUES  -- UTC-8
+        (7, '2023-08-02 00:01:23.456789', '2023-08-02 00:01:23.456789 -800');
+INSERT INTO pg_timestamptz_reference (id, tms, tmstz) VALUES  -- UTC-8
+        (8, '2023-08-02 00:01:23.456789', '2023-08-02 00:01:23.456789 -8');
+INSERT INTO pg_timestamptz_reference (id, tms, tmstz) VALUES  -- UTC
+        (9, '2023-08-02 00:01:23.456789', '2023-08-02 00:01:23.456789 zulu');
+INSERT INTO pg_timestamptz_reference (id, tms, tmstz) VALUES  -- UTC
+        (10, '2023-08-02 00:01:23.456789', '2023-08-02 00:01:23.456789 z');
+
+PREPARE add_trg_timetz (int, TIME, TIMETZ)
+                    AS INSERT INTO trg_timetz (id, tm, tmtz) VALUES ($1, $2, $3);
+
+EXECUTE add_trg_timetz  -- UTC-8
+        (1, '00:01:23.456789', '00:01:23.456789 PST');
+EXECUTE add_trg_timetz  -- UTC-8
+        (2, '00:01:23.456789', '00:01:23.456789 -8:00');
+EXECUTE add_trg_timetz  -- UTC-8
+        (3, '00:01:23.456789', '00:01:23.456789 -800');
+EXECUTE add_trg_timetz  -- UTC-8
+        (4, '00:01:23.456789', '00:01:23.456789 -8');
+EXECUTE add_trg_timetz  -- UTC
+        (5, '00:01:23.456789', '00:01:23.456789 zulu');
+EXECUTE add_trg_timetz  -- UTC
+        (6, '00:01:23.456789', '00:01:23.456789 z');
+
+PREPARE add_trg_timestamptz (int, TIMESTAMP, TIMESTAMPTZ)
+                    AS INSERT INTO trg_timestamptz (id, tms, tmstz) VALUES ($1, $2, $3);
+
+EXECUTE add_trg_timestamptz  -- UTC-8
+        (1, '2023-08-02 00:01:23.456789', '2023-08-02 00:01:23.456789 PST');
+EXECUTE add_trg_timestamptz  -- UTC-4(Daylight Saving Time)
+        (2, '2023-08-02 00:01:23.456789', '2023-08-02 00:01:23.456789 America/New_York');
+EXECUTE add_trg_timestamptz  -- UTC-5
+        (3, '2023-03-02 00:01:23.456789', '2023-03-02 00:01:23.456789 America/New_York');
+EXECUTE add_trg_timestamptz  -- UTC-7(Daylight Saving Time)
+        (4, '2023-08-02 00:01:23.456789', '2023-08-02 00:01:23.456789 PST8PDT');
+EXECUTE add_trg_timestamptz  -- UTC-8
+        (5, '2023-03-02 00:01:23.456789', '2023-03-02 00:01:23.456789 PST8PDT');
+EXECUTE add_trg_timestamptz  -- UTC-8
+        (6, '2023-08-02 00:01:23.456789', '2023-08-02 00:01:23.456789 -8:00');
+EXECUTE add_trg_timestamptz  -- UTC-8
+        (7, '2023-08-02 00:01:23.456789', '2023-08-02 00:01:23.456789 -800');
+EXECUTE add_trg_timestamptz  -- UTC-8
+        (8, '2023-08-02 00:01:23.456789', '2023-08-02 00:01:23.456789 -8');
+EXECUTE add_trg_timestamptz  -- UTC
+        (9, '2023-08-02 00:01:23.456789', '2023-08-02 00:01:23.456789 zulu');
+EXECUTE add_trg_timestamptz  -- UTC
+        (10, '2023-08-02 00:01:23.456789', '2023-08-02 00:01:23.456789 z');
+
+/* check time with time zone */
+select * from pg_timetz_reference;
+/* tsurugi-issues#790 : Tsurugi's time zone is always considered as UTC time zone */
+select * from trg_timetz;
+
+/* check timestamp with time zone in UTC */
+set session timezone to 'UTC';
+select * from pg_timestamptz_reference;
+select * from trg_timestamptz;
+
+/* check timestamp with time zone in Asia/Tokyo */
+set session timezone to 'Asia/Tokyo';
+select * from pg_timestamptz_reference;
+select * from trg_timestamptz;
+
 /* clean up */
+DROP FOREIGN TABLE trg_timetz;
+DROP TABLE trg_timetz;
+DROP FOREIGN TABLE trg_timestamptz;
+DROP TABLE trg_timestamptz;
+DROP TABLE pg_timetz_reference;
+DROP TABLE pg_timestamptz_reference;
 DROP FOREIGN TABLE trg_timedate;
 DROP TABLE trg_timedate;
 DROP FOREIGN TABLE trg_table;
