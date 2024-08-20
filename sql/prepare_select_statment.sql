@@ -454,9 +454,8 @@ EXECUTE select_t1_where5;
 -- PG
 EXECUTE select_pt2_where6;
 -- TG
-/* tsurugi-issue#69
+/* tsurugi-issue#69 */
 EXECUTE select_t2_where6;
-*/
 -- WHERE #7
 -- PG
 EXECUTE select_pt1_where7;

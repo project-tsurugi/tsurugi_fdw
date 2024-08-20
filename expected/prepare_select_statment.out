@@ -191,8 +191,6 @@ PREPARE select_pt2_where6
 /* tsurugi-issue#69 */
 PREPARE select_t2_where6
 	AS SELECT * FROM t2 WHERE c4 BETWEEN 2.2 AND 5.5;
-ERROR:  Tsurugi::prepare() failed. (10)
-	sql:SELECT * FROM t2 WHERE c4 BETWEEN 2.200000 AND 5.500000 
 -- WHERE #7
 -- PG
 PREPARE select_pt1_where7
@@ -221,8 +219,6 @@ PREPARE select_pt2_where9
 /* tsurugi-issue#70 */
 PREPARE select_t2_where9
 	AS SELECT * FROM t2 WHERE c4 IN (1.1,3.3);
-ERROR:  Tsurugi::prepare() failed. (10)
-	sql:SELECT * FROM t2 WHERE c4 IN (1.100000 , 3.300000 )
 -- GROUP BY #1
 -- PG
 PREPARE select_pt2_group1
@@ -691,9 +687,15 @@ EXECUTE select_pt2_where6;
 (3 rows)
 
 -- TG
-/* tsurugi-issue#69
+/* tsurugi-issue#69 */
 EXECUTE select_t2_where6;
-*/
+ c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
+----+----+-----+-----+------+------------+-----
+  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
+  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
+  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
+(3 rows)
+
 -- WHERE #7
 -- PG
 EXECUTE select_pt1_where7;
