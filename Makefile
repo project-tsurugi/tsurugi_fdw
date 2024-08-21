@@ -6,12 +6,13 @@ C_SRCS 		= $(shell find $(SRCDIR) -name *.c)
 CPP_SRCS	= $(shell find $(SRCDIR) -name *.cpp)
 OBJS 		= $(C_SRCS:.c=.o) $(CPP_SRCS:.cpp=.o)
 
+DEPS_INC_DIR=$(shell pg_config --includedir)
 PG_CPPFLAGS = -Isrc/common/include \
               -Isrc/tsurugi_utility/include \
-              -I$(TSURUGI_HOME)/include/ogawayama \
-              -I$(TSURUGI_HOME)/include/takatori \
-              -I$(TSURUGI_HOME)/include/manager \
-              -I$(TSURUGI_HOME)/include \
+              -I$(DEPS_INC_DIR)/ogawayama \
+              -I$(DEPS_INC_DIR)/takatori \
+              -I$(DEPS_INC_DIR)/manager \
+              -I$(DEPS_INC_DIR) \
               -std=c++17 -fPIC -Dregister= -O0 \
               -I$(libpq_srcdir)
 
@@ -52,5 +53,8 @@ else
         include $(top_srcdir)/contrib/contrib-global.mk
 endif
 
+install_deps:
+	bash ./scripts/install_deps.sh $(prefix)
+
 tests:
-	bash test.sh
+	bash ./scripts/test.sh
