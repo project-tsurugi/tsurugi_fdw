@@ -293,8 +293,9 @@ EXECUTE add_trg_timestamptz  -- UTC
 
 /* check time with time zone */
 select * from pg_timetz_reference;
-/* tsurugi-issues#790 : Tsurugi's time zone is always considered as UTC time zone */
-select * from trg_timetz;
+/* tsurugi-issues#790 : Tsurugi's time zone is always considered as system time zone */
+/* tsurugi-issues#683(issuecomment-2303321622)
+select * from trg_timetz; */
 
 /* check timestamp with time zone in UTC */
 set session timezone to 'UTC';

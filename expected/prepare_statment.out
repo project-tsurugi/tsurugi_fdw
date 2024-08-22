@@ -609,18 +609,9 @@ select * from pg_timetz_reference;
   6 | 00:01:23.456789 | 00:01:23.456789+00
 (6 rows)
 
-/* tsurugi-issues#790 : Tsurugi's time zone is always considered as UTC time zone */
-select * from trg_timetz;
- id |       tm        |        tmtz        
-----+-----------------+--------------------
-  1 | 00:01:23.456789 | 08:01:23.456789+00
-  2 | 00:01:23.456789 | 08:01:23.456789+00
-  3 | 00:01:23.456789 | 08:01:23.456789+00
-  4 | 00:01:23.456789 | 08:01:23.456789+00
-  5 | 00:01:23.456789 | 00:01:23.456789+00
-  6 | 00:01:23.456789 | 00:01:23.456789+00
-(6 rows)
-
+/* tsurugi-issues#790 : Tsurugi's time zone is always considered as system time zone */
+/* tsurugi-issues#683(issuecomment-2303321622)
+select * from trg_timetz; */
 /* check timestamp with time zone in UTC */
 set session timezone to 'UTC';
 select * from pg_timestamptz_reference;
