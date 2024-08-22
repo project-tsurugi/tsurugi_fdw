@@ -2173,6 +2173,60 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                 }
                 break;
 
+            case TIMETZOID:
+                {
+                    stub::timetz_type value;
+                    if (result_set->next_column(value) == ERROR_CODE::OK)
+                    {
+                        TimeTzADT timetz;
+                        auto subsecond = value.first.subsecond().count();
+                        timetz.time = (value.first.hour() * MINS_PER_HOUR) + value.first.minute();
+                        timetz.time = (timetz.time * SECS_PER_MINUTE) + value.first.second();
+                        timetz.time = timetz.time * USECS_PER_SEC;
+                        if (subsecond != 0) {
+                            subsecond /= 1000;
+                            timetz.time = timetz.time + subsecond;
+                        }
+                        timetz.zone = -value.second * SECS_PER_MINUTE;
+
+                        elog(DEBUG5, "time_of_day = %d:%d:%d.%d, time_zone = %d",
+                                        value.first.hour(), value.first.minute(), value.first.second(),
+                                        subsecond, value.second);
+
+                        row[attnum] = TimeTzADTPGetDatum(&timetz);
+                        is_null[attnum] = false;
+                    }
+                }
+                break;
+
+            case TIMESTAMPTZOID:
+                {
+                    stub::timestamptz_type value;
+                    if (result_set->next_column(value) == ERROR_CODE::OK)
+                    {
+                        Timestamp timestamp;
+                        auto subsecond = value.first.subsecond().count();
+                        timestamp = value.first.seconds_since_epoch().count() -
+                            ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
+                        timestamp = timestamp * USECS_PER_SEC;
+                        if (subsecond != 0) {
+                            subsecond /= 1000;
+                            timestamp = timestamp + subsecond;
+                        }
+                        auto time_zone = value.second * SECS_PER_MINUTE;
+                        timestamp = timestamp - (time_zone * USECS_PER_SEC);
+
+                        elog(DEBUG5, "seconds_since_epoch = %ld, subsecond = %d, time_zone = %d",
+                                        value.first.seconds_since_epoch().count(),
+                                        value.first.subsecond().count(),
+                                        value.second);
+
+                        row[attnum] = TimestampTzGetDatum(timestamp);
+                        is_null[attnum] = false;
+                    }
+                }
+                break;
+
             case TIMESTAMPOID:
                 {
                     stub::timestamp_type value;

@@ -23,10 +23,10 @@ CREATE TABLE character99(c1 text) TABLESPACE tsurugi;
 CREATE TABLE datetime1(c1 timestamp) TABLESPACE tsurugi;
 CREATE TABLE datetime2(c1 date) TABLESPACE tsurugi;
 CREATE TABLE datetime3(c1 time) TABLESPACE tsurugi;
+CREATE TABLE datetime4(c1 timestamp with time zone) TABLESPACE tsurugi;
+CREATE TABLE datetime5(c1 time with time zone) TABLESPACE tsurugi;
 
 -- not supported
-CREATE TABLE datetime99(c1 timestamp with time zone) TABLESPACE tsurugi;
-CREATE TABLE datetime98(c1 time with time zone) TABLESPACE tsurugi;
 CREATE TABLE datetime97(c1 interval) TABLESPACE tsurugi;
 
 /* clean up */
@@ -43,3 +43,5 @@ DROP TABLE character2;
 DROP TABLE datetime1;
 DROP TABLE datetime2;
 DROP TABLE datetime3;
+DROP TABLE datetime4;
+DROP TABLE datetime5;
