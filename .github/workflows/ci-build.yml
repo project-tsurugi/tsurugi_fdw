@@ -52,6 +52,7 @@ jobs:
           echo ${LIBRARY_PATH}
           export TSURUGI_HOME=${GITHUB_WORKSPACE}/.local
           export PATH=$PATH:${GITHUB_WORKSPACE}/pgsql/bin
+          echo ${PATH}
           make install_deps
           make -j8
           make install
