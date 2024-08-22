@@ -6,6 +6,8 @@ C_SRCS 		= $(shell find $(SRCDIR) -name *.c)
 CPP_SRCS	= $(shell find $(SRCDIR) -name *.cpp)
 OBJS 		= $(C_SRCS:.c=.o) $(CPP_SRCS:.cpp=.o)
 
+$(warning includedir = $(shell pg_config --includedir))
+
 DEPS_INC_DIR=$(shell pg_config --includedir)
 PG_CPPFLAGS = -Isrc/common/include \
               -Isrc/tsurugi_utility/include \

@@ -29,11 +29,6 @@ jobs:
         with:
           sparse-checkout: .github
 
-      - name: Install_Dependencies
-        uses: ./.github/actions/install-dependencies
-        with:
-          sharksfin-implementation: shirakami
-
       - name: Setup_PostgreSQL
         run: |
           if [ ! -e ./postgresql-${{ matrix.postgresql }} ]; then
