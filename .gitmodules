@@ -1,6 +1,3 @@
-[submodule "third_party/metadata-manager"]
-	path = third_party/metadata-manager
-	url = git@github.com:project-tsurugi/metadata-manager.git
 [submodule "third_party/ogawayama"]
 	path = third_party/ogawayama
 	url = git@github.com:project-tsurugi/ogawayama.git

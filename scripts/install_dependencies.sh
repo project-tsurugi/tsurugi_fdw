@@ -9,27 +9,16 @@ TG_CMAKE_BUILD_TYPE="RelWithDebInfo"
 TG_CMAKE_CXX_FLAGS_RELWITHDEBINFO="-O2 -g"
 TG_COMMON_CMAKE_BUILD_OPTIONS="-DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
 
-_TAKATORI_DIR="${_THIRD_PARTY_DIR}/takatori"
-_METADATA_MANAGER_DIR="${_THIRD_PARTY_DIR}/metadata-manager"
-_MESSAGE_MANAGER_DIR="${_THIRD_PARTY_DIR}/message-manager"
 _OGAWAYAMA_DIR="${_THIRD_PARTY_DIR}/ogawayama"
+_METADATA_MANAGER_DIR="${_OGAWAYAMA_DIR}/third_party/metadata-manager"
+_TAKATORI_DIR="${_THIRD_PARTY_DIR}/takatori"
+_MESSAGE_MANAGER_DIR="${_THIRD_PARTY_DIR}/message-manager"
 
 if ldconfig -p | grep -F --quiet libmpdec++; then
   echo -e "\n[SKIPPED Install_mpdecimal]"
 else
-  echo -e "\n[Install mpdecimal]"
-  cd "${_THIRD_PARTY_DIR}"
-  rm -fr build-mpdecimal
-  mkdir build-mpdecimal
-  cd build-mpdecimal
-  curl -OL https://www.bytereef.org/software/mpdecimal/releases/mpdecimal-2.5.1.tar.gz
-  tar xf ${_THIRD_PARTY_DIR}/build-mpdecimal/mpdecimal-2.5.1.tar.gz
-  cd mpdecimal-2.5.1
-  ./configure --prefix="${_FDW_DEPS_INSTALL_DIR}"
-  make
-  make install
-  cd ../..
-  rm -fr build-mpdecimal
+  echo -e "\nThe dependency module (mpdecimal) for takatori is not installed."
+  echo -e "Please follow the takatori README to install mpdecimal.\n"
 fi
 
 echo -e "\n[Install Takatori]"
