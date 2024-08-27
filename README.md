@@ -18,7 +18,8 @@
     ```
 
 1. Build and Install PostgreSQL.
-    tsurugi_fdw uses the PostgreSQL build environment. If you already know that the environment is set up, skip this procedure.
+    tsurugi_fdw uses the PostgreSQL build environment.  
+    If you already know that the environment is set up, skip this procedure.
     * Specify the PostgreSQL install directory to "--prefix". In the following example, $HOME/pgsql is specified.
     * From now on, this directory is defined as **\<PostgreSQL install directory>**.
     * Refer to the PostgreSQL documentation or online manuals for the installation of PostgreSQL.
@@ -48,7 +49,7 @@
     make install_depandencies
     ```
 
-    Dependent modules installed in **\<PostgreSQL install directory>**.
+    Dependent modules installed in **\<PostgreSQL install directory>**.  
     Add **\<PostgreSQL install directory>** to LIBRARY_PATH.
 
     ```sh
