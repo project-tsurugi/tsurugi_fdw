@@ -11,7 +11,6 @@ TG_COMMON_CMAKE_BUILD_OPTIONS="-DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
 
 _OGAWAYAMA_DIR="${_THIRD_PARTY_DIR}/ogawayama"
 _METADATA_MANAGER_DIR="${_OGAWAYAMA_DIR}/third_party/metadata-manager"
-_TAKATORI_DIR="${_THIRD_PARTY_DIR}/takatori"
 _MESSAGE_MANAGER_DIR="${_THIRD_PARTY_DIR}/message-manager"
 
 if ldconfig -p | grep -F --quiet libmpdec++; then
@@ -19,15 +18,8 @@ if ldconfig -p | grep -F --quiet libmpdec++; then
 else
   echo -e "\nThe dependency module (mpdecimal) for takatori is not installed."
   echo -e "Please follow the takatori README to install mpdecimal.\n"
+  exit 1
 fi
-
-echo -e "\n[Install Takatori]"
-cd "${_TAKATORI_DIR}"
-rm -fr build
-mkdir -p build
-cd build
-cmake -G Ninja -DCMAKE_BUILD_TYPE=${TG_CMAKE_BUILD_TYPE} -DCMAKE_CXX_FLAGS_RELWITHDEBINFO="${TG_CMAKE_CXX_FLAGS_RELWITHDEBINFO}" -DBUILD_TESTS=OFF -DBUILD_DOCUMENTS=OFF -DFORCE_INSTALL_RPATH=ON -DCMAKE_PREFIX_PATH="${_FDW_DEPS_INSTALL_DIR}" -DCMAKE_INSTALL_PREFIX="${_FDW_DEPS_INSTALL_DIR}" ${TG_COMMON_CMAKE_BUILD_OPTIONS} ..
-cmake --build . --target install
 
 echo -e "\n[Install Metadata Manager]"
 cd "${_METADATA_MANAGER_DIR}"
