@@ -116,7 +116,7 @@ Tsurugi FDWは、PostgreSQLのビルド環境を使用します。すでに環�
 
     ~~~ sh
     $ pg_ctl -D <PostgreSQL install directory>/data/ start
-        ~~~
+    ~~~
 
 1. メタデータ管理基盤の初期化
 
