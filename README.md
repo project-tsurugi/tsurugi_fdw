@@ -33,7 +33,7 @@
     ```
 
 1. Clone tsurugi_fdw.
-    Clone fronend to "contrib" directory in PostgreSQL.
+    Clone tsurugi_fdw to "contrib" directory in PostgreSQL.
     * From now on, this directory is defined as **\<tsurugi_fdw clone directory>**.
 
     ```sh
@@ -46,7 +46,7 @@
 1. Build and Install dependent modules.
 
     ```sh
-    make install_depandencies
+    make install_dependencies
     ```
 
     Dependent modules installed in **\<PostgreSQL install directory>**.  

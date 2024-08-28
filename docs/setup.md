@@ -50,7 +50,7 @@ Tsurugi FDWは、PostgreSQLのビルド環境を使用します。すでに環�
     Tsurugi FDWの依存モジュールをビルドして、PostgreSQLにインストールします。
 
     ~~~ sh
-    $ make install_depandencies
+    $ make install_dependencies
     ~~~
 
     PostgreSQLのライブラリパスをライブラリの検索パスに設定します。  
