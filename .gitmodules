@@ -7,3 +7,6 @@
 [submodule "third_party/message-manager"]
 	path = third_party/message-manager
 	url = git@github.com:project-tsurugi/message-manager.git
+[submodule "third_party/metadata-manager"]
+	path = third_party/metadata-manager
+	url = git@github.com:project-tsurugi/metadata-manager.git

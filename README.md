@@ -96,7 +96,7 @@
 1. Define metadata tables and load initial metadata.
 
     ```sh
-    psql postgres < <tsurugi_fdw clone directory>/third_party/ogawayama/third_party/metadata-manager/sql/ddl.sql
+    psql postgres < <tsurugi_fdw clone directory>/third_party/metadata-manager/sql/ddl.sql
     ```
 
 1. Install tsurugi_fdw extension
