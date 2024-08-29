@@ -29,11 +29,6 @@ jobs:
         with:
           sparse-checkout: .github
 
-      - name: Install_Dependencies
-        uses: ./.github/actions/install-dependencies
-        with:
-          sharksfin-implementation: shirakami
-
       - name: Setup_PostgreSQL
         run: |
           if [ ! -e ./postgresql-${{ matrix.postgresql }} ]; then
@@ -48,14 +43,14 @@ jobs:
         uses: actions/checkout@v3
         with:
           path: postgresql-${{ matrix.postgresql }}/contrib/tsurugi_fdw
-          submodules: true
+          submodules: recursive
 
       - name: Make_Build
         run: |
           cd postgresql-${{ matrix.postgresql }}/contrib/tsurugi_fdw
-          export LIBRARY_PATH=$LIBRARY_PATH:${GITHUB_WORKSPACE}/.local/lib
+          export LIBRARY_PATH=$LIBRARY_PATH:${GITHUB_WORKSPACE}/pgsql/lib
           echo ${LIBRARY_PATH}
-          export TSURUGI_HOME=${GITHUB_WORKSPACE}/.local
+          make install_dependencies
           make -j8
           make install
 

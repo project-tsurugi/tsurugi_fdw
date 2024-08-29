@@ -8,10 +8,10 @@ OBJS 		= $(C_SRCS:.c=.o) $(CPP_SRCS:.cpp=.o)
 
 PG_CPPFLAGS = -Isrc/common/include \
               -Isrc/tsurugi_utility/include \
-              -I$(TSURUGI_HOME)/include/ogawayama \
-              -I$(TSURUGI_HOME)/include/takatori \
-              -I$(TSURUGI_HOME)/include/manager \
-              -I$(TSURUGI_HOME)/include \
+              -Ithird_party/ogawayama/include \
+              -Ithird_party/takatori/include \
+              -Ithird_party/ogawayama/third_party/metadata-manager/include \
+              -Ithird_party/message-manager/include \
               -std=c++17 -fPIC -Dregister= -O0 \
               -I$(libpq_srcdir)
 
@@ -19,7 +19,7 @@ SHLIB_LINK_INTERNAL = $(libpq)
 SHLIB_LINK = -logawayama-stub -lmetadata-manager -lmessage-manager -lboost_filesystem
 
 EXTENSION = tsurugi_fdw
-DATA = tsurugi_fdw--1.0.0-BETA7.sql
+DATA = tsurugi_fdw--1.0.0-BETA8.sql
 
 # REGRESS_BASIC: variable used in frontend
 ifdef REGRESS_SHAKUJO
@@ -52,5 +52,8 @@ else
         include $(top_srcdir)/contrib/contrib-global.mk
 endif
 
+install_dependencies:
+	bash ./scripts/install_dependencies.sh $(prefix)
+
 tests:
-	bash test.sh
+	bash ./scripts/test.sh

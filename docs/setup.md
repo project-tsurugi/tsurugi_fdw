@@ -2,272 +2,242 @@
 
 ## セットアップ
 
-1. 必要条件
+### 必要条件
 
-    Tsurugi FDWをセットアップする環境は、TsurugiおよびPostgreSQLの必要条件に準じます。
-    必要となるソフトウェアパッケージ、および、ライブラリについては、[README.md](../README.md)を確認してください。
+Tsurugi FDWをセットアップする環境は、TsurugiおよびPostgreSQLの必要条件に準じます。
+必要となるソフトウェアパッケージ、および、ライブラリについては、[README.md](../README.md)を確認してください。
 
-1. Tsurugiのインストール
+### PostgreSQLのインストール
 
-    Tsurugiをインストールします。すでに環境が整っているとわかっている場合は、本手順はスキップしてください。
+Tsurugi FDWは、PostgreSQLのビルド環境を使用します。すでに環境が整っているとわかっている場合は、本手順はスキップしてください。
 
-    1. インストール
+- 以下の例ではPostgreSQLのインストールディレクトリに `$HOME/pgsql` を指定しています。
+- 以降、このディレクトリを **`<PostgreSQL install directory>`** と定義します。
+- PostgreSQLのインストールについては、PostgreSQL付属のドキュメントまたはWeb上のマニュアルを確認してください。  
 
-        Tsurugiのインストールについては、Tsurugi インストールガイドを確認してください。
 
-    1. インストール後の設定
+    ~~~sh
+    curl -sL https://ftp.postgresql.org/pub/source/v12.4/postgresql-12.4.tar.bz2 | tar -xj
+    cd postgresql-12.4
+    ./configure --prefix=$HOME/pgsql
+    make
+    make install
+    ~~~
 
-        インストール環境の環境変数 `LD_LIBRARY_PATH` にTsurugiのライブラリパスとPostgreSQLのライブラリパスが設定されていることを確認します。  
-        設定されていない場合は環境変数を設定します。
+### Tsurugi FDWのインストール
 
-        ~~~ sh
-        $ LD_LIBRARY_PATH=$TSURUGI_HOME/lib:$LD_LIBRARY_PATH
-        $ export LD_LIBRARY_PATH
-        ~~~
+1. ソースコードのクローン
 
-        `$TSURUGI_HOME/bin`をPATHに追加します。これは必須ではありませんが、Tsurugiの使用が便利になります。
+    GitHubのリポジトリからPostgreSQLのcontribディレクトリにクローンします。
 
-        ~~~ sh
-        $ PATH=＄TSURUGI_HOME/bin:$PATH
-        $ export PATH
-        ~~~
+    ~~~ sh
+    $ cd <PostgreSQL build directory>/contrib/
+    $ git clone https://github.com/project-tsurugi/tsurugi_fdw
+    ~~~
 
-        これらの環境変数はPostgreSQLからTsurugiを利用する際に必要になるため、`.profile`ファイルや`.bash_profile`ファイルなどの設定ファイルに記述し、ログイン時に自動的に設定されるようにしてください。
+1. サブモジュールの更新
 
-1. PostgreSQLのインストール
+    Tsurugi FDWのサブモジュールを更新します。
+    - 以降、このディレクトリを **`<tsurugi_fdw build directory>`** と定義します。
 
-    Tsurugi FDWは、PostgreSQLのビルド環境を使用します。すでに環境が整っているとわかっている場合は、本手順はスキップしてください。
+    ~~~ sh
+    $ cd <PostgreSQL build directory>/contrib/tsurugi_fdw
+    $ git submodule update --init --recursive
+    ~~~
 
-    1. インストール
+1. 依存モジュールのビルドとインストール
 
-       PostgreSQLのインストールについては、PostgreSQL付属のドキュメントまたはWeb上のマニュアルを確認してください。
+    Tsurugi FDWの依存モジュールをビルドして、PostgreSQLにインストールします。
 
-    1. インストール後の設定
+    ~~~ sh
+    $ make install_dependencies
+    ~~~
 
-        PostgreSQLのライブラリパスを共有ライブラリの検索パスに設定します。
+    PostgreSQLのライブラリパスをライブラリの検索パスに設定します。  
+    すでに環境が整っているとわかっている場合は、本手順はスキップしてください。
 
-        ~~~ sh
-        $ LD_LIBRARY_PATH=<PostgreSQL install directory>/lib:$LD_LIBRARY_PATH
-        $ export LD_LIBRARY_PATH
-        ~~~
+    ~~~ sh
+    $ LIBRARY_PATH=<PostgreSQL install directory>/lib:$LIBRARY_PATH
+    $ export LIBRARY_PATH
+    ~~~
 
-        `<PostgreSQL install directory>/bin`をPATHに追加します。これは必須ではありませんが、PostgreSQLの使用が便利になります。
+1. Tsurugi FDWのビルドとインストール
 
-        ~~~ sh
-        $ PATH=<PostgreSQL install directory>/bin:$PATH
-        $ export PATH
-        ~~~
+    Tsurugi FDWをビルドして、PostgreSQLにインストールします。
 
-        これらの環境変数はPostgreSQLからTsurugiを利用する際に必要になるため、`.profile`ファイルや`.bash_profile`ファイルなどの設定ファイルに記述し、ログイン時に自動的に設定されるようにしてください。
+    ~~~ sh
+    $ make
+    $ make install
+    ~~~
 
-1. Tsurugi FDW のインストール
+    PostgreSQLがカスタムロケーションにインストールされている場合は、pg_configが存在するディレクトリをPATHに追加して、ビルドとインストールを行ってください。
 
-    1. ソースコードのクローン
+    ~~~ sh
+    $ make USE_PGXS=1
+    $ make install USE_PGXS=1
+    ~~~
 
-        GitHubのリポジトリからPostgreSQLのcontribディレクトリにクローンします。
+### Tsurugi FDWの初期設定
 
-        ~~~ sh
-        $ cd <PostgreSQL build directory>/contrib/
-        $ git clone https://github.com/project-tsurugi/tsurugi_fdw
-        ~~~
+1. データベースクラスタの作成
 
-    1. サブモジュールの更新
+    Tsurugiを利用するためのデータベースクラスタを作成します。
+    - 以下の例では`<PostgreSQL install directory>/data`にデータベースのディレクトリを作成しています。  
+      ディレクトリの場所は任意です。
 
-        Tsurugi FDWのサブモジュールを更新します。
+    ~~~ sh
+    $ mkdir <PostgreSQL install directory>/data
+    $ initdb -D <PostgreSQL install directory>/data
+    ~~~
 
-        ~~~ sh
-        $ cd <PostgreSQL build directory>/contrib/tsurugi_fdw
-        $ git submodule update --init
-        ~~~
+1. テーブル空間用のディレクトリ作成
 
-        - 以降、このディレクトリを`<tsurugi_fdw build directory>`と定義します。
+    Tsurugiのテーブル空間として使用するディレクトリを作成します。
+    - 以下の例では`<PostgreSQL install directory>/tsurugi`にテーブル空間用のディレクトリを作成しています。  
+      ディレクトリの場所は任意です。
 
-    1. ビルド前の設定
+    ~~~ sh
+    $ mkdir <PostgreSQL install directory>/tsurugi
+    ~~~
 
-        Tsurugiのライブラリパスをライブラリの検索パスに設定します。
-        Tsurugiのライブラリパスは、$TSURUGI_HOME下のlibディレクトになります。すでに環境が整っているとわかっている場合は、本手順はスキップしてください。
+1. Tsurugi FDWの登録
 
-        ~~~ sh
-        $ LIBRARY_PATH=$TSURUGI_HOME/lib:$LIBRARY_PATH
-        $ export LIBRARY_PATH
-        ~~~
+    PostgreSQLのサーバ起動時にプリロードされる共有ライブラリにTsurugi FDWを登録します。
 
-    1. Tsurugi FDWのビルドとインストール
+    プリロードされる共有ライブラリの登録は、データベースクラスタのデータディレクトリ直下にあるpostgresql.confのshared_preload_librariesパラメータを更新します。
 
-        Tsurugi FDWをビルドして、PostgreSQLにインストールします。
+    ~~~ conf
+    shared_preload_libraries = 'tsurugi_fdw'
+    ~~~
 
-        ~~~ sh
-        $ make
-        $ make install
-        ~~~
+1. PostgreSQLのサーバ起動
 
-        PostgreSQLがカスタムロケーションにインストールされている場合は、pg_configが存在するディレクトリをPATHに追加して、ビルドとインストールを行ってください。
+    PostgreSQLのサーバを起動します。
 
-        ~~~ sh
-        $ make USE_PGXS=1
-        $ make install USE_PGXS=1
-        ~~~
+    ~~~ sh
+    $ pg_ctl -D <PostgreSQL install directory>/data/ start
+    ~~~
 
-1. Tsurugi FDW 初期設定
+1. メタデータ管理基盤の初期化
 
-    1. データベースクラスタの作成
+    Tsurugiのメタデータ管理基盤を初期化します。
 
-        Tsurugiを利用するためのデータベースクラスタを作成します。
+    ~~~ sh
+    $ psql postgres < <tsurugi_fdw build directory>/third_party/metadata-manager/sql/ddl.sql
+    ~~~
 
-        ~~~ sh
-        $ mkdir <PostgreSQL install directory>/data
-        $ initdb -D <PostgreSQL install directory>/data
-        ~~~
+1. データベースサーバへの接続
 
-        - 上記の例では`<PostgreSQL install directory>/data`にデータベースのディレクトリを作成しています。ディレクトリの場所は任意です。
+    PostgreSQLの `psql` を使用して データベースサーバへ接続します。
 
-    1. テーブル空間用のディレクトリ作成
+    ~~~ sh
+    $ psql postgres
+    psql (12.4)
+    Type "help" for help.
 
-        Tsurugiのテーブル空間として使用するディレクトリを作成します。
+    postgres=#
+    ~~~
 
-        ~~~ sh
-        $ mkdir <PostgreSQL install directory>/tsurugi
-        ~~~
+1. エクステンションのインストール
 
-        - 上記の例では`<PostgreSQL install directory>/tsurugi`にテーブル空間用のディレクトリを作成しています。ディレクトリの場所は任意です。
+    CREATE EXTENTIONコマンドを実行して、Tsurugi FDWをインストールします。
 
-    1. Tsurugi FDWの登録
+    ~~~ sql
+    postgres=# CREATE EXTENSION tsurugi_fdw;
+    ~~~
 
-        PostgreSQLのサーバ起動時にプリロードされる共有ライブラリにTsurugi FDWを登録します。
+    インストールされたTsurugi FDWは、psqlのメタコマンド`\dew`で確認できます。
 
-        プリロードされる共有ライブラリの登録は、データベースクラスタのデータディレクトリ直下にあるpostgresql.confのshared_preload_librariesパラメータを更新します。
+    ~~~ sql
+    postgres=# \dew
+                    List of foreign-data wrappers
+        Name     |  Owner   |       Handler       | Validator
+     ------------+----------+-----------------------+-----------
+     tsurugi_fdw | postgres | tsurugi_fdw_handler | -
+    ~~~
 
-        ~~~ conf
-        shared_preload_libraries = 'tsurugi_fdw'
-        ~~~
+1. 外部サーバの登録
 
-    1. PostgreSQLのサーバ起動
+    CREATE SERVERコマンドを実行して、Tsurugiを使用するための外部データラッパを登録します。
 
-        PostgreSQLのサーバを起動します。
+    ~~~ sql
+    postgres=# CREATE SERVER tsurugi FOREIGN DATA WRAPPER tsurugi_fdw;
+    ~~~
 
-        ~~~ sh
-        $ pg_ctl -D <PostgreSQL install directory>/data/ start
-        ~~~
+    登録された外部データラッパは、psqlのメタコマンド`\des`で確認できます。
 
-    1. メタデータ管理基盤の初期化
+    ~~~ sql
+    postgres=# \des
+            List of foreign servers
+    Name    |  Owner   | Foreign-data wrapper
+    --------+----------+----------------------
+    tsurugi | postgres | tsurugi_fdw
+    ~~~
 
-        Tsurugiのメタデータ管理基盤を初期化します。
+1. テーブル空間の定義
 
-        ~~~ sh
-        $ psql postgres < <tsurugi_fdw build directory>/third_party/metadata-manager/sql/ddl.sql
-        ~~~
+    CREATE TABLESPACEコマンドを実行して、Tsurugiで使用するテーブル空間を定義します。
 
-    1. データベースサーバへの接続
+    ~~~ sql
+    postgres=# CREATE TABLESPACE tsurugi LOCATION '<PostgreSQL install directory>/tsurugi';
+    ~~~
 
-        PostgreSQLの `psql` を使用して データベースサーバへ接続します。
+    定義されたテーブル空間は、psqlのメタコマンド`\db`で確認できます。
 
-        ~~~ sh
-        $ psql postgres
-        psql (12.4)
-        Type "help" for help.
+    ~~~ sql
+    postgres=# \db
+                    List of tablespaces
+        Name   |  Owner   |            Location
+    -----------+----------+------------------------------------
+    pg_default | postgres |
+    pg_global  | postgres |
+    tsurugi    | postgres | /home/postgres/local/pgsql/tsurugi
+    ~~~
 
-        postgres=#
-        ~~~
+1. PostgreSQLのサーバ終了
 
-    1. エクステンションのインストール
+    Tsurugi FDWの初期設定が完了しました。必要に応じてPostgreSQLのサーバを終了します。
 
-        CREATE EXTENTIONコマンドを実行して、Tsurugi FDWをインストールします。
+    ~~~ sh
+    postgres=# \q
+    pg_ctl -D <PostgreSQL install directory>/data/ stop
+    ~~~
 
-        ~~~ sql
-        postgres=# CREATE EXTENSION tsurugi_fdw;
-        ~~~
+### Tsurugi FDWの起動と終了
 
-        インストールされたTsurugi FDWは、psqlのメタコマンド`\dew`で確認できます。
+PostgreSQLレイヤーからTsurugiを利用する前に、Tsurugiサーバを起動してください。
+Tsurugiサーバの起動方法はTsurugiのドキュメントを参照してください。
 
-        ~~~ sql
-        postgres=# \dew
-                        List of foreign-data wrappers
-           Name     |  Owner   |       Handler       | Validator
-        ------------+----------+-----------------------+-----------
-        tsurugi_fdw | postgres | tsurugi_fdw_handler | -
-        ~~~
+Tsurugi FDWの起動と終了は、Tsurugi FDWが登録されたPostgreSQLのサーバ仕様に準じます。
 
-    1. 外部サーバの登録
+### Tsurugi FDWのアンインストール
 
-        CREATE SERVERコマンドを実行して、Tsurugiを使用するための外部データラッパを登録します。
+1. テーブル空間の削除
 
-        ~~~ sql
-        postgres=# CREATE SERVER tsurugi FOREIGN DATA WRAPPER tsurugi_fdw;
-        ~~~
+    DROP TABLESPACEコマンドを実行して、Tsurugiで使用するテーブル空間の定義を削除します。
 
-        登録された外部データラッパは、psqlのメタコマンド`\des`で確認できます。
+    ~~~ sql
+    postgres=# DROP TABLESPACE tsurugi;
+    ~~~
 
-        ~~~ sql
-        postgres=# \des
-                List of foreign servers
-        Name    |  Owner   | Foreign-data wrapper
-        --------+----------+----------------------
-        tsurugi | postgres | tsurugi_fdw
-        ~~~
+1. 外部サーバの解除
 
-    1. テーブル空間の定義
+    DROP SERVERコマンドを実行して、Tsurugiを管理する外部データラッパを解除します。
 
-        CREATE TABLESPACEコマンドを実行して、Tsurugiで使用するテーブル空間を定義します。
+    ~~~ sql
+    postgres=# DROP SERVER tsurugi;
+    ~~~
 
-        ~~~ sql
-        postgres=# CREATE TABLESPACE tsurugi LOCATION '<PostgreSQL install directory>/tsurugi';
-        ~~~
+1. エクステンションのアンインストール
 
-        定義されたテーブル空間は、psqlのメタコマンド`\db`で確認できます。
+    DROP EXTENTIONコマンドを実行して、Tsurugi FDWをアンインストールします。
 
-        ~~~ sql
-        postgres=# \db
-                        List of tablespaces
-            Name   |  Owner   |            Location
-        -----------+----------+------------------------------------
-        pg_default | postgres |
-        pg_global  | postgres |
-        tsurugi    | postgres | /home/postgres/local/pgsql/tsurugi
-        ~~~
+    ~~~ sql
+    postgres=# DROP EXTENSION tsurugi_fdw;
+    ~~~
 
-    1. PostgreSQLのサーバ終了
+1. Tsurugi FDWの解除
 
-        Tsurugi FDWの初期設定が完了しました。必要に応じてPostgreSQLのサーバを終了します。
+    postgresql.confのshared_preload_librariesパラメータに追加したTsurugi FDWを解除します。
 
-        ~~~ sh
-        postgres=# \q
-        pg_ctl -D <PostgreSQL install directory>/data/ stop
-        ~~~
-
-1. Tsurugi FDW 起動と終了
-
-    PostgreSQLレイヤーからTsurugiを利用する前に、Tsurugi（Tsurugiサーバおよび認証サーバ）を起動してください。
-
-    Tsurugi FDWが登録されたPostgreSQLサーバの起動と終了は、PostgreSQLの仕様に準じます。
-
-1. Tsurugi FDW アンインストール
-
-    1. テーブル空間の削除
-
-        DROP TABLESPACEコマンドを実行して、Tsurugiで使用するテーブル空間の定義を削除します。
-
-        ~~~ sql
-        postgres=# DROP TABLESPACE tsurugi;
-        ~~~
-
-    1. 外部サーバの解除
-
-        DROP SERVERコマンドを実行して、Tsurugiを管理する外部データラッパを解除します。
-
-        ~~~ sql
-        postgres=# DROP SERVER tsurugi;
-        ~~~
-
-    1. エクステンションのアンインストール
-
-        DROP EXTENTIONコマンドを実行して、Tsurugi FDWをアンインストールします。
-
-        ~~~ sql
-        postgres=# DROP EXTENSION tsurugi_fdw;
-        ~~~
-
-    1. Tsurugi FDWの解除
-
-        postgresql.confのshared_preload_librariesパラメータに追加したTsurugi FDWを解除します。
-
-        Tsurugi FDWのアンインストールが完了しました。PostgreSQLのサーバを再起動してください。
+    Tsurugi FDWのアンインストールが完了しました。PostgreSQLのサーバを再起動してください。
