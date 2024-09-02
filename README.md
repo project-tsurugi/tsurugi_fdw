@@ -49,6 +49,13 @@
     make install_dependencies
     ```
 
+    Or in case when PostgreSQL is installed in a custom location,  
+    add a directory of pg_config to PATH and use
+
+    ```sh
+    make install_dependencies USE_PGXS=1
+    ```
+
     Dependent modules installed in **\<PostgreSQL install directory>**.  
     Add **\<PostgreSQL install directory>** to LIBRARY_PATH.
 

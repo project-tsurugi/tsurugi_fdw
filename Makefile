@@ -53,7 +53,7 @@ else
 endif
 
 install_dependencies:
-	bash ./scripts/install_dependencies.sh $(prefix)
+	bash ./scripts/install_dependencies.sh $(libdir)
 
 tests:
 	bash ./scripts/test.sh
