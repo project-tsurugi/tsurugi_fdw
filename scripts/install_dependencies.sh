@@ -1,6 +1,6 @@
 #!/bin/bash
 
-_FDW_DEPS_INSTALL_DIR=$1
+_FDW_DEPS_INSTALL_DIR=$1/..
 
 _SCRIPTS_DIR=$(cd "$(dirname $0)" && pwd)
 _THIRD_PARTY_DIR=${_SCRIPTS_DIR}/../third_party
