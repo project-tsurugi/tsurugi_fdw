@@ -15,7 +15,6 @@ Tsurugi FDWは、PostgreSQLのビルド環境を使用します。すでに環�
 - 以降、このディレクトリを **`<PostgreSQL install directory>`** と定義します。
 - PostgreSQLのインストールについては、PostgreSQL付属のドキュメントまたはWeb上のマニュアルを確認してください。  
 
-
     ~~~sh
     curl -sL https://ftp.postgresql.org/pub/source/v12.4/postgresql-12.4.tar.bz2 | tar -xj
     cd postgresql-12.4
@@ -51,6 +50,12 @@ Tsurugi FDWは、PostgreSQLのビルド環境を使用します。すでに環�
 
     ~~~ sh
     $ make install_dependencies
+    ~~~
+
+    PostgreSQLがカスタムロケーションにインストールされている場合は、pg_configが存在するディレクトリをPATHに追加して、ビルドとインストールを行ってください。
+
+    ~~~ sh
+    $ make install_dependencies USE_PGXS=1
     ~~~
 
     PostgreSQLのライブラリパスをライブラリの検索パスに設定します。  
