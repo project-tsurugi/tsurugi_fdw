@@ -3178,7 +3178,7 @@ appendGroupByClause(List *tlist, deparse_expr_cxt *context)
 			appendStringInfoString(buf, ", ");
 		first = false;
 
-		deparseSortGroupClause(grp->tleSortGroupRef, tlist, true, context);
+		deparseSortGroupClause(grp->tleSortGroupRef, tlist, false, context);
 	}
 }
 

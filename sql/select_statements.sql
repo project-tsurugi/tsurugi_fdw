@@ -502,13 +502,14 @@ GROUP BY
     c7;
 
 -- TG
+/* tsurugi-issue#974 : Restrictions of the AGV aggregation function
 SELECT
     c7, count(c1), sum(c2), avg(c3), min(c4), max(c5)
 FROM
-    pt2
+    t2
 GROUP BY
     c7;
-
+*/
 -- FOREIGN TABLE JOIN
 -- TG JOIN #1 /* tsurugi-issue#863 */
 SELECT 

@@ -710,7 +710,13 @@ FROM
     t2
 GROUP BY
     c7;
-ERROR:  Query execution failed. (10)
+ count(c1) | sum(c2) | c7  
+-----------+---------+-----
+         1 |         | 
+         2 |      44 | ABC
+         2 |      77 | XYZ
+(3 rows)
+
 -- GROUP BY #2
 -- PG
 SELECT
@@ -735,7 +741,11 @@ GROUP BY
     c7
 HAVING 
     sum(c2) > 55;
-ERROR:  Query execution failed. (10)
+ count(c1) | sum(c2) | c7  
+-----------+---------+-----
+         2 |      77 | XYZ
+(1 row)
+
 -- GROUP BY #3
 -- PG
 SELECT
@@ -752,19 +762,14 @@ GROUP BY
 (3 rows)
 
 -- TG
+/* tsurugi-issue#974 : Restrictions of the AGV aggregation function
 SELECT
     c7, count(c1), sum(c2), avg(c3), min(c4), max(c5)
 FROM
-    pt2
+    t2
 GROUP BY
     c7;
- c7  | count | sum |         avg          | min | max  
------+-------+-----+----------------------+-----+------
-     |     1 |     |                      |     |     
- ABC |     2 |  44 | 222.0000000000000000 | 1.1 | 3.33
- XYZ |     2 |  77 | 388.5000000000000000 | 2.2 | 5.55
-(3 rows)
-
+*/
 -- FOREIGN TABLE JOIN
 -- TG JOIN #1 /* tsurugi-issue#863 */
 SELECT 
