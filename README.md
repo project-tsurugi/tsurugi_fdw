@@ -49,8 +49,8 @@
     make install_dependencies
     ```
 
-    Or in case when PostgreSQL is installed in a custom location,  
-    add a directory of pg_config to PATH and use
+    If tsurugi_fdw could not cloned into the "contrib" directory in PostgreSQL,
+    add the directory of pg_config to PATH and use "USE_PGXS=1".
 
     ```sh
     make install_dependencies USE_PGXS=1
@@ -70,8 +70,8 @@
     make install
     ```
 
-    Or in case when PostgreSQL is installed in a custom location,  
-    add a directory of pg_config to PATH and use
+    If tsurugi_fdw could not cloned into the "contrib" directory in PostgreSQL,
+    add the directory of pg_config to PATH and use "USE_PGXS=1".
 
     ```sh
     make USE_PGXS=1
@@ -200,6 +200,13 @@
 
     ```sh
     make tests REGRESS_EXTRA=1
+    ```
+
+    If tsurugi_fdw could not cloned into the "contrib" directory in PostgreSQL,
+    add the directory of pg_config to PATH and use "USE_PGXS=1".
+
+    ```sh
+    make tests USE_PGXS=1
     ```
 
 ## Define table

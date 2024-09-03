@@ -52,7 +52,7 @@ Tsurugi FDWは、PostgreSQLのビルド環境を使用します。すでに環�
     $ make install_dependencies
     ~~~
 
-    PostgreSQLがカスタムロケーションにインストールされている場合は、pg_configが存在するディレクトリをPATHに追加して、ビルドとインストールを行ってください。
+    PostgreSQLのcontribディレクトリにTsuguri FDWをクローンできなかった場合は、pg_configが存在するディレクトリをPATHに追加し`USE_PGXS=1`を指定した上でビルドとインストールを行ってください。
 
     ~~~ sh
     $ make install_dependencies USE_PGXS=1
@@ -75,7 +75,7 @@ Tsurugi FDWは、PostgreSQLのビルド環境を使用します。すでに環�
     $ make install
     ~~~
 
-    PostgreSQLがカスタムロケーションにインストールされている場合は、pg_configが存在するディレクトリをPATHに追加して、ビルドとインストールを行ってください。
+    PostgreSQLのcontribディレクトリにTsuguri FDWをクローンできなかった場合は、pg_configが存在するディレクトリをPATHに追加し`USE_PGXS=1`を指定した上でビルドとインストールを行ってください。
 
     ~~~ sh
     $ make USE_PGXS=1
