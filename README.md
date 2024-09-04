@@ -49,8 +49,8 @@
     make install_dependencies
     ```
 
-    If tsurugi_fdw could not cloned into the "contrib" directory in PostgreSQL,
-    add the directory of pg_config to PATH and use "USE_PGXS=1".
+    If tsurugi_fdw was cloned into a directory other than the "contrib" directory in PostgreSQL,
+    add a directory of pg_config to PATH and use "USE_PGXS=1".
 
     ```sh
     make install_dependencies USE_PGXS=1
@@ -70,8 +70,8 @@
     make install
     ```
 
-    If tsurugi_fdw could not cloned into the "contrib" directory in PostgreSQL,
-    add the directory of pg_config to PATH and use "USE_PGXS=1".
+    If tsurugi_fdw was cloned into a directory other than the "contrib" directory in PostgreSQL,
+    add a directory of pg_config to PATH and use "USE_PGXS=1".
 
     ```sh
     make USE_PGXS=1
@@ -202,8 +202,8 @@
     make tests REGRESS_EXTRA=1
     ```
 
-    If tsurugi_fdw could not cloned into the "contrib" directory in PostgreSQL,
-    add the directory of pg_config to PATH and use "USE_PGXS=1".
+    If tsurugi_fdw was cloned into a directory other than the "contrib" directory in PostgreSQL,
+    add a directory of pg_config to PATH and use "USE_PGXS=1".
 
     ```sh
     make tests USE_PGXS=1
