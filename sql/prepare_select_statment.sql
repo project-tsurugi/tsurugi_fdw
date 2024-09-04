@@ -253,6 +253,7 @@ PREPARE select_t2_group2
 PREPARE select_pt2_group3
 	AS SELECT c7, count(c1), sum(c2), avg(c3), min(c4), max(c5) FROM pt2 GROUP BY c7;
 -- TG
+/* tsurugi-issue#974 : Restrictions of the AGV aggregation function */
 PREPARE select_t2_group3_exe_ng1
 	AS SELECT c7, count(c1), sum(c2), avg(c3), min(c4), max(c5) FROM t2 GROUP BY c7;
 
@@ -498,10 +499,9 @@ EXECUTE select_t2_group2;
 -- PG
 EXECUTE select_pt2_group3;
 -- TG
-/* not support avg return data type 1700: NUMERICOID
+/* tsurugi-issue#974 : Restrictions of the AGV aggregation function
 EXECUTE select_t2_group3_exe_ng1;
 */
-
 -- FOREIGN TABLE JOIN
 -- TG JOIN #1
 EXECUTE select_join1;
