@@ -768,7 +768,7 @@ SELECT tg_set_write_preserve('wp_table1', 'wp_table2');
 INSERT INTO wp_table1 (column1) VALUES (100);
 INSERT INTO wp_table2 (column1) VALUES (100);
 INSERT INTO table1 (column1) VALUES (500); -- error
-ERROR:  Tsurugi::execute_statement() failed. (10)
+ERROR:  Tsurugi Server LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
 SELECT * FROM wp_table1;
  column1 
 ---------
@@ -790,7 +790,7 @@ SELECT * FROM table1;
 UPDATE wp_table1 SET column1 = column1+1;
 UPDATE wp_table2 SET column1 = column1+1;
 UPDATE table1 SET column1 = column1+1; -- error
-ERROR:  Tsurugi::execute_statement() failed. (10)
+ERROR:  Tsurugi Server LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
 SELECT * FROM wp_table1;
  column1 
 ---------
@@ -812,7 +812,7 @@ SELECT * FROM table1;
 DELETE FROM wp_table1 WHERE column1 = 101;
 DELETE FROM wp_table2 WHERE column1 = 101;
 DELETE FROM table1 WHERE column1 = 400; -- error
-ERROR:  Tsurugi::execute_statement() failed. (10)
+ERROR:  Tsurugi Server LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
 SELECT * FROM wp_table1;
  column1 
 ---------
@@ -849,9 +849,9 @@ SELECT tg_set_write_preserve('wp_table1');
 
 INSERT INTO wp_table1 (column1) VALUES (200);
 INSERT INTO wp_table2 (column1) VALUES (200); -- error
-ERROR:  Tsurugi::execute_statement() failed. (10)
+ERROR:  Tsurugi Server LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
 INSERT INTO table1 (column1) VALUES (500); -- error
-ERROR:  Tsurugi::execute_statement() failed. (10)
+ERROR:  Tsurugi Server LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
 SELECT * FROM wp_table1;
  column1 
 ---------
@@ -871,7 +871,7 @@ SELECT * FROM table1;
 
 UPDATE wp_table1 SET column1 = column1+1;
 UPDATE table1 SET column1 = column1+1; -- error
-ERROR:  Tsurugi::execute_statement() failed. (10)
+ERROR:  Tsurugi Server LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
 SELECT * FROM wp_table1;
  column1 
 ---------
@@ -891,7 +891,7 @@ SELECT * FROM table1;
 
 DELETE FROM wp_table1 WHERE column1 = 201;
 DELETE FROM table1 WHERE column1 = 400; -- error
-ERROR:  Tsurugi::execute_statement() failed. (10)
+ERROR:  Tsurugi Server LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
 SELECT * FROM wp_table1;
  column1 
 ---------
@@ -960,12 +960,15 @@ SELECT * FROM ri_table1; -- success
 ---------
 (0 rows)
 
+/*
+エラー詳細に含まれるTIDが毎回異なる値になるためテスト対象外とする
 SELECT * FROM ri_table2; -- error
-ERROR:  Tsurugi::commit() failed. (10)
+ERROR:  Tsurugi Server INACTIVE_TRANSACTION_EXCEPTION (SQL-02025: serialization failed transaction:TID-00000000000004e7 shirakami response Status=ERR_READ_AREA_VIOLATION {reason_code:CC_LTX_READ_AREA_VIOLATION, storage_name:ri_table2, no key information} )
 SELECT * FROM re_table1; -- error
-ERROR:  Tsurugi::commit() failed. (10)
+ERROR:  Tsurugi Server INACTIVE_TRANSACTION_EXCEPTION (SQL-02025: serialization failed transaction:TID-00000000000004e8 shirakami response Status=ERR_READ_AREA_VIOLATION {reason_code:CC_LTX_READ_AREA_VIOLATION, storage_name:re_table1, no key information} )
 SELECT * FROM re_table2; -- error
-ERROR:  Tsurugi::commit() failed. (10)
+ERROR:  Tsurugi Server INACTIVE_TRANSACTION_EXCEPTION (SQL-02025: serialization failed transaction:TID-00000000000004e9 shirakami response Status=ERR_READ_AREA_VIOLATION {reason_code:CC_LTX_READ_AREA_VIOLATION, storage_name:re_table2, no key information} )
+*/
 SELECT tg_set_transaction('short'); -- reset tableName
               tg_set_transaction              
 ----------------------------------------------
@@ -1024,8 +1027,11 @@ SELECT * FROM ri_table2; -- success
 ---------
 (0 rows)
 
+/*
+エラー詳細に含まれるTIDが毎回異なる値になるためテスト対象外とする
 SELECT * FROM re_table1; -- error
-ERROR:  Tsurugi::commit() failed. (10)
+ERROR:  Tsurugi Server INACTIVE_TRANSACTION_EXCEPTION (SQL-02025: serialization failed transaction:TID-00000000000004ec shirakami response Status=ERR_READ_AREA_VIOLATION {reason_code:CC_LTX_READ_AREA_VIOLATION, storage_name:re_table1, no key information} )
+*/
 SELECT * FROM re_table2; -- success
  column1 
 ---------
@@ -1081,12 +1087,15 @@ SELECT * FROM ri_table1; -- success
 ---------
 (0 rows)
 
+/*
+エラー詳細に含まれるTIDが毎回異なる値になるためテスト対象外とする
 SELECT * FROM ri_table2; -- error
-ERROR:  Tsurugi::commit() failed. (10)
+ERROR:  Tsurugi Server INACTIVE_TRANSACTION_EXCEPTION (SQL-02025: serialization failed transaction:TID-00000000000004ef shirakami response Status=ERR_READ_AREA_VIOLATION {reason_code:CC_LTX_READ_AREA_VIOLATION, storage_name:ri_table2, no key information} )
 SELECT * FROM re_table1; -- error
-ERROR:  Tsurugi::commit() failed. (10)
+ERROR:  Tsurugi Server INACTIVE_TRANSACTION_EXCEPTION (SQL-02025: serialization failed transaction:TID-00000000000004f0 shirakami response Status=ERR_READ_AREA_VIOLATION {reason_code:CC_LTX_READ_AREA_VIOLATION, storage_name:re_table1, no key information} )
 SELECT * FROM re_table2; -- error
-ERROR:  Tsurugi::commit() failed. (10)
+ERROR:  Tsurugi Server INACTIVE_TRANSACTION_EXCEPTION (SQL-02025: serialization failed transaction:TID-00000000000004f1 shirakami response Status=ERR_READ_AREA_VIOLATION {reason_code:CC_LTX_READ_AREA_VIOLATION, storage_name:re_table2, no key information} )
+*/
 SELECT tg_set_transaction('short');
               tg_set_transaction              
 ----------------------------------------------
@@ -1161,7 +1170,7 @@ SELECT tg_set_write_preserve('wp_table1', 'wp_table2');
 INSERT INTO wp_table1 (column1) VALUES (300);
 INSERT INTO wp_table2 (column1) VALUES (300);
 INSERT INTO table1 (column1) VALUES (600); -- error
-ERROR:  Tsurugi::execute_statement() failed. (10)
+ERROR:  Tsurugi Server LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
 SELECT * FROM wp_table1;
  column1 
 ---------
@@ -1255,7 +1264,7 @@ SELECT tg_show_transaction();
 INSERT INTO wp_table1 (column1) VALUES (500);
 INSERT INTO wp_table2 (column1) VALUES (500);
 INSERT INTO table1 (column1) VALUES (800); -- error
-ERROR:  Tsurugi::execute_statement() failed. (10)
+ERROR:  Tsurugi Server LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
 SELECT * FROM wp_table1;
  column1 
 ---------

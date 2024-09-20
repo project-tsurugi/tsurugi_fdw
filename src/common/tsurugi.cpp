@@ -390,3 +390,62 @@ void Tsurugi::end()
 	}
 	transaction_ = nullptr;
 }
+
+/*
+ *	tsurugi_error
+ */
+ERROR_CODE Tsurugi::tsurugi_error(stub::tsurugi_error_code& code)
+{
+    ERROR_CODE error = ERROR_CODE::UNKNOWN;
+    if (connection_ == nullptr)
+    {
+        elog(LOG, "Trying to run Tsurugi::init(). (pid: %d)", getpid());
+        error = init();
+        if (error != ERROR_CODE::OK)
+        {
+            elog(ERROR, "there can not connect to Tsurugi.");
+            return error;
+        }
+    }
+    elog(LOG, "Trying to run Connection::tsurugi_error(). (pid: %d)", getpid());
+    error = connection_->tsurugi_error(code);
+    elog(LOG, "Connection::tsurugi_error() done. (error: %d)", (int) error);
+    return error;
+}
+
+/*
+ *	report_server_error
+ */
+void Tsurugi::report_server_error()
+{
+    ERROR_CODE error = ERROR_CODE::UNKNOWN;
+    stub::tsurugi_error_code code{};
+    error = Tsurugi::tsurugi_error(code);
+    if (error == ERROR_CODE::OK)
+    {
+        elog(LOG, "ERROR_CODE::SERVER_ERROR\n\t"
+                  "tsurugi_error_code.type: %d\n\t"
+                  "                   code: %d\n\t"
+                  "                   name: %s\n\t"
+                  "                 detail: %s\n\t"
+                  "      supplemental_text: %s",
+                    (int)code.type, code.code, code.name.c_str(),
+                    code.detail.c_str(), code.supplemental_text.c_str());
+        switch (code.type)
+        {
+            case stub::tsurugi_error_code::tsurugi_error_type::sql_error:
+                elog(ERROR, "Tsurugi Server %s (SQL-%05d: %s)",
+                    code.name.c_str(), code.code, code.detail.c_str());
+                break;
+            case stub::tsurugi_error_code::tsurugi_error_type::framework_error:
+                elog(ERROR, "Tsurugi Server %s (SCD-%05d: %s)",
+                    code.name.c_str(), code.code, code.detail.c_str());
+                break;
+            default:
+                elog(ERROR, "Tsurugi Server Error (type: %d)", (int)code.type);
+                break;
+        }
+    } else {
+        elog(ERROR, "Tsurugi::tsurugi_error() failed. (%d)", (int) error);
+    }
+}

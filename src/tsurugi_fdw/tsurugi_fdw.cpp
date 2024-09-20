@@ -1219,9 +1219,16 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 	begin_prepare_processing(estate);
 
 	ERROR_CODE error = Tsurugi::start_transaction();
-	if (error != ERROR_CODE::OK)
+	switch (error)
 	{
-		elog(ERROR, "Tsurugi::start_transaction() failed. (%d)", (int) error);
+		case ERROR_CODE::OK:
+			break;
+		case ERROR_CODE::SERVER_ERROR:
+			Tsurugi::report_server_error();
+			break;
+		default:
+			elog(ERROR, "Tsurugi::start_transaction() failed. (%d)", (int) error);
+			break;
 	}
 
     fdw_info_.success = true;
@@ -1256,7 +1263,12 @@ tsurugiIterateForeignScan(ForeignScanState* node)
             /* Prepare processing when via ODBC */
             EState* estate = node->ss.ps.state;
             end_prepare_processing(estate);
-            elog(ERROR, "Query execution failed. (%d)", (int) error);
+
+            if (error == ERROR_CODE::SERVER_ERROR) {
+                Tsurugi::report_server_error();
+            } else {
+                elog(ERROR, "Query execution failed. (%d)", (int) error);
+            }
         }
 
         fdw_state->cursor_exists = true;
@@ -1324,10 +1336,17 @@ tsurugiEndForeignScan(ForeignScanState* node)
     if (fdw_info_.success)
     {
         ERROR_CODE error = Tsurugi::commit();
-		if (error != ERROR_CODE::OK)
-		{
-			elog(ERROR, "Tsurugi::commit() failed. (%d)", (int) error);
-		}
+        switch (error)
+        {
+            case ERROR_CODE::OK:
+                break;
+            case ERROR_CODE::SERVER_ERROR:
+                Tsurugi::report_server_error();
+                break;
+            default:
+                elog(ERROR, "Tsurugi::commit() failed. (%d)", (int) error);
+                break;
+        }
     }
 
 	/* Prepare processing when via ODBC */
@@ -1366,9 +1385,16 @@ tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
 	begin_prepare_processing(estate);
 
 	ERROR_CODE error = Tsurugi::start_transaction();
-	if (error != ERROR_CODE::OK)
+	switch (error)
 	{
-		elog(ERROR, "Tsurugi::start_transaction() failed. (%d)", (int) error);
+		case ERROR_CODE::OK:
+			break;
+		case ERROR_CODE::SERVER_ERROR:
+			Tsurugi::report_server_error();
+			break;
+		default:
+			elog(ERROR, "Tsurugi::start_transaction() failed. (%d)", (int) error);
+			break;
 	}
 
     fdw_info_.success = true;
@@ -1402,8 +1428,12 @@ tsurugiIterateDirectModify(ForeignScanState* node)
         /* Prepare processing when via JDBC and ODBC */
         end_prepare_processing(estate);
 
-        elog(ERROR, "Tsurugi::execute_statement() failed. (%d)", 
-            (int) error);
+        if (error == ERROR_CODE::SERVER_ERROR) {
+            Tsurugi::report_server_error();
+        } else {
+            elog(ERROR, "Tsurugi::execute_statement() failed. (%d)",
+                (int) error);
+        }
 	} else {
 		/* Increment the command es_processed count if necessary. */
 		estate->es_processed += num_rows;
@@ -1424,10 +1454,17 @@ tsurugiEndDirectModify(ForeignScanState* node)
     if (fdw_info_.success)
     {
         ERROR_CODE error = Tsurugi::commit();
-		if (error != ERROR_CODE::OK)
-		{
-			elog(ERROR, "Tsurugi::commit() failed. (%d)", (int) error);
-		}
+        switch (error)
+        {
+            case ERROR_CODE::OK:
+                break;
+            case ERROR_CODE::SERVER_ERROR:
+                Tsurugi::report_server_error();
+                break;
+            default:
+                elog(ERROR, "Tsurugi::commit() failed. (%d)", (int) error);
+                break;
+        }
     }
 
 	/* Prepare processing when via JDBC and ODBC */
@@ -1725,10 +1762,17 @@ tsurugiEndForeignModify(EState *estate,
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
  
     ERROR_CODE error = Tsurugi::commit();
-	if (error != ERROR_CODE::OK)
-	{
-		elog(ERROR, "Tsurugi::commit() failed. (%d)", (int) error);
-	}
+    switch (error)
+    {
+        case ERROR_CODE::OK:
+            break;
+        case ERROR_CODE::SERVER_ERROR:
+            Tsurugi::report_server_error();
+            break;
+        default:
+            elog(ERROR, "Tsurugi::commit() failed. (%d)", (int) error);
+            break;
+    }
 }
 
 /*
@@ -1809,9 +1853,16 @@ tsurugiBeginForeignInsert(ModifyTableState *mtstate,
     resultRelInfo->ri_FdwState = fdw_state;
 
 	ERROR_CODE error = Tsurugi::start_transaction();
-	if (error != ERROR_CODE::OK)
+	switch (error)
 	{
-		elog(ERROR, "Tsurugi::start_transaction() failed. (%d)", (int) error);
+		case ERROR_CODE::OK:
+			break;
+		case ERROR_CODE::SERVER_ERROR:
+			Tsurugi::report_server_error();
+			break;
+		default:
+			elog(ERROR, "Tsurugi::start_transaction() failed. (%d)", (int) error);
+			break;
 	}
 }
 

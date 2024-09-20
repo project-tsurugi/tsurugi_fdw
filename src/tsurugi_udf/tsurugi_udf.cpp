@@ -579,8 +579,16 @@ tg_start_transaction(PG_FUNCTION_ARGS)
 	}
 
 	ERROR_CODE error = Tsurugi::start_transaction();
-	if (error != ERROR_CODE::OK) {
-		elog(ERROR, "Tsurugi::start_transaction() failed. (%d)", (int) error);
+	switch (error)
+	{
+		case ERROR_CODE::OK:
+			break;
+		case ERROR_CODE::SERVER_ERROR:
+			Tsurugi::report_server_error();
+			break;
+		default:
+			elog(ERROR, "Tsurugi::start_transaction() failed. (%d)", (int) error);
+			break;
 	}
 
 	transaction_block = true;
@@ -599,8 +607,17 @@ tg_commit(PG_FUNCTION_ARGS)
 
 	transaction_block = false;
 	ERROR_CODE error = Tsurugi::commit();
-	if (error != ERROR_CODE::OK && error != ERROR_CODE::NO_TRANSACTION) {
-		elog(ERROR, "Tsurugi::commit() failed. (%d)", (int) error);
+	switch (error)
+	{
+		case ERROR_CODE::OK:
+		case ERROR_CODE::NO_TRANSACTION:
+			break;
+		case ERROR_CODE::SERVER_ERROR:
+			Tsurugi::report_server_error();
+			break;
+		default:
+			elog(ERROR, "Tsurugi::commit() failed. (%d)", (int) error);
+			break;
 	}
 
 	if (specific_transaction) {
@@ -622,8 +639,17 @@ tg_rollback(PG_FUNCTION_ARGS)
 
 	transaction_block = false;
 	ERROR_CODE error = Tsurugi::rollback();
-	if (error != ERROR_CODE::OK && error != ERROR_CODE::NO_TRANSACTION) {
-		elog(ERROR, "Tsurugi::rollback() failed. (%d)", (int) error);
+	switch (error)
+	{
+		case ERROR_CODE::OK:
+		case ERROR_CODE::NO_TRANSACTION:
+			break;
+		case ERROR_CODE::SERVER_ERROR:
+			Tsurugi::report_server_error();
+			break;
+		default:
+			elog(ERROR, "Tsurugi::commit() failed. (%d)", (int) error);
+			break;
 	}
 
 	if (specific_transaction) {

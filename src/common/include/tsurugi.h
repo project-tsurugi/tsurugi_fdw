@@ -39,6 +39,8 @@ public:
 
     static ERROR_CODE begin(ogawayama::stub::Transaction** transaction);
     static void end();
+    static ERROR_CODE tsurugi_error(ogawayama::stub::tsurugi_error_code& code);
+    static void report_server_error();
 	Tsurugi() = delete;
 
 private:
