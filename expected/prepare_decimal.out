@@ -124,9 +124,11 @@ EXECUTE trg_insval_s0 ( 8, -18446744073709551616);
 EXECUTE trg_insval_s0 ( 9, -99999999999999999999999999999999999999);
 -- incorrect value
 EXECUTE trg_insval_s0 (99, 100000000000000000000000000000000000000);
-ERROR:  Tsurugi Server VALUE_EVALUATION_EXCEPTION (SQL-02011: error in evaluating expression: lost_precision: value loses precision by conversion)
+ERROR:  Tsurugi::execute_statement() failed. (13)
+Tsurugi Server VALUE_EVALUATION_EXCEPTION (SQL-02011: error in evaluating expression: lost_precision: value loses precision by conversion)
 EXECUTE trg_insval_s0 (98, 340282366920938463463374607431768211455);
-ERROR:  Tsurugi Server VALUE_EVALUATION_EXCEPTION (SQL-02011: error in evaluating expression: lost_precision: value loses precision by conversion)
+ERROR:  Tsurugi::execute_statement() failed. (13)
+Tsurugi Server VALUE_EVALUATION_EXCEPTION (SQL-02011: error in evaluating expression: lost_precision: value loses precision by conversion)
 EXECUTE trg_insval_s0 (97, 340282366920938463463374607431768211456);
 ERROR:  numeric coefficient field overflow
 SELECT * FROM trg_numeric_s0;
@@ -155,11 +157,14 @@ EXECUTE trg_insval_s38 ( 8, -0.00000000000000000018446744073709551616);
 EXECUTE trg_insval_s38 ( 9, -0.99999999999999999999999999999999999999);
 -- incorrect value
 EXECUTE trg_insval_s38 (99, 1);
-ERROR:  Tsurugi Server VALUE_EVALUATION_EXCEPTION (SQL-02011: error in evaluating expression: lost_precision: value loses precision by conversion)
+ERROR:  Tsurugi::execute_statement() failed. (13)
+Tsurugi Server VALUE_EVALUATION_EXCEPTION (SQL-02011: error in evaluating expression: lost_precision: value loses precision by conversion)
 EXECUTE trg_insval_s38 (98, 0.000000000000000000000000000000000000001);
-ERROR:  Tsurugi Server VALUE_EVALUATION_EXCEPTION (SQL-02011: error in evaluating expression: lost_precision: value loses precision by conversion)
+ERROR:  Tsurugi::execute_statement() failed. (13)
+Tsurugi Server VALUE_EVALUATION_EXCEPTION (SQL-02011: error in evaluating expression: lost_precision: value loses precision by conversion)
 EXECUTE trg_insval_s38 (97, 0.340282366920938463463374607431768211455);
-ERROR:  Tsurugi Server VALUE_EVALUATION_EXCEPTION (SQL-02011: error in evaluating expression: lost_precision: value loses precision by conversion)
+ERROR:  Tsurugi::execute_statement() failed. (13)
+Tsurugi Server VALUE_EVALUATION_EXCEPTION (SQL-02011: error in evaluating expression: lost_precision: value loses precision by conversion)
 EXECUTE trg_insval_s38 (96, 0.340282366920938463463374607431768211456);
 ERROR:  numeric coefficient field overflow
 SELECT * FROM trg_numeric_s38;
