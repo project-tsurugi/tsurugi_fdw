@@ -203,9 +203,17 @@ begin_prepare_processing(const EState* estate)
 		ERROR_CODE error = Tsurugi::prepare(sql, placeholders, prepared_statement);
 		if (error != ERROR_CODE::OK)
 		{
-			std::string error_detail = Tsurugi::get_error_message(error);
-			elog(ERROR, "Tsurugi::prepare() failed. (%d)\n\tsql:%s%s",
-							(int) error, sql.c_str(), error_detail.c_str());
+			std::string error_detail = Tsurugi::get_error_detail(error);
+			if (error_detail.empty())
+			{
+				elog(ERROR, "Tsurugi::prepare() failed. (%d)\n\tsql:%s",
+								(int) error, sql.c_str());
+			}
+			else
+			{
+				elog(ERROR, "Tsurugi::prepare() failed. (%d)\n\tsql:%s\n%s",
+								(int) error, sql.c_str(), error_detail.c_str());
+			}
 			return;
 		}
 	} else {

@@ -40,8 +40,7 @@ public:
     static ERROR_CODE begin(ogawayama::stub::Transaction** transaction);
     static void end();
     static ERROR_CODE tsurugi_error(ogawayama::stub::tsurugi_error_code& code);
-    static void report_server_error();
-    static std::string get_error_message(ERROR_CODE error);
+    static std::string get_error_detail(ERROR_CODE error);
 	Tsurugi() = delete;
 
 private:
