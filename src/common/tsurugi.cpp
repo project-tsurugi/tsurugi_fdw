@@ -397,19 +397,16 @@ void Tsurugi::end()
 ERROR_CODE Tsurugi::tsurugi_error(stub::tsurugi_error_code& code)
 {
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
-	if (connection_ == nullptr)
+	if (connection_ != nullptr)
 	{
-		elog(LOG, "Trying to run Tsurugi::init(). (pid: %d)", getpid());
-		error = init();
-		if (error != ERROR_CODE::OK)
-		{
-			elog(ERROR, "there can not connect to Tsurugi.");
-			return error;
-		}
+		elog(LOG, "Trying to run Connection::tsurugi_error(). (pid: %d)", getpid());
+		error = connection_->tsurugi_error(code);
+		elog(LOG, "Connection::tsurugi_error() done. (error: %d)", (int) error);
 	}
-	elog(LOG, "Trying to run Connection::tsurugi_error(). (pid: %d)", getpid());
-	error = connection_->tsurugi_error(code);
-	elog(LOG, "Connection::tsurugi_error() done. (error: %d)", (int) error);
+	else
+	{
+		elog(ERROR, "tsurugi_error: there is no connection in progress.");
+	}
 	return error;
 }
 
