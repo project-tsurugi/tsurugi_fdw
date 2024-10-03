@@ -1221,7 +1221,15 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 	ERROR_CODE error = Tsurugi::start_transaction();
 	if (error != ERROR_CODE::OK)
 	{
-		elog(ERROR, "Tsurugi::start_transaction() failed. (%d)", (int) error);
+		std::string error_detail = Tsurugi::get_error_detail(error);
+		if (error_detail.empty())
+		{
+			elog(ERROR, "Tsurugi::start_transaction() failed. (%d)", (int) error);
+		}
+		else
+		{
+			elog(ERROR, "Tsurugi::start_transaction() failed. (%d)\n%s", (int) error, error_detail.c_str());
+		}
 	}
 
     fdw_info_.success = true;
@@ -1256,7 +1264,15 @@ tsurugiIterateForeignScan(ForeignScanState* node)
             /* Prepare processing when via ODBC */
             EState* estate = node->ss.ps.state;
             end_prepare_processing(estate);
-            elog(ERROR, "Query execution failed. (%d)", (int) error);
+            std::string error_detail = Tsurugi::get_error_detail(error);
+            if (error_detail.empty())
+            {
+                elog(ERROR, "Query execution failed. (%d)", (int) error);
+            }
+            else
+            {
+                elog(ERROR, "Query execution failed. (%d)\n%s", (int) error, error_detail.c_str());
+            }
         }
 
         fdw_state->cursor_exists = true;
@@ -1326,7 +1342,15 @@ tsurugiEndForeignScan(ForeignScanState* node)
         ERROR_CODE error = Tsurugi::commit();
 		if (error != ERROR_CODE::OK)
 		{
-			elog(ERROR, "Tsurugi::commit() failed. (%d)", (int) error);
+			std::string error_detail = Tsurugi::get_error_detail(error);
+			if (error_detail.empty())
+			{
+				elog(ERROR, "Tsurugi::commit() failed. (%d)", (int) error);
+			}
+			else
+			{
+				elog(ERROR, "Tsurugi::commit() failed. (%d)\n%s", (int) error, error_detail.c_str());
+			}
 		}
     }
 
@@ -1368,7 +1392,15 @@ tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
 	ERROR_CODE error = Tsurugi::start_transaction();
 	if (error != ERROR_CODE::OK)
 	{
-		elog(ERROR, "Tsurugi::start_transaction() failed. (%d)", (int) error);
+		std::string error_detail = Tsurugi::get_error_detail(error);
+		if (error_detail.empty())
+		{
+			elog(ERROR, "Tsurugi::start_transaction() failed. (%d)", (int) error);
+		}
+		else
+		{
+			elog(ERROR, "Tsurugi::start_transaction() failed. (%d)\n%s", (int) error, error_detail.c_str());
+		}
 	}
 
     fdw_info_.success = true;
@@ -1402,8 +1434,17 @@ tsurugiIterateDirectModify(ForeignScanState* node)
         /* Prepare processing when via JDBC and ODBC */
         end_prepare_processing(estate);
 
-        elog(ERROR, "Tsurugi::execute_statement() failed. (%d)", 
-            (int) error);
+        std::string error_detail = Tsurugi::get_error_detail(error);
+        if (error_detail.empty())
+        {
+            elog(ERROR, "Tsurugi::execute_statement() failed. (%d)",
+                (int) error);
+        }
+        else
+        {
+            elog(ERROR, "Tsurugi::execute_statement() failed. (%d)\n%s",
+                (int) error, error_detail.c_str());
+        }
 	} else {
 		/* Increment the command es_processed count if necessary. */
 		estate->es_processed += num_rows;
@@ -1426,7 +1467,15 @@ tsurugiEndDirectModify(ForeignScanState* node)
         ERROR_CODE error = Tsurugi::commit();
 		if (error != ERROR_CODE::OK)
 		{
-			elog(ERROR, "Tsurugi::commit() failed. (%d)", (int) error);
+			std::string error_detail = Tsurugi::get_error_detail(error);
+			if (error_detail.empty())
+			{
+				elog(ERROR, "Tsurugi::commit() failed. (%d)", (int) error);
+			}
+			else
+			{
+				elog(ERROR, "Tsurugi::commit() failed. (%d)\n%s", (int) error, error_detail.c_str());
+			}
 		}
     }
 
@@ -1727,7 +1776,15 @@ tsurugiEndForeignModify(EState *estate,
     ERROR_CODE error = Tsurugi::commit();
 	if (error != ERROR_CODE::OK)
 	{
-		elog(ERROR, "Tsurugi::commit() failed. (%d)", (int) error);
+		std::string error_detail = Tsurugi::get_error_detail(error);
+		if (error_detail.empty())
+		{
+			elog(ERROR, "Tsurugi::commit() failed. (%d)", (int) error);
+		}
+		else
+		{
+			elog(ERROR, "Tsurugi::commit() failed. (%d)\n%s", (int) error, error_detail.c_str());
+		}
 	}
 }
 
@@ -1811,7 +1868,15 @@ tsurugiBeginForeignInsert(ModifyTableState *mtstate,
 	ERROR_CODE error = Tsurugi::start_transaction();
 	if (error != ERROR_CODE::OK)
 	{
-		elog(ERROR, "Tsurugi::start_transaction() failed. (%d)", (int) error);
+		std::string error_detail = Tsurugi::get_error_detail(error);
+		if (error_detail.empty())
+		{
+			elog(ERROR, "Tsurugi::start_transaction() failed. (%d)", (int) error);
+		}
+		else
+		{
+			elog(ERROR, "Tsurugi::start_transaction() failed. (%d)\n%s", (int) error, error_detail.c_str());
+		}
 	}
 }
 

@@ -1293,7 +1293,17 @@ after_prepare_stmt(const PrepareStmt* stmts,
 		/* Drop entry from the PostgreSQL hash table and plancache */
 		DropPreparedStatement(stmts->name, false);
 
-		elog(ERROR, "Tsurugi::prepare() failed. (%d)\n\tsql:%s", (int) error, sql.data);
+		std::string error_detail = Tsurugi::get_error_detail(error);
+		if (error_detail.empty())
+		{
+			elog(ERROR, "Tsurugi::prepare() failed. (%d)\n\tsql:%s",
+							(int) error, sql.data);
+		}
+		else
+		{
+			elog(ERROR, "Tsurugi::prepare() failed. (%d)\n\tsql:%s\n%s",
+							(int) error, sql.data, error_detail.c_str());
+		}
 		return false;
 	}
 

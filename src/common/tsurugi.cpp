@@ -390,3 +390,72 @@ void Tsurugi::end()
 	}
 	transaction_ = nullptr;
 }
+
+/*
+ *	tsurugi_error
+ */
+ERROR_CODE Tsurugi::tsurugi_error(stub::tsurugi_error_code& code)
+{
+	ERROR_CODE error = ERROR_CODE::UNKNOWN;
+	if (connection_ != nullptr)
+	{
+		elog(LOG, "Trying to run Connection::tsurugi_error(). (pid: %d)", getpid());
+		error = connection_->tsurugi_error(code);
+		elog(LOG, "Connection::tsurugi_error() done. (error: %d)", (int) error);
+	}
+	else
+	{
+		elog(ERROR, "tsurugi_error: there is no connection in progress.");
+	}
+	return error;
+}
+
+/*
+ *	get_error_detail
+ */
+std::string Tsurugi::get_error_detail(ERROR_CODE error)
+{
+	std::string error_detail = "";
+
+	if (error == ERROR_CODE::SERVER_ERROR)
+	{
+		ERROR_CODE tsurugi_error = ERROR_CODE::UNKNOWN;
+		stub::tsurugi_error_code code{};
+		tsurugi_error = Tsurugi::tsurugi_error(code);
+		if (tsurugi_error == ERROR_CODE::OK)
+		{
+			elog(LOG, "ERROR_CODE::SERVER_ERROR\n\t"
+					  "tsurugi_error_code.type: %d\n\t"
+					  "                   code: %d\n\t"
+					  "                   name: %s\n\t"
+					  "                 detail: %s\n\t"
+					  "      supplemental_text: %s",
+						(int)code.type, code.code, code.name.c_str(),
+						code.detail.c_str(), code.supplemental_text.c_str());
+
+			std::string code_str = std::to_string(code.code);
+			size_t digits = 5;
+			int precision = digits - std::min(digits, code_str.size());
+			code_str.insert(0, precision, '0');
+
+			error_detail += "Tsurugi Server " + code.name;
+			switch (code.type)
+			{
+				case stub::tsurugi_error_code::tsurugi_error_type::sql_error:
+					error_detail += " (SQL-" + code_str + ": " + code.detail + ")";
+					break;
+				case stub::tsurugi_error_code::tsurugi_error_type::framework_error:
+					error_detail += " (SCD-" + code_str + ": " + code.detail + ")";
+					break;
+				default:
+					elog(ERROR, "Tsurugi Server Error (type: %d)", (int)code.type);
+					break;
+			}
+		}
+		else
+		{
+			elog(ERROR, "Tsurugi::tsurugi_error() failed. (%d)", (int) tsurugi_error);
+		}
+	}
+	return error_detail;
+}

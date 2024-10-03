@@ -580,7 +580,15 @@ tg_start_transaction(PG_FUNCTION_ARGS)
 
 	ERROR_CODE error = Tsurugi::start_transaction();
 	if (error != ERROR_CODE::OK) {
-		elog(ERROR, "Tsurugi::start_transaction() failed. (%d)", (int) error);
+		std::string error_detail = Tsurugi::get_error_detail(error);
+		if (error_detail.empty())
+		{
+			elog(ERROR, "Tsurugi::start_transaction() failed. (%d)", (int) error);
+		}
+		else
+		{
+			elog(ERROR, "Tsurugi::start_transaction() failed. (%d)\n%s", (int) error, error_detail.c_str());
+		}
 	}
 
 	transaction_block = true;
@@ -600,7 +608,15 @@ tg_commit(PG_FUNCTION_ARGS)
 	transaction_block = false;
 	ERROR_CODE error = Tsurugi::commit();
 	if (error != ERROR_CODE::OK && error != ERROR_CODE::NO_TRANSACTION) {
-		elog(ERROR, "Tsurugi::commit() failed. (%d)", (int) error);
+		std::string error_detail = Tsurugi::get_error_detail(error);
+		if (error_detail.empty())
+		{
+			elog(ERROR, "Tsurugi::commit() failed. (%d)", (int) error);
+		}
+		else
+		{
+			elog(ERROR, "Tsurugi::commit() failed. (%d)\n%s", (int) error, error_detail.c_str());
+		}
 	}
 
 	if (specific_transaction) {
@@ -623,7 +639,15 @@ tg_rollback(PG_FUNCTION_ARGS)
 	transaction_block = false;
 	ERROR_CODE error = Tsurugi::rollback();
 	if (error != ERROR_CODE::OK && error != ERROR_CODE::NO_TRANSACTION) {
-		elog(ERROR, "Tsurugi::rollback() failed. (%d)", (int) error);
+		std::string error_detail = Tsurugi::get_error_detail(error);
+		if (error_detail.empty())
+		{
+			elog(ERROR, "Tsurugi::rollback() failed. (%d)", (int) error);
+		}
+		else
+		{
+			elog(ERROR, "Tsurugi::rollback() failed. (%d)\n%s", (int) error, error_detail.c_str());
+		}
 	}
 
 	if (specific_transaction) {

@@ -177,9 +177,16 @@ SELECT tg_set_transaction('long');
 SELECT tg_set_inclusive_read_areas('ri_table1');
 
 SELECT * FROM ri_table1; -- success
+
+/*
+エラー詳細に含まれるTIDが毎回異なる値になるためテスト対象外とする
 SELECT * FROM ri_table2; -- error
+ERROR:  Tsurugi Server INACTIVE_TRANSACTION_EXCEPTION (SQL-02025: serialization failed transaction:TID-00000000000004e7 shirakami response Status=ERR_READ_AREA_VIOLATION {reason_code:CC_LTX_READ_AREA_VIOLATION, storage_name:ri_table2, no key information} )
 SELECT * FROM re_table1; -- error
+ERROR:  Tsurugi Server INACTIVE_TRANSACTION_EXCEPTION (SQL-02025: serialization failed transaction:TID-00000000000004e8 shirakami response Status=ERR_READ_AREA_VIOLATION {reason_code:CC_LTX_READ_AREA_VIOLATION, storage_name:re_table1, no key information} )
 SELECT * FROM re_table2; -- error
+ERROR:  Tsurugi Server INACTIVE_TRANSACTION_EXCEPTION (SQL-02025: serialization failed transaction:TID-00000000000004e9 shirakami response Status=ERR_READ_AREA_VIOLATION {reason_code:CC_LTX_READ_AREA_VIOLATION, storage_name:re_table2, no key information} )
+*/
 
 SELECT tg_set_transaction('short'); -- reset tableName
 
@@ -190,7 +197,11 @@ SELECT tg_set_exclusive_read_areas('re_table1');
 
 SELECT * FROM ri_table1; -- success
 SELECT * FROM ri_table2; -- success
+/*
+エラー詳細に含まれるTIDが毎回異なる値になるためテスト対象外とする
 SELECT * FROM re_table1; -- error
+ERROR:  Tsurugi Server INACTIVE_TRANSACTION_EXCEPTION (SQL-02025: serialization failed transaction:TID-00000000000004ec shirakami response Status=ERR_READ_AREA_VIOLATION {reason_code:CC_LTX_READ_AREA_VIOLATION, storage_name:re_table1, no key information} )
+*/
 SELECT * FROM re_table2; -- success
 
 /* 通常はどちらか一方のみを指定する使い方になることを想定 */
@@ -198,9 +209,15 @@ SELECT tg_set_inclusive_read_areas('ri_table1');
 SELECT tg_set_exclusive_read_areas('re_table1');
 
 SELECT * FROM ri_table1; -- success
+/*
+エラー詳細に含まれるTIDが毎回異なる値になるためテスト対象外とする
 SELECT * FROM ri_table2; -- error
+ERROR:  Tsurugi Server INACTIVE_TRANSACTION_EXCEPTION (SQL-02025: serialization failed transaction:TID-00000000000004ef shirakami response Status=ERR_READ_AREA_VIOLATION {reason_code:CC_LTX_READ_AREA_VIOLATION, storage_name:ri_table2, no key information} )
 SELECT * FROM re_table1; -- error
+ERROR:  Tsurugi Server INACTIVE_TRANSACTION_EXCEPTION (SQL-02025: serialization failed transaction:TID-00000000000004f0 shirakami response Status=ERR_READ_AREA_VIOLATION {reason_code:CC_LTX_READ_AREA_VIOLATION, storage_name:re_table1, no key information} )
 SELECT * FROM re_table2; -- error
+ERROR:  Tsurugi Server INACTIVE_TRANSACTION_EXCEPTION (SQL-02025: serialization failed transaction:TID-00000000000004f1 shirakami response Status=ERR_READ_AREA_VIOLATION {reason_code:CC_LTX_READ_AREA_VIOLATION, storage_name:re_table2, no key information} )
+*/
 
 SELECT tg_set_transaction('short');
 
