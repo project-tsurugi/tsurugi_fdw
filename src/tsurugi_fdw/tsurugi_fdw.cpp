@@ -321,6 +321,7 @@ static void make_tuple_from_result_row(ResultSetPtr result_set,
                                         Datum* row,
                                         bool* is_null,
                                         tsurugiFdwState* fdw_state);
+extern void handle_remote_xact(ForeignServer *server);
 
 extern PGDLLIMPORT PGPROC *MyProc;
 
@@ -1180,6 +1181,13 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 
 	ForeignScan* fsplan = (ForeignScan*) node->ss.ps.plan;
 	tsurugiFdwState* fdw_state = create_fdwstate();
+	RangeTblEntry *rte;
+	ForeignTable *table;
+	ForeignServer *server;
+	int			rtindex;
+
+	/* Prepare processing when via ODBC */
+	EState* estate = node->ss.ps.state;
 
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
@@ -1188,6 +1196,16 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 	 */
     node->fdw_state = (void*) fdw_state;
     fdw_state->rowidx = 0;
+
+	if (fsplan->scan.scanrelid > 0)
+		rtindex = fsplan->scan.scanrelid;
+	else
+		rtindex = bms_next_member(fsplan->fs_relids, -1);
+	rte = exec_rt_fetch(rtindex, estate);
+
+	/* Get info about foreign table. */
+	table = GetForeignTable(rte->relid);
+	server = GetForeignServer(table->serverid);
 
 	store_pg_data_type(fdw_state, fsplan->scan.plan.targetlist);
 
@@ -1214,23 +1232,9 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 
     fdw_state->attinmeta = TupleDescGetAttInMetadata(fdw_state->tupdesc);
 
-	/* Prepare processing when via ODBC */
-	EState* estate = node->ss.ps.state;
 	begin_prepare_processing(estate);
 
-	ERROR_CODE error = Tsurugi::start_transaction();
-	if (error != ERROR_CODE::OK)
-	{
-		std::string error_detail = Tsurugi::get_error_detail(error);
-		if (error_detail.empty())
-		{
-			elog(ERROR, "Tsurugi::start_transaction() failed. (%d)", (int) error);
-		}
-		else
-		{
-			elog(ERROR, "Tsurugi::start_transaction() failed. (%d)\n%s", (int) error, error_detail.c_str());
-		}
-	}
+	handle_remote_xact(server);
 
     fdw_info_.success = true;
 }
@@ -1259,7 +1263,6 @@ tsurugiIterateForeignScan(ForeignScanState* node)
         ERROR_CODE error = Tsurugi::execute_query(query, fdw_info_.result_set);
         if (error != ERROR_CODE::OK)
         {
-            Tsurugi::rollback();
             fdw_info_.success = false;
             /* Prepare processing when via ODBC */
             EState* estate = node->ss.ps.state;
@@ -1304,7 +1307,6 @@ tsurugiIterateForeignScan(ForeignScanState* node)
         }
         else
         {
-            Tsurugi::rollback();
             fdw_info_.success = false;
             /* Prepare processing when via ODBC */
             EState* estate = node->ss.ps.state;
@@ -1337,23 +1339,6 @@ tsurugiEndForeignScan(ForeignScanState* node)
 
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
-    if (fdw_info_.success)
-    {
-        ERROR_CODE error = Tsurugi::commit();
-		if (error != ERROR_CODE::OK)
-		{
-			std::string error_detail = Tsurugi::get_error_detail(error);
-			if (error_detail.empty())
-			{
-				elog(ERROR, "Tsurugi::commit() failed. (%d)", (int) error);
-			}
-			else
-			{
-				elog(ERROR, "Tsurugi::commit() failed. (%d)\n%s", (int) error, error_detail.c_str());
-			}
-		}
-    }
-
 	/* Prepare processing when via ODBC */
 	EState* estate = node->ss.ps.state;
 	end_prepare_processing(estate);
@@ -1371,11 +1356,26 @@ tsurugiEndForeignScan(ForeignScanState* node)
 static void 
 tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
 {
+	RangeTblEntry *rte;
+    ForeignTable *table;
+    ForeignServer *server;
+	ForeignScan* fsplan = (ForeignScan*) node->ss.ps.plan;
+	int      rtindex;
+
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
 	Assert(node != nullptr);
 
 	EState* estate = node->ss.ps.state;
+
+	if (fsplan->scan.scanrelid > 0)
+    	rtindex = fsplan->scan.scanrelid;
+  	else
+    	rtindex = bms_next_member(fsplan->fs_relids, -1);
+  	rte = exec_rt_fetch(rtindex, estate);
+  	/* Get info about foreign table. */
+  	table = GetForeignTable(rte->relid);
+  	server = GetForeignServer(table->serverid);
 
 	tsurugiFdwState* fdw_state = create_fdwstate();
 	if (fdw_state == nullptr)
@@ -1389,19 +1389,7 @@ tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
 	/* Prepare processing when via JDBC and ODBC */
 	begin_prepare_processing(estate);
 
-	ERROR_CODE error = Tsurugi::start_transaction();
-	if (error != ERROR_CODE::OK)
-	{
-		std::string error_detail = Tsurugi::get_error_detail(error);
-		if (error_detail.empty())
-		{
-			elog(ERROR, "Tsurugi::start_transaction() failed. (%d)", (int) error);
-		}
-		else
-		{
-			elog(ERROR, "Tsurugi::start_transaction() failed. (%d)\n%s", (int) error, error_detail.c_str());
-		}
-	}
+	handle_remote_xact(server);
 
     fdw_info_.success = true;
 }
@@ -1428,7 +1416,6 @@ tsurugiIterateDirectModify(ForeignScanState* node)
 	error = Tsurugi::execute_statement(statement, num_rows);
 	if (error != ERROR_CODE::OK)
     {
-        Tsurugi::rollback();
         fdw_info_.success = false;
 
         /* Prepare processing when via JDBC and ODBC */
@@ -1461,23 +1448,6 @@ static void
 tsurugiEndDirectModify(ForeignScanState* node)
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-
-    if (fdw_info_.success)
-    {
-        ERROR_CODE error = Tsurugi::commit();
-		if (error != ERROR_CODE::OK)
-		{
-			std::string error_detail = Tsurugi::get_error_detail(error);
-			if (error_detail.empty())
-			{
-				elog(ERROR, "Tsurugi::commit() failed. (%d)", (int) error);
-			}
-			else
-			{
-				elog(ERROR, "Tsurugi::commit() failed. (%d)\n%s", (int) error, error_detail.c_str());
-			}
-		}
-    }
 
 	/* Prepare processing when via JDBC and ODBC */
 	EState* estate = node->ss.ps.state;
@@ -1772,20 +1742,6 @@ tsurugiEndForeignModify(EState *estate,
                         ResultRelInfo *rinfo)
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
- 
-    ERROR_CODE error = Tsurugi::commit();
-	if (error != ERROR_CODE::OK)
-	{
-		std::string error_detail = Tsurugi::get_error_detail(error);
-		if (error_detail.empty())
-		{
-			elog(ERROR, "Tsurugi::commit() failed. (%d)", (int) error);
-		}
-		else
-		{
-			elog(ERROR, "Tsurugi::commit() failed. (%d)\n%s", (int) error, error_detail.c_str());
-		}
-	}
 }
 
 /*
@@ -1906,7 +1862,6 @@ tsurugiExecForeignInsert(
 	error = Tsurugi::execute_statement(query, num_rows);
 	if (error != ERROR_CODE::OK) 
     {
-        Tsurugi::rollback();
         elog(ERROR, "transaction::execute_statement() failed. (%d)", 
             (int) error);
 	}
