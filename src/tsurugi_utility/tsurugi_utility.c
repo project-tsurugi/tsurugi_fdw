@@ -63,6 +63,7 @@ void tsurugi_ProcessUtility(PlannedStmt* pstmt, const char* query_string,
                             ProcessUtilityContext context, ParamListInfo params,
                             QueryEnvironment* queryEnv, DestReceiver* dest,
                             char* completionTag);
+bool noTablesInDatabase(void);
 
 extern bool IsTransactionBlock(void);
 extern void check_stack_depth(void);
@@ -134,6 +135,19 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 			}
 			standard_ProcessUtility(pstmt, queryString,
 									context, params, queryEnv,
+									dest, completionTag);
+			break;
+		}
+
+		case T_CreateExtensionStmt:
+		{
+			CreateExtensionStmt *stmt = (CreateExtensionStmt *) pstmt->utilityStmt;
+			if (strcmp(stmt->extname, "tsurugi_fdw") == 0) {
+				if(!noTablesInDatabase()){
+					elog(ERROR, "tsurugi_fdw extension cannot be installed in the non-empty database. Please make sure there are no tables by using the \\d command.");
+				}
+			}
+			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
 									dest, completionTag);
 			break;
 		}
@@ -277,4 +291,35 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 	}
 
 	free_parsestate(pstate);
+}
+
+
+bool noTablesInDatabase(void)
+{
+	int ret;
+    bool result_exists = true;
+
+    const char *query = 
+        "SELECT c.oid, n.nspname, c.relname "
+        "FROM pg_catalog.pg_class c "
+        "LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace "
+        "WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') "
+        "AND pg_catalog.pg_table_is_visible(c.oid)";
+
+    if (SPI_connect() != SPI_OK_CONNECT){
+        elog(ERROR, "SPI_connect failed");
+	}
+
+    ret = SPI_exec(query, 1);
+    if (ret != SPI_OK_SELECT){
+        elog(ERROR, "SPI_exec failed: %s", query);
+	}
+
+    if (SPI_processed > 0) {
+        result_exists = false;
+    }
+
+    SPI_finish();
+
+    return result_exists;
 }
