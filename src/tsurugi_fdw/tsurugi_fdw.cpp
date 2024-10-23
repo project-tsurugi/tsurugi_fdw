@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 Project Tsurugi.
+ * Copyright 2019-2024 Project Tsurugi.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2184,7 +2184,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                         time = (time * SECS_PER_MINUTE) + value.second();
                         time = time * USECS_PER_SEC;
                         if (subsecond != 0) {
-                            subsecond /= 1000;
+                            subsecond = round(subsecond / 1000.0);
                             time = time + subsecond;
                         }
                         row[attnum] = TimeADTGetDatum(time);
@@ -2204,7 +2204,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                         timetz.time = (timetz.time * SECS_PER_MINUTE) + value.first.second();
                         timetz.time = timetz.time * USECS_PER_SEC;
                         if (subsecond != 0) {
-                            subsecond /= 1000;
+                            subsecond = round(subsecond / 1000.0);
                             timetz.time = timetz.time + subsecond;
                         }
                         timetz.zone = -value.second * SECS_PER_MINUTE;
@@ -2230,7 +2230,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                             ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
                         timestamp = timestamp * USECS_PER_SEC;
                         if (subsecond != 0) {
-                            subsecond /= 1000;
+                            subsecond = round(subsecond / 1000.0);
                             timestamp = timestamp + subsecond;
                         }
                         auto time_zone = value.second * SECS_PER_MINUTE;
@@ -2258,7 +2258,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                             ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
                         timestamp = timestamp * USECS_PER_SEC;
                         if (subsecond != 0) {
-                            subsecond /= 1000;
+                            subsecond = round(subsecond / 1000.0);
                             timestamp = timestamp + subsecond;
                         }
                         row[attnum] = TimestampGetDatum(timestamp);
