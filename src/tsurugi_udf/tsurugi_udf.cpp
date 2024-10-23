@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Project Tsurugi.
+ * Copyright 2023-2024 Project Tsurugi.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -382,33 +382,6 @@ CheckTransactionArgs(char* TransactionType, char* TransactionPriority, char* Tra
 	}
 }
 
-/**
- * @brief Check the arguments of tg_set_transaction.
- * @param CheckTables [in] list of tables.
- * @return If you call ereport, the call will not return and
- *         PostgreSQL will report the error information.
- */
-void
-CheckTransactionTables(List* CheckTables)
-{
-	if (CheckTables != NIL) {
-		auto tables = manager::metadata::get_tables_ptr(TSURUGI_DB_NAME);
-		ListCell* listptr;
-		foreach(listptr, CheckTables) {
-			Node* node = (Node *) lfirst(listptr);
-			if (IsA(node, String)) {
-				Value* table = (Value*) node;
-				if (!tables->exists(strVal(table))) {
-					ereport(ERROR,
-							(errcode(ERRCODE_INTERNAL_ERROR),
-							errmsg("Table is not exist in Tsurugi. (table: %s)",
-							strVal(table))));
-				}
-			}
-		}
-	}
-}
-
 Datum
 tg_set_transaction(PG_FUNCTION_ARGS)
 {
@@ -461,8 +434,6 @@ tg_set_write_preserve(PG_FUNCTION_ARGS)
 			 errmsg("Invalid number of parameters.")));
 	}
 
-	CheckTransactionTables(WritePreserveTables);
-
 	SetWritePreserveTables(WritePreserveTables);
 
 	GetTransactionOption(transaction);
@@ -484,8 +455,6 @@ tg_set_inclusive_read_areas(PG_FUNCTION_ARGS)
 			 errmsg("Invalid number of parameters.")));
 	}
 
-	CheckTransactionTables(InclusiveReadAreasTables);
-
 	SetInclusiveReadAreasTables(InclusiveReadAreasTables);
 
 	GetTransactionOption(transaction);
@@ -506,8 +475,6 @@ tg_set_exclusive_read_areas(PG_FUNCTION_ARGS)
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 			 errmsg("Invalid number of parameters.")));
 	}
-
-	CheckTransactionTables(ExclusiveReadAreasTables);
 
 	SetExclusiveReadAreasTables(ExclusiveReadAreasTables);
 
