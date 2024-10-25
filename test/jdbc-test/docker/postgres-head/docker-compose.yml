@@ -1,0 +1,7 @@
+services:
+  pgdb:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    ports:
+      - 5432:5432
