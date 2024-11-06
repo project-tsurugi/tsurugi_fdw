@@ -1,16 +1,6 @@
 /* SET DATASTYLE */
 SET datestyle TO ISO, ymd;
 
-/* テーブルの作成 */
-CREATE TABLE weather (
-    id              int primary key,
-    city            varchar(80),
-    temp_lo         int,           -- 最低気温
-    temp_hi         int,           -- 最高気温
-    prcp            real,          -- 降水量
-    the_date        date default '2023-04-01'
-) TABLESPACE tsurugi;
-
 /* 外部テーブルの作成 */
 CREATE FOREIGN TABLE weather (
     id              int,
@@ -31,18 +21,6 @@ INSERT INTO weather (id, city, temp_lo, temp_hi)
 
 /* データの問い合わせ */
 SELECT * from weather;
-
-/* PostgreSQLテーブルの作成 */
-CREATE TABLE cities (
-    name            varchar(80),
-    location        point
-);
-INSERT INTO cities VALUES ('San Francisco', '(-194.0, 53.0)');
-INSERT INTO cities VALUES ('Hayward', '(-122.0, 37.0)');
-
-/* TsurugiとPostgreSQLの同時アクセス */
-SELECT *
-    FROM weather INNER JOIN cities ON (weather.city = cities.name) ORDER BY id;
 
 /* データの更新 */
 UPDATE weather
@@ -73,53 +51,56 @@ REVOKE SELECT ON weather FROM jonathan;
 DROP ROLE jonathan;
 
 /* 明示的にトランザクションブロックを開始する */
-SELECT tg_start_transaction();      --  明示的にトランザクションを開始する
+BEGIN;
 INSERT INTO weather (id, city, temp_lo, temp_hi, prcp)  --  Tsurugiテーブルを操作する
     VALUES (4, 'Los Angeles', 64, 82, 0.0);
-SELECT tg_commit();     --  トランザクション終了
+COMMIT;     --  トランザクション終了
 SELECT * FROM weather;  -- レグレッションテスト確認用
 
 /* デフォルトのトランザクション特性を変更したい場合 */
 SELECT tg_set_transaction('short', 'interrupt');    /*  デフォルトのトランザクション特性を変更する
                                                         （priority = 'interrupt'） */
-SELECT tg_start_transaction();  /*  変更されたトランザクション特性が適用される
-                                    （priority = 'interrupt'）  */
+BEGIN;
 INSERT INTO weather (id, city, temp_lo, temp_hi, prcp)
     VALUES (5, 'Oakland', 48, 53, 0.5);
 SELECT * FROM weather;
-SELECT tg_commit();  -- トランザクション終了
+COMMIT;  -- トランザクション終了
 
-/* 特定のトランザクションブロックのみトランザクション特性を変更 */
-SELECT tg_start_transaction('read_only', 'wait', 'read_only_tx');   --  このトランザクションブロックのみで有効
+BEGIN;
 SELECT * FROM weather;
-SELECT tg_commit();     --  トランザクション終了
-SELECT tg_start_transaction();      --  デフォルトのトランザクション特性が適用される
+/* 特定のトランザクションブロックのみトランザクション特性を変更 */
+SELECT tg_set_transaction('read_only', 'wait', 'read_only_tx');
+SELECT * FROM weather;
+COMMIT;     --  トランザクション終了
+
+SELECT tg_set_transaction('short', 'interrupt');
+BEGIN;
 INSERT INTO weather (id, city, temp_lo, temp_hi, prcp)
     VALUES (6, 'San Jose', 46, 55, 0.0);
-SELECT tg_commit();     --  トランザクション終了
+COMMIT;     --  トランザクション終了
 SELECT * FROM weather;  -- レグレッションテスト確認用
 
 /* 暗黙的にトランザクションを開始する */
 INSERT INTO weather (id, city, temp_lo, temp_hi, prcp)
     VALUES (7, 'Sacramento', 48, 60, 0.25);  --  暗黙的にトランザクションが開始し、コミットされる（COMMIT文不要）
 SELECT * FROM weather;  -- レグレッションテスト確認用
-SELECT tg_start_transaction();
+BEGIN;
 UPDATE weather
     SET temp_hi = temp_hi - 10 WHERE city = 'Sacramento';
 SELECT * FROM weather;  -- レグレッションテスト確認用
-SELECT tg_rollback();   --  UPDATE文の更新内容は破棄されるが、上記のINSERT文の更新内容は破棄されない
+ROLLBACK;   --  UPDATE文の更新内容は破棄されるが、上記のINSERT文の更新内容は破棄されない
 SELECT * FROM weather;  -- レグレッションテスト確認用
 
 /* Longトランザクションを実行する */
 SELECT tg_set_transaction('long');      --  Longトランザクションをデフォルトに設定する
 SELECT tg_set_write_preserve('weather');    --  書き込みを予約するテーブルを設定する
-SELECT tg_start_transaction();  -- Longトランザクション開始
+BEGIN;
 INSERT INTO weather (id, city, temp_lo, temp_hi)
     VALUES (3, 'Hayward', 37, 54);
 UPDATE weather SET temp_hi = temp_hi + 5 WHERE city = 'Oakland';
 DELETE FROM weather WHERE id = 2;
 SELECT * FROM weather;
-SELECT tg_commit();             -- Longトランザクション終了
+COMMIT;             -- トランザクション終了
 
 /* プリペアド文 */
 PREPARE add_weather (int, varchar(80), int, int, real, date)
@@ -130,7 +111,3 @@ SELECT * FROM weather;  -- レグレッションテスト確認用
 
 /* 外部テーブルの削除 */
 DROP FOREIGN TABLE weather;
-/* テーブルの削除 */
-DROP TABLE weather;
-/* PostgreSQLテーブルの削除 */
-DROP TABLE cities;

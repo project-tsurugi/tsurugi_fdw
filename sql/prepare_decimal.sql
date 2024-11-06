@@ -2,7 +2,6 @@
 SET datestyle TO ISO, ymd;
 
 /* Basic Action */
-CREATE TABLE trg_numeric (id INTEGER NOT NULL PRIMARY KEY, num NUMERIC(10, 6)) TABLESPACE tsurugi;
 CREATE FOREIGN TABLE trg_numeric (id INTEGER NOT NULL, num NUMERIC(10, 6)) SERVER tsurugidb;
 
 PREPARE trg_insnum  (integer, numeric) AS INSERT INTO trg_numeric (id, num) VALUES ($1, $2);
@@ -63,8 +62,6 @@ EXECUTE trg_insnum (25, CAST(width_bucket(5.35, 0.024, 10.06, 5) AS DECIMAL(10,6
 SELECT * FROM trg_numeric;
 
 /* value check */
-CREATE TABLE trg_numeric_s0 (id INTEGER NOT NULL PRIMARY KEY, num NUMERIC(38, 0)) TABLESPACE tsurugi;
-CREATE TABLE trg_numeric_s38 (id INTEGER NOT NULL PRIMARY KEY, num NUMERIC(38, 38)) TABLESPACE tsurugi;
 CREATE FOREIGN TABLE trg_numeric_s0 (id INTEGER NOT NULL, num NUMERIC(38, 0)) SERVER tsurugidb;
 CREATE FOREIGN TABLE trg_numeric_s38 (id INTEGER NOT NULL, num NUMERIC(38, 38)) SERVER tsurugidb;
 
@@ -106,23 +103,7 @@ EXECUTE trg_insval_s38 (96, 0.340282366920938463463374607431768211456);
 
 SELECT * FROM trg_numeric_s38;
 
-/* ddl error */
-CREATE TABLE trg_error (id INTEGER NOT NULL PRIMARY KEY, num NUMERIC(-1)) TABLESPACE tsurugi;
-CREATE TABLE trg_error (id INTEGER NOT NULL PRIMARY KEY, num NUMERIC(0)) TABLESPACE tsurugi;
-CREATE TABLE trg_error (id INTEGER NOT NULL PRIMARY KEY, num NUMERIC(1001)) TABLESPACE tsurugi;
-
-/* ddl warning */
-CREATE TABLE trg_warning (id INTEGER NOT NULL PRIMARY KEY, num NUMERIC) TABLESPACE tsurugi;
-DROP TABLE trg_warning;  -- for NUMERIC
-CREATE TABLE trg_warning (id INTEGER NOT NULL PRIMARY KEY, num NUMERIC(39)) TABLESPACE tsurugi;
-DROP TABLE trg_warning;  -- for NUMERIC(39)
-CREATE TABLE trg_warning (id INTEGER NOT NULL PRIMARY KEY, num NUMERIC(1000)) TABLESPACE tsurugi;
-DROP TABLE trg_warning;  -- for NUMERIC(1000)
-
 /* clean up */
 DROP FOREIGN TABLE trg_numeric;
 DROP FOREIGN TABLE trg_numeric_s0;
 DROP FOREIGN TABLE trg_numeric_s38;
-DROP TABLE trg_numeric;
-DROP TABLE trg_numeric_s0;
-DROP TABLE trg_numeric_s38;

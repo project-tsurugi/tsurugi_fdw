@@ -1,7 +1,6 @@
 /* SET DATASTYLE */
 SET datestyle TO ISO, ymd;
 /* Basic Action */
-CREATE TABLE trg_numeric (id INTEGER NOT NULL PRIMARY KEY, num NUMERIC(10, 6)) TABLESPACE tsurugi;
 CREATE FOREIGN TABLE trg_numeric (id INTEGER NOT NULL, num NUMERIC(10, 6)) SERVER tsurugidb;
 PREPARE trg_insnum  (integer, numeric) AS INSERT INTO trg_numeric (id, num) VALUES ($1, $2);
 PREPARE trg_updnum1 (integer, numeric) AS UPDATE trg_numeric SET num = $2 WHERE id = $1;
@@ -106,8 +105,6 @@ SELECT * FROM trg_numeric;
 (25 rows)
 
 /* value check */
-CREATE TABLE trg_numeric_s0 (id INTEGER NOT NULL PRIMARY KEY, num NUMERIC(38, 0)) TABLESPACE tsurugi;
-CREATE TABLE trg_numeric_s38 (id INTEGER NOT NULL PRIMARY KEY, num NUMERIC(38, 38)) TABLESPACE tsurugi;
 CREATE FOREIGN TABLE trg_numeric_s0 (id INTEGER NOT NULL, num NUMERIC(38, 0)) SERVER tsurugidb;
 CREATE FOREIGN TABLE trg_numeric_s38 (id INTEGER NOT NULL, num NUMERIC(38, 38)) SERVER tsurugidb;
 PREPARE trg_insval_s0 (integer, numeric) AS INSERT INTO trg_numeric_s0 (id, num) VALUES ($1, $2);
@@ -181,33 +178,7 @@ SELECT * FROM trg_numeric_s38;
   9 | -0.99999999999999999999999999999999999999
 (9 rows)
 
-/* ddl error */
-CREATE TABLE trg_error (id INTEGER NOT NULL PRIMARY KEY, num NUMERIC(-1)) TABLESPACE tsurugi;
-ERROR:  NUMERIC precision -1 must be between 1 and 1000
-LINE 2: ...E trg_error (id INTEGER NOT NULL PRIMARY KEY, num NUMERIC(-1...
-                                                             ^
-CREATE TABLE trg_error (id INTEGER NOT NULL PRIMARY KEY, num NUMERIC(0)) TABLESPACE tsurugi;
-ERROR:  NUMERIC precision 0 must be between 1 and 1000
-LINE 1: ...E trg_error (id INTEGER NOT NULL PRIMARY KEY, num NUMERIC(0)...
-                                                             ^
-CREATE TABLE trg_error (id INTEGER NOT NULL PRIMARY KEY, num NUMERIC(1001)) TABLESPACE tsurugi;
-ERROR:  NUMERIC precision 1001 must be between 1 and 1000
-LINE 1: ...E trg_error (id INTEGER NOT NULL PRIMARY KEY, num NUMERIC(10...
-                                                             ^
-/* ddl warning */
-CREATE TABLE trg_warning (id INTEGER NOT NULL PRIMARY KEY, num NUMERIC) TABLESPACE tsurugi;
-WARNING:  Numeric types of tsurugi supports max precision up to 38.
-DROP TABLE trg_warning;  -- for NUMERIC
-CREATE TABLE trg_warning (id INTEGER NOT NULL PRIMARY KEY, num NUMERIC(39)) TABLESPACE tsurugi;
-WARNING:  NUMERIC precision of tsurugi supports between 1 and 38.
-DROP TABLE trg_warning;  -- for NUMERIC(39)
-CREATE TABLE trg_warning (id INTEGER NOT NULL PRIMARY KEY, num NUMERIC(1000)) TABLESPACE tsurugi;
-WARNING:  NUMERIC precision of tsurugi supports between 1 and 38.
-DROP TABLE trg_warning;  -- for NUMERIC(1000)
 /* clean up */
 DROP FOREIGN TABLE trg_numeric;
 DROP FOREIGN TABLE trg_numeric_s0;
 DROP FOREIGN TABLE trg_numeric_s38;
-DROP TABLE trg_numeric;
-DROP TABLE trg_numeric_s0;
-DROP TABLE trg_numeric_s38;

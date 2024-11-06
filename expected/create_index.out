@@ -1,192 +1,82 @@
 /* INDEX TEST */
 /* DDL */
-CREATE TABLE t1(c1 INTEGER NOT NULL PRIMARY KEY, c2 BIGINT UNIQUE, c3 DOUBLE PRECISION) TABLESPACE tsurugi;
-CREATE FOREIGN TABLE t1(c1 INTEGER NOT NULL, c2 BIGINT, c3 DOUBLE PRECISION) SERVER tsurugidb;
-CREATE TABLE t2(c1 INTEGER NOT NULL PRIMARY KEY, c2 BIGINT, c3 DOUBLE PRECISION, CONSTRAINT c2_unique UNIQUE (c2, c3) INCLUDE (c3)) TABLESPACE tsurugi;
-CREATE FOREIGN TABLE t2(c1 INTEGER NOT NULL, c2 BIGINT, c3 DOUBLE PRECISION) SERVER tsurugidb;
-CREATE TABLE t3(c1 INTEGER NOT NULL PRIMARY KEY, c2 BIGINT, c3 DOUBLE PRECISION) TABLESPACE tsurugi;
-CREATE FOREIGN TABLE t3(c1 INTEGER NOT NULL, c2 BIGINT, c3 DOUBLE PRECISION) SERVER tsurugidb;
-CREATE TABLE t4(c1 INTEGER NOT NULL PRIMARY KEY, c2 BIGINT, c3 DOUBLE PRECISION) TABLESPACE tsurugi;
-CREATE FOREIGN TABLE t4(c1 INTEGER NOT NULL, c2 BIGINT, c3 DOUBLE PRECISION) SERVER tsurugidb;
-CREATE UNIQUE INDEX ON t3(c2) TABLESPACE tsurugi;
-CREATE INDEX t4_c3_secondary_index ON t4(c3) TABLESPACE tsurugi;
+CREATE FOREIGN TABLE t3_create_index(c1 INTEGER NOT NULL) SERVER tsurugidb;
+CREATE FOREIGN TABLE t4_create_index(c1 INTEGER NOT NULL, c2 BIGINT, c3 DOUBLE PRECISION) SERVER tsurugidb;
 /* DML */
-SELECT * FROM t1;
- c1 | c2 | c3 
-----+----+----
+SELECT * FROM t3_create_index;
+ c1 
+----
 (0 rows)
 
-INSERT INTO t1 (c1) VALUES (1);
-SELECT * FROM t1;
- c1 | c2 | c3 
-----+----+----
-  1 |    |   
+INSERT INTO t3_create_index (c1) VALUES (1);
+SELECT * FROM t3_create_index;
+ c1 
+----
+  1
 (1 row)
 
-SELECT * FROM t2;
+SELECT * FROM t4_create_index;
  c1 | c2 | c3 
 ----+----+----
 (0 rows)
 
-INSERT INTO t2 (c1, c2, c3) VALUES (1, 100, 1.1);
-INSERT INTO t2 (c1, c2, c3) VALUES (2, 200, 2.2);
-SELECT * FROM t2;
+INSERT INTO t4_create_index (c1, c2, c3) VALUES (1, 100, 1.1);
+INSERT INTO t4_create_index (c1, c2, c3) VALUES (2, 200, 2.2);
+SELECT * FROM t4_create_index;
  c1 | c2  | c3  
 ----+-----+-----
   1 | 100 | 1.1
   2 | 200 | 2.2
 (2 rows)
 
-SELECT * FROM t3;
- c1 | c2 | c3 
-----+----+----
-(0 rows)
-
-INSERT INTO t3 (c1) VALUES (1);
-SELECT * FROM t3;
- c1 | c2 | c3 
-----+----+----
-  1 |    |   
+SELECT * FROM t3_create_index;
+ c1 
+----
+  1
 (1 row)
 
-SELECT * FROM t4;
- c1 | c2 | c3 
-----+----+----
-(0 rows)
-
-INSERT INTO t4 (c1, c2, c3) VALUES (1, 100, 1.1);
-INSERT INTO t4 (c1, c2, c3) VALUES (2, 200, 2.2);
-SELECT * FROM t4;
- c1 | c2  | c3  
-----+-----+-----
-  1 | 100 | 1.1
-  2 | 200 | 2.2
-(2 rows)
-
-SELECT * FROM t1;
- c1 | c2 | c3 
-----+----+----
-  1 |    |   
-(1 row)
-
-INSERT INTO t1 (c1) VALUES (10);
-INSERT INTO t1 (c1) VALUES (100);
-SELECT * FROM t1;
- c1  | c2 | c3 
------+----+----
-   1 |    |   
-  10 |    |   
- 100 |    |   
+INSERT INTO t3_create_index (c1) VALUES (10);
+INSERT INTO t3_create_index (c1) VALUES (100);
+SELECT * FROM t3_create_index;
+ c1  
+-----
+   1
+  10
+ 100
 (3 rows)
 
-SELECT * FROM t2;
+SELECT * FROM t4_create_index;
  c1 | c2  | c3  
 ----+-----+-----
   1 | 100 | 1.1
   2 | 200 | 2.2
 (2 rows)
 
-UPDATE t2 SET c2 = c2+10;
-UPDATE t2 SET c3 = c3+1.1 WHERE c2 = 110;
-SELECT * FROM t2;
+UPDATE t4_create_index SET c2 = c2+10;
+UPDATE t4_create_index SET c3 = c3+1.1 WHERE c2 = 110;
+SELECT * FROM t4_create_index;
  c1 | c2  | c3  
 ----+-----+-----
   1 | 110 | 2.2
   2 | 210 | 2.2
 (2 rows)
 
-SELECT * FROM t3;
- c1 | c2 | c3 
-----+----+----
-  1 |    |   
-(1 row)
-
-INSERT INTO t3 (c1) VALUES (10);
-INSERT INTO t3 (c1) VALUES (100);
-SELECT * FROM t3;
- c1  | c2 | c3 
------+----+----
-   1 |    |   
-  10 |    |   
- 100 |    |   
+SELECT * FROM t3_create_index;
+ c1  
+-----
+   1
+  10
+ 100
 (3 rows)
 
-SELECT * FROM t4;
- c1 | c2  | c3  
-----+-----+-----
-  1 | 100 | 1.1
-  2 | 200 | 2.2
-(2 rows)
-
-UPDATE t4 SET c2 = c2+10;
-UPDATE t4 SET c3 = c3+1.1 WHERE c2 = 110;
-SELECT * FROM t4;
- c1 | c2  | c3  
-----+-----+-----
-  1 | 110 | 2.2
-  2 | 210 | 2.2
-(2 rows)
-
-SELECT * FROM t1;
- c1  | c2 | c3 
------+----+----
-   1 |    |   
-  10 |    |   
- 100 |    |   
-(3 rows)
-
-DELETE FROM t1 WHERE c1 = 10;
-SELECT * FROM t1;
- c1  | c2 | c3 
------+----+----
-   1 |    |   
- 100 |    |   
-(2 rows)
-
-SELECT * FROM t3;
- c1  | c2 | c3 
------+----+----
-   1 |    |   
-  10 |    |   
- 100 |    |   
-(3 rows)
-
-DELETE FROM t3 WHERE c1 = 10;
-SELECT * FROM t3;
- c1  | c2 | c3 
------+----+----
-   1 |    |   
- 100 |    |   
+DELETE FROM t3_create_index WHERE c1 = 10;
+SELECT * FROM t3_create_index;
+ c1  
+-----
+   1
+ 100
 (2 rows)
 
 /* DDL */
-DROP TABLE t1;
-CREATE TABLE t1(c1 INTEGER NOT NULL PRIMARY KEY, c2 BIGINT UNIQUE, c3 DOUBLE PRECISION) TABLESPACE tsurugi;
-DROP TABLE t2;
-CREATE TABLE t2(c1 INTEGER NOT NULL PRIMARY KEY, c2 BIGINT, c3 DOUBLE PRECISION, CONSTRAINT c2_unique UNIQUE (c2)) TABLESPACE tsurugi;
-DROP TABLE t3;
-CREATE TABLE t3(c1 INTEGER NOT NULL PRIMARY KEY, c2 BIGINT, c3 DOUBLE PRECISION) TABLESPACE tsurugi;
-CREATE UNIQUE INDEX ON t3(c2) TABLESPACE tsurugi;
-DROP TABLE t4;
-CREATE TABLE t4(c1 INTEGER NOT NULL PRIMARY KEY, c2 BIGINT, c3 DOUBLE PRECISION) TABLESPACE tsurugi;
-CREATE INDEX t4_c3_secondary_index ON t4(c3) TABLESPACE tsurugi;
-CREATE TABLE table1(column1 INTEGER PRIMARY KEY, column2 BIGINT, column3 DOUBLE PRECISION) TABLESPACE tsurugi;
-CREATE TABLE table2(column1 INTEGER PRIMARY KEY, column2 BIGINT, column3 DOUBLE PRECISION) TABLESPACE tsurugi;
-CREATE TABLE table3(column1 INTEGER PRIMARY KEY, column2 BIGINT, column3 DOUBLE PRECISION) TABLESPACE tsurugi;
-CREATE TABLE table4(column1 INTEGER PRIMARY KEY, column2 BIGINT, column3 DOUBLE PRECISION) TABLESPACE tsurugi;
-CREATE UNIQUE INDEX table1_index ON table1 (column2) TABLESPACE tsurugi;
-CREATE INDEX table2_index ON table2 (column2 ASC, column3 DESC) TABLESPACE tsurugi;
-CREATE INDEX ON table3 (column2, column3) INCLUDE (colmun3) TABLESPACE tsurugi;
-CREATE INDEX table4_index ON table4 USING "mass-tree" (column3) TABLESPACE tsurugi;
-DROP TABLE table1;
-DROP TABLE table2;
-DROP TABLE table3;
-DROP TABLE table4;
-DROP TABLE t1;
-DROP TABLE t2;
-DROP TABLE t3;
-DROP TABLE t4;
-DROP FOREIGN TABLE t1;
-DROP FOREIGN TABLE t2;
-DROP FOREIGN TABLE t3;
-DROP FOREIGN TABLE t4;
+DROP FOREIGN TABLE t3_create_index;
+DROP FOREIGN TABLE t4_create_index;

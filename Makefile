@@ -24,10 +24,10 @@ DATA = tsurugi_fdw--1.0.0-BETA9.sql
 # REGRESS_BASIC: variable used in frontend
 ifdef REGRESS_SHAKUJO
 REGRESS_BASIC = test_preparation create_table create_index insert_select_happy_shakujo update_delete select_statements_shakujo user_management \
-                udf_transaction prepare_statment prepare_select_statment_shakujo prepare_decimal manual_tutorial data_types
+                udf_transaction prepare_statment prepare_select_statment_shakujo prepare_decimal manual_tutorial
 else
 REGRESS_BASIC = test_preparation create_table create_index insert_select_happy update_delete select_statements user_management \
-                udf_transaction prepare_statment prepare_select_statment prepare_decimal manual_tutorial data_types
+                udf_transaction prepare_statment prepare_select_statment prepare_decimal manual_tutorial
 endif
 
 ifdef REGRESS_EXTRA
