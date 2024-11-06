@@ -2,8 +2,6 @@
 SET datestyle TO ISO, ymd;
 
 /* Basic Action */
-CREATE FOREIGN TABLE trg_numeric (id INTEGER NOT NULL, num NUMERIC(10, 6)) SERVER tsurugidb;
-
 PREPARE trg_insnum  (integer, numeric) AS INSERT INTO trg_numeric (id, num) VALUES ($1, $2);
 PREPARE trg_updnum1 (integer, numeric) AS UPDATE trg_numeric SET num = $2 WHERE id = $1;
 PREPARE trg_updnum2 (integer, numeric) AS UPDATE trg_numeric SET id = $1 WHERE num = $2;
@@ -62,9 +60,6 @@ EXECUTE trg_insnum (25, CAST(width_bucket(5.35, 0.024, 10.06, 5) AS DECIMAL(10,6
 SELECT * FROM trg_numeric;
 
 /* value check */
-CREATE FOREIGN TABLE trg_numeric_s0 (id INTEGER NOT NULL, num NUMERIC(38, 0)) SERVER tsurugidb;
-CREATE FOREIGN TABLE trg_numeric_s38 (id INTEGER NOT NULL, num NUMERIC(38, 38)) SERVER tsurugidb;
-
 PREPARE trg_insval_s0 (integer, numeric) AS INSERT INTO trg_numeric_s0 (id, num) VALUES ($1, $2);
 PREPARE trg_insval_s38 (integer, numeric) AS INSERT INTO trg_numeric_s38 (id, num) VALUES ($1, $2);
 
@@ -102,8 +97,3 @@ EXECUTE trg_insval_s38 (97, 0.340282366920938463463374607431768211455);
 EXECUTE trg_insval_s38 (96, 0.340282366920938463463374607431768211456);
 
 SELECT * FROM trg_numeric_s38;
-
-/* clean up */
-DROP FOREIGN TABLE trg_numeric;
-DROP FOREIGN TABLE trg_numeric_s0;
-DROP FOREIGN TABLE trg_numeric_s38;

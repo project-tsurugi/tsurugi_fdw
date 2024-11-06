@@ -1,16 +1,6 @@
 /* SET DATASTYLE */
 SET datestyle TO ISO, ymd;
 
-/* 外部テーブルの作成 */
-CREATE FOREIGN TABLE weather (
-    id              int,
-    city            varchar(80),
-    temp_lo         int,           -- 最低気温
-    temp_hi         int,           -- 最高気温
-    prcp            real,          -- 降水量
-    the_date        date default '2023-04-01'
-) SERVER tsurugidb;
-
 /* データの挿入 */
 INSERT INTO weather (id, city, temp_lo, temp_hi, prcp)
     VALUES (1, 'San Francisco', 46, 50, 0.25);
@@ -108,6 +98,3 @@ PREPARE add_weather (int, varchar(80), int, int, real, date)
             VALUES ($1, $2, $3, $4, $5, $6);
 EXECUTE add_weather (8, 'San Diego', 41, 57, 0.25, '2023-11-24'); -- 日付固定
 SELECT * FROM weather;  -- レグレッションテスト確認用
-
-/* 外部テーブルの削除 */
-DROP FOREIGN TABLE weather;

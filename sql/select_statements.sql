@@ -1,30 +1,3 @@
-/* DDL */
--- TG tables
-CREATE FOREIGN TABLE t1_select_statement(
-    c1 INTEGER, 
-    c2 INTEGER, 
-    c3 BIGINT,
-    c4 REAL, 
-    c5 DOUBLE PRECISION, 
-    c6 CHAR(10),
-    c7 VARCHAR(26)
-) SERVER tsurugidb;
-
-CREATE FOREIGN TABLE t2_select_statement(
-    c1 INTEGER, 
-    c2 INTEGER, 
-    c3 BIGINT,
-    c4 REAL, 
-    c5 DOUBLE PRECISION, 
-    c6 CHAR(10),
-    c7 VARCHAR(26)
-) SERVER tsurugidb;
-
-CREATE FOREIGN TABLE t3_select_statement(
-    c1 INTEGER,
-    c2 CHAR(10)
-) SERVER tsurugidb;
-
 /* DML */
 -- TG tables
 INSERT INTO 
@@ -277,8 +250,3 @@ SELECT
     *
 FROM
     t1_select_statement AS a JOIN t1_select_statement AS b ON a.c3=b.c3;
-
-/* DDL */
-DROP FOREIGN TABLE t1_select_statement;
-DROP FOREIGN TABLE t2_select_statement;
-DROP FOREIGN TABLE t3_select_statement;

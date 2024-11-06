@@ -22,15 +22,6 @@ SELECT tg_set_transaction('short', 'exlude');
 SELECT tg_set_transaction('short', 'wait', '');
 
 /* set write preserve */
--- table preparation
-CREATE FOREIGN TABLE udf_table1 (column1 INTEGER NOT NULL) SERVER tsurugidb;
-CREATE FOREIGN TABLE wp_table1 (column1 INTEGER NOT NULL) SERVER tsurugidb;
-CREATE FOREIGN TABLE wp_table2 (column1 INTEGER NOT NULL) SERVER tsurugidb;
-CREATE FOREIGN TABLE ri_table1 (column1 INTEGER NOT NULL) SERVER tsurugidb;
-CREATE FOREIGN TABLE ri_table2 (column1 INTEGER NOT NULL) SERVER tsurugidb;
-CREATE FOREIGN TABLE re_table1 (column1 INTEGER NOT NULL) SERVER tsurugidb;
-CREATE FOREIGN TABLE re_table2 (column1 INTEGER NOT NULL) SERVER tsurugidb;
-
 SELECT tg_set_write_preserve('wp_table1');
 SELECT tg_set_write_preserve('wp_table2');
 SELECT tg_set_write_preserve('wp_table1', 'wp_table2');
@@ -256,7 +247,6 @@ SELECT * FROM udf_table1;
 /* Cooperation with PostgreSQL table */
 SELECT tg_set_transaction('short');
 -- table preparation
-CREATE FOREIGN TABLE tg_table (column1 INTEGER NOT NULL) SERVER tsurugidb;
 	CREATE TABLE pg_table (column1 INTEGER NOT NULL PRIMARY KEY);
 INSERT INTO tg_table (column1) VALUES (999);
 -- Start the Tsurugi transaction
@@ -273,13 +263,3 @@ ROLLBACK;
 SELECT * from tg_table;
 	-- Do not discard updates to PostgreSQL tables(1000)
 	-- SELECT * from pg_table;
-
-/* clean up */
-DROP FOREIGN TABLE tg_table;
-DROP FOREIGN TABLE udf_table1;
-DROP FOREIGN TABLE wp_table1;
-DROP FOREIGN TABLE wp_table2;
-DROP FOREIGN TABLE ri_table1;
-DROP FOREIGN TABLE ri_table2;
-DROP FOREIGN TABLE re_table1;
-DROP FOREIGN TABLE re_table2;

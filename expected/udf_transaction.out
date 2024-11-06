@@ -192,14 +192,6 @@ ERROR:  Invalid Transaction Priority parameter. (priority: exlude)
 SELECT tg_set_transaction('short', 'wait', '');
 ERROR:  Invalid Transaction Label parameter. (label: empty)
 /* set write preserve */
--- table preparation
-CREATE FOREIGN TABLE udf_table1 (column1 INTEGER NOT NULL) SERVER tsurugidb;
-CREATE FOREIGN TABLE wp_table1 (column1 INTEGER NOT NULL) SERVER tsurugidb;
-CREATE FOREIGN TABLE wp_table2 (column1 INTEGER NOT NULL) SERVER tsurugidb;
-CREATE FOREIGN TABLE ri_table1 (column1 INTEGER NOT NULL) SERVER tsurugidb;
-CREATE FOREIGN TABLE ri_table2 (column1 INTEGER NOT NULL) SERVER tsurugidb;
-CREATE FOREIGN TABLE re_table1 (column1 INTEGER NOT NULL) SERVER tsurugidb;
-CREATE FOREIGN TABLE re_table2 (column1 INTEGER NOT NULL) SERVER tsurugidb;
 SELECT tg_set_write_preserve('wp_table1');
            tg_set_write_preserve            
 --------------------------------------------
@@ -1552,7 +1544,6 @@ SELECT tg_set_transaction('short');
 (1 row)
 
 -- table preparation
-CREATE FOREIGN TABLE tg_table (column1 INTEGER NOT NULL) SERVER tsurugidb;
 	CREATE TABLE pg_table (column1 INTEGER NOT NULL PRIMARY KEY);
 ERROR:  This database is for Tsurugi, so CREATE TABLE is not supported
 INSERT INTO tg_table (column1) VALUES (999);
@@ -1578,12 +1569,3 @@ SELECT * from tg_table;
 
 	-- Do not discard updates to PostgreSQL tables(1000)
 	-- SELECT * from pg_table;
-/* clean up */
-DROP FOREIGN TABLE tg_table;
-DROP FOREIGN TABLE udf_table1;
-DROP FOREIGN TABLE wp_table1;
-DROP FOREIGN TABLE wp_table2;
-DROP FOREIGN TABLE ri_table1;
-DROP FOREIGN TABLE ri_table2;
-DROP FOREIGN TABLE re_table1;
-DROP FOREIGN TABLE re_table2;

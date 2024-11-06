@@ -1,29 +1,6 @@
 /* SET DATASTYLE */
 SET datestyle TO ISO, ymd;
 
-/* preparation */
--- table preparation
-CREATE FOREIGN TABLE trg_table (id INTEGER NOT NULL, num INTEGER, name VARCHAR(10)) SERVER tsurugidb;
-
-CREATE FOREIGN TABLE trg_timedate (
-    id      INTEGER NOT NULL,
-    tms     TIMESTAMP  default '2023-03-03 23:59:35.123456',
-    dt      DATE       default '2023-03-03',
-    tm      TIME       default '23:59:35.123456789'
-) SERVER tsurugidb;
-
-CREATE FOREIGN TABLE trg_timetz (
-    id      INTEGER NOT NULL,
-    tm      TIME,
-    tmtz    TIME WITH TIME ZONE
-) SERVER tsurugidb;
-
-CREATE FOREIGN TABLE trg_timestamptz (
-    id      INTEGER NOT NULL,
-    tms     TIMESTAMP,
-    tmstz   TIMESTAMP WITH TIME ZONE
-) SERVER tsurugidb;
-
 PREPARE add_trg_table (int, int, varchar(80)) 		AS INSERT INTO trg_table (id, num, name) VALUES ($1, $2, $3);
 PREPARE add_trg_table_num (int, int) 				AS INSERT INTO trg_table (id, num, name) VALUES ($1, $2, 'zzz');
 PREPARE add_trg_table_name (int, varchar(80))		AS INSERT INTO trg_table (id, num, name) VALUES ($1, 99, $2);
@@ -235,9 +212,3 @@ select * from trg_timestamptz;
 /* check timestamp with time zone in Asia/Tokyo */
 set session timezone to 'Asia/Tokyo';
 select * from trg_timestamptz;
-
-/* clean up */
-DROP FOREIGN TABLE trg_timetz;
-DROP FOREIGN TABLE trg_timestamptz;
-DROP FOREIGN TABLE trg_timedate;
-DROP FOREIGN TABLE trg_table;

@@ -3,9 +3,6 @@
 CREATE TABLE t0_create_table(c1 INTEGER NOT NULL);
 --
 
-CREATE FOREIGN TABLE t1_create_table(c1 INTEGER NOT NULL) SERVER tsurugidb;
-CREATE FOREIGN TABLE t2_create_table(c1 INTEGER NOT NULL, c2 BIGINT, c3 DOUBLE PRECISION) SERVER tsurugidb;
-
 /* DML */
 SELECT * FROM t1_create_table;
 INSERT INTO t1_create_table (c1) VALUES (1);
@@ -53,9 +50,3 @@ SELECT * FROM Public.t1_create_table;
 INSERT INTO "puBlIc"."t1_create_table" (c1) VALUES (999); -- error
 UPDATE "PUBLIC"."t1_create_table" SET c1 = c1+100; -- error
 DELETE FROM "Public"."t1_create_table" WHERE c1 > 1000; -- error
-
-/* DDL */
-DROP FOREIGN TABLE t1_create_table;
-DROP FOREIGN TABLE t2_create_table;
-
-

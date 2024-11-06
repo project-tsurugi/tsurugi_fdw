@@ -119,8 +119,6 @@ ORDER BY
 ---------+---------+--------------
 (0 rows)
 
-CREATE FOREIGN TABLE t1_user_management (column1 INTEGER NOT NULL) SERVER tsurugidb;
-CREATE FOREIGN TABLE t2_user_management (column1 INTEGER NOT NULL) SERVER tsurugidb;
 GRANT SELECT, INSERT, UPDATE, DELETE ON t1_user_management to sample_role2;
 GRANT SELECT, INSERT, UPDATE ON t1_user_management to sample_role3, sample_role4;
 GRANT ALL ON t1_user_management to admin;
@@ -148,7 +146,9 @@ SELECT
 FROM 
     pg_class 
 WHERE 
-    relname = 't1_user_management' or relname = 't2_user_management';
+    relname = 't1_user_management' or relname = 't2_user_management'
+ORDER BY
+    relname;
       relname       |                                                             relacl                                                              
 --------------------+---------------------------------------------------------------------------------------------------------------------------------
  t1_user_management | {postgres=arwdDxt/postgres,sample_role2=ar/postgres,sample_role3=ar/postgres,sample_role4=ar/postgres,sample_role1=ar/postgres}
@@ -166,14 +166,15 @@ SELECT
 FROM 
     pg_class 
 WHERE 
-    relname = 't1_user_management' or relname = 't2_user_management';
+    relname = 't1_user_management' or relname = 't2_user_management'
+ORDER BY
+    relname;
       relname       |           relacl            
 --------------------+-----------------------------
  t1_user_management | {postgres=arwdDxt/postgres}
  t2_user_management | {postgres=arwdDxt/postgres}
 (2 rows)
 
-DROP FOREIGN TABLE t1_user_management;
 DROP ROLE sample_role4;
 DROP ROLE sample_role2, sample_role3;
 DROP ROLE sample_role1, admin;
@@ -189,7 +190,6 @@ WHERE
 (0 rows)
 
 -- unhappy case
-CREATE FOREIGN TABLE t3_user_management (column1 INTEGER NOT NULL) SERVER tsurugidb;
 CREATE ROLE sample_role1;
 CREATE ROLE sample_role1;
 ERROR:  role "sample_role1" already exists
@@ -266,6 +266,4 @@ ERROR:  relation "t4_user_management" does not exist
 -- clean up
 DROP ROLE sample_role1;
 DROP ROLE sample_role2;
-DROP FOREIGN TABLE t2_user_management;
-DROP FOREIGN TABLE t3_user_management;
 RESET ROLE;

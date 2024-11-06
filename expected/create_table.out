@@ -3,8 +3,6 @@
 CREATE TABLE t0_create_table(c1 INTEGER NOT NULL);
 ERROR:  This database is for Tsurugi, so CREATE TABLE is not supported
 --
-CREATE FOREIGN TABLE t1_create_table(c1 INTEGER NOT NULL) SERVER tsurugidb;
-CREATE FOREIGN TABLE t2_create_table(c1 INTEGER NOT NULL, c2 BIGINT, c3 DOUBLE PRECISION) SERVER tsurugidb;
 /* DML */
 SELECT * FROM t1_create_table;
  c1 
@@ -131,6 +129,3 @@ DELETE FROM "Public"."t1_create_table" WHERE c1 > 1000; -- error
 ERROR:  relation "Public.t1_create_table" does not exist
 LINE 1: DELETE FROM "Public"."t1_create_table" WHERE c1 > 1000;
                     ^
-/* DDL */
-DROP FOREIGN TABLE t1_create_table;
-DROP FOREIGN TABLE t2_create_table;

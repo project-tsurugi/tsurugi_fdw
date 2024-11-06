@@ -1,7 +1,4 @@
 /* INDEX TEST */
-/* DDL */
-CREATE FOREIGN TABLE t3_create_index(c1 INTEGER NOT NULL) SERVER tsurugidb;
-CREATE FOREIGN TABLE t4_create_index(c1 INTEGER NOT NULL, c2 BIGINT, c3 DOUBLE PRECISION) SERVER tsurugidb;
 
 /* DML */
 SELECT * FROM t3_create_index;
@@ -26,7 +23,3 @@ SELECT * FROM t4_create_index;
 SELECT * FROM t3_create_index;
 DELETE FROM t3_create_index WHERE c1 = 10;
 SELECT * FROM t3_create_index;
-
-/* DDL */
-DROP FOREIGN TABLE t3_create_index;
-DROP FOREIGN TABLE t4_create_index;

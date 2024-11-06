@@ -80,9 +80,6 @@ WHERE
 ORDER BY
     auth1.rolname;
 
-CREATE FOREIGN TABLE t1_user_management (column1 INTEGER NOT NULL) SERVER tsurugidb;
-CREATE FOREIGN TABLE t2_user_management (column1 INTEGER NOT NULL) SERVER tsurugidb;
-
 GRANT SELECT, INSERT, UPDATE, DELETE ON t1_user_management to sample_role2;
 GRANT SELECT, INSERT, UPDATE ON t1_user_management to sample_role3, sample_role4;
 GRANT ALL ON t1_user_management to admin;
@@ -107,7 +104,9 @@ SELECT
 FROM 
     pg_class 
 WHERE 
-    relname = 't1_user_management' or relname = 't2_user_management';
+    relname = 't1_user_management' or relname = 't2_user_management'
+ORDER BY
+    relname;
 
 REVOKE 
     ALL 
@@ -121,9 +120,10 @@ SELECT
 FROM 
     pg_class 
 WHERE 
-    relname = 't1_user_management' or relname = 't2_user_management';
+    relname = 't1_user_management' or relname = 't2_user_management'
+ORDER BY
+    relname;
 
-DROP FOREIGN TABLE t1_user_management;
 DROP ROLE sample_role4;
 DROP ROLE sample_role2, sample_role3;
 DROP ROLE sample_role1, admin;
@@ -136,8 +136,6 @@ WHERE
     rolname = 'sample_role3' or rolname = 'sample_role4' or rolname = 'admin';
 
 -- unhappy case
-CREATE FOREIGN TABLE t3_user_management (column1 INTEGER NOT NULL) SERVER tsurugidb;
-
 CREATE ROLE sample_role1;
 CREATE ROLE sample_role1;
 SELECT rolname FROM pg_authid WHERE rolname like 'sample_role%' Order By rolname;
@@ -172,6 +170,4 @@ REVOKE ALL ON t3_user_management, t4_user_management FROM sample_role2;
 -- clean up
 DROP ROLE sample_role1;
 DROP ROLE sample_role2;
-DROP FOREIGN TABLE t2_user_management;
-DROP FOREIGN TABLE t3_user_management;
 RESET ROLE;

@@ -1,31 +1,3 @@
-/***********/
-/*** DDL ***/
-/***********/
-CREATE FOREIGN TABLE t1_prepare_select_statement(
-    c1 INTEGER, 
-    c2 INTEGER, 
-    c3 BIGINT,
-    c4 REAL, 
-    c5 DOUBLE PRECISION, 
-    c6 CHAR(10),
-    c7 VARCHAR(26)
-) SERVER tsurugidb;
-
-CREATE FOREIGN TABLE t2_prepare_select_statement(
-    c1 INTEGER, 
-    c2 INTEGER, 
-    c3 BIGINT,
-    c4 REAL, 
-    c5 DOUBLE PRECISION, 
-    c6 CHAR(10),
-    c7 VARCHAR(26)
-) SERVER tsurugidb;
-
-CREATE FOREIGN TABLE t3_prepare_select_statement(
-    c1 INTEGER,
-    c2 CHAR(10)
-) SERVER tsurugidb;
-
 /***************/
 /*** PREPARE ***/
 /***************/
@@ -225,10 +197,3 @@ EXECUTE select_pg_join_tg6;
 EXECUTE select_pg_join_tg7;
 -- PG JOIN #8
 EXECUTE select_pg_join_tg8;
-
-/***********/
-/*** DDL ***/
-/***********/
-DROP FOREIGN TABLE t1_prepare_select_statement;
-DROP FOREIGN TABLE t2_prepare_select_statement;
-DROP FOREIGN TABLE t3_prepare_select_statement;
