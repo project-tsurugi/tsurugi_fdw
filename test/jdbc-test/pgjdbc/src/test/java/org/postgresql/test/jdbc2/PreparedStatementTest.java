@@ -76,9 +76,9 @@ public class PreparedStatementTest extends BaseTest4 {
   public void setUp() throws Exception {
     super.setUp();
     TestUtil.createTable(con, "streamtable", "bin bytea, str text");
-    TestUtil.createTable(con, "texttable", "ch char(3), te text, vc varchar(3)");
+    TestUtil.createForeignTable(con, "texttable", "ch char(3), te varchar, vc varchar(3)");
     TestUtil.createTable(con, "intervaltable", "i interval");
-    TestUtil.createTable(con, "inttable", "a int");
+    TestUtil.createForeignTable(con, "inttable", "a int");
     TestUtil.createTable(con, "bool_tab", "bool_val boolean, null_val boolean, tf_val boolean, "
         + "truefalse_val boolean, yn_val boolean, yesno_val boolean, "
         + "onoff_val boolean, onezero_val boolean");
@@ -91,6 +91,16 @@ public class PreparedStatementTest extends BaseTest4 {
     TestUtil.dropTable(con, "intervaltable");
     TestUtil.dropTable(con, "inttable");
     TestUtil.dropTable(con, "bool_tab");
+    TestUtil.dropTable(con, "numeric_tab");
+    TestUtil.dropTable(con, "double_tab");
+    TestUtil.dropTable(con, "float_tab_real");
+    TestUtil.dropTable(con, "float_tab_double");
+    TestUtil.dropTable(con, "tiny_int");
+    TestUtil.dropTable(con, "small_int");
+    TestUtil.dropTable(con, "int_tab");
+    TestUtil.dropTable(con, "DECIMAL_TAB");
+    TestUtil.dropTable(con, "batch_tab_threshold5");
+    TestUtil.dropTable(con, "batch_tab_threshold0");
     super.tearDown();
   }
 
@@ -525,7 +535,7 @@ public class PreparedStatementTest extends BaseTest4 {
   @Test
   public void testNumeric() throws SQLException {
     PreparedStatement pstmt = con.prepareStatement(
-        "CREATE TEMP TABLE numeric_tab (max_numeric_positive numeric, min_numeric_positive numeric, max_numeric_negative numeric, min_numeric_negative numeric, null_value numeric)");
+        "CREATE FOREIGN TABLE numeric_tab (max_numeric_positive numeric, min_numeric_positive numeric, max_numeric_negative numeric, min_numeric_negative numeric, null_value numeric) SERVER tsurugi");
     pstmt.executeUpdate();
     pstmt.close();
 
@@ -572,7 +582,7 @@ public class PreparedStatementTest extends BaseTest4 {
   @Test
   public void testDouble() throws SQLException {
     PreparedStatement pstmt = con.prepareStatement(
-        "CREATE TEMP TABLE double_tab (max_double float, min_double float, null_value float)");
+        "CREATE FOREIGN TABLE double_tab (max_double float, min_double float, null_value float) SERVER tsurugi");
     pstmt.executeUpdate();
     pstmt.close();
 
@@ -599,18 +609,18 @@ public class PreparedStatementTest extends BaseTest4 {
   @Test
   public void testFloat() throws SQLException {
     PreparedStatement pstmt = con.prepareStatement(
-        "CREATE TEMP TABLE float_tab (max_float real, min_float real, null_value real)");
+        "CREATE FOREIGN TABLE float_tab_real (max_float real, min_float real, null_value real) SERVER tsurugi");
     pstmt.executeUpdate();
     pstmt.close();
 
-    pstmt = con.prepareStatement("insert into float_tab values (?,?,?)");
+    pstmt = con.prepareStatement("insert into float_tab_real values (?,?,?)");
     pstmt.setFloat(1, (float) 1.0E37);
     pstmt.setFloat(2, (float) 1.0E-37);
     pstmt.setNull(3, Types.FLOAT);
     pstmt.executeUpdate();
     pstmt.close();
 
-    pstmt = con.prepareStatement("select * from float_tab");
+    pstmt = con.prepareStatement("select * from float_tab_real");
     ResultSet rs = pstmt.executeQuery();
     assertTrue(rs.next());
     float f = rs.getFloat(1);
@@ -938,7 +948,7 @@ public class PreparedStatementTest extends BaseTest4 {
   @Test
   public void testSetFloatInteger() throws SQLException {
     PreparedStatement pstmt = con.prepareStatement(
-        "CREATE temp TABLE float_tab (max_val float8, min_val float, null_val float8)");
+        "CREATE FOREIGN TABLE float_tab_double (max_val double, min_val double, null_val double) SERVER tsurugi");
     pstmt.executeUpdate();
     pstmt.close();
 
@@ -948,14 +958,14 @@ public class PreparedStatementTest extends BaseTest4 {
     Double maxFloat = 2147483647.0;
     Double minFloat = (double) -2147483648;
 
-    pstmt = con.prepareStatement("insert into float_tab values (?,?,?)");
+    pstmt = con.prepareStatement("insert into float_tab_double values (?,?,?)");
     pstmt.setObject(1, maxInteger, Types.FLOAT);
     pstmt.setObject(2, minInteger, Types.FLOAT);
     pstmt.setNull(3, Types.FLOAT);
     pstmt.executeUpdate();
     pstmt.close();
 
-    pstmt = con.prepareStatement("select * from float_tab");
+    pstmt = con.prepareStatement("select * from float_tab_double");
     ResultSet rs = pstmt.executeQuery();
     assertTrue(rs.next());
 
@@ -973,7 +983,7 @@ public class PreparedStatementTest extends BaseTest4 {
   @Test
   public void testSetFloatString() throws SQLException {
     PreparedStatement pstmt = con.prepareStatement(
-        "CREATE temp TABLE float_tab (max_val float8, min_val float8, null_val float8)");
+        "CREATE FOREIGN TABLE float_tab_double (max_val double, min_val double, null_val double) SERVER tsurugi");
     pstmt.executeUpdate();
     pstmt.close();
 
@@ -982,7 +992,7 @@ public class PreparedStatementTest extends BaseTest4 {
     Double maxFloat = 1.0E37;
     Double minFloat = 1.0E-37;
 
-    pstmt = con.prepareStatement("insert into float_tab values (?,?,?)");
+    pstmt = con.prepareStatement("insert into float_tab_double values (?,?,?)");
     pstmt.setObject(1, maxStringFloat, Types.FLOAT);
     pstmt.setObject(2, minStringFloat, Types.FLOAT);
     pstmt.setNull(3, Types.FLOAT);
@@ -993,7 +1003,7 @@ public class PreparedStatementTest extends BaseTest4 {
     pstmt.executeUpdate();
     pstmt.close();
 
-    pstmt = con.prepareStatement("select * from float_tab");
+    pstmt = con.prepareStatement("select * from float_tab_double");
     ResultSet rs = pstmt.executeQuery();
     assertTrue(rs.next());
 
@@ -1016,7 +1026,7 @@ public class PreparedStatementTest extends BaseTest4 {
   @Test
   public void testSetFloatBigDecimal() throws SQLException {
     PreparedStatement pstmt = con.prepareStatement(
-        "CREATE temp TABLE float_tab (max_val float8, min_val float8, null_val float8)");
+        "CREATE FOREIGN TABLE float_tab_double (max_val double, min_val double, null_val double) SERVER tsurugi");
     pstmt.executeUpdate();
     pstmt.close();
 
@@ -1025,14 +1035,14 @@ public class PreparedStatementTest extends BaseTest4 {
     Double maxFloat = 1.0E37;
     Double minFloat = 1.0E-37;
 
-    pstmt = con.prepareStatement("insert into float_tab values (?,?,?)");
+    pstmt = con.prepareStatement("insert into float_tab_double values (?,?,?)");
     pstmt.setObject(1, maxBigDecimalFloat, Types.FLOAT);
     pstmt.setObject(2, minBigDecimalFloat, Types.FLOAT);
     pstmt.setNull(3, Types.FLOAT);
     pstmt.executeUpdate();
     pstmt.close();
 
-    pstmt = con.prepareStatement("select * from float_tab");
+    pstmt = con.prepareStatement("select * from float_tab_double");
     ResultSet rs = pstmt.executeQuery();
     assertTrue(rs.next());
 
@@ -1050,7 +1060,7 @@ public class PreparedStatementTest extends BaseTest4 {
   @Test
   public void testSetTinyIntFloat() throws SQLException {
     PreparedStatement pstmt = con
-        .prepareStatement("CREATE temp TABLE tiny_int (max_val int4, min_val int4, null_val int4)");
+        .prepareStatement("CREATE FOREIGN TABLE tiny_int (max_val integer, min_val integer, null_val integer) SERVER tsurugi");
     pstmt.executeUpdate();
     pstmt.close();
 
@@ -1106,7 +1116,7 @@ public class PreparedStatementTest extends BaseTest4 {
   @Test
   public void testSetSmallIntFloat() throws SQLException {
     PreparedStatement pstmt = con.prepareStatement(
-        "CREATE temp TABLE small_int (max_val int4, min_val int4, null_val int4)");
+        "CREATE FOREIGN TABLE small_int (max_val integer, min_val integer, null_val integer) SERVER tsurugi");
     pstmt.executeUpdate();
     pstmt.close();
 
@@ -1139,7 +1149,7 @@ public class PreparedStatementTest extends BaseTest4 {
   @Test
   public void testSetIntFloat() throws SQLException {
     PreparedStatement pstmt = con
-        .prepareStatement("CREATE temp TABLE int_TAB (max_val int4, min_val int4, null_val int4)");
+        .prepareStatement("CREATE FOREIGN TABLE int_TAB (max_val integer, min_val integer, null_val integer) SERVER tsurugi");
     pstmt.executeUpdate();
     pstmt.close();
 
@@ -1205,21 +1215,21 @@ public class PreparedStatementTest extends BaseTest4 {
   @Test
   public void testSetBooleanNumeric() throws SQLException {
     PreparedStatement pstmt = con.prepareStatement(
-        "CREATE temp TABLE numeric_tab (max_val numeric(30,15), min_val numeric(30,15), null_val numeric(30,15))");
+        "CREATE FOREIGN TABLE numeric_tab_3015 (max_val numeric(30,15), min_val numeric(30,15), null_val numeric(30,15)) SERVER tsurugi");
     pstmt.executeUpdate();
     pstmt.close();
 
     BigDecimal dBooleanTrue = new BigDecimal(1);
     BigDecimal dBooleanFalse = new BigDecimal(0);
 
-    pstmt = con.prepareStatement("insert into numeric_tab values (?,?,?)");
+    pstmt = con.prepareStatement("insert into numeric_tab_3015 values (?,?,?)");
     pstmt.setObject(1, Boolean.TRUE, Types.NUMERIC, 2);
     pstmt.setObject(2, Boolean.FALSE, Types.NUMERIC, 2);
     pstmt.setNull(3, Types.DOUBLE);
     pstmt.executeUpdate();
     pstmt.close();
 
-    pstmt = con.prepareStatement("select * from numeric_tab");
+    pstmt = con.prepareStatement("select * from numeric_tab_3015");
     ResultSet rs = pstmt.executeQuery();
     assertTrue(rs.next());
 
@@ -1237,7 +1247,7 @@ public class PreparedStatementTest extends BaseTest4 {
   @Test
   public void testSetBooleanDecimal() throws SQLException {
     PreparedStatement pstmt = con.prepareStatement(
-        "CREATE temp TABLE DECIMAL_TAB (max_val numeric(30,15), min_val numeric(30,15), null_val numeric(30,15))");
+        "CREATE FOREIGN TABLE DECIMAL_TAB (max_val numeric(30,15), min_val numeric(30,15), null_val numeric(30,15)) SERVER tsurugi");
     pstmt.executeUpdate();
     pstmt.close();
 
@@ -1268,7 +1278,7 @@ public class PreparedStatementTest extends BaseTest4 {
 
   @Test
   public void testSetObjectBigDecimalUnscaled() throws SQLException {
-    TestUtil.createTempTable(con, "decimal_scale",
+    TestUtil.createForeignTable(con, "decimal_scale",
         "n1 numeric, n2 numeric, n3 numeric, n4 numeric");
     PreparedStatement pstmt = con.prepareStatement("insert into decimal_scale values(?,?,?,?)");
     BigDecimal v = new BigDecimal("3.141593");
@@ -1350,7 +1360,7 @@ public class PreparedStatementTest extends BaseTest4 {
 
   @Test
   public void testSetObjectWithBigDecimal() throws SQLException {
-    TestUtil.createTempTable(con, "number_fallback",
+    TestUtil.createForeignTable(con, "number_fallback",
             "n1 numeric");
     PreparedStatement psinsert = con.prepareStatement("insert into number_fallback values(?)");
     PreparedStatement psselect = con.prepareStatement("select n1 from number_fallback");
@@ -1461,7 +1471,7 @@ public class PreparedStatementTest extends BaseTest4 {
     Assume.assumeTrue("simple protocol only does not support prepared statement requests",
         preferQueryMode != PreferQueryMode.SIMPLE);
 
-    PreparedStatement pstmt = con.prepareStatement("CREATE temp TABLE batch_tab_threshold5 (id bigint, val bigint)");
+    PreparedStatement pstmt = con.prepareStatement("CREATE FOREIGN TABLE batch_tab_threshold5 (id bigint, val bigint) SERVER tsurugi");
     pstmt.executeUpdate();
     pstmt.close();
 
@@ -1489,7 +1499,7 @@ public class PreparedStatementTest extends BaseTest4 {
     Assume.assumeTrue("simple protocol only does not support prepared statement requests",
         preferQueryMode != PreferQueryMode.SIMPLE);
 
-    PreparedStatement pstmt = con.prepareStatement("CREATE temp TABLE batch_tab_threshold0 (id bigint, val bigint)");
+    PreparedStatement pstmt = con.prepareStatement("CREATE FOREIGN TABLE batch_tab_threshold0 (id bigint, val bigint) SERVER tsurugi");
     pstmt.executeUpdate();
     pstmt.close();
 

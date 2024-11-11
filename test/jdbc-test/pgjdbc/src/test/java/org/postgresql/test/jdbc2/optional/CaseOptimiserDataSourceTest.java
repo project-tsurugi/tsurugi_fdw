@@ -37,7 +37,7 @@ public class CaseOptimiserDataSourceTest {
     assertTrue(bc.isColumnSanitiserDisabled(),
         "Expected state [TRUE] of base connection configuration failed test.");
     Statement insert = conn.createStatement();
-    TestUtil.createTable(conn, "allmixedup",
+    TestUtil.createForeignTable(conn, "allmixedup",
         "id int primary key, \"DESCRIPTION\" varchar(40), \"fOo\" varchar(3)");
     insert.execute(TestUtil.insertSQL("allmixedup", "1,'mixed case test', 'bar'"));
     insert.close();
@@ -48,7 +48,7 @@ public class CaseOptimiserDataSourceTest {
   void tearDown() throws SQLException {
     Connection conn = getDataSourceConnection();
     Statement drop = conn.createStatement();
-    drop.execute("drop table allmixedup");
+    drop.execute("drop foreign table if exists allmixedup");
     drop.close();
     conn.close();
     bds.setDisableColumnSanitiser(false);

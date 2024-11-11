@@ -40,7 +40,7 @@ public class TypeCacheDLLStressTest extends BaseTest4 {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    TestUtil.createTable(con, "create_and_drop_table", "user_id serial PRIMARY KEY");
+    TestUtil.createForeignTable(con, "create_and_drop_table", "user_id serial PRIMARY KEY");
   }
 
   @Override
@@ -67,11 +67,11 @@ public class TypeCacheDLLStressTest extends BaseTest4 {
         Statement stmt = con2.createStatement();
 
         while (!Thread.currentThread().isInterrupted()) {
-          stmt.execute("drop TABLE create_and_drop_table");
-          stmt.execute("CREATE TABLE create_and_drop_table"
+          stmt.execute("drop FOREIGN TABLE create_and_drop_table");
+          stmt.execute("CREATE FOREIGN TABLE create_and_drop_table"
               + "( user_id serial PRIMARY KEY, username VARCHAR (50) UNIQUE NOT NULL"
               + ", password VARCHAR (50) NOT NULL, email VARCHAR (355) UNIQUE NOT NULL"
-              + ", created_on TIMESTAMP NOT NULL, last_login TIMESTAMP)");
+              + ", created_on TIMESTAMP NOT NULL, last_login TIMESTAMP)  SERVER tsurugi");
         }
         return null;
       }

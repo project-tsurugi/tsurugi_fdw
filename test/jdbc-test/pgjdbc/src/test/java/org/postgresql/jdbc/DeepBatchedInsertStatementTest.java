@@ -44,8 +44,8 @@ public class DeepBatchedInsertStatementTest extends BaseTest4 {
      * Drop the test table if it already exists for some reason. It is not an
      * error if it doesn't exist.
      */
-    TestUtil.createTable(con, "testbatch", "pk INTEGER, col1 INTEGER");
-    TestUtil.createTable(con, "testunspecified", "pk INTEGER, bday TIMESTAMP");
+    TestUtil.createForeignTable(con, "testbatch", "pk INTEGER, col1 INTEGER");
+    TestUtil.createForeignTable(con, "testunspecified", "pk INTEGER, bday TIMESTAMP");
 
     stmt.executeUpdate("INSERT INTO testbatch VALUES (1, 0)");
     stmt.close();

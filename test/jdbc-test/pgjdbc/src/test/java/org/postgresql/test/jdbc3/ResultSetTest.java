@@ -28,7 +28,7 @@ class ResultSetTest {
   void setUp() throws Exception {
     conn = TestUtil.openDB();
     Statement stmt = conn.createStatement();
-    stmt.execute("CREATE TEMP TABLE hold(a int)");
+    stmt.execute("CREATE FOREIGN TABLE hold(a int) SERVER tsurugi");
     stmt.execute("INSERT INTO hold VALUES (1)");
     stmt.execute("INSERT INTO hold VALUES (2)");
     stmt.close();
@@ -37,7 +37,7 @@ class ResultSetTest {
   @AfterEach
   void tearDown() throws SQLException {
     Statement stmt = conn.createStatement();
-    stmt.execute("DROP TABLE hold");
+    stmt.execute("DROP FOREIGN TABLE hold");
     stmt.close();
     TestUtil.closeDB(conn);
   }

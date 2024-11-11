@@ -18,12 +18,12 @@ import java.sql.Statement;
 public class ResultSetRefreshTest extends BaseTest4 {
   @Test
   public void testWithDataColumnThatRequiresEscaping() throws Exception {
-    TestUtil.dropTable(con, "refresh_row_bad_ident");
-    TestUtil.execute(con, "CREATE TABLE refresh_row_bad_ident (id int PRIMARY KEY, \"1 FROM refresh_row_bad_ident; SELECT 2; SELECT *\" int)");
-    TestUtil.execute(con, "INSERT INTO refresh_row_bad_ident (id) VALUES (1), (2), (3)");
+    TestUtil.dropTable(con, "refresh_row_bad_ident_SQL");
+    TestUtil.execute(con, "CREATE FOREIGN TABLE refresh_row_bad_ident_SQL (id int, \"1 FROM refresh_row_bad_ident; SELECT 2; SELECT *\" int) SERVER tsurugi");
+    TestUtil.execute(con, "INSERT INTO refresh_row_bad_ident_SQL (id) VALUES (1), (2), (3)");
 
     Statement stmt = con.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
-    ResultSet rs = stmt.executeQuery("SELECT * FROM refresh_row_bad_ident");
+    ResultSet rs = stmt.executeQuery("SELECT * FROM refresh_row_bad_ident_SQL");
     assertTrue(rs.next());
     try {
       rs.refreshRow();
@@ -36,12 +36,12 @@ public class ResultSetRefreshTest extends BaseTest4 {
 
   @Test
   public void testWithKeyColumnThatRequiresEscaping() throws Exception {
-    TestUtil.dropTable(con, "refresh_row_bad_ident");
-    TestUtil.execute(con, "CREATE TABLE refresh_row_bad_ident (\"my key\" int PRIMARY KEY)");
-    TestUtil.execute(con, "INSERT INTO refresh_row_bad_ident VALUES (1), (2), (3)");
+    TestUtil.dropTable(con, "refresh_row_bad_ident_space");
+    TestUtil.execute(con, "CREATE  FOREIGN TABLE refresh_row_bad_ident_space (\"my key\" int) SERVER tsurugi");
+    TestUtil.execute(con, "INSERT INTO refresh_row_bad_ident_space VALUES (1), (2), (3)");
 
     Statement stmt = con.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
-    ResultSet rs = stmt.executeQuery("SELECT * FROM refresh_row_bad_ident");
+    ResultSet rs = stmt.executeQuery("SELECT * FROM refresh_row_bad_ident_space");
     assertTrue(rs.next());
     try {
       rs.refreshRow();

@@ -39,7 +39,7 @@ class TimeTest {
   @BeforeEach
   void setUp() throws Exception {
     con = TestUtil.openDB();
-    TestUtil.createTempTable(con, "testtime", "tm time, tz time with time zone");
+    TestUtil.createForeignTable(con, "testtime", "tm time, tz time with time zone");
   }
 
   @AfterEach

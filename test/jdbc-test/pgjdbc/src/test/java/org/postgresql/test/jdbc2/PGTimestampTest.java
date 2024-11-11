@@ -43,7 +43,7 @@ class PGTimestampTest {
   @BeforeEach
   void setUp() throws Exception {
     con = TestUtil.openDB();
-    TestUtil.createTable(con, TEST_TABLE, "ts timestamp, tz timestamp with time zone");
+    TestUtil.createForeignTable(con, TEST_TABLE, "ts timestamp, tz timestamp with time zone");
   }
 
   @AfterEach

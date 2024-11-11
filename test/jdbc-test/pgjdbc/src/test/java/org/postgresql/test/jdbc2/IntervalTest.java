@@ -34,7 +34,7 @@ class IntervalTest {
   void setUp() throws Exception {
     conn = TestUtil.openDB();
     TestUtil.createTable(conn, "testinterval", "v interval");
-    TestUtil.createTable(conn, "testdate", "v date");
+    TestUtil.createForeignTable(conn, "testdate", "v date");
   }
 
   @AfterEach

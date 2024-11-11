@@ -32,7 +32,7 @@ public class ServerErrorTest extends BaseTest4 {
     Statement stmt = con.createStatement();
 
     stmt.execute("CREATE DOMAIN testdom AS int4 CHECK (value < 10)");
-    TestUtil.createTable(con, "testerr", "id int not null, val testdom not null");
+    TestUtil.createForeignTable(con, "testerr", "id int not null, val testdom not null");
     stmt.execute("ALTER TABLE testerr ADD CONSTRAINT testerr_pk PRIMARY KEY (id)");
     stmt.close();
   }

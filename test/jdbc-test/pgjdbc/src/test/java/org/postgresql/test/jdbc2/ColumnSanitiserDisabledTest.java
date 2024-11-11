@@ -41,7 +41,7 @@ class ColumnSanitiserDisabledTest {
      * Quoted columns will be stored with case preserved. Driver will receive column names as
      * defined in db server.
      */
-    TestUtil.createTable(conn, "allmixedup",
+    TestUtil.createForeignTable(conn, "allmixedup",
         "id int primary key, \"DESCRIPTION\" varchar(40), \"fOo\" varchar(3)");
     Statement data = conn.createStatement();
     data.execute(TestUtil.insertSQL("allmixedup", "1,'mixed case test', 'bar'"));

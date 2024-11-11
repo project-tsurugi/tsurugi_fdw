@@ -38,7 +38,7 @@ public class PGTimeTest extends BaseTest4 {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    TestUtil.createTempTable(con, TEST_TABLE, "tm time, tz time with time zone");
+    TestUtil.createForeignTable(con, TEST_TABLE, "tm time, tz time with time zone");
   }
 
   @Override

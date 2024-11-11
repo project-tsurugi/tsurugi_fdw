@@ -38,7 +38,7 @@ class DatabaseEncodingTest {
   @BeforeEach
   void setUp() throws Exception {
     con = TestUtil.openDB();
-    TestUtil.createTempTable(con, "testdbencoding",
+    TestUtil.createForeignTable(con, "testdbencoding",
         "unicode_ordinal integer primary key not null, unicode_string varchar(" + STEP + ")");
     // disabling auto commit makes the test run faster
     // by not committing each insert individually.

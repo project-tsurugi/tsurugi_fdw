@@ -37,7 +37,7 @@ class ColumnSanitiserEnabledTest {
     BaseConnection bc = (BaseConnection) conn;
     assertFalse(bc.isColumnSanitiserDisabled(),
         "Expected state [FALSE] of base connection configuration failed test.");
-    TestUtil.createTable(conn, "allmixedup",
+    TestUtil.createForeignTable(conn, "allmixedup",
         "id int primary key, \"DESCRIPTION\" varchar(40), \"fOo\" varchar(3)");
     Statement data = conn.createStatement();
     data.execute(TestUtil.insertSQL("allmixedup", "1,'mixed case test', 'bar'"));

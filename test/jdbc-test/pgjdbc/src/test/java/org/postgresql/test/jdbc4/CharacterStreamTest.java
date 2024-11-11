@@ -32,7 +32,7 @@ public class CharacterStreamTest extends BaseTest4 {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    TestUtil.createTempTable(con, TEST_TABLE_NAME, "cs text");
+    TestUtil.createForeignTable(con, TEST_TABLE_NAME, "cs varchar");
   }
 
   private void insertStreamKnownIntLength(String data) throws Exception {

@@ -146,7 +146,7 @@ public class AutoRollbackTestSuite extends BaseTest4 {
       assumeMinimumServerVersion(ServerVersion.v9_1);
     }
 
-    TestUtil.createTable(con, "rollbacktest", "a int, str text");
+    TestUtil.createForeignTable(con, "rollbacktest", "a int, str varchar");
     con.setAutoCommit(autoCommit == AutoCommit.YES);
     BaseConnection baseConnection = con.unwrap(BaseConnection.class);
     baseConnection.setFlushCacheOnDeallocate(flushCacheOnDeallocate);

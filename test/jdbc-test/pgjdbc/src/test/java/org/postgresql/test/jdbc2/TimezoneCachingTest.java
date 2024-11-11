@@ -384,7 +384,7 @@ public class TimezoneCachingTest extends BaseTest4 {
         + " then no cache is needed", timestampUtils.hasFastDefaultTimeZone());
     /* Drop the test table if it already exists for some reason. It is
     not an error if it doesn't exist. */
-    TestUtil.createTable(con, "testtz", "col1 INTEGER, col2 TIMESTAMP");
+    TestUtil.createForeignTable(con, "testtz", "col1 INTEGER, col2 TIMESTAMP");
   }
 
   // Tear down the fixture for this test case.

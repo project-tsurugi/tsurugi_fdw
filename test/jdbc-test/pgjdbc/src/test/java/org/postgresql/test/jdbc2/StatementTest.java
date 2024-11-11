@@ -63,11 +63,11 @@ class StatementTest {
   @BeforeEach
   void setUp() throws Exception {
     con = TestUtil.openDB();
-    TestUtil.createTempTable(con, "test_statement", "i int");
-    TestUtil.createTempTable(con, "escapetest",
-        "ts timestamp, d date, t time, \")\" varchar(5), \"\"\"){a}'\" text ");
-    TestUtil.createTempTable(con, "comparisontest", "str1 varchar(5), str2 varchar(15)");
-    TestUtil.createTable(con, "test_lock", "name text");
+    TestUtil.createForeignTable(con, "test_statement", "i int");
+    TestUtil.createForeignTable(con, "escapetest",
+        "ts timestamp, d date, t time, \")\" varchar(5), \"\"\"){a}'\" varchar ");
+    TestUtil.createForeignTable(con, "comparisontest", "str1 varchar(5), str2 varchar(15)");
+    TestUtil.createForeignTable(con, "test_lock", "name varchar");
     Statement stmt = con.createStatement();
     stmt.executeUpdate(TestUtil.insertSQL("comparisontest", "str1,str2", "'_abcd','_found'"));
     stmt.executeUpdate(TestUtil.insertSQL("comparisontest", "str1,str2", "'%abcd','%found'"));
@@ -80,6 +80,9 @@ class StatementTest {
     TestUtil.dropTable(con, "escapetest");
     TestUtil.dropTable(con, "comparisontest");
     TestUtil.dropTable(con, "test_lock");
+    TestUtil.dropTable(con, "another_table");
+    TestUtil.dropTable(con, "b");
+    TestUtil.dropTable(con, "unused");
     TestUtil.execute(con, "DROP FUNCTION IF EXISTS notify_loop()");
     TestUtil.execute(con, "DROP FUNCTION IF EXISTS notify_then_sleep()");
     con.close();
@@ -169,7 +172,7 @@ class StatementTest {
     count = stmt.executeUpdate("UPDATE test_statement SET i=4");
     assertEquals(2, count);
 
-    count = stmt.executeUpdate("CREATE TEMP TABLE another_table (a int)");
+    count = stmt.executeUpdate("CREATE FOREIGN TABLE another_table (a int) SERVER tsurugi");
     assertEquals(0, count);
 
     if (TestUtil.haveMinimumServerVersion(con, ServerVersion.v9_0)) {
@@ -214,7 +217,7 @@ class StatementTest {
     assertEquals("'\"", rs.getString(3));
     assertEquals("b'}'", rs.getString(4));
 
-    count = stmt.executeUpdate("create temp table b (i int)");
+    count = stmt.executeUpdate("create FOREIGN table b (i int) SERVER tsurugi");
     assertEquals(0, count);
 
     rs = stmt.executeQuery("select * from {oj test_statement a left outer join b on (a.i=b.i)} ");
@@ -472,7 +475,7 @@ class StatementTest {
   void warningsAreCleared() throws SQLException {
     Statement stmt = con.createStatement();
     // Will generate a NOTICE: for primary key index creation
-    stmt.execute("CREATE TEMP TABLE unused (a int primary key)");
+    stmt.execute("CREATE FOREIGN TABLE unused (a int primary key) SERVER tsurugi");
     stmt.executeQuery("SELECT 1");
     // Executing another query should clear the warning from the first one.
     assertNull(stmt.getWarnings());

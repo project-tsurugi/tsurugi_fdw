@@ -51,7 +51,7 @@ public class SetObject310InfinityTests extends BaseTest4 {
     Assume.assumeTrue("PostgreSQL 8.3 does not support 'infinity' for 'date'",
         TestUtil.haveMinimumServerVersion(con, ServerVersion.v8_4));
     super.setUp();
-    TestUtil.createTable(con, "table1", "timestamp_without_time_zone_column timestamp without time zone,"
+    TestUtil.createForeignTable(con, "table1", "timestamp_without_time_zone_column timestamp without time zone,"
             + "timestamp_with_time_zone_column timestamp with time zone,"
             + "date_column date"
     );

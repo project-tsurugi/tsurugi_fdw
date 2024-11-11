@@ -67,7 +67,7 @@ public class ResultSetTest extends BaseTest4 {
     super.setUp();
     Statement stmt = con.createStatement();
 
-    TestUtil.createTable(con, "testrs", "id integer");
+    TestUtil.createForeignTable(con, "testrs", "id integer");
 
     stmt.executeUpdate("INSERT INTO testrs VALUES (1)");
     stmt.executeUpdate("INSERT INTO testrs VALUES (2)");
@@ -76,10 +76,10 @@ public class ResultSetTest extends BaseTest4 {
     stmt.executeUpdate("INSERT INTO testrs VALUES (6)");
     stmt.executeUpdate("INSERT INTO testrs VALUES (9)");
 
-    TestUtil.createTable(con, "teststring", "a text");
+    TestUtil.createForeignTable(con, "teststring", "a varchar");
     stmt.executeUpdate("INSERT INTO teststring VALUES ('12345')");
 
-    TestUtil.createTable(con, "testint", "a int");
+    TestUtil.createForeignTable(con, "testint", "a int");
     stmt.executeUpdate("INSERT INTO testint VALUES (12345)");
 
     // Boolean Tests
@@ -138,7 +138,7 @@ public class ResultSetTest extends BaseTest4 {
 
     // TestUtil.createTable(con, "testbit", "a bit");
 
-    TestUtil.createTable(con, "testnumeric", "t text, a numeric");
+    TestUtil.createForeignTable(con, "testnumeric", "t varchar, a numeric");
     stmt.executeUpdate("INSERT INTO testnumeric VALUES('1.0', '1.0')");
     stmt.executeUpdate("INSERT INTO testnumeric VALUES('0.0', '0.0')");
     stmt.executeUpdate("INSERT INTO testnumeric VALUES('-1.0', '-1.0')");

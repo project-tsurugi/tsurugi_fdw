@@ -243,7 +243,7 @@ public class ServerPreparedStmtTest extends BaseTest4 {
   public void testCreateTable() throws Exception {
     // CREATE TABLE isn't supported by PREPARE; the driver should realize this and
     // still complete without error.
-    PreparedStatement pstmt = con.prepareStatement("CREATE TABLE testsps_bad(data int)");
+    PreparedStatement pstmt = con.prepareStatement("CREATE FOREIGN TABLE testsps_bad(data int) SERVER tsurugi");
     setUseServerPrepare(pstmt, true);
     pstmt.executeUpdate();
     TestUtil.dropTable(con, "testsps_bad");
@@ -254,7 +254,7 @@ public class ServerPreparedStmtTest extends BaseTest4 {
     // Shouldn't try to PREPARE this one, if we do we get:
     // PREPARE x(int,int) AS INSERT .... $1 ; INSERT ... $2 -- syntax error
     try {
-      TestUtil.createTable(con, "testsps_multiple", "data int");
+      TestUtil.createForeignTable(con, "testsps_multiple", "data int");
       PreparedStatement pstmt = con.prepareStatement(
           "INSERT INTO testsps_multiple(data) VALUES (?); INSERT INTO testsps_multiple(data) VALUES (?)");
       setUseServerPrepare(pstmt, true);

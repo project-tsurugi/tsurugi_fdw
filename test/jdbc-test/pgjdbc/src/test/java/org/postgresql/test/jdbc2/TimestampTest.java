@@ -62,9 +62,9 @@ public class TimestampTest extends BaseTest4 {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    TestUtil.createTable(con, TSWTZ_TABLE, "ts timestamp with time zone");
-    TestUtil.createTable(con, TSWOTZ_TABLE, "ts timestamp without time zone");
-    TestUtil.createTable(con, DATE_TABLE, "ts date");
+    TestUtil.createForeignTable(con, TSWTZ_TABLE, "ts timestamp with time zone");
+    TestUtil.createForeignTable(con, TSWOTZ_TABLE, "ts timestamp without time zone");
+    TestUtil.createForeignTable(con, DATE_TABLE, "ts date");
     currentTZ = TimeZone.getDefault();
   }
 

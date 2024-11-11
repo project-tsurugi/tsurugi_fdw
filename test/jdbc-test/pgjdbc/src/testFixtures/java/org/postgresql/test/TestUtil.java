@@ -453,6 +453,27 @@ public class TestUtil {
     }
   }
 
+  /*
+   * Helper - creates a foreign table for use by a test
+   */
+  public static void createForeignTable(Connection con, String table, String columns) throws SQLException {
+    Statement st = con.createStatement();
+    try {
+      // Drop the table
+      dropTable(con, table);
+
+      columns = columns.replaceAll("(?i) primary key", "");
+      columns = columns.replaceAll("(?i) unique", "");
+
+      // Now create the table
+      String sql = "CREATE FOREIGN TABLE " + table + " (" + columns + ") SERVER tsurugi";
+
+      st.executeUpdate(sql);
+    } finally {
+      closeQuietly(st);
+    }
+  }
+
   /**
    * Helper creates a temporary table.
    *
@@ -617,7 +638,28 @@ public class TestUtil {
    * Helper - drops a table
    */
   public static void dropTable(Connection con, String table) throws SQLException {
-    dropObject(con, "TABLE", table);
+    try {
+      resetForeignTable(con, table);
+    } catch (SQLException e) {
+      ;
+    }
+    try {
+      dropObject(con, "FOREIGN TABLE", table);
+    } catch (SQLException e) {
+      dropObject(con, "TABLE", table);
+    }
+  }
+
+  /*
+   * Helper - reset foreign table
+   */
+  public static void resetForeignTable(Connection con, String table) throws SQLException {
+    Statement st = con.createStatement();
+    try {
+      st.execute("DELETE FROM " + table);
+    } finally {
+      closeQuietly(st);
+    }
   }
 
   /*

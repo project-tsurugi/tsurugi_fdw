@@ -28,9 +28,9 @@ public class PreparedStatementTest extends BaseTest4 {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    TestUtil.createTable(con, "timestamptztable", "tstz timestamptz");
-    TestUtil.createTable(con, "timetztable", "ttz timetz");
-    TestUtil.createTable(con, "timetable", "id serial, tt time");
+    TestUtil.createForeignTable(con, "timestamptztable", "tstz timestamp with time zone");
+    TestUtil.createForeignTable(con, "timetztable", "ttz time with time zone");
+    TestUtil.createForeignTable(con, "timetable", "id serial, tt time");
   }
 
   @Override

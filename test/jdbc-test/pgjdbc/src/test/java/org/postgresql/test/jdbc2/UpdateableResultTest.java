@@ -41,20 +41,20 @@ public class UpdateableResultTest extends BaseTest4 {
     super.setUp();
     TestUtil.createTable(con, "updateable",
         "id int primary key, name text, notselected text, ts timestamp with time zone, intarr int[]");
-    TestUtil.createTable(con, "hasdate", "id int primary key, dt date unique, name text");
+    TestUtil.createForeignTable(con, "hasdate", "id int primary key, dt date unique, name varchar");
     TestUtil.createTable(con, "unique_null_constraint", "u1 int unique, name1 text");
     TestUtil.createTable(con, "uniquekeys", "id int unique not null, id2 int unique, dt date");
     TestUtil.createTable(con, "partialunique", "subject text, target text, success boolean");
     TestUtil.execute(con, "CREATE UNIQUE INDEX tests_success_constraint ON partialunique (subject, target) WHERE success");
-    TestUtil.createTable(con, "second", "id1 int primary key, name1 text");
+    TestUtil.createForeignTable(con, "second_table", "id1 int primary key, name1 varchar");
     TestUtil.createTable(con, "primaryunique", "id int primary key, name text unique not null, dt date");
     TestUtil.createTable(con, "serialtable", "gen_id serial primary key, name text");
     TestUtil.createTable(con, "compositepktable", "gen_id serial, name text, dec_id serial");
     TestUtil.execute(con, "alter sequence compositepktable_dec_id_seq increment by 10; alter sequence compositepktable_dec_id_seq restart with 10");
     TestUtil.execute(con, "alter table compositepktable add primary key ( gen_id, dec_id )");
     TestUtil.createTable(con, "stream", "id int primary key, asi text, chr text, bin bytea");
-    TestUtil.createTable(con, "multicol", "id1 int not null, id2 int not null, val text");
-    TestUtil.createTable(con, "nopkmulticol", "id1 int not null, id2 int not null, val text");
+    TestUtil.createTable(con, "multicol", "id1 int not null, id2 int not null, val varchar");
+    TestUtil.createForeignTable(con, "nopkmulticol", "id1 int not null, id2 int not null, val varchar");
     TestUtil.createTable(con, "booltable", "id int not null primary key, b boolean default false");
     TestUtil.execute(con, "insert into booltable (id) values (1)");
     TestUtil.execute(con, "insert into uniquekeys(id, id2, dt) values (1, 2, now())");
@@ -63,7 +63,7 @@ public class UpdateableResultTest extends BaseTest4 {
     // create pk for multicol table
     st2.execute("ALTER TABLE multicol ADD CONSTRAINT multicol_pk PRIMARY KEY (id1, id2)");
     // put some dummy data into second
-    st2.execute("insert into second values (1,'anyvalue' )");
+    st2.execute("insert into second_table values (1,'anyvalue' )");
     st2.close();
     TestUtil.execute(con, "insert into unique_null_constraint values (1, 'dave')");
     TestUtil.execute(con, "insert into unique_null_constraint values (null, 'unknown')");
@@ -74,7 +74,7 @@ public class UpdateableResultTest extends BaseTest4 {
   @Override
   public void tearDown() throws SQLException {
     TestUtil.dropTable(con, "updateable");
-    TestUtil.dropTable(con, "second");
+    TestUtil.dropTable(con, "second_table");
     TestUtil.dropTable(con, "serialtable");
     TestUtil.dropTable(con, "compositepktable");
     TestUtil.dropTable(con, "stream");
@@ -91,13 +91,13 @@ public class UpdateableResultTest extends BaseTest4 {
   @Test
   public void testDeleteRows() throws SQLException {
     Statement st = con.createStatement();
-    st.executeUpdate("INSERT INTO second values (2,'two')");
-    st.executeUpdate("INSERT INTO second values (3,'three')");
-    st.executeUpdate("INSERT INTO second values (4,'four')");
+    st.executeUpdate("INSERT INTO second_table values (2,'two')");
+    st.executeUpdate("INSERT INTO second_table values (3,'three')");
+    st.executeUpdate("INSERT INTO second_table values (4,'four')");
     st.close();
 
     st = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
-    ResultSet rs = st.executeQuery("select id1,name1 from second order by id1");
+    ResultSet rs = st.executeQuery("select id1,name1 from second_table order by id1");
 
     assertTrue(rs.next());
     assertEquals(1, rs.getInt("id1"));
@@ -118,7 +118,7 @@ public class UpdateableResultTest extends BaseTest4 {
   public void testCancelRowUpdates() throws Exception {
     Statement st =
         con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
-    ResultSet rs = st.executeQuery("select * from second");
+    ResultSet rs = st.executeQuery("select * from second_table");
 
     // make sure we're dealing with the correct row.
     rs.first();
@@ -145,7 +145,7 @@ public class UpdateableResultTest extends BaseTest4 {
 
     // make sure the update got to the db and the driver isn't lying to us.
     rs.close();
-    rs = st.executeQuery("select * from second");
+    rs = st.executeQuery("select * from second_table");
     rs.first();
     assertEquals(999, rs.getInt(1));
     assertEquals("anyvalue", rs.getString(2));
@@ -184,7 +184,7 @@ public class UpdateableResultTest extends BaseTest4 {
   public void testPositioning() throws SQLException {
     Statement stmt =
         con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
-    ResultSet rs = stmt.executeQuery("SELECT id1,name1 FROM second");
+    ResultSet rs = stmt.executeQuery("SELECT id1,name1 FROM second_table");
 
     checkPositioning(rs);
 
@@ -416,7 +416,7 @@ public class UpdateableResultTest extends BaseTest4 {
 
     rs.close();
 
-    rs = st.executeQuery("select id1, id, name, name1 from updateable, second");
+    rs = st.executeQuery("select id1, id, name, name1 from updateable, second_table");
     try {
       while (rs.next()) {
         rs.updateInt("id", 2);
@@ -561,7 +561,7 @@ public class UpdateableResultTest extends BaseTest4 {
     Statement st =
         con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
 
-    ResultSet rs = st.executeQuery("select * from only second");
+    ResultSet rs = st.executeQuery("select * from only second_table");
     assertTrue(rs.next());
     rs.updateInt(1, 2);
     rs.updateRow();
@@ -694,7 +694,7 @@ public class UpdateableResultTest extends BaseTest4 {
     PGConnection unwrap = con.unwrap(PGConnection.class);
     Assume.assumeNotNull(unwrap);
     int prepareThreshold = unwrap.getPrepareThreshold();
-    String sql = "select * from second where id1=?";
+    String sql = "select * from second_table where id1=?";
     for (int i = 0; i <= prepareThreshold; i++) {
       PreparedStatement ps = null;
       ResultSet rs = null;

@@ -29,7 +29,7 @@ public class SendRecvBufferSizeTest extends BaseTest4 {
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    TestUtil.createTable(con, "hold", "a int");
+    TestUtil.createForeignTable(con, "hold", "a int");
     Statement stmt = con.createStatement();
     stmt.execute("INSERT INTO hold VALUES (1)");
     stmt.execute("INSERT INTO hold VALUES (2)");

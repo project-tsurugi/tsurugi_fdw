@@ -89,8 +89,8 @@ public class TimezoneTest {
     TimeZone.setDefault(TimeZone.getTimeZone("GMT+01"));
 
     connect();
-    TestUtil.createTable(con, "testtimezone",
-        "seq int4, tstz timestamp with time zone, ts timestamp without time zone, t time without time zone, tz time with time zone, d date");
+    TestUtil.createForeignTable(con, "testtimezone",
+        "seq integer, tstz timestamp with time zone, ts timestamp without time zone, t time without time zone, tz time with time zone, d date");
 
     // This is not obvious, but the "gmt-3" timezone is actually 3 hours *ahead* of GMT
     // so will produce +03 timestamptz output

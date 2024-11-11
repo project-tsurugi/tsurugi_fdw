@@ -43,7 +43,7 @@ public class CursorFetchTest extends BaseTest4 {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    TestUtil.createTable(con, "test_fetch", "value integer");
+    TestUtil.createForeignTable(con, "test_fetch", "value integer");
     con.setAutoCommit(false);
   }
 
