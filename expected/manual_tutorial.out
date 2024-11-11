@@ -1,23 +1,5 @@
 /* SET DATASTYLE */
 SET datestyle TO ISO, ymd;
-/* テーブルの作成 */
-CREATE TABLE weather (
-    id              int primary key,
-    city            varchar(80),
-    temp_lo         int,           -- 最低気温
-    temp_hi         int,           -- 最高気温
-    prcp            real,          -- 降水量
-    the_date        date default '2023-04-01'
-) TABLESPACE tsurugi;
-/* 外部テーブルの作成 */
-CREATE FOREIGN TABLE weather (
-    id              int,
-    city            varchar(80),
-    temp_lo         int,           -- 最低気温
-    temp_hi         int,           -- 最高気温
-    prcp            real,          -- 降水量
-    the_date        date default '2023-04-01'
-) SERVER tsurugidb;
 /* データの挿入 */
 INSERT INTO weather (id, city, temp_lo, temp_hi, prcp)
     VALUES (1, 'San Francisco', 46, 50, 0.25);
@@ -32,23 +14,6 @@ SELECT * from weather;
   1 | San Francisco |      46 |      50 | 0.25 | 2023-04-01
   2 | San Francisco |      43 |      57 |    0 | 2023-04-01
   3 | Hayward       |      54 |      37 |      | 2023-04-01
-(3 rows)
-
-/* PostgreSQLテーブルの作成 */
-CREATE TABLE cities (
-    name            varchar(80),
-    location        point
-);
-INSERT INTO cities VALUES ('San Francisco', '(-194.0, 53.0)');
-INSERT INTO cities VALUES ('Hayward', '(-122.0, 37.0)');
-/* TsurugiとPostgreSQLの同時アクセス */
-SELECT *
-    FROM weather INNER JOIN cities ON (weather.city = cities.name) ORDER BY id;
- id |     city      | temp_lo | temp_hi | prcp |  the_date  |     name      | location  
-----+---------------+---------+---------+------+------------+---------------+-----------
-  1 | San Francisco |      46 |      50 | 0.25 | 2023-04-01 | San Francisco | (-194,53)
-  2 | San Francisco |      43 |      57 |    0 | 2023-04-01 | San Francisco | (-194,53)
-  3 | Hayward       |      54 |      37 |      | 2023-04-01 | Hayward       | (-122,37)
 (3 rows)
 
 /* データの更新 */
@@ -93,20 +58,10 @@ REVOKE SELECT ON weather FROM jonathan;
 /* データベースロールの削除 */
 DROP ROLE jonathan;
 /* 明示的にトランザクションブロックを開始する */
-SELECT tg_start_transaction();      --  明示的にトランザクションを開始する
- tg_start_transaction 
-----------------------
- 
-(1 row)
-
+BEGIN;
 INSERT INTO weather (id, city, temp_lo, temp_hi, prcp)  --  Tsurugiテーブルを操作する
     VALUES (4, 'Los Angeles', 64, 82, 0.0);
-SELECT tg_commit();     --  トランザクション終了
- tg_commit 
------------
- 
-(1 row)
-
+COMMIT;     --  トランザクション終了
 SELECT * FROM weather;  -- レグレッションテスト確認用
  id |     city      | temp_lo | temp_hi | prcp |  the_date  
 ----+---------------+---------+---------+------+------------
@@ -131,13 +86,7 @@ SELECT tg_set_transaction('short', 'interrupt');    /*  デフォルトのトラ
 (1 row)
 
                                                         （priority = 'interrupt'） */
-SELECT tg_start_transaction();  /*  変更されたトランザクション特性が適用される
- tg_start_transaction 
-----------------------
- 
-(1 row)
-
-                                    （priority = 'interrupt'）  */
+BEGIN;
 INSERT INTO weather (id, city, temp_lo, temp_hi, prcp)
     VALUES (5, 'Oakland', 48, 53, 0.5);
 SELECT * FROM weather;
@@ -149,16 +98,29 @@ SELECT * FROM weather;
   5 | Oakland       |      48 |      53 |  0.5 | 2023-04-01
 (4 rows)
 
-SELECT tg_commit();  -- トランザクション終了
- tg_commit 
------------
- 
-(1 row)
+COMMIT;  -- トランザクション終了
+BEGIN;
+SELECT * FROM weather;
+ id |     city      | temp_lo | temp_hi | prcp |  the_date  
+----+---------------+---------+---------+------+------------
+  1 | San Francisco |      46 |      50 | 0.25 | 2023-04-01
+  2 | San Francisco |      43 |      57 |    0 | 2023-04-01
+  4 | Los Angeles   |      64 |      82 |    0 | 2023-04-01
+  5 | Oakland       |      48 |      53 |  0.5 | 2023-04-01
+(4 rows)
 
 /* 特定のトランザクションブロックのみトランザクション特性を変更 */
-SELECT tg_start_transaction('read_only', 'wait', 'read_only_tx');   --  このトランザクションブロックのみで有効
- tg_start_transaction 
-----------------------
+SELECT tg_set_transaction('read_only', 'wait', 'read_only_tx');
+           tg_set_transaction            
+-----------------------------------------
+ {                                      +
+     "transactionType": "3",            +
+     "transactionPriority": "2",        +
+     "transactionLabel": "read_only_tx",+
+     "writePreserve": "",               +
+     "inclusiveReadArea": "",           +
+     "exclusiveReadArea": ""            +
+ }                                      +
  
 (1 row)
 
@@ -171,26 +133,25 @@ SELECT * FROM weather;
   5 | Oakland       |      48 |      53 |  0.5 | 2023-04-01
 (4 rows)
 
-SELECT tg_commit();     --  トランザクション終了
- tg_commit 
------------
+COMMIT;     --  トランザクション終了
+SELECT tg_set_transaction('short', 'interrupt');
+              tg_set_transaction              
+----------------------------------------------
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "1",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
+ }                                           +
  
 (1 row)
 
-SELECT tg_start_transaction();      --  デフォルトのトランザクション特性が適用される
- tg_start_transaction 
-----------------------
- 
-(1 row)
-
+BEGIN;
 INSERT INTO weather (id, city, temp_lo, temp_hi, prcp)
     VALUES (6, 'San Jose', 46, 55, 0.0);
-SELECT tg_commit();     --  トランザクション終了
- tg_commit 
------------
- 
-(1 row)
-
+COMMIT;     --  トランザクション終了
 SELECT * FROM weather;  -- レグレッションテスト確認用
  id |     city      | temp_lo | temp_hi | prcp |  the_date  
 ----+---------------+---------+---------+------+------------
@@ -215,12 +176,7 @@ SELECT * FROM weather;  -- レグレッションテスト確認用
   7 | Sacramento    |      48 |      60 | 0.25 | 2023-04-01
 (6 rows)
 
-SELECT tg_start_transaction();
- tg_start_transaction 
-----------------------
- 
-(1 row)
-
+BEGIN;
 UPDATE weather
     SET temp_hi = temp_hi - 10 WHERE city = 'Sacramento';
 SELECT * FROM weather;  -- レグレッションテスト確認用
@@ -234,12 +190,7 @@ SELECT * FROM weather;  -- レグレッションテスト確認用
   7 | Sacramento    |      48 |      50 | 0.25 | 2023-04-01
 (6 rows)
 
-SELECT tg_rollback();   --  UPDATE文の更新内容は破棄されるが、上記のINSERT文の更新内容は破棄されない
- tg_rollback 
--------------
- 
-(1 row)
-
+ROLLBACK;   --  UPDATE文の更新内容は破棄されるが、上記のINSERT文の更新内容は破棄されない
 SELECT * FROM weather;  -- レグレッションテスト確認用
  id |     city      | temp_lo | temp_hi | prcp |  the_date  
 ----+---------------+---------+---------+------+------------
@@ -284,12 +235,7 @@ SELECT tg_set_write_preserve('weather');    --  書き込みを予約するテ�
  
 (1 row)
 
-SELECT tg_start_transaction();  -- Longトランザクション開始
- tg_start_transaction 
-----------------------
- 
-(1 row)
-
+BEGIN;
 INSERT INTO weather (id, city, temp_lo, temp_hi)
     VALUES (3, 'Hayward', 37, 54);
 UPDATE weather SET temp_hi = temp_hi + 5 WHERE city = 'Oakland';
@@ -305,12 +251,7 @@ SELECT * FROM weather;
   7 | Sacramento    |      48 |      60 | 0.25 | 2023-04-01
 (6 rows)
 
-SELECT tg_commit();             -- Longトランザクション終了
- tg_commit 
------------
- 
-(1 row)
-
+COMMIT;             -- トランザクション終了
 /* プリペアド文 */
 PREPARE add_weather (int, varchar(80), int, int, real, date)
     AS INSERT INTO weather (id, city, temp_lo, temp_hi, prcp, the_date)
@@ -328,9 +269,3 @@ SELECT * FROM weather;  -- レグレッションテスト確認用
   8 | San Diego     |      41 |      57 | 0.25 | 2023-11-24
 (7 rows)
 
-/* 外部テーブルの削除 */
-DROP FOREIGN TABLE weather;
-/* テーブルの削除 */
-DROP TABLE weather;
-/* PostgreSQLテーブルの削除 */
-DROP TABLE cities;

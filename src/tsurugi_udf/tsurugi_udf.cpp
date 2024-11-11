@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Project Tsurugi.
+ * Copyright 2023-2024 Project Tsurugi.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,9 +46,6 @@ PG_FUNCTION_INFO_V1(tg_set_write_preserve);
 PG_FUNCTION_INFO_V1(tg_set_inclusive_read_areas);
 PG_FUNCTION_INFO_V1(tg_set_exclusive_read_areas);
 PG_FUNCTION_INFO_V1(tg_show_transaction);
-PG_FUNCTION_INFO_V1(tg_start_transaction);
-PG_FUNCTION_INFO_V1(tg_commit);
-PG_FUNCTION_INFO_V1(tg_rollback);
 
 #ifdef __cplusplus
 }
@@ -382,33 +379,6 @@ CheckTransactionArgs(char* TransactionType, char* TransactionPriority, char* Tra
 	}
 }
 
-/**
- * @brief Check the arguments of tg_set_transaction.
- * @param CheckTables [in] list of tables.
- * @return If you call ereport, the call will not return and
- *         PostgreSQL will report the error information.
- */
-void
-CheckTransactionTables(List* CheckTables)
-{
-	if (CheckTables != NIL) {
-		auto tables = manager::metadata::get_tables_ptr(TSURUGI_DB_NAME);
-		ListCell* listptr;
-		foreach(listptr, CheckTables) {
-			Node* node = (Node *) lfirst(listptr);
-			if (IsA(node, String)) {
-				Value* table = (Value*) node;
-				if (!tables->exists(strVal(table))) {
-					ereport(ERROR,
-							(errcode(ERRCODE_INTERNAL_ERROR),
-							errmsg("Table is not exist in Tsurugi. (table: %s)",
-							strVal(table))));
-				}
-			}
-		}
-	}
-}
-
 Datum
 tg_set_transaction(PG_FUNCTION_ARGS)
 {
@@ -461,8 +431,6 @@ tg_set_write_preserve(PG_FUNCTION_ARGS)
 			 errmsg("Invalid number of parameters.")));
 	}
 
-	CheckTransactionTables(WritePreserveTables);
-
 	SetWritePreserveTables(WritePreserveTables);
 
 	GetTransactionOption(transaction);
@@ -484,8 +452,6 @@ tg_set_inclusive_read_areas(PG_FUNCTION_ARGS)
 			 errmsg("Invalid number of parameters.")));
 	}
 
-	CheckTransactionTables(InclusiveReadAreasTables);
-
 	SetInclusiveReadAreasTables(InclusiveReadAreasTables);
 
 	GetTransactionOption(transaction);
@@ -506,8 +472,6 @@ tg_set_exclusive_read_areas(PG_FUNCTION_ARGS)
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 			 errmsg("Invalid number of parameters.")));
 	}
-
-	CheckTransactionTables(ExclusiveReadAreasTables);
 
 	SetExclusiveReadAreasTables(ExclusiveReadAreasTables);
 
@@ -532,128 +496,4 @@ tg_show_transaction(PG_FUNCTION_ARGS)
 
 	GetTransactionOption(transaction);
 	PG_RETURN_CSTRING(TransactionToJsonCharString(transaction));
-}
-
-Datum
-tg_start_transaction(PG_FUNCTION_ARGS)
-{
-	char* TransactionType = nullptr;
-	char* TransactionPriority = nullptr;
-	char* TransactionLabel = nullptr;
-	boost::property_tree::ptree transaction;
-
-	if (PG_NARGS() == 1) {
-		text* type = PG_GETARG_TEXT_PP(0);
-		TransactionType = text_to_cstring(type);
-	} else if (PG_NARGS() == 2) {
-		text* type = PG_GETARG_TEXT_PP(0);
-		text* priority = PG_GETARG_TEXT_PP(1);
-		TransactionType = text_to_cstring(type);
-		TransactionPriority = text_to_cstring(priority);
-	} else if (PG_NARGS() == 3) {
-		text* type = PG_GETARG_TEXT_PP(0);
-		text* priority = PG_GETARG_TEXT_PP(1);
-		text* label = PG_GETARG_TEXT_PP(2);
-		TransactionType = text_to_cstring(type);
-		TransactionPriority = text_to_cstring(priority);
-		TransactionLabel = text_to_cstring(label);
-	} else if (PG_NARGS() != 0) {
-		ereport(ERROR,
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			 errmsg("Invalid number of parameters.")));
-	}
-
-	if (IsTransactionProgress()) {
-        elog(WARNING, "there is already a tsurugi transaction in progress");
-		PG_RETURN_VOID();
-	}
-
-	if (PG_NARGS() != 0) {
-		specific_transaction = true;
-		CheckTransactionArgs(TransactionType, TransactionPriority, TransactionLabel);
-
-		SaveTransactionOption();
-		SetTransactionOption(TransactionType, TransactionPriority, TransactionLabel);
-	} else {
-		specific_transaction = false;
-	}
-
-	ERROR_CODE error = Tsurugi::start_transaction();
-	if (error != ERROR_CODE::OK) {
-		std::string error_detail = Tsurugi::get_error_detail(error);
-		if (error_detail.empty())
-		{
-			elog(ERROR, "Tsurugi::start_transaction() failed. (%d)", (int) error);
-		}
-		else
-		{
-			elog(ERROR, "Tsurugi::start_transaction() failed. (%d)\n%s", (int) error, error_detail.c_str());
-		}
-	}
-
-	transaction_block = true;
-
-	PG_RETURN_VOID();
-}
-
-Datum
-tg_commit(PG_FUNCTION_ARGS)
-{
-	if (PG_NARGS() != 0) {
-		ereport(ERROR,
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			 errmsg("Invalid number of parameters.")));
-	}
-
-	transaction_block = false;
-	ERROR_CODE error = Tsurugi::commit();
-	if (error != ERROR_CODE::OK && error != ERROR_CODE::NO_TRANSACTION) {
-		std::string error_detail = Tsurugi::get_error_detail(error);
-		if (error_detail.empty())
-		{
-			elog(ERROR, "Tsurugi::commit() failed. (%d)", (int) error);
-		}
-		else
-		{
-			elog(ERROR, "Tsurugi::commit() failed. (%d)\n%s", (int) error, error_detail.c_str());
-		}
-	}
-
-	if (specific_transaction) {
-		LoadTransactionOption();
-		specific_transaction = false;
-	}
-
-    PG_RETURN_VOID();
-}
-
-Datum
-tg_rollback(PG_FUNCTION_ARGS)
-{
-	if (PG_NARGS() != 0) {
-		ereport(ERROR,
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			 errmsg("Invalid number of parameters.")));
-	}
-
-	transaction_block = false;
-	ERROR_CODE error = Tsurugi::rollback();
-	if (error != ERROR_CODE::OK && error != ERROR_CODE::NO_TRANSACTION) {
-		std::string error_detail = Tsurugi::get_error_detail(error);
-		if (error_detail.empty())
-		{
-			elog(ERROR, "Tsurugi::rollback() failed. (%d)", (int) error);
-		}
-		else
-		{
-			elog(ERROR, "Tsurugi::rollback() failed. (%d)\n%s", (int) error, error_detail.c_str());
-		}
-	}
-
-	if (specific_transaction) {
-		LoadTransactionOption();
-		specific_transaction = false;
-	}
-
-    PG_RETURN_VOID();
 }
