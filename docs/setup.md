@@ -91,13 +91,6 @@ make install
 
     Tsurugiを利用するためのデータベースクラスタを作成します。
 
-    > [!NOTE]
-    > 既存のデータベースクラスタからTsurugiを利用する場合は、本手順はスキップしてください。
-    > この場合、Tsurugiを利用するためのデータベースを新たに作成する必要があります。
-    > 以下の例では`tsurugidb`という名前のデータベースを作成しています。
-    > ``` $ createdb tsurugidb ```
-    > 後述の接続先データベース `postgres` は `tsurugidb` に置き換えて行ってください。
-
     以下の例では`<PostgreSQL install directory>/data`にデータベースのディレクトリを作成しています。  
     ディレクトリの場所は任意です。
 
@@ -105,6 +98,13 @@ make install
     $ mkdir <PostgreSQL install directory>/data
     $ initdb -D <PostgreSQL install directory>/data
     ~~~
+
+> [!NOTE]
+> 既存のデータベースクラスタからTsurugiを利用する場合は、本手順はスキップしてください。
+> この場合、Tsurugiを利用するためのデータベースを新たに作成する必要があります。
+> 以下の例では`tsurugidb`という名前のデータベースを作成しています。
+> ``` $ createdb tsurugidb ```
+> 後述の接続先データベース `postgres` は `tsurugidb` に置き換えて行ってください。
 
 1. Tsurugi FDWの登録
 
