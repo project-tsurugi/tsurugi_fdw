@@ -28,21 +28,3 @@ CREATE FUNCTION tg_set_exclusive_read_areas(variadic text[]) RETURNS cstring
 
 CREATE FUNCTION tg_show_transaction() RETURNS cstring
   AS 'tsurugi_fdw' LANGUAGE C STRICT;
-
-CREATE FUNCTION tg_start_transaction(text, text, text) RETURNS void
-  AS 'tsurugi_fdw' LANGUAGE C STRICT;
-
-CREATE FUNCTION tg_start_transaction(text, text) RETURNS void
-  AS 'tsurugi_fdw' LANGUAGE C STRICT;
-
-CREATE FUNCTION tg_start_transaction(text) RETURNS void
-  AS 'tsurugi_fdw' LANGUAGE C STRICT;
-
-CREATE FUNCTION tg_start_transaction() RETURNS void
-  AS 'tsurugi_fdw' LANGUAGE C STRICT;
-
-CREATE FUNCTION tg_commit() RETURNS void
-  AS 'tsurugi_fdw' LANGUAGE C STRICT;
-
-CREATE FUNCTION tg_rollback() RETURNS void
-  AS 'tsurugi_fdw' LANGUAGE C STRICT;

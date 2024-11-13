@@ -49,10 +49,12 @@
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_foreign_table.h"
+#include "catalog/pg_extension.h"
+#include "catalog/indexing.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+#include "utils/fmgroids.h"
 #include "executor/spi.h"
-
 
 #ifndef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
@@ -64,6 +66,9 @@ void tsurugi_ProcessUtility(PlannedStmt* pstmt, const char* query_string,
                             QueryEnvironment* queryEnv, DestReceiver* dest,
                             char* completionTag);
 bool noTablesInDatabase(void);
+static bool IsTsurugifdwInstalled(void);
+
+#define EXTENSION_NAME "tsurugi_fdw"
 
 extern bool IsTransactionBlock(void);
 extern void check_stack_depth(void);
@@ -107,7 +112,12 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 	{
         case T_CreateStmt:
 		{
-			elog(ERROR, "This database is for Tsurugi, so CREATE TABLE is not supported");
+			if (IsTsurugifdwInstalled())
+			{
+				elog(ERROR, "This database is for Tsurugi, so CREATE TABLE is not supported");
+			}
+			standard_ProcessUtility(pstmt, queryString,context, params, queryEnv,
+									dest, completionTag);
             break;
 		}
 
@@ -322,4 +332,19 @@ bool noTablesInDatabase(void)
     SPI_finish();
 
     return result_exists;
+}
+
+static bool IsTsurugifdwInstalled(void)
+{
+	bool found = false;
+    HeapTuple tuple;
+
+    tuple = SearchSysCache1(FOREIGNDATAWRAPPERNAME, CStringGetDatum(EXTENSION_NAME));
+    if (HeapTupleIsValid(tuple))
+    {
+        found = true;
+        ReleaseSysCache(tuple);
+    }
+
+    return found;
 }
