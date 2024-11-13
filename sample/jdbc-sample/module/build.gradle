@@ -1,0 +1,35 @@
+plugins {
+    id 'application'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.postgresql:postgresql:42.7.3'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(11)
+    }
+}
+
+application {
+    mainClass = 'com.tsurugidb.fdw.jdbc.sample.JdbcSample'
+}
+
+tasks.named('run') {
+    doFirst {
+        exec {
+            commandLine 'sh', '-c', 'tgsql --exec -c ipc:tsurugi "create table if not exists fdw_sample (col int not null, tm time)"'
+        }
+    }
+
+    doLast {
+        exec {
+            commandLine 'sh', '-c', 'tgsql --exec -c ipc:tsurugi "drop table fdw_sample"'
+        }
+    }
+}
