@@ -15,78 +15,86 @@
  */
 package com.tsurugidb.fdw.jdbc.sample;
 
-import java.sql.*;
-import java.time.*;
+// 利用するJDBC APIのimport宣言
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Time;
+
+// 現在時刻を取得するクラスのimport宣言
+import java.time.LocalTime;
 
 public class JdbcSample {
-	public static void main(String[] args) {
+    public static void main(String[] args) {
+        try {
+            /* データベース(PostgreSQL)へ接続する */
+            String url = "jdbc:postgresql://localhost:35432/postgres";
+            Connection conn = DriverManager.getConnection(url);
 
-		/* データベース(PostgreSQL)の接続先 */
-		String url = "jdbc:postgresql://localhost:35432/postgres";
-		try {
+            /* この接続の自動コミットモードを無効にする */
+            conn.setAutoCommit(false);
 
-			/* データベース(PostgreSQL)へ接続する */
-			Connection conn = DriverManager.getConnection(url);
+            /* 外部テーブルを作成する */
+            Statement st = conn.createStatement();
+            st.execute(
+                        "CREATE FOREIGN TABLE IF NOT EXISTS fdw_sample ("
+                            + "col INTEGER NOT NULL,"
+                            + "tm TIME"
+                            + ") SERVER tsurugi"
+                      );
 
-			/* この接続の自動コミット・モードを無効にする */
-			conn.setAutoCommit(false);
+            /* ステートメントキャッシュを利用してTsurugiテーブルにデータを挿入する */
+            String sql = "INSERT INTO fdw_sample (col, tm) VALUES (?, ?)";
+            PreparedStatement ps = conn.prepareStatement(sql);
 
-			// 外部テーブル作成
-			Statement st = conn.createStatement();
-			st.execute(
-						"CREATE FOREIGN TABLE IF NOT EXISTS fdw_sample ("
-							+ "col INTEGER NOT NULL,"
-							+ "tm TIME"
-							+ ") SERVER tsurugi"
-					  );
+            System.out.print("Please wait 10 seconds");
+            for (int i=0; i<10; i++) {
+                /* colカラムに値(i)を挿入する */
+                ps.setInt(1, i);
+                /* tmカラムに現在時間を挿入する */
+                ps.setTime(2, Time.valueOf(LocalTime.now()));
 
-			/* ステートメントキャッシュを利用してTsurugiテーブルにデータを挿入する */
-			String sql = "INSERT INTO fdw_sample (col, tm) VALUES (?, ?)";
-			PreparedStatement ps = conn.prepareStatement(sql);
+                /* トランザクション(INSERT文)を開始する */
+                ps.executeUpdate();
 
-			System.out.print("Please wait 10 seconds");
-			for (int i=0; i<10; i++) {
+                /* 挿入した値(i)が偶数か奇数か判定 */
+                if (i % 2 == 0) {
+                    /* 偶数の場合：トランザクションをコミットする */
+                    conn.commit();
+                } else {
+                    /* 奇数の場合：トランザクションをロールバックする */
+                    conn.rollback();
+                }
 
-				/* colカラムに値(i)を挿入する */
-				ps.setInt(1, i);
-				/* tmカラムに現在時間を挿入する */
-				ps.setTime(2, Time.valueOf(LocalTime.now()));
-				ps.executeUpdate();
+                System.out.print(".");
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    Thread.currentThread().interrupt();
+                }
+            }
+            System.out.println(".");
 
-				/* 挿入した値(i)が偶数か奇数か判定 */
-				if (i % 2 == 0) {
-					/* 偶数の場合：トランザクションをコミットする */
-					conn.commit();
-				} else {
-					/* 奇数の場合：トランザクションをロールバックする */
-					conn.rollback();
-				}
+            /* 実行結果を問い合わせる（出力する） */
+            ResultSet rs = st.executeQuery("SELECT * FROM fdw_sample");
+            System.out.println("RESULT : Even are committed, odd are rolled back.");
+            System.out.println("col,        tm");
+            while (rs.next()) {
+                System.out.println("  " + rs.getString(1) + ",  " + 
+                                          rs.getString(2));
+            }
 
-				System.out.print(".");
-
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-					Thread.currentThread().interrupt();
-				}
-			}
-			System.out.println(".");
-
-			/* 実行結果を確認する */
-			ResultSet rs = st.executeQuery("SELECT * FROM fdw_sample");
-			System.out.println("RESULT : Even are committed, odd are rolled back.");
-			System.out.println("col,        tm");
-			while (rs.next()) {
-				System.out.println("  " + rs.getString(1) + ",  " + 
-										  rs.getString(2));
-			}
-
-			ps.close();
-			st.close();
-			conn.close();
-		} catch (SQLException e) {
-			System.out.println("SQLException e.getMessage = " + e.getMessage());
-		}
-	}
+            /* オブジェクトをクローズする */
+            ps.close();
+            st.close();
+            conn.close();
+        } catch (SQLException e) {
+            /* エラーが発生した場合のメッセージを出力する */
+            System.out.println("\nSQLException e.getMessage = " + e.getMessage());
+        }
+    }
 }
