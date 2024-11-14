@@ -15,7 +15,7 @@ Tsurugi FDWは、PostgreSQLのビルド環境を使用します。
 > すでに環境が整っているとわかっている場合は、本手順はスキップしてください。
 
 以下の例ではPostgreSQLのインストールディレクトリに `$HOME/pgsql` を指定しています。  
-PostgreSQLのインストールについては、PostgreSQL付属のドキュメントまたはWeb上のマニュアルを確認してください。
+PostgreSQLのインストールについては、PostgreSQL付属のドキュメントまたはWeb上のマニュアルを確認してください。  
 以降、このディレクトリを **`<PostgreSQL install directory>`** と定義します。  
 
 ~~~sh
@@ -39,7 +39,7 @@ $ git clone https://github.com/project-tsurugi/tsurugi_fdw
 
 #### 2) サブモジュールの更新
 
-Tsurugi FDWのサブモジュールを更新します。
+Tsurugi FDWのサブモジュールを更新します。  
 以降、このディレクトリを **`<tsurugi_fdw build directory>`** と定義します。
 
 ~~~ sh
@@ -91,8 +91,8 @@ $ make install USE_PGXS=1
 Tsurugiを利用するためのデータベースクラスタを作成します。
 
 > [!NOTE]
-> 既存のデータベースクラスタでTsurugiを利用する場合は、本手順はスキップしてください。  
-> この場合、Tsurugiを利用するためのデータベースを新たに作成する必要があります。  
+> 既存のデータベースクラスタを使用してTsurugiを利用する場合は、本手順はスキップしてください。  
+> その場合、Tsurugiを利用するためのデータベースを新たに作成する必要があります。  
 > 以下の例では`tsurugidb`という名前のデータベースを作成しています。  
 > ``` $ createdb tsurugidb ```  
 > 以降の接続先データベース `postgres` は `tsurugidb` に置き換えて行ってください。  
