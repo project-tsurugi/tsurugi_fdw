@@ -8,45 +8,13 @@ Tsurugi FDWは、PostgreSQLと比較して以下の動作が異なります。
 
 - ORDER BY句を利用して文字列型のデータを問い合わせた場合、対象データの大文字小文字をソート条件に含みます。PostgreSQLは大文字小文字を区別しません。
 - ORDER BY句のNULLSオプションのデフォルトがNULLS FIRSTとなります。PostgreSQLはNULLS LASTです。
-
-- JDBC APIではexecuteQuery（SELECT）したステートがキャッシュされない件（FDWの実装の問題）
+- TsurugiとPostgreSQLでデータ型定義の違いをすべて記載予定（Tsurugi:double、PostgreSQL：double precision）
 
 ### 制約事項
 
-GA以降に実装計画がある以下の件を制約事項として書くべきか。
+- JDBC APIではexecuteQuery（SELECT）したステートがキャッシュされない件（FDWの実装の問題）
+- Tsurugi FDWはBINARY、VARBINARYのTsurugi側実装を追随できていない
 
-- DDL実行
-- IMPORT FOREIGN SCHEMAによる外部テーブル一括登録
-- FDW - TSURUGI間のTCP接続
-
-これれまで（以下）の記載は削除予定。
-
-Tsurugi FDWは、以下の機能が利用できません。
-
-- 非サポート機能一覧
-- アクセスメソッド（ACCESS METHOD）
-- 集約関数（AGGREGATE）
-- キャスト（CAST）
-- 照合順序（COLLATION）
-- 符号化方式変換（CONVERSION）
-- ドメイン（DOMAIN）
-- イベントトリガ（EVENT TRIGGER）
-- マテリアライズドビュー（MATERIALIZED VIEW）
-- 演算子（OPERATOR）
-- セキュリティポリシー（POLICY）
-- スキーマ（SCHEMA）
-- シーケンスジェネレータ（SEQUENCE）
-- 拡張統計情報（STATISTICS）
-- テキスト検索（TEXT SEARCH）
-- 変換（TRANSFORM）
-- トリガ（TRIGGER）
-- ビュー（VIEW）
-- 統計（ANALYZE / EXPLAIN / VACUUM）
-- カーソル（DECLARE / FETCH / CLOSE）
-- 通知（NOTIFY / LISTEN）
-- セーブポイント（SAVEPOINT）
-- 二相コミット（COMMIT PREPARED）
-- 手続き言語（PL/pgSQL）
 
 ### サードパーティライセンス
 

@@ -2,7 +2,7 @@
 
 ## チュートリアル
 
-PostgreSQLからTsurugiを利用する簡単な操作方法を説明します。  
+PostgreSQLのユーザインタフェースからTsurugiを利用する簡単な操作方法を説明します。  
 このチュートリアルは単なる入門用であり、Tsurugi固有の仕様および制限については、Tsurugiのドキュメントを確認してください。
 
 ### 基本的なSQL言語
@@ -179,44 +179,6 @@ EXECUTコマンドを実行して、プリペアド文を実行します。
 
 ~~~sql
 EXECUTE add_weather (8, 'San Diego', 41, 57, 0.25, current_date);
-~~~
-
-#### アクセス制御
-
-PostgreSQLからTsurugiテーブルへのアクセス権を制御する方法を説明します。  
-アクセス権の制御方法（データベースロールを利用したアクセス制御）はPostgreSQLに準じます。  
-詳細は [PostgreSQLのドキュメント](https://www.postgresql.jp/document/12/html/sql-commands.html) を参照してください。
-
-##### データベースロールの作成
-
-CREATE ROLEコマンドを実行して、アクセス制御を行うデータベースロールを作成します。  
-
-~~~sql
-CREATE ROLE jonathan;
-~~~
-
-##### アクセス権の付与
-
-GRANTコマンドを実行して、Tsurugiテーブルへアクセス権を付与することができます。  
-例えば、Tsurugiテーブルに対して問い合わせ権限のみをjonathanへ付与します。
-
-~~~sql
-GRANT SELECT ON weather TO jonathan;    -- Tsurugiテーブルにアクセス権を付与します
-~~~
-
-問い合わせ以外の操作（アクセス）は失敗します。
-
-~~~sql
-SET ROLE jonathan;          -- 確認のためカレントのデータベースロールを変更します
-SELECT * from weather;      -- 問い合わせの操作は成功します
- id |     city      | temp_lo | temp_hi | prcp |  the_date  
-----+---------------+---------+---------+------+------------
-  1 | San Francisco |      46 |      50 | 0.25 | 2023-04-01
-  2 | San Francisco |      43 |      57 |    0 | 2023-04-01
-(2 rows)
-DELETE FROM weather WHERE city = 'San Francisco'; -- 問い合わせ以外の操作は失敗します
-ERROR:  permission denied for foreign table weather
-RESET ROLE;                 -- 現在のデータベースロールを元に戻します
 ~~~
 
 ### Tsurugi固有の機能
