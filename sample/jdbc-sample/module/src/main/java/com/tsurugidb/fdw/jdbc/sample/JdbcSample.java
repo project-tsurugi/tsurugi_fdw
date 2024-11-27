@@ -83,6 +83,7 @@ public class JdbcSample {
             ResultSet rs = st.executeQuery("SELECT * FROM fdw_sample");
             System.out.println("RESULT : Even are committed, odd are rolled back.");
             System.out.println("col,        tm");
+            /* 最初の行から問い合わせ結果を順次出力する */
             while (rs.next()) {
                 System.out.println("  " + rs.getString(1) + ",  " + 
                                           rs.getString(2));
