@@ -121,6 +121,17 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
             break;
 		}
 
+		case T_CreateTableAsStmt:
+		{
+			if (IsTsurugifdwInstalled())
+			{
+				elog(ERROR, "This database is for Tsurugi, so CREATE TABLE AS is not supported");
+			}
+			standard_ProcessUtility(pstmt, queryString,context, params, queryEnv,
+									dest, completionTag);
+            break;
+		}
+
 		case T_CreateRoleStmt:
 		{
 			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
@@ -134,14 +145,17 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 
 		case T_CreateForeignTableStmt:
 		{
-			ForeignServer *server;
-			ForeignDataWrapper *fdw;
-			CreateForeignTableStmt *stmt = (CreateForeignTableStmt *) pstmt->utilityStmt;
+			if (IsTsurugifdwInstalled())
+			{
+				ForeignServer *server;
+				ForeignDataWrapper *fdw;
+				CreateForeignTableStmt *stmt = (CreateForeignTableStmt *) pstmt->utilityStmt;
 
-			server = GetForeignServerByName(stmt->servername, false);
-			fdw = GetForeignDataWrapper(server->fdwid);
-			if (strcmp(fdw->fdwname, "tsurugi_fdw") != 0){
-				elog(ERROR, "This database is for Tsurugi, so CREATE FOREIGN TABLE for non-Tsurugi foreign table is not supported");
+				server = GetForeignServerByName(stmt->servername, false);
+				fdw = GetForeignDataWrapper(server->fdwid);
+				if (strcmp(fdw->fdwname, "tsurugi_fdw") != 0){
+					elog(ERROR, "This database is for Tsurugi, so CREATE FOREIGN TABLE for non-Tsurugi foreign table is not supported");
+				}
 			}
 			standard_ProcessUtility(pstmt, queryString,
 									context, params, queryEnv,
