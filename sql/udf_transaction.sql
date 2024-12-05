@@ -85,6 +85,22 @@ SELECT * FROM udf_table1;
 DELETE FROM udf_table1 WHERE column1 = 101;
 SELECT * from udf_table1;
 
+/* Explicit transaction (begin) */
+BEGIN;
+INSERT INTO udf_table1 (column1) VALUES (100);
+UPDATE udf_table1 SET column1 = column1+2;
+DELETE FROM udf_table1 WHERE column1 = 102;
+COMMIT;
+SELECT * from udf_table1;
+
+/* Explicit transaction (start transaction) */
+START TRANSACTION;
+INSERT INTO udf_table1 (column1) VALUES (100);
+UPDATE udf_table1 SET column1 = column1+3;
+DELETE FROM udf_table1 WHERE column1 = 103;
+COMMIT;
+SELECT * from udf_table1;
+
 /* Explicit transaction (commit) */
 BEGIN;
 INSERT INTO udf_table1 (column1) VALUES (200);
@@ -99,6 +115,22 @@ SELECT * FROM udf_table1;
 BEGIN;
 DELETE FROM udf_table1 WHERE column1 = 201;
 COMMIT;
+SELECT * from udf_table1;
+
+/* Explicit transaction (end) */
+BEGIN;
+INSERT INTO udf_table1 (column1) VALUES (200);
+END;
+SELECT * FROM udf_table1;
+
+BEGIN;
+UPDATE udf_table1 SET column1 = column1+2;
+END;
+SELECT * FROM udf_table1;
+
+BEGIN;
+DELETE FROM udf_table1 WHERE column1 = 202;
+END;
 SELECT * from udf_table1;
 
 /* Explicit transaction (rollback) */
@@ -116,6 +148,70 @@ BEGIN;
 DELETE FROM udf_table1 WHERE column1 = 400;
 ROLLBACK;
 SELECT * FROM udf_table1;
+
+BEGIN;
+INSERT INTO udf_table1 (column1) VALUES (300);
+INSERT INTO udf_table2 (column1) VALUES (400);
+COMMIT;
+SELECT * FROM udf_table1;
+
+/* Explicit transaction (abort) */
+BEGIN;
+INSERT INTO udf_table1 (column1) VALUES (300);
+ABORT;
+SELECT * FROM udf_table1;
+
+BEGIN;
+UPDATE udf_table1 SET column1 = column1+2;
+ABORT;
+SELECT * FROM udf_table1;
+
+BEGIN;
+DELETE FROM udf_table1 WHERE column1 = 400;
+ABORT;
+SELECT * FROM udf_table1;
+
+DELETE FROM udf_table1 WHERE column1 = 400;
+
+/* Auto commit off */
+\echo :AUTOCOMMIT
+\set AUTOCOMMIT off
+\echo :AUTOCOMMIT
+
+BEGIN;
+SELECT * FROM udf_table1;
+COMMIT;
+
+INSERT INTO udf_table1 (column1) VALUES (410);
+COMMIT;
+SELECT * FROM udf_table1;
+DELETE FROM udf_table1 WHERE column1 = 410;
+COMMIT;
+
+BEGIN;
+INSERT INTO udf_table1 (column1) VALUES (420);
+COMMIT;
+SELECT * FROM udf_table1;
+DELETE FROM udf_table1 WHERE column1 = 420;
+COMMIT;
+
+INSERT INTO udf_table1 (column1) VALUES (430);
+ROLLBACK;
+SELECT * FROM udf_table1;
+COMMIT;
+
+BEGIN;
+INSERT INTO udf_table1 (column1) VALUES (440);
+ROLLBACK;
+SELECT * FROM udf_table1;
+COMMIT;
+
+
+\echo :AUTOCOMMIT
+\set AUTOCOMMIT on
+\echo :AUTOCOMMIT
+
+INSERT INTO udf_table1 (column1) VALUES (400);
 
 /* Long transaction */
 SELECT tg_set_transaction('long');
@@ -214,52 +310,112 @@ SELECT * FROM ri_table2; -- success
 SELECT * FROM re_table1; -- success
 SELECT * FROM re_table2; -- success
 
-/* Explicit specific transaction */
-/* Execute a specific Short transaction during a Long transaction */
+SELECT tg_set_write_preserve('');
+SELECT tg_set_inclusive_read_areas('');
+SELECT tg_set_exclusive_read_areas('');
+
+/* Explicit long transaction (tg_set_write_preserve) */
 SELECT tg_set_transaction('long');
-SELECT tg_set_write_preserve('wp_table1', 'wp_table2');
-INSERT INTO wp_table1 (column1) VALUES (300);
-INSERT INTO wp_table2 (column1) VALUES (300);
-INSERT INTO udf_table1 (column1) VALUES (600); -- error
-SELECT * FROM wp_table1;
-SELECT * FROM wp_table2;
-SELECT * FROM udf_table1;
 
-SELECT tg_set_transaction('short', 'default', 'specific-transaction');
-SELECT tg_show_transaction();
-INSERT INTO wp_table1 (column1) VALUES (400);
-INSERT INTO wp_table2 (column1) VALUES (400);
-INSERT INTO udf_table1 (column1) VALUES (700);
-SELECT * FROM wp_table1;
-SELECT * FROM wp_table2;
-SELECT * FROM udf_table1;
-
-SELECT tg_set_write_preserve('wp_table1', 'wp_table2');
-SELECT tg_set_transaction('long');
-SELECT tg_show_transaction();
-INSERT INTO wp_table1 (column1) VALUES (500);
-INSERT INTO wp_table2 (column1) VALUES (500);
-INSERT INTO udf_table1 (column1) VALUES (800); -- error
-SELECT * FROM wp_table1;
-SELECT * FROM wp_table2;
-SELECT * FROM udf_table1;
-
-/* Cooperation with PostgreSQL table */
-SELECT tg_set_transaction('short');
--- table preparation
-	CREATE TABLE pg_table (column1 INTEGER NOT NULL PRIMARY KEY);
-INSERT INTO tg_table (column1) VALUES (999);
--- Start the Tsurugi transaction
+SELECT tg_set_write_preserve('wp_table1');
 BEGIN;
--- Update the Tsurugi table
-UPDATE tg_table SET column1 = column1+1;
-	-- BEGIN;
-	-- Insert pre-commit Tsurugi table into PostgreSQL table
-	INSERT INTO pg_table SELECT column1 from tg_table;
--- Abort the Tsuguri transaction
-ROLLBACK;
-	-- COMMIT;
--- Updates to the Tsurugi table are discarded(999)
-SELECT * from tg_table;
-	-- Do not discard updates to PostgreSQL tables(1000)
-	-- SELECT * from pg_table;
+INSERT INTO wp_table1 (column1) VALUES (100);
+COMMIT;
+SELECT * FROM wp_table1;
+DELETE FROM udf_table1 WHERE column1 = 100;
+
+SELECT tg_set_write_preserve('wp_table1', 'wp_table2');
+BEGIN;
+INSERT INTO wp_table1 (column1) VALUES (200);
+INSERT INTO wp_table2 (column1) VALUES (300);
+COMMIT;
+SELECT * FROM wp_table1;
+SELECT * FROM wp_table2;
+
+SELECT tg_set_write_preserve('wp_table3');
+BEGIN;
+SELECT * FROM wp_table1;
+COMMIT;
+
+SELECT tg_set_write_preserve('wp_table3', 'wp_table4');
+BEGIN;
+SELECT * FROM wp_table1;
+SELECT * FROM wp_table2;
+COMMIT;
+
+SELECT tg_set_write_preserve('wp_table1', 'wp_table3');
+BEGIN;
+INSERT INTO wp_table1 (column1) VALUES (100);
+COMMIT;
+
+SELECT tg_set_write_preserve('');
+
+/* Explicit long transaction (tg_set_inclusive_read_areas) */
+SELECT tg_set_transaction('long');
+
+SELECT tg_set_inclusive_read_areas('ri_table1');
+BEGIN;
+SELECT * FROM ri_table1;
+COMMIT;
+
+SELECT tg_set_inclusive_read_areas('ri_table1', 'ri_table2'); 
+BEGIN;
+SELECT * FROM ri_table1;
+SELECT * FROM ri_table2;
+COMMIT;
+
+SELECT tg_set_inclusive_read_areas('ri_table3');
+BEGIN;
+SELECT * FROM ri_table1;
+COMMIT;
+
+SELECT tg_set_inclusive_read_areas('ri_table3', 'ri_table4');
+BEGIN;
+SELECT * FROM ri_table1;
+SELECT * FROM ri_table2;
+COMMIT;
+
+SELECT tg_set_inclusive_read_areas('ri_table1', 'ri_table3');
+BEGIN;
+SELECT * FROM ri_table1;
+COMMIT;
+
+SELECT tg_set_inclusive_read_areas('');
+
+/* Explicit long transaction (tg_set_exclusive_read_areas) */
+SELECT tg_set_transaction('long');
+
+SELECT tg_set_exclusive_read_areas('re_table1'); 
+BEGIN;
+SELECT * FROM udf_table1;
+COMMIT;
+
+SELECT tg_set_exclusive_read_areas('re_table1', 're_table2');
+BEGIN;
+SELECT * FROM udf_table1;
+COMMIT;
+
+SELECT tg_set_exclusive_read_areas('re_table3');
+BEGIN;
+SELECT * FROM udf_table1;
+COMMIT;
+
+SELECT tg_set_exclusive_read_areas('re_table3', 're_table4');
+BEGIN;
+SELECT * FROM udf_table1;
+COMMIT;
+
+SELECT tg_set_exclusive_read_areas('wp_table1', 'wp_table3');
+BEGIN;
+SELECT * FROM udf_table1;
+COMMIT;
+
+SELECT tg_set_exclusive_read_areas('');
+
+/* Since tsurugi_fdw 1.0.0, the following UDF is no longer supported.*/
+SELECT tg_start_transaction();
+SELECT tg_start_transaction('short');
+SELECT tg_start_transaction('short', 'interrupt');
+SELECT tg_start_transaction('short', 'interrupt', 'test-label');
+SELECT tg_commit();
+SELECT tg_rollback();

@@ -1,7 +1,3 @@
-/* DDL */
--- error
-CREATE TABLE t0_create_table(c1 INTEGER NOT NULL);
---
 
 /* DML */
 SELECT * FROM t1_create_table;

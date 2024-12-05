@@ -1,8 +1,3 @@
-/* DDL */
--- error
-CREATE TABLE t0_create_table(c1 INTEGER NOT NULL);
-ERROR:  This database is for Tsurugi, so CREATE TABLE is not supported
---
 /* DML */
 SELECT * FROM t1_create_table;
  c1 

@@ -23,7 +23,7 @@ DATA = tsurugi_fdw--1.0.0-BETA9.sql
 
 # REGRESS_BASIC: variable used in frontend
 REGRESS_BASIC = test_preparation create_table create_index insert_select_happy update_delete select_statements user_management \
-                udf_transaction prepare_statment prepare_select_statment prepare_decimal manual_tutorial
+                udf_transaction prepare_statment prepare_select_statment prepare_decimal manual_tutorial create_table_restrict
 
 ifdef REGRESS_EXTRA
 	# REGRESS: variable defined in PostgreSQL
