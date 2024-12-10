@@ -7,16 +7,16 @@ Tsurugi FDWがサポートするJDBC APIについて説明します。
 JDBC APIの仕様はPostgreSQL JDBCドライバの要件（Java 8以降のJDBC 4.2バージョン）に準じます。
 詳細は JDBC API（ [java.sql パッケージ](https://docs.oracle.com/javase/jp/8/docs/api/java/sql/package-summary.html) および [javax.sql パッケージ](https://docs.oracle.com/javase/jp/8/docs/api/javax/sql/package-summary.html) ）のドキュメントを参照してください。
 
-### JDBC API動作確認済みメソッド一覧
+### 動作確認済みメソッド一覧
 
 Tsurugiの操作に必要な基本的なクラスおよびインターフェースの動作確認済みメソッド一覧を示します。
 
-[DriverManagerクラス](#drivermanagerクラス---jdbcドライバを管理する)
-[Connectionインタフェース](#connectionインタフェース---文を作成し接続とそのプロパティを管理する)
-[Statementインターフェース](#statementインターフェース---基本sql文を送信する)
-[PreparedStatementインターフェース](#preparedstatementインターフェース---準備済み文または基本sql文を送信する)
-[ResultSetインタフェース](#resultsetインタフェース---データベースの結果セットを取得更新する)
-[SQLExceptionクラス](#sqlexceptionクラス----データベースアクセスエラーまたはその他のエラーに関する情報を提供する)
+[DriverManagerクラス](#drivermanagerクラス---jdbcドライバを管理する)  
+[Connectionインタフェース](#connectionインタフェース---文を作成し接続とそのプロパティを管理する)  
+[Statementインターフェース](#statementインターフェース---基本sql文を送信する)  
+[PreparedStatementインターフェース](#preparedstatementインターフェース---準備済み文または基本sql文を送信する)  
+[ResultSetインタフェース](#resultsetインタフェース---データベースの結果セットを取得更新する)  
+[SQLExceptionクラス](#sqlexceptionクラス----データベースアクセスエラーまたはその他のエラーに関する情報を提供する)  
 
 #### DriverManagerクラス - JDBCドライバを管理する
 
