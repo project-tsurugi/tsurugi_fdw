@@ -83,12 +83,12 @@ Tsurugiでコンパイルされる以下のSQLコマンドはTsurugiのSQLコマ
 | CREATE CAST | 新しいキャストを定義する | × |
 | CREATE COLLATION | 新しい照合順序を定義する | × |
 | CREATE CONVERSION | 新しい符号化方式変換を定義する | × |
-| CREATE DATABASE | 新しいデータベースを作成する | 〇 |
+| CREATE DATABASE | 新しいデータベースを作成する | × |
 | CREATE DOMAIN | 新しいドメインを定義する | × |
 | CREATE EVENT TRIGGER | 新しいイベントトリガを定義する | × |
-| CREATE EXTENSION | 拡張をインストールする | 〇 |
+| CREATE EXTENSION | 拡張をインストールする | × |
 | CREATE FOREIGN DATA WRAPPER | 新しい外部データラッパを定義する | × |
-| CREATE FOREIGN TABLE | 新しい外部テーブルを定義する | 〇 |
+| CREATE FOREIGN TABLE | 新しい外部テーブルを定義する | × |
 | CREATE FUNCTION | 新しい関数を定義する | × |
 | CREATE GROUP | 新しいデータベースロールを定義する | × |
 | CREATE INDEX | 新しいインデックスを定義する | × |
@@ -100,11 +100,11 @@ Tsurugiでコンパイルされる以下のSQLコマンドはTsurugiのSQLコマ
 | CREATE POLICY | テーブルに新しい行単位のセキュリティポリシーを定義する | × |
 | CREATE PROCEDURE | 新しいプロシージャを定義する | × |
 | CREATE PUBLICATION | 新しいパブリケーションを定義する | × |
-| CREATE ROLE | 新しいデータベースロールを定義する | 〇 |
+| CREATE ROLE | 新しいデータベースロールを定義する | × |
 | CREATE RULE | 新しい書き換えルールを定義する | × |
 | CREATE SCHEMA | 新しいスキーマを定義する | × |
 | CREATE SEQUENCE | 新しいシーケンスジェネレータを定義する | × |
-| CREATE SERVER | 新しい外部サーバを定義する | 〇 |
+| CREATE SERVER | 新しい外部サーバを定義する | × |
 | CREATE STATISTICS | 拡張統計情報を定義する | × |
 | CREATE SUBSCRIPTION | 新しいサブスクリプションを定義する | × |
 | CREATE TABLE | 新しいテーブルを定義する | × |
@@ -117,7 +117,7 @@ Tsurugiでコンパイルされる以下のSQLコマンドはTsurugiのSQLコマ
 | CREATE TRANSFORM | 新しい変換を定義する | × |
 | CREATE TRIGGER | 新しいトリガを定義する | × |
 | CREATE TYPE | 新しいデータ型を定義する | × |
-| CREATE USER | 新しいデータベースロールを定義する | 〇 |
+| CREATE USER | 新しいデータベースロールを定義する | × |
 | CREATE USER MAPPING | 外部サーバのユーザマップを新しく定義する | × |
 | CREATE VIEW | 新しいビューを定義する | × |
 | DEALLOCATE | プリペアド文の割り当てを解除する | 〇 |
@@ -130,12 +130,12 @@ Tsurugiでコンパイルされる以下のSQLコマンドはTsurugiのSQLコマ
 | DROP CAST | キャストを削除する | × |
 | DROP COLLATION | 照合順序を削除する | × |
 | DROP CONVERSION | 符号化方式変換を削除する | × |
-| DROP DATABASE | データベースを削除する | 〇 |
+| DROP DATABASE | データベースを削除する | × |
 | DROP DOMAIN | ドメインを削除する | × |
 | DROP EVENT TRIGGER | イベントトリガを削除する | × |
-| DROP EXTENSION | 拡張を削除する | 〇 |
+| DROP EXTENSION | 拡張を削除する | × |
 | DROP FOREIGN DATA WRAPPER | 外部データラッパを削除する | × |
-| DROP FOREIGN TABLE | 外部テーブルを削除する | 〇 |
+| DROP FOREIGN TABLE | 外部テーブルを削除する | × |
 | DROP FUNCTION | 関数を削除する | × |
 | DROP GROUP | データベースロールを削除する | × |
 | DROP INDEX | インデックスを削除する | × |
@@ -148,7 +148,7 @@ Tsurugiでコンパイルされる以下のSQLコマンドはTsurugiのSQLコマ
 | DROP POLICY | テーブルから行単位のセキュリティポリシーを削除する | × |
 | DROP PROCEDURE | プロシージャを削除する | × |
 | DROP PUBLICATION | パブリケーションを削除する | × |
-| DROP ROLE | データベースロールを削除する | 〇 |
+| DROP ROLE | データベースロールを削除する | × |
 | DROP ROUTINE | ルーチンを削除する | × |
 | DROP RULE | 書き換えルールを削除する | × |
 | DROP SCHEMA | スキーマを削除する | × |
@@ -165,14 +165,14 @@ Tsurugiでコンパイルされる以下のSQLコマンドはTsurugiのSQLコマ
 | DROP TRANSFORM | 変換を削除する | × |
 | DROP TRIGGER | トリガを削除する | × |
 | DROP TYPE | データ型を削除する | × |
-| DROP USER | データベースロールを削除する | 〇 |
+| DROP USER | データベースロールを削除する | × |
 | DROP USER MAPPING | 外部サーバ用のユーザマップを削除します | × |
 | DROP VIEW | ビューを削除する | × |
 | END | 現在のトランザクションをコミットする | 〇 |
 | EXECUTE | プリペアド文を実行する | 〇 |
 | EXPLAIN | 問い合わせ文の実行計画を表示する | × |
 | FETCH | カーソルを使用して問い合わせから行を取り出す | × |
-| GRANT | アクセス権限を定義する | 〇 |
+| GRANT | アクセス権限を定義する | × |
 | IMPORT FOREIGN SCHEMA | 外部サーバからテーブル定義をインポートする | × |
 | INSERT | テーブルに新しい行を作成する | 〇 |
 | LISTEN | 通知を監視する | × |
@@ -187,7 +187,7 @@ Tsurugiでコンパイルされる以下のSQLコマンドはTsurugiのSQLコマ
 | REINDEX | インデックスを再構築する | × |
 | RELEASE SAVEPOINT | 設定済みのセーブポイントを破棄する | × |
 | RESET | 実行時パラメータの値をデフォルト値に戻す | × |
-| REVOKE | アクセス権限を取り消す | 〇 |
+| REVOKE | アクセス権限を取り消す | × |
 | ROLLBACK | 現在のトランザクションをアボートする | 〇 |
 | ROLLBACK PREPARED | 二相コミット用に事前に準備されたトランザクションを取り消す | × |
 | ROLLBACK TO SAVEPOINT | セーブポイントまでロールバックする | × |
