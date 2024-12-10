@@ -472,7 +472,8 @@ std::string Tsurugi::get_error_message(ERROR_CODE error_code)
 
 	if (error_code != ERROR_CODE::SERVER_ERROR)
 	{
-		elog(LOG, "Not SERVER_ERROR. (error_code: %s)", stub::error_name(error_code).data());
+		elog(LOG, "Error code is not SERVER_ERROR. (error code: %s)", 
+			stub::error_name(error_code).data());
 		return message;
 	}
 
@@ -516,8 +517,8 @@ std::string Tsurugi::get_error_message(ERROR_CODE error_code)
 	}
 	else
 	{
-		elog(ERROR, "Tsurugi::tsurugi_error() failed. (%s)", 
-									stub::error_name(ret_code).data());
+		elog(ERROR, "It failed to get Tsurugi Server Error. (erro code: %s)", 
+				stub::error_name(ret_code).data());
 	}
 
 	return message;
