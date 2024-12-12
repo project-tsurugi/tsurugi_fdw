@@ -34,13 +34,13 @@ PostgreSQLとTsurugiはアーキテクチャおよびその性質が異なるた
 
 - JDBC APIのPreparedStatementではSELECT文のステートメントキャッシュが利用できません。このためPreparedStatementを使用した場合でもSELECT文の性能向上は見込めません。  
   PreparedStatementでのINSERT/UPDATE/DELETE文はステートメントキャッシュを利用することができます。  
-  なお、SQLのPREPAREコマンドを使用する場合はSELECT/INSERT/UPDATE/DELETE文のすべてでステートメントキャッシュを利用することができる。
+  なお、SQLのPREPAREコマンドを使用する場合はSELECT/INSERT/UPDATE/DELETE文のすべてでステートメントキャッシュを利用することはできます。
 
 ### 制約事項
 
-- JDBC APIではexecuteQuery（SELECT）したステートがキャッシュされない件（FDWの実装の問題）
-- Tsurugi FDWはBINARY、VARBINARYのTsurugi側実装を追随できていない
+Tsurugi FDW 1.0.0では以下の機能を制限とします。
 
+- Tsurugiのバイナリデータ型（BINARY/VARBINARY/BINARY VARYING）を操作することはできません。
 
 ### サードパーティライセンス
 
