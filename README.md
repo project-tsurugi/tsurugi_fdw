@@ -141,33 +141,6 @@
           tsurugi   | postgres | tsurugi_fdw
         ```
 
-1. Define TABLESPACE
-
-   * Create a directory for TABLESPACE.
-     * The following directory is an example of execution and can be created at any location.
-
-        ```sh
-        mkdir -p <PostgreSQL install directory>/tsurugi
-        ```
-
-   * Execute **CREATE TABLESPACE** command
-
-        ```sql
-        CREATE TABLESPACE tsurugi LOCATION '<PostgreSQL install directory>/tsurugi';
-        ```
-
-   * Check with the meta-command(\db)
-
-        ```sql
-        postgres=# \db
-                    List of tablespaces
-            Name    |  Owner   |             Location
-        ------------+----------+-----------------------------------
-         pg_default | postgres |
-         pg_global  | postgres |
-         tsurugi    | postgres | /home/postgres/local/pgsql/tsurugi
-        ```
-
 ## Regression tests
 
 ### Structure
@@ -209,21 +182,11 @@
     make tests USE_PGXS=1
     ```
 
-## Define table
-
-1. Define table
-   * Execute **CREATE TABLE** command
-     * You must add "TABLESPACE tsurugi"
-     * You must specify PRIMARY KEY
-
-        ```sql
-        CREATE TABLE table1 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
-        ```
+## How to access Tsurugi from PostgreSQL
 
 1. Define foreign table
    * Execute **CREATE FOREIGN TABLE** command
-     * You must define same table name and schema as specified in CREATE TABLE
-     * You must **NOT** specify PRIMARY KEY
+     * You must define same table name as table name in Tsurugi
      * You must specify same server name as specified in CREATE SERVER
 
         ```sql
@@ -236,3 +199,6 @@
     SELECT * FROM table1;
     INSERT INTO table1 (column1) VALUES (100);
     ```
+
+> [!NOTE]
+> see [docs/setup.md](./docs/setup.md) and [docs/tutorial.md](./docs/tutorial.md), it has more information.
