@@ -26,16 +26,15 @@
 
 ## [リファレンス（UDF）](./udf_reference.md)
 
-- ユーザ定義関数一覧
+- Tsurugi固有トランザクション特性の設定
 
 ## [リファレンス（JDBC API）](./jdbc_reference.md)
 
-- JDBC API一覧
+- 動作確認済みメソッド一覧
 
 ## [リファレンス（メッセージ）](./message_reference.md)
 
-- メッセージ一覧
-- エラーコード一覧
+- Tsurugi FDWのエラーメッセージ
 
 ## [付録](./appendixes.md)
 
