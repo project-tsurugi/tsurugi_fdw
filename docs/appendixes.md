@@ -30,7 +30,7 @@ PostgreSQLとTsurugiはアーキテクチャおよびその性質が異なるた
     | TIMESTAMP | java.sql.Timestamp・LocalDateTme | timestamp |
     | TIMESTAMP WITH TIME ZONE | OffsetDateTime | timestamp with time zone |
 
-- JDBC APIで送信可能なSQL文は、Tsurugi_FDWでサポートする[SQLコマンド](./sql_reference.md)および[ユーザ定義関数](./udf_reference.md)に限ります。  
+- JDBC APIで送信可能なSQL文は、Tsurugi_FDWがサポートする[SQLコマンド](./sql_reference.md)および[ユーザ定義関数](./udf_reference.md)に限ります。  
 
 - JDBC APIのPreparedStatementではSELECT文のステートメントキャッシュが利用できません。このためPreparedStatementを使用した場合でもSELECT文の性能向上は見込めません。  
   PreparedStatementでのINSERT/UPDATE/DELETE文はステートメントキャッシュを利用することができます。  

@@ -4,7 +4,7 @@
 
 ### 必要条件
 
-Tsurugi FDWをセットアップする環境は、TsurugiおよびPostgreSQLの必要条件に準じます。  
+Tsurugi FDWをセットアップする環境は、TsurugiおよびPostgreSQLの要件に準じます。  
 必要となるソフトウェアパッケージ、および、ライブラリについては、[README.md](../README.md)を確認してください。
 
 ### PostgreSQLのインストール

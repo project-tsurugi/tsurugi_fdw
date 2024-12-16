@@ -31,7 +31,7 @@ public class JdbcSample {
     public static void main(String[] args) {
         try {
             /* データベース(PostgreSQL)へ接続する */
-            String url = "jdbc:postgresql://localhost:35432/postgres";
+            String url = "jdbc:postgresql://localhost:5432/postgres";
             Connection conn = DriverManager.getConnection(url);
 
             /* この接続の自動コミットモードを無効にする */
