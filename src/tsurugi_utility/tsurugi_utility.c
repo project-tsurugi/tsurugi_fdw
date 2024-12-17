@@ -66,7 +66,7 @@ void tsurugi_ProcessUtility(PlannedStmt* pstmt, const char* query_string,
                             QueryEnvironment* queryEnv, DestReceiver* dest,
                             char* completionTag);
 bool noTablesInDatabase(void);
-static bool IsTsurugifdwInstalled(void);
+bool IsTsurugifdwInstalled(void);
 
 #define EXTENSION_NAME "tsurugi_fdw"
 
@@ -348,7 +348,7 @@ bool noTablesInDatabase(void)
     return result_exists;
 }
 
-static bool IsTsurugifdwInstalled(void)
+bool IsTsurugifdwInstalled(void)
 {
 	bool found = false;
     HeapTuple tuple;

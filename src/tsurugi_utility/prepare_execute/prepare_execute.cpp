@@ -1162,6 +1162,11 @@ after_prepare_stmt(const PrepareStmt* stmts,
 {
 	Assert(stmts != nullptr);
 
+	if (!IsTsurugifdwInstalled()) {
+		/* Only Tsurugi will be processed */
+		return true;
+	}
+
 	Node* query = stmts->query;
 	stub::placeholders_type placeholders{};
 	StringInfoData sql;
@@ -2124,6 +2129,11 @@ befor_execute_stmt(const ExecuteStmt* stmts,
 	List* query_list;
 	ListCell* l;
 
+	if (!IsTsurugifdwInstalled()) {
+		/* Only Tsurugi will be processed */
+		return true;
+	}
+
 	entry = FetchPreparedStatement(stmts->name, true);
 	RawStmt* raw_stmt = entry->plansource->raw_parse_tree;
 
@@ -2193,6 +2203,11 @@ befor_execute_stmt(const ExecuteStmt* stmts,
 bool
 after_execute_stmt(const ExecuteStmt* stmts)
 {
+	if (!IsTsurugifdwInstalled()) {
+		/* Only Tsurugi will be processed */
+		return true;
+	}
+
 	stored_prepare_statment[stmts->name] = std::move(prepared_statement);
 	stmts_name = {};
 	parameters = {};
