@@ -1128,11 +1128,6 @@ deparse_select_query(const SelectStmt* stmt,
 		deparse_where_clause(stmt->whereClause, argtypes, placeholders, buf);
 	}
 
-	if (stmt->sortClause != NULL) {
-		appendStringInfoString(buf, " ORDER BY ");
-		deparse_sort_clause(stmt->sortClause, buf);
-	}
-
 	if (stmt->groupClause != NULL) {
 		appendStringInfoString(buf, " GROUP BY ");
 		ListCell* l;
@@ -1148,6 +1143,11 @@ deparse_select_query(const SelectStmt* stmt,
 	if (stmt->havingClause != NULL) {
 		appendStringInfoString(buf, " HAVING ");
 		deparse_where_clause(stmt->havingClause, argtypes, placeholders, buf);
+	}
+
+	if (stmt->sortClause != NULL) {
+		appendStringInfoString(buf, " ORDER BY ");
+		deparse_sort_clause(stmt->sortClause, buf);
 	}
 }
 
