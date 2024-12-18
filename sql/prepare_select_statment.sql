@@ -4,23 +4,23 @@
 PREPARE insert_t1 (INTEGER, INTEGER, BIGINT, REAL, DOUBLE PRECISION, CHAR(10), VARCHAR(26)) 
     AS INSERT INTO t1_prepare_select_statement (c1, c2, c3, c4, c5, c6, c7) VALUES ($1, $2, $3, $4, $5, $6, $7);
 PREPARE select_t1_all 
-	AS SELECT * FROM t1_prepare_select_statement;
+	AS SELECT * FROM t1_prepare_select_statement ORDER BY c1;
 PREPARE insert_t2 (INTEGER, INTEGER, BIGINT, REAL, DOUBLE PRECISION, CHAR(10), VARCHAR(26)) 
     AS INSERT INTO t2_prepare_select_statement (c1, c2, c3, c4, c5, c6, c7) VALUES ($1, $2, $3, $4, $5, $6, $7);
 PREPARE select_t2_all 
-	AS SELECT * FROM t2_prepare_select_statement;
+	AS SELECT * FROM t2_prepare_select_statement ORDER BY c1;
 PREPARE insert_t3 (INTEGER, CHAR(10)) 
     AS INSERT INTO t3_prepare_select_statement (c1, c2) VALUES ($1, $2);
 PREPARE select_t3_all 
-	AS SELECT * FROM t3_prepare_select_statement;
+	AS SELECT * FROM t3_prepare_select_statement ORDER BY c1;
 
 -- SELECT
 PREPARE select_t2_c2_c4_c6
-	AS SELECT c2, c4, c6 FROM t2_prepare_select_statement;
+	AS SELECT c2, c4, c6 FROM t2_prepare_select_statement ORDER BY c2;
 PREPARE select_t2_c6
-	AS SELECT c6 FROM t2_prepare_select_statement;
+	AS SELECT c6 FROM t2_prepare_select_statement ORDER BY c6;
 PREPARE select_t2_c1_c2_seisu
-	AS SELECT c1, c2 AS seisu FROM t2_prepare_select_statement;
+	AS SELECT c1, c2 AS seisu FROM t2_prepare_select_statement ORDER BY c1;
 -- ORDER BY #1
 PREPARE select_t2_orderby1
 	AS SELECT * FROM t2_prepare_select_statement ORDER BY c6;
@@ -42,42 +42,42 @@ PREPARE select_t2_where2
 	AS SELECT * FROM t2_prepare_select_statement WHERE c7 = 'XYZ' ORDER BY c1;
 -- WHERE #3
 PREPARE select_t1_where3
-	AS SELECT c1, c2, c6, c7 FROM t1_prepare_select_statement WHERE c1 = 1 OR c1 = 3;
+	AS SELECT c1, c2, c6, c7 FROM t1_prepare_select_statement WHERE c1 = 1 OR c1 = 3 ORDER BY c1;
 -- WHERE #4
 PREPARE select_t1_where4
-	AS SELECT c1, c3, c5, c7 FROM t1_prepare_select_statement WHERE c1 = 2;
+	AS SELECT c1, c3, c5, c7 FROM t1_prepare_select_statement WHERE c1 = 2 ORDER BY c1;
 -- WHERE #5
 PREPARE select_t1_where5
-	AS SELECT * FROM t1_prepare_select_statement WHERE c4 >= 2.2 AND c4 < 5.5;
+	AS SELECT * FROM t1_prepare_select_statement WHERE c4 >= 2.2 AND c4 < 5.5 ORDER BY c1;
 -- WHERE #6
 /* tsurugi-issue#69 */
 PREPARE select_t2_where6
-	AS SELECT * FROM t2_prepare_select_statement WHERE c4 BETWEEN 2.2 AND 5.5;
+	AS SELECT * FROM t2_prepare_select_statement WHERE c4 BETWEEN 2.2 AND 5.5 ORDER BY c1;
 -- WHERE #7
 /* tsurugi-issue#103 (no longer supports) */
 PREPARE select_t1_where7
-	AS SELECT * FROM t1_prepare_select_statement WHERE c7 LIKE '%LMN%';
+	AS SELECT * FROM t1_prepare_select_statement WHERE c7 LIKE '%LMN%' ORDER BY c1;
 -- WHERE #8
 /* not support EXISTS failed. (10) */
 PREPARE select_t1_where8
-	AS SELECT * FROM t1_prepare_select_statement WHERE EXISTS (SELECT * FROM t2_prepare_select_statement WHERE c2 = 22);
+	AS SELECT * FROM t1_prepare_select_statement WHERE EXISTS (SELECT * FROM t2_prepare_select_statement WHERE c2 = 22) ORDER BY c1;
 -- WHERE #9
 /* tsurugi-issue#70 */
 PREPARE select_t2_where9
-	AS SELECT * FROM t2_prepare_select_statement WHERE c4 IN (1.1,3.3);
+	AS SELECT * FROM t2_prepare_select_statement WHERE c4 IN (1.1,3.3) ORDER BY c1;
 -- GROUP BY #1
 /* aggregate functions alias not support failed. (10) */
 PREPARE select_t2_group1_ng
 	AS SELECT count(c1) AS "count(c1)", sum(c2) AS "sum(c2)", c7 FROM t2_prepare_select_statement GROUP BY c7;
 PREPARE select_t2_group1
-	AS SELECT count(c1), sum(c2), c7 FROM t2_prepare_select_statement GROUP BY c7;
+	AS SELECT count(c1), sum(c2), c7 FROM t2_prepare_select_statement GROUP BY c7 ORDER BY c7;
 -- GROUP BY #2
 /* aggregate functions alias not support failed. (10) */
 PREPARE select_t2_group2_ng1
-	AS SELECT count(c1) AS "count(c1)", sum(c2) AS "sum(c2)", c7 FROM t2_prepare_select_statement GROUP BY c7 HAVING sum(c2) > 55;
+	AS SELECT count(c1) AS "count(c1)", sum(c2) AS "sum(c2)", c7 FROM t2_prepare_select_statement GROUP BY c7 HAVING sum(c2) > 55 ORDER BY c7;
 /* having support. (tsurugi-issue#739) */
 PREPARE select_t2_group2
-	AS SELECT count(c1), sum(c2), c7 FROM t2_prepare_select_statement GROUP BY c7 HAVING sum(c2) > 55;
+	AS SELECT count(c1), sum(c2), c7 FROM t2_prepare_select_statement GROUP BY c7 HAVING sum(c2) > 55 ORDER BY c7;
 -- GROUP BY #3
 /* tsurugi-issue#974 : Restrictions of the AGV aggregation function */
 PREPARE select_t2_group3_exe_ng1
@@ -85,23 +85,23 @@ PREPARE select_t2_group3_exe_ng1
 -- FOREIGN TABLE JOIN
 -- TG JOIN #1
 PREPARE select_join1
-	AS SELECT * FROM t1_prepare_select_statement a INNER JOIN t2_prepare_select_statement b ON a.c1 = b.c1 WHERE b.c1 > 1;
+	AS SELECT * FROM t1_prepare_select_statement a INNER JOIN t2_prepare_select_statement b ON a.c1 = b.c1 WHERE b.c1 > 1 ORDER BY a.c1;
 -- TG JOIN #2
 /* failed (10) : mismatched input 'USING' */
 PREPARE select_join2
 	AS SELECT a.c1, a.c2, b.c1, b.c7 FROM t1_prepare_select_statement a INNER JOIN t2_prepare_select_statement b USING (c1) ORDER BY b.c4 DESC;
 -- TG JOIN #3
 PREPARE select_join3
-	AS SELECT a.c1, a.c3, b.c1, b.c6 FROM t1_prepare_select_statement a INNER JOIN t2_prepare_select_statement b ON a.c1 != b.c1;
+	AS SELECT a.c1, a.c3, b.c1, b.c6 FROM t1_prepare_select_statement a INNER JOIN t2_prepare_select_statement b ON a.c1 != b.c1 ORDER BY a.c1;
 
 PREPARE select_pg_join_tg6
-	AS SELECT * FROM t1_prepare_select_statement AS a JOIN t2_prepare_select_statement AS b ON a.c4=b.c4 JOIN t1_prepare_select_statement AS c ON b.c4=c.c4 WHERE a.c2=22;
+	AS SELECT * FROM t1_prepare_select_statement AS a JOIN t2_prepare_select_statement AS b ON a.c4=b.c4 JOIN t1_prepare_select_statement AS c ON b.c4=c.c4 WHERE a.c2=22 ORDER BY a.c1;
 
 PREPARE select_pg_join_tg7
 	AS SELECT * FROM t1_prepare_select_statement AS a CROSS JOIN t2_prepare_select_statement AS b ORDER BY b.c1;
 
 PREPARE select_pg_join_tg8
-	AS SELECT * FROM t1_prepare_select_statement AS a JOIN t1_prepare_select_statement AS b ON a.c3=b.c3;
+	AS SELECT * FROM t1_prepare_select_statement AS a JOIN t1_prepare_select_statement AS b ON a.c3=b.c3 ORDER BY a.c1;
 /***************/
 /*** EXECUTE ***/
 /***************/

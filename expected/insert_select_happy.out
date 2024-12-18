@@ -1,11 +1,11 @@
-SELECT * FROM insert_select_happy;
+SELECT * FROM insert_select_happy ORDER BY col0;
  col0 | col1 | col2 | col3 | col4 | col5 | col6 | col7 | col8 | col9 | col10 | col11 | col12 | col13 | col14 | col15 | col16 
 ------+------+------+------+------+------+------+------+------+------+-------+-------+-------+-------+-------+-------+-------
 (0 rows)
 
 --ok
 INSERT INTO insert_select_happy (col0, col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11, col12, col13, col14, col15, col16) VALUES (-2147483648, 0, 2147483647,-3147483648, 3147483647,3.24000001, -2.27600002,-0.299999999999999989, 25.8000000000000007,'A','B','a','abcdefghij','0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789', 'b','KLMNOPQRST','ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKL');
-SELECT * FROM insert_select_happy;
+SELECT * FROM insert_select_happy ORDER BY col0;
     col0     | col1 |    col2    |    col3     |    col4    | col5 |  col6  | col7 | col8 | col9 | col10 | col11 |   col12    |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  col13                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | col14 |   col15    |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  col16                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
 -------------+------+------------+-------------+------------+------+--------+------+------+------+-------+-------+------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------+------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  -2147483648 |    0 | 2147483647 | -3147483648 | 3147483647 | 3.24 | -2.276 | -0.3 | 25.8 | A    | B     | a     | abcdefghij | 0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789 | b     | KLMNOPQRST | ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKL
@@ -13,7 +13,7 @@ SELECT * FROM insert_select_happy;
 
 ---INSERT column of char(1000) INTO 1 characters
 INSERT INTO insert_select_happy (col0, col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11, col12, col13, col14, col15, col16) VALUES (1, 0, 2147483647,-3147483648, 3147483647,3.24000001, -2.27600002,-0.299999999999999989, 25.8000000000000007,'A','B','a','abcdefghij','a', 'b','a','a');
-SELECT * FROM insert_select_happy;
+SELECT * FROM insert_select_happy ORDER BY col0;
     col0     | col1 |    col2    |    col3     |    col4    | col5 |  col6  | col7 | col8 | col9 | col10 | col11 |   col12    |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  col13                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | col14 |   col15    |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  col16                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
 -------------+------+------------+-------------+------------+------+--------+------+------+------+-------+-------+------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------+------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  -2147483648 |    0 | 2147483647 | -3147483648 | 3147483647 | 3.24 | -2.276 | -0.3 | 25.8 | A    | B     | a     | abcdefghij | 0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789 | b     | KLMNOPQRST | ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKL
@@ -22,7 +22,7 @@ SELECT * FROM insert_select_happy;
 
 ---INSERT column of char(1000) INTO 10 characters
 INSERT INTO insert_select_happy (col0, col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11, col12, col13, col14, col15, col16) VALUES (2, 0, 2147483647,-3147483648, 3147483647,3.24000001, -2.27600002,-0.299999999999999989, 25.8000000000000007,'A','B','a','abcdefghij','abcdefghij', 'b','a','a');
-SELECT * FROM insert_select_happy;
+SELECT * FROM insert_select_happy ORDER BY col0;
     col0     | col1 |    col2    |    col3     |    col4    | col5 |  col6  | col7 | col8 | col9 | col10 | col11 |   col12    |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  col13                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | col14 |   col15    |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  col16                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
 -------------+------+------------+-------------+------------+------+--------+------+------+------+-------+-------+------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------+------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  -2147483648 |    0 | 2147483647 | -3147483648 | 3147483647 | 3.24 | -2.276 | -0.3 | 25.8 | A    | B     | a     | abcdefghij | 0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789 | b     | KLMNOPQRST | ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKL
@@ -31,20 +31,20 @@ SELECT * FROM insert_select_happy;
 (3 rows)
 
 --- int
-SELECT * FROM integer1;
+SELECT * FROM integer1 ORDER BY ol_w_id;
  ol_w_id 
 ---------
 (0 rows)
 
 INSERT INTO integer1 (ol_w_id) VALUES (2147483644); --max-3
-SELECT * FROM integer1;
+SELECT * FROM integer1 ORDER BY ol_w_id;
   ol_w_id   
 ------------
  2147483644
 (1 row)
 
 INSERT INTO integer1 (ol_w_id) VALUES (2147483645); --max-2
-SELECT * FROM integer1;
+SELECT * FROM integer1 ORDER BY ol_w_id;
   ol_w_id   
 ------------
  2147483644
@@ -52,7 +52,7 @@ SELECT * FROM integer1;
 (2 rows)
 
 INSERT INTO integer1 (ol_w_id) VALUES (2147483646); --max-1
-SELECT * FROM integer1;
+SELECT * FROM integer1 ORDER BY ol_w_id;
   ol_w_id   
 ------------
  2147483644
@@ -62,7 +62,7 @@ SELECT * FROM integer1;
 
 INSERT INTO integer1 (ol_w_id) VALUES (2147483647); --max
 INSERT INTO integer1 (ol_w_id) VALUES (-2147483645); --min+3
-SELECT * FROM integer1;
+SELECT * FROM integer1 ORDER BY ol_w_id;
    ol_w_id   
 -------------
  -2147483645
@@ -73,7 +73,7 @@ SELECT * FROM integer1;
 (5 rows)
 
 INSERT INTO integer1 (ol_w_id) VALUES (-2147483646); --min+2
-SELECT * FROM integer1;
+SELECT * FROM integer1 ORDER BY ol_w_id;
    ol_w_id   
 -------------
  -2147483646
@@ -85,7 +85,7 @@ SELECT * FROM integer1;
 (6 rows)
 
 INSERT INTO integer1 (ol_w_id) VALUES (-2147483647); --min+1
-SELECT * FROM integer1;
+SELECT * FROM integer1 ORDER BY ol_w_id;
    ol_w_id   
 -------------
  -2147483647
@@ -98,7 +98,7 @@ SELECT * FROM integer1;
 (7 rows)
 
 INSERT INTO integer1 (ol_w_id) VALUES (-2147483648); --min
-SELECT * FROM integer1;
+SELECT * FROM integer1 ORDER BY ol_w_id;
    ol_w_id   
 -------------
  -2147483648
@@ -116,7 +116,7 @@ INSERT INTO integer1 (ol_w_id) VALUES (1.1);  -- see tsurugi-issues#736
 ERROR:  Tsurugi::execute_statement() failed. (13)
 Tsurugi Server VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
 INSERT INTO integer1 (ol_w_id) VALUES (cast(1.1 as int));
-SELECT * FROM integer1;
+SELECT * FROM integer1 ORDER BY ol_w_id;
    ol_w_id   
 -------------
  -2147483648
@@ -137,7 +137,7 @@ INSERT INTO integer1 (ol_w_id) VALUES (0.1);  -- see tsurugi-issues#736
 ERROR:  Tsurugi::execute_statement() failed. (13)
 Tsurugi Server VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
 INSERT INTO integer1 (ol_w_id) VALUES (cast(0.1 as int));
-SELECT * FROM integer1;
+SELECT * FROM integer1 ORDER BY ol_w_id;
    ol_w_id   
 -------------
  -2147483648
@@ -156,20 +156,20 @@ SELECT * FROM integer1;
 (13 rows)
 
 --- bigint
-SELECT * FROM bigint1;
+SELECT * FROM bigint1 ORDER BY id;
  id | ol_w_id 
 ----+---------
 (0 rows)
 
 INSERT INTO bigint1 (id, ol_w_id) VALUES (1, 9223372036854775804);  --max-3
-SELECT * FROM bigint1;
+SELECT * FROM bigint1 ORDER BY id;
  id |       ol_w_id       
 ----+---------------------
   1 | 9223372036854775804
 (1 row)
 
 INSERT INTO bigint1 (id, ol_w_id) VALUES (2, 9223372036854775805);  --max-2
-SELECT * FROM bigint1;
+SELECT * FROM bigint1 ORDER BY id;
  id |       ol_w_id       
 ----+---------------------
   1 | 9223372036854775804
@@ -177,7 +177,7 @@ SELECT * FROM bigint1;
 (2 rows)
 
 INSERT INTO bigint1 (id, ol_w_id) VALUES (3, 9223372036854775806);  --max-1
-SELECT * FROM bigint1;
+SELECT * FROM bigint1 ORDER BY id;
  id |       ol_w_id       
 ----+---------------------
   1 | 9223372036854775804
@@ -186,7 +186,7 @@ SELECT * FROM bigint1;
 (3 rows)
 
 INSERT INTO bigint1 (id, ol_w_id) VALUES (4, 9223372036854775807);  --max
-SELECT * FROM bigint1;
+SELECT * FROM bigint1 ORDER BY id;
  id |       ol_w_id       
 ----+---------------------
   1 | 9223372036854775804
@@ -196,7 +196,7 @@ SELECT * FROM bigint1;
 (4 rows)
 
 INSERT INTO bigint1 (id, ol_w_id) VALUES (8, -9223372036854775805);  --min+3
-SELECT * FROM bigint1;
+SELECT * FROM bigint1 ORDER BY id;
  id |       ol_w_id        
 ----+----------------------
   1 |  9223372036854775804
@@ -207,7 +207,7 @@ SELECT * FROM bigint1;
 (5 rows)
 
 INSERT INTO bigint1 (id, ol_w_id) VALUES (9, -9223372036854775806);  --min+2
-SELECT * FROM bigint1;
+SELECT * FROM bigint1 ORDER BY id;
  id |       ol_w_id        
 ----+----------------------
   1 |  9223372036854775804
@@ -219,7 +219,7 @@ SELECT * FROM bigint1;
 (6 rows)
 
 INSERT INTO bigint1 (id, ol_w_id) VALUES (10, -9223372036854775807);  --min+1
-SELECT * FROM bigint1;
+SELECT * FROM bigint1 ORDER BY id;
  id |       ol_w_id        
 ----+----------------------
   1 |  9223372036854775804
@@ -232,7 +232,7 @@ SELECT * FROM bigint1;
 (7 rows)
 
 INSERT INTO bigint1 (id, ol_w_id) VALUES (11, -9223372036854775807-1); --min
-SELECT * FROM bigint1;
+SELECT * FROM bigint1 ORDER BY id;
  id |       ol_w_id        
 ----+----------------------
   1 |  9223372036854775804
@@ -249,7 +249,7 @@ INSERT INTO bigint1 (id, ol_w_id) VALUES (15, 1.1);  -- see tsurugi-issues#736
 ERROR:  Tsurugi::execute_statement() failed. (13)
 Tsurugi Server VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
 INSERT INTO bigint1 (id, ol_w_id) VALUES (15, cast(1.1 as bigint));
-SELECT * FROM bigint1;
+SELECT * FROM bigint1 ORDER BY id;
  id |       ol_w_id        
 ----+----------------------
   1 |  9223372036854775804
@@ -267,7 +267,7 @@ INSERT INTO bigint1 (id, ol_w_id) VALUES (16, 0.1);  -- see tsurugi-issues#736
 ERROR:  Tsurugi::execute_statement() failed. (13)
 Tsurugi Server VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
 INSERT INTO bigint1 (id, ol_w_id) VALUES (16, cast(0.1 as bigint));
-SELECT * FROM bigint1;
+SELECT * FROM bigint1 ORDER BY id;
  id |       ol_w_id        
 ----+----------------------
   1 |  9223372036854775804
@@ -283,20 +283,20 @@ SELECT * FROM bigint1;
 (10 rows)
 
 --- real
-SELECT * FROM real1;
+SELECT * FROM real1 ORDER BY ol_w_id;
  ol_w_id 
 ---------
 (0 rows)
 
 INSERT INTO real1 (ol_w_id) VALUES (12.345678901234567890); --20 digits
-SELECT * FROM real1;
+SELECT * FROM real1 ORDER BY ol_w_id;
   ol_w_id  
 -----------
  12.345679
 (1 row)
 
 INSERT INTO real1 (ol_w_id) VALUES (0.1);
-SELECT * FROM real1;
+SELECT * FROM real1 ORDER BY ol_w_id;
   ol_w_id  
 -----------
        0.1
@@ -304,7 +304,7 @@ SELECT * FROM real1;
 (2 rows)
 
 INSERT INTO real1 (ol_w_id) VALUES (1.1);
-SELECT * FROM real1;
+SELECT * FROM real1 ORDER BY ol_w_id;
   ol_w_id  
 -----------
        0.1
@@ -313,20 +313,20 @@ SELECT * FROM real1;
 (3 rows)
 
 --- double precision
-SELECT * FROM double1;
+SELECT * FROM double1 ORDER BY ol_w_id;
  ol_w_id 
 ---------
 (0 rows)
 
 INSERT INTO double1 (ol_w_id) VALUES (12.345678901234567890); --20 digits
-SELECT * FROM double1;
+SELECT * FROM double1 ORDER BY ol_w_id;
       ol_w_id       
 --------------------
  12.345678901234567
 (1 row)
 
 INSERT INTO double1 (ol_w_id) VALUES (0.1);
-SELECT * FROM double1;
+SELECT * FROM double1 ORDER BY ol_w_id;
       ol_w_id       
 --------------------
                 0.1
@@ -334,7 +334,7 @@ SELECT * FROM double1;
 (2 rows)
 
 INSERT INTO double1 (ol_w_id) VALUES (1.1);
-SELECT * FROM double1;
+SELECT * FROM double1 ORDER BY ol_w_id;
       ol_w_id       
 --------------------
                 0.1
@@ -343,52 +343,52 @@ SELECT * FROM double1;
 (3 rows)
 
 --- char(1)
-SELECT * FROM char_length_1;
+SELECT * FROM char_length_1 ORDER BY ol_w_id;
  ol_w_id 
 ---------
 (0 rows)
 
 INSERT INTO char_length_1 (ol_w_id) VALUES ('P');
-SELECT * FROM char_length_1;
+SELECT * FROM char_length_1 ORDER BY ol_w_id;
  ol_w_id 
 ---------
  P
 (1 row)
 
 --- varchar(1)
-SELECT * FROM varchar_length_1;
+SELECT * FROM varchar_length_1 ORDER BY ol_w_id;
  ol_w_id 
 ---------
 (0 rows)
 
 INSERT INTO varchar_length_1 (ol_w_id) VALUES ('P');
-SELECT * FROM varchar_length_1;
+SELECT * FROM varchar_length_1 ORDER BY ol_w_id;
  ol_w_id 
 ---------
  P
 (1 row)
 
 --- char(10)
-SELECT * FROM char_length_10;
+SELECT * FROM char_length_10 ORDER BY ol_w_id;
  ol_w_id 
 ---------
 (0 rows)
 
 INSERT INTO char_length_10 (ol_w_id) VALUES ('PostgreSQL');
-SELECT * FROM char_length_10;
+SELECT * FROM char_length_10 ORDER BY ol_w_id;
   ol_w_id   
 ------------
  PostgreSQL
 (1 row)
 
 --- varchar(10)
-SELECT * FROM varchar_length_10;
+SELECT * FROM varchar_length_10 ORDER BY ol_w_id;
  ol_w_id 
 ---------
 (0 rows)
 
 INSERT INTO varchar_length_10 (ol_w_id) VALUES ('PostgreSQL');
-SELECT * FROM varchar_length_10;
+SELECT * FROM varchar_length_10 ORDER BY ol_w_id;
   ol_w_id   
 ------------
  PostgreSQL
@@ -397,7 +397,7 @@ SELECT * FROM varchar_length_10;
 --- temporal_literal : tsurugi-issues#881
 /* SET DATASTYLE */
 SET datestyle TO ISO, ymd;
-SELECT * FROM trg_temporal_literal;
+SELECT * FROM trg_temporal_literal ORDER BY id;
  id | dt | tm | tms | tms_wo_tz | tms_w_tz 
 ----+----+----+-----+-----------+----------
 (0 rows)
@@ -425,7 +425,7 @@ ERROR:  Tsurugi::execute_statement() failed. (13)
 Tsurugi Server VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:unsupported)
 /* check timestamp with time zone in UTC */
 set session timezone to 'UTC';
-SELECT * FROM trg_temporal_literal;
+SELECT * FROM trg_temporal_literal ORDER BY id;
  id |     dt     |      tm      |           tms           |        tms_wo_tz        |          tms_w_tz          
 ----+------------+--------------+-------------------------+-------------------------+----------------------------
   1 | 2024-08-30 |              |                         |                         | 
@@ -437,7 +437,7 @@ SELECT * FROM trg_temporal_literal;
 
 /* check timestamp with time zone in Asia/Tokyo */
 set session timezone to 'Asia/Tokyo';
-SELECT * FROM trg_temporal_literal;
+SELECT * FROM trg_temporal_literal ORDER BY id;
  id |     dt     |      tm      |           tms           |        tms_wo_tz        |          tms_w_tz          
 ----+------------+--------------+-------------------------+-------------------------+----------------------------
   1 | 2024-08-30 |              |                         |                         | 

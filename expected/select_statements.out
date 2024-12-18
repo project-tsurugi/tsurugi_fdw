@@ -12,7 +12,7 @@ INSERT INTO
     t1_select_statement(c1, c2, c3, c4, c5, c6, c7)
 VALUES
     (3, 33, 333, 3.3, 3.33, 'third', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
-SELECT * FROM t1_select_statement;
+SELECT * FROM t1_select_statement ORDER BY c1;
  c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
 ----+----+-----+-----+------+------------+----------------------------
   1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
@@ -40,7 +40,7 @@ INSERT INTO
     t2_select_statement(c1, c2, c3, c4, c5, c6, c7)
 VALUES
     (5, 55, 555, 5.5, 5.55, 'five', 'XYZ');
-SELECT * FROM t2_select_statement;
+SELECT * FROM t2_select_statement ORDER BY c1;
  c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
 ----+----+-----+-----+------+------------+-----
   1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
@@ -70,7 +70,7 @@ INSERT INTO
     t3_select_statement(c1, c2)
 VALUES
     (5, 'go');
-SELECT * FROM t3_select_statement;
+SELECT * FROM t3_select_statement ORDER BY c1;
  c1 |     c2     
 ----+------------
   1 | ichi      
@@ -81,7 +81,7 @@ SELECT * FROM t3_select_statement;
 (5 rows)
 
 -- SELECT
-SELECT * FROM t1_select_statement;
+SELECT * FROM t1_select_statement ORDER BY c1;
  c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
 ----+----+-----+-----+------+------------+----------------------------
   1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
@@ -89,27 +89,27 @@ SELECT * FROM t1_select_statement;
   3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
 (3 rows)
 
-SELECT c2, c4, c6 FROM t2_select_statement;
+SELECT c2, c4, c6 FROM t2_select_statement ORDER BY c2;
  c2 | c4  |     c6     
 ----+-----+------------
+    |     | NULL      
  11 | 1.1 | one       
  22 | 2.2 | two       
  33 | 3.3 | three     
-    |     | NULL      
  55 | 5.5 | five      
 (5 rows)
 
-SELECT c6 FROM t2_select_statement;
+SELECT c6 FROM t2_select_statement ORDER BY c6;
      c6     
 ------------
- one       
- two       
- three     
  NULL      
  five      
+ one       
+ three     
+ two       
 (5 rows)
 
-SELECT c1, c2 AS seisu  FROM t2_select_statement;
+SELECT c1, c2 AS seisu  FROM t2_select_statement ORDER BY c1;
  c1 | seisu 
 ----+-------
   1 |    11
@@ -220,7 +220,9 @@ SELECT
 FROM
     t1_select_statement
 WHERE
-    c1 = 1 OR c1 = 3;
+    c1 = 1 OR c1 = 3
+ORDER BY 
+    c1;
  c1 | c2 |     c6     |             c7             
 ----+----+------------+----------------------------
   1 | 11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
@@ -233,7 +235,9 @@ SELECT
 FROM 
     t1_select_statement 
 WHERE 
-    c1 = 2;
+    c1 = 2
+ORDER BY 
+    c1;
  c1 | c3  |  c5  |             c7             
 ----+-----+------+----------------------------
   2 | 222 | 2.22 | ABCDEFGHIJKLMNOPQRSTUVWXYZ
@@ -245,7 +249,9 @@ SELECT
 FROM
     t1_select_statement
 WHERE
-    c4 >= 2.2 AND c4 < 5.5;
+    c4 >= 2.2 AND c4 < 5.5
+ORDER BY 
+    c1;
  c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
 ----+----+-----+-----+------+------------+----------------------------
   2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
@@ -258,7 +264,9 @@ SELECT
 FROM
     t2_select_statement
 WHERE
-    c4 BETWEEN 2.2 AND 5.5;
+    c4 BETWEEN 2.2 AND 5.5
+ORDER BY 
+    c1;
  c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
 ----+----+-----+-----+------+------------+-----
   2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
@@ -272,7 +280,9 @@ SELECT
 FROM
     t1_select_statement
 WHERE
-    c7 LIKE '%LMN%';
+    c7 LIKE '%LMN%'
+ORDER BY 
+    c1;
 ERROR:  Query execution failed. (13)
 Tsurugi Server SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"unrecognized character: "~"" region:"region(begin=70, end=71)")
 -- WHERE #8
@@ -290,7 +300,9 @@ SELECT
 FROM
     t2_select_statement
 WHERE
-    c4 IN (1.1,3.3);
+    c4 IN (1.1,3.3)
+ORDER BY
+    c4;
 ERROR:  Query execution failed. (13)
 Tsurugi Server SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "'{1.1,3.3}'", expected one of {SELECT, TABLE}" region:"region(begin=77, end=88)")
 -- GROUP BY #1
@@ -299,6 +311,8 @@ SELECT
 FROM 
     t2_select_statement
 GROUP BY
+    c7
+ORDER BY
     c7;
  count(c1) | sum(c2) | c7  
 -----------+---------+-----
@@ -315,7 +329,9 @@ FROM
 GROUP BY
     c7
 HAVING 
-    sum(c2) > 55;
+    sum(c2) > 55
+ORDER BY
+    c7;
  count(c1) | sum(c2) | c7  
 -----------+---------+-----
          2 |      77 | XYZ
@@ -337,7 +353,9 @@ SELECT
 FROM 
     t1_select_statement a INNER JOIN t2_select_statement b ON a.c1 = b.c1
 WHERE
-    b.c1 > 1;
+    b.c1 > 1
+ORDER BY
+    a.c1;
 ERROR:  Query execution failed. (13)
 Tsurugi Server SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "t1_select_statement", expected one of {(, SELECT, TABLE, VALUES}" region:"region(begin=110, end=129)")
 -- TG JOIN #2 /* tsurugi-issue#863 */
@@ -353,7 +371,9 @@ Tsurugi Server SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeare
 SELECT 
     a.c1, a.c3, b.c1, b.c6
 FROM 
-    t1_select_statement a INNER JOIN t2_select_statement b ON a.c1 != b.c1;
+    t1_select_statement a INNER JOIN t2_select_statement b ON a.c1 != b.c1
+ORDER BY
+    a.c1;
 ERROR:  Query execution failed. (13)
 Tsurugi Server SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "t1_select_statement", expected one of {(, SELECT, TABLE, VALUES}" region:"region(begin=40, end=59)")
 -- POSTGRESQL TABLE JOIN
@@ -379,6 +399,8 @@ Tsurugi Server SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeare
 SELECT
     *
 FROM
-    t1_select_statement AS a JOIN t1_select_statement AS b ON a.c3=b.c3;
+    t1_select_statement AS a JOIN t1_select_statement AS b ON a.c3=b.c3
+ORDER BY
+    a.c3;
 ERROR:  Query execution failed. (13)
 Tsurugi Server SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "t1_select_statement", expected one of {(, SELECT, TABLE, VALUES}" region:"region(begin=110, end=129)")

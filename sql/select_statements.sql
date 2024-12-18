@@ -12,7 +12,7 @@ INSERT INTO
     t1_select_statement(c1, c2, c3, c4, c5, c6, c7)
 VALUES
     (3, 33, 333, 3.3, 3.33, 'third', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
-SELECT * FROM t1_select_statement;
+SELECT * FROM t1_select_statement ORDER BY c1;
 
 INSERT INTO 
     t2_select_statement(c1, c2, c3, c4, c5, c6, c7)
@@ -34,7 +34,7 @@ INSERT INTO
     t2_select_statement(c1, c2, c3, c4, c5, c6, c7)
 VALUES
     (5, 55, 555, 5.5, 5.55, 'five', 'XYZ');
-SELECT * FROM t2_select_statement;
+SELECT * FROM t2_select_statement ORDER BY c1;
 
 INSERT INTO
     t3_select_statement(c1, c2)
@@ -56,14 +56,14 @@ INSERT INTO
     t3_select_statement(c1, c2)
 VALUES
     (5, 'go');
-SELECT * FROM t3_select_statement;
+SELECT * FROM t3_select_statement ORDER BY c1;
 
 
 -- SELECT
-SELECT * FROM t1_select_statement;
-SELECT c2, c4, c6 FROM t2_select_statement;
-SELECT c6 FROM t2_select_statement;
-SELECT c1, c2 AS seisu  FROM t2_select_statement;
+SELECT * FROM t1_select_statement ORDER BY c1;
+SELECT c2, c4, c6 FROM t2_select_statement ORDER BY c2;
+SELECT c6 FROM t2_select_statement ORDER BY c6;
+SELECT c1, c2 AS seisu  FROM t2_select_statement ORDER BY c1;
 
 -- ORDER BY #1
 SELECT
@@ -127,7 +127,9 @@ SELECT
 FROM
     t1_select_statement
 WHERE
-    c1 = 1 OR c1 = 3;
+    c1 = 1 OR c1 = 3
+ORDER BY 
+    c1;
 
 -- WHERE #4
 SELECT 
@@ -135,7 +137,9 @@ SELECT
 FROM 
     t1_select_statement 
 WHERE 
-    c1 = 2;
+    c1 = 2
+ORDER BY 
+    c1;
 
 -- WHERE #5
 SELECT
@@ -143,7 +147,9 @@ SELECT
 FROM
     t1_select_statement
 WHERE
-    c4 >= 2.2 AND c4 < 5.5;
+    c4 >= 2.2 AND c4 < 5.5
+ORDER BY 
+    c1;
 
 -- WHERE #6
 SELECT
@@ -151,7 +157,9 @@ SELECT
 FROM
     t2_select_statement
 WHERE
-    c4 BETWEEN 2.2 AND 5.5;
+    c4 BETWEEN 2.2 AND 5.5
+ORDER BY 
+    c1;
 
 -- WHERE #7
 SELECT
@@ -159,7 +167,9 @@ SELECT
 FROM
     t1_select_statement
 WHERE
-    c7 LIKE '%LMN%';
+    c7 LIKE '%LMN%'
+ORDER BY 
+    c1;
 
 -- WHERE #8
 /*
@@ -176,7 +186,9 @@ SELECT
 FROM
     t2_select_statement
 WHERE
-    c4 IN (1.1,3.3);
+    c4 IN (1.1,3.3)
+ORDER BY
+    c4;
 
 -- GROUP BY #1
 SELECT
@@ -184,6 +196,8 @@ SELECT
 FROM 
     t2_select_statement
 GROUP BY
+    c7
+ORDER BY
     c7;
 
 -- GROUP BY #2
@@ -194,7 +208,9 @@ FROM
 GROUP BY
     c7
 HAVING 
-    sum(c2) > 55;
+    sum(c2) > 55
+ORDER BY
+    c7;
 
 -- GROUP BY #3
 /* tsurugi-issue#974 : Restrictions of the AGV aggregation function
@@ -212,7 +228,9 @@ SELECT
 FROM 
     t1_select_statement a INNER JOIN t2_select_statement b ON a.c1 = b.c1
 WHERE
-    b.c1 > 1;
+    b.c1 > 1
+ORDER BY
+    a.c1;
 
 -- TG JOIN #2 /* tsurugi-issue#863 */
 SELECT 
@@ -226,7 +244,9 @@ ORDER BY
 SELECT 
     a.c1, a.c3, b.c1, b.c6
 FROM 
-    t1_select_statement a INNER JOIN t2_select_statement b ON a.c1 != b.c1;
+    t1_select_statement a INNER JOIN t2_select_statement b ON a.c1 != b.c1
+ORDER BY
+    a.c1;
 
 -- POSTGRESQL TABLE JOIN
 -- TG /* tsurugi-issue#863 */
@@ -249,4 +269,6 @@ ORDER BY
 SELECT
     *
 FROM
-    t1_select_statement AS a JOIN t1_select_statement AS b ON a.c3=b.c3;
+    t1_select_statement AS a JOIN t1_select_statement AS b ON a.c3=b.c3
+ORDER BY
+    a.c3;

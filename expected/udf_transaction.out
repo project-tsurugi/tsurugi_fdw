@@ -815,21 +815,21 @@ SELECT tg_set_exclusive_read_areas('');
 
 /* Implicit transaction */
 INSERT INTO udf_table1 (column1) VALUES (100);
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
      100
 (1 row)
 
 UPDATE udf_table1 SET column1 = column1+1;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
      101
 (1 row)
 
 DELETE FROM udf_table1 WHERE column1 = 101;
-SELECT * from udf_table1;
+SELECT * from udf_table1 ORDER BY column1;
  column1 
 ---------
 (0 rows)
@@ -840,7 +840,7 @@ INSERT INTO udf_table1 (column1) VALUES (100);
 UPDATE udf_table1 SET column1 = column1+2;
 DELETE FROM udf_table1 WHERE column1 = 102;
 COMMIT;
-SELECT * from udf_table1;
+SELECT * from udf_table1 ORDER BY column1;
  column1 
 ---------
 (0 rows)
@@ -851,7 +851,7 @@ INSERT INTO udf_table1 (column1) VALUES (100);
 UPDATE udf_table1 SET column1 = column1+3;
 DELETE FROM udf_table1 WHERE column1 = 103;
 COMMIT;
-SELECT * from udf_table1;
+SELECT * from udf_table1 ORDER BY column1;
  column1 
 ---------
 (0 rows)
@@ -860,7 +860,7 @@ SELECT * from udf_table1;
 BEGIN;
 INSERT INTO udf_table1 (column1) VALUES (200);
 COMMIT;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
      200
@@ -869,7 +869,7 @@ SELECT * FROM udf_table1;
 BEGIN;
 UPDATE udf_table1 SET column1 = column1+1;
 COMMIT;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
      201
@@ -878,7 +878,7 @@ SELECT * FROM udf_table1;
 BEGIN;
 DELETE FROM udf_table1 WHERE column1 = 201;
 COMMIT;
-SELECT * from udf_table1;
+SELECT * from udf_table1 ORDER BY column1;
  column1 
 ---------
 (0 rows)
@@ -887,7 +887,7 @@ SELECT * from udf_table1;
 BEGIN;
 INSERT INTO udf_table1 (column1) VALUES (200);
 END;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
      200
@@ -896,7 +896,7 @@ SELECT * FROM udf_table1;
 BEGIN;
 UPDATE udf_table1 SET column1 = column1+2;
 END;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
      202
@@ -905,7 +905,7 @@ SELECT * FROM udf_table1;
 BEGIN;
 DELETE FROM udf_table1 WHERE column1 = 202;
 END;
-SELECT * from udf_table1;
+SELECT * from udf_table1 ORDER BY column1;
  column1 
 ---------
 (0 rows)
@@ -914,7 +914,7 @@ SELECT * from udf_table1;
 BEGIN;
 INSERT INTO udf_table1 (column1) VALUES (300);
 ROLLBACK;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
 (0 rows)
@@ -923,7 +923,7 @@ INSERT INTO udf_table1 (column1) VALUES (400);
 BEGIN;
 UPDATE udf_table1 SET column1 = column1+1;
 ROLLBACK;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
      400
@@ -932,7 +932,7 @@ SELECT * FROM udf_table1;
 BEGIN;
 DELETE FROM udf_table1 WHERE column1 = 400;
 ROLLBACK;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
      400
@@ -945,7 +945,7 @@ ERROR:  relation "udf_table2" does not exist
 LINE 1: INSERT INTO udf_table2 (column1) VALUES (400);
                     ^
 COMMIT;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
      400
@@ -955,7 +955,7 @@ SELECT * FROM udf_table1;
 BEGIN;
 INSERT INTO udf_table1 (column1) VALUES (300);
 ABORT;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
      400
@@ -964,7 +964,7 @@ SELECT * FROM udf_table1;
 BEGIN;
 UPDATE udf_table1 SET column1 = column1+2;
 ABORT;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
      400
@@ -973,7 +973,7 @@ SELECT * FROM udf_table1;
 BEGIN;
 DELETE FROM udf_table1 WHERE column1 = 400;
 ABORT;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
      400
@@ -987,7 +987,7 @@ on
 \echo :AUTOCOMMIT
 off
 BEGIN;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
 (0 rows)
@@ -995,7 +995,7 @@ SELECT * FROM udf_table1;
 COMMIT;
 INSERT INTO udf_table1 (column1) VALUES (410);
 COMMIT;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
      410
@@ -1006,7 +1006,7 @@ COMMIT;
 BEGIN;
 INSERT INTO udf_table1 (column1) VALUES (420);
 COMMIT;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
      420
@@ -1016,7 +1016,7 @@ DELETE FROM udf_table1 WHERE column1 = 420;
 COMMIT;
 INSERT INTO udf_table1 (column1) VALUES (430);
 ROLLBACK;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
 (0 rows)
@@ -1025,7 +1025,7 @@ COMMIT;
 BEGIN;
 INSERT INTO udf_table1 (column1) VALUES (440);
 ROLLBACK;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
 (0 rows)
@@ -1098,19 +1098,19 @@ INSERT INTO wp_table2 (column1) VALUES (100);
 INSERT INTO udf_table1 (column1) VALUES (500); -- error
 ERROR:  Tsurugi::execute_statement() failed. (13)
 Tsurugi Server LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
-SELECT * FROM wp_table1;
+SELECT * FROM wp_table1 ORDER BY column1;
  column1 
 ---------
      100
 (1 row)
 
-SELECT * FROM wp_table2;
+SELECT * FROM wp_table2 ORDER BY column1;
  column1 
 ---------
      100
 (1 row)
 
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
      400
@@ -1121,19 +1121,19 @@ UPDATE wp_table2 SET column1 = column1+1;
 UPDATE udf_table1 SET column1 = column1+1; -- error
 ERROR:  Tsurugi::execute_statement() failed. (13)
 Tsurugi Server LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
-SELECT * FROM wp_table1;
+SELECT * FROM wp_table1 ORDER BY column1;
  column1 
 ---------
      101
 (1 row)
 
-SELECT * FROM wp_table2;
+SELECT * FROM wp_table2 ORDER BY column1;
  column1 
 ---------
      101
 (1 row)
 
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
      400
@@ -1144,17 +1144,17 @@ DELETE FROM wp_table2 WHERE column1 = 101;
 DELETE FROM udf_table1 WHERE column1 = 400; -- error
 ERROR:  Tsurugi::execute_statement() failed. (13)
 Tsurugi Server LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
-SELECT * FROM wp_table1;
+SELECT * FROM wp_table1 ORDER BY column1;
  column1 
 ---------
 (0 rows)
 
-SELECT * FROM wp_table2;
+SELECT * FROM wp_table2 ORDER BY column1;
  column1 
 ---------
 (0 rows)
 
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
      400
@@ -1193,18 +1193,18 @@ Tsurugi Server LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: 
 INSERT INTO udf_table1 (column1) VALUES (500); -- error
 ERROR:  Tsurugi::execute_statement() failed. (13)
 Tsurugi Server LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
-SELECT * FROM wp_table1;
+SELECT * FROM wp_table1 ORDER BY column1;
  column1 
 ---------
      200
 (1 row)
 
-SELECT * FROM wp_table2;
+SELECT * FROM wp_table2 ORDER BY column1;
  column1 
 ---------
 (0 rows)
 
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
      400
@@ -1214,18 +1214,18 @@ UPDATE wp_table1 SET column1 = column1+1;
 UPDATE udf_table1 SET column1 = column1+1; -- error
 ERROR:  Tsurugi::execute_statement() failed. (13)
 Tsurugi Server LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
-SELECT * FROM wp_table1;
+SELECT * FROM wp_table1 ORDER BY column1;
  column1 
 ---------
      201
 (1 row)
 
-SELECT * FROM wp_table2;
+SELECT * FROM wp_table2 ORDER BY column1;
  column1 
 ---------
 (0 rows)
 
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
      400
@@ -1235,17 +1235,17 @@ DELETE FROM wp_table1 WHERE column1 = 201;
 DELETE FROM udf_table1 WHERE column1 = 400; -- error
 ERROR:  Tsurugi::execute_statement() failed. (13)
 Tsurugi Server LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
-SELECT * FROM wp_table1;
+SELECT * FROM wp_table1 ORDER BY column1;
  column1 
 ---------
 (0 rows)
 
-SELECT * FROM wp_table2;
+SELECT * FROM wp_table2 ORDER BY column1;
  column1 
 ---------
 (0 rows)
 
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
      400
@@ -1360,12 +1360,12 @@ SELECT tg_set_exclusive_read_areas('re_table1');
  
 (1 row)
 
-SELECT * FROM ri_table1; -- success
+SELECT * FROM ri_table1 ORDER BY column1; -- success
  column1 
 ---------
 (0 rows)
 
-SELECT * FROM ri_table2; -- success
+SELECT * FROM ri_table2 ORDER BY column1; -- success
  column1 
 ---------
 (0 rows)
@@ -1375,7 +1375,7 @@ SELECT * FROM ri_table2; -- success
 SELECT * FROM re_table1; -- error
 ERROR:  Tsurugi Server INACTIVE_TRANSACTION_EXCEPTION (SQL-02025: serialization failed transaction:TID-00000000000004ec shirakami response Status=ERR_READ_AREA_VIOLATION {reason_code:CC_LTX_READ_AREA_VIOLATION, storage_name:re_table1, no key information} )
 */
-SELECT * FROM re_table2; -- success
+SELECT * FROM re_table2 ORDER BY column1; -- success
  column1 
 ---------
 (0 rows)
@@ -1425,7 +1425,7 @@ SELECT tg_set_exclusive_read_areas('re_table1');
  
 (1 row)
 
-SELECT * FROM ri_table1; -- success
+SELECT * FROM ri_table1 ORDER BY column1; -- success
  column1 
 ---------
 (0 rows)
@@ -1453,22 +1453,22 @@ SELECT tg_set_transaction('short');
  
 (1 row)
 
-SELECT * FROM ri_table1; -- success
+SELECT * FROM ri_table1 ORDER BY column1; -- success
  column1 
 ---------
 (0 rows)
 
-SELECT * FROM ri_table2; -- success
+SELECT * FROM ri_table2 ORDER BY column1; -- success
  column1 
 ---------
 (0 rows)
 
-SELECT * FROM re_table1; -- success
+SELECT * FROM re_table1 ORDER BY column1; -- success
  column1 
 ---------
 (0 rows)
 
-SELECT * FROM re_table2; -- success
+SELECT * FROM re_table2 ORDER BY column1; -- success
  column1 
 ---------
 (0 rows)
@@ -1595,12 +1595,13 @@ SELECT tg_set_write_preserve('wp_table1');
 BEGIN;
 INSERT INTO wp_table1 (column1) VALUES (100);
 COMMIT;
-SELECT * FROM wp_table1;
+SELECT * FROM wp_table1 ORDER BY column1;
  column1 
 ---------
      100
 (1 row)
 
+DELETE FROM udf_table1 WHERE column1 = 100;
 SELECT tg_set_write_preserve('wp_table1', 'wp_table2');
             tg_set_write_preserve             
 ----------------------------------------------
@@ -1634,14 +1635,14 @@ BEGIN;
 INSERT INTO wp_table1 (column1) VALUES (200);
 INSERT INTO wp_table2 (column1) VALUES (300);
 COMMIT;
-SELECT * FROM wp_table1;
+SELECT * FROM wp_table1 ORDER BY column1;
  column1 
 ---------
      100
      200
 (2 rows)
 
-SELECT * FROM wp_table2;
+SELECT * FROM wp_table2 ORDER BY column1;
  column1 
 ---------
      300
@@ -1674,7 +1675,7 @@ SELECT tg_set_write_preserve('wp_table3');
 (1 row)
 
 BEGIN;
-SELECT * FROM wp_table1;
+SELECT * FROM wp_table1 ORDER BY column1;
 ERROR:  Tsurugi::start_transaction() failed. (13)
 Tsurugi Server TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false write_preserves:{ wp_table3 })
 COMMIT;
@@ -1708,10 +1709,10 @@ SELECT tg_set_write_preserve('wp_table3', 'wp_table4');
 (1 row)
 
 BEGIN;
-SELECT * FROM wp_table1;
+SELECT * FROM wp_table1 ORDER BY column1;
 ERROR:  Tsurugi::start_transaction() failed. (13)
 Tsurugi Server TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false write_preserves:{ wp_table3 wp_table4 })
-SELECT * FROM wp_table2;
+SELECT * FROM wp_table2 ORDER BY column1;
 ERROR:  current transaction is aborted, commands ignored until end of transaction block
 COMMIT;
 SELECT tg_set_write_preserve('wp_table1', 'wp_table3');
@@ -1828,7 +1829,7 @@ SELECT tg_set_inclusive_read_areas('ri_table1');
 (1 row)
 
 BEGIN;
-SELECT * FROM ri_table1;
+SELECT * FROM ri_table1 ORDER BY column1;
  column1 
 ---------
 (0 rows)
@@ -1864,12 +1865,12 @@ SELECT tg_set_inclusive_read_areas('ri_table1', 'ri_table2');
 (1 row)
 
 BEGIN;
-SELECT * FROM ri_table1;
+SELECT * FROM ri_table1 ORDER BY column1;
  column1 
 ---------
 (0 rows)
 
-SELECT * FROM ri_table2;
+SELECT * FROM ri_table2 ORDER BY column1;
  column1 
 ---------
 (0 rows)
@@ -1902,7 +1903,7 @@ SELECT tg_set_inclusive_read_areas('ri_table3');
 (1 row)
 
 BEGIN;
-SELECT * FROM ri_table1;
+SELECT * FROM ri_table1 ORDER BY column1;
 ERROR:  Tsurugi::start_transaction() failed. (13)
 Tsurugi Server TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false read_areas_inclusive:{ ri_table3 })
 COMMIT;
@@ -1936,10 +1937,10 @@ SELECT tg_set_inclusive_read_areas('ri_table3', 'ri_table4');
 (1 row)
 
 BEGIN;
-SELECT * FROM ri_table1;
+SELECT * FROM ri_table1 ORDER BY column1;
 ERROR:  Tsurugi::start_transaction() failed. (13)
 Tsurugi Server TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false read_areas_inclusive:{ ri_table3 ri_table4 })
-SELECT * FROM ri_table2;
+SELECT * FROM ri_table2 ORDER BY column1;
 ERROR:  current transaction is aborted, commands ignored until end of transaction block
 COMMIT;
 SELECT tg_set_inclusive_read_areas('ri_table1', 'ri_table3');
@@ -1972,7 +1973,7 @@ SELECT tg_set_inclusive_read_areas('ri_table1', 'ri_table3');
 (1 row)
 
 BEGIN;
-SELECT * FROM ri_table1;
+SELECT * FROM ri_table1 ORDER BY column1;
 ERROR:  Tsurugi::start_transaction() failed. (13)
 Tsurugi Server TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false read_areas_inclusive:{ ri_table1 ri_table3 })
 COMMIT;
@@ -2056,7 +2057,7 @@ SELECT tg_set_exclusive_read_areas('re_table1');
 (1 row)
 
 BEGIN;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
      400
@@ -2093,7 +2094,7 @@ SELECT tg_set_exclusive_read_areas('re_table1', 're_table2');
 (1 row)
 
 BEGIN;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
      400
@@ -2127,7 +2128,7 @@ SELECT tg_set_exclusive_read_areas('re_table3');
 (1 row)
 
 BEGIN;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
 ERROR:  Tsurugi::start_transaction() failed. (13)
 Tsurugi Server TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false read_areas_exclusive:{ re_table3 })
 COMMIT;
@@ -2161,7 +2162,7 @@ SELECT tg_set_exclusive_read_areas('re_table3', 're_table4');
 (1 row)
 
 BEGIN;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
 ERROR:  Tsurugi::start_transaction() failed. (13)
 Tsurugi Server TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false read_areas_exclusive:{ re_table3 re_table4 })
 COMMIT;
@@ -2195,7 +2196,7 @@ SELECT tg_set_exclusive_read_areas('wp_table1', 'wp_table3');
 (1 row)
 
 BEGIN;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
 ERROR:  Tsurugi::start_transaction() failed. (13)
 Tsurugi Server TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false read_areas_exclusive:{ wp_table1 wp_table3 })
 COMMIT;

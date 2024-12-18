@@ -12,56 +12,56 @@ PREPARE all_chg_trg_table_name (varchar(80))      	AS UPDATE trg_table SET name 
 PREPARE all_chg_trg_table_num (int)      			AS UPDATE trg_table SET num = $1;
 PREPARE del_trg_table_num  (int)              		AS DELETE FROM trg_table WHERE num = $1;
 PREPARE del_trg_table_name (varchar(80))      		AS DELETE FROM trg_table WHERE name = $1;
-PREPARE all_select_table							AS SELECT * FROM trg_table;
-PREPARE all_select_table_num (int)					AS SELECT * FROM trg_table WHERE num > $1;
-PREPARE all_select_table_num2 (int, int)			AS SELECT * FROM trg_table WHERE num > $1 AND num < $2;
-PREPARE all_select_table_name (varchar(80))			AS SELECT * FROM trg_table WHERE name = $1;
+PREPARE all_select_table							AS SELECT * FROM trg_table order by id;
+PREPARE all_select_table_num (int)					AS SELECT * FROM trg_table WHERE num > $1 order by id;
+PREPARE all_select_table_num2 (int, int)			AS SELECT * FROM trg_table WHERE num > $1 AND num < $2 order by id;
+PREPARE all_select_table_name (varchar(80))			AS SELECT * FROM trg_table WHERE name = $1 order by id;
 
-select * from trg_table;
+select * from trg_table order by id;
 
 EXECUTE add_trg_table (1, 11, 'aaa');
-select * from trg_table;
+select * from trg_table order by id;
 EXECUTE add_trg_table (2, 22, 'bbb');
-select * from trg_table;
+select * from trg_table order by id;
 EXECUTE add_trg_table (3, 33, 'ccc');
-select * from trg_table;
+select * from trg_table order by id;
 EXECUTE add_trg_table (4, 44, 'ddd');
-select * from trg_table;
+select * from trg_table order by id;
 EXECUTE add_trg_table_num (5, 55);
-select * from trg_table;
+select * from trg_table order by id;
 EXECUTE add_trg_table_name (6, 'fff');
 
-select * from trg_table;
+select * from trg_table order by id;
 EXECUTE all_select_table;
-select * from trg_table where num > 30;
+select * from trg_table where num > 30 order by id;
 EXECUTE all_select_table_num(30);
-select * from trg_table where num > 20 and num < 50;
+select * from trg_table where num > 20 and num < 50 order by id;
 EXECUTE all_select_table_num2(20, 50);
-select * from trg_table where name = 'fff';
+select * from trg_table where name = 'fff' order by id;
 EXECUTE all_select_table_name('fff');
 
 EXECUTE chg_trg_table_name (1, 'xyz');
-select * from trg_table;
+select * from trg_table order by id;
 EXECUTE chg_trg_table_num (2, 789);
-select * from trg_table;
+select * from trg_table order by id;
 EXECUTE chg_trg_table_88_name (3, 'xyz');
-select * from trg_table;
+select * from trg_table order by id;
 EXECUTE chg_trg_table_88_name (4, 'xyz');
-select * from trg_table;
+select * from trg_table order by id;
 
 EXECUTE del_trg_table_num  (789);
-select * from trg_table;
+select * from trg_table order by id;
 EXECUTE del_trg_table_name ('xyz');
-select * from trg_table;
+select * from trg_table order by id;
 
 EXECUTE all_chg_trg_table_name ('abc');
-select * from trg_table;
+select * from trg_table order by id;
 EXECUTE all_chg_trg_table_num (123);
-select * from trg_table;
+select * from trg_table order by id;
 
 PREPARE add_trg_timedate_def (int)						AS INSERT INTO trg_timedate (id) VALUES ($1);
 EXECUTE add_trg_timedate_def (1);
-select * from trg_timedate;
+select * from trg_timedate order by id;
 
 PREPARE add_trg_timedate_tms (int, timestamp)			AS INSERT INTO trg_timedate (id, tms) VALUES ($1, $2);
 EXECUTE add_trg_timedate_tms (10, '1999-01-08 04:05:06');
@@ -74,7 +74,7 @@ EXECUTE add_trg_timedate_tms (15, 'infinity');
 -- Can't test with regression EXECUTE add_trg_timedate_tms (9999, 'tomorrow');
 -- Can't test with regression EXECUTE add_trg_timedate_tms (9999, 'yesterday');
 EXECUTE add_trg_timedate_tms (16, '2004-10-19 allballs');
-select * from trg_timedate;
+select * from trg_timedate order by id;
 
 PREPARE add_trg_timedate_dt (int, date)					AS INSERT INTO trg_timedate (id, dt) VALUES ($1, $2);
 EXECUTE add_trg_timedate_dt (20, '1999-01-08');
@@ -93,7 +93,7 @@ EXECUTE add_trg_timedate_dt (28, '990108');
 EXECUTE add_trg_timedate_dt (29, '1999.008');
 EXECUTE add_trg_timedate_dt (30, 'J2451187');
 EXECUTE add_trg_timedate_dt (9999, 'January 8, 99 BC');  -- error
-select * from trg_timedate;
+select * from trg_timedate order by id;
 
 PREPARE add_trg_timedate_tm (int, time)					AS INSERT INTO trg_timedate (id, tm) VALUES ($1, $2);
 EXECUTE add_trg_timedate_tm (50, '04:05:06.789');
@@ -108,7 +108,7 @@ EXECUTE add_trg_timedate_tm (58, '04:05-08:00');
 EXECUTE add_trg_timedate_tm (59, '040506-08');
 EXECUTE add_trg_timedate_tm (60, '04:05:06 PST');
 EXECUTE add_trg_timedate_tm (61, '2003-04-12 04:05:06 America/New_York');
-select * from trg_timedate;
+select * from trg_timedate order by id;
 
 PREPARE trg_timedate_where_tms (timestamp)				AS DELETE FROM trg_timedate WHERE tms = $1;
 PREPARE trg_timedate_where_dt (date)					AS DELETE FROM trg_timedate WHERE dt = $1;
@@ -119,17 +119,17 @@ EXECUTE trg_timedate_where_tms (TIMESTAMP '2004-10-19 10:23:54');
 EXECUTE trg_timedate_where_tms ('epoch');
 EXECUTE trg_timedate_where_tms ('infinity');
 EXECUTE trg_timedate_where_tms ('2004-10-19 allballs');
-select * from trg_timedate;
+select * from trg_timedate order by id;
 
 EXECUTE trg_timedate_where_dt ('1999-01-08');
 EXECUTE trg_timedate_where_dt ('01/02/03');
-select * from trg_timedate;
+select * from trg_timedate order by id;
 
 EXECUTE trg_timedate_where_tm ('04:05:06.789');
 EXECUTE trg_timedate_where_tm ('040506');
 EXECUTE trg_timedate_where_tm ('04:05');
 EXECUTE trg_timedate_where_tm ('04:05 PM');
-select * from trg_timedate;
+select * from trg_timedate order by id;
 
 -- Can't test with regression EXECUTE add_trg_timedate_tms (9901, clock_timestamp());
 -- Can't test with regression EXECUTE add_trg_timedate_dt  (9902, current_date);
@@ -147,19 +147,19 @@ EXECUTE add_trg_timedate_tms (15, make_timestamptz(2013, 7, 15, 8, 15, 23.5));
 -- Can't test with regression EXECUTE add_trg_timedate_tms (9908, statement_timestamp());
 -- Can't test with regression EXECUTE add_trg_timedate_tms (9909, transaction_timestamp());
 EXECUTE add_trg_timedate_tms (16, to_timestamp(1284352323));
-select * from trg_timedate;
+select * from trg_timedate order by id;
 
 EXECUTE trg_timedate_where_tms (date_trunc('hour', timestamp '2001-02-16 20:38:40'));
 EXECUTE trg_timedate_where_tms (date_trunc('day', timestamptz '2001-02-16 20:38:40+00', 'Australia/Sydney'));
 EXECUTE trg_timedate_where_tms (make_timestamp(2013, 7, 15, 8, 15, 23.5));
 EXECUTE trg_timedate_where_tms (to_timestamp(1284352323));
-select * from trg_timedate;
+select * from trg_timedate order by id;
 
 EXECUTE trg_timedate_where_dt (make_date(2013, 7, 15));
-select * from trg_timedate;
+select * from trg_timedate order by id;
 
 EXECUTE trg_timedate_where_tm (make_time(8, 15, 23.5));
-select * from trg_timedate;
+select * from trg_timedate order by id;
 
 PREPARE add_trg_timetz (int, TIME, TIMETZ)
                     AS INSERT INTO trg_timetz (id, tm, tmtz) VALUES ($1, $2, $3);
@@ -207,8 +207,8 @@ select * from trg_timetz; */
 
 /* check timestamp with time zone in UTC */
 set session timezone to 'UTC';
-select * from trg_timestamptz;
+select * from trg_timestamptz order by id;
 
 /* check timestamp with time zone in Asia/Tokyo */
 set session timezone to 'Asia/Tokyo';
-select * from trg_timestamptz;
+select * from trg_timestamptz order by id;

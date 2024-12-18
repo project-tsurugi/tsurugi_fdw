@@ -79,11 +79,11 @@ SELECT tg_set_exclusive_read_areas('');
 
 /* Implicit transaction */
 INSERT INTO udf_table1 (column1) VALUES (100);
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
 UPDATE udf_table1 SET column1 = column1+1;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
 DELETE FROM udf_table1 WHERE column1 = 101;
-SELECT * from udf_table1;
+SELECT * from udf_table1 ORDER BY column1;
 
 /* Explicit transaction (begin) */
 BEGIN;
@@ -91,7 +91,7 @@ INSERT INTO udf_table1 (column1) VALUES (100);
 UPDATE udf_table1 SET column1 = column1+2;
 DELETE FROM udf_table1 WHERE column1 = 102;
 COMMIT;
-SELECT * from udf_table1;
+SELECT * from udf_table1 ORDER BY column1;
 
 /* Explicit transaction (start transaction) */
 START TRANSACTION;
@@ -99,77 +99,77 @@ INSERT INTO udf_table1 (column1) VALUES (100);
 UPDATE udf_table1 SET column1 = column1+3;
 DELETE FROM udf_table1 WHERE column1 = 103;
 COMMIT;
-SELECT * from udf_table1;
+SELECT * from udf_table1 ORDER BY column1;
 
 /* Explicit transaction (commit) */
 BEGIN;
 INSERT INTO udf_table1 (column1) VALUES (200);
 COMMIT;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
 
 BEGIN;
 UPDATE udf_table1 SET column1 = column1+1;
 COMMIT;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
 
 BEGIN;
 DELETE FROM udf_table1 WHERE column1 = 201;
 COMMIT;
-SELECT * from udf_table1;
+SELECT * from udf_table1 ORDER BY column1;
 
 /* Explicit transaction (end) */
 BEGIN;
 INSERT INTO udf_table1 (column1) VALUES (200);
 END;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
 
 BEGIN;
 UPDATE udf_table1 SET column1 = column1+2;
 END;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
 
 BEGIN;
 DELETE FROM udf_table1 WHERE column1 = 202;
 END;
-SELECT * from udf_table1;
+SELECT * from udf_table1 ORDER BY column1;
 
 /* Explicit transaction (rollback) */
 BEGIN;
 INSERT INTO udf_table1 (column1) VALUES (300);
 ROLLBACK;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
 
 INSERT INTO udf_table1 (column1) VALUES (400);
 BEGIN;
 UPDATE udf_table1 SET column1 = column1+1;
 ROLLBACK;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
 BEGIN;
 DELETE FROM udf_table1 WHERE column1 = 400;
 ROLLBACK;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
 
 BEGIN;
 INSERT INTO udf_table1 (column1) VALUES (300);
 INSERT INTO udf_table2 (column1) VALUES (400);
 COMMIT;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
 
 /* Explicit transaction (abort) */
 BEGIN;
 INSERT INTO udf_table1 (column1) VALUES (300);
 ABORT;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
 
 BEGIN;
 UPDATE udf_table1 SET column1 = column1+2;
 ABORT;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
 
 BEGIN;
 DELETE FROM udf_table1 WHERE column1 = 400;
 ABORT;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
 
 DELETE FROM udf_table1 WHERE column1 = 400;
 
@@ -179,31 +179,31 @@ DELETE FROM udf_table1 WHERE column1 = 400;
 \echo :AUTOCOMMIT
 
 BEGIN;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
 COMMIT;
 
 INSERT INTO udf_table1 (column1) VALUES (410);
 COMMIT;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
 DELETE FROM udf_table1 WHERE column1 = 410;
 COMMIT;
 
 BEGIN;
 INSERT INTO udf_table1 (column1) VALUES (420);
 COMMIT;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
 DELETE FROM udf_table1 WHERE column1 = 420;
 COMMIT;
 
 INSERT INTO udf_table1 (column1) VALUES (430);
 ROLLBACK;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
 COMMIT;
 
 BEGIN;
 INSERT INTO udf_table1 (column1) VALUES (440);
 ROLLBACK;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
 COMMIT;
 
 
@@ -220,39 +220,39 @@ SELECT tg_set_write_preserve('wp_table1', 'wp_table2');
 INSERT INTO wp_table1 (column1) VALUES (100);
 INSERT INTO wp_table2 (column1) VALUES (100);
 INSERT INTO udf_table1 (column1) VALUES (500); -- error
-SELECT * FROM wp_table1;
-SELECT * FROM wp_table2;
-SELECT * FROM udf_table1;
+SELECT * FROM wp_table1 ORDER BY column1;
+SELECT * FROM wp_table2 ORDER BY column1;
+SELECT * FROM udf_table1 ORDER BY column1;
 UPDATE wp_table1 SET column1 = column1+1;
 UPDATE wp_table2 SET column1 = column1+1;
 UPDATE udf_table1 SET column1 = column1+1; -- error
-SELECT * FROM wp_table1;
-SELECT * FROM wp_table2;
-SELECT * FROM udf_table1;
+SELECT * FROM wp_table1 ORDER BY column1;
+SELECT * FROM wp_table2 ORDER BY column1;
+SELECT * FROM udf_table1 ORDER BY column1;
 DELETE FROM wp_table1 WHERE column1 = 101;
 DELETE FROM wp_table2 WHERE column1 = 101;
 DELETE FROM udf_table1 WHERE column1 = 400; -- error
-SELECT * FROM wp_table1;
-SELECT * FROM wp_table2;
-SELECT * FROM udf_table1;
+SELECT * FROM wp_table1 ORDER BY column1;
+SELECT * FROM wp_table2 ORDER BY column1;
+SELECT * FROM udf_table1 ORDER BY column1;
 
 SELECT tg_set_write_preserve('wp_table1');
 INSERT INTO wp_table1 (column1) VALUES (200);
 INSERT INTO wp_table2 (column1) VALUES (200); -- error
 INSERT INTO udf_table1 (column1) VALUES (500); -- error
-SELECT * FROM wp_table1;
-SELECT * FROM wp_table2;
-SELECT * FROM udf_table1;
+SELECT * FROM wp_table1 ORDER BY column1;
+SELECT * FROM wp_table2 ORDER BY column1;
+SELECT * FROM udf_table1 ORDER BY column1;
 UPDATE wp_table1 SET column1 = column1+1;
 UPDATE udf_table1 SET column1 = column1+1; -- error
-SELECT * FROM wp_table1;
-SELECT * FROM wp_table2;
-SELECT * FROM udf_table1;
+SELECT * FROM wp_table1 ORDER BY column1;
+SELECT * FROM wp_table2 ORDER BY column1;
+SELECT * FROM udf_table1 ORDER BY column1;
 DELETE FROM wp_table1 WHERE column1 = 201;
 DELETE FROM udf_table1 WHERE column1 = 400; -- error
-SELECT * FROM wp_table1;
-SELECT * FROM wp_table2;
-SELECT * FROM udf_table1;
+SELECT * FROM wp_table1 ORDER BY column1;
+SELECT * FROM wp_table2 ORDER BY column1;
+SELECT * FROM udf_table1 ORDER BY column1;
 
 SELECT tg_set_transaction('short'); -- reset tableName
 
@@ -279,20 +279,20 @@ SELECT tg_set_transaction('short'); -- reset tableName
 SELECT tg_set_transaction('long');
 SELECT tg_set_exclusive_read_areas('re_table1');
 
-SELECT * FROM ri_table1; -- success
-SELECT * FROM ri_table2; -- success
+SELECT * FROM ri_table1 ORDER BY column1; -- success
+SELECT * FROM ri_table2 ORDER BY column1; -- success
 /*
 エラー詳細に含まれるTIDが毎回異なる値になるためテスト対象外とする
 SELECT * FROM re_table1; -- error
 ERROR:  Tsurugi Server INACTIVE_TRANSACTION_EXCEPTION (SQL-02025: serialization failed transaction:TID-00000000000004ec shirakami response Status=ERR_READ_AREA_VIOLATION {reason_code:CC_LTX_READ_AREA_VIOLATION, storage_name:re_table1, no key information} )
 */
-SELECT * FROM re_table2; -- success
+SELECT * FROM re_table2 ORDER BY column1; -- success
 
 /* 通常はどちらか一方のみを指定する使い方になることを想定 */
 SELECT tg_set_inclusive_read_areas('ri_table1');
 SELECT tg_set_exclusive_read_areas('re_table1');
 
-SELECT * FROM ri_table1; -- success
+SELECT * FROM ri_table1 ORDER BY column1; -- success
 /*
 エラー詳細に含まれるTIDが毎回異なる値になるためテスト対象外とする
 SELECT * FROM ri_table2; -- error
@@ -305,10 +305,10 @@ ERROR:  Tsurugi Server INACTIVE_TRANSACTION_EXCEPTION (SQL-02025: serialization 
 
 SELECT tg_set_transaction('short');
 
-SELECT * FROM ri_table1; -- success
-SELECT * FROM ri_table2; -- success
-SELECT * FROM re_table1; -- success
-SELECT * FROM re_table2; -- success
+SELECT * FROM ri_table1 ORDER BY column1; -- success
+SELECT * FROM ri_table2 ORDER BY column1; -- success
+SELECT * FROM re_table1 ORDER BY column1; -- success
+SELECT * FROM re_table2 ORDER BY column1; -- success
 
 SELECT tg_set_write_preserve('');
 SELECT tg_set_inclusive_read_areas('');
@@ -321,7 +321,7 @@ SELECT tg_set_write_preserve('wp_table1');
 BEGIN;
 INSERT INTO wp_table1 (column1) VALUES (100);
 COMMIT;
-SELECT * FROM wp_table1;
+SELECT * FROM wp_table1 ORDER BY column1;
 DELETE FROM udf_table1 WHERE column1 = 100;
 
 SELECT tg_set_write_preserve('wp_table1', 'wp_table2');
@@ -329,18 +329,18 @@ BEGIN;
 INSERT INTO wp_table1 (column1) VALUES (200);
 INSERT INTO wp_table2 (column1) VALUES (300);
 COMMIT;
-SELECT * FROM wp_table1;
-SELECT * FROM wp_table2;
+SELECT * FROM wp_table1 ORDER BY column1;
+SELECT * FROM wp_table2 ORDER BY column1;
 
 SELECT tg_set_write_preserve('wp_table3');
 BEGIN;
-SELECT * FROM wp_table1;
+SELECT * FROM wp_table1 ORDER BY column1;
 COMMIT;
 
 SELECT tg_set_write_preserve('wp_table3', 'wp_table4');
 BEGIN;
-SELECT * FROM wp_table1;
-SELECT * FROM wp_table2;
+SELECT * FROM wp_table1 ORDER BY column1;
+SELECT * FROM wp_table2 ORDER BY column1;
 COMMIT;
 
 SELECT tg_set_write_preserve('wp_table1', 'wp_table3');
@@ -355,29 +355,29 @@ SELECT tg_set_transaction('long');
 
 SELECT tg_set_inclusive_read_areas('ri_table1');
 BEGIN;
-SELECT * FROM ri_table1;
+SELECT * FROM ri_table1 ORDER BY column1;
 COMMIT;
 
 SELECT tg_set_inclusive_read_areas('ri_table1', 'ri_table2'); 
 BEGIN;
-SELECT * FROM ri_table1;
-SELECT * FROM ri_table2;
+SELECT * FROM ri_table1 ORDER BY column1;
+SELECT * FROM ri_table2 ORDER BY column1;
 COMMIT;
 
 SELECT tg_set_inclusive_read_areas('ri_table3');
 BEGIN;
-SELECT * FROM ri_table1;
+SELECT * FROM ri_table1 ORDER BY column1;
 COMMIT;
 
 SELECT tg_set_inclusive_read_areas('ri_table3', 'ri_table4');
 BEGIN;
-SELECT * FROM ri_table1;
-SELECT * FROM ri_table2;
+SELECT * FROM ri_table1 ORDER BY column1;
+SELECT * FROM ri_table2 ORDER BY column1;
 COMMIT;
 
 SELECT tg_set_inclusive_read_areas('ri_table1', 'ri_table3');
 BEGIN;
-SELECT * FROM ri_table1;
+SELECT * FROM ri_table1 ORDER BY column1;
 COMMIT;
 
 SELECT tg_set_inclusive_read_areas('');
@@ -387,27 +387,27 @@ SELECT tg_set_transaction('long');
 
 SELECT tg_set_exclusive_read_areas('re_table1'); 
 BEGIN;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
 COMMIT;
 
 SELECT tg_set_exclusive_read_areas('re_table1', 're_table2');
 BEGIN;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
 COMMIT;
 
 SELECT tg_set_exclusive_read_areas('re_table3');
 BEGIN;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
 COMMIT;
 
 SELECT tg_set_exclusive_read_areas('re_table3', 're_table4');
 BEGIN;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
 COMMIT;
 
 SELECT tg_set_exclusive_read_areas('wp_table1', 'wp_table3');
 BEGIN;
-SELECT * FROM udf_table1;
+SELECT * FROM udf_table1 ORDER BY column1;
 COMMIT;
 
 SELECT tg_set_exclusive_read_areas('');
