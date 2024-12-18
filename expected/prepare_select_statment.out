@@ -87,7 +87,7 @@ PREPARE select_t2_group1
 PREPARE select_t2_group2_ng1
 	AS SELECT count(c1) AS "count(c1)", sum(c2) AS "sum(c2)", c7 FROM t2_prepare_select_statement GROUP BY c7 HAVING sum(c2) > 55 ORDER BY c7;
 ERROR:  Tsurugi::prepare() failed. (13)
-	sql:SELECT count(c1) AS 'count(c1)', sum(c2) AS 'sum(c2)', c7 FROM t2_prepare_select_statement GROUP BY c7 HAVING sum(c2) > 55 ORDER BY c7
+	sql:SELECT count(c1) AS 'count(c1)', sum(c2) AS 'sum(c2)', c7 FROM t2_prepare_select_statement GROUP BY c7 HAVING sum(c2) > 55  ORDER BY c7
 Tsurugi Server SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "'count(c1)'", expected one of {ASC, DESC, FIRST, IGNORE, KEY, ...}" region:"region(begin=20, end=31)")
 /* having support. (tsurugi-issue#739) */
 PREPARE select_t2_group2
