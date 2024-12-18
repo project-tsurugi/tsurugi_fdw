@@ -31,6 +31,7 @@ bool after_prepare_stmt(const PrepareStmt* stmts, const char* queryString);
 bool befor_execute_stmt(const ExecuteStmt* stmts, const char *queryString);
 bool after_execute_stmt(const ExecuteStmt* stmts);
 
+extern bool IsTsurugifdwInstalled(void);
 #ifdef __cplusplus
 }
 #endif
