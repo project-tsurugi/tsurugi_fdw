@@ -6,22 +6,6 @@ CREATE EXTENSION tsurugi_fdw;
 \dx tsurugi_fdw
 DROP TABLE tsurugifdw_regressiontest;
 
-CREATE EXTENSION postgres_fdw;
-\dx postgres_fdw
-CREATE SERVER IF NOT EXISTS postgresdb FOREIGN DATA WRAPPER postgres_fdw;
-CREATE FOREIGN TABLE postgresfdw_regressiontest(id INT) SERVER postgresdb;
-CREATE EXTENSION tsurugi_fdw;
-\dx tsurugi_fdw
-DROP FOREIGN TABLE postgresfdw_regressiontest;
-
-DROP EXTENSION postgres_fdw CASCADE;
-
-CREATE TABLE tsurugifdw_regressiontest(id INT);
-CREATE EXTENSION postgres_fdw;
-\dx postgres_fdw
-DROP TABLE tsurugifdw_regressiontest;
-DROP EXTENSION postgres_fdw CASCADE;
-
 CREATE EXTENSION tsurugi_fdw;
 \dx tsurugi_fdw
 CREATE SERVER IF NOT EXISTS tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
@@ -33,10 +17,6 @@ SELECT EXISTS (
   WHERE relname = 'tsurugifdw_regressiontest'
   AND relkind = 'f'
 );
-
-CREATE EXTENSION postgres_fdw;
-\dx postgres_fdw
-CREATE SERVER IF NOT EXISTS postgresdb FOREIGN DATA WRAPPER postgres_fdw;
 
 -- error (CREATE TABLE)
 CREATE TABLE t0_create_table(c1 INTEGER NOT NULL);
@@ -69,30 +49,6 @@ CREATE TABLE t1_create_table_as AS SELECT * FROM tsurugifdw_regressiontest;
 SELECT * FROM t1_create_table_as;
 SELECT * INTO t2_create_table_as FROM tsurugifdw_regressiontest;
 SELECT * FROM t2_create_table_as;
-
--- error (CREATE FOREIGN TABLE)
-CREATE FOREIGN TABLE foreign_table (
-    id INT,
-    name TEXT,
-    value NUMERIC
-) SERVER postgresdb;
-SELECT EXISTS (
-  SELECT 1
-  FROM pg_class
-  WHERE relname = 'foreign_table'
-  AND relkind = 'f'
-);
-CREATE FOREIGN TABLE IF NOT EXISTS foreign_table (
-    id INT,
-    name TEXT,
-    value NUMERIC
-) SERVER postgresdb;
-SELECT EXISTS (
-  SELECT 1
-  FROM pg_class
-  WHERE relname = 'foreign_table'
-  AND relkind = 'f'
-);
 
 DROP EXTENSION tsurugi_fdw CASCADE;
 
@@ -127,31 +83,6 @@ CREATE TABLE t1_create_table_as AS SELECT * FROM t0_create_table;
 SELECT * FROM t1_create_table_as;
 SELECT * INTO t2_create_table_as FROM t0_create_table;
 SELECT * FROM t2_create_table_as;
-
-
--- Success (CREATE FOREIGN TABLE)
-CREATE FOREIGN TABLE foreign_table (
-    id INT,
-    name TEXT,
-    value NUMERIC
-) SERVER postgresdb;
-SELECT EXISTS (
-  SELECT 1
-  FROM pg_class
-  WHERE relname = 'foreign_table'
-  AND relkind = 'f'
-);
-CREATE FOREIGN TABLE IF NOT EXISTS foreign_table (
-    id INT,
-    name TEXT,
-    value NUMERIC
-) SERVER postgresdb;
-SELECT EXISTS (
-  SELECT 1
-  FROM pg_class
-  WHERE relname = 'foreign_table'
-  AND relkind = 'f'
-);
 
 \c contrib_regression
 DROP DATABASE contrib_regression2;

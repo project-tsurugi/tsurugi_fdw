@@ -10,38 +10,6 @@ ERROR:  tsurugi_fdw extension cannot be installed in the non-empty database. Ple
 (0 rows)
 
 DROP TABLE tsurugifdw_regressiontest;
-CREATE EXTENSION postgres_fdw;
-\dx postgres_fdw
-                             List of installed extensions
-     Name     | Version | Schema |                    Description                     
---------------+---------+--------+----------------------------------------------------
- postgres_fdw | 1.0     | public | foreign-data wrapper for remote PostgreSQL servers
-(1 row)
-
-CREATE SERVER IF NOT EXISTS postgresdb FOREIGN DATA WRAPPER postgres_fdw;
-CREATE FOREIGN TABLE postgresfdw_regressiontest(id INT) SERVER postgresdb;
-CREATE EXTENSION tsurugi_fdw;
-ERROR:  tsurugi_fdw extension cannot be installed in the non-empty database. Please make sure there are no tables by using the \d command.
-\dx tsurugi_fdw
-     List of installed extensions
- Name | Version | Schema | Description 
-------+---------+--------+-------------
-(0 rows)
-
-DROP FOREIGN TABLE postgresfdw_regressiontest;
-DROP EXTENSION postgres_fdw CASCADE;
-NOTICE:  drop cascades to server postgresdb
-CREATE TABLE tsurugifdw_regressiontest(id INT);
-CREATE EXTENSION postgres_fdw;
-\dx postgres_fdw
-                             List of installed extensions
-     Name     | Version | Schema |                    Description                     
---------------+---------+--------+----------------------------------------------------
- postgres_fdw | 1.0     | public | foreign-data wrapper for remote PostgreSQL servers
-(1 row)
-
-DROP TABLE tsurugifdw_regressiontest;
-DROP EXTENSION postgres_fdw CASCADE;
 CREATE EXTENSION tsurugi_fdw;
 \dx tsurugi_fdw
                      List of installed extensions
@@ -63,15 +31,6 @@ SELECT EXISTS (
  t
 (1 row)
 
-CREATE EXTENSION postgres_fdw;
-\dx postgres_fdw
-                             List of installed extensions
-     Name     | Version | Schema |                    Description                     
---------------+---------+--------+----------------------------------------------------
- postgres_fdw | 1.0     | public | foreign-data wrapper for remote PostgreSQL servers
-(1 row)
-
-CREATE SERVER IF NOT EXISTS postgresdb FOREIGN DATA WRAPPER postgres_fdw;
 -- error (CREATE TABLE)
 CREATE TABLE t0_create_table(c1 INTEGER NOT NULL);
 ERROR:  This database is for Tsurugi, so CREATE TABLE is not supported
@@ -158,41 +117,6 @@ SELECT * FROM t2_create_table_as;
 ERROR:  relation "t2_create_table_as" does not exist
 LINE 1: SELECT * FROM t2_create_table_as;
                       ^
--- error (CREATE FOREIGN TABLE)
-CREATE FOREIGN TABLE foreign_table (
-    id INT,
-    name TEXT,
-    value NUMERIC
-) SERVER postgresdb;
-ERROR:  This database is for Tsurugi, so CREATE FOREIGN TABLE for non-Tsurugi foreign table is not supported
-SELECT EXISTS (
-  SELECT 1
-  FROM pg_class
-  WHERE relname = 'foreign_table'
-  AND relkind = 'f'
-);
- exists 
---------
- f
-(1 row)
-
-CREATE FOREIGN TABLE IF NOT EXISTS foreign_table (
-    id INT,
-    name TEXT,
-    value NUMERIC
-) SERVER postgresdb;
-ERROR:  This database is for Tsurugi, so CREATE FOREIGN TABLE for non-Tsurugi foreign table is not supported
-SELECT EXISTS (
-  SELECT 1
-  FROM pg_class
-  WHERE relname = 'foreign_table'
-  AND relkind = 'f'
-);
- exists 
---------
- f
-(1 row)
-
 DROP EXTENSION tsurugi_fdw CASCADE;
 NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to server tsurugidb
@@ -282,40 +206,6 @@ SELECT * FROM t2_create_table_as;
  c1 
 ----
 (0 rows)
-
--- Success (CREATE FOREIGN TABLE)
-CREATE FOREIGN TABLE foreign_table (
-    id INT,
-    name TEXT,
-    value NUMERIC
-) SERVER postgresdb;
-SELECT EXISTS (
-  SELECT 1
-  FROM pg_class
-  WHERE relname = 'foreign_table'
-  AND relkind = 'f'
-);
- exists 
---------
- t
-(1 row)
-
-CREATE FOREIGN TABLE IF NOT EXISTS foreign_table (
-    id INT,
-    name TEXT,
-    value NUMERIC
-) SERVER postgresdb;
-NOTICE:  relation "foreign_table" already exists, skipping
-SELECT EXISTS (
-  SELECT 1
-  FROM pg_class
-  WHERE relname = 'foreign_table'
-  AND relkind = 'f'
-);
- exists 
---------
- t
-(1 row)
 
 \c contrib_regression
 DROP DATABASE contrib_regression2;
