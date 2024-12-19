@@ -41,6 +41,7 @@ public:
     static void end();
     static ERROR_CODE tsurugi_error(ogawayama::stub::tsurugi_error_code& code);
     static std::string get_error_detail(ERROR_CODE error);
+    static std::string get_error_message(ERROR_CODE error_code);
 	Tsurugi() = delete;
 
 private:

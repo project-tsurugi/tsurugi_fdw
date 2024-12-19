@@ -20,6 +20,7 @@
 #include <string_view>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/format.hpp>
 
 #include "ogawayama/stub/error_code.h"
 #include "ogawayama/stub/api.h"
@@ -458,4 +459,67 @@ std::string Tsurugi::get_error_detail(ERROR_CODE error)
 		}
 	}
 	return error_detail;
+}
+
+/*
+	get detail message of tsurugi server error.
+*/
+std::string Tsurugi::get_error_message(ERROR_CODE error_code)
+{
+	std::string message = "No detail message.";
+
+	elog(LOG, "Tsurugi::get_error_message() started");
+
+	if (error_code != ERROR_CODE::SERVER_ERROR)
+	{
+		elog(LOG, "Error code is not SERVER_ERROR. (error code: %s)", 
+			stub::error_name(error_code).data());
+		return message;
+	}
+
+	if (connection_ == nullptr)
+	{
+		elog(LOG, "There is no connection for Tsurugi.");
+		return message;
+	}
+
+	//  get error message from Tsurugi.
+	stub::tsurugi_error_code error{};
+	ERROR_CODE ret_code = connection_->tsurugi_error(error);
+	if (ret_code == ERROR_CODE::OK)
+	{
+		elog(LOG, "ERROR_CODE::SERVER_ERROR\n\t"
+					"tsurugi_error_code.type: %d\n\t"
+					"                   code: %d\n\t"
+					"                   name: %s\n\t"
+					"                 detail: %s\n\t"
+					"      supplemental_text: %s",
+					(int) error.type, error.code, error.name.c_str(),
+					error.detail.c_str(), error.supplemental_text.c_str());
+
+		std::string detail_code;
+		switch (error.type)
+		{
+			case stub::tsurugi_error_code::tsurugi_error_type::sql_error:
+				detail_code = "SQL-" + (boost::format("%05d") % error.code).str();
+				break;
+			case stub::tsurugi_error_code::tsurugi_error_type::framework_error:
+				detail_code = "SCD-" + (boost::format("%05d") % error.code).str();
+				break;
+			default:
+				elog(WARNING, "Unknown error type. (type: %d)", (int) error.type);
+				detail_code = "UNKNOWN-" + (boost::format("%05d") % error.code).str();
+				break;
+		}
+		// build message.
+		message = "Tsurugi Server Error: " + error.name 
+									+ " (" + detail_code + ": " + error.detail + ")";
+	}
+	else
+	{
+		elog(ERROR, "It failed to get Tsurugi Server Error. (erro code: %s)", 
+				stub::error_name(ret_code).data());
+	}
+
+	return message;
 }
