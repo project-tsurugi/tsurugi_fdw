@@ -38,9 +38,11 @@ PostgreSQLとTsurugiはアーキテクチャおよびその性質が異なるた
 
 ### 制約事項
 
-Tsurugi FDW 1.0.0では以下の機能を制限とします。
+現バージョンでは以下の機能を制限とします。
 
 - Tsurugiのバイナリデータ型（BINARY/VARBINARY/BINARY VARYING）を操作することはできません。
+
+- SQLのPREPAREコマンドでプリペアするSELECT文にLIMIT句（結果行の一部分のみ返す）を使用することはできません。
 
 ### サードパーティライセンス
 
