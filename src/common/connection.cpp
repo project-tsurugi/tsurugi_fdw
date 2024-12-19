@@ -131,12 +131,8 @@ void begin_remote_xact(ConnCacheEntry *entry)
 		ERROR_CODE error = Tsurugi::start_transaction();
 		if (error != ERROR_CODE::OK)
 		{
-        	std::string error_detail = Tsurugi::get_error_detail(error);
-        	if (error_detail.empty()) {
-            	elog(ERROR, "Tsurugi::start_transaction() failed. (%d)", (int) error);
-        	} else {
-            	elog(ERROR, "Tsurugi::start_transaction() failed. (%d)\n%s", (int) error, error_detail.c_str());
-			}
+			elog(ERROR, "Tsurugi::start_transaction() failed. (%d)\n%s", 
+                (int) error, Tsurugi::get_error_message(error).c_str());
     	}
 		entry->xact_depth = 1;
 		entry->changing_xact_state = false;
@@ -174,12 +170,8 @@ static void tsurugifdw_xact_callback(XactEvent event, void *arg)
 					error = Tsurugi::commit();
 					if (error != ERROR_CODE::OK)
 					{
-						std::string error_detail = Tsurugi::get_error_detail(error);
-						if (error_detail.empty()) {
-							elog(ERROR, "Tsurugi::commit() failed. (%d)", (int) error);
-						} else {
-							elog(ERROR, "Tsurugi::commit() failed. (%d)\n%s", (int) error, error_detail.c_str());
-						}
+						elog(ERROR, "Tsurugi::commit() failed. (%d)\n%s", 
+                			(int) error, Tsurugi::get_error_message(error).c_str());
 					}
 					entry->changing_xact_state = false;
 					break;
@@ -211,12 +203,8 @@ static void tsurugifdw_xact_callback(XactEvent event, void *arg)
 					entry->changing_xact_state = true;
 					error = Tsurugi::rollback();
 					if (error != ERROR_CODE::OK) {
-						std::string error_detail = Tsurugi::get_error_detail(error);
-						if (error_detail.empty()) {
-							elog(ERROR, "Tsurugi::rollback() failed. (%d)", (int) error);
-						} else {
-							elog(ERROR, "Tsurugi::rollback() failed. (%d)\n%s", (int) error, error_detail.c_str());
-						}
+						elog(ERROR, "Tsurugi::rollback() failed. (%d)\n%s", 
+                			(int) error, Tsurugi::get_error_message(error).c_str());
 					}
 					entry->changing_xact_state = false;
 					break;

@@ -1267,15 +1267,8 @@ tsurugiIterateForeignScan(ForeignScanState* node)
             /* Prepare processing when via ODBC */
             EState* estate = node->ss.ps.state;
             end_prepare_processing(estate);
-            std::string error_detail = Tsurugi::get_error_detail(error);
-            if (error_detail.empty())
-            {
-                elog(ERROR, "Query execution failed. (%d)", (int) error);
-            }
-            else
-            {
-                elog(ERROR, "Query execution failed. (%d)\n%s", (int) error, error_detail.c_str());
-            }
+			elog(ERROR, "Query execution failed. (%d)\n%s", 
+                (int) error, Tsurugi::get_error_message(error).c_str());
         }
 
         fdw_state->cursor_exists = true;
@@ -1417,21 +1410,10 @@ tsurugiIterateDirectModify(ForeignScanState* node)
 	if (error != ERROR_CODE::OK)
     {
         fdw_info_.success = false;
-
         /* Prepare processing when via JDBC and ODBC */
         end_prepare_processing(estate);
-
-        std::string error_detail = Tsurugi::get_error_detail(error);
-        if (error_detail.empty())
-        {
-            elog(ERROR, "Tsurugi::execute_statement() failed. (%d)",
-                (int) error);
-        }
-        else
-        {
-            elog(ERROR, "Tsurugi::execute_statement() failed. (%d)\n%s",
-                (int) error, error_detail.c_str());
-        }
+		elog(ERROR, "Tsurugi::execute_statement() failed. (%d)\n%s", 
+                (int) error, Tsurugi::get_error_message(error).c_str());
 	} else {
 		/* Increment the command es_processed count if necessary. */
 		estate->es_processed += num_rows;
@@ -1824,15 +1806,8 @@ tsurugiBeginForeignInsert(ModifyTableState *mtstate,
 	ERROR_CODE error = Tsurugi::start_transaction();
 	if (error != ERROR_CODE::OK)
 	{
-		std::string error_detail = Tsurugi::get_error_detail(error);
-		if (error_detail.empty())
-		{
-			elog(ERROR, "Tsurugi::start_transaction() failed. (%d)", (int) error);
-		}
-		else
-		{
-			elog(ERROR, "Tsurugi::start_transaction() failed. (%d)\n%s", (int) error, error_detail.c_str());
-		}
+		elog(ERROR, "Tsurugi::start_transaction() failed. (%d)\n%s", 
+            (int) error, Tsurugi::get_error_message(error).c_str());
 	}
 }
 
