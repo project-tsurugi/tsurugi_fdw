@@ -114,7 +114,7 @@ SELECT * FROM integer1 ORDER BY ol_w_id;
 INSERT INTO integer1 (ol_w_id) VALUES (9), (8), (7);  -- see tsurugi-issues#770
 INSERT INTO integer1 (ol_w_id) VALUES (1.1);  -- see tsurugi-issues#736
 ERROR:  Tsurugi::execute_statement() failed. (13)
-Tsurugi Server VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
+Tsurugi Server Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
 INSERT INTO integer1 (ol_w_id) VALUES (cast(1.1 as int));
 SELECT * FROM integer1 ORDER BY ol_w_id;
    ol_w_id   
@@ -135,7 +135,7 @@ SELECT * FROM integer1 ORDER BY ol_w_id;
 
 INSERT INTO integer1 (ol_w_id) VALUES (0.1);  -- see tsurugi-issues#736
 ERROR:  Tsurugi::execute_statement() failed. (13)
-Tsurugi Server VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
+Tsurugi Server Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
 INSERT INTO integer1 (ol_w_id) VALUES (cast(0.1 as int));
 SELECT * FROM integer1 ORDER BY ol_w_id;
    ol_w_id   
@@ -247,7 +247,7 @@ SELECT * FROM bigint1 ORDER BY id;
 
 INSERT INTO bigint1 (id, ol_w_id) VALUES (15, 1.1);  -- see tsurugi-issues#736
 ERROR:  Tsurugi::execute_statement() failed. (13)
-Tsurugi Server VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
+Tsurugi Server Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
 INSERT INTO bigint1 (id, ol_w_id) VALUES (15, cast(1.1 as bigint));
 SELECT * FROM bigint1 ORDER BY id;
  id |       ol_w_id        
@@ -265,7 +265,7 @@ SELECT * FROM bigint1 ORDER BY id;
 
 INSERT INTO bigint1 (id, ol_w_id) VALUES (16, 0.1);  -- see tsurugi-issues#736
 ERROR:  Tsurugi::execute_statement() failed. (13)
-Tsurugi Server VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
+Tsurugi Server Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
 INSERT INTO bigint1 (id, ol_w_id) VALUES (16, cast(0.1 as bigint));
 SELECT * FROM bigint1 ORDER BY id;
  id |       ol_w_id        
@@ -410,19 +410,19 @@ INSERT INTO trg_temporal_literal (id, tms_w_tz) VALUES (5, TIMESTAMP WITH TIME Z
 --- temporal_literal(auto cast) : tsurugi-issues#896  -- error
 INSERT INTO trg_temporal_literal (id, dt) VALUES (11, '2024-08-30');  -- error
 ERROR:  Tsurugi::execute_statement() failed. (13)
-Tsurugi Server VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:unsupported)
+Tsurugi Server Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:unsupported)
 INSERT INTO trg_temporal_literal (id, tm) VALUES (12, '04:05:06.789');  -- error
 ERROR:  Tsurugi::execute_statement() failed. (13)
-Tsurugi Server VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:unsupported)
+Tsurugi Server Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:unsupported)
 INSERT INTO trg_temporal_literal (id, tms) VALUES (13, '2024-08-30 04:05:06.789');  -- error
 ERROR:  Tsurugi::execute_statement() failed. (13)
-Tsurugi Server VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:unsupported)
+Tsurugi Server Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:unsupported)
 INSERT INTO trg_temporal_literal (id, tms_wo_tz) VALUES (14, '2024-08-30 04:05:06.789');  -- error
 ERROR:  Tsurugi::execute_statement() failed. (13)
-Tsurugi Server VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:unsupported)
+Tsurugi Server Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:unsupported)
 INSERT INTO trg_temporal_literal (id, tms_w_tz) VALUES (15, '2024-08-30 04:05:06.789+9:00');  -- error
 ERROR:  Tsurugi::execute_statement() failed. (13)
-Tsurugi Server VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:unsupported)
+Tsurugi Server Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:unsupported)
 /* check timestamp with time zone in UTC */
 set session timezone to 'UTC';
 SELECT * FROM trg_temporal_literal ORDER BY id;

@@ -284,7 +284,7 @@ WHERE
 ORDER BY 
     c1;
 ERROR:  Query execution failed. (13)
-Tsurugi Server SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"unrecognized character: "~"" region:"region(begin=70, end=71)")
+Tsurugi Server Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"unrecognized character: "~"" region:"region(begin=70, end=71)")
 -- WHERE #8
 /*
 SELECT
@@ -304,7 +304,7 @@ WHERE
 ORDER BY
     c4;
 ERROR:  Query execution failed. (13)
-Tsurugi Server SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "'{1.1,3.3}'", expected one of {SELECT, TABLE}" region:"region(begin=77, end=88)")
+Tsurugi Server Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "'{1.1,3.3}'", expected one of {SELECT, TABLE}" region:"region(begin=77, end=88)")
 -- GROUP BY #1
 SELECT
     count(c1) AS "count(c1)", sum(c2) AS "sum(c2)", c7
@@ -357,7 +357,7 @@ WHERE
 ORDER BY
     a.c1;
 ERROR:  Query execution failed. (13)
-Tsurugi Server SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "t1_select_statement", expected one of {(, SELECT, TABLE, VALUES}" region:"region(begin=110, end=129)")
+Tsurugi Server Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "t1_select_statement", expected one of {(, SELECT, TABLE, VALUES}" region:"region(begin=110, end=129)")
 -- TG JOIN #2 /* tsurugi-issue#863 */
 SELECT 
     a.c1, a.c2, b.c1, b.c7
@@ -366,7 +366,7 @@ FROM
 ORDER BY
     b.c4 DESC;   
 ERROR:  Query execution failed. (13)
-Tsurugi Server SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "t1_select_statement", expected one of {(, SELECT, TABLE, VALUES}" region:"region(begin=47, end=66)")
+Tsurugi Server Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "t1_select_statement", expected one of {(, SELECT, TABLE, VALUES}" region:"region(begin=47, end=66)")
 -- TG JOIN #3 /* tsurugi-issue#863 */
 SELECT 
     a.c1, a.c3, b.c1, b.c6
@@ -375,7 +375,7 @@ FROM
 ORDER BY
     a.c1;
 ERROR:  Query execution failed. (13)
-Tsurugi Server SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "t1_select_statement", expected one of {(, SELECT, TABLE, VALUES}" region:"region(begin=40, end=59)")
+Tsurugi Server Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "t1_select_statement", expected one of {(, SELECT, TABLE, VALUES}" region:"region(begin=40, end=59)")
 -- POSTGRESQL TABLE JOIN
 -- TG /* tsurugi-issue#863 */
 SELECT
@@ -385,7 +385,7 @@ FROM
 WHERE
     a.c2=22;
 ERROR:  Query execution failed. (13)
-Tsurugi Server SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "t1_select_statement", expected one of {(, SELECT, TABLE}" region:"region(begin=160, end=179)")
+Tsurugi Server Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "t1_select_statement", expected one of {(, SELECT, TABLE}" region:"region(begin=160, end=179)")
 -- TG /* tsurugi-issue#863 */
 SELECT
     *
@@ -394,7 +394,7 @@ FROM
 ORDER BY
     b.c1;
 ERROR:  Query execution failed. (13)
-Tsurugi Server SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "t1_select_statement", expected one of {(, SELECT, TABLE, VALUES}" region:"region(begin=110, end=129)")
+Tsurugi Server Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "t1_select_statement", expected one of {(, SELECT, TABLE, VALUES}" region:"region(begin=110, end=129)")
 -- TG /* tsurugi-issue#863 */
 SELECT
     *
@@ -403,4 +403,4 @@ FROM
 ORDER BY
     a.c3;
 ERROR:  Query execution failed. (13)
-Tsurugi Server SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "t1_select_statement", expected one of {(, SELECT, TABLE, VALUES}" region:"region(begin=110, end=129)")
+Tsurugi Server Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "t1_select_statement", expected one of {(, SELECT, TABLE, VALUES}" region:"region(begin=110, end=129)")

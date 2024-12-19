@@ -198,7 +198,7 @@ SELECT * FROM update_delete_char1 ORDER BY col1;
 
 UPDATE update_delete_char1 SET col2 = 'uvd' WHERE col2 = 'kl';
 ERROR:  Tsurugi::execute_statement() failed. (13)
-Tsurugi Server VALUE_TOO_LONG_EXCEPTION (SQL-02058: evaluated value was too long)
+Tsurugi Server Error: VALUE_TOO_LONG_EXCEPTION (SQL-02058: evaluated value was too long)
 SELECT * FROM update_delete_char1 ORDER BY col1;
  col1 | col2 
 ------+------
@@ -249,7 +249,7 @@ SELECT * FROM update_delete_varchar1 ORDER BY col1;
 
 UPDATE update_delete_varchar1 SET col2 = 'uvd' WHERE col2 = 'kl';
 ERROR:  Tsurugi::execute_statement() failed. (13)
-Tsurugi Server VALUE_TOO_LONG_EXCEPTION (SQL-02058: evaluated value was too long)
+Tsurugi Server Error: VALUE_TOO_LONG_EXCEPTION (SQL-02058: evaluated value was too long)
 SELECT * FROM update_delete_varchar1 ORDER BY col1;
  col1 | col2 
 ------+------
