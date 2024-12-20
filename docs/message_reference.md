@@ -16,28 +16,27 @@ Tsurugi FDWからTsurugiの操作中に異常が発生した場合に返され�
 "Failed to make the Ogawayama Stub. (error: *<error_code>*)"  
 "Failed to connect to Tsurugi. (error: *<error_code>*)"  
 "Failed to begin the Tsurugi transaction. (error: *<error_code>*)"  
-"Failed to prepare SQL statement to Tsurugi. (error: *<error_code>*)"  
-"Failed to retrieve error information from Tsurugi. (error: *<error_code>*)"  
-"Failed to execute statement to Tsurugi. (error: *<error_code>*)"  
-"Failed to execute query to Tsurugi. (error: *<error_code>*)"  
 "Failed to commit the Tsurugi transaction. (error: *<error_code>*)"  
 "Failed to rollback the Tsurugi transaction. (error: *<error_code>*)"  
+"Failed to prepare SQL statement to Tsurugi. (error: *<error_code>*)"  
+"Failed to execute statement to Tsurugi. (error: *<error_code>*)"  
+"Failed to execute query to Tsurugi. (error: *<error_code>*)"  
 "Failed to retrieve result set from Tsurugi. (error: *<error_code>*)"  
 
 - **エラーコード**  
 
     | error_code | 意味 |
     | :-: | :- |
-    | COLUMN_TYPE_MISMATCH | Tsurugi FDWで内部エラーが発生しました。 |
-    | UNSUPPORTED | Tsurugi FDWがサポートしていないSQL文が実行されました。</BR>Tsurugi FDWがサポートするSQL文については[リファレンス（SQL）](./sql_reference.md)を確認ください。 |
-    | NO_TRANSACTION | Tsurugi FDWで内部エラーが発生しました。 |
-    | INVALID_PARAMETER | Tsurugi FDWで内部エラーが発生しました。 |
-    | FILE_IO_ERROR | Tsurugi FDWで内部エラーが発生しました。 |
-    | UNKNOWN | Tsurugi FDWで内部エラーが発生しました。 |
-    | SERVER_FAILURE | Tsurugi FDWで内部エラーが発生しました。 |
-    | TIMEOUT | Tsurugi FDWで内部エラーが発生しました。 |
-    | TRANSACTION_ALREADY_STARTED | Tsurugi FDWで内部エラーが発生しました。 |
-    | SERVER_ERROR | Tsurugiでエラーが発生しました。Tsurugiのエラー情報が追加情報として出力されます。</BR>Tsurugiのエラー情報については[Error Code of Tsurugi Services](https://github.com/project-tsurugi/tsurugidb/blob/master/docs/error-code-tsurugi-services.md)を確認ください。 |
+    | 4 | Tsurugi FDWで内部エラーが発生しました。内部エラーが`COLUMN_TYPE_MISMATCH`であることを示す追加情報が出力されます。 |
+    | 5 | Tsurugi FDWがサポートしていないSQL文が実行されました（`UNSUPPORTED`）。</BR>Tsurugi FDWがサポートするSQL文については[リファレンス（SQL）](./sql_reference.md)を確認ください。 |
+    | 6 | Tsurugi FDWで内部エラーが発生しました。内部エラーが`NO_TRANSACTION`であることを示す追加情報が出力されます。 |
+    | 7 | Tsurugi FDWで内部エラーが発生しました。内部エラーが`INVALID_PARAMETER`であることを示す追加情報が出力されます。 |
+    | 8 | Tsurugi FDWで内部エラーが発生しました。内部エラーが`FILE_IO_ERROR`であることを示す追加情報が出力されます。 |
+    | 9 | Tsurugi FDWで内部エラーが発生しました。内部エラーが`UNKNOWN`であることを示す追加情報が出力されます。 |
+    | 10 | Tsurugi FDWで内部エラーが発生しました。内部エラーが`SERVER_FAILURE`であることを示す追加情報が出力されます。 |
+    | 11 | Tsurugi FDWで内部エラーが発生しました。内部エラーが`TIMEOUT`であることを示す追加情報が出力されます。 |
+    | 12 | Tsurugi FDWで内部エラーが発生しました。内部エラーが`TRANSACTION_ALREADY_STARTED`であることを示す追加情報が出力されます。 |
+    | 13 | Tsurugiでエラーが発生しました。Tsurugiのエラー情報が追加情報として出力されます。</BR>Tsurugiのエラー情報については[Error Code of Tsurugi Services](https://github.com/project-tsurugi/tsurugidb/blob/master/docs/error-code-tsurugi-services.md)を確認ください。 |
 
 - **その他のメッセージ**
 
