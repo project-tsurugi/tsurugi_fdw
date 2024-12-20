@@ -1267,7 +1267,7 @@ tsurugiIterateForeignScan(ForeignScanState* node)
             /* Prepare processing when via ODBC */
             EState* estate = node->ss.ps.state;
             end_prepare_processing(estate);
-			elog(ERROR, "Query execution failed. (%d)\n%s", 
+			elog(ERROR, "Failed to execute query to Tsurugi. (%d)\n%s", 
                 (int) error, Tsurugi::get_error_message(error).c_str());
         }
 
@@ -1304,7 +1304,7 @@ tsurugiIterateForeignScan(ForeignScanState* node)
             /* Prepare processing when via ODBC */
             EState* estate = node->ss.ps.state;
             end_prepare_processing(estate);
-            elog(ERROR, "Could NOT obtain result set from Tsurugi. (error: %d)",
+            elog(ERROR, "Failed to retrieve result set from Tsurugi. (error: %d)",
                 (int) error);
         }
     }
@@ -1412,7 +1412,7 @@ tsurugiIterateDirectModify(ForeignScanState* node)
         fdw_info_.success = false;
         /* Prepare processing when via JDBC and ODBC */
         end_prepare_processing(estate);
-		elog(ERROR, "Tsurugi::execute_statement() failed. (%d)\n%s", 
+		elog(ERROR, "Failed to execute statement to Tsurugi. (%d)\n%s", 
                 (int) error, Tsurugi::get_error_message(error).c_str());
 	} else {
 		/* Increment the command es_processed count if necessary. */
@@ -1806,7 +1806,7 @@ tsurugiBeginForeignInsert(ModifyTableState *mtstate,
 	ERROR_CODE error = Tsurugi::start_transaction();
 	if (error != ERROR_CODE::OK)
 	{
-		elog(ERROR, "Tsurugi::start_transaction() failed. (%d)\n%s", 
+		elog(ERROR, "Failed to begin the Tsurugi transaction. (%d)\n%s", 
             (int) error, Tsurugi::get_error_message(error).c_str());
 	}
 }

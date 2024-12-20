@@ -283,7 +283,7 @@ WHERE
     c7 LIKE '%LMN%'
 ORDER BY 
     c1;
-ERROR:  Query execution failed. (13)
+ERROR:  Failed to execute query to Tsurugi. (13)
 Tsurugi Server Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"unrecognized character: "~"" region:"region(begin=70, end=71)")
 -- WHERE #8
 /*
@@ -303,7 +303,7 @@ WHERE
     c4 IN (1.1,3.3)
 ORDER BY
     c4;
-ERROR:  Query execution failed. (13)
+ERROR:  Failed to execute query to Tsurugi. (13)
 Tsurugi Server Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "'{1.1,3.3}'", expected one of {SELECT, TABLE}" region:"region(begin=77, end=88)")
 -- GROUP BY #1
 SELECT
@@ -356,7 +356,7 @@ WHERE
     b.c1 > 1
 ORDER BY
     a.c1;
-ERROR:  Query execution failed. (13)
+ERROR:  Failed to execute query to Tsurugi. (13)
 Tsurugi Server Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "t1_select_statement", expected one of {(, SELECT, TABLE, VALUES}" region:"region(begin=110, end=129)")
 -- TG JOIN #2 /* tsurugi-issue#863 */
 SELECT 
@@ -365,7 +365,7 @@ FROM
     t1_select_statement a INNER JOIN t2_select_statement b USING (c1)
 ORDER BY
     b.c4 DESC;   
-ERROR:  Query execution failed. (13)
+ERROR:  Failed to execute query to Tsurugi. (13)
 Tsurugi Server Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "t1_select_statement", expected one of {(, SELECT, TABLE, VALUES}" region:"region(begin=47, end=66)")
 -- TG JOIN #3 /* tsurugi-issue#863 */
 SELECT 
@@ -374,7 +374,7 @@ FROM
     t1_select_statement a INNER JOIN t2_select_statement b ON a.c1 != b.c1
 ORDER BY
     a.c1;
-ERROR:  Query execution failed. (13)
+ERROR:  Failed to execute query to Tsurugi. (13)
 Tsurugi Server Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "t1_select_statement", expected one of {(, SELECT, TABLE, VALUES}" region:"region(begin=40, end=59)")
 -- POSTGRESQL TABLE JOIN
 -- TG /* tsurugi-issue#863 */
@@ -384,7 +384,7 @@ FROM
     t1_select_statement AS a JOIN t2_select_statement AS b ON a.c4=b.c4 JOIN t1_select_statement AS c ON b.c4=c.c4
 WHERE
     a.c2=22;
-ERROR:  Query execution failed. (13)
+ERROR:  Failed to execute query to Tsurugi. (13)
 Tsurugi Server Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "t1_select_statement", expected one of {(, SELECT, TABLE}" region:"region(begin=160, end=179)")
 -- TG /* tsurugi-issue#863 */
 SELECT
@@ -393,7 +393,7 @@ FROM
     t1_select_statement AS a CROSS JOIN t2_select_statement AS b
 ORDER BY
     b.c1;
-ERROR:  Query execution failed. (13)
+ERROR:  Failed to execute query to Tsurugi. (13)
 Tsurugi Server Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "t1_select_statement", expected one of {(, SELECT, TABLE, VALUES}" region:"region(begin=110, end=129)")
 -- TG /* tsurugi-issue#863 */
 SELECT
@@ -402,5 +402,5 @@ FROM
     t1_select_statement AS a JOIN t1_select_statement AS b ON a.c3=b.c3
 ORDER BY
     a.c3;
-ERROR:  Query execution failed. (13)
+ERROR:  Failed to execute query to Tsurugi. (13)
 Tsurugi Server Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "t1_select_statement", expected one of {(, SELECT, TABLE, VALUES}" region:"region(begin=110, end=129)")

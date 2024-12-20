@@ -95,7 +95,7 @@ ERROR_CODE Tsurugi::init()
 		error = make_stub(stub_, shared_memory_name);
 		if (error != ERROR_CODE::OK) 
         {
-            elog(ERROR, "Failed to run make_stub(). (error: %d)",
+            elog(ERROR, "Failed to make the Ogawayama Stub. (error: %d)",
                 (int) error);
             stub_ = nullptr;
 			return error;
@@ -112,7 +112,7 @@ ERROR_CODE Tsurugi::init()
 		error = stub_->get_connection(getpid(), connection_);
 		if (error != ERROR_CODE::OK)
 		{
-            elog(ERROR, "Stub::get_connection() failed. (error: %d)",
+            elog(ERROR, "Failed to connect to Tsurugi. (error: %d)",
                 (int) error);
             connection_ = nullptr;
 			return error;
@@ -357,7 +357,7 @@ ERROR_CODE Tsurugi::begin(stub::Transaction** transaction)
 		ERROR_CODE error = stub_->get_connection(getpid() , connection_);
 		if (error != ERROR_CODE::OK)
 		{
-			std::cerr << "Stub::get_connection() failed. " << (int) error << std::endl;
+			std::cerr << "Failed to connect to Tsurugi. " << (int) error << std::endl;
 			return error;
 		}
 	}
@@ -455,7 +455,7 @@ std::string Tsurugi::get_error_detail(ERROR_CODE error)
 		}
 		else
 		{
-			elog(ERROR, "Tsurugi::tsurugi_error() failed. (%d)", (int) tsurugi_error);
+			elog(ERROR, "Failed to retrieve error information from Tsurugi. (%d)", (int) tsurugi_error);
 		}
 	}
 	return error_detail;
