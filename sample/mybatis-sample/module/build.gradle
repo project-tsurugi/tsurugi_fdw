@@ -1,0 +1,46 @@
+plugins {
+    id 'application'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.postgresql:postgresql:42.7.3'
+	implementation 'org.mybatis:mybatis:3.5.17'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(11)
+    }
+}
+
+application {
+    mainClass = 'com.tsurugidb.fdw.mybatis.sample.MyBatisSample'
+}
+
+task createTable(type: Exec) {
+    commandLine 'sh', '-c', 'tgsql --exec -c ipc:tsurugi "create table if not exists fdw_sample (col int not null, tm time)"'
+}
+
+task dropTable(type: Exec) {
+    commandLine 'sh', '-c', 'tgsql --exec -c ipc:tsurugi "drop table if exists fdw_sample"'
+}
+
+task createForeignTable(type: Exec) {
+    commandLine 'sh', '-c', 'psql postgres -c "create foreign table if not exists fdw_sample (col int not null, tm time) server tsurugi"'
+}
+
+task dropForeignTable(type: Exec) {
+    commandLine 'sh', '-c', 'psql postgres -c "drop foreign table if exists fdw_sample"'
+}
+
+tasks.named('run') {
+    dependsOn createTable
+    finalizedBy dropForeignTable
+}
+
+createTable.finalizedBy createForeignTable
+dropForeignTable.finalizedBy dropTable
