@@ -40,6 +40,21 @@
 #include "grant_revoke_table/grant_revoke_table.h"
 #include "prepare_execute/prepare_execute.h"
 #include "utility_common.h"
+#include "foreign/foreign.h"
+#include "utils/builtins.h"
+#include "utils/rel.h"
+#include "access/table.h"
+#include "access/heapam.h"
+#include "catalog/namespace.h"
+#include "catalog/pg_namespace.h"
+#include "catalog/pg_class.h"
+#include "catalog/pg_foreign_table.h"
+#include "catalog/pg_extension.h"
+#include "catalog/indexing.h"
+#include "utils/lsyscache.h"
+#include "utils/syscache.h"
+#include "utils/fmgroids.h"
+#include "executor/spi.h"
 
 #ifndef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
@@ -50,6 +65,10 @@ void tsurugi_ProcessUtility(PlannedStmt* pstmt, const char* query_string,
                             ProcessUtilityContext context, ParamListInfo params,
                             QueryEnvironment* queryEnv, DestReceiver* dest,
                             char* completionTag);
+bool noTablesInDatabase(void);
+bool IsTsurugifdwInstalled(void);
+
+#define EXTENSION_NAME "tsurugi_fdw"
 
 extern bool IsTransactionBlock(void);
 extern void check_stack_depth(void);
@@ -65,16 +84,6 @@ extern void standard_ProcessUtility(PlannedStmt *pstmt,
 						            DestReceiver *dest,
 						            char *completionTag);
 
-static void tsurugi_ProcessUtilitySlow(ParseState *pstate,
-			        	               PlannedStmt *pstmt,
-				                       const char *queryString,
-				                       ProcessUtilityContext context,
-				                       ParamListInfo params,
-				                       QueryEnvironment *queryEnv,
-				                       DestReceiver *dest,
-				                       char *completionTag);
-
-const char *TSURUGI_TABLESPACE_NAME = "tsurugi";
 
 /*
  *  @brief:
@@ -103,20 +112,23 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 	{
         case T_CreateStmt:
 		{
-			CreateStmt* create_stmt = (CreateStmt*) pstmt->utilityStmt;
-			if (create_stmt->tablespacename != NULL && 
-					!strcmp(create_stmt->tablespacename, TSURUGI_TABLESPACE_NAME))
+			if (IsTsurugifdwInstalled())
 			{
-				tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
-										context, params, queryEnv,
-										dest, completionTag);
+				elog(ERROR, "This database is for Tsurugi, so CREATE TABLE is not supported");
 			}
-			else
+			standard_ProcessUtility(pstmt, queryString,context, params, queryEnv,
+									dest, completionTag);
+            break;
+		}
+
+		case T_CreateTableAsStmt:
+		{
+			if (IsTsurugifdwInstalled())
 			{
-				standard_ProcessUtility(pstmt, queryString,
-										context, params, queryEnv,
-										dest, completionTag);
+				elog(ERROR, "This database is for Tsurugi, so CREATE TABLE AS is not supported");
 			}
+			standard_ProcessUtility(pstmt, queryString,context, params, queryEnv,
+									dest, completionTag);
             break;
 		}
 
@@ -131,95 +143,36 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 			break;
 		}
 
-		case T_IndexStmt: 
+		case T_CreateForeignTableStmt:
 		{
-			IndexStmt* index_stmt = (IndexStmt*) pstmt->utilityStmt;
-			if (index_stmt->tableSpace != NULL && 
-					!strcmp(index_stmt->tableSpace, TSURUGI_TABLESPACE_NAME))
+			if (IsTsurugifdwInstalled())
 			{
-				tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
-										context, params, queryEnv,
-										dest, completionTag);
+				ForeignServer *server;
+				ForeignDataWrapper *fdw;
+				CreateForeignTableStmt *stmt = (CreateForeignTableStmt *) pstmt->utilityStmt;
+
+				server = GetForeignServerByName(stmt->servername, false);
+				fdw = GetForeignDataWrapper(server->fdwid);
+				if (strcmp(fdw->fdwname, "tsurugi_fdw") != 0){
+					elog(ERROR, "This database is for Tsurugi, so CREATE FOREIGN TABLE for non-Tsurugi foreign table is not supported");
+				}
 			}
-			else
-			{
-				standard_ProcessUtility(pstmt, queryString,
-										context, params, queryEnv,
-										dest, completionTag);
-			}
+			standard_ProcessUtility(pstmt, queryString,
+									context, params, queryEnv,
+									dest, completionTag);
 			break;
 		}
 
-        case T_DropStmt:
+		case T_CreateExtensionStmt:
 		{
-			ObjectName obj;
-			DropStmt *drop_stmt = (DropStmt *) parsetree;
-			switch (drop_stmt->removeType)
-			{
-				case OBJECT_TABLE:
-				{
-					bool exists_in_tsurugi = false;
-					ListCell *listptr;
-					foreach(listptr, drop_stmt->objects)
-					{
-						List *names = (List *) lfirst(listptr);
-						get_object_name(names, &obj);
-						if (table_exists_in_tsurugi(obj.object_name))
-						{
-							exists_in_tsurugi = true;
-							break;
-						}
-					}
-					if (exists_in_tsurugi)
-					{
-						tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
-												context, params, queryEnv,
-												dest, completionTag);
-					}
-					else
-					{
-						standard_ProcessUtility(pstmt, queryString,
-									context, params, queryEnv,
-									dest, completionTag);
-					}
-					break;
-				}
-				case OBJECT_INDEX:
-				{
-					bool exists_in_tsurugi = false;
-					ListCell *listptr;
-					foreach(listptr, drop_stmt->objects)
-					{
-						List *names = (List *) lfirst(listptr);
-						get_object_name(names, &obj);
-						if (index_exists_in_tsurugi(obj.object_name))
-						{
-							exists_in_tsurugi = true;
-							break;
-						}
-					}
-					if (exists_in_tsurugi)
-					{
-						tsurugi_ProcessUtilitySlow(pstate, pstmt, queryString,
-												context, params, queryEnv,
-												dest, completionTag);
-					}
-					else
-					{
-						standard_ProcessUtility(pstmt, queryString,
-									context, params, queryEnv,
-									dest, completionTag);
-					}
-					break;
-				}
-				default:
-				{
-					standard_ProcessUtility(pstmt, queryString,
-								context, params, queryEnv,
-								dest, completionTag);
-					break;
+			CreateExtensionStmt *stmt = (CreateExtensionStmt *) pstmt->utilityStmt;
+			if (strcmp(stmt->extname, "tsurugi_fdw") == 0) {
+				if(!noTablesInDatabase()){
+					elog(ERROR, "tsurugi_fdw extension cannot be installed in the non-empty database. Please make sure there are no tables by using the \\d command.");
 				}
 			}
+			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
+									dest, completionTag);
 			break;
 		}
 
@@ -364,109 +317,48 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 	free_parsestate(pstate);
 }
 
-/**
- * @brief 	
- * @param	psatte
- * @param	pstmt
- * @param	queryString
- * @param	context
- * @param	params
- * @param	queryEnv
- * @param	dest
- * @param	completionTag
- */
-static void
-tsurugi_ProcessUtilitySlow(ParseState *pstate,
-				           PlannedStmt *pstmt,
-				           const char *queryString,
-				           ProcessUtilityContext context,
-				           ParamListInfo params,
-				           QueryEnvironment *queryEnv,
-				           DestReceiver *dest,
-				           char *completionTag)
+
+bool noTablesInDatabase(void)
 {
-    Node	*parsetree = pstmt->utilityStmt;
-    bool	isCompleteQuery = (context <= PROCESS_UTILITY_QUERY);
-    bool	needCleanup;
-    bool	commandCollected = false;
-    ObjectAddress address;
-    ObjectAddress secondaryObject = InvalidObjectAddress;
+	int ret;
+    bool result_exists = true;
 
-    /* All event trigger calls are done only when isCompleteQuery is true */
-    needCleanup = isCompleteQuery && EventTriggerBeginCompleteQuery();
+    const char *query = 
+        "SELECT c.oid, n.nspname, c.relname "
+        "FROM pg_catalog.pg_class c "
+        "LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace "
+        "WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') "
+        "AND pg_catalog.pg_table_is_visible(c.oid)";
 
-    /* PG_TRY block is to ensure we call EventTriggerEndCompleteQuery */
-    PG_TRY();
-	{
-		if (isCompleteQuery)
-		EventTriggerDDLCommandStart(parsetree);
-
-		switch (nodeTag(parsetree))
-		{
-			case T_CreateStmt:
-			{
-				Node	  *parsetree = pstmt->utilityStmt;    
-				List      *stmts;
-
-				/* Run parse analysis ... */
-				stmts = transformCreateStmt((CreateStmt *) parsetree,
-											queryString);
-				execute_create_stmt(pstmt, queryString, params, stmts);
-				break;
-			}
-
-			case T_IndexStmt:	/* CREATE INDEX */
-			{
-				int64_t index_id = -1;
-				IndexStmt* index_stmt = (IndexStmt*) pstmt->utilityStmt;
-				index_id = execute_create_index(index_stmt);
-				if (index_id > 0)
-				{
-					/* Send a DDL message to ogawayama. */
-					send_create_index_message(index_id);
-				}
-				break;
-			}
-
-			case T_DropStmt:
-			{
-				DropStmt *drop = (DropStmt *) parsetree;
-				execute_drop_stmt(drop);
-
-				/* no commands stashed for DROP */
-				commandCollected = true;
-				break;
-			}
-
-            default:
-			{
-				elog(ERROR, "unrecognized node type: %d",
-					 (int) nodeTag(parsetree));
-                break;
-			}
-        }
-		/*
-		 * Remember the object so that ddl_command_end event triggers have
-		 * access to it.
-		 */
-		if (!commandCollected)
-			EventTriggerCollectSimpleCommand(address, secondaryObject,
-											 parsetree);
-
-		if (isCompleteQuery)
-		{
-			EventTriggerSQLDrop(parsetree);
-			EventTriggerDDLCommandEnd(parsetree);
-		}
+    if (SPI_connect() != SPI_OK_CONNECT){
+        elog(ERROR, "SPI_connect failed");
 	}
-	PG_CATCH();
-	{
-		if (needCleanup)
-			EventTriggerEndCompleteQuery();
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
 
-    if (needCleanup)
-      EventTriggerEndCompleteQuery();
+    ret = SPI_exec(query, 1);
+    if (ret != SPI_OK_SELECT){
+        elog(ERROR, "SPI_exec failed: %s", query);
+	}
+
+    if (SPI_processed > 0) {
+        result_exists = false;
+    }
+
+    SPI_finish();
+
+    return result_exists;
+}
+
+bool IsTsurugifdwInstalled(void)
+{
+	bool found = false;
+    HeapTuple tuple;
+
+    tuple = SearchSysCache1(FOREIGNDATAWRAPPERNAME, CStringGetDatum(EXTENSION_NAME));
+    if (HeapTupleIsValid(tuple))
+    {
+        found = true;
+        ReleaseSysCache(tuple);
+    }
+
+    return found;
 }

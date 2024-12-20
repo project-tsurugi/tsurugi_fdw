@@ -1,0 +1,211 @@
+CREATE DATABASE contrib_regression2;
+\c contrib_regression2
+CREATE TABLE tsurugifdw_regressiontest(id INT);
+CREATE EXTENSION tsurugi_fdw;
+ERROR:  tsurugi_fdw extension cannot be installed in the non-empty database. Please make sure there are no tables by using the \d command.
+\dx tsurugi_fdw
+     List of installed extensions
+ Name | Version | Schema | Description 
+------+---------+--------+-------------
+(0 rows)
+
+DROP TABLE tsurugifdw_regressiontest;
+CREATE EXTENSION tsurugi_fdw;
+\dx tsurugi_fdw
+                     List of installed extensions
+    Name     |   Version   | Schema |           Description            
+-------------+-------------+--------+----------------------------------
+ tsurugi_fdw | 1.0.0-BETA9 | public | foreign-data wrapper for tsurugi
+(1 row)
+
+CREATE SERVER IF NOT EXISTS tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
+CREATE FOREIGN TABLE tsurugifdw_regressiontest(id INT) SERVER tsurugidb;
+SELECT EXISTS (
+  SELECT 1
+  FROM pg_class
+  WHERE relname = 'tsurugifdw_regressiontest'
+  AND relkind = 'f'
+);
+ exists 
+--------
+ t
+(1 row)
+
+-- error (CREATE TABLE)
+CREATE TABLE t0_create_table(c1 INTEGER NOT NULL);
+ERROR:  This database is for Tsurugi, so CREATE TABLE is not supported
+SELECT * FROM t0_create_table;
+ERROR:  relation "t0_create_table" does not exist
+LINE 1: SELECT * FROM t0_create_table;
+                      ^
+CREATE TABLE IF NOT EXISTS mytable1 (id INT);
+ERROR:  This database is for Tsurugi, so CREATE TABLE is not supported
+SELECT * FROM mytable1;
+ERROR:  relation "mytable1" does not exist
+LINE 1: SELECT * FROM mytable1;
+                      ^
+CREATE TABLE mytable2 (LIKE t0_create_table);
+ERROR:  This database is for Tsurugi, so CREATE TABLE is not supported
+SELECT * FROM mytable2;
+ERROR:  relation "mytable2" does not exist
+LINE 1: SELECT * FROM mytable2;
+                      ^
+CREATE TABLE mytable3 (INHERITS t0_create_table);
+ERROR:  This database is for Tsurugi, so CREATE TABLE is not supported
+SELECT * FROM mytable3;
+ERROR:  relation "mytable3" does not exist
+LINE 1: SELECT * FROM mytable3;
+                      ^
+CREATE TABLE mytable4 (id INT) PARTITION BY LIST (id);
+ERROR:  This database is for Tsurugi, so CREATE TABLE is not supported
+SELECT * FROM mytable4;
+ERROR:  relation "mytable4" does not exist
+LINE 1: SELECT * FROM mytable4;
+                      ^
+CREATE TABLE mytable5 (id INT) USING heap;
+ERROR:  This database is for Tsurugi, so CREATE TABLE is not supported
+SELECT * FROM mytable5;
+ERROR:  relation "mytable5" does not exist
+LINE 1: SELECT * FROM mytable5;
+                      ^
+CREATE TABLE mytable6 (id INT) WITH (fillfactor = 70);
+ERROR:  This database is for Tsurugi, so CREATE TABLE is not supported
+SELECT * FROM mytable6;
+ERROR:  relation "mytable6" does not exist
+LINE 1: SELECT * FROM mytable6;
+                      ^
+CREATE UNLOGGED TABLE unlogged_table(id INT);
+ERROR:  This database is for Tsurugi, so CREATE TABLE is not supported
+SELECT * FROM unlogged_table;
+ERROR:  relation "unlogged_table" does not exist
+LINE 1: SELECT * FROM unlogged_table;
+                      ^
+CREATE TEMPORARY TABLE temporary_table (id INT);
+ERROR:  This database is for Tsurugi, so CREATE TABLE is not supported
+SELECT * FROM temporary_table;
+ERROR:  relation "temporary_table" does not exist
+LINE 1: SELECT * FROM temporary_table;
+                      ^
+CREATE LOCAL TEMPORARY TABLE temporary_table1 (id INT);
+ERROR:  This database is for Tsurugi, so CREATE TABLE is not supported
+SELECT * FROM temporary_table1;
+ERROR:  relation "temporary_table1" does not exist
+LINE 1: SELECT * FROM temporary_table1;
+                      ^
+CREATE TEMP TABLE temp_table (id iNT);
+ERROR:  This database is for Tsurugi, so CREATE TABLE is not supported
+SELECT * FROM temp_table;
+ERROR:  relation "temp_table" does not exist
+LINE 1: SELECT * FROM temp_table;
+                      ^
+CREATE LOCAL TEMP TABLE temp_table1 (id iNT);
+ERROR:  This database is for Tsurugi, so CREATE TABLE is not supported
+SELECT * FROM temp_table1;
+ERROR:  relation "temp_table1" does not exist
+LINE 1: SELECT * FROM temp_table1;
+                      ^
+-- error (CREATE TABLE AS)
+CREATE TABLE t1_create_table_as AS SELECT * FROM tsurugifdw_regressiontest;
+ERROR:  This database is for Tsurugi, so CREATE TABLE AS is not supported
+SELECT * FROM t1_create_table_as;
+ERROR:  relation "t1_create_table_as" does not exist
+LINE 1: SELECT * FROM t1_create_table_as;
+                      ^
+SELECT * INTO t2_create_table_as FROM tsurugifdw_regressiontest;
+ERROR:  This database is for Tsurugi, so CREATE TABLE AS is not supported
+SELECT * FROM t2_create_table_as;
+ERROR:  relation "t2_create_table_as" does not exist
+LINE 1: SELECT * FROM t2_create_table_as;
+                      ^
+DROP EXTENSION tsurugi_fdw CASCADE;
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to server tsurugidb
+drop cascades to foreign table tsurugifdw_regressiontest
+-- Success (CREATE TABLE)
+CREATE TABLE t0_create_table(c1 INTEGER NOT NULL);
+SELECT * FROM t0_create_table;
+ c1 
+----
+(0 rows)
+
+CREATE TABLE IF NOT EXISTS mytable1 (id INT);
+SELECT * FROM mytable1;
+ id 
+----
+(0 rows)
+
+CREATE TABLE mytable2 (LIKE t0_create_table);
+SELECT * FROM mytable2;
+ c1 
+----
+(0 rows)
+
+CREATE TABLE mytable3 (INHERITS t0_create_table);
+SELECT * FROM mytable3;
+ inherits 
+----------
+(0 rows)
+
+CREATE TABLE mytable4 (id INT) PARTITION BY LIST (id);
+SELECT * FROM mytable4;
+ id 
+----
+(0 rows)
+
+CREATE TABLE mytable5 (id INT) USING heap;
+SELECT * FROM mytable5;
+ id 
+----
+(0 rows)
+
+CREATE TABLE mytable6 (id INT) WITH (fillfactor = 70);
+SELECT * FROM mytable6;
+ id 
+----
+(0 rows)
+
+CREATE UNLOGGED TABLE unlogged_table(id INT);
+SELECT * FROM unlogged_table;
+ id 
+----
+(0 rows)
+
+CREATE TEMPORARY TABLE temporary_table (id INT);
+SELECT * FROM temporary_table;
+ id 
+----
+(0 rows)
+
+CREATE LOCAL TEMPORARY TABLE temporary_table1 (id INT);
+SELECT * FROM temporary_table1;
+ id 
+----
+(0 rows)
+
+CREATE TEMP TABLE temp_table (id iNT);
+SELECT * FROM temp_table;
+ id 
+----
+(0 rows)
+
+CREATE LOCAL TEMP TABLE temp_table1 (id iNT);
+SELECT * FROM temp_table1;
+ id 
+----
+(0 rows)
+
+-- Success (CREATE TABLE AS)
+CREATE TABLE t1_create_table_as AS SELECT * FROM t0_create_table;
+SELECT * FROM t1_create_table_as;
+ c1 
+----
+(0 rows)
+
+SELECT * INTO t2_create_table_as FROM t0_create_table;
+SELECT * FROM t2_create_table_as;
+ c1 
+----
+(0 rows)
+
+\c contrib_regression
+DROP DATABASE contrib_regression2;

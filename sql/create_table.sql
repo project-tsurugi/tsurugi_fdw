@@ -1,116 +1,48 @@
-/* DDL */
-CREATE TABLE t1(c1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
-CREATE FOREIGN TABLE t1(c1 INTEGER NOT NULL) SERVER tsurugidb;
-
-CREATE TABLE t2(c1 INTEGER NOT NULL PRIMARY KEY, c2 BIGINT, c3 DOUBLE PRECISION) TABLESPACE tsurugi;
-CREATE FOREIGN TABLE t2(c1 INTEGER NOT NULL, c2 BIGINT, c3 DOUBLE PRECISION) SERVER tsurugidb;
 
 /* DML */
-SELECT * FROM t1;
-INSERT INTO t1 (c1) VALUES (1);
-SELECT * FROM t1;
+SELECT * FROM t1_create_table ORDER BY c1;
+INSERT INTO t1_create_table (c1) VALUES (1);
+SELECT * FROM t1_create_table ORDER BY c1;
 
-SELECT * FROM t2;
-INSERT INTO t2 (c1, c2, c3) VALUES (1, 100, 1.1);
-INSERT INTO t2 (c1, c2, c3) VALUES (2, 200, 2.2);
-SELECT * FROM t2;
+SELECT * FROM t2_create_table ORDER BY c1;
+INSERT INTO t2_create_table (c1, c2, c3) VALUES (1, 100, 1.1);
+INSERT INTO t2_create_table (c1, c2, c3) VALUES (2, 200, 2.2);
+SELECT * FROM t2_create_table ORDER BY c1;
 
-SELECT * FROM t1;
-INSERT INTO t1 (c1) VALUES (10);
-INSERT INTO t1 (c1) VALUES (100);
-SELECT * FROM t1;
+SELECT * FROM t1_create_table ORDER BY c1;
+INSERT INTO t1_create_table (c1) VALUES (10);
+INSERT INTO t1_create_table (c1) VALUES (100);
+SELECT * FROM t1_create_table ORDER BY c1;
 
-SELECT * FROM t2;
-UPDATE t2 SET c2 = c2+10;
-UPDATE t2 SET c3 = c3+1.1 WHERE c2 = 110;
-SELECT * FROM t2;
+SELECT * FROM t2_create_table ORDER BY c1;
+UPDATE t2_create_table SET c2 = c2+10;
+UPDATE t2_create_table SET c3 = c3+1.1 WHERE c2 = 110;
+SELECT * FROM t2_create_table ORDER BY c1;
 
-SELECT * FROM t1;
-DELETE FROM t1 WHERE c1 = 10;
-SELECT * FROM t1;
+SELECT * FROM t1_create_table ORDER BY c1;
+DELETE FROM t1_create_table WHERE c1 = 10;
+SELECT * FROM t1_create_table ORDER BY c1;
 
 /* Fix tsurugi-issues#568 */
-INSERT INTO public.t1 (c1) VALUES (1000);
-INSERT INTO PuBlIc.t1 (c1) VALUES (2000);
-INSERT INTO PUBLIC.t1 (c1) VALUES (3000);
-INSERT INTO "public"."t1" (c1) VALUES (4000);
+INSERT INTO public.t1_create_table (c1) VALUES (1000);
+INSERT INTO PuBlIc.t1_create_table (c1) VALUES (2000);
+INSERT INTO PUBLIC.t1_create_table (c1) VALUES (3000);
+INSERT INTO "public"."t1_create_table" (c1) VALUES (4000);
 
-SELECT * FROM public.t1;
+SELECT * FROM public.t1_create_table ORDER BY c1;
 
-UPDATE public.t1 SET c1 = c1+100;
-UPDATE PuBlIc.t1 SET c1 = c1+100 WHERE c1 > 1000;
-UPDATE public.t1 SET c1 = c1+100 WHERE c1 > 2000;
-UPDATE "public"."t1" SET c1 = c1+100 WHERE c1 > 3000;
+UPDATE public.t1_create_table SET c1 = c1+100;
+UPDATE PuBlIc.t1_create_table SET c1 = c1+100 WHERE c1 > 1000;
+UPDATE public.t1_create_table SET c1 = c1+100 WHERE c1 > 2000;
+UPDATE "public"."t1_create_table" SET c1 = c1+100 WHERE c1 > 3000;
 
-SELECT * FROM "public"."t1";
+SELECT * FROM "public"."t1_create_table" ORDER BY c1;
 
-DELETE FROM public.t1 WHERE c1 = 200;
-DELETE FROM "public"."t1" WHERE c1 > 1000;
+DELETE FROM public.t1_create_table WHERE c1 = 200;
+DELETE FROM "public"."t1_create_table" WHERE c1 > 1000;
 
-SELECT * FROM Public.t1;
+SELECT * FROM Public.t1_create_table ORDER BY c1;
 
-INSERT INTO "puBlIc"."t1" (c1) VALUES (999); -- error
-UPDATE "PUBLIC"."t1" SET c1 = c1+100; -- error
-DELETE FROM "Public"."t1" WHERE c1 > 1000; -- error
-
-/* DDL */
-DROP TABLE t1;
-DROP TABLE t2;
-
-DROP FOREIGN TABLE t1;
-DROP FOREIGN TABLE t2;
-
-/* INDEX TEST */
-/* DDL */
-CREATE TABLE t3(c1 INTEGER NOT NULL PRIMARY KEY, c2 BIGINT, c3 DOUBLE PRECISION) TABLESPACE tsurugi;
-CREATE FOREIGN TABLE t3(c1 INTEGER NOT NULL, c2 BIGINT, c3 DOUBLE PRECISION) SERVER tsurugidb;
-
-CREATE TABLE t4(c1 INTEGER NOT NULL PRIMARY KEY, c2 BIGINT, c3 DOUBLE PRECISION) TABLESPACE tsurugi;
-CREATE FOREIGN TABLE t4(c1 INTEGER NOT NULL, c2 BIGINT, c3 DOUBLE PRECISION) SERVER tsurugidb;
-
-CREATE UNIQUE INDEX ON t3(c2) TABLESPACE tsurugi;
-CREATE INDEX t4_c3_secondary_index ON t4(c3) TABLESPACE tsurugi;
-
-/* DML */
-SELECT * FROM t3;
-INSERT INTO t3 (c1) VALUES (1);
-SELECT * FROM t3;
-
-SELECT * FROM t3;
-INSERT INTO t4 (c1, c2, c3) VALUES (1, 100, 1.1);
-INSERT INTO t4 (c1, c2, c3) VALUES (2, 200, 2.2);
-SELECT * FROM t4;
-
-SELECT * FROM t3;
-INSERT INTO t3 (c1) VALUES (10);
-INSERT INTO t3 (c1) VALUES (100);
-SELECT * FROM t3;
-
-SELECT * FROM t4;
-UPDATE t4 SET c2 = c2+10;
-UPDATE t4 SET c3 = c3+1.1 WHERE c2 = 110;
-SELECT * FROM t4;
-
-SELECT * FROM t3;
-DELETE FROM t3 WHERE c1 = 10;
-SELECT * FROM t3;
-
-/* DDL */
-DROP INDEX t3_c2_key;
-DROP TABLE t3;
-CREATE TABLE t3(c1 INTEGER NOT NULL PRIMARY KEY, c2 BIGINT, c3 DOUBLE PRECISION) TABLESPACE tsurugi;
-CREATE UNIQUE INDEX ON t3(c2) TABLESPACE tsurugi;
-
-DROP INDEX t4_c3_secondary_index;
-DROP TABLE t4;
-CREATE TABLE t4(c1 INTEGER NOT NULL PRIMARY KEY, c2 BIGINT, c3 DOUBLE PRECISION) TABLESPACE tsurugi;
-CREATE INDEX t4_c3_secondary_index ON t4(c3) TABLESPACE tsurugi;
-
-DROP INDEX t3_c2_key;
-DROP TABLE t3;
-
-DROP INDEX t4_c3_secondary_index;
-DROP TABLE t4;
-
-DROP FOREIGN TABLE t3;
-DROP FOREIGN TABLE t4;
+INSERT INTO "puBlIc"."t1_create_table" (c1) VALUES (999); -- error
+UPDATE "PUBLIC"."t1_create_table" SET c1 = c1+100; -- error
+DELETE FROM "Public"."t1_create_table" WHERE c1 > 1000; -- error

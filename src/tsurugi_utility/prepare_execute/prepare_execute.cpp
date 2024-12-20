@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Project Tsurugi.
+ * Copyright 2023-2024 Project Tsurugi.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,87 +100,6 @@ get_tsurugi_table_join_expr(JoinExpr* join,
 		RangeVar* relation = (RangeVar *) join->rarg;
 		target_tables.emplace_back(relation->relname);
 	}
-}
-
-/**
- *  @brief Tsurugi OLTP table exist in the target relation.
- *  @param [in] query
- *  @return true if Tsurugi OLTP table exists.
- */
-bool
-is_tsurugi_table(Node* query,
-				 bool show_warning)
-{
-	bool result = false;
-	bool is_tsurugi = false;
-	bool is_not_tsurugi = false;
-	std::vector<std::string> target_tables;
-
-	switch (nodeTag(query))
-	{
-		case T_InsertStmt:
-			{
-				InsertStmt* stmt = (InsertStmt *) query;
-				target_tables.emplace_back(stmt->relation->relname);
-			}
-			break;
-		case T_UpdateStmt:
-			{
-				UpdateStmt* stmt = (UpdateStmt *) query;
-				target_tables.emplace_back(stmt->relation->relname);
-			}
-			break;
-		case T_DeleteStmt:
-			{
-				DeleteStmt* stmt = (DeleteStmt *) query;
-				target_tables.emplace_back(stmt->relation->relname);
-			}
-			break;
-		case T_SelectStmt:
-			{
-				SelectStmt* stmt = (SelectStmt *) query;
-				ListCell* l;
-				foreach(l, stmt->fromClause)
-				{
-					Node* from = (Node *) lfirst(l);
-					if (IsA(from, RangeVar)) {
-						RangeVar* relation = (RangeVar *) from;
-						target_tables.emplace_back(relation->relname);
-					}
-					if (IsA(from, JoinExpr)) {
-						get_tsurugi_table_join_expr((JoinExpr *) from, target_tables);
-					}
-				}
-			}
-			break;
-		default:
-			/* should not reach here */
-			elog(ERROR, "is_tsurugi_table: unrecognized node type: %d",
-				 (int) nodeTag(query));
-			return result;
-	}
-
-	auto tables = manager::metadata::get_tables_ptr(TSURUGI_DB_NAME);
-	for(std::size_t i = 0; i < target_tables.size(); i++) {
-		if (tables->exists(target_tables[i])) {
-			is_tsurugi = true;
-		} else {
-			is_not_tsurugi = true;
-		}
-	}
-
-	if (is_tsurugi) {
-		if (is_not_tsurugi) {
-			if (show_warning) {
-				elog(WARNING,
-					"If Tsurugi and non-Tsurugi tables are mixed, do not PREPARE to Tsurugi");
-			}
-		} else {
-			result = true;
-		}
-	}
-
-	return result;
 }
 
 /**
@@ -1209,11 +1128,6 @@ deparse_select_query(const SelectStmt* stmt,
 		deparse_where_clause(stmt->whereClause, argtypes, placeholders, buf);
 	}
 
-	if (stmt->sortClause != NULL) {
-		appendStringInfoString(buf, " ORDER BY ");
-		deparse_sort_clause(stmt->sortClause, buf);
-	}
-
 	if (stmt->groupClause != NULL) {
 		appendStringInfoString(buf, " GROUP BY ");
 		ListCell* l;
@@ -1230,6 +1144,11 @@ deparse_select_query(const SelectStmt* stmt,
 		appendStringInfoString(buf, " HAVING ");
 		deparse_where_clause(stmt->havingClause, argtypes, placeholders, buf);
 	}
+
+	if (stmt->sortClause != NULL) {
+		appendStringInfoString(buf, " ORDER BY ");
+		deparse_sort_clause(stmt->sortClause, buf);
+	}
 }
 
 /**
@@ -1243,11 +1162,12 @@ after_prepare_stmt(const PrepareStmt* stmts,
 {
 	Assert(stmts != nullptr);
 
-	Node* query = stmts->query;
-	if (!is_tsurugi_table(query, true)) {
+	if (!IsTsurugifdwInstalled()) {
+		/* Only Tsurugi will be processed */
 		return true;
 	}
 
+	Node* query = stmts->query;
 	stub::placeholders_type placeholders{};
 	StringInfoData sql;
 	initStringInfo(&sql);
@@ -1293,17 +1213,8 @@ after_prepare_stmt(const PrepareStmt* stmts,
 		/* Drop entry from the PostgreSQL hash table and plancache */
 		DropPreparedStatement(stmts->name, false);
 
-		std::string error_detail = Tsurugi::get_error_detail(error);
-		if (error_detail.empty())
-		{
-			elog(ERROR, "Tsurugi::prepare() failed. (%d)\n\tsql:%s",
-							(int) error, sql.data);
-		}
-		else
-		{
-			elog(ERROR, "Tsurugi::prepare() failed. (%d)\n\tsql:%s\n%s",
-							(int) error, sql.data, error_detail.c_str());
-		}
+		elog(ERROR, "Failed to prepare SQL statement to Tsurugi. (%d)\n\tsql:%s\n%s", 
+            (int) error, sql.data, Tsurugi::get_error_message(error).c_str());
 		return false;
 	}
 
@@ -2209,13 +2120,13 @@ befor_execute_stmt(const ExecuteStmt* stmts,
 	List* query_list;
 	ListCell* l;
 
-	entry = FetchPreparedStatement(stmts->name, true);
-
-	RawStmt* raw_stmt = entry->plansource->raw_parse_tree;
-	Node* query = raw_stmt->stmt;
-	if (!is_tsurugi_table(query, false)) {
+	if (!IsTsurugifdwInstalled()) {
+		/* Only Tsurugi will be processed */
 		return true;
 	}
+
+	entry = FetchPreparedStatement(stmts->name, true);
+	RawStmt* raw_stmt = entry->plansource->raw_parse_tree;
 
 	analyze_execut_parameters(stmts, entry, queryString);
 
@@ -2283,10 +2194,8 @@ befor_execute_stmt(const ExecuteStmt* stmts,
 bool
 after_execute_stmt(const ExecuteStmt* stmts)
 {
-	PreparedStatement* entry = FetchPreparedStatement(stmts->name, true);
-	RawStmt* raw_stmt = entry->plansource->raw_parse_tree;
-	Node* query = raw_stmt->stmt;
-	if (!is_tsurugi_table(query, false)) {
+	if (!IsTsurugifdwInstalled()) {
+		/* Only Tsurugi will be processed */
 		return true;
 	}
 

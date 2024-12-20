@@ -2,62 +2,39 @@
 
 ## [はじめに](./preface.md)
 
-1. Tsurugi FDWについて
-1. Tsurugi FDW 機能一覧
+- Tsurugi FDWについて
+- Tsurugi FDWの機能
 
 ## [セットアップ](./setup.md)
 
-1. 必要条件
-1. Tsurugiのインストール
-1. PostgreSQLのインストール
-1. Tsurugi FDW のインストール
-1. Tsurugi FDW 初期設定
-1. Tsurugi FDW 起動と終了
-1. Tsurugi FDW アンインストール
+- 必要条件
+- PostgreSQLのインストール
+- Tsurugi FDWのインストール
+- Tsurugi FDWの初期設定
+- Tsurugi FDWの起動と終了
+- Tsurugi FDWのアンインストール
 
 ## [チュートリアル](./tutorial.md)
 
-### [基本的なSQL言語](./tutorial.md#基本的なsql言語)
-
-   1. テーブルの作成
-   1. データの挿入
-   1. データの問い合わせ
-   1. データの更新と削除
-   1. アクセス制御
-   1. インデックス
-   1. プリペアドステートメント
-
-### [Tsurugi固有の機能](./tutorial.md#Tsurugi固有の機能)
-
-   1. トランザクション
+- 基本的なSQL言語
+- Tsurugi固有の機能
+- Javaアプリケーションからの利用
 
 ## [リファレンス（SQL）](./sql_reference.md)
 
-- CREATE INDEX
-- CREATE ROLE
-- CREATE TABLE
-- DELETE
-- DROP INDEX
-- DROP ROLE
-- DROP TABLE
-- EXECUTE
-- GRANT
-- INSERT
-- PREPARE
-- REVOKE
-- SELECT
-- UPDATE
+- SQLコマンド一覧
 
 ## [リファレンス（UDF）](./udf_reference.md)
 
-- tg_commit
-- tg_rollback
-- tg_set_exclusive_read_areas
-- tg_set_inclusive_read_areas
-- tg_set_transaction
-- tg_set_write_preserve
-- tg_show_transaction
-- tg_start_transaction
+- Tsurugi固有トランザクション特性の設定
+
+## [リファレンス（JDBC API）](./jdbc_reference.md)
+
+- 動作確認済みメソッド一覧
+
+## [リファレンス（メッセージ）](./message_reference.md)
+
+- Tsurugi FDWのエラーメッセージ
 
 ## [付録](./appendixes.md)
 

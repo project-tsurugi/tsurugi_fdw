@@ -80,41 +80,38 @@ WHERE
 ORDER BY
     auth1.rolname;
 
-CREATE TABLE table2 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
-CREATE FOREIGN TABLE table2 (column1 INTEGER NOT NULL) SERVER tsurugidb;
-CREATE TABLE table3 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
-CREATE FOREIGN TABLE table3 (column1 INTEGER NOT NULL) SERVER tsurugidb;
-
-GRANT SELECT, INSERT, UPDATE, DELETE ON table2 to sample_role2;
-GRANT SELECT, INSERT, UPDATE ON table2 to sample_role3, sample_role4;
-GRANT ALL ON table2 to admin;
-GRANT SELECT, INSERT, UPDATE ON table2, table3 to sample_role1;
+GRANT SELECT, INSERT, UPDATE, DELETE ON t1_user_management to sample_role2;
+GRANT SELECT, INSERT, UPDATE ON t1_user_management to sample_role3, sample_role4;
+GRANT ALL ON t1_user_management to admin;
+GRANT SELECT, INSERT, UPDATE ON t1_user_management, t2_user_management to sample_role1;
 
 SELECT 
     relname, relacl 
 FROM 
     pg_class 
 WHERE 
-    relname = 'table2' or relname = 'table3'
+    relname = 't1_user_management' or relname = 't2_user_management'
 ORDER BY
     relname;
 
-REVOKE UPDATE,DELETE  ON table2 FROM sample_role2;
-REVOKE UPDATE ON table2 FROM sample_role3, sample_role4;
-REVOKE ALL ON table2 FROM admin;
-REVOKE UPDATE ON table2, table3 FROM sample_role1;
+REVOKE UPDATE,DELETE  ON t1_user_management FROM sample_role2;
+REVOKE UPDATE ON t1_user_management FROM sample_role3, sample_role4;
+REVOKE ALL ON t1_user_management FROM admin;
+REVOKE UPDATE ON t1_user_management, t2_user_management FROM sample_role1;
 
 SELECT 
     relname, relacl 
 FROM 
     pg_class 
 WHERE 
-    relname = 'table2' or relname = 'table3';
+    relname = 't1_user_management' or relname = 't2_user_management'
+ORDER BY
+    relname;
 
 REVOKE 
     ALL 
 ON 
-    table2, table3 
+    t1_user_management, t2_user_management 
 FROM 
     sample_role1, sample_role2, sample_role3, sample_role4;
 
@@ -123,10 +120,10 @@ SELECT
 FROM 
     pg_class 
 WHERE 
-    relname = 'table2' or relname = 'table3';
+    relname = 't1_user_management' or relname = 't2_user_management'
+ORDER BY
+    relname;
 
-DROP TABLE table2;
-DROP FOREIGN TABLE table2;
 DROP ROLE sample_role4;
 DROP ROLE sample_role2, sample_role3;
 DROP ROLE sample_role1, admin;
@@ -139,9 +136,6 @@ WHERE
     rolname = 'sample_role3' or rolname = 'sample_role4' or rolname = 'admin';
 
 -- unhappy case
-CREATE TABLE table2 (column1 INTEGER NOT NULL PRIMARY KEY) TABLESPACE tsurugi;
-CREATE FOREIGN TABLE table2 (column1 INTEGER NOT NULL) SERVER tsurugidb;
-
 CREATE ROLE sample_role1;
 CREATE ROLE sample_role1;
 SELECT rolname FROM pg_authid WHERE rolname like 'sample_role%' Order By rolname;
@@ -165,19 +159,15 @@ DROP ROLE unknown_role;
 DROP ROLE unknown_role, sample_role2;
 DROP ROLE sample_role2, unknown_role;
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON table4 to sample_role2;
-GRANT SELECT, INSERT, UPDATE, DELETE ON table4, table2 to sample_role2;
-GRANT SELECT, INSERT, UPDATE, DELETE ON table2, table4 to sample_role2;
+GRANT SELECT, INSERT, UPDATE, DELETE ON t4_user_management to sample_role2;
+GRANT SELECT, INSERT, UPDATE, DELETE ON t4_user_management, t3_user_management to sample_role2;
+GRANT SELECT, INSERT, UPDATE, DELETE ON t3_user_management, t4_user_management to sample_role2;
 
-REVOKE ALL ON table4 FROM sample_role2;
-REVOKE ALL ON table4, table2 FROM sample_role2;
-REVOKE ALL ON table2, table4 FROM sample_role2;
+REVOKE ALL ON t4_user_management FROM sample_role2;
+REVOKE ALL ON t4_user_management, t3_user_management FROM sample_role2;
+REVOKE ALL ON t3_user_management, t4_user_management FROM sample_role2;
 
 -- clean up
 DROP ROLE sample_role1;
 DROP ROLE sample_role2;
-DROP TABLE table2;
-DROP FOREIGN TABLE table2;
-DROP TABLE table3;
-DROP FOREIGN TABLE table3;
 RESET ROLE;

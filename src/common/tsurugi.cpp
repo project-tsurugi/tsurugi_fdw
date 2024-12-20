@@ -20,6 +20,7 @@
 #include <string_view>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/format.hpp>
 
 #include "ogawayama/stub/error_code.h"
 #include "ogawayama/stub/api.h"
@@ -88,13 +89,13 @@ ERROR_CODE Tsurugi::init()
     if (stub_ == nullptr)
 	{
         std::string shared_memory_name(get_shared_memory_name());
-		elog(LOG, "Trying to run make_stub(). (shared memory: %s)", 
+		elog(DEBUG1, "Trying to run make_stub(). (shared memory: %s)", 
             shared_memory_name.c_str());
 
 		error = make_stub(stub_, shared_memory_name);
 		if (error != ERROR_CODE::OK) 
         {
-            elog(ERROR, "Failed to run make_stub(). (error: %d)",
+            elog(ERROR, "Failed to make the Ogawayama Stub. (error: %d)",
                 (int) error);
             stub_ = nullptr;
 			return error;
@@ -106,12 +107,12 @@ ERROR_CODE Tsurugi::init()
 
 	if (connection_ == nullptr) 
     {
-		elog(LOG, "Trying to run Stub::get_connection(). (pid: %d)", getpid());
+		elog(DEBUG1, "Trying to run Stub::get_connection(). (pid: %d)", getpid());
 
 		error = stub_->get_connection(getpid(), connection_);
 		if (error != ERROR_CODE::OK)
 		{
-            elog(ERROR, "Stub::get_connection() failed. (error: %d)",
+            elog(ERROR, "Failed to connect to Tsurugi. (error: %d)",
                 (int) error);
             connection_ = nullptr;
 			return error;
@@ -148,7 +149,7 @@ ERROR_CODE Tsurugi::prepare(std::string_view sql, stub::placeholders_type& place
 
     if (connection_ == nullptr)
     {
-        elog(LOG, "Trying to run Tsurugi::init(). (pid: %d)", getpid());
+        elog(DEBUG1, "Trying to run Tsurugi::init(). (pid: %d)", getpid());
 
         error = init();
 
@@ -159,7 +160,7 @@ ERROR_CODE Tsurugi::prepare(std::string_view sql, stub::placeholders_type& place
         }
     }
 
-    elog(LOG, "Trying to run Connection::prepare(). (pid: %d)", getpid());
+    elog(DEBUG1, "Trying to run Connection::prepare(). (pid: %d)", getpid());
     elog(LOG, "sql = \n%s", sql.data());
 
     error = connection_->prepare(sql, placeholders, prepared_statement);
@@ -186,7 +187,7 @@ ERROR_CODE Tsurugi::start_transaction()
         boost::property_tree::ptree option;
         GetTransactionOption(option);
 
-        elog(LOG, "Trying to run Connection::begin(). (pid: %d)", getpid());
+        elog(DEBUG1, "Trying to run Connection::begin(). (pid: %d)", getpid());
 
         error = connection_->begin(option, transaction_);
 
@@ -210,11 +211,11 @@ Tsurugi::execute_query(std::string_view query, ResultSetPtr& result_set)
 
     result_set = nullptr;
 	if (prepared_statement.get() != nullptr) {
-	    elog(LOG, "Trying to run Transaction::execute_query(prepared_statement). \n%s",
+	    elog(DEBUG1, "Trying to run Transaction::execute_query(prepared_statement). \n%s",
 	        query.data());
 	    error = transaction_->execute_query(prepared_statement, parameters, result_set);
 	} else {
-	    elog(LOG, "Trying to run Transaction::execute_query(query). \n%s",
+	    elog(DEBUG1, "Trying to run Transaction::execute_query(query). \n%s",
 	        query.data());
 	    error = transaction_->execute_query(query, result_set);
 	}
@@ -243,11 +244,11 @@ Tsurugi::execute_statement(std::string_view statement, std::size_t& num_rows)
     if (transaction_ != nullptr)
     {
 		if (prepared_statement.get() != nullptr) {
-	        elog(LOG, "tsurugi-fdw: Trying to execute the prepared statement. \n%s",
+	        elog(DEBUG1, "tsurugi-fdw: Trying to execute the prepared statement. \n%s",
 	            statement.data());
 	        error = transaction_->execute_statement(prepared_statement, parameters, num_rows);
 		} else {
-	        elog(LOG, "tsurugi-fdw: Trying to execute the statement. \n%s",
+	        elog(DEBUG1, "tsurugi-fdw: Trying to execute the statement. \n%s",
 	            statement.data());
 	        error = transaction_->execute_statement(statement, num_rows);
 		}
@@ -286,7 +287,7 @@ ERROR_CODE Tsurugi::commit()
 
     if (transaction_ != nullptr) 
     {
-        elog(LOG, "Trying to run Transaction::commit().");
+        elog(DEBUG1, "Trying to run Transaction::commit().");
 
         error = transaction_->commit();
         transaction_ = nullptr;
@@ -316,7 +317,7 @@ ERROR_CODE Tsurugi::rollback()
 
     if (transaction_ != nullptr) 
     {
-        elog(LOG, "Trying to run Transaction::rollback().");
+        elog(DEBUG1, "Trying to run Transaction::rollback().");
 
         error = transaction_->rollback();
         transaction_ = nullptr;
@@ -356,7 +357,7 @@ ERROR_CODE Tsurugi::begin(stub::Transaction** transaction)
 		ERROR_CODE error = stub_->get_connection(getpid() , connection_);
 		if (error != ERROR_CODE::OK)
 		{
-			std::cerr << "Stub::get_connection() failed. " << (int) error << std::endl;
+			std::cerr << "Failed to connect to Tsurugi. " << (int) error << std::endl;
 			return error;
 		}
 	}
@@ -399,7 +400,7 @@ ERROR_CODE Tsurugi::tsurugi_error(stub::tsurugi_error_code& code)
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
 	if (connection_ != nullptr)
 	{
-		elog(LOG, "Trying to run Connection::tsurugi_error(). (pid: %d)", getpid());
+		elog(DEBUG1, "Trying to run Connection::tsurugi_error(). (pid: %d)", getpid());
 		error = connection_->tsurugi_error(code);
 		elog(LOG, "Connection::tsurugi_error() done. (error: %d)", (int) error);
 	}
@@ -454,8 +455,71 @@ std::string Tsurugi::get_error_detail(ERROR_CODE error)
 		}
 		else
 		{
-			elog(ERROR, "Tsurugi::tsurugi_error() failed. (%d)", (int) tsurugi_error);
+			elog(ERROR, "Failed to retrieve error information from Tsurugi. (%d)", (int) tsurugi_error);
 		}
 	}
 	return error_detail;
+}
+
+/*
+	get detail message of tsurugi server error.
+*/
+std::string Tsurugi::get_error_message(ERROR_CODE error_code)
+{
+	std::string message = "No detail message.";
+
+	elog(LOG, "Tsurugi::get_error_message() started");
+
+	if (error_code != ERROR_CODE::SERVER_ERROR)
+	{
+		elog(LOG, "Error code is not SERVER_ERROR. (error code: %s)", 
+			stub::error_name(error_code).data());
+		return message;
+	}
+
+	if (connection_ == nullptr)
+	{
+		elog(LOG, "There is no connection for Tsurugi.");
+		return message;
+	}
+
+	//  get error message from Tsurugi.
+	stub::tsurugi_error_code error{};
+	ERROR_CODE ret_code = connection_->tsurugi_error(error);
+	if (ret_code == ERROR_CODE::OK)
+	{
+		elog(LOG, "ERROR_CODE::SERVER_ERROR\n\t"
+					"tsurugi_error_code.type: %d\n\t"
+					"                   code: %d\n\t"
+					"                   name: %s\n\t"
+					"                 detail: %s\n\t"
+					"      supplemental_text: %s",
+					(int) error.type, error.code, error.name.c_str(),
+					error.detail.c_str(), error.supplemental_text.c_str());
+
+		std::string detail_code;
+		switch (error.type)
+		{
+			case stub::tsurugi_error_code::tsurugi_error_type::sql_error:
+				detail_code = "SQL-" + (boost::format("%05d") % error.code).str();
+				break;
+			case stub::tsurugi_error_code::tsurugi_error_type::framework_error:
+				detail_code = "SCD-" + (boost::format("%05d") % error.code).str();
+				break;
+			default:
+				elog(WARNING, "Unknown error type. (type: %d)", (int) error.type);
+				detail_code = "UNKNOWN-" + (boost::format("%05d") % error.code).str();
+				break;
+		}
+		// build message.
+		message = "Tsurugi Server Error: " + error.name 
+									+ " (" + detail_code + ": " + error.detail + ")";
+	}
+	else
+	{
+		elog(ERROR, "It failed to get Tsurugi Server Error. (erro code: %s)", 
+				stub::error_name(ret_code).data());
+	}
+
+	return message;
 }
