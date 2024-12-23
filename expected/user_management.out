@@ -246,11 +246,11 @@ ERROR:  syntax error at or near "sample_role2"
 LINE 1: REVOKE ROLE sample_role2, unknown_role FROM sample_role1;
                     ^
 DROP ROLE unknown_role;
-ERROR:  Could not get role.
+ERROR:  role "unknown_role" does not exist
 DROP ROLE unknown_role, sample_role2;
-ERROR:  Could not get role.
+ERROR:  role "unknown_role" does not exist
 DROP ROLE sample_role2, unknown_role;
-ERROR:  Could not get role.
+ERROR:  role "unknown_role" does not exist
 GRANT SELECT, INSERT, UPDATE, DELETE ON t4_user_management to sample_role2;
 ERROR:  relation "t4_user_management" does not exist
 GRANT SELECT, INSERT, UPDATE, DELETE ON t4_user_management, t3_user_management to sample_role2;

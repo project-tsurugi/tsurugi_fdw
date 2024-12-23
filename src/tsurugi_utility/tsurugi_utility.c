@@ -132,17 +132,6 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
             break;
 		}
 
-		case T_CreateRoleStmt:
-		{
-			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
-									dest, completionTag);
-			if (!after_create_role((CreateRoleStmt*)parsetree)) 
-			{
-				elog(ERROR, "failed after_create_role() function.");
-			}
-			break;
-		}
-
 		case T_CreateForeignTableStmt:
 		{
 			if (IsTsurugifdwInstalled())
@@ -173,6 +162,18 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 			}
 			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
 									dest, completionTag);
+			break;
+		}
+
+#if 0 // Since user and access control is not implemented in Tsurugi, it runs on the standard.
+		case T_CreateRoleStmt:
+		{
+			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
+									dest, completionTag);
+			if (!after_create_role((CreateRoleStmt*)parsetree))
+			{
+				elog(ERROR, "failed after_create_role() function.");
+			}
 			break;
 		}
 
@@ -278,6 +279,7 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 			}
 			break;
 		}
+#endif // Since user and access control is not implemented in Tsurugi, it runs on the standard.
 
 		case T_PrepareStmt:
 		{
