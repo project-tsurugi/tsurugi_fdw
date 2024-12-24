@@ -125,7 +125,11 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 		{
 			if (IsTsurugifdwInstalled())
 			{
-				elog(ERROR, "This database is for Tsurugi, so CREATE TABLE AS is not supported");
+				switch (((CreateTableAsStmt *) parsetree)->relkind)
+            	{
+                	case OBJECT_TABLE:
+						elog(ERROR, "This database is for Tsurugi, so CREATE TABLE AS is not supported");
+				}
 			}
 			standard_ProcessUtility(pstmt, queryString,context, params, queryEnv,
 									dest, completionTag);
