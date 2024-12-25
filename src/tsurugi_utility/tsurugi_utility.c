@@ -129,6 +129,9 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
             	{
                 	case OBJECT_TABLE:
 						elog(ERROR, "This database is for Tsurugi, so CREATE TABLE AS is not supported");
+						break;
+					default:
+						break;
 				}
 			}
 			standard_ProcessUtility(pstmt, queryString,context, params, queryEnv,
