@@ -10,6 +10,8 @@ PostgreSQLとTsurugiはアーキテクチャおよびその性質が異なるた
 
 - ORDER BY句のNULLSオプションのデフォルトがNULLS FIRSTとなります。PostgreSQLはNULLS LASTです。
 
+- SQLのINSERTコマンドに`insert-option`（OR REPLACE/OR IGNORE/IF NOT EXISTS）が指定できません。PostgreSQLは`insert-option`を指定することができません。
+
 - Tsurugiのデータ型とそれに対応するJDBC API(Java)およびPostgreSQLのデータ型は適切にマッピングする必要があります。※ PostgreSQL JDBDドライバは`TIME WITH TIME ZONE`型を[非サポート](https://jdbc.postgresql.org/documentation/query/#using-java-8-date-and-time-classes)としています。
 
     | Tsurugi | Java(JDBC) | PostgreSQL |
@@ -42,7 +44,12 @@ PostgreSQLとTsurugiはアーキテクチャおよびその性質が異なるた
 
 - Tsurugiのバイナリデータ型（BINARY/VARBINARY/BINARY VARYING）を操作することはできません。
 
-- SQLのPREPAREコマンドでプリペアするSELECT文にLIMIT句（結果行の一部分のみ返す）を使用することはできません。
+- SQLのPREPAREコマンドでプリペアするSQL文に以下を使用することはできません。
+  - SELECT文で指定可能な`set-quantifier`（ALL/DISTINCT）
+  - SELECT文で指定可能なLIMIT句
+  - SELECT文で指定可能な集約関数（UNION/EXCEPT/INTERSECT）
+  - INSERT文の`insert-source`で指定可能な`DEFAULT VALUES`
+  - INSERT文の`insert-source`で指定可能な`query-expression`
 
 ### サードパーティライセンス
 
