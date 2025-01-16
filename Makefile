@@ -6,8 +6,7 @@ C_SRCS 		= $(shell find $(SRCDIR) -name *.c)
 CPP_SRCS	= $(shell find $(SRCDIR) -name *.cpp)
 OBJS 		= $(C_SRCS:.c=.o) $(CPP_SRCS:.cpp=.o)
 
-PG_CPPFLAGS = -Isrc/common/include \
-              -Isrc/tsurugi_utility/include \
+PG_CPPFLAGS = -Iinclude \
               -Ithird_party/ogawayama/include \
               -Ithird_party/takatori/include \
               -Ithird_party/ogawayama/third_party/metadata-manager/include \

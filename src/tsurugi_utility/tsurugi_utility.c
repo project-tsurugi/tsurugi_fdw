@@ -28,7 +28,7 @@
 #include "tcop/utility.h"
 
 #include <string.h>
-#include "prepare_execute/prepare_execute.h"
+#include "prepare_execute.h"
 #include "foreign/foreign.h"
 #include "utils/builtins.h"
 #include "utils/rel.h"
