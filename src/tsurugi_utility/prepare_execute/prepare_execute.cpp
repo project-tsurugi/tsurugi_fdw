@@ -933,6 +933,25 @@ deparse_sort_clause(List* sortClause,
 }
 
 void
+deparse_limit_clause(Node* limitCount,
+					 const Oid* argtypes,
+					 stub::placeholders_type& placeholders,
+					 StringInfo buf)
+{
+	if (IsA(limitCount, A_Const)) {
+		A_Const* con = (A_Const *) limitCount;
+		Value* val = &con->val;
+		if IsA(val, Null) {
+			appendStringInfoString(buf, "ALL ");
+			return;
+		}
+	}
+
+	std::string name = "LIMIT";
+	deparse_expr_recurse(limitCount, argtypes, placeholders, name, buf);
+}
+
+void
 deparse_join_expr(JoinExpr* join,
 				  const Oid* argtypes,
 				  stub::placeholders_type& placeholders,
@@ -1217,8 +1236,7 @@ deparse_select_query(const SelectStmt* stmt,
 
 	if (stmt->limitCount != NULL) {
 		appendStringInfoString(buf, " LIMIT ");
-		std::string name = "LIMIT";
-		deparse_expr_recurse(stmt->limitCount, argtypes, placeholders, name, buf);
+		deparse_limit_clause(stmt->limitCount, argtypes, placeholders, buf);
 	}
 }
 
