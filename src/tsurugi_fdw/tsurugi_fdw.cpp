@@ -2008,6 +2008,12 @@ store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist)
 				Var *var = (Var *) node;
 				data_types[i] = var->vartype;
 			}
+			else if (nodeTag(node) == T_Const)
+			{
+				// When generating placeholders in a SELECT query expression.
+				elog(DEBUG5, "Skip the data type placeholders. (index: %d, type:%u)",
+					 i, (unsigned int) nodeTag(node));
+			}
 			else
 			{
 				elog(ERROR, "Unexpected data type in target list. (index: %d, type:%u)",

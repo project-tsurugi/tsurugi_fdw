@@ -66,3 +66,8 @@ DROP TABLE trg_numeric_s38;
 
 /* manual_tutorial.sql */
 DROP TABLE weather;
+
+/* bug fix confirm */
+DROP TABLE employee_1;
+DROP TABLE employee_2;
+DROP TABLE employee_i;

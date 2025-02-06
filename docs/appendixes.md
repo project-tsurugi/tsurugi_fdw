@@ -40,16 +40,10 @@ PostgreSQLとTsurugiはアーキテクチャおよびその性質が異なるた
 
 ### 制約事項
 
-現バージョンでは以下の機能を制限とします。
+現バージョン（Tsurugi 1.2.0とTsurugi FDWの組み合わせ環境）では以下の機能を制限とします。
 
-- Tsurugiのバイナリデータ型（BINARY/VARBINARY/BINARY VARYING）を操作することはできません。
-
-- SQLのPREPAREコマンドでプリペアするSQL文に以下を使用することはできません。
-  - SELECT文で指定可能な`set-quantifier`（ALL/DISTINCT）
-  - SELECT文で指定可能なLIMIT句
-  - SELECT文で指定可能な集約関数（UNION/EXCEPT/INTERSECT）
-  - INSERT文の`insert-source`で指定可能な`DEFAULT VALUES`
-  - INSERT文の`insert-source`で指定可能な`query-expression`
+- バイナリデータ型（BINARY/VARBINARY/BINARY VARYING）を操作することはできません。
+- SQLのPREPAREコマンドでプリペアするSQL文に集合演算子（UNION/EXCEPT/INTERSECT）があるとEXECUTEコマンドで正しい結果を得ることができません。
 
 ### サードパーティライセンス
 
@@ -88,3 +82,9 @@ Tsurugi FDWには、ライセンス規定または著作権の表示が必要な
 
 - 1.0.0
   - 初版
+- 1.1.0
+  - SQLのPREPAREコマンドで制約事項としていた以下のSQL構文の使用を解除
+    SELECT文で指定可能なset-quantifier（ALL/DISTINCT）
+    SELECT文で指定可能なLIMIT句
+    INSERT文のinsert-sourceで指定可能なDEFAULT VALUES
+    INSERT文のinsert-sourceで指定可能なquery-expression

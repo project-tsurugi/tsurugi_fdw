@@ -212,3 +212,56 @@ select * from trg_timestamptz order by id;
 /* check timestamp with time zone in Asia/Tokyo */
 set session timezone to 'Asia/Tokyo';
 select * from trg_timestamptz order by id;
+
+/************************/
+/* bug fix confirm r685 */
+/************************/
+select * from employee_1 order by id, name;
+select * from employee_2 order by id, name;
+
+/* limit r682 */
+PREPARE limit_5 AS select * from employee_2 order by id, name limit 5;
+EXECUTE limit_5;
+-- Error:SYNTAX_EXCEPTION
+PREPARE limit_all AS select * from employee_2 order by id, name limit all;
+-- Error:TYPE_ANALYZE_EXCEPTION
+PREPARE limit_x (int) AS select * from employee_2 order by id, name limit $1;
+
+/* set quantifier r686 */
+PREPARE quantifier_distinct AS select distinct * from employee_2 order by id, name;
+EXECUTE quantifier_distinct;
+PREPARE quantifier_all AS select all * from employee_2 order by id, name;
+EXECUTE quantifier_all;
+
+/* set operators r687 */
+PREPARE uni AS select * from employee_1 union select * from employee_2 order by id, name;
+PREPARE uni_all AS select * from employee_1 union all select * from employee_2 order by id, name;
+PREPARE exce AS select * from employee_1 except select * from employee_2 order by id, name;
+-- Error:UNSUPPORTED_COMPILER_FEATURE_EXCEPTION
+PREPARE exce_all AS select * from employee_1 except all select * from employee_2 order by id, name;
+PREPARE inte AS select * from employee_1 intersect select * from employee_2 order by id, name;
+-- Error:UNSUPPORTED_COMPILER_FEATURE_EXCEPTION
+PREPARE inte_all AS select * from employee_1 intersect all select * from employee_2 order by id, name;
+-- EXECUTE see:r711
+
+/* set operators r688 */
+select * from employee_i order by id, name;
+prepare ins_def as insert into employee_i default values;
+execute ins_def;
+select * from employee_i order by id, name;
+select * from employee_1 where id < 10 order by id, name;
+prepare ins_query as insert into employee_i select * from employee_1 where id < 10 order by id, name;
+execute ins_query;
+select * from employee_i order by id, name;
+
+/* group by r707 */
+PREPARE group_name AS select id, count(name), sum(salary) from employee_2 group by id order by id;
+EXECUTE group_name;
+-- Error:UNSUPPORTED_COMPILER_FEATURE_EXCEPTION
+PREPARE group_num AS select id, count(name), sum(salary) from employee_2 group by 1 order by id;
+
+/* order by r708 */
+PREPARE order_name AS select * from employee_2 order by id, name;
+EXECUTE order_name;
+-- Error:UNSUPPORTED_COMPILER_FEATURE_EXCEPTION
+PREPARE order_num AS select * from employee_2 order by 1, 2;

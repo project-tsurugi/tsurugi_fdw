@@ -200,3 +200,8 @@ CREATE FOREIGN TABLE weather (
     prcp            real,          -- 降水量
     the_date        date default '2023-04-01'
 ) SERVER tsurugidb;
+
+/* bug fix confirm */
+CREATE FOREIGN TABLE employee_1 (id INTEGER DEFAULT 1, name VARCHAR(100) DEFAULT 'Unknown', salary NUMERIC(10, 2) DEFAULT 30000.00) SERVER tsurugidb;
+CREATE FOREIGN TABLE employee_2 (id INTEGER DEFAULT 1, name VARCHAR(100) DEFAULT 'Unknown', salary NUMERIC(10, 2) DEFAULT 30000.00) SERVER tsurugidb;
+CREATE FOREIGN TABLE employee_i (id INTEGER DEFAULT 1, name VARCHAR(100) DEFAULT 'Unknown', salary NUMERIC(10, 2) DEFAULT 30000.00) SERVER tsurugidb;

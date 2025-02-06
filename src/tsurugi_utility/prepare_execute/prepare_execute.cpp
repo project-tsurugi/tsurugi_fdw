@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 Project Tsurugi.
+ * Copyright 2023-2025 Project Tsurugi.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,6 +72,9 @@ bool deparse_expr_recurse(Node* expr, const Oid* argtypes, stub::placeholders_ty
 void deparse_execute_where_clause(const Node* expr, const ExecuteStmt* stmts);
 bool deparse_execute_expr_recurse(Node* expr, std::string& col_name, const ExecuteStmt* stmts);
 void deparse_select_query(const SelectStmt* stmt, const Oid* argtypes, stub::placeholders_type& placeholders, StringInfo buf);
+void deparse_select_operation_query(const SelectStmt* stmt, const Oid* argtypes, stub::placeholders_type& placeholders, StringInfo buf);
+void deparse_execute_select_query(const SelectStmt* stmt, const ExecuteStmt* stmts);
+void deparse_execute_select_operation_query(const SelectStmt* stmt, const ExecuteStmt* stmts);
 
 void
 get_tsurugi_table_join_expr(JoinExpr* join,
@@ -745,7 +748,12 @@ deparse_expr_recurse(Node* expr,
 			{
 				SubLink* sub_link = (SubLink *) expr;
 				appendStringInfoString(buf, "EXISTS (");
-				deparse_select_query((SelectStmt*) sub_link->subselect, argtypes, placeholders, buf);
+				SelectStmt* substmt = (SelectStmt *)sub_link->subselect;
+				if (substmt->op == SETOP_NONE) {
+					deparse_select_query(substmt, argtypes, placeholders, buf);
+				} else {
+					deparse_select_operation_query(substmt, argtypes, placeholders, buf);
+				}
 				appendStringInfoString(buf, ")");
 			}
 			break;
@@ -825,7 +833,12 @@ deparse_where_clause(Node* expr,
 			{
 				SubLink* sub_link = (SubLink *) expr;
 				appendStringInfoString(buf, "EXISTS (");
-				deparse_select_query((SelectStmt*) sub_link->subselect, argtypes, placeholders, buf);
+				SelectStmt* substmt = (SelectStmt *)sub_link->subselect;
+				if (substmt->op == SETOP_NONE) {
+					deparse_select_query(substmt, argtypes, placeholders, buf);
+				} else {
+					deparse_select_operation_query(substmt, argtypes, placeholders, buf);
+				}
 				appendStringInfoString(buf, ")");
 			}
 			break;
@@ -841,7 +854,27 @@ deparse_where_clause(Node* expr,
 }
 
 void
+deparse_group_clause(List* groupClause,
+					 const Oid* argtypes,
+					 stub::placeholders_type& placeholders,
+					 StringInfo buf)
+{
+	const char* sep = "";
+	ListCell* l;
+	foreach(l, groupClause)
+	{
+		Node* group = (Node *) lfirst(l);
+		appendStringInfoString(buf, sep);
+		std::string name = "GROUP";
+		deparse_expr_recurse(group, argtypes, placeholders, name, buf);
+		sep = ", ";
+	}
+}
+
+void
 deparse_sort_clause(List* sortClause,
+					 const Oid* argtypes,
+					 stub::placeholders_type& placeholders,
 					 StringInfo buf)
 {
 	const char* sep = "";
@@ -852,14 +885,8 @@ deparse_sort_clause(List* sortClause,
 		if (IsA(sort, SortBy)) {
 			SortBy* sortby = (SortBy *) sort;
 			appendStringInfoString(buf, sep);
-			if (IsA(sortby->node, ColumnRef)) {
-				deparse_column_ref((ColumnRef*) sortby->node, NULL, buf);
-			}
-			if (IsA(sortby->node, A_Const)) {
-				A_Const* con = (A_Const *) sortby->node;
-				Value* val = &con->val;
-				deparse_a_const(val, buf);
-			}
+			std::string name = "SORT";
+			deparse_expr_recurse(sortby->node, argtypes, placeholders, name, buf);
 			switch (sortby->sortby_dir)
 			{
 				case SORTBY_DEFAULT:
@@ -903,6 +930,25 @@ deparse_sort_clause(List* sortClause,
 			sep = ", ";
 		}
 	}
+}
+
+void
+deparse_limit_clause(Node* limitCount,
+					 const Oid* argtypes,
+					 stub::placeholders_type& placeholders,
+					 StringInfo buf)
+{
+	if (IsA(limitCount, A_Const)) {
+		A_Const* con = (A_Const *) limitCount;
+		Value* val = &con->val;
+		if IsA(val, Null) {
+			appendStringInfoString(buf, "ALL ");
+			return;
+		}
+	}
+
+	std::string name = "LIMIT";
+	deparse_expr_recurse(limitCount, argtypes, placeholders, name, buf);
 }
 
 void
@@ -989,6 +1035,26 @@ deparse_join_expr(JoinExpr* join,
 	}
 }
 
+bool
+isGeneralSelect(const SelectStmt* selectStmt)
+{
+	/*
+	 * We have three cases to deal with: DEFAULT VALUES (selectStmt == NULL),
+	 * VALUES list, or general SELECT input.  We special-case VALUES, both for
+	 * efficiency and so we can handle DEFAULT specifications.
+	 *
+	 * The grammar allows attaching ORDER BY, LIMIT, FOR UPDATE, or WITH to a
+	 * VALUES clause.  If we have any of those, treat it as a general SELECT;
+	 * so it will work, but you can't use DEFAULT items together with those.
+	 */
+	return (selectStmt && (selectStmt->valuesLists == NIL ||
+						   selectStmt->sortClause != NIL ||
+						   selectStmt->limitOffset != NULL ||
+						   selectStmt->limitCount != NULL ||
+						   selectStmt->lockingClause != NIL ||
+						   selectStmt->withClause != NULL));
+}
+
 void
 deparse_insert_query(const InsertStmt* stmt,
 					 const Oid* argtypes,
@@ -999,12 +1065,23 @@ deparse_insert_query(const InsertStmt* stmt,
 
 	appendStringInfo(buf, "INSERT INTO %s ", stmt->relation->relname);
 
-	deparse_query_columns(stmt->cols, col_names, buf);
-
-	appendStringInfoString(buf, " VALUES ");
+	if (stmt->cols != NULL) {
+		deparse_query_columns(stmt->cols, col_names, buf);
+	}
 
 	SelectStmt* selectStmt = (SelectStmt *)stmt->selectStmt;
-	deparse_values_lists(selectStmt->valuesLists, argtypes, col_names, placeholders, buf);
+	if (selectStmt == NULL) {
+		appendStringInfoString(buf, " DEFAULT VALUES");
+	} else if (isGeneralSelect(selectStmt)) {
+		if (selectStmt->op == SETOP_NONE) {
+			deparse_select_query(selectStmt, argtypes, placeholders, buf);
+		} else {
+			deparse_select_operation_query(selectStmt, argtypes, placeholders, buf);
+		}
+	} else if (list_length(selectStmt->valuesLists)) {
+		appendStringInfoString(buf, " VALUES ");
+		deparse_values_lists(selectStmt->valuesLists, argtypes, col_names, placeholders, buf);
+	}
 }
 
 void
@@ -1063,6 +1140,20 @@ deparse_select_query(const SelectStmt* stmt,
 					 StringInfo buf)
 {
 	appendStringInfoString(buf, "SELECT ");
+
+	if (stmt->distinctClause == NIL)
+	{
+		// SELECT ALL retains all rows by default.
+		// appendStringInfoString(buf, "ALL ");
+	}
+	else if (linitial(stmt->distinctClause) == NULL)
+	{
+		appendStringInfoString(buf, "DISTINCT ");
+	}
+	else
+	{
+		elog(ERROR, "SELECT DISTINCT ON is not supported in Tsurugi.");
+	}
 
 	bool first = true;
 	ListCell* lc;
@@ -1130,14 +1221,7 @@ deparse_select_query(const SelectStmt* stmt,
 
 	if (stmt->groupClause != NULL) {
 		appendStringInfoString(buf, " GROUP BY ");
-		ListCell* l;
-		foreach(l, stmt->groupClause)
-		{
-			Node* group = (Node *) lfirst(l);
-			if (IsA(group, ColumnRef)) {
-				deparse_column_ref((ColumnRef*) group, NULL, buf);
-			}
-		}
+		deparse_group_clause(stmt->groupClause, argtypes, placeholders, buf);
 	}
 
 	if (stmt->havingClause != NULL) {
@@ -1147,7 +1231,67 @@ deparse_select_query(const SelectStmt* stmt,
 
 	if (stmt->sortClause != NULL) {
 		appendStringInfoString(buf, " ORDER BY ");
-		deparse_sort_clause(stmt->sortClause, buf);
+		deparse_sort_clause(stmt->sortClause, argtypes, placeholders, buf);
+	}
+
+	if (stmt->limitCount != NULL) {
+		appendStringInfoString(buf, " LIMIT ");
+		deparse_limit_clause(stmt->limitCount, argtypes, placeholders, buf);
+	}
+}
+
+void
+deparse_select_operation_query(const SelectStmt* stmt,
+							   const Oid* argtypes,
+							   stub::placeholders_type& placeholders,
+							   StringInfo buf)
+{
+	if (stmt->larg->op == SETOP_NONE)
+	{
+		deparse_select_query(stmt->larg, argtypes, placeholders, buf);
+	}
+	else
+	{
+		deparse_select_operation_query(stmt->larg, argtypes, placeholders, buf);
+	}
+
+	switch (stmt->op)
+	{
+		case SETOP_UNION:
+			appendStringInfoString(buf, " UNION ");
+			break;
+		case SETOP_INTERSECT:
+			appendStringInfoString(buf, " INTERSECT ");
+			break;
+		case SETOP_EXCEPT:
+			appendStringInfoString(buf, " EXCEPT ");
+			break;
+		default:
+			elog(ERROR, "unrecognized set op: %d", (int) stmt->op);
+	}
+	if (stmt->all)
+	{
+		appendStringInfoString(buf, "ALL ");
+	}
+
+	if (stmt->rarg->op == SETOP_NONE)
+	{
+		deparse_select_query(stmt->rarg, argtypes, placeholders, buf);
+	}
+	else
+	{
+		deparse_select_operation_query(stmt->rarg, argtypes, placeholders, buf);
+	}
+
+	if (stmt->sortClause != NULL) {
+		appendStringInfoString(buf, " ORDER BY ");
+		deparse_sort_clause(stmt->sortClause, argtypes, placeholders, buf);
+	}
+
+	if (stmt->limitCount != NULL) {
+		appendStringInfoString(buf, " LIMIT ");
+		std::string name = "LIMIT";
+		deparse_expr_recurse(stmt->limitCount, argtypes, placeholders, name, buf);
 	}
 }
 
@@ -1196,7 +1340,12 @@ after_prepare_stmt(const PrepareStmt* stmts,
 			break;
 		case T_SelectStmt:
 			{
-				deparse_select_query((SelectStmt *)query, argtypes, placeholders, &sql);
+				SelectStmt* stmt = (SelectStmt *)query;
+				if (stmt->op == SETOP_NONE) {
+					deparse_select_query(stmt, argtypes, placeholders, &sql);
+				} else {
+					deparse_select_operation_query(stmt, argtypes, placeholders, &sql);
+				}
 			}
 			break;
 		default:
@@ -1535,7 +1684,9 @@ deparse_execute_target_entry(const TargetEntry* target_entry,
 
 	if (IsA(expr, Param)) {
 		Param* target_param = (Param *) expr;
-		deparse_execute_param(stmts, target_param, target_entry->resname);
+		if (target_entry->resname) {
+			deparse_execute_param(stmts, target_param, target_entry->resname);
+		}
 	} else if (IsA(expr, FuncExpr)) {
 		FuncExpr* func_expr = (FuncExpr *) expr;
 		List* args = func_expr->args;
@@ -1816,8 +1967,12 @@ deparse_execute_expr_recurse(Node* expr,
 		case T_SubLink:
 			{
 				SubLink* sub_link = (SubLink *) expr;
-				SelectStmt* stmt = (SelectStmt *) sub_link->subselect;
-				deparse_execute_where_clause(stmt->whereClause, stmts);
+				SelectStmt* substmt = (SelectStmt *) sub_link->subselect;
+				if (substmt->op == SETOP_NONE) {
+					deparse_execute_select_query(substmt, stmts);
+				} else {
+					deparse_execute_select_operation_query(substmt, stmts);
+				}
 			}
 			break;
 
@@ -1878,8 +2033,12 @@ deparse_execute_where_clause(const Node* expr,
 		case T_SubLink:
 			{
 				SubLink* sub_link = (SubLink *) expr;
-				SelectStmt* stmt = (SelectStmt *) sub_link->subselect;
-				deparse_execute_where_clause(stmt->whereClause, stmts);
+				SelectStmt* substmt = (SelectStmt *) sub_link->subselect;
+				if (substmt->op == SETOP_NONE) {
+					deparse_execute_select_query(substmt, stmts);
+				} else {
+					deparse_execute_select_operation_query(substmt, stmts);
+				}
 			}
 			break;
 
@@ -1888,6 +2047,89 @@ deparse_execute_where_clause(const Node* expr,
 			elog(ERROR, "unrecognized where clause expr node type: %d", (int) nodeTag(expr));
 			break;
 	}
+}
+
+void
+deparse_execute_group_clause(List* groupClause,
+							 const ExecuteStmt* stmts)
+{
+	if (groupClause != NULL) {
+		ListCell* l;
+		foreach(l, groupClause)
+		{
+			Node* group = (Node *) lfirst(l);
+			std::string name = "GROUP";
+			deparse_execute_expr_recurse(group, name, stmts);
+		}
+	}
+}
+
+void
+deparse_execute_sort_clause(List* sortClause,
+							const ExecuteStmt* stmts)
+{
+	if (sortClause != NULL) {
+		ListCell* l;
+		foreach(l, sortClause)
+		{
+			Node* sort = (Node *) lfirst(l);
+			if (IsA(sort, SortBy)) {
+				SortBy* sortby = (SortBy *) sort;
+				std::string name = "SORT";
+				deparse_execute_expr_recurse(sortby->node, name, stmts);
+			}
+		}
+	}
+}
+
+void
+deparse_execute_limit_count(Node* limitCount,
+							const ExecuteStmt* stmts)
+{
+	if (limitCount != NULL) {
+		std::string name = "LIMIT";
+		deparse_execute_expr_recurse(limitCount, name, stmts);
+	}
+}
+
+void
+deparse_execute_select_query(const SelectStmt* stmt,
+							 const ExecuteStmt* stmts)
+{
+	if (stmt->fromClause != NULL) {
+		ListCell* l;
+		foreach(l, stmt->fromClause)
+		{
+			Node* from = (Node *) lfirst(l);
+			if (IsA(from, JoinExpr)) {
+				JoinExpr* join = (JoinExpr *) from;
+				deparse_execute_where_clause(join->quals, stmts);
+			}
+		}
+	}
+	deparse_execute_where_clause(stmt->whereClause, stmts);
+	deparse_execute_group_clause(stmt->groupClause, stmts);
+	deparse_execute_where_clause(stmt->havingClause, stmts);
+	deparse_execute_sort_clause(stmt->sortClause, stmts);
+	deparse_execute_limit_count(stmt->limitCount, stmts);
+}
+
+void
+deparse_execute_select_operation_query(const SelectStmt* stmt,
+									   const ExecuteStmt* stmts)
+{
+	if (stmt->larg->op == SETOP_NONE) {
+		deparse_execute_select_query(stmt->larg, stmts);
+	} else {
+		deparse_execute_select_operation_query(stmt->larg, stmts);
+	}
+	if (stmt->rarg->op == SETOP_NONE) {
+		deparse_execute_select_query(stmt->rarg, stmts);
+	} else {
+		deparse_execute_select_operation_query(stmt->rarg, stmts);
+	}
+	deparse_execute_sort_clause(stmt->sortClause, stmts);
+	deparse_execute_limit_count(stmt->limitCount, stmts);
 }
 
 Datum
@@ -2146,6 +2388,17 @@ befor_execute_stmt(const ExecuteStmt* stmts,
 	switch (nodeTag(raw_stmt->stmt))
 	{
 		case T_InsertStmt:
+			{
+				InsertStmt* stmt = (InsertStmt *) raw_stmt->stmt;
+				SelectStmt* selectStmt = (SelectStmt *)stmt->selectStmt;
+				if (isGeneralSelect(selectStmt)) {
+					if (selectStmt->op == SETOP_NONE) {
+						deparse_execute_select_query(selectStmt, stmts);
+					} else {
+						deparse_execute_select_operation_query(selectStmt, stmts);
+					}
+				}
+			}
 			break;
 		case T_UpdateStmt:
 			{
@@ -2162,20 +2415,11 @@ befor_execute_stmt(const ExecuteStmt* stmts,
 		case T_SelectStmt:
 			{
 				SelectStmt* stmt = (SelectStmt *) raw_stmt->stmt;
-
-				if (stmt->fromClause != NULL) {
-					ListCell* l;
-					foreach(l, stmt->fromClause)
-					{
-						Node* from = (Node *) lfirst(l);
-						if (IsA(from, JoinExpr)) {
-							JoinExpr* join = (JoinExpr *) from;
-							deparse_execute_where_clause(join->quals, stmts);
-						}
-					}
+				if (stmt->op == SETOP_NONE) {
+					deparse_execute_select_query(stmt, stmts);
+				} else {
+					deparse_execute_select_operation_query(stmt, stmts);
 				}
-				deparse_execute_where_clause(stmt->whereClause, stmts);
-				deparse_execute_where_clause(stmt->havingClause, stmts);
 			}
 			break;
 		default:
