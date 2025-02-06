@@ -152,4 +152,26 @@ CREATE TABLE weather (
     the_date        date default DATE '2023-04-01'
 );
 
-
+/* bug fix confirm */
+CREATE TABLE employee_1 (id INTEGER DEFAULT 1, name VARCHAR(100) DEFAULT 'Unknown', salary NUMERIC(10, 2) DEFAULT 30000.00);
+CREATE TABLE employee_2 (id INTEGER DEFAULT 1, name VARCHAR(100) DEFAULT 'Unknown', salary NUMERIC(10, 2) DEFAULT 30000.00);
+CREATE TABLE employee_i (id INTEGER DEFAULT 1, name VARCHAR(100) DEFAULT 'Unknown', salary NUMERIC(10, 2) DEFAULT 30000.00);
+INSERT INTO employee_1 (id, name, salary) VALUES (1, 'Alice', 50000), (2, 'Bob', 55000);
+INSERT INTO employee_1 (id, name, salary) VALUES (11, 'kf', 50000), (12, 'yy', 55000);
+INSERT INTO employee_1 (id, name, salary) VALUES (1, 'Alice', 50000), (2, 'Bob', 55000);
+INSERT INTO employee_1 (id, name, salary) VALUES (11, 'kf', 50000), (12, 'yy', 55000);
+INSERT INTO employee_1 (id, name, salary) VALUES (1, 'Alice', 50000), (2, 'Bob', 55000);
+INSERT INTO employee_2 DEFAULT VALUES;
+INSERT INTO employee_2 DEFAULT VALUES;
+INSERT INTO employee_2 (id, name, salary) VALUES (1, 'Alice', 50000), (2, 'Bob', 55000);
+INSERT INTO employee_2 (id, name, salary) VALUES (1, 'Alice', 50000), (2, 'Bob', 55000);
+INSERT INTO employee_2 (id, name, salary) VALUES (3, 'Charile', 47000);
+INSERT INTO employee_2 (id, name, salary) VALUES (6, 'Frank', 52000);
+INSERT INTO employee_2 (id, name, salary) VALUES (7, 'Grace', 53000);
+INSERT INTO employee_2 DEFAULT VALUES;
+INSERT INTO employee_2 DEFAULT VALUES;
+INSERT INTO employee_2 (id, name, salary) VALUES (1, 'Alice', 50000), (2, 'Bob', 55000);
+INSERT INTO employee_2 (id, name, salary) VALUES (3, 'Charile', 47000);
+INSERT INTO employee_2 (id, name, salary) VALUES (4, 'David', 48000);
+INSERT INTO employee_2 (id, name, salary) VALUES (5, 'Eva', 50000);
+INSERT INTO employee_2 (id, name, salary) VALUES (6, 'Frank', 52000);

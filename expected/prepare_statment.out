@@ -555,3 +555,206 @@ select * from trg_timestamptz order by id;
  10 | 2023-08-02 00:01:23.456789 | 2023-08-02 09:01:23.456789+09
 (10 rows)
 
+/************************/
+/* bug fix confirm r685 */
+/************************/
+select * from employee_1 order by id, name;
+ id | name  |  salary  
+----+-------+----------
+  1 | Alice | 50000.00
+  1 | Alice | 50000.00
+  1 | Alice | 50000.00
+  2 | Bob   | 55000.00
+  2 | Bob   | 55000.00
+  2 | Bob   | 55000.00
+ 11 | kf    | 50000.00
+ 11 | kf    | 50000.00
+ 12 | yy    | 55000.00
+ 12 | yy    | 55000.00
+(10 rows)
+
+select * from employee_2 order by id, name;
+ id |  name   |  salary  
+----+---------+----------
+  1 | Alice   | 50000.00
+  1 | Alice   | 50000.00
+  1 | Alice   | 50000.00
+  1 | Unknown | 30000.00
+  1 | Unknown | 30000.00
+  1 | Unknown | 30000.00
+  1 | Unknown | 30000.00
+  2 | Bob     | 55000.00
+  2 | Bob     | 55000.00
+  2 | Bob     | 55000.00
+  3 | Charile | 47000.00
+  3 | Charile | 47000.00
+  4 | David   | 48000.00
+  5 | Eva     | 50000.00
+  6 | Frank   | 52000.00
+  6 | Frank   | 52000.00
+  7 | Grace   | 53000.00
+(17 rows)
+
+/* limit r682 */
+PREPARE limit_5 AS select * from employee_2 order by id, name limit 5;
+EXECUTE limit_5;
+ id |  name   |  salary  
+----+---------+----------
+  1 | Alice   | 50000.00
+  1 | Alice   | 50000.00
+  1 | Alice   | 50000.00
+  1 | Unknown | 30000.00
+  1 | Unknown | 30000.00
+(5 rows)
+
+-- Error:SYNTAX_EXCEPTION
+PREPARE limit_all AS select * from employee_2 order by id, name limit all;
+ERROR:  Failed to prepare SQL statement to Tsurugi. (13)
+	sql:SELECT * FROM employee_2 ORDER BY id, name LIMIT ALL 
+Tsurugi Server Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "ALL", expected one of {(, +, -, ABS, AVG, ...}" region:"region(begin=49, end=52)")
+-- Error:TYPE_ANALYZE_EXCEPTION
+PREPARE limit_x (int) AS select * from employee_2 order by id, name limit $1;
+ERROR:  Failed to prepare SQL statement to Tsurugi. (13)
+	sql:SELECT * FROM employee_2 ORDER BY id, name LIMIT :LIMIT_1
+Tsurugi Server Error: TYPE_ANALYZE_EXCEPTION (SQL-03003: compile failed with error:invalid_unsigned_integer message:"must be a unsigned integer: variable_reference" location:<input>:1:50+8)
+/* set quantifier r686 */
+PREPARE quantifier_distinct AS select distinct * from employee_2 order by id, name;
+EXECUTE quantifier_distinct;
+ id |  name   |  salary  
+----+---------+----------
+  1 | Alice   | 50000.00
+  1 | Unknown | 30000.00
+  2 | Bob     | 55000.00
+  3 | Charile | 47000.00
+  4 | David   | 48000.00
+  5 | Eva     | 50000.00
+  6 | Frank   | 52000.00
+  7 | Grace   | 53000.00
+(8 rows)
+
+PREPARE quantifier_all AS select all * from employee_2 order by id, name;
+EXECUTE quantifier_all;
+ id |  name   |  salary  
+----+---------+----------
+  1 | Alice   | 50000.00
+  1 | Alice   | 50000.00
+  1 | Alice   | 50000.00
+  1 | Unknown | 30000.00
+  1 | Unknown | 30000.00
+  1 | Unknown | 30000.00
+  1 | Unknown | 30000.00
+  2 | Bob     | 55000.00
+  2 | Bob     | 55000.00
+  2 | Bob     | 55000.00
+  3 | Charile | 47000.00
+  3 | Charile | 47000.00
+  4 | David   | 48000.00
+  5 | Eva     | 50000.00
+  6 | Frank   | 52000.00
+  6 | Frank   | 52000.00
+  7 | Grace   | 53000.00
+(17 rows)
+
+/* set operators r687 */
+PREPARE uni AS select * from employee_1 union select * from employee_2 order by id, name;
+PREPARE uni_all AS select * from employee_1 union all select * from employee_2 order by id, name;
+PREPARE exce AS select * from employee_1 except select * from employee_2 order by id, name;
+-- Error:UNSUPPORTED_COMPILER_FEATURE_EXCEPTION
+PREPARE exce_all AS select * from employee_1 except all select * from employee_2 order by id, name;
+ERROR:  Failed to prepare SQL statement to Tsurugi. (13)
+	sql:SELECT * FROM employee_1 EXCEPT ALL SELECT * FROM employee_2 ORDER BY id, name
+Tsurugi Server Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"difference operator is unsupported" location:(unknown))
+PREPARE inte AS select * from employee_1 intersect select * from employee_2 order by id, name;
+-- Error:UNSUPPORTED_COMPILER_FEATURE_EXCEPTION
+PREPARE inte_all AS select * from employee_1 intersect all select * from employee_2 order by id, name;
+ERROR:  Failed to prepare SQL statement to Tsurugi. (13)
+	sql:SELECT * FROM employee_1 INTERSECT ALL SELECT * FROM employee_2 ORDER BY id, name
+Tsurugi Server Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"intersection operator is unsupported" location:(unknown))
+-- EXECUTE see:r711
+/* set operators r688 */
+select * from employee_i order by id, name;
+ id | name | salary 
+----+------+--------
+(0 rows)
+
+prepare ins_def as insert into employee_i default values;
+execute ins_def;
+select * from employee_i order by id, name;
+ id |  name   |  salary  
+----+---------+----------
+  1 | Unknown | 30000.00
+(1 row)
+
+select * from employee_1 where id < 10 order by id, name;
+ id | name  |  salary  
+----+-------+----------
+  1 | Alice | 50000.00
+  1 | Alice | 50000.00
+  1 | Alice | 50000.00
+  2 | Bob   | 55000.00
+  2 | Bob   | 55000.00
+  2 | Bob   | 55000.00
+(6 rows)
+
+prepare ins_query as insert into employee_i select * from employee_1 where id < 10 order by id, name;
+execute ins_query;
+select * from employee_i order by id, name;
+ id |  name   |  salary  
+----+---------+----------
+  1 | Alice   | 50000.00
+  1 | Alice   | 50000.00
+  1 | Alice   | 50000.00
+  1 | Unknown | 30000.00
+  2 | Bob     | 55000.00
+  2 | Bob     | 55000.00
+  2 | Bob     | 55000.00
+(7 rows)
+
+/* group by r707 */
+PREPARE group_name AS select id, count(name), sum(salary) from employee_2 group by id order by id;
+EXECUTE group_name;
+ id | count |    sum    
+----+-------+-----------
+  1 |     7 | 270000.00
+  2 |     3 | 165000.00
+  3 |     2 |  94000.00
+  4 |     1 |  48000.00
+  5 |     1 |  50000.00
+  6 |     2 | 104000.00
+  7 |     1 |  53000.00
+(7 rows)
+
+-- Error:UNSUPPORTED_COMPILER_FEATURE_EXCEPTION
+PREPARE group_num AS select id, count(name), sum(salary) from employee_2 group by 1 order by id;
+ERROR:  Failed to prepare SQL statement to Tsurugi. (13)
+	sql:SELECT id, count(name), sum(salary) FROM employee_2 GROUP BY 1  ORDER BY id
+Tsurugi Server Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"plain variable is required in GROUP BY clause" location:<input>:1:62+1)
+/* order by r708 */
+PREPARE order_name AS select * from employee_2 order by id, name;
+EXECUTE order_name;
+ id |  name   |  salary  
+----+---------+----------
+  1 | Alice   | 50000.00
+  1 | Alice   | 50000.00
+  1 | Alice   | 50000.00
+  1 | Unknown | 30000.00
+  1 | Unknown | 30000.00
+  1 | Unknown | 30000.00
+  1 | Unknown | 30000.00
+  2 | Bob     | 55000.00
+  2 | Bob     | 55000.00
+  2 | Bob     | 55000.00
+  3 | Charile | 47000.00
+  3 | Charile | 47000.00
+  4 | David   | 48000.00
+  5 | Eva     | 50000.00
+  6 | Frank   | 52000.00
+  6 | Frank   | 52000.00
+  7 | Grace   | 53000.00
+(17 rows)
+
+-- Error:UNSUPPORTED_COMPILER_FEATURE_EXCEPTION
+PREPARE order_num AS select * from employee_2 order by 1, 2;
+ERROR:  Failed to prepare SQL statement to Tsurugi. (13)
+	sql:SELECT * FROM employee_2 ORDER BY 1 , 2 
+Tsurugi Server Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"plain literal is not allowed in ORDER BY clause" location:<input>:1:35+1)
