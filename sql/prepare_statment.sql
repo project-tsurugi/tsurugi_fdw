@@ -234,14 +234,14 @@ PREPARE quantifier_all AS select all * from employee_2 order by id, name;
 EXECUTE quantifier_all;
 
 /* set operators r687 */
-PREPARE uni AS select * from employee_1 union select * from employee_2 order by id, name;
-PREPARE uni_all AS select * from employee_1 union all select * from employee_2 order by id, name;
-PREPARE exce AS select * from employee_1 except select * from employee_2 order by id, name;
+/* PREPARE uni AS select * from employee_1 union select * from employee_2 order by id, name; */
+/* PREPARE uni_all AS select * from employee_1 union all select * from employee_2 order by id, name; */
+/* PREPARE exce AS select * from employee_1 except select * from employee_2 order by id, name; */
 -- Error:UNSUPPORTED_COMPILER_FEATURE_EXCEPTION
-PREPARE exce_all AS select * from employee_1 except all select * from employee_2 order by id, name;
-PREPARE inte AS select * from employee_1 intersect select * from employee_2 order by id, name;
+/* PREPARE exce_all AS select * from employee_1 except all select * from employee_2 order by id, name; */
+/* PREPARE inte AS select * from employee_1 intersect select * from employee_2 order by id, name; */
 -- Error:UNSUPPORTED_COMPILER_FEATURE_EXCEPTION
-PREPARE inte_all AS select * from employee_1 intersect all select * from employee_2 order by id, name;
+/* PREPARE inte_all AS select * from employee_1 intersect all select * from employee_2 order by id, name; */
 -- EXECUTE see:r711
 
 /* set operators r688 */

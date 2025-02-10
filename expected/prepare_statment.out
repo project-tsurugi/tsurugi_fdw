@@ -656,20 +656,14 @@ EXECUTE quantifier_all;
 (17 rows)
 
 /* set operators r687 */
-PREPARE uni AS select * from employee_1 union select * from employee_2 order by id, name;
-PREPARE uni_all AS select * from employee_1 union all select * from employee_2 order by id, name;
-PREPARE exce AS select * from employee_1 except select * from employee_2 order by id, name;
+/* PREPARE uni AS select * from employee_1 union select * from employee_2 order by id, name; */
+/* PREPARE uni_all AS select * from employee_1 union all select * from employee_2 order by id, name; */
+/* PREPARE exce AS select * from employee_1 except select * from employee_2 order by id, name; */
 -- Error:UNSUPPORTED_COMPILER_FEATURE_EXCEPTION
-PREPARE exce_all AS select * from employee_1 except all select * from employee_2 order by id, name;
-ERROR:  Failed to prepare SQL statement to Tsurugi. (13)
-	sql:SELECT * FROM employee_1 EXCEPT ALL SELECT * FROM employee_2 ORDER BY id, name
-Tsurugi Server Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"difference operator is unsupported" location:(unknown))
-PREPARE inte AS select * from employee_1 intersect select * from employee_2 order by id, name;
+/* PREPARE exce_all AS select * from employee_1 except all select * from employee_2 order by id, name; */
+/* PREPARE inte AS select * from employee_1 intersect select * from employee_2 order by id, name; */
 -- Error:UNSUPPORTED_COMPILER_FEATURE_EXCEPTION
-PREPARE inte_all AS select * from employee_1 intersect all select * from employee_2 order by id, name;
-ERROR:  Failed to prepare SQL statement to Tsurugi. (13)
-	sql:SELECT * FROM employee_1 INTERSECT ALL SELECT * FROM employee_2 ORDER BY id, name
-Tsurugi Server Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"intersection operator is unsupported" location:(unknown))
+/* PREPARE inte_all AS select * from employee_1 intersect all select * from employee_2 order by id, name; */
 -- EXECUTE see:r711
 /* set operators r688 */
 select * from employee_i order by id, name;

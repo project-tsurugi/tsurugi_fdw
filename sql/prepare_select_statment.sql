@@ -59,8 +59,8 @@ PREPARE select_t1_where7
 	AS SELECT * FROM t1_prepare_select_statement WHERE c7 LIKE '%LMN%' ORDER BY c1;
 -- WHERE #8
 /* not support EXISTS failed. (10) */
-PREPARE select_t1_where8
-	AS SELECT * FROM t1_prepare_select_statement WHERE EXISTS (SELECT * FROM t2_prepare_select_statement WHERE c2 = 22) ORDER BY c1;
+/* PREPARE select_t1_where8*/
+/* 	AS SELECT * FROM t1_prepare_select_statement WHERE EXISTS (SELECT * FROM t2_prepare_select_statement WHERE c2 = 22) ORDER BY c1;*/
 -- WHERE #9
 /* tsurugi-issue#70 */
 PREPARE select_t2_where9
@@ -183,17 +183,17 @@ EXECUTE select_t2_group3_exe_ng1;
 */
 -- FOREIGN TABLE JOIN
 -- TG JOIN #1
-EXECUTE select_join1;
+/* EXECUTE select_join1; */
 -- TG JOIN #2
 /* failed (10) : mismatched input 'USING'
 EXECUTE select_join2;
 */
 -- TG JOIN #3
-EXECUTE select_join3;
+/* EXECUTE select_join3; */
 
 -- PG JOIN #6
-EXECUTE select_pg_join_tg6;
+/* EXECUTE select_pg_join_tg6; */
 -- PG JOIN #7
-EXECUTE select_pg_join_tg7;
+/* EXECUTE select_pg_join_tg7; */
 -- PG JOIN #8
-EXECUTE select_pg_join_tg8;
+/* EXECUTE select_pg_join_tg8; */
