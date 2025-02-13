@@ -8,7 +8,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-22.04]
-        postgresql: [12.4]
+        postgresql: [12.4, 13.18]
     name: Build with PosgreSQL ${{ matrix.postgresql }} ( ${{ matrix.os }} )
     runs-on: [self-hosted, docker]
     timeout-minutes: 30
