@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Project Tsurugi.
+ * Copyright 2023-2025 Project Tsurugi.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ extern "C" {
 #endif
 
 bool after_prepare_stmt(const PrepareStmt* stmts, const char* queryString);
-bool befor_execute_stmt(const ExecuteStmt* stmts, const char *queryString);
+bool before_execute_stmt(const ExecuteStmt* stmts, const char *queryString);
 bool after_execute_stmt(const ExecuteStmt* stmts);
 
 extern bool IsTsurugifdwInstalled(void);

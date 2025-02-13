@@ -2355,7 +2355,7 @@ analyze_execut_parameters(const ExecuteStmt* stmts,
 }
 
 bool
-befor_execute_stmt(const ExecuteStmt* stmts,
+before_execute_stmt(const ExecuteStmt* stmts,
 				   const char* queryString)
 {
 	PreparedStatement* entry;

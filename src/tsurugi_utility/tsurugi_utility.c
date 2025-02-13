@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 Project Tsurugi.
+ * Copyright 2019-2025 Project Tsurugi.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -213,7 +213,7 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 		case T_DropRoleStmt: 
 		{
 			int64_t* objectIdList;
-			bool befor_function_success = false;
+			bool before_function_success = false;
 			DropRoleStmt* tmpDropStmt = (DropRoleStmt*) parsetree;
 			objectIdList = malloc(sizeof(int64_t) * tmpDropStmt->roles->length);
 			if (objectIdList == NULL) 
@@ -226,9 +226,9 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 				break;
 			}
 
-			befor_function_success =
+			before_function_success =
 				before_drop_role((DropRoleStmt*) parsetree, objectIdList);
-			if (!befor_function_success) 
+			if (!before_function_success)
 			{
 				elog(ERROR, "failed before_drop_role() function.");
 			}
@@ -251,7 +251,7 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 			 * If pre-processing fails, the object ID cannot be obtained,
 			 * so post-processing is skipped.
 			 */
-			if (befor_function_success) 
+			if (before_function_success)
 			{
 				if (!after_drop_role((DropRoleStmt*)parsetree, objectIdList))
 				elog(ERROR, "failed after_drop_role() function.");
@@ -357,9 +357,9 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 
 		case T_ExecuteStmt:
 		{
-			if (!befor_execute_stmt((ExecuteStmt*)parsetree, queryString))
+			if (!before_execute_stmt((ExecuteStmt*)parsetree, queryString))
 			{
-				elog(ERROR, "failed befor_execute_stmt() function.");
+				elog(ERROR, "failed before_execute_stmt() function.");
 			}
 #if PG_VERSION_NUM >= 130000
 			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
