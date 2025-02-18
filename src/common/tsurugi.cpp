@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Project Tsurugi.
+ * Copyright 2023-2025 Project Tsurugi.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -390,6 +390,73 @@ void Tsurugi::end()
 		return;
 	}
 	transaction_ = nullptr;
+}
+
+/*
+ * @brief request list tables and get table_list class.
+ * @param table_list returns a table_list class
+ * @return error code defined in error_code.h
+ */
+ERROR_CODE Tsurugi::get_list_tables(TableListPtr& table_list)
+{
+	ERROR_CODE error = ERROR_CODE::UNKNOWN;
+
+	if (connection_ == nullptr)
+	{
+		elog(DEBUG1, "Trying to run Tsurugi::init(). (pid: %d)", getpid());
+
+		error = init();
+		if (error != ERROR_CODE::OK)
+		{
+			ereport(ERROR, 
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
+				 errmsg(R"(error connecting to server)"),
+				 errdetail("%s", get_error_message(error).c_str())));
+		}
+	}
+
+	elog(DEBUG1, "Trying to run Connection::get_list_tables(). (pid: %d)", getpid());
+
+	/* Get a list of table names from Tsurugi. */
+	error = connection_->get_list_tables(table_list);
+
+	elog(LOG, "Connection::get_list_tables() done. (error: %d)", (int) error);
+
+	return error;
+}
+
+/*
+ * @brief request table metadata and get TableMetadata class.
+ * @param table_name the table name
+ * @param table_metadata returns a table_metadata class
+ * @return error code defined in error_code.h
+ */
+ERROR_CODE Tsurugi::get_table_metadata(std::string_view table_name, TableMetadataPtr& table_metadata)
+{
+	ERROR_CODE error = ERROR_CODE::UNKNOWN;
+
+	if (connection_ == nullptr)
+	{
+		elog(DEBUG1, "Trying to run Tsurugi::init(). (pid: %d)", getpid());
+
+		error = init();
+		if (error != ERROR_CODE::OK)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_CONNECTION_FAILURE),
+				 errmsg("error connecting to server"),
+				 errdetail("%s", get_error_message(error).c_str())));
+		}
+	}
+
+	elog(DEBUG1, "Trying to run Connection::get_table_metadata(). (pid: %d)", getpid());
+
+	/* Get table metadata from Tsurugi. */
+	error = connection_->get_table_metadata(std::string(table_name), table_metadata);
+
+	elog(LOG, "Connection::get_table_metadata() done. (error: %d)", (int) error);
+
+	return error;
 }
 
 /*
