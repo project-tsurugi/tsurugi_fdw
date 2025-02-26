@@ -1935,7 +1935,7 @@ static List* tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt, Oid serve
 		{tg_metadata::AtomType::TIME_OF_DAY, "time"},
 		{tg_metadata::AtomType::TIME_POINT, "timestamp"},
 		{tg_metadata::AtomType::TIME_OF_DAY_WITH_TIME_ZONE, "time with time zone"},
-		{tg_metadata::AtomType::TIME_POINT_WITH_TIME_ZONE, "time with time zone"},
+		{tg_metadata::AtomType::TIME_POINT_WITH_TIME_ZONE, "timestamp with time zone"},
 	};
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
 
