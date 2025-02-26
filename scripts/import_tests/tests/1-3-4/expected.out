@@ -1,0 +1,23 @@
+IMPORT FOREIGN SCHEMA
+
+                  List of relations
+ Schema |       Name       |     Type      |  Owner   
+--------+------------------+---------------+----------
+ public | fdw_test_table_1 | foreign table | postgres
+ public | fdw_test_table_3 | foreign table | postgres
+(2 rows)
+
+             Foreign table "public.fdw_test_table_1"
+ Column |  Type   | Collation | Nullable | Default | FDW options 
+--------+---------+-----------+----------+---------+-------------
+ id     | integer |           |          |         | 
+ name   | text    |           |          |         | 
+Server: tsurugi
+
+                    Foreign table "public.fdw_test_table_3"
+ Column |          Type          | Collation | Nullable | Default | FDW options 
+--------+------------------------+-----------+----------+---------+-------------
+ id     | integer                |           |          |         | 
+ timer  | time without time zone |           |          |         | 
+Server: tsurugi
+

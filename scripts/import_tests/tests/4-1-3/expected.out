@@ -1,0 +1,16 @@
+NOTICE:  identifier "fdw_test_table_name2_________3_________4_________5_________6____" will be truncated to "fdw_test_table_name2_________3_________4_________5_________6___"
+IMPORT FOREIGN SCHEMA
+
+                                          List of relations
+ Schema |                              Name                               |     Type      |  Owner   
+--------+-----------------------------------------------------------------+---------------+----------
+ public | fdw_test_table_name2_________3_________4_________5_________6___ | foreign table | postgres
+(1 row)
+
+Foreign table "public.fdw_test_table_name2_________3_________4_________5_________6___"
+ Column |  Type   | Collation | Nullable | Default | FDW options 
+--------+---------+-----------+----------+---------+-------------
+ id     | integer |           |          |         | 
+ name   | text    |           |          |         | 
+Server: tsurugi
+
