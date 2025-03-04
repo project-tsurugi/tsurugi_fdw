@@ -1972,7 +1972,8 @@ static List* tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt, Oid serve
 	{
 		ereport(ERROR,
 			(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
-			 errmsg(R"(error retrieving metadata from server "%s")", server->servername),
+			 errmsg("Failed to retrieve table list from Tsurugi. (error: %d)",
+				static_cast<int>(error)),
 			 errdetail("%s", Tsurugi::get_error_message(error).c_str())));
 	}
 
@@ -2032,8 +2033,9 @@ static List* tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt, Oid serve
 		{
 			ereport(ERROR,
 				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
-				 errmsg(R"(error retrieving metadata from server "%s")", server->servername),
-				 errdetail("%s", Tsurugi::get_error_message(error).c_str())));
+				errmsg("Failed to retrieve table metadata from Tsurugi. (error: %d)",
+					static_cast<int>(error)),
+				errdetail("%s", Tsurugi::get_error_message(error).c_str())));
 		}
 
 		/* Get table metadata from Tsurugi. */
