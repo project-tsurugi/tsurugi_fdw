@@ -410,19 +410,19 @@ INSERT INTO trg_temporal_literal (id, tms_w_tz) VALUES (5, TIMESTAMP WITH TIME Z
 --- temporal_literal(auto cast) : tsurugi-issues#896  -- error
 INSERT INTO trg_temporal_literal (id, dt) VALUES (11, '2024-08-30');  -- error
 ERROR:  Failed to execute statement to Tsurugi. (13)
-Tsurugi Server Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:unsupported)
+Tsurugi Server Error: UNSUPPORTED_RUNTIME_FEATURE_EXCEPTION (SQL-02050: unsupported expression)
 INSERT INTO trg_temporal_literal (id, tm) VALUES (12, '04:05:06.789');  -- error
 ERROR:  Failed to execute statement to Tsurugi. (13)
-Tsurugi Server Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:unsupported)
+Tsurugi Server Error: UNSUPPORTED_RUNTIME_FEATURE_EXCEPTION (SQL-02050: unsupported expression)
 INSERT INTO trg_temporal_literal (id, tms) VALUES (13, '2024-08-30 04:05:06.789');  -- error
 ERROR:  Failed to execute statement to Tsurugi. (13)
-Tsurugi Server Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:unsupported)
+Tsurugi Server Error: UNSUPPORTED_RUNTIME_FEATURE_EXCEPTION (SQL-02050: unsupported expression)
 INSERT INTO trg_temporal_literal (id, tms_wo_tz) VALUES (14, '2024-08-30 04:05:06.789');  -- error
 ERROR:  Failed to execute statement to Tsurugi. (13)
-Tsurugi Server Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:unsupported)
+Tsurugi Server Error: UNSUPPORTED_RUNTIME_FEATURE_EXCEPTION (SQL-02050: unsupported expression)
 INSERT INTO trg_temporal_literal (id, tms_w_tz) VALUES (15, '2024-08-30 04:05:06.789+9:00');  -- error
 ERROR:  Failed to execute statement to Tsurugi. (13)
-Tsurugi Server Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:unsupported)
+Tsurugi Server Error: UNSUPPORTED_RUNTIME_FEATURE_EXCEPTION (SQL-02050: unsupported expression)
 /* check timestamp with time zone in UTC */
 set session timezone to 'UTC';
 SELECT * FROM trg_temporal_literal ORDER BY id;
