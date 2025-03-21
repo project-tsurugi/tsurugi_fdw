@@ -26,6 +26,7 @@ Tsurugi FDWは、PostgreSQLからTsurugiを利用するため以下の機能を�
   - START TRANSACTION
   - COMMIT
   - ROLLBACK
+  - IMPORT FOREIGN SCHEMA
 
 - クライアントインタフェース
   - JDBC（タイプ4 JDBCドライバ）
