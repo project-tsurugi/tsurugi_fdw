@@ -83,7 +83,7 @@ Tsurugi FDWには、ライセンス規定または著作権の表示が必要な
 - 1.0.0
   - 初版
 - 1.1.0
-  - SQLのPREPAREコマンドで制約事項としていた以下のSQL構文の使用を解除
+  - SQLのPREPAREコマンドで制約事項としていた以下のSQL構文の使用を解除  
     SELECT文で指定可能なset-quantifier（ALL/DISTINCT）  
     SELECT文で指定可能なLIMIT句  
     INSERT文のinsert-sourceで指定可能なDEFAULT VALUES  
