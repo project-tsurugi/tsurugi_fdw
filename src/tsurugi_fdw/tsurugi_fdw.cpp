@@ -1207,8 +1207,6 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 	table = GetForeignTable(rte->relid);
 	server = GetForeignServer(table->serverid);
 
-	store_pg_data_type(fdw_state, fsplan->scan.plan.targetlist);
-
 	fdw_state->query_string = strVal(list_nth(fsplan->fdw_private,
 									 FdwScanPrivateSelectSql));
     fdw_state->retrieved_attrs = (List*) list_nth(fsplan->fdw_private, 
@@ -1986,7 +1984,7 @@ free_fdwstate(tsurugiFdwState* fdw_state)
  * 	This function was prepared because we decided that it would be better to
  * 	understand PostgreSQL data types.
  */
-static void 
+[[maybe_unused]] static void 
 store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist)
 {
 	ListCell* lc;
