@@ -56,12 +56,9 @@ PREPARE select_t1_where5
 PREPARE select_t2_where6
 	AS SELECT * FROM t2_prepare_select_statement WHERE c4 BETWEEN 2.2 AND 5.5 ORDER BY c1;
 -- WHERE #7
-/* tsurugi-issue#103 (no longer supports) */
-PREPARE select_t1_where7
-	AS SELECT * FROM t1_prepare_select_statement WHERE c7 LIKE '%LMN%' ORDER BY c1;
-ERROR:  Failed to prepare SQL statement to Tsurugi. (13)
-	sql:SELECT * FROM t1_prepare_select_statement WHERE c7 LIKE '%LMN%'  ORDER BY c1
-Tsurugi Server Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"unsupported scalar expression: {"node_kind":"pattern_match_predicate","match_value":{"node_kind":"variable_reference","name":{"node_kind":"simple","identifier":"c7","identifier_kind":"regular"}},"is_not":false,"operator_kind":"like","pattern":{"node_kind":"literal_expression","value":{"node_kind":"character_string","value":"'%LMN%'","concatenations":[]}}}" location:<input>:1:49+15)
+/* tsurugi-issue#1078 (disable due to development) */
+/* PREPARE select_t1_where7
+	AS SELECT * FROM t1_prepare_select_statement WHERE c7 LIKE '%LMN%' ORDER BY c1;*/
 -- WHERE #8
 /* not support EXISTS failed. (10) */
 PREPARE select_t1_where8
@@ -283,9 +280,8 @@ EXECUTE select_t2_where6;
 (3 rows)
 
 -- WHERE #7
-/* tsurugi-issue#103 (no longer supports) */
-EXECUTE select_t1_where7;
-ERROR:  prepared statement "select_t1_where7" does not exist
+/* tsurugi-issue#1078 (disable due to development) */
+/* EXECUTE select_t1_where7;*/
 -- WHERE #8
 /* not support EXISTS failed. (10)
 EXECUTE select_t1_where8;

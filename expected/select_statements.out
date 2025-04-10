@@ -275,16 +275,15 @@ ORDER BY
 (3 rows)
 
 -- WHERE #7
-SELECT
+/* tsurugi-issue#1078 (disable due to development) */
+/*SELECT
     *
 FROM
     t1_select_statement
 WHERE
     c7 LIKE '%LMN%'
 ORDER BY 
-    c1;
-ERROR:  Failed to execute query to Tsurugi. (13)
-Tsurugi Server Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"unrecognized character: "~"" region:"region(begin=70, end=71)")
+    c1;*/
 -- WHERE #8
 /*
 SELECT
