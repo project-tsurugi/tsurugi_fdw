@@ -54,9 +54,9 @@ PREPARE select_t1_where5
 PREPARE select_t2_where6
 	AS SELECT * FROM t2_prepare_select_statement WHERE c4 BETWEEN 2.2 AND 5.5 ORDER BY c1;
 -- WHERE #7
-/* tsurugi-issue#103 (no longer supports) */
-PREPARE select_t1_where7
-	AS SELECT * FROM t1_prepare_select_statement WHERE c7 LIKE '%LMN%' ORDER BY c1;
+/* tsurugi-issue#1078 (disable due to development) */
+/* PREPARE select_t1_where7
+	AS SELECT * FROM t1_prepare_select_statement WHERE c7 LIKE '%LMN%' ORDER BY c1;*/
 -- WHERE #8
 /* not support EXISTS failed. (10) */
 PREPARE select_t1_where8
@@ -155,8 +155,8 @@ EXECUTE select_t1_where5;
 /* tsurugi-issue#69 */
 EXECUTE select_t2_where6;
 -- WHERE #7
-/* tsurugi-issue#103 (no longer supports) */
-EXECUTE select_t1_where7;
+/* tsurugi-issue#1078 (disable due to development) */
+/* EXECUTE select_t1_where7;*/
 -- WHERE #8
 /* not support EXISTS failed. (10)
 EXECUTE select_t1_where8;

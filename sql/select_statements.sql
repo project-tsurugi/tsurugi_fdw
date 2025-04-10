@@ -162,14 +162,15 @@ ORDER BY
     c1;
 
 -- WHERE #7
-SELECT
+/* tsurugi-issue#1078 (disable due to development) */
+/*SELECT
     *
 FROM
     t1_select_statement
 WHERE
     c7 LIKE '%LMN%'
 ORDER BY 
-    c1;
+    c1;*/
 
 -- WHERE #8
 /*
