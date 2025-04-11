@@ -54,6 +54,18 @@ cd build
 cmake -G Ninja -DCMAKE_BUILD_TYPE=${TG_CMAKE_BUILD_TYPE} -DCMAKE_CXX_FLAGS_RELWITHDEBINFO="${TG_CMAKE_CXX_FLAGS_RELWITHDEBINFO}" -DBUILD_TESTS=OFF -DBUILD_EXAMPLES=OFF -DSHARKSFIN_IMPLEMENTATION=shirakami -DCMAKE_PREFIX_PATH="${_FDW_DEPS_INSTALL_DIR}" -DCMAKE_INSTALL_PREFIX="${_FDW_DEPS_INSTALL_DIR}" -DCMAKE_MODULE_PATH="${_FDW_DEPS_INSTALL_DIR}" -DBUILD_STUB_ONLY=ON ..
 cmake --build . --target install
 
+echo -e "\n[Generate header file for protobuf]"
+_PROTO_HOME="${_OGAWAYAMA_DIR}/src"
+_PROTO_SRCDIR="jogasaki/proto/sql"
+_PROTO_SRCS="common.proto error.proto response.proto"
+_GENERATED_HOME="${_TSURUGI_FDW_DIR}/include/proto"
+cd ${_TSURUGI_FDW_DIR}
+mkdir -p ${_GENERATED_HOME}
+for proto_file in ${_PROTO_SRCS}; do
+  protoc --proto_path=${_PROTO_HOME} --cpp_out=${_GENERATED_HOME} ${_PROTO_HOME}/${_PROTO_SRCDIR}/${proto_file}
+done
+find ${_GENERATED_HOME} -type f -name "*.pb.cc" -delete
+
 PROJECT_URL=https://github.com/project-tsurugi
 BUILD_TIMESTAMP=`TZ=JST-9 date +"%Y%m%d%H%M"`
 

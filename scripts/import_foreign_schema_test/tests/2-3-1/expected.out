@@ -1,0 +1,9 @@
+ERROR:  relation "fdw_test_table_2" already exists
+CONTEXT:  importing foreign table "fdw_test_table_2"
+
+                  List of relations
+ Schema |       Name       |     Type      |  Owner   
+--------+------------------+---------------+----------
+ public | fdw_test_table_2 | foreign table | postgres
+(1 row)
+

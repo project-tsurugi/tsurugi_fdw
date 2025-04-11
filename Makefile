@@ -7,6 +7,7 @@ CPP_SRCS	= $(shell find $(SRCDIR) -name *.cpp)
 OBJS 		= $(C_SRCS:.c=.o) $(CPP_SRCS:.cpp=.o)
 
 PG_CPPFLAGS = -Iinclude \
+              -Iinclude/proto \
               -Ithird_party/ogawayama/include \
               -Ithird_party/takatori/include \
               -Ithird_party/ogawayama/third_party/metadata-manager/include \
@@ -33,7 +34,7 @@ else
 	REGRESS = $(REGRESS_BASIC)
 endif
 
-PGFILEDESC = "tsurugi_fdw - foregin data wrapper for Tsurugi"           
+PGFILEDESC = "tsurugi_fdw - foreign data wrapper for Tsurugi"
 
 ifdef USE_PGXS
         PG_CONFIG = pg_config

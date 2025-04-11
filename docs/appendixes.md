@@ -44,6 +44,7 @@ PostgreSQLとTsurugiはアーキテクチャおよびその性質が異なるた
 
 - バイナリデータ型（BINARY/VARBINARY/BINARY VARYING）を操作することはできません。
 - SQLのPREPAREコマンドでプリペアするSQL文に集合演算子（UNION/EXCEPT/INTERSECT）があるとEXECUTEコマンドで正しい結果を得ることができません。
+- publicスキーマに外部テーブルを作成してください。publicスキーマ以外では外部テーブルを経由してTsurugiのデータを操作をすることはできません。
 
 ### サードパーティライセンス
 
@@ -83,8 +84,9 @@ Tsurugi FDWには、ライセンス規定または著作権の表示が必要な
 - 1.0.0
   - 初版
 - 1.1.0
-  - SQLのPREPAREコマンドで制約事項としていた以下のSQL構文の使用を解除
-    SELECT文で指定可能なset-quantifier（ALL/DISTINCT）
-    SELECT文で指定可能なLIMIT句
-    INSERT文のinsert-sourceで指定可能なDEFAULT VALUES
-    INSERT文のinsert-sourceで指定可能なquery-expression
+  - SQLのPREPAREコマンドで制約事項としていた以下のSQL構文の使用を解除  
+    SELECT文で指定可能なset-quantifier（ALL/DISTINCT）  
+    SELECT文で指定可能なLIMIT句  
+    INSERT文のinsert-sourceで指定可能なDEFAULT VALUES  
+    INSERT文のinsert-sourceで指定可能なquery-expression  
+  - SQLのIMPORT FOREIGN SCHEMAコマンドを追加 
