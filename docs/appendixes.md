@@ -44,6 +44,7 @@ PostgreSQLとTsurugiはアーキテクチャおよびその性質が異なるた
 
 - バイナリデータ型（BINARY/VARBINARY/BINARY VARYING）を操作することはできません。
 - SQLのPREPAREコマンドでプリペアするSQL文に集合演算子（UNION/EXCEPT/INTERSECT）があるとEXECUTEコマンドで正しい結果を得ることができません。
+- publicスキーマに外部テーブルを作成してください。publicスキーマ以外では外部テーブルを経由してTsurugiのデータを操作をすることはできません。
 
 ### サードパーティライセンス
 
