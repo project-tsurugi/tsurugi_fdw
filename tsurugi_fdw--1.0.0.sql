@@ -28,3 +28,11 @@ CREATE FUNCTION tg_set_exclusive_read_areas(variadic text[]) RETURNS cstring
 
 CREATE FUNCTION tg_show_transaction() RETURNS cstring
   AS 'tsurugi_fdw' LANGUAGE C STRICT;
+
+CREATE FUNCTION tg_show_tables
+  (text DEFAULT null, text DEFAULT null, text DEFAULT 'summary', boolean DEFAULT true)
+  RETURNS JSON AS 'tsurugi_fdw' LANGUAGE C;
+
+CREATE FUNCTION tg_verify_tables
+  (text DEFAULT null, text DEFAULT null, text DEFAULT null, text DEFAULT 'summary', boolean DEFAULT true)
+  RETURNS JSON AS 'tsurugi_fdw' LANGUAGE C;

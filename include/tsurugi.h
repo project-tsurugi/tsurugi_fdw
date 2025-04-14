@@ -17,6 +17,7 @@
  */
 #pragma once
 
+#include <optional>
 #include <string>
 #include <string_view>
 
@@ -46,7 +47,10 @@ public:
     static ERROR_CODE get_list_tables(TableListPtr& table_list);
     static ERROR_CODE get_table_metadata(std::string_view table_name, TableMetadataPtr& table_metadata);
 
-    Tsurugi() = delete;
+	static std::optional<std::string_view> convert_type_to_pg(
+		jogasaki::proto::sql::common::AtomType tg_type);
+
+	Tsurugi() = delete;
 
 private:
 	static StubPtr stub_;

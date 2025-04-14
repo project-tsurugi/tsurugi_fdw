@@ -81,8 +81,6 @@ PG_MODULE_MAGIC;
 
 using namespace ogawayama;
 
-namespace tg_metadata = jogasaki::proto::sql::common;
-
 int unused PG_USED_FOR_ASSERTS_ONLY;
 
 /* Default CPU cost to start up a foreign query. */
@@ -1924,19 +1922,6 @@ tsurugiAnalyzeForeignTable(Relation relation,
  */
 static List* tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt, Oid serverOid)
 {
-	static std::map<tg_metadata::AtomType, std::string> type_mapping = {
-		{tg_metadata::AtomType::INT4, "integer"},
-		{tg_metadata::AtomType::INT8, "bigint"},
-		{tg_metadata::AtomType::FLOAT4, "real"},
-		{tg_metadata::AtomType::FLOAT8, "double precision"},
-		{tg_metadata::AtomType::DECIMAL, "numeric"},
-		{tg_metadata::AtomType::CHARACTER, "text"},
-		{tg_metadata::AtomType::DATE, "date"},
-		{tg_metadata::AtomType::TIME_OF_DAY, "time"},
-		{tg_metadata::AtomType::TIME_POINT, "timestamp"},
-		{tg_metadata::AtomType::TIME_OF_DAY_WITH_TIME_ZONE, "time with time zone"},
-		{tg_metadata::AtomType::TIME_POINT_WITH_TIME_ZONE, "timestamp with time zone"},
-	};
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
 
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
@@ -2048,8 +2033,8 @@ static List* tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt, Oid serve
 		for (const auto& column : tg_columns)
 		{
 			/* Convert from Tsurugi datatype to PostgreSQL datatype. */
-			auto pg_type = type_mapping.find(column.atom_type());
-			if (pg_type == type_mapping.end())
+			auto pg_type = Tsurugi::convert_type_to_pg(column.atom_type());
+			if (!pg_type)
 			{
 				ereport(ERROR,
 					(errcode(ERRCODE_FDW_INVALID_DATA_TYPE),
@@ -2060,7 +2045,7 @@ static List* tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt, Oid serve
 					 	column.name().c_str(),
 					 	static_cast<int>(column.atom_type()))));
 			}
-			std::string type_name(pg_type->second);
+			std::string type_name(*pg_type);
 
 			elog(DEBUG2,
 				R"(column: {"name":"%.64s", "tsurugi_atom_type":%d, "postgres_type":"%s"})",
