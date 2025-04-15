@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, The Regents of the University of California
  *
- * alt_planner.c
+ * tsurugi_planner.c
  * Planning to push down DML for Tsurugi table to Tsurugi server
  */
 
@@ -35,14 +35,14 @@
 #include "parser/parse_coerce.h"
 #include "utils/rel.h"
 
-typedef struct AltPlannerInfo
+typedef struct TsurugiPlannerInfo
 {
 	Query	*parse;
 	bool	hasjoin;
 	bool	hasaggref;
 	Oid		serverid;
 	List	*oidlist;
-} AltPlannerInfo;
+} TsurugiPlannerInfo;
 
 /* "table_open" was "heap_open" before v12 */
 #if PG_VERSION_NUM < 120000
@@ -56,22 +56,22 @@ PG_MODULE_MAGIC;
 
 /* planner_hook function */
 #if PG_VERSION_NUM >= 130000
-PlannedStmt *alt_planner(Query *parse2, const char *query_string, int cursorOptions, ParamListInfo boundParams);
+PlannedStmt *tsurugi_planner(Query *parse2, const char *query_string, int cursorOptions, ParamListInfo boundParams);
 #else
-PlannedStmt *alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams);
+PlannedStmt *tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams);
 #endif
-bool is_only_foreign_table(AltPlannerInfo *root, List *rtable);
-AltPlannerInfo *init_altplannerinfo(Query *parse);
-ForeignScan *create_foreign_scan(AltPlannerInfo *root); 
-ModifyTable *create_modify_table(AltPlannerInfo *root, ForeignScan *scan); 
-void is_valid_targetentry(ForeignScan *scan, AltPlannerInfo *root); 
-PlannedStmt *create_planned_stmt(AltPlannerInfo *root, Plan *plan);
+bool is_only_foreign_table(TsurugiPlannerInfo *root, List *rtable);
+TsurugiPlannerInfo *init_tsurugiplannerinfo(Query *parse);
+ForeignScan *create_foreign_scan(TsurugiPlannerInfo *root); 
+ModifyTable *create_modify_table(TsurugiPlannerInfo *root, ForeignScan *scan); 
+void is_valid_targetentry(ForeignScan *scan, TsurugiPlannerInfo *root); 
+PlannedStmt *create_planned_stmt(TsurugiPlannerInfo *root, Plan *plan);
 void preprocess_targetlist2(Query *parse, ForeignScan *scan);
 static List *expand_targetlist(List *tlist, int command_type, Index result_relation, Relation rel);
-bool contain_foreign_tables(AltPlannerInfo *root, List *rtable);
+bool contain_foreign_tables(TsurugiPlannerInfo *root, List *rtable);
 
 /*
- * alt_planner
+ * tsurugi_planner
  *
  * input
  * Query *parse2             ...
@@ -83,13 +83,13 @@ bool contain_foreign_tables(AltPlannerInfo *root, List *rtable);
  */
 struct PlannedStmt *
 #if PG_VERSION_NUM >= 130000
-alt_planner(Query *parse2, const char *query_string, int cursorOptions, ParamListInfo boundParams)
+tsurugi_planner(Query *parse2, const char *query_string, int cursorOptions, ParamListInfo boundParams)
 #else
-alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
+tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 #endif
 {
 	Query *parse = copyObject(parse2);
-	AltPlannerInfo *root = init_altplannerinfo(parse);
+	TsurugiPlannerInfo *root = init_tsurugiplannerinfo(parse);
 	ForeignScan *scan = 0;
 	Plan *plan = 0;
 	PlannedStmt *stmt = NULL;
@@ -161,18 +161,18 @@ alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 }
 
 /*
- * init_altplannerinfo
+ * init_tsurugiplannerinfo
  *
  * input
  * Query *parse         ... 
  *
  * output
- * AltPlannerInfo *root ... 
+ * TsurugiPlannerInfo *root ... 
  */
-AltPlannerInfo
-*init_altplannerinfo(Query *parse)
+TsurugiPlannerInfo
+*init_tsurugiplannerinfo(Query *parse)
 {
-	AltPlannerInfo *root = (AltPlannerInfo *) palloc0(sizeof(AltPlannerInfo));
+	TsurugiPlannerInfo *root = (TsurugiPlannerInfo *) palloc0(sizeof(TsurugiPlannerInfo));
 	root->parse		=	parse;
 	root->hasjoin	=	false;
 	root->hasaggref	=	false;
@@ -186,14 +186,14 @@ AltPlannerInfo
  * is_only_foreign_table
  *
  * input
- * AltPlannerInfo *root ... 
+ * TsurugiPlannerInfo *root ... 
  * List *rtable         ... 
  *
  * output
  * bool                 ... 
  */
 bool
-is_only_foreign_table(AltPlannerInfo *root, List *rtable)
+is_only_foreign_table(TsurugiPlannerInfo *root, List *rtable)
 {
 	ListCell	*rtable_list_cell;
 	Oid			currentserverid;
@@ -284,7 +284,7 @@ is_only_foreign_table(AltPlannerInfo *root, List *rtable)
  *
  */
 bool
-contain_foreign_tables(AltPlannerInfo *root, List *rtable)
+contain_foreign_tables(TsurugiPlannerInfo *root, List *rtable)
 {
 	ListCell	*rtable_list_cell;
 	Oid			currentserverid;
@@ -366,7 +366,7 @@ contain_foreign_tables(AltPlannerInfo *root, List *rtable)
  * create_foreign_scan
  *
  * input
- * AltPlannerInfo *root ... 
+ * TsurugiPlannerInfo *root ... 
  *                          
  *
  * output
@@ -374,7 +374,7 @@ contain_foreign_tables(AltPlannerInfo *root, List *rtable)
  *                          
  */
 ForeignScan *
-create_foreign_scan(AltPlannerInfo *root)
+create_foreign_scan(TsurugiPlannerInfo *root)
 {
 	Bitmapset  *fs_relids = NULL;
 
@@ -407,14 +407,14 @@ create_foreign_scan(AltPlannerInfo *root)
  * create_modify_table
  *
  * input
- * AltPlannerInfo *root ... 
+ * TsurugiPlannerInfo *root ... 
  * ForeignScan *scan    ... 
  *
  * output
  * ModifyTable *modify  ... 
  */
 ModifyTable *
-create_modify_table(AltPlannerInfo *root, ForeignScan *scan)
+create_modify_table(TsurugiPlannerInfo *root, ForeignScan *scan)
 {
 	ModifyTable *modify = makeNode(ModifyTable);
 	List *fdwPrivLists = NIL;
@@ -467,14 +467,14 @@ create_modify_table(AltPlannerInfo *root, ForeignScan *scan)
  *
  * input
  * ForeignScan *scan    ...
- * AltPlannerInfo *root ...
+ * TsurugiPlannerInfo *root ...
  *
  * output
  * --
  *
  */
 void
-is_valid_targetentry(ForeignScan *scan, AltPlannerInfo *root)
+is_valid_targetentry(ForeignScan *scan, TsurugiPlannerInfo *root)
 {
 	List *pte = root->parse->targetList;
 	ListCell *l;
@@ -601,13 +601,13 @@ is_valid_targetentry(ForeignScan *scan, AltPlannerInfo *root)
  * create_planned_stmt
  *
  * input
- * AltPlannerInfo *root ... 
+ * TsurugiPlannerInfo *root ... 
  * Plan *plan           ... 
  * output
  * PlannedStmt *stmt    ... 
  */
 PlannedStmt *
-create_planned_stmt(AltPlannerInfo *root, Plan *plan)
+create_planned_stmt(TsurugiPlannerInfo *root, Plan *plan)
 {
 	PlannedStmt *stmt = makeNode(PlannedStmt);
 	Query *parse = root->parse;
