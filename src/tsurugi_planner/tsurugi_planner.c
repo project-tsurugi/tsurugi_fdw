@@ -35,7 +35,7 @@
 #include "parser/parse_coerce.h"
 #include "utils/rel.h"
 
-typedef struct TsurugiPlannerInfo
+typedef struct tsurugi_planner_info_
 {
 	Query	*parse;
 	bool	hasjoin;
