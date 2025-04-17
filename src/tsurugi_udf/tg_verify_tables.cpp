@@ -38,7 +38,9 @@
 extern "C" {
 #endif
 
+/* Primary include file for PostgreSQL (first file to be included). */
 #include "postgres.h"
+/* Related include files for PostgreSQL. */
 #include "catalog/namespace.h"
 #include "catalog/pg_foreign_server.h"
 #include "catalog/pg_type.h"
@@ -135,31 +137,30 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 		SearchSysCache1(FOREIGNSERVERNAME, CStringGetDatum(arg_server_name.c_str()));
 
 	if (HeapTupleIsValid(srv_tuple)) {
-		server_oid = ((Form_pg_foreign_server) GETSTRUCT(srv_tuple))->oid;
+		server_oid = ((Form_pg_foreign_server)GETSTRUCT(srv_tuple))->oid;
 		ReleaseSysCache(srv_tuple);
 	} else {
-		ereport(ERROR,
-			(errcode(ERRCODE_FDW_UNABLE_TO_ESTABLISH_CONNECTION),
-			errmsg(R"(server "%s" does not exist)", arg_server_name.c_str())));
+		ereport(ERROR, (errcode(ERRCODE_FDW_UNABLE_TO_ESTABLISH_CONNECTION),
+						errmsg(R"(server "%s" does not exist)", arg_server_name.c_str())));
 	}
 
 	Oid local_schema_oid = InvalidOid;
-	/* Verification of table definitions in remote and locus schemas. */
+	/* Get the local schema OID. */
 	local_schema_oid = get_namespace_oid(arg_local_schema.c_str(), true);
 	if (!OidIsValid(local_schema_oid)) {
-		ereport(ERROR,
-			(errcode(ERRCODE_FDW_SCHEMA_NOT_FOUND),
-			errmsg(R"(local schema "%s" does not exist)", arg_local_schema.c_str())));
+		ereport(ERROR, (errcode(ERRCODE_FDW_SCHEMA_NOT_FOUND),
+						errmsg(R"(local schema "%s" does not exist)", arg_local_schema.c_str())));
 	}
 
-	std::stringstream pretty;
-	pretty << std::boolalpha << arg_pretty;
-	elog(DEBUG5, __func__);
-	elog(DEBUG5, "  remote_schema : %s", arg_remote_schema.c_str());
-	elog(DEBUG5, "  server_name   : %s", arg_server_name.c_str());
-	elog(DEBUG5, "  local_schema  : %s", arg_local_schema.c_str());
-	elog(DEBUG5, "  mode          : %s", arg_mode.c_str());
-	elog(DEBUG5, "  pretty        : %s", pretty.str().c_str());
+	std::stringstream debug_log;
+	debug_log << std::boolalpha << "tsurugi_fdw : " << __func__ << "\n"
+			  << "Arguments:\n"
+			  << "  remote_schema: " << arg_remote_schema << "\n"
+			  << "  server_name  : " << arg_server_name << "\n"
+			  << "  local_schema : " << arg_local_schema << "\n"
+			  << "  mode         : " << arg_mode << "\n"
+			  << "  pretty       : " << arg_pretty;
+	elog(DEBUG2, "%s", debug_log.str().c_str());
 
 	ERROR_CODE error;
 	TableListPtr tg_table_list;
@@ -167,11 +168,10 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 	/* Get a list of table names from Tsurugi. */
 	error = Tsurugi::get_list_tables(tg_table_list);
 	if (error != ERROR_CODE::OK) {
-		ereport(ERROR,
-			(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
-			errmsg("Failed to retrieve table list from Tsurugi. (error: %d)",
-				static_cast<int>(error)),
-			errdetail("%s", Tsurugi::get_error_message(error).c_str())));
+		ereport(ERROR, (errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
+						errmsg("Failed to retrieve table list from Tsurugi. (error: %d)",
+							   static_cast<int>(error)),
+						errdetail("%s", Tsurugi::get_error_message(error).c_str())));
 	}
 
 	boost::property_tree::ptree list_remote;  // <tables_on_only_remote_schema> <list> array
@@ -188,7 +188,7 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 	static const int kValAttname = 2;
 	static const int kValDatatype = 3;
 	static const int kValAtttypmod = 4;
-	const char *query =
+	static constexpr const char* const kMetadataQuery =
 		"SELECT "
 		"  c.relname, a.attname, format_type(a.atttypid, a.atttypmod) AS datatype, a.atttypmod "
 		"FROM pg_foreign_table ft "
@@ -204,17 +204,18 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 	char nulls[2] = {' ', ' '};
 
 	/* Refer to the system catalog. */
-	int ret = SPI_execute_with_args(query, 2, argtypes, values, nulls, true, 0);
-	if (ret != SPI_OK_SELECT) {
+	int res =
+		SPI_execute_with_args(kMetadataQuery, sizeof(values), argtypes, values, nulls, true, 0);
+	if (res != SPI_OK_SELECT) {
 		ereport(ERROR, (errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
-						errmsg("Failed to SPI_execute_with_args. (error: %d)", ret)));
+						errmsg("Failed to SPI_execute_with_args. (error: %d)", res)));
 	}
 
 	// Metadata of foreign tables
 	std::unordered_map<std::string, std::vector<std::tuple<std::string, std::string, int, int>>>
 		ft_define = {};
 
-	// List of table names
+	// List of Tsurugi table names
 	auto table_names = tg_table_list->get_table_names();
 
 	std::string skip_table_name = "";
@@ -225,8 +226,8 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 		HeapTuple spi_tuple = SPI_tuptable->vals[i];
 		TupleDesc tupdesc = SPI_tuptable->tupdesc;
 
-		bool isnull;
-		char *rel_name = SPI_getvalue(spi_tuple, tupdesc, kValRelname);  // rel_name
+		// Foreign table name
+		std::string rel_name(SPI_getvalue(spi_tuple, tupdesc, kValRelname));
 
 		if (rel_name == skip_table_name) {
 			continue;
@@ -235,7 +236,8 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 		/* Add to a table that exists only in the remote schema. */
 		auto it = std::find(table_names.begin(), table_names.end(), rel_name);
 		if (it == table_names.end()) {
-			elog(DEBUG2, R"(Tables that do not exist in the remote schema. "%s")", rel_name);
+			elog(DEBUG2, R"(Tables that do not exist in the remote schema. "%s")",
+				 rel_name.c_str());
 
 			/* Add to a table that exists only in the remote schema. */
 			list_local.push_back(std::make_pair("", boost::property_tree::ptree(rel_name)));
@@ -248,30 +250,34 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 		}
 		skip_table_name = "";
 
-		/* column name */
+		// column name
 		char* column_name = SPI_getvalue(spi_tuple, tupdesc, kValAttname);
 
-		/* data type (string) */
+		// data type (string)
 		std::string datatype(SPI_getvalue(spi_tuple, tupdesc, kValDatatype));
 		std::transform(datatype.begin(), datatype.end(), datatype.begin(), ::tolower);
 
-		/* precision and scale */
+		bool is_null;
+		// precision
 		int precision = -1;
+		// scale
 		int scale = -1;
-		Datum typmod_datum = SPI_getbinval(spi_tuple, tupdesc, kValAtttypmod, &isnull);
-		int32 typmod = (!isnull ? DatumGetInt32(typmod_datum) : -1);
+
+		Datum typmod_datum = SPI_getbinval(spi_tuple, tupdesc, kValAtttypmod, &is_null);
+		int32 typmod = (!is_null ? DatumGetInt32(typmod_datum) : -1);
 		if (typmod != -1) {
 			precision = ((typmod - VARHDRSZ) >> 16) & 0xFFFF;
 			scale = (typmod - VARHDRSZ) & 0xFFFF;
 		}
 
+		/* Stores metadata for foreign tables. */
 		ft_define[rel_name].emplace_back(std::make_tuple(column_name, datatype, precision, scale));
 	}
 
 	SPI_finish();
 
 	/* Verifies whether tables in the remote schema exist in the local schema. */
-	for (auto it = table_names.begin(); it != table_names.end(); ) {
+	for (auto it = table_names.begin(); it != table_names.end();) {
 		/* Verify that a remote table exists on the local. */
 		if (ft_define.find(*it) == ft_define.end()) {
 			elog(DEBUG2, R"(Tables that do not exist in the local schema. "%s")", (*it).c_str());
@@ -294,17 +300,16 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 		/* Get table metadata from Tsurugi. */
 		error = Tsurugi::get_table_metadata(table_name, tg_table_metadata);
 		if (error != ERROR_CODE::OK) {
-			ereport(ERROR,
-					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
-						errmsg("Failed to retrieve table metadata from Tsurugi. (error: %d)",
-							static_cast<int>(error)),
-						errdetail("%s", Tsurugi::get_error_message(error).c_str())));
+			ereport(ERROR, (errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
+							errmsg("Failed to retrieve table metadata from Tsurugi. (error: %d)",
+								   static_cast<int>(error)),
+							errdetail("%s", Tsurugi::get_error_message(error).c_str())));
 		}
 
 		/* Get table metadata from PostgreSQL. */
-		const auto &pg_columns = ft_define.find(table_name)->second;
+		const auto& pg_columns = ft_define.find(table_name)->second;
 		/* Get table metadata from Tsurugi. */
-		const auto &tg_columns = tg_table_metadata->columns();
+		const auto& tg_columns = tg_table_metadata->columns();
 
 		/* Validate the number of columns. */
 		if (pg_columns.size() != static_cast<size_t>(tg_columns.size())) {
@@ -323,6 +328,7 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 		int idx = 0;
 		/* Validate the column metadata. */
 		for (const auto& pg_column : pg_columns) {
+			// Foreign table metadata
 			const auto& [pg_col_name, pg_col_type, pg_col_precision, pg_col_scale] = pg_column;
 			const auto& tg_column = tg_columns.at(idx++);
 
@@ -390,7 +396,8 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 		}
 	}
 
-	boost::property_tree::ptree verification;  // verification object
+	boost::property_tree::ptree pt_root;  // root object
+	boost::property_tree::ptree verification;  // <verification> object
 
 	/* Add to <remote_schema>. */
 	verification.put(kKeyRemoteSchema, arg_remote_schema);
@@ -410,10 +417,10 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 
 	/* Verification object is configured. */
 	for (const auto& object : child_object) {
-		boost::property_tree::ptree child;
 		const auto key = object.first;
 		const auto list = object.second;
 
+		boost::property_tree::ptree child;
 		/* Add to table count. */
 		child.put(kKeyCount, list->size());
 
@@ -428,7 +435,6 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 	}
 
 	/* Add to root object. */
-	boost::property_tree::ptree pt_root;
 	pt_root.add_child(kKeyRootObject, verification);
 
 	std::stringstream ss;

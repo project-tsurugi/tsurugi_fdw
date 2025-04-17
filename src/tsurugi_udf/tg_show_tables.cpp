@@ -36,7 +36,9 @@
 extern "C" {
 #endif
 
+/* Primary include file for PostgreSQL (first file to be included). */
 #include "postgres.h"
+/* Related include files for PostgreSQL. */
 #include "catalog/namespace.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
@@ -119,13 +121,14 @@ tg_show_tables(PG_FUNCTION_ARGS)
 	}
 	ReleaseSysCache(srv_tuple);
 
-	std::stringstream pretty;
-	pretty << std::boolalpha << arg_pretty;
-	elog(DEBUG5, __func__);
-	elog(DEBUG5, "  remote_schema : %s", arg_remote_schema.c_str());
-	elog(DEBUG5, "  server_name   : %s", arg_server_name.c_str());
-	elog(DEBUG5, "  mode          : %s", arg_mode.c_str());
-	elog(DEBUG5, "  pretty        : %s", pretty.str().c_str());
+	std::stringstream debug_log;
+	debug_log << std::boolalpha << "tsurugi_fdw : " << __func__ << "\n"
+			  << "Arguments:\n"
+			  << "  remote_schema: " << arg_remote_schema << "\n"
+			  << "  server_name  : " << arg_server_name << "\n"
+			  << "  mode         : " << arg_mode << "\n"
+			  << "  pretty       : " << arg_pretty;
+	elog(DEBUG2, "%s", debug_log.str().c_str());
 
 	ERROR_CODE error;
 	TableListPtr tg_table_list;
@@ -148,8 +151,11 @@ tg_show_tables(PG_FUNCTION_ARGS)
 		table_list.push_back(std::make_pair("", item));
 	}
 
+	boost::property_tree::ptree pt_root;  // root object
+	boost::property_tree::ptree remote_schema;  // <remote_schema> object
 	boost::property_tree::ptree remote_tables;  // <tables_on_remote_schema> object
-	/* Add to table count. */
+
+  /* Add to table count. */
 	remote_tables.put(kKeyCount, table_list.size());
 
 	/* If the report level is 'detail', add a table listing. */
@@ -158,8 +164,7 @@ tg_show_tables(PG_FUNCTION_ARGS)
 		remote_tables.add_child(kKeyList, table_list);
 	}
 
-	boost::property_tree::ptree remote_schema;  // <remote_schema> object
-	/* Add to <remote_schema>. */
+  /* Add to <remote_schema>. */
 	remote_schema.put(kKeyRemoteSchema, arg_remote_schema);
 	/* Add to <server_name>. */
 	remote_schema.put(kKeyServerName, arg_server_name);
@@ -168,8 +173,7 @@ tg_show_tables(PG_FUNCTION_ARGS)
 	/* Add to <tables_on_remote_schema> object. */
 	remote_schema.add_child(kKeyRemoteTable, remote_tables);
 
-	/* Add to root object. */
-	boost::property_tree::ptree pt_root;
+  /* Add to root object. */
 	pt_root.add_child(kKeyRootObject, remote_schema);
 
 	std::stringstream ss;
