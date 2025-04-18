@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2024 Project Tsurugi.
+ * Copyright 2019-2025 Project Tsurugi.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -334,7 +334,6 @@ static TsurugiFdwInfo fdw_info_;
 Datum
 tsurugi_fdw_handler(PG_FUNCTION_ARGS)
 {
-
 	FdwRoutine* routine = makeNode(FdwRoutine);
 
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
@@ -377,7 +376,7 @@ tsurugi_fdw_handler(PG_FUNCTION_ARGS)
     routine->EndForeignInsert = tsurugiEndForeignInsert;
 
 	/* Support functions for join push-down */
-	routine->GetForeignJoinPaths = tsurugiGetForeignJoinPaths;
+//	routine->GetForeignJoinPaths = tsurugiGetForeignJoinPaths;
 
 	ERROR_CODE error = Tsurugi::init();
 	if (error != ERROR_CODE::OK) 
@@ -1207,15 +1206,18 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 	table = GetForeignTable(rte->relid);
 	server = GetForeignServer(table->serverid);
 
-	store_pg_data_type(fdw_state, fsplan->scan.plan.targetlist);
-
+#if 0	/* Make query string using deparse functions or not. */
 	fdw_state->query_string = strVal(list_nth(fsplan->fdw_private,
-									 FdwScanPrivateSelectSql));
-    fdw_state->retrieved_attrs = (List*) list_nth(fsplan->fdw_private, 
-                                                   FdwScanPrivateRetrievedAttrs);
-    fdw_state->cursor_exists = false;
+		FdwScanPrivateSelectSql));
+	fdw_state->retrieved_attrs = (List*) list_nth(fsplan->fdw_private, 
+		FdwScanPrivateRetrievedAttrs);
+#else
+	fdw_state->query_string = estate->es_sourceText;
+	store_pg_data_type(fdw_state, fsplan->scan.plan.targetlist);
+#endif
+  	fdw_state->cursor_exists = false;
 
-   	/*
+	/*
 	 * Get info we'll need for converting data fetched from the foreign server
 	 * into local representation and error reporting during that process.
 	 */
@@ -1230,13 +1232,13 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 		fdw_state->tupdesc = node->ss.ss_ScanTupleSlot->tts_tupleDescriptor;
 	} 
 
-    fdw_state->attinmeta = TupleDescGetAttInMetadata(fdw_state->tupdesc);
+	fdw_state->attinmeta = TupleDescGetAttInMetadata(fdw_state->tupdesc);
 
 	begin_prepare_processing(estate);
 
 	handle_remote_xact(server);
 
-    fdw_info_.success = true;
+	fdw_info_.success = true;
 }
 
 /*
@@ -1270,7 +1272,6 @@ tsurugiIterateForeignScan(ForeignScanState* node)
 			elog(ERROR, "Failed to execute query to Tsurugi. (%d)\n%s", 
                 (int) error, Tsurugi::get_error_message(error).c_str());
         }
-
         fdw_state->cursor_exists = true;
         fdw_state->eof_reached = false;
     }
@@ -1999,29 +2000,28 @@ store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist)
 		int count = 0;
 		foreach (lc, tlist)
 		{
-			TargetEntry *entry = (TargetEntry *) lfirst(lc);
-			Node *node = (Node *) entry->expr;
+			TargetEntry* entry = (TargetEntry*) lfirst(lc);
+			Node* node = (Node*) entry->expr;
 			count++;
 
-			if (nodeTag(node) == T_Var)
+			if (nodeTag(node) == T_Var || nodeTag(node) == T_OpExpr)
 			{
-				Var *var = (Var *) node;
+				Var* var = (Var*) node;
 				data_types[i] = var->vartype;
 			}
 			else if (nodeTag(node) == T_Const)
 			{
 				// When generating placeholders in a SELECT query expression.
-				elog(DEBUG5, "Skip the data type placeholders. (index: %d, type:%u)",
+				elog(DEBUG5, "Skip the data type placeholders. (index: %d, type: %u)",
 					 i, (unsigned int) nodeTag(node));
 			}
 			else
 			{
-				elog(ERROR, "Unexpected data type in target list. (index: %d, type:%u)",
-					 i, (unsigned int) nodeTag(node));
+				elog(ERROR, "Unexpected data type in target list. (index: %d, type: %u)",
+					i, (unsigned int) nodeTag(node));
 			}
 			i++;
 		}
-
 		fdw_state->column_types = data_types;
 		fdw_state->number_of_columns = count;
 	}
@@ -2039,12 +2039,16 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                             bool* is_null,
                             tsurugiFdwState* fdw_state)
 {
-    ListCell   *lc = NULL;
-
-    foreach(lc, retrieved_attrs)
+#if 0	/*  */
+	ListCell   *lc = NULL;
+	foreach(lc, retrieved_attrs)
     {
         int     attnum = lfirst_int(lc) - 1;
-        Oid     pgtype = TupleDescAttr(tupleDescriptor, attnum)->atttypid;
+#else
+	for (size_t attnum = 0; attnum < fdw_state->number_of_columns; attnum++)
+	{
+#endif
+        Oid     	pgtype = TupleDescAttr(tupleDescriptor, attnum)->atttypid;
         HeapTuple 	heap_tuple;
         regproc 	typinput;
         int 		typemod;

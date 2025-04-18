@@ -90,8 +90,8 @@ alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 {
 	Query *parse = copyObject(parse2);
 	AltPlannerInfo *root = init_altplannerinfo(parse);
-	ForeignScan *scan = 0;
-	Plan *plan = 0;
+	ForeignScan *scan = NULL;
+	Plan *plan = NULL;
 	PlannedStmt *stmt = NULL;
 	ModifyTable *modify = NULL;
 
@@ -114,6 +114,15 @@ alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 
 	switch (parse->commandType)
 	{
+		case CMD_SELECT:
+			if (root->oidlist->length > 1 && !root->hasjoin)
+			{
+				elog( NOTICE, "Implicit JOIN is not support." );
+			}
+			scan = create_foreign_scan(root);
+			plan = (Plan *) scan;
+			break;
+
 		case CMD_INSERT:
 		case CMD_UPDATE:
 		case CMD_DELETE:
@@ -128,7 +137,7 @@ alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
             if (root->parse != NULL && root->parse->rtable != NULL &&
                 is_only_foreign_table(root, root->parse->rtable)) 
             {
-                elog(LOG, "tsurugi_fdw : Execute direct modify. %s", __func__);
+                elog(LOG, "tsurugi_fdw : %s : Choose direct modify.", __func__);
                 scan = create_foreign_scan(root);
                 modify = create_modify_table(root, scan);
                 plan = (Plan *) modify;
@@ -144,7 +153,6 @@ alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 			break;
 		}
 
-		case CMD_SELECT:
 		default:
 		{
 #if PG_VERSION_NUM >= 130000
@@ -446,6 +454,7 @@ create_modify_table(AltPlannerInfo *root, ForeignScan *scan)
 	modify->fdwDirectModifyPlans = NULL;
 	modify->rowMarks = NIL;
 	modify->epqParam = 0;
+	/* Areas requiring consideration. */
 	modify->onConflictAction = ONCONFLICT_NONE;
 	modify->onConflictSet = NIL;
 	modify->onConflictWhere = NULL;
