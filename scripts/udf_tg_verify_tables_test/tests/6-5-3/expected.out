@@ -1,0 +1,3 @@
+ERROR:  invalid input syntax for type boolean: ""
+LINE 1: ...rify_tables('tsurugidb', 'tsurugi', 'public', 'summary', '')
+                                                                    ^

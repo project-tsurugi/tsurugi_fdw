@@ -1,0 +1,13 @@
+            tg_show_tables
+---------------------------------------
+ {                                    +
+     "remote_schema": {               +
+         "remote_schema": "tsurugidb",+
+         "server_name": "tsurugi",    +
+         "mode": "summary",           +
+         "tables_on_remote_schema": { +
+             "count": 1               +
+         }                            +
+     }                                +
+ }
+(1 row)
