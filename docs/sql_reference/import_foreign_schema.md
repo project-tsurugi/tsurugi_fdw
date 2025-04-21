@@ -19,18 +19,14 @@ IMPORT FOREIGN SCHEMA remote_schema
 ### パラメータ
 
 #### *remote_schema*
-本来はインポート元となるリモートのスキーマを指定します。  
-Tsurugiでスキーマに該当する機能がないため、PostgreSQLの構⽂チェックでエラーとならない値("tsurugidb"等)を記述します。  
+PostgreSQLのエラーとならない値("tsurugi_schema"等)を記述します。  
+現バージョンではTsurugiはスキーマ機能をサポートしていません。Tsurugi上のすべてのテーブルがインポート対象になります。  
 今後、仕様変更の可能性があります。
 
 #### *OPTIONS ( option 'value' [, ... ] )*
 使用できるオプションはありません。  
-
-上記以外のパラメータは
-PostgreSQLのSQLコマンド仕様に準じます。
+上記以外のパラメータはPostgreSQLのSQLコマンド仕様に準じます。  
 詳細は [PostgreSQLのドキュメント](https://www.postgresql.jp/document/12/html/sql-commands.html) を参照してください。
-
-
 
 ### 例
 
@@ -49,6 +45,37 @@ PostgreSQLのSQLコマンド仕様に準じます。
   IMPORT FOREIGN SCHEMA
   postgres=#
   ``` 
+### テーブルの定義状況の確認
+
+IMPORT FOREIGN SCHEMA コマンド実行時に、インポート対象となる`remote_schema`にあるテーブルと同名のリレーションがインポート先となる`local_schema`に存在する場合、コマンドはエラーになります。
+
+そのため、コマンド実行前に`remote_schema`、`local_schema`それぞれのスキーマにおけるテーブルの定義状況を確認することを推奨します。
+以下の方法で確認することが可能です。
+
+- [tg_show_tables](../udf_reference/tg_show_tables.md)  
+  関数実行実行時に指定する`remote_schema`に配置されているテーブルを確認することができます。
+
+  例えば、「`remote_schema`に配置されているテーブル」の有無を確認し、IMPORT FOREIGN SCHEMA コマンドの実行の要・不要を判断することが可能になります。
+
+- [tg_verify_tables](../udf_reference/tg_verify_tables.md)    
+  関数実行実行時に指定する`remote_schema`、`local_schema`それぞれに配置されているテーブルまたは外部テーブルについて、以下の情報を確認をすることができます。
+    - `remote_schema`のみに存在するテーブルの情報
+    - `local_schema`のみに存在する外部テーブルの情報
+    - `remote_schema`と`local_schema`の両方に存在し、列定義が異なるとテーブルまたは外部テーブルの情報
+    - `remote_schema`と`local_schema`の両方に存在し、列定義が同じテーブルまたは外部テーブルの情報  
+
+  例えば、「`remote_schema`のみに存在するテーブルの情報」を確認し、インポート対象のテーブルとして`LIMIT TO`句で指定することで、IMPORT FOREIGN SCHEMA コマンドのエラーを回避して実行することが可能になります。
+
+- PostgreSQL システムカタログ等  
+  以下のSQLコマンドを実行することで、指定するスキーマに配置されているPostgreSQLの外部テーブルを確認することができます。  
+
+  ```sql
+  SELECT relname, relkind FROM pg_class 
+    JOIN pg_namespace ON pg_class.relnamespace = pg_namespace.oid 
+    WHERE relkind = 'f' and nspname = 'public';
+  ```
+
+  例えば、「`local_schema`に配置されている外部テーブル」の有無を確認し、IMPORT FOREIGN SCHEMA コマンドの実行の要・不要を判断することが可能になります。
 
 ### 外部テーブルの列データ型定義のルール
 
@@ -84,12 +111,3 @@ PostgreSQLのSQLコマンド仕様に準じます。
 
 ### Tsurugi対応バージョン
 - 1.3.0以降
-
-
-
-
-
-
-
-
-
