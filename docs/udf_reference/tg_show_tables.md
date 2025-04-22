@@ -63,25 +63,43 @@ Tsurugiのスキーマ(`remote_schema`)に配置されたテーブル定義の�
 #### Tsurugiのテーブル定義情報としてテーブル数のみを表示する
 
   ```sql
-  postgres=# select tg_show_tables('tsurugi_schema', 'tsurugi', 'sumamry');
-                  tg_show_tables
-  ----------------------------------------------------
-
-（★実行イメージは別途）
-
-    (1 row)
+  SELECT tg_show_tables('tsurugi_schema', 'tsurugi', 'summary');
+              tg_show_tables
+  --------------------------------------------
+   {                                         +
+       "remote_schema": {                    +
+           "remote_schema": "tsurugi_schema",+
+           "server_name": "tsurugi",         +
+           "mode": "summary",                +
+           "tables_on_remote_schema": {      +
+               "count": 2                    +
+           }                                 +
+       }                                     +
+   }
+  (1 row)
   ```
 
 #### Tsurugiのテーブル定義情報としてテーブル数、およびテーブル名のリストを表示する
 
   ```sql
-  postgres=# select tg_show_tables('tsurugi_schema', 'tsurugi', 'detail');
-                  tg_show_tables
-  ----------------------------------------------------
-
-（★実行イメージは別途）
-
-    (1 row)
+  SELECT tg_show_tables('tsurugi_schema', 'tsurugi', 'detail');
+              tg_show_tables
+  --------------------------------------------
+   {                                         +
+       "remote_schema": {                    +
+           "remote_schema": "tsurugi_schema",+
+           "server_name": "tsurugi",         +
+           "mode": "detail",                 +
+           "tables_on_remote_schema": {      +
+               "count": 2,                   +
+               "list": [                     +
+                   "table_a",                +
+                   "table_b"                 +
+               ]                             +
+           }                                 +
+       }                                     +
+   }
+  (1 row)
   ```
 
 ---
