@@ -218,9 +218,7 @@ enum FdwPathPrivateIndex
 #ifdef __cplusplus
 extern "C" {
 #endif
-/*
- * SQL functions
- */
+
 PG_FUNCTION_INFO_V1(tsurugi_fdw_handler);
 
 /*
@@ -387,7 +385,9 @@ tsurugi_fdw_handler(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(routine);
 }
 
-/* FDW Plan functions */
+/*
+ * FDW Scan functions. 
+ */
 
 /*
  * tsurugiGetForeignRelSize
@@ -1165,10 +1165,6 @@ tsurugiGetForeignJoinPaths(PlannerInfo *root,
 	/* XXX Consider parameterized paths for the join relation */
 }                            
 
-/* 
- * 	fdw executor functions 
- */
-
 /*
  *  tsurugiBeginForeignScan
  *	    Preparation for scanning foreign tables.
@@ -1341,6 +1337,10 @@ tsurugiEndForeignScan(ForeignScanState* node)
 		free_fdw_state(fdw_state);
     }
 }
+
+/*
+ * FDW Update functions.
+ */
 
 /*
  * tsurugiBeginDirectModify
@@ -1856,6 +1856,10 @@ tsurugiEndForeignInsert(EState *estate,
 }
 
 /*
+ * FDW Explain functions.
+ */
+
+/*
  * tsurugiExplainForeignScan
  *		Produce extra output for EXPLAIN of a ForeignScan on a foreign table
  */
@@ -1915,6 +1919,10 @@ tsurugiAnalyzeForeignTable(Relation relation,
 
 	return true;
 }
+
+/*
+ * FDW Import Foreign Schema functions.
+ */
 
 /*
  *	@note	Not in use.
