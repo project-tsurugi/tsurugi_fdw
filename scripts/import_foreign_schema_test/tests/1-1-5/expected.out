@@ -1,0 +1,17 @@
+IMPORT FOREIGN SCHEMA
+
+Did not find any relations.
+
+                     List of relations
+    Schema    |       Name       |     Type      |  Owner
+--------------+------------------+---------------+----------
+ other_schema | fdw_test_table_1 | foreign table | postgres
+(1 row)
+
+          Foreign table "other_schema.fdw_test_table_1"
+ Column |  Type   | Collation | Nullable | Default | FDW options 
+--------+---------+-----------+----------+---------+-------------
+ id     | integer |           |          |         | 
+ name   | text    |           |          |         | 
+Server: tsurugi
+

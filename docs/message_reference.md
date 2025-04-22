@@ -22,6 +22,9 @@ Tsurugi FDWからTsurugiの操作中に異常が発生した場合に返され�
 "Failed to execute statement to Tsurugi. (error: *<error_code>*)"  
 "Failed to execute query to Tsurugi. (error: *<error_code>*)"  
 "Failed to retrieve result set from Tsurugi. (error: *<error_code>*)"  
+"Failed to retrieve table list from Tsurugi. (error: *<error_code>*)"  
+"Failed to retrieve table metadata from Tsurugi. (error: *<error_code>*)"  
+
 
 - **エラーコード**  
 

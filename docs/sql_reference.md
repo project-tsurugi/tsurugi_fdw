@@ -173,7 +173,7 @@ Tsurugiでコンパイルされる以下のSQLコマンドはTsurugiのSQLコマ
 | EXPLAIN | 問い合わせ文の実行計画を表示する | × |
 | FETCH | カーソルを使用して問い合わせから行を取り出す | × |
 | GRANT | アクセス権限を定義する | × |
-| IMPORT FOREIGN SCHEMA | 外部サーバからテーブル定義をインポートする | × |
+| IMPORT FOREIGN SCHEMA | 外部サーバからテーブル定義をインポートする | 〇 |
 | INSERT | テーブルに新しい行を作成する | 〇 |
 | LISTEN | 通知を監視する | × |
 | LOAD | 共有ライブラリファイルの読み込みを行う | × |
@@ -207,3 +207,6 @@ Tsurugiでコンパイルされる以下のSQLコマンドはTsurugiのSQLコマ
 | UPDATE | テーブルの行を更新する | 〇 |
 | VACUUM | データベースの不要領域の回収とデータベースの解析を行う | × |
 | VALUES | 行セットを計算する | × |
+
+
+- IMPORT FOREIGN SCHEMAについて、Tsurugi FDW固有の仕様は [IMPORT FOREIGN SCHEMA for Tsurugi FDW のドキュメント](sql_reference/import_foreign_schema.md) を参照してください。
