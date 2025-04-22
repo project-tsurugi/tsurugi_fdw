@@ -1993,29 +1993,29 @@ static List* tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt, Oid serve
 			_table_list.insert(((RangeVar*)lfirst(lc))->relname);
 		}
 
-		for (auto it = tg_table_names.begin(); it != tg_table_names.end();)
+		for (auto ite = tg_table_names.begin(); ite != tg_table_names.end();)
 		{
-			bool remove_flag;
+			bool is_exclude_table = false;
 
 			if (stmt->list_type == FDW_IMPORT_SCHEMA_LIMIT_TO)
 			{
 				/* include only listed tables in import */
-				remove_flag = (_table_list.find(*it) == _table_list.end());
+				is_exclude_table = (_table_list.find(*ite) == _table_list.end());
 			}
 			else if (stmt->list_type == FDW_IMPORT_SCHEMA_EXCEPT)
 			{
 				/* exclude listed tables from import */
-				remove_flag = (_table_list.find(*it) != _table_list.end());
+				is_exclude_table = (_table_list.find(*ite) != _table_list.end());
 			}
 
-			if (remove_flag)
+			if (is_exclude_table)
 			{
-				elog(DEBUG2, R"(exclude table "%s" from import.)", (*it).c_str());
-				it = tg_table_names.erase(it);
+				elog(DEBUG2, R"(exclude table "%s" from import.)", (*ite).c_str());
+				ite = tg_table_names.erase(ite);
 			}
 			else
 			{
-				++it;
+				++ite;
 			}
 		}
 	}
