@@ -79,25 +79,72 @@ PostgreSQLのスキーマ(`local_schema`)に配置された外部テーブルに
 
 
   ```sql
-  postgres=# select tg_verify_tables('tsurugi_schema', 'tsurugi', 'public', 'sumamry');
-                  tg_verify_tables
-  ----------------------------------------------------
-
-（★実行イメージは別途）
-
-    (1 row)
+  SELECT tg_verify_tables('tsurugi_schema', 'tsurugi', 'public', 'summary');
+                   tg_verify_tables
+  --------------------------------------------------
+   {                                               +
+       "verification": {                           +
+           "remote_schema": "tsurugi_schema",      +
+           "server_name": "tsurugi",               +
+           "local_schema": "public",               +
+           "mode": "summary",                      +
+           "tables_on_only_remote_schema": {       +
+               "count": 0                          +
+           },                                      +
+           "foreign_tables_on_only_local_schema": {+
+               "count": 1                          +
+           },                                      +
+           "tables_that_need_to_be_altered": {     +
+               "count": 2                          +
+           },                                      +
+           "available_foreign_table": {            +
+               "count": 3                          +
+           }                                       +
+       }                                           +
+   }
+  (1 row)
   ```
 
 #### 検証結果として対象のテーブル数、およびテーブル名のリストを表示する
 
   ```sql
-  postgres=# select tg_verify_tables('tsurugi_schema', 'tsurugi',　'public', 'detail');
-                  tg_verify_tables
-  ----------------------------------------------------
-
-（★実行イメージは別途）
-
-    (1 row)
+  SELECT tg_verify_tables('tsurugi_schema', 'tsurugi', 'public', 'detail');
+                   tg_verify_tables
+  --------------------------------------------------
+   {                                               +
+       "verification": {                           +
+           "remote_schema": "tsurugi_schema",      +
+           "server_name": "tsurugi",               +
+           "local_schema": "public",               +
+           "mode": "detail",                       +
+           "tables_on_only_remote_schema": {       +
+               "count": 0,                         +
+               "list": []                          +
+           },                                      +
+           "foreign_tables_on_only_local_schema": {+
+               "count": 1,                         +
+               "list": [                           +
+                   "table_a"                       +
+               ]                                   +
+           },                                      +
+           "tables_that_need_to_be_altered": {     +
+               "count": 2,                         +
+               "list": [                           +
+                   "table_b",                      +
+                   "table_c"                       +
+               ]                                   +
+           },                                      +
+           "available_foreign_table": {            +
+               "count": 3,                         +
+               "list": [                           +
+                   "table_d",                      +
+                   "table_e",                      +
+                   "table_f"                       +
+               ]                                   +
+           }                                       +
+       }                                           +
+   }
+  (1 row)
   ```
 
 ---
