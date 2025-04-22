@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, The Regents of the University of California
  *
- * alt_planner.c
+ * tsurugi_planner.c
  * Planning to push down DML for Tsurugi table to Tsurugi server
  */
 
@@ -35,7 +35,7 @@
 #include "parser/parse_coerce.h"
 #include "utils/rel.h"
 
-typedef struct alt_planner_info_
+typedef struct tsurugi_planner_info_
 {
 	Query	*parse;
 	bool	hasjoin;
@@ -56,9 +56,9 @@ PG_MODULE_MAGIC;
 
 /* planner_hook function */
 #if PG_VERSION_NUM >= 130000
-PlannedStmt *alt_planner(Query *parse2, const char *query_string, int cursorOptions, ParamListInfo boundParams);
+PlannedStmt *tsurugi_planner(Query *parse2, const char *query_string, int cursorOptions, ParamListInfo boundParams);
 #else
-PlannedStmt *alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams);
+PlannedStmt *tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams);
 #endif
 static bool is_only_foreign_table(TsurugiPlannerInfo *root, List *rtable);
 static TsurugiPlannerInfo *init_TsurugiPlannerInfo(Query *parse);
@@ -71,7 +71,7 @@ static List *expand_targetlist(List *tlist, int command_type, Index result_relat
 static bool contain_foreign_tables(TsurugiPlannerInfo *root, List *rtable);
 
 /*
- * alt_planner
+ * tsurugi_planner
  *
  * input
  * Query *parse2             ...
@@ -83,9 +83,9 @@ static bool contain_foreign_tables(TsurugiPlannerInfo *root, List *rtable);
  */
 struct PlannedStmt *
 #if PG_VERSION_NUM >= 130000
-alt_planner(Query *parse2, const char *query_string, int cursorOptions, ParamListInfo boundParams)
+tsurugi_planner(Query *parse2, const char *query_string, int cursorOptions, ParamListInfo boundParams)
 #else
-alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
+tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 #endif
 {
 	Query *parse = copyObject(parse2);
