@@ -45,12 +45,12 @@ PostgreSQLのエラーとならない値("tsurugi_schema"等)を記述します�
   IMPORT FOREIGN SCHEMA
   postgres=#
   ``` 
-### テーブルの定義状況の確認
+### テーブルの定義状況を確認するための手段
 
 IMPORT FOREIGN SCHEMA コマンド実行時に、インポート対象となる`remote_schema`にあるテーブルと同名のリレーションがインポート先となる`local_schema`に存在する場合、コマンドはエラーになります。
 
 そのため、コマンド実行前に`remote_schema`、`local_schema`それぞれのスキーマにおけるテーブルの定義状況を確認することを推奨します。
-以下の方法で確認することが可能です。
+以下の手段で確認することが可能です。
 
 - [tg_show_tables](../udf_reference/tg_show_tables.md)  
   関数実行実行時に指定する`remote_schema`に配置されているテーブルを確認することができます。
