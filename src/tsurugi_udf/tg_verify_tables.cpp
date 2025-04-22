@@ -94,7 +94,7 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 	// pretty argument
 	auto arg_pretty = PG_GETARG_BOOL(4);
 
-	// Convert mode argument value to lowercase
+	/* Convert mode argument value to lowercase. */
 	std::transform(arg_mode.begin(), arg_mode.end(), arg_mode.begin(),
 				   [](unsigned char c) { return std::tolower(c); });
 
@@ -221,7 +221,8 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 	std::string skip_table_name = "";
 
 	/* Verifies whether foreign tables in the local schema exist in the remote schema,
-	   and if so, retrieves metadata for the external tables. */
+	 * and if so, retrieves metadata for the external tables.
+	 */
 	for (uint64 i = 0; i < SPI_processed; i++) {
 		HeapTuple spi_tuple = SPI_tuptable->vals[i];
 		TupleDesc tupdesc = SPI_tuptable->tupdesc;
@@ -234,8 +235,8 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 		}
 
 		/* Add to a table that exists only in the remote schema. */
-		auto it = std::find(table_names.begin(), table_names.end(), rel_name);
-		if (it == table_names.end()) {
+		auto ite = std::find(table_names.begin(), table_names.end(), rel_name);
+		if (ite == table_names.end()) {
 			elog(DEBUG2, R"(Tables that do not exist in the remote schema. "%s")",
 				 rel_name.c_str());
 
@@ -277,19 +278,19 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 	SPI_finish();
 
 	/* Verifies whether tables in the remote schema exist in the local schema. */
-	for (auto it = table_names.begin(); it != table_names.end();) {
+	for (auto ite = table_names.begin(); ite != table_names.end();) {
 		/* Verify that a remote table exists on the local. */
-		if (ft_define.find(*it) == ft_define.end()) {
-			elog(DEBUG2, R"(Tables that do not exist in the local schema. "%s")", (*it).c_str());
+		if (ft_define.find(*ite) == ft_define.end()) {
+			elog(DEBUG2, R"(Tables that do not exist in the local schema. "%s")", (*ite).c_str());
 
 			/* Add to a table that exists only in the remote schema. */
-			list_remote.push_back(std::make_pair("", boost::property_tree::ptree(*it)));
+			list_remote.push_back(std::make_pair("", boost::property_tree::ptree(*ite)));
 			/* Exclude from metadata validation. */
-			table_names.erase(it);
+			table_names.erase(ite);
 
 			continue;
 		}
-		it++;
+		ite++;
 	}
 
 	/* Metadata Validation */
@@ -362,8 +363,8 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 			}
 
 			/* Validate the data type. */
-			auto it = std::find(local_type.begin(), local_type.end(), *remote_type_pg);
-			if (it == local_type.end()) {
+			auto ite = std::find(local_type.begin(), local_type.end(), *remote_type_pg);
+			if (ite == local_type.end()) {
 				elog(DEBUG2,
 						R"_(Datatype of column does not match. %s (local:"%s" / remote:"%s"))_",
 						pg_col_name.c_str(), local_type[0].c_str(), remote_type_pg->data());
