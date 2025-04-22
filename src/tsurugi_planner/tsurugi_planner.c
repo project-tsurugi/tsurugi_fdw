@@ -35,14 +35,14 @@
 #include "parser/parse_coerce.h"
 #include "utils/rel.h"
 
-typedef struct AltPlannerInfo
+typedef struct alt_planner_info_
 {
 	Query	*parse;
 	bool	hasjoin;
 	bool	hasaggref;
 	Oid		serverid;
 	List	*oidlist;
-} AltPlannerInfo;
+} TsurugiPlannerInfo;
 
 /* "table_open" was "heap_open" before v12 */
 #if PG_VERSION_NUM < 120000
@@ -60,15 +60,15 @@ PlannedStmt *alt_planner(Query *parse2, const char *query_string, int cursorOpti
 #else
 PlannedStmt *alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams);
 #endif
-bool is_only_foreign_table(AltPlannerInfo *root, List *rtable);
-AltPlannerInfo *init_altplannerinfo(Query *parse);
-ForeignScan *create_foreign_scan(AltPlannerInfo *root); 
-ModifyTable *create_modify_table(AltPlannerInfo *root, ForeignScan *scan); 
-void is_valid_targetentry(ForeignScan *scan, AltPlannerInfo *root); 
-PlannedStmt *create_planned_stmt(AltPlannerInfo *root, Plan *plan);
-void preprocess_targetlist2(Query *parse, ForeignScan *scan);
+static bool is_only_foreign_table(TsurugiPlannerInfo *root, List *rtable);
+static TsurugiPlannerInfo *init_TsurugiPlannerInfo(Query *parse);
+static ForeignScan *create_foreign_scan(TsurugiPlannerInfo *root); 
+static ModifyTable *create_modify_table(TsurugiPlannerInfo *root, ForeignScan *scan); 
+static void is_valid_targetentry(ForeignScan *scan, TsurugiPlannerInfo *root); 
+static PlannedStmt *create_planned_stmt(TsurugiPlannerInfo *root, Plan *plan);
+static void preprocess_targetlist2(Query *parse, ForeignScan *scan);
 static List *expand_targetlist(List *tlist, int command_type, Index result_relation, Relation rel);
-bool contain_foreign_tables(AltPlannerInfo *root, List *rtable);
+static bool contain_foreign_tables(TsurugiPlannerInfo *root, List *rtable);
 
 /*
  * alt_planner
@@ -89,13 +89,13 @@ alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 #endif
 {
 	Query *parse = copyObject(parse2);
-	AltPlannerInfo *root = init_altplannerinfo(parse);
+	TsurugiPlannerInfo *root = init_TsurugiPlannerInfo(parse);
 	ForeignScan *scan = NULL;
 	Plan *plan = NULL;
 	PlannedStmt *stmt = NULL;
 	ModifyTable *modify = NULL;
 
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	if ((root->parse != NULL && root->parse->rtable == NULL) || 
 		!contain_foreign_tables(root, root->parse->rtable))
@@ -169,18 +169,18 @@ alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 }
 
 /*
- * init_altplannerinfo
+ * init_TsurugiPlannerInfo
  *
  * input
  * Query *parse         ... 
  *
  * output
- * AltPlannerInfo *root ... 
+ * TsurugiPlannerInfo *root ... 
  */
-AltPlannerInfo
-*init_altplannerinfo(Query *parse)
+TsurugiPlannerInfo
+*init_TsurugiPlannerInfo(Query *parse)
 {
-	AltPlannerInfo *root = (AltPlannerInfo *) palloc0(sizeof(AltPlannerInfo));
+	TsurugiPlannerInfo *root = (TsurugiPlannerInfo *) palloc0(sizeof(TsurugiPlannerInfo));
 	root->parse		=	parse;
 	root->hasjoin	=	false;
 	root->hasaggref	=	false;
@@ -194,17 +194,19 @@ AltPlannerInfo
  * is_only_foreign_table
  *
  * input
- * AltPlannerInfo *root ... 
+ * TsurugiPlannerInfo *root ... 
  * List *rtable         ... 
  *
  * output
  * bool                 ... 
  */
 bool
-is_only_foreign_table(AltPlannerInfo *root, List *rtable)
+is_only_foreign_table(TsurugiPlannerInfo *root, List *rtable)
 {
 	ListCell	*rtable_list_cell;
 	Oid			currentserverid;
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	foreach(rtable_list_cell, rtable)
 	{
@@ -292,11 +294,13 @@ is_only_foreign_table(AltPlannerInfo *root, List *rtable)
  *
  */
 bool
-contain_foreign_tables(AltPlannerInfo *root, List *rtable)
+contain_foreign_tables(TsurugiPlannerInfo *root, List *rtable)
 {
 	ListCell	*rtable_list_cell;
 	Oid			currentserverid;
 	bool contained = false;
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	foreach(rtable_list_cell, rtable)
 	{
@@ -374,7 +378,7 @@ contain_foreign_tables(AltPlannerInfo *root, List *rtable)
  * create_foreign_scan
  *
  * input
- * AltPlannerInfo *root ... 
+ * TsurugiPlannerInfo *root ... 
  *                          
  *
  * output
@@ -382,12 +386,14 @@ contain_foreign_tables(AltPlannerInfo *root, List *rtable)
  *                          
  */
 ForeignScan *
-create_foreign_scan(AltPlannerInfo *root)
+create_foreign_scan(TsurugiPlannerInfo *root)
 {
 	Bitmapset  *fs_relids = NULL;
 
 	ForeignScan *fnode;
 	fnode = makeNode(ForeignScan);
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	fnode->scan.plan.targetlist = 0;
 	fnode->scan.plan.qual = 0;
@@ -415,14 +421,14 @@ create_foreign_scan(AltPlannerInfo *root)
  * create_modify_table
  *
  * input
- * AltPlannerInfo *root ... 
+ * TsurugiPlannerInfo *root ... 
  * ForeignScan *scan    ... 
  *
  * output
  * ModifyTable *modify  ... 
  */
 ModifyTable *
-create_modify_table(AltPlannerInfo *root, ForeignScan *scan)
+create_modify_table(TsurugiPlannerInfo *root, ForeignScan *scan)
 {
 	ModifyTable *modify = makeNode(ModifyTable);
 	List *fdwPrivLists = NIL;
@@ -430,6 +436,8 @@ create_modify_table(AltPlannerInfo *root, ForeignScan *scan)
 
 	List *subplan = NIL;
 	subplan = lappend(subplan, scan);
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	modify->plan.lefttree = NULL;
 	modify->plan.righttree = NULL;
@@ -476,29 +484,31 @@ create_modify_table(AltPlannerInfo *root, ForeignScan *scan)
  *
  * input
  * ForeignScan *scan    ...
- * AltPlannerInfo *root ...
+ * TsurugiPlannerInfo *root ...
  *
  * output
  * --
  *
  */
 void
-is_valid_targetentry(ForeignScan *scan, AltPlannerInfo *root)
+is_valid_targetentry(ForeignScan *scan, TsurugiPlannerInfo *root)
 {
 	List *pte = root->parse->targetList;
-	ListCell *l;
-	Var *var;
-	Var *newvar;
-	Aggref *aggref;
-
+	ListCell *lc = NULL;
+	Var *var = NULL;
+	Var *newvar = NULL;
+	Aggref *aggref = NULL;
 	TargetEntry *newte = NULL;
-
 	TargetEntry *newfste = NULL;
 
+	/* attribute number is 1 origin. */
 	int attno = 1;
-	foreach(l, pte)
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
+	foreach(lc, pte)
 	{
-		TargetEntry *te = (TargetEntry *) lfirst(l);
+		TargetEntry *te = (TargetEntry *) lfirst(lc);
 		Node *node = (Node *) te->expr;
 
 		switch (nodeTag(node))
@@ -506,7 +516,6 @@ is_valid_targetentry(ForeignScan *scan, AltPlannerInfo *root)
 			case T_Var:
 			{
 				var = (Var *) node;
-
 				newfste = makeTargetEntry((Expr *) node,
 								    attno,
 								    NULL,
@@ -544,12 +553,6 @@ is_valid_targetentry(ForeignScan *scan, AltPlannerInfo *root)
 			case T_Aggref:
 			{
 				aggref = (Aggref *) node;
-
-	            if (aggref->aggtype == INT2OID || aggref->aggtype == INT8OID)
-		        {
-					aggref->aggtype = INT4OID;
-
-				}
 				newvar = makeVar(INDEX_VAR,
 								  attno,
 								  aggref->aggtype,
@@ -610,16 +613,18 @@ is_valid_targetentry(ForeignScan *scan, AltPlannerInfo *root)
  * create_planned_stmt
  *
  * input
- * AltPlannerInfo *root ... 
+ * TsurugiPlannerInfo *root ... 
  * Plan *plan           ... 
  * output
  * PlannedStmt *stmt    ... 
  */
 PlannedStmt *
-create_planned_stmt(AltPlannerInfo *root, Plan *plan)
+create_planned_stmt(TsurugiPlannerInfo *root, Plan *plan)
 {
 	PlannedStmt *stmt = makeNode(PlannedStmt);
 	Query *parse = root->parse;
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	stmt->commandType = parse->commandType;
 	stmt->queryId = parse->queryId;
@@ -672,6 +677,8 @@ preprocess_targetlist2(Query *parse, ForeignScan *scan)
 	Relation		target_relation = NULL;
 	List			*tlist;
 
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
 	target_rte = rt_fetch(parse->resultRelation, parse->rtable);
 
 	target_relation = table_open(target_rte->relid, NoLock);
@@ -701,6 +708,8 @@ expand_targetlist(List *tlist, int command_type,
 	ListCell   *tlist_item;
 	int			attrno,
 				numattrs;
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	tlist_item = list_head(tlist);
 

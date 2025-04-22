@@ -197,7 +197,7 @@ typedef struct tsurugiFdwModifyState
 
 	/* for update row movement if subplan result rel */
 	struct tsurugiFdwModifyState *aux_fmstate;	/* foreign-insert state, if
-											 * created */
+											 	 * created */
 } tsurugiFdwModifyState;
 
 /*
@@ -312,9 +312,9 @@ static void tsurugiGetForeignJoinPaths(PlannerInfo *root,
 /*
  * Helper functions
  */
-static tsurugiFdwState* create_fdwstate();
-static void free_fdwstate(tsurugiFdwState* fdw_state);
-static void store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist);
+static tsurugiFdwState* create_fdw_state();
+static void free_fdw_state(tsurugiFdwState* fdw_state);
+static void store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist, List** );
 static void make_tuple_from_result_row(ResultSetPtr result_set, 
                                         TupleDesc tupleDescriptor,
                                         List* retrieved_attrs,
@@ -376,7 +376,7 @@ tsurugi_fdw_handler(PG_FUNCTION_ARGS)
     routine->EndForeignInsert = tsurugiEndForeignInsert;
 
 	/* Support functions for join push-down */
-//	routine->GetForeignJoinPaths = tsurugiGetForeignJoinPaths;
+	routine->GetForeignJoinPaths = tsurugiGetForeignJoinPaths;
 
 	ERROR_CODE error = Tsurugi::init();
 	if (error != ERROR_CODE::OK) 
@@ -428,7 +428,7 @@ static void tsurugiGetForeignRelSize(
 	fpinfo->shippable_extensions = NIL;
 	fpinfo->fetch_size = 100;
 
-//	apply_server_options(fpinfo);
+/*	apply_server_options(fpinfo);	*/
 	apply_table_options(fpinfo);
 
 	/*
@@ -1179,7 +1179,7 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 	Assert(node != nullptr);
 
 	ForeignScan* fsplan = (ForeignScan*) node->ss.ps.plan;
-	tsurugiFdwState* fdw_state = create_fdwstate();
+	tsurugiFdwState* fdw_state = create_fdw_state();
 	RangeTblEntry *rte;
 	ForeignTable *table;
 	ForeignServer *server;
@@ -1206,14 +1206,14 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 	table = GetForeignTable(rte->relid);
 	server = GetForeignServer(table->serverid);
 
-#if 0	/* Make query string using deparse functions or not. */
+#ifdef __TSURUGI_PLANNER__	/* Make query string using deparse functions or not. */
+	fdw_state->query_string = estate->es_sourceText;
+	store_pg_data_type(fdw_state, fsplan->scan.plan.targetlist, &fdw_state->retrieved_attrs);
+#else
 	fdw_state->query_string = strVal(list_nth(fsplan->fdw_private,
 		FdwScanPrivateSelectSql));
 	fdw_state->retrieved_attrs = (List*) list_nth(fsplan->fdw_private, 
 		FdwScanPrivateRetrievedAttrs);
-#else
-	fdw_state->query_string = estate->es_sourceText;
-	store_pg_data_type(fdw_state, fsplan->scan.plan.targetlist);
 #endif
   	fdw_state->cursor_exists = false;
 
@@ -1251,7 +1251,6 @@ tsurugiIterateForeignScan(ForeignScanState* node)
 	elog(DEBUG5, "tsurugi_fdw : %s", __func__);
 
 	Assert(node != nullptr);
-	Assert(fdw_info_.transaction != nullptr);
 
 	tsurugiFdwState* fdw_state = (tsurugiFdwState*) node->fdw_state;
 	TupleTableSlot* tupleSlot = node->ss.ss_ScanTupleSlot;
@@ -1339,7 +1338,7 @@ tsurugiEndForeignScan(ForeignScanState* node)
 
 	if (fdw_state != nullptr) 
     {
-		free_fdwstate(fdw_state);
+		free_fdw_state(fdw_state);
     }
 }
 
@@ -1371,11 +1370,7 @@ tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
   	table = GetForeignTable(rte->relid);
   	server = GetForeignServer(table->serverid);
 
-	tsurugiFdwState* fdw_state = create_fdwstate();
-	if (fdw_state == nullptr)
-	{
-		elog(ERROR, "create_fdw_state() failed.");
-	}
+	tsurugiFdwState* fdw_state = create_fdw_state();
 
  	fdw_state->query_string = estate->es_sourceText; 
     node->fdw_state = fdw_state;
@@ -1438,7 +1433,7 @@ tsurugiEndDirectModify(ForeignScanState* node)
 
 	if (node->fdw_state != nullptr)
     {
-		free_fdwstate((tsurugiFdwState*) node->fdw_state);
+		free_fdw_state((tsurugiFdwState*) node->fdw_state);
     }
 }
 
@@ -1483,6 +1478,7 @@ tsurugiPlanDirectModify(PlannerInfo *root,
 	List	   *returningList = NIL;
 	List	   *retrieved_attrs = NIL;
 
+	/* operation - 1:SELECT, 2:UPDATE, 3:INSERT, 4:DELETE, 5:UTILITY */
 	elog(DEBUG2, "tsurugi_fdw : %s (operation= %d)", __func__, (int) operation);
 
 	/*
@@ -1493,8 +1489,11 @@ tsurugiPlanDirectModify(PlannerInfo *root,
 	 * The table modification must be an UPDATE or DELETE.
 	 */
 	if (operation != CMD_UPDATE && operation != CMD_DELETE)
+#ifdef __TSURUGI_PLANNER__
+		return true;
+#else
 		return false;
-
+#endif
 	/*
 	 * It's unsafe to modify a foreign table directly if there are any local
 	 * joins needed.
@@ -1678,13 +1677,51 @@ static List
  */
 static void 
 tsurugiBeginForeignModify(ModifyTableState *mtstate,
-                        ResultRelInfo *rinfo,
+                        ResultRelInfo *resultRelInfo,
                         List *fdw_private,
                         int subplan_index,
                         int eflags)
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 	return;
+}
+
+/*
+ * tsurugiExecForeignInsert
+ */
+static TupleTableSlot*
+tsurugiExecForeignInsert(
+	EState *estate, 
+	ResultRelInfo *rinfo, 
+	TupleTableSlot *slot, 
+	TupleTableSlot *planSlot)
+{
+	Assert(rinfo != nullptr);
+	Assert(rinfo->ri_FdwState != nullptr);
+
+	tsurugiFdwState* fdw_state = (tsurugiFdwState*) rinfo->ri_FdwState;
+	ERROR_CODE error;
+
+	elog(DEBUG2, "tsurugi_fdw : %s : query string: %s", __func__, fdw_state->query_string);
+ 	std::string query(fdw_state->query_string);
+	std::size_t num_rows = 0;
+
+	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+
+#if 0
+	query = std::regex_replace(query, std::regex("\\$\\d"), "%s");
+    query = (boost::format(query) % slot->tts_values[0] % slot->tts_values[1]).str();
+#endif
+	make_tsurugi_query(query);
+	error = Tsurugi::execute_statement(query, num_rows);
+	if (error != ERROR_CODE::OK) 
+    {
+        elog(ERROR, "transaction::execute_statement() failed. (%d)", 
+            (int) error);
+	}
+	
+	slot = nullptr;
+    return slot;
 }
 
 /*
@@ -1771,7 +1808,7 @@ tsurugiBeginForeignInsert(ModifyTableState *mtstate,
 	rte = exec_rt_fetch(resultRelation, estate);
 	if (rte->relid != RelationGetRelid(rel))
 	{
-//		rte = copyObject(rte);
+/*		rte = copyObject(rte);	*/
         rte = (RangeTblEntry*) copyObjectImpl(rte);
 		rte->relid = RelationGetRelid(rel);
 		rte->relkind = RELKIND_FOREIGN_TABLE;
@@ -1793,11 +1830,7 @@ tsurugiBeginForeignInsert(ModifyTableState *mtstate,
 					 resultRelInfo->ri_returningList,
 					 &retrieved_attrs);
 
-	tsurugiFdwState* fdw_state = create_fdwstate();
-	if (fdw_state == nullptr)
-	{
-		elog(ERROR, "create_fdw_state() failed.");
-	}
+	tsurugiFdwState* fdw_state = create_fdw_state();
 
     elog(DEBUG2, "deparse sql : %s", sql.data);
 
@@ -1810,40 +1843,6 @@ tsurugiBeginForeignInsert(ModifyTableState *mtstate,
 		elog(ERROR, "Failed to begin the Tsurugi transaction. (%d)\n%s", 
             (int) error, Tsurugi::get_error_message(error).c_str());
 	}
-}
-
-/*
- * tsurugiExecForeignInsert
- */
-static TupleTableSlot*
-tsurugiExecForeignInsert(
-	EState *estate, 
-	ResultRelInfo *rinfo, 
-	TupleTableSlot *slot, 
-	TupleTableSlot *planSlot)
-{
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-
-	Assert(fdw_info_.transaction != nullptr);
-
-	ERROR_CODE error;
-
-	tsurugiFdwState* fdw_state = (tsurugiFdwState*) rinfo->ri_FdwState;
-
- 	std::string query(fdw_state->query_string);
-	std::size_t num_rows = 0;
-    query = std::regex_replace(query, std::regex("\\$\\d"), "%s");
-    query = (boost::format(query) % slot->tts_values[0] % slot->tts_values[1]).str();
-
-	error = Tsurugi::execute_statement(query, num_rows);
-	if (error != ERROR_CODE::OK) 
-    {
-        elog(ERROR, "transaction::execute_statement() failed. (%d)", 
-            (int) error);
-	}
-	
-	slot = nullptr;
-    return slot;
 }
 
 /*
@@ -1935,15 +1934,20 @@ tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt,
  */
 
 /*
- *	create_fdwstate
+ *	create_fdw_state
  *      Create tsurugiFdwState structure.
  */
 static tsurugiFdwState* 
-create_fdwstate()
+create_fdw_state()
 {
 	tsurugiFdwState* fdw_state = 
 		(tsurugiFdwState*) palloc0(sizeof(tsurugiFdwState));
 	
+	if (fdw_state == nullptr)
+	{
+		elog(ERROR, "tsurugi_fdw : %s : palloc0() failed.", __func__);
+	}
+
 	fdw_state->cursor_exists = false;
 	fdw_state->number_of_columns = 0;
 	fdw_state->column_types = nullptr;
@@ -1952,11 +1956,11 @@ create_fdwstate()
 }
 
 /*
- * free_fdwstate
+ * free_fdw_state
  *      Free allocated memories.
  */
 static void 
-free_fdwstate(tsurugiFdwState* fdw_state)
+free_fdw_state(tsurugiFdwState* fdw_state)
 {
 	if (fdw_state->column_types != nullptr) 
 	{
@@ -1988,9 +1992,13 @@ free_fdwstate(tsurugiFdwState* fdw_state)
  * 	understand PostgreSQL data types.
  */
 static void 
-store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist)
+store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist, List** retrieved_attrs)
 {
-	ListCell* lc;
+	ListCell* lc = NULL;
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
+	*retrieved_attrs = NIL;
 
 	if (tlist != NULL)
 	{
@@ -2008,6 +2016,8 @@ store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist)
 			{
 				Var* var = (Var*) node;
 				data_types[i] = var->vartype;
+				elog(DEBUG5, "tsurugi_fdw :  (att_number: %d, nodeTag: %u, vartype: %d)", 
+					 i, (unsigned int) nodeTag(node), (int) var->vartype);
 			}
 			else if (nodeTag(node) == T_Const)
 			{
@@ -2020,6 +2030,8 @@ store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist)
 				elog(ERROR, "Unexpected data type in target list. (index: %d, type: %u)",
 					i, (unsigned int) nodeTag(node));
 			}
+			elog(DEBUG1, "tsurugi_fdw : %s : attr_number: %d", __func__, i);
+			*retrieved_attrs = lappend_int(*retrieved_attrs, i + 1);
 			i++;
 		}
 		fdw_state->column_types = data_types;
@@ -2039,25 +2051,24 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                             bool* is_null,
                             tsurugiFdwState* fdw_state)
 {
-#if 0	/*  */
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
 	ListCell   *lc = NULL;
 	foreach(lc, retrieved_attrs)
-    {
-        int     attnum = lfirst_int(lc) - 1;
-#else
-	for (size_t attnum = 0; attnum < fdw_state->number_of_columns; attnum++)
 	{
-#endif
-        Oid     	pgtype = TupleDescAttr(tupleDescriptor, attnum)->atttypid;
+		int     attnum = lfirst_int(lc) - 1;
+		Oid     	pgtype = TupleDescAttr(tupleDescriptor, attnum)->atttypid;
         HeapTuple 	heap_tuple;
         regproc 	typinput;
         int 		typemod;
 
-        heap_tuple = SearchSysCache1(TYPEOID, 
+		elog(DEBUG1, "tsurugi_fdw : %s : attnum: %d", __func__, attnum);
+
+		heap_tuple = SearchSysCache1(TYPEOID, 
                                     ObjectIdGetDatum(pgtype));
         if (!HeapTupleIsValid(heap_tuple))
         {
-            elog(ERROR, "cache lookup failed for type %u", pgtype);
+            elog(ERROR, "tsurugi_fdw : cache lookup failed for type %u", pgtype);
         }
         typinput = ((Form_pg_type) GETSTRUCT(heap_tuple))->typinput;
         typemod = ((Form_pg_type) GETSTRUCT(heap_tuple))->typtypmod;
@@ -2069,6 +2080,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case INT2OID:
                 {
                     std::int16_t value;
+					elog(DEBUG3, "tsurugi_fdw : %s : pgtype is INT2OID.", __func__);
                     if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         is_null[attnum] = false;
@@ -2080,6 +2092,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case INT4OID:
                 {
                     std::int32_t value;
+					elog(DEBUG3, "tsurugi_fdw : %s : pgtype is INT4OID.", __func__);
                     if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         is_null[attnum] = false;
@@ -2091,6 +2104,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case INT8OID:
                 {
                     std::int64_t value;
+					elog(DEBUG3, "tsurugi_fdw : %s : pgtype is INT8OID.", __func__);
                     if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         is_null[attnum] = false;
@@ -2102,6 +2116,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case FLOAT4OID:
                 {
                     float4 value;
+					elog(DEBUG3, "tsurugi_fdw : %s : pgtype is FLOAT4OID.", __func__);
                     if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         is_null[attnum] = false;
@@ -2113,6 +2128,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case FLOAT8OID:
                 {
                     float8 value;
+					elog(DEBUG3, "tsurugi_fdw : %s : pgtype is FLOAT8OID.", __func__);
                     if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         is_null[attnum] = false;
@@ -2125,10 +2141,11 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case VARCHAROID:
             case TEXTOID:
                 {
-                    std::string value;
+					elog(DEBUG3, "tsurugi_fdw : %s : pgtype is BPCHAROID/VARCHAROID/TEXTOID.", __func__);
+					std::string value;
                     Datum value_datum;
                     ERROR_CODE result = result_set->next_column(value);
-                    if (result == ERROR_CODE::OK)
+					if (result == ERROR_CODE::OK)
                     {
                         value_datum = CStringGetDatum(value.c_str());
                         if (value_datum == (Datum) nullptr)
@@ -2147,6 +2164,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case DATEOID:
                 {
                     stub::date_type value;
+					elog(DEBUG3, "tsurugi_fdw : %s : pgtype is DATEOID.", __func__);
                     if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         DateADT date;
@@ -2161,6 +2179,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case TIMEOID:
                 {
                     stub::time_type value;
+					elog(DEBUG3, "tsurugi_fdw : %s : pgtype is TIMEOID.", __func__);
                     if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         TimeADT time;
@@ -2181,7 +2200,8 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case TIMETZOID:
                 {
                     stub::timetz_type value;
-                    if (result_set->next_column(value) == ERROR_CODE::OK)
+					elog(DEBUG3, "tsurugi_fdw : %s : pgtype is TIMETZOID.", __func__);
+					if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         TimeTzADT timetz;
                         auto subsecond = value.first.subsecond().count();
@@ -2207,6 +2227,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case TIMESTAMPTZOID:
                 {
                     stub::timestamptz_type value;
+					elog(DEBUG3, "tsurugi_fdw : %s : pgtype is TIMESTAMPTZOID.", __func__);
                     if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         Timestamp timestamp;
@@ -2235,6 +2256,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case TIMESTAMPOID:
                 {
                     stub::timestamp_type value;
+					elog(DEBUG3, "tsurugi_fdw : %s : pgtype is TIMESTAMPOID.", __func__);
                     if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         Timestamp timestamp;
@@ -2255,6 +2277,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case NUMERICOID:
                 {
                     stub::decimal_type value;
+					elog(DEBUG3, "tsurugi_fdw : %s : pgtype is NUMERICOID.", __func__);
                     auto error_code = result_set->next_column(value);
                     if (error_code == ERROR_CODE::OK)
                     {
