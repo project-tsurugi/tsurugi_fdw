@@ -254,6 +254,9 @@ prepare ins_query as insert into employee_i select * from employee_1 where id < 
 execute ins_query;
 select * from employee_i order by id, name;
 
+PREPARE pre_emp2 AS select id, name, salary from employee_2 order by id;
+EXECUTE pre_emp2;
+
 /* group by r707 */
 PREPARE group_name AS select id, count(name), sum(salary) from employee_2 group by id order by id;
 EXECUTE group_name;

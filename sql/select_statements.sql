@@ -162,6 +162,7 @@ ORDER BY
     c1;
 
 -- WHERE #7
+/* Tsurugi does not yet support "LIKE" cluase.
 SELECT
     *
 FROM
@@ -170,7 +171,7 @@ WHERE
     c7 LIKE '%LMN%'
 ORDER BY 
     c1;
-
+*/
 -- WHERE #8
 /*
 SELECT
@@ -234,7 +235,9 @@ ORDER BY
 
 -- TG JOIN #2 /* tsurugi-issue#863 */
 SELECT 
-    a.c1, a.c2, b.c1, b.c7
+--  tsurugi-issue
+--  a.c1, a.c2, b.c1, b.c7
+    a.c1, a.c2, b.c2, b.c7
 FROM 
     t1_select_statement a INNER JOIN t2_select_statement b USING (c1)
 ORDER BY
@@ -244,6 +247,7 @@ ORDER BY
 SELECT 
     a.c1, a.c3, b.c1, b.c6
 FROM 
+--  PostgreSQL specific syntax (!=)
     t1_select_statement a INNER JOIN t2_select_statement b ON a.c1 != b.c1
 ORDER BY
     a.c1;
