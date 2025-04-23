@@ -213,10 +213,10 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 
 	// Metadata of foreign tables
 	std::unordered_map<std::string, std::vector<std::tuple<std::string, std::string, int, int>>>
-		ft_define = {};
+		foreign_table_metadata = {};
 
 	// List of Tsurugi table names
-	auto table_names = tg_table_list->get_table_names();
+	auto tsurugi_table_names = tg_table_list->get_table_names();
 
 	std::string skip_table_name = "";
 
@@ -235,16 +235,13 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 		}
 
 		/* Add to a table that exists only in the remote schema. */
-		auto ite = std::find(table_names.begin(), table_names.end(), rel_name);
-		if (ite == table_names.end()) {
+		auto ite = std::find(tsurugi_table_names.begin(), tsurugi_table_names.end(), rel_name);
+		if (ite == tsurugi_table_names.end()) {
 			elog(DEBUG2, R"(Tables that do not exist in the remote schema. "%s")",
 				 rel_name.c_str());
 
 			/* Add to a table that exists only in the remote schema. */
 			list_local.push_back(std::make_pair("", boost::property_tree::ptree(rel_name)));
-			/* Exclude from metadata validation. */
-			table_names.erase(std::remove(table_names.begin(), table_names.end(), rel_name),
-							  table_names.end());
 
 			skip_table_name = rel_name;
 			continue;
@@ -272,21 +269,21 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 		}
 
 		/* Stores metadata for foreign tables. */
-		ft_define[rel_name].emplace_back(std::make_tuple(column_name, datatype, precision, scale));
+		foreign_table_metadata[rel_name].emplace_back(std::make_tuple(column_name, datatype, precision, scale));
 	}
 
 	SPI_finish();
 
 	/* Verifies whether tables in the remote schema exist in the local schema. */
-	for (auto ite = table_names.begin(); ite != table_names.end();) {
+	for (auto ite = tsurugi_table_names.begin(); ite != tsurugi_table_names.end();) {
 		/* Verify that a remote table exists on the local. */
-		if (ft_define.find(*ite) == ft_define.end()) {
+		if (foreign_table_metadata.find(*ite) == foreign_table_metadata.end()) {
 			elog(DEBUG2, R"(Tables that do not exist in the local schema. "%s")", (*ite).c_str());
 
 			/* Add to a table that exists only in the remote schema. */
 			list_remote.push_back(std::make_pair("", boost::property_tree::ptree(*ite)));
 			/* Exclude from metadata validation. */
-			table_names.erase(ite);
+			tsurugi_table_names.erase(ite);
 
 			continue;
 		}
@@ -294,12 +291,12 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 	}
 
 	/* Metadata Validation */
-	for (const auto& table_name : table_names) {
+	for (const auto& table_name : tsurugi_table_names) {
 		elog(DEBUG2, R"(Metadata Validation: table name: "%s")", table_name.c_str());
 
-		TableMetadataPtr tg_table_metadata;
+		TableMetadataPtr tsurugi_table_metadata;
 		/* Get table metadata from Tsurugi. */
-		error = Tsurugi::get_table_metadata(table_name, tg_table_metadata);
+		error = Tsurugi::get_table_metadata(table_name, tsurugi_table_metadata);
 		if (error != ERROR_CODE::OK) {
 			ereport(ERROR, (errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
 							errmsg("Failed to retrieve table metadata from Tsurugi. (error: %d)",
@@ -308,9 +305,9 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 		}
 
 		/* Get table metadata from PostgreSQL. */
-		const auto& pg_columns = ft_define.find(table_name)->second;
+		const auto& pg_columns = foreign_table_metadata.find(table_name)->second;
 		/* Get table metadata from Tsurugi. */
-		const auto& tg_columns = tg_table_metadata->columns();
+		const auto& tg_columns = tsurugi_table_metadata->columns();
 
 		/* Validate the number of columns. */
 		if (pg_columns.size() != static_cast<size_t>(tg_columns.size())) {
