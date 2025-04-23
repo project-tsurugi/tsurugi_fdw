@@ -23,7 +23,7 @@ Tsurugiのスキーマ(`remote_schema`)に配置されたテーブル定義の�
   - `list`はテーブル名のリストを表示します。`mode`で'detail'を指定した時のみ表示します。
 
 `mode`、`pretty`について、引数を指定しない場合は以下のデフォルトの設定が適用されます。
-- mode - 'sumamry'
+- mode - 'summary'
 - pretty - true
 
 ### パラメータ
