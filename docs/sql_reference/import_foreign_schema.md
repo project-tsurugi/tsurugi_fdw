@@ -25,6 +25,7 @@ PostgreSQLのエラーとならない値("tsurugi_schema"等)を記述します�
 
 #### *OPTIONS ( option 'value' [, ... ] )*
 使用できるオプションはありません。  
+
 上記以外のパラメータはPostgreSQLのSQLコマンド仕様に準じます。  
 詳細は [PostgreSQLのドキュメント](https://www.postgresql.jp/document/12/html/sql-commands.html) を参照してください。
 
