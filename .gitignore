@@ -21,3 +21,6 @@ regression.*
 
 # scripts
 scripts/*.md
+
+# Protocol Buffers
+include/proto
