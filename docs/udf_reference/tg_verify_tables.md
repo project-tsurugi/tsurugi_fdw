@@ -34,7 +34,7 @@ PostgreSQLのスキーマ(`local_schema`)に配置された外部テーブルに
 「列のデータ型」は[IMPORT FOREIGN SCHEMA](../sql_reference/import_foreign_schema.md) の [列データ型の変換ルール](../sql_reference/import_foreign_schema.md#列データ型の変換ルール) に基づいて判定します。
 
 `mode`、`pretty`について、引数を指定しない場合は以下のデフォルトの設定が適用されます。
-- mode - 'sumamry'
+- mode - 'summary'
 - pretty - true
 
 ### パラメータ
