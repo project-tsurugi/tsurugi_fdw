@@ -1,0 +1,3 @@
+ERROR:  invalid input syntax for type boolean: "invalid"
+LINE 1: ...tg_show_tables('tsurugidb', 'tsurugi', 'summary', 'invalid')
+                                                             ^

@@ -1,0 +1,19 @@
+          ?column?
+-----------------------------
+ ["udf_test_table_remote_1"]
+(1 row)
+
+                      ?column?
+-----------------------------------------------------
+ ["udf_test_table_local_1","udf_test_table_local_2"]
+(1 row)
+
+                          ?column?
+-------------------------------------------------------------
+ ["udf_test_table_unmatched_1","udf_test_table_unmatched_2"]
+(1 row)
+
+           ?column?
+------------------------------
+ ["udf_test_table_matched_1"]
+(1 row)

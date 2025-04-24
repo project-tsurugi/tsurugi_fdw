@@ -1,0 +1,65 @@
+                 tg_verify_tables
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+        "remote_schema": "tsurugidb",            +
+        "server_name": "tsurugi",                +
+        "local_schema": "public",                +
+        "mode": "detail",                        +
+         "tables_on_only_remote_schema": {       +
+             "count": 1,                         +
+             "list": [                           +
+                 "udf_test_table_3"              +
+             ]                                   +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 2,                         +
+             "list": [                           +
+                 "udf_test_table_1",             +
+                 "udf_test_table_2"              +
+             ]                                   +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+                 tg_verify_tables
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+        "remote_schema": "tsurugidb",            +
+        "server_name": "other_server",           +
+        "local_schema": "public",                +
+        "mode": "detail",                        +
+         "tables_on_only_remote_schema": {       +
+             "count": 2,                         +
+             "list": [                           +
+                 "udf_test_table_1",             +
+                 "udf_test_table_2"              +
+             ]                                   +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 1,                         +
+             "list": [                           +
+                 "udf_test_table_3"              +
+             ]                                   +
+         }                                       +
+     }                                           +
+ }
+(1 row)

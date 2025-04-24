@@ -1,0 +1,11 @@
+$PSQL \
+  -c "SELECT tg_verify_tables('tsurugidb', 'tsurugi', 'public', 'summary', 't')" \
+  -c "SELECT tg_verify_tables('tsurugidb', 'tsurugi', 'public', 'summary', 'yes')" \
+  -c "SELECT tg_verify_tables('tsurugidb', 'tsurugi', 'public', 'summary', 'y')" \
+  -c "SELECT tg_verify_tables('tsurugidb', 'tsurugi', 'public', 'summary', 'on')" \
+  -c "SELECT tg_verify_tables('tsurugidb', 'tsurugi', 'public', 'summary', '1')" \
+  -c "SELECT tg_verify_tables('tsurugidb', 'tsurugi', 'public', 'summary', 'f')" \
+  -c "SELECT tg_verify_tables('tsurugidb', 'tsurugi', 'public', 'summary', 'no')" \
+  -c "SELECT tg_verify_tables('tsurugidb', 'tsurugi', 'public', 'summary', 'n')" \
+  -c "SELECT tg_verify_tables('tsurugidb', 'tsurugi', 'public', 'summary', 'off')" \
+  -c "SELECT tg_verify_tables('tsurugidb', 'tsurugi', 'public', 'summary', '0')"

@@ -1,0 +1,3 @@
+ERROR:  invalid input syntax for type boolean: ""
+LINE 1: SELECT tg_show_tables('tsurugidb', 'tsurugi', 'summary', '')
+                                                                 ^

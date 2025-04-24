@@ -1,0 +1,38 @@
+                  tg_verify_tables
+----------------------------------------------------
+ {                                                 +
+     "verification": {                             +
+        "remote_schema": "tsurugidb",            +
+        "server_name": "tsurugi",                +
+        "local_schema": "public",                +
+        "mode": "detail",                        +
+         "tables_on_only_remote_schema": {         +
+             "count": 0,                           +
+             "list": []                            +
+         },                                        +
+         "foreign_tables_on_only_local_schema": {  +
+             "count": 0,                           +
+             "list": []                            +
+         },                                        +
+         "tables_that_need_to_be_altered": {       +
+             "count": 0,                           +
+             "list": []                            +
+         },                                        +
+         "available_foreign_table": {              +
+             "count": 10,                          +
+             "list": [                             +
+                 "udf_test_table_bigint",          +
+                 "udf_test_table_decimal",         +
+                 "udf_test_table_decimal_max",     +
+                 "udf_test_table_decimal_p",       +
+                 "udf_test_table_decimal_ps",      +
+                 "udf_test_table_double",          +
+                 "udf_test_table_double_precision",+
+                 "udf_test_table_float",           +
+                 "udf_test_table_int",             +
+                 "udf_test_table_real"             +
+             ]                                     +
+         }                                         +
+     }                                             +
+ }
+(1 row)
