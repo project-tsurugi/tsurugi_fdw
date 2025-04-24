@@ -1,36 +1,21 @@
-/*-------------------------------------------------------------------------
+/*
+ * Copyright 2019-2025 Project Tsurugi.
  *
- * deparse.c
- *		  Query deparser for postgres_fdw
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This file includes functions that examine query WHERE clauses to see
- * whether they're safe to send to the remote server for execution, as
- * well as functions to construct the query text to be sent.  The latter
- * functionality is annoyingly duplicative of ruleutils.c, but there are
- * enough special considerations that it seems best to keep this separate.
- * One saving grace is that we only need deparse logic for node types that
- * we consider safe to send.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * We assume that the remote session's search_path is exactly "pg_catalog",
- * and thus we need schema-qualify all and only names outside pg_catalog.
- *
- * We do not consider that it is ever safe to send COLLATE expressions to
- * the remote server: it might not have the same collation names we do.
- * (Later we might consider it safe to send COLLATE "C", but even that would
- * fail on old remote servers.)  An expression is considered safe to send
- * only if all operator/function input collations used in it are traceable to
- * Var(s) of the foreign table.  That implies that if the remote server gets
- * a different answer than we do, the foreign table's columns are not marked
- * with collations that match the remote table's columns, which we can
- * consider to be user error.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  *
  * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, The Regents of the University of California
  *
- * IDENTIFICATION
- *		  contrib/postgres_fdw/deparse.c
- *
- *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
@@ -215,6 +200,8 @@ classifyConditions(PlannerInfo *root,
 	*remote_conds = NIL;
 	*local_conds = NIL;
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	foreach(lc, input_conds)
 	{
 		RestrictInfo *ri = lfirst_node(RestrictInfo, lc);
@@ -237,6 +224,8 @@ is_foreign_expr(PlannerInfo *root,
 	foreign_glob_cxt glob_cxt;
 	foreign_loc_cxt loc_cxt;
 	TgFdwRelationInfo *fpinfo = (TgFdwRelationInfo *) (baserel->fdw_private);
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	/*
 	 * Check that the expression consists of nodes that are safe to execute
@@ -304,7 +293,7 @@ foreign_expr_walker(Node *node,
 	Oid			collation;
 	FDWCollateState state;
 
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	/* Need do nothing for empty subexpressions */
 	if (node == NULL)
@@ -877,6 +866,8 @@ is_foreign_param(PlannerInfo *root,
 				 RelOptInfo *baserel,
 				 Expr *expr)
 {
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	if (expr == NULL)
 		return false;
 
@@ -925,6 +916,8 @@ deparse_type_name(Oid type_oid, int32 typemod)
 {
 	bits16		flags = FORMAT_TYPE_TYPEMOD_GIVEN;
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	if (!is_builtin(type_oid))
 		flags |= FORMAT_TYPE_FORCE_QUALIFY;
 
@@ -945,6 +938,8 @@ build_tlist_to_deparse(RelOptInfo *foreignrel)
 	List	   *tlist = NIL;
 	TgFdwRelationInfo *fpinfo = (TgFdwRelationInfo *) foreignrel->fdw_private;
 	ListCell   *lc;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	/*
 	 * For an upper relation, we have already built the target list while
@@ -1002,10 +997,11 @@ deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *rel,
 						bool has_final_sort, bool has_limit, bool is_subquery,
 						List **retrieved_attrs, List **params_list)
 {
-
 	deparse_expr_cxt context;
 	TgFdwRelationInfo *fpinfo = (TgFdwRelationInfo *) rel->fdw_private;
 	List	   *quals;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	/*
 	 * We handle relations for foreign tables, joins between those and upper
@@ -1088,6 +1084,8 @@ deparseSelectSql(List *tlist, bool is_subquery, List **retrieved_attrs,
 	PlannerInfo *root = context->root;
 	TgFdwRelationInfo *fpinfo = (TgFdwRelationInfo *) foreignrel->fdw_private;
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	/*
 	 * Construct SELECT list
 	 */
@@ -1143,6 +1141,8 @@ deparseFromExpr(List *quals, deparse_expr_cxt *context)
 	StringInfo	buf = context->buf;
 	RelOptInfo *scanrel = context->scanrel;
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	/* For upper relations, scanrel must be either a joinrel or a baserel */
 	Assert(!IS_UPPER_REL(context->foreignrel) ||
 		   IS_JOIN_REL(scanrel) || IS_SIMPLE_REL(scanrel));
@@ -1185,6 +1185,8 @@ deparseTargetList(StringInfo buf,
 	bool		have_wholerow;
 	bool		first;
 	int			i;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	*retrieved_attrs = NIL;
 
@@ -1255,6 +1257,8 @@ deparseLockingClause(deparse_expr_cxt *context)
 	RelOptInfo *rel = context->scanrel;
 	TgFdwRelationInfo *fpinfo = (TgFdwRelationInfo *) rel->fdw_private;
 	int			relid = -1;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	while ((relid = bms_next_member(rel->relids, relid)) >= 0)
 	{
@@ -1345,6 +1349,8 @@ appendConditions(List *exprs, deparse_expr_cxt *context)
 	bool		is_first = true;
 	StringInfo	buf = context->buf;
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	/* Make sure any constants in the exprs are printed portably */
 	nestlevel = set_transmission_modes();
 
@@ -1418,6 +1424,8 @@ deparseExplicitTargetList(List *tlist,
 	StringInfo	buf = context->buf;
 	int			i = 0;
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	*retrieved_attrs = NIL;
 
 	foreach(lc, tlist)
@@ -1451,6 +1459,8 @@ deparseSubqueryTargetList(deparse_expr_cxt *context)
 	RelOptInfo *foreignrel = context->foreignrel;
 	bool		first;
 	ListCell   *lc;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	/* Should only be called in these cases. */
 	Assert(IS_SIMPLE_REL(foreignrel) || IS_JOIN_REL(foreignrel));
@@ -1491,6 +1501,8 @@ deparseFromExprForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 					  List **params_list)
 {
 	TgFdwRelationInfo *fpinfo = (TgFdwRelationInfo *) foreignrel->fdw_private;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	if (IS_JOIN_REL(foreignrel))
 	{
@@ -1584,8 +1596,12 @@ deparseFromExprForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 		 *
 		 * ((outer relation) <join type> (inner relation) ON (joinclauses))
 		 */
+#if 0 /* for tsurugi-issue: 863*/
 		appendStringInfo(buf, "(%s %s JOIN %s ON ", join_sql_o.data,
-						 get_jointype_name(fpinfo->jointype), join_sql_i.data);
+#else
+		appendStringInfo(buf, "%s %s JOIN %s ON ", join_sql_o.data,
+#endif
+		get_jointype_name(fpinfo->jointype), join_sql_i.data);
 
 		/* Append join clause; (TRUE) if no join clause */
 		if (fpinfo->joinclauses)
@@ -1606,7 +1622,9 @@ deparseFromExprForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 			appendStringInfoString(buf, "(TRUE)");
 
 		/* End the FROM clause entry. */
+#if 0 /* for tsurugi-issue: 863 */
 		appendStringInfoChar(buf, ')');
+#endif
 	}
 	else
 	{
@@ -1641,6 +1659,8 @@ deparseRangeTblRef(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 				   List **params_list)
 {
 	TgFdwRelationInfo *fpinfo = (TgFdwRelationInfo *) foreignrel->fdw_private;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	/* Should only be called in these cases. */
 	Assert(IS_SIMPLE_REL(foreignrel) || IS_JOIN_REL(foreignrel));
@@ -1717,6 +1737,8 @@ deparseInsertSql(StringInfo buf, RangeTblEntry *rte,
 	bool		first;
 	ListCell   *lc;
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	appendStringInfoString(buf, "INSERT INTO ");
 	deparseRelation(buf, rel);
 
@@ -1780,6 +1802,8 @@ deparseUpdateSql(StringInfo buf, RangeTblEntry *rte,
 	AttrNumber	pindex;
 	bool		first;
 	ListCell   *lc;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	appendStringInfoString(buf, "UPDATE ");
 	deparseRelation(buf, rel);
@@ -1845,6 +1869,8 @@ deparseDirectUpdateSql(StringInfo buf, PlannerInfo *root,
 	context.scanrel = foreignrel;
 	context.buf = buf;
 	context.params_list = params_list;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	appendStringInfoString(buf, "UPDATE ");
 	deparseRelation(buf, rel);
@@ -1913,6 +1939,8 @@ deparseDeleteSql(StringInfo buf, RangeTblEntry *rte,
 				 List *returningList,
 				 List **retrieved_attrs)
 {
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	appendStringInfoString(buf, "DELETE FROM ");
 	deparseRelation(buf, rel);
 	appendStringInfoString(buf, " WHERE ctid = $1");
@@ -1946,6 +1974,8 @@ deparseDirectDeleteSql(StringInfo buf, PlannerInfo *root,
 					   List **retrieved_attrs)
 {
 	deparse_expr_cxt context;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	/* Set up context struct for recursion */
 	context.root = root;
@@ -1996,6 +2026,8 @@ deparseReturningList(StringInfo buf, RangeTblEntry *rte,
 					 List **retrieved_attrs)
 {
 	Bitmapset  *attrs_used = NULL;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	if (trig_after_row)
 	{
@@ -2049,6 +2081,8 @@ deparseAnalyzeSizeSql(StringInfo buf, Relation rel)
 {
 	StringInfoData relname;
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	/* We'll need the remote relation name as a literal. */
 	initStringInfo(&relname);
 	deparseRelation(&relname, rel);
@@ -2074,6 +2108,8 @@ deparseAnalyzeSql(StringInfo buf, Relation rel, List **retrieved_attrs)
 	List	   *options;
 	ListCell   *lc;
 	bool		first = true;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	*retrieved_attrs = NIL;
 
@@ -2129,6 +2165,8 @@ static void
 deparseColumnRef(StringInfo buf, int varno, int varattno, RangeTblEntry *rte,
 				 bool qualify_col)
 {
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	/* We support fetching the remote side's CTID and OID. */
 	if (varattno == SelfItemPointerAttributeNumber)
 	{
@@ -2261,6 +2299,8 @@ deparseRelation(StringInfo buf, Relation rel)
 	const char *relname = NULL;
 	ListCell   *lc;
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	/* obtain additional catalog information. */
 	table = GetForeignTable(RelationGetRelid(rel));
 
@@ -2301,6 +2341,8 @@ deparseStringLiteral(StringInfo buf, const char *val)
 {
 	const char *valptr;
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	/*
 	 * Rather than making assumptions about the remote server's value of
 	 * standard_conforming_strings, always use E'foo' syntax if there are any
@@ -2334,6 +2376,8 @@ deparseStringLiteral(StringInfo buf, const char *val)
 static void
 deparseExpr(Expr *node, deparse_expr_cxt *context)
 {
+	elog(DEBUG5, "tsurugi_fdw : %s", __func__);
+
 	if (node == NULL)
 		return;
 
@@ -2399,6 +2443,8 @@ deparseVar(Var *node, deparse_expr_cxt *context)
 	Relids		relids = context->scanrel->relids;
 	int			relno;
 	int			colno;
+
+	elog(DEBUG5, "tsurugi_fdw : %s", __func__);
 
 	/* Qualify columns when multiple relations are involved. */
 	bool		qualify_col = (bms_membership(relids) == BMS_MULTIPLE);
@@ -2468,6 +2514,8 @@ deparseConst(Const *node, deparse_expr_cxt *context, int showtype)
 	char	   *extval;
 	bool		isfloat = false;
 	bool		needlabel;
+
+	elog(DEBUG5, "tsurugi_fdw : %s", __func__);
 
 	if (node->constisnull)
 	{
@@ -2568,6 +2616,8 @@ deparseConst(Const *node, deparse_expr_cxt *context, int showtype)
 static void
 deparseParam(Param *node, deparse_expr_cxt *context)
 {
+	elog(DEBUG5, "tsurugi_fdw : %s", __func__);
+
 	if (context->params_list)
 	{
 		int			pindex = 0;
@@ -2604,6 +2654,8 @@ deparseSubscriptingRef(SubscriptingRef *node, deparse_expr_cxt *context)
 	StringInfo	buf = context->buf;
 	ListCell   *lowlist_item;
 	ListCell   *uplist_item;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	/* Always parenthesize the expression. */
 	appendStringInfoChar(buf, '(');
@@ -2655,6 +2707,8 @@ deparseFuncExpr(FuncExpr *node, deparse_expr_cxt *context)
 	bool		use_variadic;
 	bool		first;
 	ListCell   *arg;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	/*
 	 * If the function call came from an implicit coercion, then just show the
@@ -2724,6 +2778,8 @@ deparseOpExpr(OpExpr *node, deparse_expr_cxt *context)
 	char		oprkind;
 	ListCell   *arg;
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	/* Retrieve information about the operator from system catalog. */
 	tuple = SearchSysCache1(OPEROID, ObjectIdGetDatum(node->opno));
 	if (!HeapTupleIsValid(tuple))
@@ -2771,6 +2827,8 @@ deparseOperatorName(StringInfo buf, Form_pg_operator opform)
 {
 	char	   *opname;
 
+	elog(DEBUG5, "tsurugi_fdw : %s", __func__);
+
 	/* opname is not a SQL identifier, so we should not quote it. */
 	opname = NameStr(opform->oprname);
 
@@ -2799,6 +2857,8 @@ deparseDistinctExpr(DistinctExpr *node, deparse_expr_cxt *context)
 {
 	StringInfo	buf = context->buf;
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	Assert(list_length(node->args) == 2);
 
 	appendStringInfoChar(buf, '(');
@@ -2820,6 +2880,8 @@ deparseScalarArrayOpExpr(ScalarArrayOpExpr *node, deparse_expr_cxt *context)
 	Form_pg_operator form;
 	Expr	   *arg1;
 	Expr	   *arg2;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	/* Retrieve information about the operator from system catalog. */
 	tuple = SearchSysCache1(OPEROID, ObjectIdGetDatum(node->opno));
@@ -2860,6 +2922,8 @@ deparseScalarArrayOpExpr(ScalarArrayOpExpr *node, deparse_expr_cxt *context)
 static void
 deparseRelabelType(RelabelType *node, deparse_expr_cxt *context)
 {
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	deparseExpr(node->arg, context);
 	if (node->relabelformat != COERCE_IMPLICIT_CAST)
 		appendStringInfo(context->buf, "::%s",
@@ -2877,6 +2941,8 @@ deparseBoolExpr(BoolExpr *node, deparse_expr_cxt *context)
 	const char *op = NULL;		/* keep compiler quiet */
 	bool		first;
 	ListCell   *lc;
+
+	elog(DEBUG5, "tsurugi_fdw : %s", __func__);
 
 	switch (node->boolop)
 	{
@@ -2913,6 +2979,8 @@ deparseNullTest(NullTest *node, deparse_expr_cxt *context)
 {
 	StringInfo	buf = context->buf;
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	appendStringInfoChar(buf, '(');
 	deparseExpr(node->arg, context);
 
@@ -2948,6 +3016,8 @@ deparseArrayExpr(ArrayExpr *node, deparse_expr_cxt *context)
 	bool		first = true;
 	ListCell   *lc;
 
+	elog(DEBUG5, "tsurugi_fdw : %s", __func__);
+
 	appendStringInfoString(buf, "ARRAY[");
 	foreach(lc, node->elements)
 	{
@@ -2972,6 +3042,8 @@ deparseAggref(Aggref *node, deparse_expr_cxt *context)
 {
 	StringInfo	buf = context->buf;
 	bool		use_variadic;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	/* Only basic, non-split aggregation accepted. */
 	Assert(node->aggsplit == AGGSPLIT_SIMPLE);
@@ -3069,6 +3141,8 @@ appendAggOrderBy(List *orderList, List *targetList, deparse_expr_cxt *context)
 	StringInfo	buf = context->buf;
 	ListCell   *lc;
 	bool		first = true;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	foreach(lc, orderList)
 	{
@@ -3170,6 +3244,8 @@ appendGroupByClause(List *tlist, deparse_expr_cxt *context)
 	ListCell   *lc;
 	bool		first = true;
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	/* Nothing to be done, if there's no GROUP BY clause in the query. */
 	if (!query->groupClause)
 		return;
@@ -3208,6 +3284,8 @@ appendOrderByClause(List *pathkeys, bool has_final_sort,
 	char	   *delim = " ";
 	RelOptInfo *baserel = context->scanrel;
 	StringInfo	buf = context->buf;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	/* Make sure any constants in the exprs are printed portably */
 	nestlevel = set_transmission_modes();
@@ -3260,6 +3338,8 @@ appendLimitClause(deparse_expr_cxt *context)
 	StringInfo	buf = context->buf;
 	int			nestlevel;
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	/* Make sure any constants in the exprs are printed portably */
 	nestlevel = set_transmission_modes();
 
@@ -3288,6 +3368,8 @@ appendFunctionName(Oid funcid, deparse_expr_cxt *context)
 	HeapTuple	proctup;
 	Form_pg_proc procform;
 	const char *proname;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
 	if (!HeapTupleIsValid(proctup))
@@ -3323,6 +3405,8 @@ deparseSortGroupClause(Index ref, List *tlist, bool force_colno,
 	StringInfo	buf = context->buf;
 	TargetEntry *tle;
 	Expr	   *expr;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	tle = get_sortgroupref_tle(ref, tlist);
 	expr = tle->expr;

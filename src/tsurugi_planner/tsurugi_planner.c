@@ -114,15 +114,6 @@ tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 
 	switch (parse->commandType)
 	{
-		case CMD_SELECT:
-			if (root->oidlist->length > 1 && !root->hasjoin)
-			{
-				elog( NOTICE, "Implicit JOIN is not support." );
-			}
-			scan = create_foreign_scan(root);
-			plan = (Plan *) scan;
-			break;
-
 		case CMD_INSERT:
 		case CMD_UPDATE:
 		case CMD_DELETE:
@@ -137,7 +128,7 @@ tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
             if (root->parse != NULL && root->parse->rtable != NULL &&
                 is_only_foreign_table(root, root->parse->rtable)) 
             {
-                elog(LOG, "tsurugi_fdw : %s : Choose direct modify.", __func__);
+                elog(LOG, "tsurugi_fdw : %s : choose direct modify.", __func__);
                 scan = create_foreign_scan(root);
                 modify = create_modify_table(root, scan);
                 plan = (Plan *) modify;
@@ -152,7 +143,7 @@ tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
             }
 			break;
 		}
-
+		case CMD_SELECT:
 		default:
 		{
 #if PG_VERSION_NUM >= 130000
@@ -206,7 +197,7 @@ is_only_foreign_table(TsurugiPlannerInfo *root, List *rtable)
 	ListCell	*rtable_list_cell;
 	Oid			currentserverid;
 
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	foreach(rtable_list_cell, rtable)
 	{
@@ -300,7 +291,7 @@ contain_foreign_tables(TsurugiPlannerInfo *root, List *rtable)
 	Oid			currentserverid;
 	bool contained = false;
 
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	foreach(rtable_list_cell, rtable)
 	{
@@ -393,7 +384,7 @@ create_foreign_scan(TsurugiPlannerInfo *root)
 	ForeignScan *fnode;
 	fnode = makeNode(ForeignScan);
 
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	fnode->scan.plan.targetlist = 0;
 	fnode->scan.plan.qual = 0;
@@ -437,7 +428,7 @@ create_modify_table(TsurugiPlannerInfo *root, ForeignScan *scan)
 	List *subplan = NIL;
 	subplan = lappend(subplan, scan);
 
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	modify->plan.lefttree = NULL;
 	modify->plan.righttree = NULL;
@@ -624,7 +615,7 @@ create_planned_stmt(TsurugiPlannerInfo *root, Plan *plan)
 	PlannedStmt *stmt = makeNode(PlannedStmt);
 	Query *parse = root->parse;
 
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	stmt->commandType = parse->commandType;
 	stmt->queryId = parse->queryId;
@@ -677,7 +668,7 @@ preprocess_targetlist2(Query *parse, ForeignScan *scan)
 	Relation		target_relation = NULL;
 	List			*tlist;
 
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	target_rte = rt_fetch(parse->resultRelation, parse->rtable);
 
@@ -709,7 +700,7 @@ expand_targetlist(List *tlist, int command_type,
 	int			attrno,
 				numattrs;
 
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	tlist_item = list_head(tlist);
 

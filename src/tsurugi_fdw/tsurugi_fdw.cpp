@@ -1202,9 +1202,13 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 	table = GetForeignTable(rte->relid);
 	server = GetForeignServer(table->serverid);
 
-#ifdef __TSURUGI_PLANNER__	/* Make query string using deparse functions or not. */
-	fdw_state->query_string = estate->es_sourceText;
-	store_pg_data_type(fdw_state, fsplan->scan.plan.targetlist, &fdw_state->retrieved_attrs);
+#ifdef __TSURUGI_PLANNER__
+//	fdw_state->query_string = estate->es_sourceText;
+//	store_pg_data_type(fdw_state, fsplan->scan.plan.targetlist, &fdw_state->retrieved_attrs);
+	fdw_state->query_string = strVal(list_nth(fsplan->fdw_private,
+								FdwScanPrivateSelectSql));
+	fdw_state->retrieved_attrs = (List*) list_nth(fsplan->fdw_private, 
+								FdwScanPrivateRetrievedAttrs);
 #else
 	fdw_state->query_string = strVal(list_nth(fsplan->fdw_private,
 		FdwScanPrivateSelectSql));
@@ -1231,9 +1235,7 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 	fdw_state->attinmeta = TupleDescGetAttInMetadata(fdw_state->tupdesc);
 
 	begin_prepare_processing(estate);
-
 	handle_remote_xact(server);
-
 	fdw_info_.success = true;
 }
 
@@ -2142,7 +2144,7 @@ free_fdw_state(tsurugiFdwState* fdw_state)
  * 	This function was prepared because we decided that it would be better to
  * 	understand PostgreSQL data types.
  */
-static void 
+[[maybe_unused]] static void 
 store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist, List** retrieved_attrs)
 {
 	ListCell* lc = NULL;
@@ -2202,7 +2204,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                             bool* is_null,
                             tsurugiFdwState* fdw_state)
 {
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	ListCell   *lc = NULL;
 	foreach(lc, retrieved_attrs)
@@ -2213,7 +2215,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
         regproc 	typinput;
         int 		typemod;
 
-		elog(DEBUG1, "tsurugi_fdw : %s : attnum: %d", __func__, attnum);
+		elog(DEBUG5, "tsurugi_fdw : %s : attnum: %d", __func__, attnum + 1);
 
 		heap_tuple = SearchSysCache1(TYPEOID, 
                                     ObjectIdGetDatum(pgtype));
@@ -2231,7 +2233,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case INT2OID:
                 {
                     std::int16_t value;
-					elog(DEBUG3, "tsurugi_fdw : %s : pgtype is INT2OID.", __func__);
+					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is INT2OID.", __func__);
                     if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         is_null[attnum] = false;
@@ -2243,7 +2245,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case INT4OID:
                 {
                     std::int32_t value;
-					elog(DEBUG3, "tsurugi_fdw : %s : pgtype is INT4OID.", __func__);
+					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is INT4OID.", __func__);
                     if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         is_null[attnum] = false;
@@ -2255,7 +2257,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case INT8OID:
                 {
                     std::int64_t value;
-					elog(DEBUG3, "tsurugi_fdw : %s : pgtype is INT8OID.", __func__);
+					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is INT8OID.", __func__);
                     if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         is_null[attnum] = false;
@@ -2267,7 +2269,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case FLOAT4OID:
                 {
                     float4 value;
-					elog(DEBUG3, "tsurugi_fdw : %s : pgtype is FLOAT4OID.", __func__);
+					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is FLOAT4OID.", __func__);
                     if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         is_null[attnum] = false;
@@ -2279,7 +2281,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case FLOAT8OID:
                 {
                     float8 value;
-					elog(DEBUG3, "tsurugi_fdw : %s : pgtype is FLOAT8OID.", __func__);
+					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is FLOAT8OID.", __func__);
                     if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         is_null[attnum] = false;
@@ -2292,7 +2294,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case VARCHAROID:
             case TEXTOID:
                 {
-					elog(DEBUG3, "tsurugi_fdw : %s : pgtype is BPCHAROID/VARCHAROID/TEXTOID.", __func__);
+					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is BPCHAROID/VARCHAROID/TEXTOID.", __func__);
 					std::string value;
                     Datum value_datum;
                     ERROR_CODE result = result_set->next_column(value);
@@ -2315,7 +2317,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case DATEOID:
                 {
                     stub::date_type value;
-					elog(DEBUG3, "tsurugi_fdw : %s : pgtype is DATEOID.", __func__);
+					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is DATEOID.", __func__);
                     if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         DateADT date;
@@ -2330,7 +2332,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case TIMEOID:
                 {
                     stub::time_type value;
-					elog(DEBUG3, "tsurugi_fdw : %s : pgtype is TIMEOID.", __func__);
+					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is TIMEOID.", __func__);
                     if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         TimeADT time;
@@ -2351,7 +2353,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case TIMETZOID:
                 {
                     stub::timetz_type value;
-					elog(DEBUG3, "tsurugi_fdw : %s : pgtype is TIMETZOID.", __func__);
+					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is TIMETZOID.", __func__);
 					if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         TimeTzADT timetz;
@@ -2378,7 +2380,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case TIMESTAMPTZOID:
                 {
                     stub::timestamptz_type value;
-					elog(DEBUG3, "tsurugi_fdw : %s : pgtype is TIMESTAMPTZOID.", __func__);
+					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is TIMESTAMPTZOID.", __func__);
                     if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         Timestamp timestamp;
@@ -2407,7 +2409,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case TIMESTAMPOID:
                 {
                     stub::timestamp_type value;
-					elog(DEBUG3, "tsurugi_fdw : %s : pgtype is TIMESTAMPOID.", __func__);
+					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is TIMESTAMPOID.", __func__);
                     if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         Timestamp timestamp;
@@ -2428,7 +2430,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case NUMERICOID:
                 {
                     stub::decimal_type value;
-					elog(DEBUG3, "tsurugi_fdw : %s : pgtype is NUMERICOID.", __func__);
+					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is NUMERICOID.", __func__);
                     auto error_code = result_set->next_column(value);
                     if (error_code == ERROR_CODE::OK)
                     {

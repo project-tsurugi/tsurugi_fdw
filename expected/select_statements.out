@@ -142,8 +142,15 @@ FROM
     t2_select_statement
 ORDER BY 
     6;
-ERROR:  Failed to execute query to Tsurugi. (13)
-Tsurugi Server Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"plain literal is not allowed in ORDER BY clause" location:<input>:6:5+1)
+ c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
+----+----+-----+-----+------+------------+-----
+  4 |    |     |     |      | NULL       | 
+  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
+  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
+  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
+  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
+(5 rows)
+
 -- ORDER BY #3
 SELECT
     c1, c4, c5, c6, c7
@@ -288,6 +295,7 @@ WHERE
     EXISTS (SELECT * FROM t2_select_statement WHERE c2 = 22);
 */
 -- WHERE #9
+/*	Tsurugi does not yet support "IN(ANY)" clause.
 SELECT
     *
 FROM
@@ -296,10 +304,7 @@ WHERE
     c4 IN (1.1,3.3)
 ORDER BY
     c4;
- c1 | c2 | c3 | c4 | c5 | c6 | c7 
-----+----+----+----+----+----+----
-(0 rows)
-
+*/
 -- GROUP BY #1
 SELECT
     count(c1) AS "count(c1)", sum(c2) AS "sum(c2)", c7
@@ -381,8 +386,22 @@ FROM
     t1_select_statement a INNER JOIN t2_select_statement b ON a.c1 != b.c1
 ORDER BY
     a.c1;
-ERROR:  Failed to execute query to Tsurugi. (13)
-Tsurugi Server Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"unrecognized character: "!"" region:"region(begin=109, end=110)")
+ c1 | c3  | c1 |     c6     
+----+-----+----+------------
+  1 | 111 |  2 | two       
+  1 | 111 |  3 | three     
+  1 | 111 |  4 | NULL      
+  1 | 111 |  5 | five      
+  2 | 222 |  1 | one       
+  2 | 222 |  3 | three     
+  2 | 222 |  4 | NULL      
+  2 | 222 |  5 | five      
+  3 | 333 |  1 | one       
+  3 | 333 |  2 | two       
+  3 | 333 |  4 | NULL      
+  3 | 333 |  5 | five      
+(12 rows)
+
 -- POSTGRESQL TABLE JOIN
 -- TG /* tsurugi-issue#863 */
 SELECT
