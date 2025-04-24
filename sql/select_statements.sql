@@ -182,6 +182,7 @@ WHERE
     EXISTS (SELECT * FROM t2_select_statement WHERE c2 = 22);
 */
 -- WHERE #9
+/*	Tsurugi does not yet support "IN(ANY)" clause.
 SELECT
     *
 FROM
@@ -190,7 +191,7 @@ WHERE
     c4 IN (1.1,3.3)
 ORDER BY
     c4;
-
+*/
 -- GROUP BY #1
 SELECT
     count(c1) AS "count(c1)", sum(c2) AS "sum(c2)", c7
