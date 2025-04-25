@@ -1203,8 +1203,6 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 	server = GetForeignServer(table->serverid);
 
 #ifdef __TSURUGI_PLANNER__
-//	fdw_state->query_string = estate->es_sourceText;
-//	store_pg_data_type(fdw_state, fsplan->scan.plan.targetlist, &fdw_state->retrieved_attrs);
 	fdw_state->query_string = strVal(list_nth(fsplan->fdw_private,
 								FdwScanPrivateSelectSql));
 	fdw_state->retrieved_attrs = (List*) list_nth(fsplan->fdw_private, 
