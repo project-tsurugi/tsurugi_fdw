@@ -21,19 +21,20 @@
 #include "postgres.h"
 #include "optimizer/planner.h"
 #include "tcop/utility.h"
+#include "tsurugi_fdw.h"
 
 extern PGDLLIMPORT planner_hook_type planner_hook;
 extern PGDLLIMPORT ProcessUtility_hook_type ProcessUtility_hook;
 extern void _PG_init(void);
 #if PG_VERSION_NUM >= 130000
-extern PlannedStmt *alt_planner(Query *parse2, const char *query_string, int cursorOptions, ParamListInfo boundParams);
+extern PlannedStmt *tsurugi_planner(Query *parse2, const char *query_string, int cursorOptions, ParamListInfo boundParams);
 extern void tsurugi_ProcessUtility(PlannedStmt *pstmt,
                                    const char *query_string, ProcessUtilityContext context,
                                    ParamListInfo params,
                                    QueryEnvironment *queryEnv,
                                    DestReceiver *dest, QueryCompletion *qc);
 #else
-extern PlannedStmt *alt_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams);
+extern PlannedStmt *tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams);
 extern void tsurugi_ProcessUtility(PlannedStmt *pstmt, 
                             	   const char *query_string, ProcessUtilityContext context, 
                             	   ParamListInfo params, 
@@ -44,6 +45,10 @@ extern void tsurugi_ProcessUtility(PlannedStmt *pstmt,
 void
 _PG_init(void)
 {
-  planner_hook = alt_planner;
+#ifdef __TSURUGI_PLANNER__
+  	planner_hook = tsurugi_planner;
+#else
+	planner_hook = NULL;
+#endif
   ProcessUtility_hook = tsurugi_ProcessUtility;
 }

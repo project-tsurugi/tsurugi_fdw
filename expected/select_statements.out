@@ -284,6 +284,7 @@ WHERE
     c7 LIKE '%LMN%'
 ORDER BY 
     c1;*/
+
 -- WHERE #8
 /*
 SELECT
@@ -294,6 +295,7 @@ WHERE
     EXISTS (SELECT * FROM t2_select_statement WHERE c2 = 22);
 */
 -- WHERE #9
+/*	Tsurugi does not yet support "IN(ANY)" clause.
 SELECT
     *
 FROM
@@ -302,8 +304,7 @@ WHERE
     c4 IN (1.1,3.3)
 ORDER BY
     c4;
-ERROR:  Failed to execute query to Tsurugi. (13)
-Tsurugi Server Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "'{1.1,3.3}'", expected one of {SELECT, TABLE}" region:"region(begin=77, end=88)")
+*/
 -- GROUP BY #1
 SELECT
     count(c1) AS "count(c1)", sum(c2) AS "sum(c2)", c7
@@ -355,26 +356,52 @@ WHERE
     b.c1 > 1
 ORDER BY
     a.c1;
-ERROR:  Failed to execute query to Tsurugi. (13)
-Tsurugi Server Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "t1_select_statement", expected one of {(, SELECT, TABLE, VALUES}" region:"region(begin=110, end=129)")
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
+----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
+(2 rows)
+
 -- TG JOIN #2 /* tsurugi-issue#863 */
 SELECT 
-    a.c1, a.c2, b.c1, b.c7
+--  tsurugi-issue
+--  a.c1, a.c2, b.c1, b.c7
+    a.c1, a.c2, b.c2, b.c7
 FROM 
     t1_select_statement a INNER JOIN t2_select_statement b USING (c1)
 ORDER BY
     b.c4 DESC;   
-ERROR:  Failed to execute query to Tsurugi. (13)
-Tsurugi Server Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "t1_select_statement", expected one of {(, SELECT, TABLE, VALUES}" region:"region(begin=47, end=66)")
+ c1 | c2 | c2 | c7  
+----+----+----+-----
+  3 | 33 | 33 | ABC
+  2 | 22 | 22 | XYZ
+  1 | 11 | 11 | ABC
+(3 rows)
+
 -- TG JOIN #3 /* tsurugi-issue#863 */
 SELECT 
     a.c1, a.c3, b.c1, b.c6
 FROM 
+--  PostgreSQL specific syntax (!=)
     t1_select_statement a INNER JOIN t2_select_statement b ON a.c1 != b.c1
 ORDER BY
     a.c1;
-ERROR:  Failed to execute query to Tsurugi. (13)
-Tsurugi Server Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "t1_select_statement", expected one of {(, SELECT, TABLE, VALUES}" region:"region(begin=40, end=59)")
+ c1 | c3  | c1 |     c6     
+----+-----+----+------------
+  1 | 111 |  2 | two       
+  1 | 111 |  3 | three     
+  1 | 111 |  4 | NULL      
+  1 | 111 |  5 | five      
+  2 | 222 |  1 | one       
+  2 | 222 |  3 | three     
+  2 | 222 |  4 | NULL      
+  2 | 222 |  5 | five      
+  3 | 333 |  1 | one       
+  3 | 333 |  2 | two       
+  3 | 333 |  4 | NULL      
+  3 | 333 |  5 | five      
+(12 rows)
+
 -- POSTGRESQL TABLE JOIN
 -- TG /* tsurugi-issue#863 */
 SELECT
@@ -383,8 +410,11 @@ FROM
     t1_select_statement AS a JOIN t2_select_statement AS b ON a.c4=b.c4 JOIN t1_select_statement AS c ON b.c4=c.c4
 WHERE
     a.c2=22;
-ERROR:  Failed to execute query to Tsurugi. (13)
-Tsurugi Server Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "t1_select_statement", expected one of {(, SELECT, TABLE}" region:"region(begin=160, end=179)")
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  | c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
+----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----+----+----+-----+-----+------+------------+----------------------------
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ |  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+(1 row)
+
 -- TG /* tsurugi-issue#863 */
 SELECT
     *
@@ -392,8 +422,25 @@ FROM
     t1_select_statement AS a CROSS JOIN t2_select_statement AS b
 ORDER BY
     b.c1;
-ERROR:  Failed to execute query to Tsurugi. (13)
-Tsurugi Server Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "t1_select_statement", expected one of {(, SELECT, TABLE, VALUES}" region:"region(begin=110, end=129)")
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
+----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       | 
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       | 
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       | 
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
+(15 rows)
+
 -- TG /* tsurugi-issue#863 */
 SELECT
     *
@@ -401,5 +448,10 @@ FROM
     t1_select_statement AS a JOIN t1_select_statement AS b ON a.c3=b.c3
 ORDER BY
     a.c3;
-ERROR:  Failed to execute query to Tsurugi. (13)
-Tsurugi Server Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "t1_select_statement", expected one of {(, SELECT, TABLE, VALUES}" region:"region(begin=110, end=129)")
+ c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
+----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+----------------------------
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+(3 rows)
+

@@ -43,7 +43,7 @@ std::string make_tsurugi_query(std::string_view query_string)
 {
     std::string tsurugi_query(query_string);
 
-	elog(DEBUG1, "tsurugi_fdw : raw query string : \"%s\"", query_string.data());
+	elog(DEBUG1, "tsurugi_fdw : input query string : \"%s\"", query_string.data());
 
 	// erase public schema.
 	std::smatch regex_match;
@@ -66,7 +66,7 @@ std::string make_tsurugi_query(std::string_view query_string)
         tsurugi_query.pop_back();
     }
 
-    elog(DEBUG1, "tsurugi_fdw : tsurugi query string : \"%s\"", tsurugi_query.c_str());
+    elog(DEBUG1, "tsurugi_fdw : remote query string : \"%s\"", tsurugi_query.c_str());
 
     return tsurugi_query;
 }

@@ -32,6 +32,9 @@ extern "C" {
 #include "nodes/plannodes.h"
 #include "utils/relcache.h"
 
+/* Planning Flag */
+#define __TSURUGI_PLANNER__
+
 /*
  * Note: Diverted from postgres_fdw
  */

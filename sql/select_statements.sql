@@ -182,6 +182,7 @@ WHERE
     EXISTS (SELECT * FROM t2_select_statement WHERE c2 = 22);
 */
 -- WHERE #9
+/*	Tsurugi does not yet support "IN(ANY)" clause.
 SELECT
     *
 FROM
@@ -190,7 +191,7 @@ WHERE
     c4 IN (1.1,3.3)
 ORDER BY
     c4;
-
+*/
 -- GROUP BY #1
 SELECT
     count(c1) AS "count(c1)", sum(c2) AS "sum(c2)", c7
@@ -235,7 +236,9 @@ ORDER BY
 
 -- TG JOIN #2 /* tsurugi-issue#863 */
 SELECT 
-    a.c1, a.c2, b.c1, b.c7
+--  tsurugi-issue
+--  a.c1, a.c2, b.c1, b.c7
+    a.c1, a.c2, b.c2, b.c7
 FROM 
     t1_select_statement a INNER JOIN t2_select_statement b USING (c1)
 ORDER BY
@@ -245,6 +248,7 @@ ORDER BY
 SELECT 
     a.c1, a.c3, b.c1, b.c6
 FROM 
+--  PostgreSQL specific syntax (!=)
     t1_select_statement a INNER JOIN t2_select_statement b ON a.c1 != b.c1
 ORDER BY
     a.c1;

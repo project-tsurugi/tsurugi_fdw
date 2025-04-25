@@ -1,0 +1,37 @@
+                      tg_verify_tables
+-------------------------------------------------------------
+ {                                                          +
+     "verification": {                                      +
+        "remote_schema": "tsurugidb",            +
+        "server_name": "tsurugi",                +
+        "local_schema": "public",                +
+        "mode": "detail",                        +
+         "tables_on_only_remote_schema": {                  +
+             "count": 0,                                    +
+             "list": []                                     +
+         },                                                 +
+         "foreign_tables_on_only_local_schema": {           +
+             "count": 0,                                    +
+             "list": []                                     +
+         },                                                 +
+         "tables_that_need_to_be_altered": {                +
+             "count": 9,                                    +
+             "list": [                                      +
+                 "udf_test_table_date",                     +
+                 "udf_test_table_time",                     +
+                 "udf_test_table_time_p",                   +
+                 "udf_test_table_time_with_time_zone",      +
+                 "udf_test_table_time_with_time_zone_p",    +
+                 "udf_test_table_timestamp",                +
+                 "udf_test_table_timestamp_p",              +
+                 "udf_test_table_timestamp_with_time_zone", +
+                 "udf_test_table_timestamp_with_time_zone_p"+
+             ]                                              +
+         },                                                 +
+         "available_foreign_table": {                       +
+             "count": 0,                                    +
+             "list": []                                     +
+         }                                                  +
+     }                                                      +
+ }
+(1 row)

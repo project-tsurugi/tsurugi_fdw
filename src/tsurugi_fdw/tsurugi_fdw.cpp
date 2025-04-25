@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2024 Project Tsurugi.
+ * Copyright 2019-2025 Project Tsurugi.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -197,7 +197,7 @@ typedef struct tsurugiFdwModifyState
 
 	/* for update row movement if subplan result rel */
 	struct tsurugiFdwModifyState *aux_fmstate;	/* foreign-insert state, if
-											 * created */
+											 	 * created */
 } tsurugiFdwModifyState;
 
 /*
@@ -218,9 +218,7 @@ enum FdwPathPrivateIndex
 #ifdef __cplusplus
 extern "C" {
 #endif
-/*
- * SQL functions
- */
+
 PG_FUNCTION_INFO_V1(tsurugi_fdw_handler);
 
 /*
@@ -312,9 +310,9 @@ static void tsurugiGetForeignJoinPaths(PlannerInfo *root,
 /*
  * Helper functions
  */
-static tsurugiFdwState* create_fdwstate();
-static void free_fdwstate(tsurugiFdwState* fdw_state);
-static void store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist);
+static tsurugiFdwState* create_fdw_state();
+static void free_fdw_state(tsurugiFdwState* fdw_state);
+static void store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist, List** );
 static void make_tuple_from_result_row(ResultSetPtr result_set, 
                                         TupleDesc tupleDescriptor,
                                         List* retrieved_attrs,
@@ -334,7 +332,6 @@ static TsurugiFdwInfo fdw_info_;
 Datum
 tsurugi_fdw_handler(PG_FUNCTION_ARGS)
 {
-
 	FdwRoutine* routine = makeNode(FdwRoutine);
 
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
@@ -388,7 +385,9 @@ tsurugi_fdw_handler(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(routine);
 }
 
-/* FDW Plan functions */
+/*
+ * FDW Scan functions. 
+ */
 
 /*
  * tsurugiGetForeignRelSize
@@ -429,7 +428,7 @@ static void tsurugiGetForeignRelSize(
 	fpinfo->shippable_extensions = NIL;
 	fpinfo->fetch_size = 100;
 
-//	apply_server_options(fpinfo);
+/*	apply_server_options(fpinfo);	*/
 	apply_table_options(fpinfo);
 
 	/*
@@ -1166,10 +1165,6 @@ tsurugiGetForeignJoinPaths(PlannerInfo *root,
 	/* XXX Consider parameterized paths for the join relation */
 }                            
 
-/* 
- * 	fdw executor functions 
- */
-
 /*
  *  tsurugiBeginForeignScan
  *	    Preparation for scanning foreign tables.
@@ -1180,7 +1175,7 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 	Assert(node != nullptr);
 
 	ForeignScan* fsplan = (ForeignScan*) node->ss.ps.plan;
-	tsurugiFdwState* fdw_state = create_fdwstate();
+	tsurugiFdwState* fdw_state = create_fdw_state();
 	RangeTblEntry *rte;
 	ForeignTable *table;
 	ForeignServer *server;
@@ -1207,13 +1202,20 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 	table = GetForeignTable(rte->relid);
 	server = GetForeignServer(table->serverid);
 
+#ifdef __TSURUGI_PLANNER__
 	fdw_state->query_string = strVal(list_nth(fsplan->fdw_private,
-									 FdwScanPrivateSelectSql));
-    fdw_state->retrieved_attrs = (List*) list_nth(fsplan->fdw_private, 
-                                                   FdwScanPrivateRetrievedAttrs);
-    fdw_state->cursor_exists = false;
+								FdwScanPrivateSelectSql));
+	fdw_state->retrieved_attrs = (List*) list_nth(fsplan->fdw_private, 
+								FdwScanPrivateRetrievedAttrs);
+#else
+	fdw_state->query_string = strVal(list_nth(fsplan->fdw_private,
+		FdwScanPrivateSelectSql));
+	fdw_state->retrieved_attrs = (List*) list_nth(fsplan->fdw_private, 
+		FdwScanPrivateRetrievedAttrs);
+#endif
+  	fdw_state->cursor_exists = false;
 
-   	/*
+	/*
 	 * Get info we'll need for converting data fetched from the foreign server
 	 * into local representation and error reporting during that process.
 	 */
@@ -1228,13 +1230,11 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 		fdw_state->tupdesc = node->ss.ss_ScanTupleSlot->tts_tupleDescriptor;
 	} 
 
-    fdw_state->attinmeta = TupleDescGetAttInMetadata(fdw_state->tupdesc);
+	fdw_state->attinmeta = TupleDescGetAttInMetadata(fdw_state->tupdesc);
 
 	begin_prepare_processing(estate);
-
 	handle_remote_xact(server);
-
-    fdw_info_.success = true;
+	fdw_info_.success = true;
 }
 
 /*
@@ -1247,7 +1247,6 @@ tsurugiIterateForeignScan(ForeignScanState* node)
 	elog(DEBUG5, "tsurugi_fdw : %s", __func__);
 
 	Assert(node != nullptr);
-	Assert(fdw_info_.transaction != nullptr);
 
 	tsurugiFdwState* fdw_state = (tsurugiFdwState*) node->fdw_state;
 	TupleTableSlot* tupleSlot = node->ss.ss_ScanTupleSlot;
@@ -1268,7 +1267,6 @@ tsurugiIterateForeignScan(ForeignScanState* node)
 			elog(ERROR, "Failed to execute query to Tsurugi. (%d)\n%s", 
                 (int) error, Tsurugi::get_error_message(error).c_str());
         }
-
         fdw_state->cursor_exists = true;
         fdw_state->eof_reached = false;
     }
@@ -1336,9 +1334,13 @@ tsurugiEndForeignScan(ForeignScanState* node)
 
 	if (fdw_state != nullptr) 
     {
-		free_fdwstate(fdw_state);
+		free_fdw_state(fdw_state);
     }
 }
+
+/*
+ * FDW Update functions.
+ */
 
 /*
  * tsurugiBeginDirectModify
@@ -1368,11 +1370,7 @@ tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
   	table = GetForeignTable(rte->relid);
   	server = GetForeignServer(table->serverid);
 
-	tsurugiFdwState* fdw_state = create_fdwstate();
-	if (fdw_state == nullptr)
-	{
-		elog(ERROR, "create_fdw_state() failed.");
-	}
+	tsurugiFdwState* fdw_state = create_fdw_state();
 
  	fdw_state->query_string = estate->es_sourceText; 
     node->fdw_state = fdw_state;
@@ -1435,7 +1433,7 @@ tsurugiEndDirectModify(ForeignScanState* node)
 
 	if (node->fdw_state != nullptr)
     {
-		free_fdwstate((tsurugiFdwState*) node->fdw_state);
+		free_fdw_state((tsurugiFdwState*) node->fdw_state);
     }
 }
 
@@ -1480,6 +1478,7 @@ tsurugiPlanDirectModify(PlannerInfo *root,
 	List	   *returningList = NIL;
 	List	   *retrieved_attrs = NIL;
 
+	/* operation - 1:SELECT, 2:UPDATE, 3:INSERT, 4:DELETE, 5:UTILITY */
 	elog(DEBUG2, "tsurugi_fdw : %s (operation= %d)", __func__, (int) operation);
 
 	/*
@@ -1490,8 +1489,11 @@ tsurugiPlanDirectModify(PlannerInfo *root,
 	 * The table modification must be an UPDATE or DELETE.
 	 */
 	if (operation != CMD_UPDATE && operation != CMD_DELETE)
+#ifdef __TSURUGI_PLANNER__
+		return true;
+#else
 		return false;
-
+#endif
 	/*
 	 * It's unsafe to modify a foreign table directly if there are any local
 	 * joins needed.
@@ -1675,13 +1677,51 @@ static List
  */
 static void 
 tsurugiBeginForeignModify(ModifyTableState *mtstate,
-                        ResultRelInfo *rinfo,
+                        ResultRelInfo *resultRelInfo,
                         List *fdw_private,
                         int subplan_index,
                         int eflags)
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 	return;
+}
+
+/*
+ * tsurugiExecForeignInsert
+ */
+static TupleTableSlot*
+tsurugiExecForeignInsert(
+	EState *estate, 
+	ResultRelInfo *rinfo, 
+	TupleTableSlot *slot, 
+	TupleTableSlot *planSlot)
+{
+	Assert(rinfo != nullptr);
+	Assert(rinfo->ri_FdwState != nullptr);
+
+	tsurugiFdwState* fdw_state = (tsurugiFdwState*) rinfo->ri_FdwState;
+	ERROR_CODE error;
+
+	elog(DEBUG2, "tsurugi_fdw : %s : query string: %s", __func__, fdw_state->query_string);
+ 	std::string query(fdw_state->query_string);
+	std::size_t num_rows = 0;
+
+	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+
+#if 0
+	query = std::regex_replace(query, std::regex("\\$\\d"), "%s");
+    query = (boost::format(query) % slot->tts_values[0] % slot->tts_values[1]).str();
+#endif
+	make_tsurugi_query(query);
+	error = Tsurugi::execute_statement(query, num_rows);
+	if (error != ERROR_CODE::OK) 
+    {
+        elog(ERROR, "transaction::execute_statement() failed. (%d)", 
+            (int) error);
+	}
+	
+	slot = nullptr;
+    return slot;
 }
 
 /*
@@ -1768,7 +1808,7 @@ tsurugiBeginForeignInsert(ModifyTableState *mtstate,
 	rte = exec_rt_fetch(resultRelation, estate);
 	if (rte->relid != RelationGetRelid(rel))
 	{
-//		rte = copyObject(rte);
+/*		rte = copyObject(rte);	*/
         rte = (RangeTblEntry*) copyObjectImpl(rte);
 		rte->relid = RelationGetRelid(rel);
 		rte->relkind = RELKIND_FOREIGN_TABLE;
@@ -1790,11 +1830,7 @@ tsurugiBeginForeignInsert(ModifyTableState *mtstate,
 					 resultRelInfo->ri_returningList,
 					 &retrieved_attrs);
 
-	tsurugiFdwState* fdw_state = create_fdwstate();
-	if (fdw_state == nullptr)
-	{
-		elog(ERROR, "create_fdw_state() failed.");
-	}
+	tsurugiFdwState* fdw_state = create_fdw_state();
 
     elog(DEBUG2, "deparse sql : %s", sql.data);
 
@@ -1810,40 +1846,6 @@ tsurugiBeginForeignInsert(ModifyTableState *mtstate,
 }
 
 /*
- * tsurugiExecForeignInsert
- */
-static TupleTableSlot*
-tsurugiExecForeignInsert(
-	EState *estate, 
-	ResultRelInfo *rinfo, 
-	TupleTableSlot *slot, 
-	TupleTableSlot *planSlot)
-{
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-
-	Assert(fdw_info_.transaction != nullptr);
-
-	ERROR_CODE error;
-
-	tsurugiFdwState* fdw_state = (tsurugiFdwState*) rinfo->ri_FdwState;
-
- 	std::string query(fdw_state->query_string);
-	std::size_t num_rows = 0;
-    query = std::regex_replace(query, std::regex("\\$\\d"), "%s");
-    query = (boost::format(query) % slot->tts_values[0] % slot->tts_values[1]).str();
-
-	error = Tsurugi::execute_statement(query, num_rows);
-	if (error != ERROR_CODE::OK) 
-    {
-        elog(ERROR, "transaction::execute_statement() failed. (%d)", 
-            (int) error);
-	}
-	
-	slot = nullptr;
-    return slot;
-}
-
-/*
  * tsurugiEndForeignInsert
  */
 static void 
@@ -1852,6 +1854,10 @@ tsurugiEndForeignInsert(EState *estate,
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 }
+
+/*
+ * FDW Explain functions.
+ */
 
 /*
  * tsurugiExplainForeignScan
@@ -1915,16 +1921,163 @@ tsurugiAnalyzeForeignTable(Relation relation,
 }
 
 /*
- *	@note	Not in use.
+ * FDW Import Foreign Schema functions.
  */
-static List* 
-tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt,
-							Oid serverOid)
-{
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-	List	*commands = NIL;
 
-	return commands;
+/*
+ * tsurugiImportForeignSchema
+ *      Import table metadata from a foreign server.
+ */
+static List* tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt, Oid serverOid)
+{
+	ERROR_CODE error = ERROR_CODE::UNKNOWN;
+
+	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+
+	/*
+	 * Checking the options of the Import Foreign Schema statement.
+	 * If the option is specified, an error is assumed.
+	 */
+	if ((stmt->options != nullptr) && (stmt->options->length > 0))
+	{
+#if PG_VERSION_NUM >= 130000
+		auto def = static_cast<DefElem*>(lfirst(stmt->options->elements));
+#else
+		auto def = static_cast<DefElem*>(lfirst(stmt->options->head));
+#endif
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_INVALID_OPTION_NAME),
+				 errmsg(R"(unsupported import foreign schema option "%.64s")", def->defname)));
+	}
+
+	/* Get information about foreign server and user mapping. */
+	ForeignServer* server = GetForeignServer(serverOid);
+	//UserMapping* mapping = GetUserMapping(GetUserId(), server->serverid);
+
+	elog(DEBUG2, "ForeignServer::fdwid: %u", server->fdwid);
+	elog(DEBUG2, "ForeignServer::serverid: %u", server->serverid);
+	elog(DEBUG2, R"(ForeignServer::servername: "%s")", server->servername);
+
+	TableListPtr tg_table_list;
+	/* Get a list of table names from Tsurugi. */
+	error = Tsurugi::get_list_tables(tg_table_list);
+	if (error != ERROR_CODE::OK)
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
+			 errmsg("Failed to retrieve table list from Tsurugi. (error: %d)",
+				static_cast<int>(error)),
+			 errdetail("%s", Tsurugi::get_error_message(error).c_str())));
+	}
+
+	auto tg_table_names = tg_table_list->get_table_names();
+
+#ifdef ENABLE_IMPORT_TABLE_LIMITS
+	/* The basic behavior regarding the restriction of tables to be imported is handled
+	 * by PostgreSQL functions.
+	 * FDW does not need to handle this and should be disabled.
+	 */
+	if ((stmt->list_type == FDW_IMPORT_SCHEMA_LIMIT_TO) || (stmt->list_type == FDW_IMPORT_SCHEMA_EXCEPT))
+	{
+		std::unordered_set<std::string> _table_list;
+		ListCell* lc;
+		foreach (lc, stmt->table_list)
+		{
+			_table_list.insert(((RangeVar*)lfirst(lc))->relname);
+		}
+
+		for (auto ite = tg_table_names.begin(); ite != tg_table_names.end();)
+		{
+			bool is_exclude_table = false;
+
+			if (stmt->list_type == FDW_IMPORT_SCHEMA_LIMIT_TO)
+			{
+				/* include only listed tables in import */
+				is_exclude_table = (_table_list.find(*ite) == _table_list.end());
+			}
+			else if (stmt->list_type == FDW_IMPORT_SCHEMA_EXCEPT)
+			{
+				/* exclude listed tables from import */
+				is_exclude_table = (_table_list.find(*ite) != _table_list.end());
+			}
+
+			if (is_exclude_table)
+			{
+				elog(DEBUG2, R"(exclude table "%s" from import.)", (*ite).c_str());
+				ite = tg_table_names.erase(ite);
+			}
+			else
+			{
+				++ite;
+			}
+		}
+	}
+#endif	// ENABLE_IMPORT_TABLE_LIMITS
+
+	List* result_commands = NIL;
+	/* CREATE FOREIGN TABLE statments */
+	for (const auto& table_name : tg_table_names)
+	{
+		TableMetadataPtr tg_table_metadata;
+
+		/* Get table metadata from Tsurugi. */
+		error = Tsurugi::get_table_metadata(table_name, tg_table_metadata);
+		if (error != ERROR_CODE::OK)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
+				errmsg("Failed to retrieve table metadata from Tsurugi. (error: %d)",
+					static_cast<int>(error)),
+				errdetail("%s", Tsurugi::get_error_message(error).c_str())));
+		}
+
+		/* Get table metadata from Tsurugi. */
+		const auto &tg_columns = tg_table_metadata->columns();
+
+		elog(DEBUG2, R"(table: "%.64s")", table_name.c_str());
+
+		std::ostringstream col_def;  /* columns definition */
+		/* Create PostgreSQL column definitions based on Tsurugi column definitions. */
+		for (const auto& column : tg_columns)
+		{
+			/* Convert from Tsurugi datatype to PostgreSQL datatype. */
+			auto pg_type = Tsurugi::convert_type_to_pg(column.atom_type());
+			if (!pg_type)
+			{
+				ereport(ERROR,
+					(errcode(ERRCODE_FDW_INVALID_DATA_TYPE),
+					 errmsg(R"(unsupported tsurugi data type "%d")",
+					 	static_cast<int>(column.atom_type())),
+					 errdetail(R"(table:"%s" column:"%s" type:%d)",
+					 	table_name.c_str(),
+					 	column.name().c_str(),
+					 	static_cast<int>(column.atom_type()))));
+			}
+			std::string type_name(*pg_type);
+
+			elog(DEBUG2,
+				R"(column: {"name":"%.64s", "tsurugi_atom_type":%d, "postgres_type":"%s"})",
+				column.name().c_str(), static_cast<int>(column.atom_type()), type_name.c_str());
+
+			/* Create a column definition. */
+			if (col_def.tellp() != 0)
+			{
+				col_def << ",";
+			}
+			col_def << "\"" << column.name() << "\" " << type_name;
+		}
+
+		/* Create a CREATE FOREIGN TABLE statement. */
+		auto table_def =
+			(boost::format(R"(CREATE FOREIGN TABLE "%s" (%s) SERVER %s)")
+				% table_name.c_str() % col_def.str() % server->servername).str();
+
+		elog(DEBUG1, "%.512s", table_def.c_str());
+
+		result_commands = lappend(result_commands, pstrdup(table_def.c_str()));
+	}
+
+	return result_commands;
 }
 
 /*
@@ -1932,15 +2085,20 @@ tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt,
  */
 
 /*
- *	create_fdwstate
+ *	create_fdw_state
  *      Create tsurugiFdwState structure.
  */
 static tsurugiFdwState* 
-create_fdwstate()
+create_fdw_state()
 {
 	tsurugiFdwState* fdw_state = 
 		(tsurugiFdwState*) palloc0(sizeof(tsurugiFdwState));
 	
+	if (fdw_state == nullptr)
+	{
+		elog(ERROR, "tsurugi_fdw : %s : palloc0() failed.", __func__);
+	}
+
 	fdw_state->cursor_exists = false;
 	fdw_state->number_of_columns = 0;
 	fdw_state->column_types = nullptr;
@@ -1949,11 +2107,11 @@ create_fdwstate()
 }
 
 /*
- * free_fdwstate
+ * free_fdw_state
  *      Free allocated memories.
  */
 static void 
-free_fdwstate(tsurugiFdwState* fdw_state)
+free_fdw_state(tsurugiFdwState* fdw_state)
 {
 	if (fdw_state->column_types != nullptr) 
 	{
@@ -1985,9 +2143,13 @@ free_fdwstate(tsurugiFdwState* fdw_state)
  * 	understand PostgreSQL data types.
  */
 [[maybe_unused]] static void 
-store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist)
+store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist, List** retrieved_attrs)
 {
-	ListCell* lc;
+	ListCell* lc = NULL;
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
+	*retrieved_attrs = NIL;
 
 	if (tlist != NULL)
 	{
@@ -1997,29 +2159,32 @@ store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist)
 		int count = 0;
 		foreach (lc, tlist)
 		{
-			TargetEntry *entry = (TargetEntry *) lfirst(lc);
-			Node *node = (Node *) entry->expr;
+			TargetEntry* entry = (TargetEntry*) lfirst(lc);
+			Node* node = (Node*) entry->expr;
 			count++;
 
-			if (nodeTag(node) == T_Var)
+			if (nodeTag(node) == T_Var || nodeTag(node) == T_OpExpr)
 			{
-				Var *var = (Var *) node;
+				Var* var = (Var*) node;
 				data_types[i] = var->vartype;
+				elog(DEBUG5, "tsurugi_fdw :  (att_number: %d, nodeTag: %u, vartype: %d)", 
+					 i, (unsigned int) nodeTag(node), (int) var->vartype);
 			}
 			else if (nodeTag(node) == T_Const)
 			{
 				// When generating placeholders in a SELECT query expression.
-				elog(DEBUG5, "Skip the data type placeholders. (index: %d, type:%u)",
+				elog(DEBUG5, "Skip the data type placeholders. (index: %d, type: %u)",
 					 i, (unsigned int) nodeTag(node));
 			}
 			else
 			{
-				elog(ERROR, "Unexpected data type in target list. (index: %d, type:%u)",
-					 i, (unsigned int) nodeTag(node));
+				elog(ERROR, "Unexpected data type in target list. (index: %d, type: %u)",
+					i, (unsigned int) nodeTag(node));
 			}
+			elog(DEBUG1, "tsurugi_fdw : %s : attr_number: %d", __func__, i);
+			*retrieved_attrs = lappend_int(*retrieved_attrs, i + 1);
 			i++;
 		}
-
 		fdw_state->column_types = data_types;
 		fdw_state->number_of_columns = count;
 	}
@@ -2037,21 +2202,24 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                             bool* is_null,
                             tsurugiFdwState* fdw_state)
 {
-    ListCell   *lc = NULL;
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
-    foreach(lc, retrieved_attrs)
-    {
-        int     attnum = lfirst_int(lc) - 1;
-        Oid     pgtype = TupleDescAttr(tupleDescriptor, attnum)->atttypid;
+	ListCell   *lc = NULL;
+	foreach(lc, retrieved_attrs)
+	{
+		int     attnum = lfirst_int(lc) - 1;
+		Oid     	pgtype = TupleDescAttr(tupleDescriptor, attnum)->atttypid;
         HeapTuple 	heap_tuple;
         regproc 	typinput;
         int 		typemod;
 
-        heap_tuple = SearchSysCache1(TYPEOID, 
+		elog(DEBUG5, "tsurugi_fdw : %s : attnum: %d", __func__, attnum + 1);
+
+		heap_tuple = SearchSysCache1(TYPEOID, 
                                     ObjectIdGetDatum(pgtype));
         if (!HeapTupleIsValid(heap_tuple))
         {
-            elog(ERROR, "cache lookup failed for type %u", pgtype);
+            elog(ERROR, "tsurugi_fdw : cache lookup failed for type %u", pgtype);
         }
         typinput = ((Form_pg_type) GETSTRUCT(heap_tuple))->typinput;
         typemod = ((Form_pg_type) GETSTRUCT(heap_tuple))->typtypmod;
@@ -2063,6 +2231,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case INT2OID:
                 {
                     std::int16_t value;
+					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is INT2OID.", __func__);
                     if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         is_null[attnum] = false;
@@ -2074,6 +2243,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case INT4OID:
                 {
                     std::int32_t value;
+					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is INT4OID.", __func__);
                     if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         is_null[attnum] = false;
@@ -2085,6 +2255,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case INT8OID:
                 {
                     std::int64_t value;
+					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is INT8OID.", __func__);
                     if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         is_null[attnum] = false;
@@ -2096,6 +2267,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case FLOAT4OID:
                 {
                     float4 value;
+					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is FLOAT4OID.", __func__);
                     if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         is_null[attnum] = false;
@@ -2107,6 +2279,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case FLOAT8OID:
                 {
                     float8 value;
+					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is FLOAT8OID.", __func__);
                     if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         is_null[attnum] = false;
@@ -2119,10 +2292,11 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case VARCHAROID:
             case TEXTOID:
                 {
-                    std::string value;
+					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is BPCHAROID/VARCHAROID/TEXTOID.", __func__);
+					std::string value;
                     Datum value_datum;
                     ERROR_CODE result = result_set->next_column(value);
-                    if (result == ERROR_CODE::OK)
+					if (result == ERROR_CODE::OK)
                     {
                         value_datum = CStringGetDatum(value.c_str());
                         if (value_datum == (Datum) nullptr)
@@ -2141,6 +2315,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case DATEOID:
                 {
                     stub::date_type value;
+					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is DATEOID.", __func__);
                     if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         DateADT date;
@@ -2155,6 +2330,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case TIMEOID:
                 {
                     stub::time_type value;
+					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is TIMEOID.", __func__);
                     if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         TimeADT time;
@@ -2175,7 +2351,8 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case TIMETZOID:
                 {
                     stub::timetz_type value;
-                    if (result_set->next_column(value) == ERROR_CODE::OK)
+					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is TIMETZOID.", __func__);
+					if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         TimeTzADT timetz;
                         auto subsecond = value.first.subsecond().count();
@@ -2201,6 +2378,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case TIMESTAMPTZOID:
                 {
                     stub::timestamptz_type value;
+					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is TIMESTAMPTZOID.", __func__);
                     if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         Timestamp timestamp;
@@ -2229,6 +2407,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case TIMESTAMPOID:
                 {
                     stub::timestamp_type value;
+					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is TIMESTAMPOID.", __func__);
                     if (result_set->next_column(value) == ERROR_CODE::OK)
                     {
                         Timestamp timestamp;
@@ -2249,6 +2428,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
             case NUMERICOID:
                 {
                     stub::decimal_type value;
+					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is NUMERICOID.", __func__);
                     auto error_code = result_set->next_column(value);
                     if (error_code == ERROR_CODE::OK)
                     {

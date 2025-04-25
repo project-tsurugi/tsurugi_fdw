@@ -1,0 +1,11 @@
+$PSQL \
+  -c "SELECT tg_show_tables('tsurugidb', 'tsurugi', 'summary', 't')" \
+  -c "SELECT tg_show_tables('tsurugidb', 'tsurugi', 'summary', 'yes')" \
+  -c "SELECT tg_show_tables('tsurugidb', 'tsurugi', 'summary', 'y')" \
+  -c "SELECT tg_show_tables('tsurugidb', 'tsurugi', 'summary', 'on')" \
+  -c "SELECT tg_show_tables('tsurugidb', 'tsurugi', 'summary', '1')" \
+  -c "SELECT tg_show_tables('tsurugidb', 'tsurugi', 'summary', 'f')" \
+  -c "SELECT tg_show_tables('tsurugidb', 'tsurugi', 'summary', 'no')" \
+  -c "SELECT tg_show_tables('tsurugidb', 'tsurugi', 'summary', 'n')" \
+  -c "SELECT tg_show_tables('tsurugidb', 'tsurugi', 'summary', 'off')" \
+  -c "SELECT tg_show_tables('tsurugidb', 'tsurugi', 'summary', '0')"

@@ -1,0 +1,29 @@
+                 tg_verify_tables
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tsurugidb",           +
+         "server_name": "tsurugi",               +
+         "local_schema": "public",               +
+         "mode": "detail",                       +
+         "tables_on_only_remote_schema": {       +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 1,                         +
+             "list": [                           +
+                 "udf_test_table_1"              +
+             ]                                   +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 0,                         +
+             "list": []                          +
+         }                                       +
+     }                                           +
+ }
+(1 row)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Project Tsurugi.
+ * Copyright 2023-2025 Project Tsurugi.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  */
 #pragma once
 
+#include <optional>
 #include <string>
 #include <string_view>
 
@@ -42,6 +43,13 @@ public:
     static ERROR_CODE tsurugi_error(ogawayama::stub::tsurugi_error_code& code);
     static std::string get_error_detail(ERROR_CODE error);
     static std::string get_error_message(ERROR_CODE error_code);
+
+    static ERROR_CODE get_list_tables(TableListPtr& table_list);
+    static ERROR_CODE get_table_metadata(std::string_view table_name, TableMetadataPtr& table_metadata);
+
+	static std::optional<std::string_view> convert_type_to_pg(
+		jogasaki::proto::sql::common::AtomType tg_type);
+
 	Tsurugi() = delete;
 
 private:

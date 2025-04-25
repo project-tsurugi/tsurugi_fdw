@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Project Tsurugi.
+ * Copyright 2023-2025 Project Tsurugi.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@
 #include <iostream>
 #include <string>
 #include <string_view>
+#include <unordered_map>
+
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
@@ -27,6 +29,8 @@
 #include "tsurugi.h"
 
 using namespace ogawayama;
+
+namespace tg_metadata = jogasaki::proto::sql::common;
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,7 +46,7 @@ PG_MODULE_MAGIC;
 
 #ifdef __cplusplus
 }
-#endif 
+#endif
 
 StubPtr Tsurugi::stub_ = nullptr;
 ConnectionPtr Tsurugi::connection_ = nullptr;
@@ -89,7 +93,7 @@ ERROR_CODE Tsurugi::init()
     if (stub_ == nullptr)
 	{
         std::string shared_memory_name(get_shared_memory_name());
-		elog(DEBUG1, "Trying to run make_stub(). (shared memory: %s)", 
+		elog(DEBUG1, "Attempt to call make_stub(). (shared memory: %s)", 
             shared_memory_name.c_str());
 
 		error = make_stub(stub_, shared_memory_name);
@@ -107,7 +111,7 @@ ERROR_CODE Tsurugi::init()
 
 	if (connection_ == nullptr) 
     {
-		elog(DEBUG1, "Trying to run Stub::get_connection(). (pid: %d)", getpid());
+		elog(DEBUG1, "Attempt to call Stub::get_connection(). (pid: %d)", getpid());
 
 		error = stub_->get_connection(getpid(), connection_);
 		if (error != ERROR_CODE::OK)
@@ -149,7 +153,7 @@ ERROR_CODE Tsurugi::prepare(std::string_view sql, stub::placeholders_type& place
 
     if (connection_ == nullptr)
     {
-        elog(DEBUG1, "Trying to run Tsurugi::init(). (pid: %d)", getpid());
+        elog(DEBUG1, "Attempt to call Tsurugi::init(). (pid: %d)", getpid());
 
         error = init();
 
@@ -160,7 +164,7 @@ ERROR_CODE Tsurugi::prepare(std::string_view sql, stub::placeholders_type& place
         }
     }
 
-    elog(DEBUG1, "Trying to run Connection::prepare(). (pid: %d)", getpid());
+    elog(DEBUG1, "Attempt to call Connection::prepare(). (pid: %d)", getpid());
     elog(LOG, "sql = \n%s", sql.data());
 
     error = connection_->prepare(sql, placeholders, prepared_statement);
@@ -187,7 +191,7 @@ ERROR_CODE Tsurugi::start_transaction()
         boost::property_tree::ptree option;
         GetTransactionOption(option);
 
-        elog(DEBUG1, "Trying to run Connection::begin(). (pid: %d)", getpid());
+        elog(DEBUG1, "Attempt to call Connection::begin(). (pid: %d)", getpid());
 
         error = connection_->begin(option, transaction_);
 
@@ -211,11 +215,11 @@ Tsurugi::execute_query(std::string_view query, ResultSetPtr& result_set)
 
     result_set = nullptr;
 	if (prepared_statement.get() != nullptr) {
-	    elog(DEBUG1, "Trying to run Transaction::execute_query(prepared_statement). \n%s",
+	    elog(DEBUG1, "Attempt to call Transaction::execute_query(prepared_statement). \n%s",
 	        query.data());
 	    error = transaction_->execute_query(prepared_statement, parameters, result_set);
 	} else {
-	    elog(DEBUG1, "Trying to run Transaction::execute_query(query). \n%s",
+	    elog(DEBUG1, "Attempt to call Transaction::execute_query(query). \n%s",
 	        query.data());
 	    error = transaction_->execute_query(query, result_set);
 	}
@@ -244,11 +248,11 @@ Tsurugi::execute_statement(std::string_view statement, std::size_t& num_rows)
     if (transaction_ != nullptr)
     {
 		if (prepared_statement.get() != nullptr) {
-	        elog(DEBUG1, "tsurugi-fdw: Trying to execute the prepared statement. \n%s",
+	        elog(DEBUG1, "tsurugi-fdw: Attempt to execute the prepared statement. \n%s",
 	            statement.data());
 	        error = transaction_->execute_statement(prepared_statement, parameters, num_rows);
 		} else {
-	        elog(DEBUG1, "tsurugi-fdw: Trying to execute the statement. \n%s",
+	        elog(DEBUG1, "tsurugi-fdw: Attempt to execute the statement. \n%s",
 	            statement.data());
 	        error = transaction_->execute_statement(statement, num_rows);
 		}
@@ -287,7 +291,7 @@ ERROR_CODE Tsurugi::commit()
 
     if (transaction_ != nullptr) 
     {
-        elog(DEBUG1, "Trying to run Transaction::commit().");
+        elog(DEBUG1, "Attempt to call Transaction::commit().");
 
         error = transaction_->commit();
         transaction_ = nullptr;
@@ -317,7 +321,7 @@ ERROR_CODE Tsurugi::rollback()
 
     if (transaction_ != nullptr) 
     {
-        elog(DEBUG1, "Trying to run Transaction::rollback().");
+        elog(DEBUG1, "Attempt to call Transaction::rollback().");
 
         error = transaction_->rollback();
         transaction_ = nullptr;
@@ -393,6 +397,105 @@ void Tsurugi::end()
 }
 
 /*
+ * @brief request list tables and get table_list class.
+ * @param table_list returns a table_list class
+ * @return error code defined in error_code.h
+ */
+ERROR_CODE Tsurugi::get_list_tables(TableListPtr& table_list)
+{
+	ERROR_CODE error = ERROR_CODE::UNKNOWN;
+
+	if (connection_ == nullptr)
+	{
+		elog(DEBUG1, "Attempt to call Tsurugi::init(). (pid: %d)", getpid());
+
+		error = init();
+		if (error != ERROR_CODE::OK)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
+				 errmsg(R"(error connecting to server)"),
+				 errdetail("%s", get_error_message(error).c_str())));
+		}
+	}
+
+	elog(DEBUG1, "Attempt to call Connection::get_list_tables(). (pid: %d)", getpid());
+
+	/* Get a list of table names from Tsurugi. */
+	error = connection_->get_list_tables(table_list);
+
+	elog(LOG, "Connection::get_list_tables() done. (error: %d)", (int) error);
+
+	return error;
+}
+
+/*
+ * @brief request table metadata and get TableMetadata class.
+ * @param table_name the table name
+ * @param table_metadata returns a table_metadata class
+ * @return error code defined in error_code.h
+ */
+ERROR_CODE
+Tsurugi::get_table_metadata(std::string_view table_name, TableMetadataPtr& table_metadata)
+{
+	ERROR_CODE error = ERROR_CODE::UNKNOWN;
+
+	if (connection_ == nullptr)
+	{
+		elog(DEBUG1, "Attempt to call Tsurugi::init(). (pid: %d)", getpid());
+
+		error = init();
+		if (error != ERROR_CODE::OK)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_CONNECTION_FAILURE),
+				 errmsg("error connecting to server"),
+				 errdetail("%s", get_error_message(error).c_str())));
+		}
+	}
+
+	elog(DEBUG1, "Attempt to call Connection::get_table_metadata(). (pid: %d)", getpid());
+
+	/* Get table metadata from Tsurugi. */
+	error = connection_->get_table_metadata(std::string(table_name), table_metadata);
+
+	elog(LOG, "Connection::get_table_metadata() done. (error: %d)", (int) error);
+
+	return error;
+}
+
+/*
+ * @brief convert Tsurugi data types to PostgreSQL data types.
+ * @param tg_type tsurugi data type (AtomType)
+ * @return std::optional of PostgreSQL data type
+ */
+std::optional<std::string_view> Tsurugi::convert_type_to_pg(
+		jogasaki::proto::sql::common::AtomType tg_type)
+{
+	static const std::unordered_map<tg_metadata::AtomType, std::string> type_mapping = {
+		{tg_metadata::AtomType::INT4, "integer"},
+		{tg_metadata::AtomType::INT8, "bigint"},
+		{tg_metadata::AtomType::FLOAT4, "real"},
+		{tg_metadata::AtomType::FLOAT8, "double precision"},
+		{tg_metadata::AtomType::DECIMAL, "numeric"},
+		{tg_metadata::AtomType::CHARACTER, "text"},
+		{tg_metadata::AtomType::DATE, "date"},
+		{tg_metadata::AtomType::TIME_OF_DAY, "time"},
+		{tg_metadata::AtomType::TIME_POINT, "timestamp"},
+		{tg_metadata::AtomType::TIME_OF_DAY_WITH_TIME_ZONE, "time with time zone"},
+		{tg_metadata::AtomType::TIME_POINT_WITH_TIME_ZONE, "timestamp with time zone"},
+	};
+
+	auto pg_type = type_mapping.find(tg_type);
+	if (pg_type != type_mapping.end())
+	{
+		return pg_type->second;
+	}
+
+	return std::nullopt;
+}
+
+/*
  *	tsurugi_error
  */
 ERROR_CODE Tsurugi::tsurugi_error(stub::tsurugi_error_code& code)
@@ -400,7 +503,7 @@ ERROR_CODE Tsurugi::tsurugi_error(stub::tsurugi_error_code& code)
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
 	if (connection_ != nullptr)
 	{
-		elog(DEBUG1, "Trying to run Connection::tsurugi_error(). (pid: %d)", getpid());
+		elog(DEBUG1, "Attempt to call Connection::tsurugi_error(). (pid: %d)", getpid());
 		error = connection_->tsurugi_error(code);
 		elog(LOG, "Connection::tsurugi_error() done. (error: %d)", (int) error);
 	}
