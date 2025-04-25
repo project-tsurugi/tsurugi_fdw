@@ -284,7 +284,6 @@ WHERE
     c7 LIKE '%LMN%'
 ORDER BY 
     c1;*/
-
 -- WHERE #8
 /*
 SELECT

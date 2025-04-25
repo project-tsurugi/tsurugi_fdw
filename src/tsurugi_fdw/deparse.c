@@ -2444,10 +2444,10 @@ deparseVar(Var *node, deparse_expr_cxt *context)
 	int			relno;
 	int			colno;
 
-	elog(DEBUG5, "tsurugi_fdw : %s", __func__);
-
 	/* Qualify columns when multiple relations are involved. */
 	bool		qualify_col = (bms_membership(relids) == BMS_MULTIPLE);
+
+	elog(DEBUG5, "tsurugi_fdw : %s", __func__);
 
 	/*
 	 * If the Var belongs to the foreign relation that is deparsed as a
