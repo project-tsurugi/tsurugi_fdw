@@ -1677,7 +1677,7 @@ SELECT tg_set_write_preserve('wp_table3');
 BEGIN;
 SELECT * FROM wp_table1 ORDER BY column1;
 ERROR:  Failed to begin the Tsurugi transaction. (13)
-Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false write_preserves:{ wp_table3 })
+Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null write_preserves:{ wp_table3 })
 COMMIT;
 SELECT tg_set_write_preserve('wp_table3', 'wp_table4');
             tg_set_write_preserve             
@@ -1711,7 +1711,7 @@ SELECT tg_set_write_preserve('wp_table3', 'wp_table4');
 BEGIN;
 SELECT * FROM wp_table1 ORDER BY column1;
 ERROR:  Failed to begin the Tsurugi transaction. (13)
-Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false write_preserves:{ wp_table3 wp_table4 })
+Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null write_preserves:{ wp_table3 wp_table4 })
 SELECT * FROM wp_table2 ORDER BY column1;
 ERROR:  current transaction is aborted, commands ignored until end of transaction block
 COMMIT;
@@ -1747,7 +1747,7 @@ SELECT tg_set_write_preserve('wp_table1', 'wp_table3');
 BEGIN;
 INSERT INTO wp_table1 (column1) VALUES (100);
 ERROR:  Failed to begin the Tsurugi transaction. (13)
-Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false write_preserves:{ wp_table1 wp_table3 })
+Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null write_preserves:{ wp_table1 wp_table3 })
 COMMIT;
 SELECT tg_set_write_preserve('');
             tg_set_write_preserve             
@@ -1905,7 +1905,7 @@ SELECT tg_set_inclusive_read_areas('ri_table3');
 BEGIN;
 SELECT * FROM ri_table1 ORDER BY column1;
 ERROR:  Failed to begin the Tsurugi transaction. (13)
-Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false read_areas_inclusive:{ ri_table3 })
+Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null read_areas_inclusive:{ ri_table3 })
 COMMIT;
 SELECT tg_set_inclusive_read_areas('ri_table3', 'ri_table4');
          tg_set_inclusive_read_areas          
@@ -1939,7 +1939,7 @@ SELECT tg_set_inclusive_read_areas('ri_table3', 'ri_table4');
 BEGIN;
 SELECT * FROM ri_table1 ORDER BY column1;
 ERROR:  Failed to begin the Tsurugi transaction. (13)
-Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false read_areas_inclusive:{ ri_table3 ri_table4 })
+Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null read_areas_inclusive:{ ri_table3 ri_table4 })
 SELECT * FROM ri_table2 ORDER BY column1;
 ERROR:  current transaction is aborted, commands ignored until end of transaction block
 COMMIT;
@@ -1975,7 +1975,7 @@ SELECT tg_set_inclusive_read_areas('ri_table1', 'ri_table3');
 BEGIN;
 SELECT * FROM ri_table1 ORDER BY column1;
 ERROR:  Failed to begin the Tsurugi transaction. (13)
-Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false read_areas_inclusive:{ ri_table1 ri_table3 })
+Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null read_areas_inclusive:{ ri_table1 ri_table3 })
 COMMIT;
 SELECT tg_set_inclusive_read_areas('');
          tg_set_inclusive_read_areas          
@@ -2130,7 +2130,7 @@ SELECT tg_set_exclusive_read_areas('re_table3');
 BEGIN;
 SELECT * FROM udf_table1 ORDER BY column1;
 ERROR:  Failed to begin the Tsurugi transaction. (13)
-Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false read_areas_exclusive:{ re_table3 })
+Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null read_areas_exclusive:{ re_table3 })
 COMMIT;
 SELECT tg_set_exclusive_read_areas('re_table3', 're_table4');
          tg_set_exclusive_read_areas          
@@ -2164,7 +2164,7 @@ SELECT tg_set_exclusive_read_areas('re_table3', 're_table4');
 BEGIN;
 SELECT * FROM udf_table1 ORDER BY column1;
 ERROR:  Failed to begin the Tsurugi transaction. (13)
-Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false read_areas_exclusive:{ re_table3 re_table4 })
+Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null read_areas_exclusive:{ re_table3 re_table4 })
 COMMIT;
 SELECT tg_set_exclusive_read_areas('wp_table1', 'wp_table3');
          tg_set_exclusive_read_areas          
@@ -2198,7 +2198,7 @@ SELECT tg_set_exclusive_read_areas('wp_table1', 'wp_table3');
 BEGIN;
 SELECT * FROM udf_table1 ORDER BY column1;
 ERROR:  Failed to begin the Tsurugi transaction. (13)
-Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false read_areas_exclusive:{ wp_table1 wp_table3 })
+Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null read_areas_exclusive:{ wp_table1 wp_table3 })
 COMMIT;
 SELECT tg_set_exclusive_read_areas('');
          tg_set_exclusive_read_areas          
