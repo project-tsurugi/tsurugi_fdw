@@ -6,13 +6,13 @@ C_SRCS 		= $(shell find $(SRCDIR) -name *.c)
 CPP_SRCS	= $(shell find $(SRCDIR) -name *.cpp)
 OBJS 		= $(C_SRCS:.c=.o) $(CPP_SRCS:.cpp=.o)
 
-PG_CPPFLAGS	= -Iinclude -I$(libpq_srcdir) -fPIC -Dregister= -O0 -Werror
+PG_CPPFLAGS	= -Iinclude -I$(libpq_srcdir) -fPIC -O0 -Werror 
 PG_CXXFLAGS = -Iinclude/proto \
               -Ithird_party/ogawayama/include \
               -Ithird_party/takatori/include \
               -Ithird_party/ogawayama/third_party/metadata-manager/include \
               -Ithird_party/message-manager/include \
-              -std=c++17
+              -std=c++17 -Dregister= 
 
 SHLIB_LINK_INTERNAL = $(libpq)
 SHLIB_LINK = -logawayama-stub -lmetadata-manager -lmessage-manager -lboost_filesystem
