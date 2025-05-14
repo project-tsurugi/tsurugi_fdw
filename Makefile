@@ -6,14 +6,13 @@ C_SRCS 		= $(shell find $(SRCDIR) -name *.c)
 CPP_SRCS	= $(shell find $(SRCDIR) -name *.cpp)
 OBJS 		= $(C_SRCS:.c=.o) $(CPP_SRCS:.cpp=.o)
 
-PG_CPPFLAGS = -Iinclude \
-              -Iinclude/proto \
+PG_CPPFLAGS	= -Iinclude -I$(libpq_srcdir) -fPIC -O0 -Werror 
+PG_CXXFLAGS = -Iinclude/proto \
               -Ithird_party/ogawayama/include \
               -Ithird_party/takatori/include \
               -Ithird_party/ogawayama/third_party/metadata-manager/include \
               -Ithird_party/message-manager/include \
-              -std=c++17 -fPIC -Dregister= -O0 \
-              -I$(libpq_srcdir)
+              -std=c++17 -Dregister= 
 
 SHLIB_LINK_INTERNAL = $(libpq)
 SHLIB_LINK = -logawayama-stub -lmetadata-manager -lmessage-manager -lboost_filesystem
@@ -41,7 +40,7 @@ ifdef USE_PGXS
         PGXS := $(shell $(PG_CONFIG) --pgxs)
         include $(PGXS)
 else
-        subdir = contrib/frontend/tsurugi_fdw
+        subdir = contrib/tsurugi_fdw
         top_builddir = ../../
         include $(top_builddir)/src/Makefile.global
         include $(top_srcdir)/contrib/contrib-global.mk
