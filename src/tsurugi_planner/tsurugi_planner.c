@@ -430,7 +430,11 @@ create_modify_table(TsurugiPlannerInfo *root, ForeignScan *scan)
 
 	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
+#if PG_VERSION_NUM >= 140000
+	modify->plan.lefttree = (Plan *)scan;
+#else
 	modify->plan.lefttree = NULL;
+#endif  // PG_VERSION_NUM >= 140000
 	modify->plan.righttree = NULL;
 	modify->plan.qual = NIL;
 	modify->plan.targetlist = NIL;
@@ -443,10 +447,14 @@ create_modify_table(TsurugiPlannerInfo *root, ForeignScan *scan)
 	modify->rootRelation = 0;
 #endif
 	modify->partColsUpdated = false;
+#if PG_VERSION_NUM >= 140000
+	modify->resultRelations = lappend_int(modify->resultRelations, root->parse->resultRelation);
+#else
 	modify->resultRelations = 0;
 	modify->resultRelIndex = 0;
 	modify->rootResultRelIndex = -1;
 	modify->plans = subplan;
+#endif  // PG_VERSION_NUM >= 140000
 	modify->withCheckOptionLists = NIL;
 	modify->returningLists = NIL;
 	modify->fdwPrivLists = NIL;
@@ -632,7 +640,9 @@ create_planned_stmt(TsurugiPlannerInfo *root, Plan *plan)
 #if PG_VERSION_NUM < 120000
 	stmt->nonleafResultRelations = NIL;
 #endif
+#if PG_VERSION_NUM < 140000
 	stmt->rootResultRelations = NIL;
+#endif  // PG_VERSION_NUM >= 140000
 	stmt->subplans = NIL;
 	stmt->rewindPlanIDs = NULL;
 	stmt->rowMarks = NIL;
@@ -667,6 +677,10 @@ preprocess_targetlist2(Query *parse, ForeignScan *scan)
 	RangeTblEntry	*target_rte = NULL;
 	Relation		target_relation = NULL;
 	List			*tlist;
+#if PG_VERSION_NUM >= 140000
+	Var		   *var;
+	TargetEntry *tle;
+#endif  // PG_VERSION_NUM >= 140000
 
 	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
@@ -677,6 +691,15 @@ preprocess_targetlist2(Query *parse, ForeignScan *scan)
 	tlist = parse->targetList;
 	tlist = expand_targetlist(tlist, parse->commandType, 
 							parse->resultRelation, target_relation);
+
+#if PG_VERSION_NUM >= 140000
+	var = makeWholeRowVar(target_rte, parse->resultRelation, 0, false);
+	tle = makeTargetEntry((Expr *) var,
+						  list_length(parse->targetList) + 1,
+						  pstrdup("wholerow"),
+						  true);
+	tlist = lappend(tlist, tle);
+#endif  // PG_VERSION_NUM >= 140000
 
 	scan->scan.plan.targetlist = tlist;
 

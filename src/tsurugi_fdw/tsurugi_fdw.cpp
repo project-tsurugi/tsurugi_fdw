@@ -50,6 +50,9 @@ extern "C" {
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
+#if PG_VERSION_NUM >= 140000
+#include "optimizer/appendinfo.h"	// get_translated_update_targetlist
+#endif  // PG_VERSION_NUM >= 140000
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/optimizer.h"
@@ -71,7 +74,13 @@ extern "C" {
 #include "access/tupdesc.h"
 #include "nodes/pg_list.h"
 
+#if PG_VERSION_NUM >= 140000
+#ifndef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
+#endif  // PG_MODULE_MAGIC
+#else
+PG_MODULE_MAGIC;
+#endif  // PG_VERSION_NUM >= 140000
 
 #ifdef __cplusplus
 }
@@ -247,9 +256,16 @@ static void tsurugiGetForeignUpperPaths(PlannerInfo *root, UpperRelationKind sta
 /*
  * FDW callback routines (Insert/Update/Delete)
  */
+#if PG_VERSION_NUM >= 140000
+static void tsurugiAddForeignUpdateTargets(PlannerInfo *root,
+											Index rtindex,
+											RangeTblEntry *target_rte,
+											Relation target_relation);
+#else
 static void tsurugiAddForeignUpdateTargets(Query *parsetree,
 											RangeTblEntry *target_rte,
 											Relation target_relation);
+#endif  // PG_VERSION_NUM >= 140000
 static List *tsurugiPlanForeignModify(PlannerInfo *root,
 									   ModifyTable *plan,
 									   Index resultRelation,
@@ -365,13 +381,13 @@ tsurugi_fdw_handler(PG_FUNCTION_ARGS)
 	routine->ImportForeignSchema = tsurugiImportForeignSchema;
 
    /*Functions for foreign modify*/
-    routine->BeginForeignModify = tsurugiBeginForeignModify;
+	routine->BeginForeignModify = tsurugiBeginForeignModify;
 	routine->ExecForeignUpdate = tsurugiExecForeignUpdate;
 	routine->ExecForeignDelete = tsurugiExecForeignDelete;
-    routine->EndForeignModify = tsurugiEndForeignModify;
-    routine->BeginForeignInsert = tsurugiBeginForeignInsert;
+	routine->EndForeignModify = tsurugiEndForeignModify;
+	routine->BeginForeignInsert = tsurugiBeginForeignInsert;
 	routine->ExecForeignInsert = tsurugiExecForeignInsert;
-    routine->EndForeignInsert = tsurugiEndForeignInsert;
+	routine->EndForeignInsert = tsurugiEndForeignInsert;
 
 	/* Support functions for join push-down */
 	routine->GetForeignJoinPaths = tsurugiGetForeignJoinPaths;
@@ -1393,7 +1409,7 @@ tsurugiIterateDirectModify(ForeignScanState* node)
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
 	Assert(node != nullptr);
-	Assert(fdw_info_.transaction != nullptr);
+	// Assert(fdw_info_.transaction != nullptr);
 
 	tsurugiFdwState* fdw_state = (tsurugiFdwState*) node->fdw_state;
 	TupleTableSlot* slot = nullptr;
@@ -1442,14 +1458,85 @@ tsurugiEndDirectModify(ForeignScanState* node)
  * tsurugiAddForeignUpdateTargets
  *      
  */
+#if PG_VERSION_NUM >= 140000
+static void
+tsurugiAddForeignUpdateTargets(PlannerInfo *root,
+								Index rtindex,
+								RangeTblEntry *target_rte,
+								Relation target_relation)
+#else
 static void 
 tsurugiAddForeignUpdateTargets(Query *parsetree,
 								RangeTblEntry *target_rte,
 								Relation target_relation)
+#endif  // PG_VERSION_NUM >= 140000
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
-}	
+}
+
+#if PG_VERSION_NUM >= 140000
+/*
+ * find_modifytable_subplan
+ *		Helper routine for postgresPlanDirectModify to find the
+ *		ModifyTable subplan node that scans the specified RTI.
+ *
+ * Returns NULL if the subplan couldn't be identified.  That's not a fatal
+ * error condition, we just abandon trying to do the update directly.
+ */
+static ForeignScan *
+find_modifytable_subplan(PlannerInfo *root,
+						 ModifyTable *plan,
+						 Index rtindex,
+						 int subplan_index)
+{
+	Plan	   *subplan = outerPlan(plan);
+
+	/*
+	 * The cases we support are (1) the desired ForeignScan is the immediate
+	 * child of ModifyTable, or (2) it is the subplan_index'th child of an
+	 * Append node that is the immediate child of ModifyTable.  There is no
+	 * point in looking further down, as that would mean that local joins are
+	 * involved, so we can't do the update directly.
+	 *
+	 * There could be a Result atop the Append too, acting to compute the
+	 * UPDATE targetlist values.  We ignore that here; the tlist will be
+	 * checked by our caller.
+	 *
+	 * In principle we could examine all the children of the Append, but it's
+	 * currently unlikely that the core planner would generate such a plan
+	 * with the children out-of-order.  Moreover, such a search risks costing
+	 * O(N^2) time when there are a lot of children.
+	 */
+	if (IsA(subplan, Append))
+	{
+		Append	   *appendplan = (Append *) subplan;
+
+		if (subplan_index < list_length(appendplan->appendplans))
+			subplan = (Plan *) list_nth(appendplan->appendplans, subplan_index);
+	}
+	else if (IsA(subplan, Result) &&
+			 outerPlan(subplan) != NULL &&
+			 IsA(outerPlan(subplan), Append))
+	{
+		Append	   *appendplan = (Append *) outerPlan(subplan);
+
+		if (subplan_index < list_length(appendplan->appendplans))
+			subplan = (Plan *) list_nth(appendplan->appendplans, subplan_index);
+	}
+
+	/* Now, have we got a ForeignScan on the desired rel? */
+	if (IsA(subplan, ForeignScan))
+	{
+		ForeignScan *fscan = (ForeignScan *) subplan;
+
+		if (bms_is_member(rtindex, fscan->fs_relids))
+			return fscan;
+	}
+
+	return NULL;
+}
+#endif  // PG_VERSION_NUM >= 140000
 
 /*
  * tsurugiPlanDirectModify
@@ -1465,13 +1552,18 @@ tsurugiPlanDirectModify(PlannerInfo *root,
 						int subplan_index)
 {
 	CmdType		operation = plan->operation;
+#if PG_VERSION_NUM < 140000
 	Plan	   *subplan;
+#endif  // PG_VERSION_NUM < 140000
 	RelOptInfo *foreignrel;
 	RangeTblEntry *rte;
 	TgFdwRelationInfo *fpinfo;
 	Relation	rel;
 	StringInfoData sql;
 	ForeignScan *fscan;
+#if PG_VERSION_NUM >= 140000
+	List	   *processed_tlist = NIL;
+#endif  // PG_VERSION_NUM >= 140000
 	List	   *targetAttrs = NIL;
 	List	   *remote_exprs;
 	List	   *params_list = NIL;
@@ -1494,6 +1586,15 @@ tsurugiPlanDirectModify(PlannerInfo *root,
 #else
 		return false;
 #endif
+
+#if PG_VERSION_NUM >= 140000
+	/*
+	 * Try to locate the ForeignScan subplan that's scanning resultRelation.
+	 */
+	fscan = find_modifytable_subplan(root, plan, resultRelation, subplan_index);
+	if (!fscan)
+		return false;
+#else
 	/*
 	 * It's unsafe to modify a foreign table directly if there are any local
 	 * joins needed.
@@ -1502,12 +1603,17 @@ tsurugiPlanDirectModify(PlannerInfo *root,
 	if (!IsA(subplan, ForeignScan))
 		return false;
 	fscan = (ForeignScan *) subplan;
+#endif  // PG_VERSION_NUM >= 140000
 
 	/*
 	 * It's unsafe to modify a foreign table directly if there are any quals
 	 * that should be evaluated locally.
 	 */
+#if PG_VERSION_NUM >= 140000
+	if (fscan->scan.plan.qual != NIL)
+#else
 	if (subplan->qual != NIL)
+#endif  // PG_VERSION_NUM >= 140000
 		return false;
 
 	/* Safe to fetch data about the target foreign rel */
@@ -1528,6 +1634,31 @@ tsurugiPlanDirectModify(PlannerInfo *root,
 	 */
 	if (operation == CMD_UPDATE)
 	{
+#if PG_VERSION_NUM >= 140000
+		ListCell   *lc,
+				   *lc2;
+
+		/*
+		 * The expressions of concern are the first N columns of the processed
+		 * targetlist, where N is the length of the rel's update_colnos.
+		 */
+		get_translated_update_targetlist(root, resultRelation,
+										 &processed_tlist, &targetAttrs);
+		forboth(lc, processed_tlist, lc2, targetAttrs)
+		{
+			TargetEntry *tle = lfirst_node(TargetEntry, lc);
+			AttrNumber	attno = lfirst_int(lc2);
+
+			/* update's new-value expressions shouldn't be resjunk */
+			Assert(!tle->resjunk);
+
+			if (attno <= InvalidAttrNumber) /* shouldn't happen */
+				elog(ERROR, "system-column update is not supported");
+
+			if (!is_foreign_expr(root, foreignrel, (Expr *) tle->expr))
+				return false;
+		}
+#else
 		int			col;
 
 		/*
@@ -1555,6 +1686,7 @@ tsurugiPlanDirectModify(PlannerInfo *root,
 
 			targetAttrs = lappend_int(targetAttrs, attno);
 		}
+#endif  // PG_VERSION_NUM >= 140000
 	}
 
 	/*
@@ -1604,7 +1736,11 @@ tsurugiPlanDirectModify(PlannerInfo *root,
 		case CMD_UPDATE:
 			deparseDirectUpdateSql(&sql, root, resultRelation, rel,
 								   foreignrel,
+#if PG_VERSION_NUM >= 140000
+								   processed_tlist,
+#else
 								   ((Plan *) fscan)->targetlist,
+#endif  // PG_VERSION_NUM >= 140000
 								   targetAttrs,
 								   remote_exprs, &params_list,
 								   returningList, &retrieved_attrs);
@@ -1626,6 +1762,9 @@ tsurugiPlanDirectModify(PlannerInfo *root,
 	 * Update the operation info.
 	 */
 	fscan->operation = operation;
+#if PG_VERSION_NUM >= 140000
+	fscan->resultRelation = resultRelation;
+#endif  // PG_VERSION_NUM >= 140000
 
 	/*
 	 * Update the fdw_exprs list that will be available to the executor.
@@ -1653,6 +1792,15 @@ tsurugiPlanDirectModify(PlannerInfo *root,
 		if (returningList)
 			rebuild_fdw_scan_tlist(fscan, returningList);
 	}
+
+#if PG_VERSION_NUM >= 140000
+	/*
+	 * Finally, unset the async-capable flag if it is set, as we currently
+	 * don't support asynchronous execution of direct modifications.
+	 */
+	if (fscan->scan.plan.async_capable)
+		fscan->scan.plan.async_capable = false;
+#endif  // PG_VERSION_NUM >= 140000
 
 	table_close(rel, NoLock);
 	elog(DEBUG2, "tsurugi_fdw : Direct Modify is true.");

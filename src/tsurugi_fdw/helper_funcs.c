@@ -703,6 +703,17 @@ tsurugi_foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 			 * RestrictInfos, so we must make our own.
 			 */
 			Assert(!IsA(expr, RestrictInfo));
+#if PG_VERSION_NUM >= 140000
+			rinfo = make_restrictinfo(root,
+									  expr,
+									  true,
+									  false,
+									  false,
+									  root->qual_security_level,
+									  grouped_rel->relids,
+									  NULL,
+									  NULL);
+#else
 			rinfo = make_restrictinfo(expr,
 									  true,
 									  false,
@@ -711,6 +722,7 @@ tsurugi_foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 									  grouped_rel->relids,
 									  NULL,
 									  NULL);
+#endif  // PG_VERSION_NUM >= 140000
 			if (is_foreign_expr(root, grouped_rel, expr))
 				fpinfo->remote_conds = lappend(fpinfo->remote_conds, rinfo);
 			else
