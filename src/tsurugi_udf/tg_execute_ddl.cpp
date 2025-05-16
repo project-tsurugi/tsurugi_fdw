@@ -85,6 +85,7 @@ tg_execute_ddl(PG_FUNCTION_ARGS)
 		ereport(ERROR, (errcode(ERRCODE_FDW_INVALID_ATTRIBUTE_VALUE),
 						errmsg(R"("%s" is not supported)", arg_ddl_statement.c_str())));
 	}
+	std::string ddl(std::regex_replace(match.str(), std::regex(R"(^\s+|\s+$)"), ""));
 
 	/* Get the Tsurugi server OID. */
 	HeapTuple srv_tuple =
@@ -126,5 +127,5 @@ tg_execute_ddl(PG_FUNCTION_ARGS)
 						errmsg("%s", Tsurugi::get_error_message(error).c_str())));
 	}
 
-	PG_RETURN_TEXT_P(cstring_to_text(match.str().c_str()));
+	PG_RETURN_TEXT_P(cstring_to_text(ddl.c_str()));
 }
