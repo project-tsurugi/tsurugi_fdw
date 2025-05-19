@@ -76,8 +76,9 @@ tg_execute_ddl(PG_FUNCTION_ARGS)
 
 	/* Validate the DDL statement. */
 	std::smatch match;
-	for (auto pattern: allowed_statement) {
-		if (std::regex_search(arg_ddl_statement, match, std::regex(pattern))) {
+	for (auto pattern : allowed_statement) {
+		if (std::regex_search(arg_ddl_statement, match,
+							  std::regex(pattern, std::regex_constants::icase))) {
 			break;
 		}
 	}
@@ -85,7 +86,6 @@ tg_execute_ddl(PG_FUNCTION_ARGS)
 		ereport(ERROR, (errcode(ERRCODE_FDW_INVALID_ATTRIBUTE_VALUE),
 						errmsg(R"("%s" is not supported)", arg_ddl_statement.c_str())));
 	}
-	std::string ddl(std::regex_replace(match.str(), std::regex(R"(^\s+|\s+$)"), ""));
 
 	/* Get the Tsurugi server OID. */
 	HeapTuple srv_tuple =
@@ -127,5 +127,11 @@ tg_execute_ddl(PG_FUNCTION_ARGS)
 						errmsg("%s", Tsurugi::get_error_message(error).c_str())));
 	}
 
-	PG_RETURN_TEXT_P(cstring_to_text(ddl.c_str()));
+	/* Convert to uppercase for DDL command comparison. */
+	std::string ddl_command(std::regex_replace(match.str(), std::regex(R"(^\s+|\s+$)"), ""));
+	ddl_command = std::regex_replace(ddl_command, std::regex(R"(\s+)"), " ");
+	std::transform(ddl_command.begin(), ddl_command.end(), ddl_command.begin(),
+				   [](unsigned char c) { return std::toupper(c); });
+
+	PG_RETURN_TEXT_P(cstring_to_text(ddl_command.c_str()));
 }
