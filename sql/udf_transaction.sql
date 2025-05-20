@@ -1,3 +1,71 @@
+/* Test setup: DDL of the Tsurugi */
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE udf_table1 (
+        column1 INTEGER NOT NULL PRIMARY KEY
+    )
+');
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE wp_table1 (
+        column1 INTEGER NOT NULL PRIMARY KEY
+    )
+');
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE wp_table2 (
+        column1 INTEGER NOT NULL PRIMARY KEY
+    )
+');
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE ri_table1 (
+        column1 INTEGER NOT NULL PRIMARY KEY
+    )
+');
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE ri_table2 (
+        column1 INTEGER NOT NULL PRIMARY KEY
+    )
+');
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE re_table1 (
+        column1 INTEGER NOT NULL PRIMARY KEY
+    )
+');
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE re_table2 (
+        column1 INTEGER NOT NULL PRIMARY KEY
+    )
+');
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE tg_table (
+        column1 INTEGER NOT NULL PRIMARY KEY
+    )
+');
+
+/* Test setup: DDL of the PostgreSQL */
+CREATE FOREIGN TABLE udf_table1 (
+    column1 INTEGER NOT NULL
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE wp_table1 (
+    column1 INTEGER NOT NULL
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE wp_table2 (
+    column1 INTEGER NOT NULL
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE ri_table1 (
+    column1 INTEGER NOT NULL
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE ri_table2 (
+    column1 INTEGER NOT NULL
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE re_table1 (
+    column1 INTEGER NOT NULL
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE re_table2 (
+    column1 INTEGER NOT NULL
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE tg_table (
+    column1 INTEGER NOT NULL
+) SERVER tsurugidb;
+
 /* show default option */
 SELECT tg_show_transaction();
 
@@ -419,3 +487,23 @@ SELECT tg_start_transaction('short', 'interrupt');
 SELECT tg_start_transaction('short', 'interrupt', 'test-label');
 SELECT tg_commit();
 SELECT tg_rollback();
+
+/* Test teardown: DDL of the PostgreSQL */
+DROP FOREIGN TABLE udf_table1;
+DROP FOREIGN TABLE wp_table1;
+DROP FOREIGN TABLE wp_table2;
+DROP FOREIGN TABLE ri_table1;
+DROP FOREIGN TABLE ri_table2;
+DROP FOREIGN TABLE re_table1;
+DROP FOREIGN TABLE re_table2;
+DROP FOREIGN TABLE tg_table;
+
+/* Test teardown: DDL of the Tsurugi */
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE tg_table');
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_table1');
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE wp_table1');
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE wp_table2');
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE ri_table1');
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE ri_table2');
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE re_table1');
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE re_table2');
