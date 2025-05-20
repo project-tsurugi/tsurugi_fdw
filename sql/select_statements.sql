@@ -1,36 +1,92 @@
+/* Test setup: DDL of the Tsurugi */
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE t1_select_statement (
+        c1 INTEGER PRIMARY KEY,
+        c2 INTEGER,
+        c3 BIGINT,
+        c4 REAL,
+        c5 DOUBLE PRECISION,
+        c6 CHAR(10),
+        c7 VARCHAR(26)
+    )
+');
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE t2_select_statement (
+        c1 INTEGER PRIMARY KEY,
+        c2 INTEGER,
+        c3 BIGINT,
+        c4 REAL,
+        c5 DOUBLE PRECISION,
+        c6 CHAR(10),
+        c7 VARCHAR(26)
+    )
+');
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE t3_select_statement (
+        c1 INTEGER PRIMARY KEY,
+        c2 CHAR(10)
+    )
+');
+
+/* Test setup: DDL of the PostgreSQL */
+CREATE FOREIGN TABLE t1_select_statement (
+    c1 INTEGER,
+    c2 INTEGER,
+    c3 BIGINT,
+    c4 REAL,
+    c5 DOUBLE PRECISION,
+    c6 CHAR(10),
+    c7 VARCHAR(26)
+) SERVER tsurugidb;
+
+CREATE FOREIGN TABLE t2_select_statement (
+    c1 INTEGER,
+    c2 INTEGER,
+    c3 BIGINT,
+    c4 REAL,
+    c5 DOUBLE PRECISION,
+    c6 CHAR(10),
+    c7 VARCHAR(26)
+) SERVER tsurugidb;
+
+CREATE FOREIGN TABLE t3_select_statement (
+    c1 INTEGER,
+    c2 CHAR(10)
+) SERVER tsurugidb;
+
 /* DML */
 -- TG tables
-INSERT INTO 
+INSERT INTO
     t1_select_statement(c1, c2, c3, c4, c5, c6, c7)
 VALUES
     (1, 11, 111, 1.1, 1.11, 'first', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
-INSERT INTO 
+INSERT INTO
     t1_select_statement(c1, c2, c3, c4, c5, c6, c7)
 VALUES
     (2, 22, 222, 2.2, 2.22, 'second', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
-INSERT INTO 
+INSERT INTO
     t1_select_statement(c1, c2, c3, c4, c5, c6, c7)
 VALUES
     (3, 33, 333, 3.3, 3.33, 'third', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
 SELECT * FROM t1_select_statement ORDER BY c1;
 
-INSERT INTO 
+INSERT INTO
     t2_select_statement(c1, c2, c3, c4, c5, c6, c7)
 VALUES
     (1, 11, 111, 1.1, 1.11, 'one', 'ABC');
-INSERT INTO 
+INSERT INTO
     t2_select_statement(c1, c2, c3, c4, c5, c6, c7)
 VALUES
     (2, 22, 222, 2.2, 2.22, 'two', 'XYZ');
-INSERT INTO 
+INSERT INTO
     t2_select_statement(c1, c2, c3, c4, c5, c6, c7)
 VALUES
     (3, 33, 333, 3.3, 3.33, 'three', 'ABC');
-INSERT INTO 
+INSERT INTO
     t2_select_statement(c1, c2, c3, c4, c5, c6, c7)
 VALUES
     (4, NULL, NULL, NULL, NULL, 'NULL', NULL);
-INSERT INTO 
+INSERT INTO
     t2_select_statement(c1, c2, c3, c4, c5, c6, c7)
 VALUES
     (5, 55, 555, 5.5, 5.55, 'five', 'XYZ');
@@ -58,7 +114,6 @@ VALUES
     (5, 'go');
 SELECT * FROM t3_select_statement ORDER BY c1;
 
-
 -- SELECT
 SELECT * FROM t1_select_statement ORDER BY c1;
 SELECT c2, c4, c6 FROM t2_select_statement ORDER BY c2;
@@ -70,7 +125,7 @@ SELECT
     *
 FROM
     t2_select_statement
-ORDER BY 
+ORDER BY
     c6;
 
 -- ORDER BY #2
@@ -78,7 +133,7 @@ SELECT
     c1, c2, c3, c4, c5, c6, c7
 FROM
     t2_select_statement
-ORDER BY 
+ORDER BY
     6;
 
 -- ORDER BY #3
@@ -122,23 +177,23 @@ ORDER BY
     c1;
 
 -- WHERE #3
-SELECT 
+SELECT
     c1, c2, c6, c7
 FROM
     t1_select_statement
 WHERE
     c1 = 1 OR c1 = 3
-ORDER BY 
+ORDER BY
     c1;
 
 -- WHERE #4
-SELECT 
-    c1, c3, c5, c7 
-FROM 
-    t1_select_statement 
-WHERE 
+SELECT
+    c1, c3, c5, c7
+FROM
+    t1_select_statement
+WHERE
     c1 = 2
-ORDER BY 
+ORDER BY
     c1;
 
 -- WHERE #5
@@ -148,7 +203,7 @@ FROM
     t1_select_statement
 WHERE
     c4 >= 2.2 AND c4 < 5.5
-ORDER BY 
+ORDER BY
     c1;
 
 -- WHERE #6
@@ -158,7 +213,7 @@ FROM
     t2_select_statement
 WHERE
     c4 BETWEEN 2.2 AND 5.5
-ORDER BY 
+ORDER BY
     c1;
 
 -- WHERE #7
@@ -169,7 +224,7 @@ FROM
     t1_select_statement
 WHERE
     c7 LIKE '%LMN%'
-ORDER BY 
+ORDER BY
     c1;*/
 
 -- WHERE #8
@@ -195,7 +250,7 @@ ORDER BY
 -- GROUP BY #1
 SELECT
     count(c1) AS "count(c1)", sum(c2) AS "sum(c2)", c7
-FROM 
+FROM
     t2_select_statement
 GROUP BY
     c7
@@ -205,11 +260,11 @@ ORDER BY
 -- GROUP BY #2
 SELECT
     count(c1) AS "count(c1)", sum(c2) AS "sum(c2)", c7
-FROM 
+FROM
     t2_select_statement
 GROUP BY
     c7
-HAVING 
+HAVING
     sum(c2) > 55
 ORDER BY
     c7;
@@ -225,9 +280,9 @@ GROUP BY
 */
 -- FOREIGN TABLE JOIN
 -- TG JOIN #1 /* tsurugi-issue#863 */
-SELECT 
+SELECT
     *
-FROM 
+FROM
     t1_select_statement a INNER JOIN t2_select_statement b ON a.c1 = b.c1
 WHERE
     b.c1 > 1
@@ -235,19 +290,19 @@ ORDER BY
     a.c1;
 
 -- TG JOIN #2 /* tsurugi-issue#863 */
-SELECT 
+SELECT
 --  tsurugi-issue
 --  a.c1, a.c2, b.c1, b.c7
     a.c1, a.c2, b.c2, b.c7
-FROM 
+FROM
     t1_select_statement a INNER JOIN t2_select_statement b USING (c1)
 ORDER BY
-    b.c4 DESC;   
+    b.c4 DESC;
 
 -- TG JOIN #3 /* tsurugi-issue#863 */
-SELECT 
+SELECT
     a.c1, a.c3, b.c1, b.c6
-FROM 
+FROM
 --  PostgreSQL specific syntax (!=)
     t1_select_statement a INNER JOIN t2_select_statement b ON a.c1 != b.c1
 ORDER BY
@@ -277,3 +332,13 @@ FROM
     t1_select_statement AS a JOIN t1_select_statement AS b ON a.c3=b.c3
 ORDER BY
     a.c3;
+
+/* Test teardown: DDL of the PostgreSQL */
+DROP FOREIGN TABLE t1_select_statement;
+DROP FOREIGN TABLE t2_select_statement;
+DROP FOREIGN TABLE t3_select_statement;
+
+/* Test teardown: DDL of the Tsurugi */
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE t1_select_statement');
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE t2_select_statement');
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE t3_select_statement');
