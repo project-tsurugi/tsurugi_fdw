@@ -1,3 +1,25 @@
+/* Test setup: DDL of the Tsurugi */
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE t1_create_table (
+        c1 INTEGER NOT NULL PRIMARY KEY
+    )
+');
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE t2_create_table (
+        c1 INTEGER NOT NULL PRIMARY KEY,
+        c2 BIGINT, c3 DOUBLE PRECISION
+    )
+');
+
+/* Test setup: DDL of the PostgreSQL */
+CREATE FOREIGN TABLE t1_create_table (
+    c1 INTEGER NOT NULL
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE t2_create_table (
+    c1 INTEGER NOT NULL,
+    c2 BIGINT,
+    c3 DOUBLE PRECISION
+) SERVER tsurugidb;
 
 /* DML */
 SELECT * FROM t1_create_table ORDER BY c1;
@@ -46,3 +68,11 @@ SELECT * FROM Public.t1_create_table ORDER BY c1;
 INSERT INTO "puBlIc"."t1_create_table" (c1) VALUES (999); -- error
 UPDATE "PUBLIC"."t1_create_table" SET c1 = c1+100; -- error
 DELETE FROM "Public"."t1_create_table" WHERE c1 > 1000; -- error
+
+/* Test teardown: DDL of the PostgreSQL */
+DROP FOREIGN TABLE t1_create_table;
+DROP FOREIGN TABLE t2_create_table;
+
+/* Test teardown: DDL of the Tsurugi */
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE t1_create_table');
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE t2_create_table');

@@ -1,3 +1,25 @@
+/* Test setup: DDL of the Tsurugi */
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE weather (
+        id       int primary key,
+        city     varchar(80),
+        temp_lo  int,
+        temp_hi  int,
+        prcp     real,
+        the_date date default DATE ''2023-04-01''
+    )
+');
+
+/* Test setup: DDL of the PostgreSQL */
+CREATE FOREIGN TABLE weather (
+    id       int,
+    city     varchar(80),
+    temp_lo  int,           -- 最低気温
+    temp_hi  int,           -- 最高気温
+    prcp     real,          -- 降水量
+    the_date date default '2023-04-01'
+) SERVER tsurugidb;
+
 /* SET DATASTYLE */
 SET datestyle TO ISO, ymd;
 
@@ -98,3 +120,9 @@ PREPARE add_weather (int, varchar(80), int, int, real, date)
             VALUES ($1, $2, $3, $4, $5, $6);
 EXECUTE add_weather (8, 'San Diego', 41, 57, 0.25, '2023-11-24'); -- 日付固定
 SELECT * FROM weather ORDER BY id;  -- レグレッションテスト確認用
+
+/* Test teardown: DDL of the PostgreSQL */
+DROP FOREIGN TABLE weather;
+
+/* Test teardown: DDL of the Tsurugi */
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE weather');

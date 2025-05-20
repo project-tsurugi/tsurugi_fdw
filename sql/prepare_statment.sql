@@ -1,21 +1,111 @@
+/* Test setup: DDL of the Tsurugi */
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE trg_table (
+        id INTEGER NOT NULL PRIMARY KEY,
+        num INTEGER, name VARCHAR(10)
+    )
+');
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE trg_timedate (
+        id INTEGER NOT NULL PRIMARY KEY,
+        tms TIMESTAMP DEFAULT TIMESTAMP ''2023-03-03 23:59:35.123456'',
+        dt DATE DEFAULT DATE ''2023-03-03'',
+        tm TIME DEFAULT TIME ''23:59:35.123456789''
+    )
+');
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE trg_timetz (
+        id INTEGER NOT NULL PRIMARY KEY,
+        tm TIME,
+        tmtz TIME WITH TIME ZONE
+    )
+');
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE trg_timestamptz (
+        id INTEGER NOT NULL PRIMARY KEY,
+        tms TIMESTAMP,
+        tmstz TIMESTAMP WITH TIME ZONE
+    )
+');
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE employee_1 (
+        id INTEGER DEFAULT 1,
+        name VARCHAR(100) DEFAULT ''Unknown'',
+        salary NUMERIC(10, 2) DEFAULT 30000.00
+    )
+');
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE employee_2 (
+        id INTEGER DEFAULT 1,
+        name VARCHAR(100) DEFAULT ''Unknown'',
+        salary NUMERIC(10, 2) DEFAULT 30000.00
+    )
+');
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE employee_i (
+        id INTEGER DEFAULT 1,
+        name VARCHAR(100) DEFAULT ''Unknown'',
+        salary NUMERIC(10, 2) DEFAULT 30000.00
+    )
+');
+
+/* Test setup: DDL of the PostgreSQL */
+CREATE FOREIGN TABLE trg_table (
+    id INTEGER NOT NULL,
+    num INTEGER,
+    name VARCHAR(10)
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE trg_timedate (
+    id INTEGER NOT NULL,
+    tms TIMESTAMP DEFAULT '2023-03-03 23:59:35.123456',
+    dt DATE DEFAULT '2023-03-03',
+    tm TIME DEFAULT '23:59:35.123456789'
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE trg_timetz (
+    id INTEGER NOT NULL,
+    tm TIME,
+    tmtz TIME WITH TIME ZONE
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE trg_timestamptz (
+    id INTEGER NOT NULL,
+    tms TIMESTAMP,
+    tmstz TIMESTAMP WITH TIME ZONE
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE employee_1 (
+    id INTEGER DEFAULT 1,
+    name VARCHAR(100) DEFAULT 'Unknown',
+    salary NUMERIC(10, 2) DEFAULT 30000.00
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE employee_2 (
+    id INTEGER DEFAULT 1,
+    name VARCHAR(100) DEFAULT 'Unknown',
+    salary NUMERIC(10, 2) DEFAULT 30000.00
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE employee_i (
+    id INTEGER DEFAULT 1,
+    name VARCHAR(100) DEFAULT 'Unknown',
+    salary NUMERIC(10, 2) DEFAULT 30000.00
+) SERVER tsurugidb;
+
 /* SET DATASTYLE */
 SET datestyle TO ISO, ymd;
 
-PREPARE add_trg_table (int, int, varchar(80)) 		AS INSERT INTO trg_table (id, num, name) VALUES ($1, $2, $3);
-PREPARE add_trg_table_num (int, int) 				AS INSERT INTO trg_table (id, num, name) VALUES ($1, $2, 'zzz');
-PREPARE add_trg_table_name (int, varchar(80))		AS INSERT INTO trg_table (id, num, name) VALUES ($1, 99, $2);
-PREPARE chg_trg_table_name (int, varchar(80)) 		AS UPDATE trg_table SET name = $2 WHERE id = $1;
-PREPARE chg_trg_table_num (int, int)         		AS UPDATE trg_table SET num  = $2 WHERE id = $1;
-PREPARE chg_trg_table_88_name (int, varchar(80))	AS UPDATE trg_table SET num  = 88, name = $2 WHERE id = $1;
-PREPARE chg_trg_table_num_yyy (int, int)    		AS UPDATE trg_table SET num  = $2, name = 'yyy' WHERE id = $1;
-PREPARE all_chg_trg_table_name (varchar(80))      	AS UPDATE trg_table SET name = $1;
-PREPARE all_chg_trg_table_num (int)      			AS UPDATE trg_table SET num = $1;
-PREPARE del_trg_table_num  (int)              		AS DELETE FROM trg_table WHERE num = $1;
-PREPARE del_trg_table_name (varchar(80))      		AS DELETE FROM trg_table WHERE name = $1;
-PREPARE all_select_table							AS SELECT * FROM trg_table order by id;
-PREPARE all_select_table_num (int)					AS SELECT * FROM trg_table WHERE num > $1 order by id;
-PREPARE all_select_table_num2 (int, int)			AS SELECT * FROM trg_table WHERE num > $1 AND num < $2 order by id;
-PREPARE all_select_table_name (varchar(80))			AS SELECT * FROM trg_table WHERE name = $1 order by id;
+/* PREPARE */
+PREPARE add_trg_table (int, int, varchar(80))    AS INSERT INTO trg_table (id, num, name) VALUES ($1, $2, $3);
+PREPARE add_trg_table_num (int, int)             AS INSERT INTO trg_table (id, num, name) VALUES ($1, $2, 'zzz');
+PREPARE add_trg_table_name (int, varchar(80))    AS INSERT INTO trg_table (id, num, name) VALUES ($1, 99, $2);
+PREPARE chg_trg_table_name (int, varchar(80))    AS UPDATE trg_table SET name = $2 WHERE id = $1;
+PREPARE chg_trg_table_num (int, int)             AS UPDATE trg_table SET num  = $2 WHERE id = $1;
+PREPARE chg_trg_table_88_name (int, varchar(80)) AS UPDATE trg_table SET num  = 88, name = $2 WHERE id = $1;
+PREPARE chg_trg_table_num_yyy (int, int)         AS UPDATE trg_table SET num  = $2, name = 'yyy' WHERE id = $1;
+PREPARE all_chg_trg_table_name (varchar(80))     AS UPDATE trg_table SET name = $1;
+PREPARE all_chg_trg_table_num (int)              AS UPDATE trg_table SET num = $1;
+PREPARE del_trg_table_num  (int)                 AS DELETE FROM trg_table WHERE num = $1;
+PREPARE del_trg_table_name (varchar(80))         AS DELETE FROM trg_table WHERE name = $1;
+PREPARE all_select_table                         AS SELECT * FROM trg_table order by id;
+PREPARE all_select_table_num (int)               AS SELECT * FROM trg_table WHERE num > $1 order by id;
+PREPARE all_select_table_num2 (int, int)         AS SELECT * FROM trg_table WHERE num > $1 AND num < $2 order by id;
+PREPARE all_select_table_name (varchar(80))      AS SELECT * FROM trg_table WHERE name = $1 order by id;
 
 select * from trg_table order by id;
 
@@ -59,11 +149,11 @@ select * from trg_table order by id;
 EXECUTE all_chg_trg_table_num (123);
 select * from trg_table order by id;
 
-PREPARE add_trg_timedate_def (int)						AS INSERT INTO trg_timedate (id) VALUES ($1);
+PREPARE add_trg_timedate_def (int) AS INSERT INTO trg_timedate (id) VALUES ($1);
 EXECUTE add_trg_timedate_def (1);
 select * from trg_timedate order by id;
 
-PREPARE add_trg_timedate_tms (int, timestamp)			AS INSERT INTO trg_timedate (id, tms) VALUES ($1, $2);
+PREPARE add_trg_timedate_tms (int, timestamp) AS INSERT INTO trg_timedate (id, tms) VALUES ($1, $2);
 EXECUTE add_trg_timedate_tms (10, '1999-01-08 04:05:06');
 EXECUTE add_trg_timedate_tms (11, '1999-01-08 04:05:06 -8:00');
 EXECUTE add_trg_timedate_tms (12, TIMESTAMP '2004-10-19 10:23:54');
@@ -76,7 +166,7 @@ EXECUTE add_trg_timedate_tms (15, 'infinity');
 EXECUTE add_trg_timedate_tms (16, '2004-10-19 allballs');
 select * from trg_timedate order by id;
 
-PREPARE add_trg_timedate_dt (int, date)					AS INSERT INTO trg_timedate (id, dt) VALUES ($1, $2);
+PREPARE add_trg_timedate_dt (int, date) AS INSERT INTO trg_timedate (id, dt) VALUES ($1, $2);
 EXECUTE add_trg_timedate_dt (20, '1999-01-08');
 EXECUTE add_trg_timedate_dt (21, 'January 8, 1999');
 EXECUTE add_trg_timedate_dt (9999, '1/8/1999');  -- error
@@ -95,7 +185,7 @@ EXECUTE add_trg_timedate_dt (30, 'J2451187');
 EXECUTE add_trg_timedate_dt (9999, 'January 8, 99 BC');  -- error
 select * from trg_timedate order by id;
 
-PREPARE add_trg_timedate_tm (int, time)					AS INSERT INTO trg_timedate (id, tm) VALUES ($1, $2);
+PREPARE add_trg_timedate_tm (int, time) AS INSERT INTO trg_timedate (id, tm) VALUES ($1, $2);
 EXECUTE add_trg_timedate_tm (50, '04:05:06.789');
 EXECUTE add_trg_timedate_tm (51, '04:05:06');
 EXECUTE add_trg_timedate_tm (52, '04:05');
@@ -110,9 +200,9 @@ EXECUTE add_trg_timedate_tm (60, '04:05:06 PST');
 EXECUTE add_trg_timedate_tm (61, '2003-04-12 04:05:06 America/New_York');
 select * from trg_timedate order by id;
 
-PREPARE trg_timedate_where_tms (timestamp)				AS DELETE FROM trg_timedate WHERE tms = $1;
-PREPARE trg_timedate_where_dt (date)					AS DELETE FROM trg_timedate WHERE dt = $1;
-PREPARE trg_timedate_where_tm (time)					AS DELETE FROM trg_timedate WHERE tm = $1;
+PREPARE trg_timedate_where_tms (timestamp) AS DELETE FROM trg_timedate WHERE tms = $1;
+PREPARE trg_timedate_where_dt (date)       AS DELETE FROM trg_timedate WHERE dt = $1;
+PREPARE trg_timedate_where_tm (time)       AS DELETE FROM trg_timedate WHERE tm = $1;
 
 EXECUTE trg_timedate_where_tms ('1999-01-08 04:05:06');
 EXECUTE trg_timedate_where_tms (TIMESTAMP '2004-10-19 10:23:54');
@@ -162,7 +252,7 @@ EXECUTE trg_timedate_where_tm (make_time(8, 15, 23.5));
 select * from trg_timedate order by id;
 
 PREPARE add_trg_timetz (int, TIME, TIMETZ)
-                    AS INSERT INTO trg_timetz (id, tm, tmtz) VALUES ($1, $2, $3);
+    AS INSERT INTO trg_timetz (id, tm, tmtz) VALUES ($1, $2, $3);
 
 EXECUTE add_trg_timetz  -- UTC-8
         (1, '00:01:23.456789', '00:01:23.456789 PST');
@@ -178,7 +268,7 @@ EXECUTE add_trg_timetz  -- UTC
         (6, '00:01:23.456789', '00:01:23.456789 z');
 
 PREPARE add_trg_timestamptz (int, TIMESTAMP, TIMESTAMPTZ)
-                    AS INSERT INTO trg_timestamptz (id, tms, tmstz) VALUES ($1, $2, $3);
+    AS INSERT INTO trg_timestamptz (id, tms, tmstz) VALUES ($1, $2, $3);
 
 EXECUTE add_trg_timestamptz  -- UTC-8
         (1, '2023-08-02 00:01:23.456789', '2023-08-02 00:01:23.456789 PST');
@@ -216,7 +306,27 @@ select * from trg_timestamptz order by id;
 /************************/
 /* bug fix confirm r685 */
 /************************/
+INSERT INTO employee_1 (id, name, salary) VALUES (1, 'Alice', 50000), (2, 'Bob', 55000);
+INSERT INTO employee_1 (id, name, salary) VALUES (11, 'kf', 50000), (12, 'yy', 55000);
+INSERT INTO employee_1 (id, name, salary) VALUES (1, 'Alice', 50000), (2, 'Bob', 55000);
+INSERT INTO employee_1 (id, name, salary) VALUES (11, 'kf', 50000), (12, 'yy', 55000);
+INSERT INTO employee_1 (id, name, salary) VALUES (1, 'Alice', 50000), (2, 'Bob', 55000);
 select * from employee_1 order by id, name;
+
+INSERT INTO employee_2 DEFAULT VALUES;
+INSERT INTO employee_2 DEFAULT VALUES;
+INSERT INTO employee_2 (id, name, salary) VALUES (1, 'Alice', 50000), (2, 'Bob', 55000);
+INSERT INTO employee_2 (id, name, salary) VALUES (1, 'Alice', 50000), (2, 'Bob', 55000);
+INSERT INTO employee_2 (id, name, salary) VALUES (3, 'Charile', 47000);
+INSERT INTO employee_2 (id, name, salary) VALUES (6, 'Frank', 52000);
+INSERT INTO employee_2 (id, name, salary) VALUES (7, 'Grace', 53000);
+INSERT INTO employee_2 DEFAULT VALUES;
+INSERT INTO employee_2 DEFAULT VALUES;
+INSERT INTO employee_2 (id, name, salary) VALUES (1, 'Alice', 50000), (2, 'Bob', 55000);
+INSERT INTO employee_2 (id, name, salary) VALUES (3, 'Charile', 47000);
+INSERT INTO employee_2 (id, name, salary) VALUES (4, 'David', 48000);
+INSERT INTO employee_2 (id, name, salary) VALUES (5, 'Eva', 50000);
+INSERT INTO employee_2 (id, name, salary) VALUES (6, 'Frank', 52000);
 select * from employee_2 order by id, name;
 
 /* limit r682 */
@@ -246,11 +356,11 @@ PREPARE inte_all AS select * from employee_1 intersect all select * from employe
 
 /* set operators r688 */
 select * from employee_i order by id, name;
-prepare ins_def as insert into employee_i default values;
+PREPARE ins_def AS insert into employee_i default values;
 execute ins_def;
 select * from employee_i order by id, name;
 select * from employee_1 where id < 10 order by id, name;
-prepare ins_query as insert into employee_i select * from employee_1 where id < 10 order by id, name;
+PREPARE ins_query AS insert into employee_i select * from employee_1 where id < 10 order by id, name;
 execute ins_query;
 select * from employee_i order by id, name;
 
@@ -268,3 +378,21 @@ PREPARE order_name AS select * from employee_2 order by id, name;
 EXECUTE order_name;
 -- Error:UNSUPPORTED_COMPILER_FEATURE_EXCEPTION
 PREPARE order_num AS select * from employee_2 order by 1, 2;
+
+/* Test teardown: DDL of the PostgreSQL */
+DROP FOREIGN TABLE trg_table;
+DROP FOREIGN TABLE trg_timedate;
+DROP FOREIGN TABLE trg_timetz;
+DROP FOREIGN TABLE trg_timestamptz;
+DROP FOREIGN TABLE employee_1;
+DROP FOREIGN TABLE employee_2;
+DROP FOREIGN TABLE employee_i;
+
+/* Test teardown: DDL of the Tsurugi */
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE trg_table');
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE trg_timedate');
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE trg_timetz');
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE trg_timestamptz');
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE employee_1');
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE employee_2');
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE employee_i');

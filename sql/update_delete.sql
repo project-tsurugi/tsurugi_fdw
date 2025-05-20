@@ -1,3 +1,73 @@
+/* Test setup: DDL of the Tsurugi */
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE update_delete_int1 (
+        col1 int PRIMARY KEY,
+        col2 int
+    )
+');
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE update_delete_bigint1 (
+        col1 int PRIMARY KEY,
+        col2 bigint
+    )
+');
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE update_delete_real1 (
+        col1 int PRIMARY KEY,
+        col2 real
+    )
+');
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE update_delete_double1 (
+        col1 int PRIMARY KEY,
+        col2 double precision
+    )
+');
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE update_delete_char1 (
+        col1 int PRIMARY KEY,
+        col2 char(2)
+    )
+');
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE update_delete_varchar1 (
+        col1 int PRIMARY KEY,
+        col2 varchar(2)
+    )
+');
+
+/* Test setup: DDL of the PostgreSQL */
+---int
+CREATE FOREIGN TABLE update_delete_int1 (
+    col1 int,
+    col2 int
+) SERVER tsurugidb;
+---bigint
+CREATE FOREIGN TABLE update_delete_bigint1 (
+    col1 int,
+    col2 bigint
+) SERVER tsurugidb;
+---real
+CREATE FOREIGN TABLE update_delete_real1 (
+    col1 int,
+    col2 real
+) SERVER tsurugidb;
+---double precision
+CREATE FOREIGN TABLE update_delete_double1 (
+    col1 int,
+    col2 double precision
+) SERVER tsurugidb;
+---char
+CREATE FOREIGN TABLE update_delete_char1 (
+    col1 int,
+    col2 char(2)
+) SERVER tsurugidb;
+---varchar
+CREATE FOREIGN TABLE update_delete_varchar1 (
+    col1 int,
+    col2 varchar(2)
+) SERVER tsurugidb;
+
 /* DML */
 ---int
 SELECT * FROM update_delete_int1 ORDER BY col1;
@@ -96,3 +166,19 @@ SELECT * FROM update_delete_varchar1 ORDER BY col1;
 
 DELETE FROM update_delete_varchar1 WHERE col3 = 'ab';
 SELECT * FROM update_delete_varchar1 ORDER BY col1;
+
+/* Test teardown: DDL of the PostgreSQL */
+DROP FOREIGN TABLE update_delete_int1;
+DROP FOREIGN TABLE update_delete_bigint1;
+DROP FOREIGN TABLE update_delete_real1;
+DROP FOREIGN TABLE update_delete_double1;
+DROP FOREIGN TABLE update_delete_char1;
+DROP FOREIGN TABLE update_delete_varchar1;
+
+/* Test teardown: DDL of the Tsurugi */
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE update_delete_int1');
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE update_delete_bigint1');
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE update_delete_real1');
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE update_delete_double1');
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE update_delete_char1');
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE update_delete_varchar1');

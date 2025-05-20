@@ -1,5 +1,53 @@
+/* Test setup: DDL of the Tsurugi */
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE trg_numeric (
+        id INTEGER NOT NULL PRIMARY KEY,
+        num NUMERIC(10, 6)
+    )
+');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE trg_numeric_s0 (
+        id INTEGER NOT NULL PRIMARY KEY,
+        num NUMERIC(38, 0)
+    )
+');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE trg_numeric_s38 (
+        id INTEGER NOT NULL PRIMARY KEY,
+        num NUMERIC(38, 38)
+    )
+');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+/* Test setup: DDL of the PostgreSQL */
+CREATE FOREIGN TABLE trg_numeric (
+    id INTEGER NOT NULL,
+    num NUMERIC(10, 6)
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE trg_numeric_s0 (
+    id INTEGER NOT NULL,
+    num NUMERIC(38, 0)
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE trg_numeric_s38 (
+    id INTEGER NOT NULL,
+    num NUMERIC(38, 38)
+) SERVER tsurugidb;
 /* SET DATASTYLE */
 SET datestyle TO ISO, ymd;
+/* PREPARE */
 /* Basic Action */
 PREPARE trg_insnum  (integer, numeric) AS INSERT INTO trg_numeric (id, num) VALUES ($1, $2);
 PREPARE trg_updnum1 (integer, numeric) AS UPDATE trg_numeric SET num = $2 WHERE id = $1;
@@ -174,4 +222,27 @@ SELECT * FROM trg_numeric_s38;
   8 | -0.00000000000000000018446744073709551616
   9 | -0.99999999999999999999999999999999999999
 (9 rows)
+
+/* Test teardown: DDL of the PostgreSQL */
+DROP FOREIGN TABLE trg_numeric;
+DROP FOREIGN TABLE trg_numeric_s0;
+DROP FOREIGN TABLE trg_numeric_s38;
+/* Test teardown: DDL of the Tsurugi */
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE trg_numeric');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE trg_numeric_s0');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE trg_numeric_s38');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
 

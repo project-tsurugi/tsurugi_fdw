@@ -1,3 +1,109 @@
+/* Test setup: DDL of the Tsurugi */
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE udf_table1 (
+        column1 INTEGER NOT NULL PRIMARY KEY
+    )
+');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE wp_table1 (
+        column1 INTEGER NOT NULL PRIMARY KEY
+    )
+');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE wp_table2 (
+        column1 INTEGER NOT NULL PRIMARY KEY
+    )
+');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE ri_table1 (
+        column1 INTEGER NOT NULL PRIMARY KEY
+    )
+');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE ri_table2 (
+        column1 INTEGER NOT NULL PRIMARY KEY
+    )
+');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE re_table1 (
+        column1 INTEGER NOT NULL PRIMARY KEY
+    )
+');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE re_table2 (
+        column1 INTEGER NOT NULL PRIMARY KEY
+    )
+');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE tg_table (
+        column1 INTEGER NOT NULL PRIMARY KEY
+    )
+');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+/* Test setup: DDL of the PostgreSQL */
+CREATE FOREIGN TABLE udf_table1 (
+    column1 INTEGER NOT NULL
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE wp_table1 (
+    column1 INTEGER NOT NULL
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE wp_table2 (
+    column1 INTEGER NOT NULL
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE ri_table1 (
+    column1 INTEGER NOT NULL
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE ri_table2 (
+    column1 INTEGER NOT NULL
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE re_table1 (
+    column1 INTEGER NOT NULL
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE re_table2 (
+    column1 INTEGER NOT NULL
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE tg_table (
+    column1 INTEGER NOT NULL
+) SERVER tsurugidb;
 /* show default option */
 SELECT tg_show_transaction();
              tg_show_transaction              
@@ -2257,3 +2363,61 @@ ERROR:  function tg_rollback() does not exist
 LINE 1: SELECT tg_rollback();
                ^
 HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+/* Test teardown: DDL of the PostgreSQL */
+DROP FOREIGN TABLE udf_table1;
+DROP FOREIGN TABLE wp_table1;
+DROP FOREIGN TABLE wp_table2;
+DROP FOREIGN TABLE ri_table1;
+DROP FOREIGN TABLE ri_table2;
+DROP FOREIGN TABLE re_table1;
+DROP FOREIGN TABLE re_table2;
+DROP FOREIGN TABLE tg_table;
+/* Test teardown: DDL of the Tsurugi */
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE tg_table');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_table1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE wp_table1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE wp_table2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE ri_table1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE ri_table2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE re_table1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE re_table2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+

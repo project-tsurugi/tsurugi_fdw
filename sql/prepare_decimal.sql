@@ -1,6 +1,41 @@
+/* Test setup: DDL of the Tsurugi */
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE trg_numeric (
+        id INTEGER NOT NULL PRIMARY KEY,
+        num NUMERIC(10, 6)
+    )
+');
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE trg_numeric_s0 (
+        id INTEGER NOT NULL PRIMARY KEY,
+        num NUMERIC(38, 0)
+    )
+');
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE trg_numeric_s38 (
+        id INTEGER NOT NULL PRIMARY KEY,
+        num NUMERIC(38, 38)
+    )
+');
+
+/* Test setup: DDL of the PostgreSQL */
+CREATE FOREIGN TABLE trg_numeric (
+    id INTEGER NOT NULL,
+    num NUMERIC(10, 6)
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE trg_numeric_s0 (
+    id INTEGER NOT NULL,
+    num NUMERIC(38, 0)
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE trg_numeric_s38 (
+    id INTEGER NOT NULL,
+    num NUMERIC(38, 38)
+) SERVER tsurugidb;
+
 /* SET DATASTYLE */
 SET datestyle TO ISO, ymd;
 
+/* PREPARE */
 /* Basic Action */
 PREPARE trg_insnum  (integer, numeric) AS INSERT INTO trg_numeric (id, num) VALUES ($1, $2);
 PREPARE trg_updnum1 (integer, numeric) AS UPDATE trg_numeric SET num = $2 WHERE id = $1;
@@ -97,3 +132,13 @@ EXECUTE trg_insval_s38 (97, 0.340282366920938463463374607431768211455);
 EXECUTE trg_insval_s38 (96, 0.340282366920938463463374607431768211456);
 
 SELECT * FROM trg_numeric_s38;
+
+/* Test teardown: DDL of the PostgreSQL */
+DROP FOREIGN TABLE trg_numeric;
+DROP FOREIGN TABLE trg_numeric_s0;
+DROP FOREIGN TABLE trg_numeric_s38;
+
+/* Test teardown: DDL of the Tsurugi */
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE trg_numeric');
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE trg_numeric_s0');
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE trg_numeric_s38');
