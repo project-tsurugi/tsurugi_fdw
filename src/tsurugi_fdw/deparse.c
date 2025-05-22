@@ -1731,8 +1731,9 @@ deparseInsertSql(StringInfo buf, RangeTblEntry *rte,
 				 Index rtindex, Relation rel,
 				 List *targetAttrs, bool doNothing,
 				 List *withCheckOptionList, List *returningList,
-				 List **retrieved_attrs)
+				 List **retrieved_attrs, int *values_end_len)
 {
+	TupleDesc	tupdesc = RelationGetDescr(rel);
 	AttrNumber	pindex;
 	bool		first;
 	ListCell   *lc;
@@ -1764,18 +1765,27 @@ deparseInsertSql(StringInfo buf, RangeTblEntry *rte,
 		first = true;
 		foreach(lc, targetAttrs)
 		{
+			int			attnum = lfirst_int(lc);
+			Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
+
 			if (!first)
 				appendStringInfoString(buf, ", ");
 			first = false;
 
-			appendStringInfo(buf, "$%d", pindex);
-			pindex++;
+			if (attr->attgenerated)
+				appendStringInfoString(buf, "DEFAULT");
+			else
+			{
+				appendStringInfo(buf, ":param%d", pindex);
+				pindex++;
+			}
 		}
 
 		appendStringInfoChar(buf, ')');
 	}
 	else
 		appendStringInfoString(buf, " DEFAULT VALUES");
+	*values_end_len = buf->len;
 
 	if (doNothing)
 		appendStringInfoString(buf, " ON CONFLICT DO NOTHING");
@@ -1830,6 +1840,102 @@ deparseUpdateSql(StringInfo buf, RangeTblEntry *rte,
 						 withCheckOptionList, returningList, retrieved_attrs);
 }
 
+/*
+ * deparse remote UPDATE statement
+ *
+ * 'buf' is the output buffer to append the statement to
+ * 'rtindex' is the RT index of the associated target relation
+ * 'rel' is the relation descriptor for the target relation
+ * 'foreignrel' is the RelOptInfo for the target relation or the join relation
+ *		containing all base relations in the query
+ * 'targetlist' is the tlist of the underlying foreign-scan plan node
+ *		(note that this only contains new-value expressions and junk attrs)
+ * 'targetAttrs' is the target columns of the UPDATE
+ * 'remote_conds' is the qual clauses that must be evaluated remotely
+ * '*params_list' is an output list of exprs that will become remote Params
+ * 'returningList' is the RETURNING targetlist
+ * '*retrieved_attrs' is an output list of integers of columns being retrieved
+ *		by RETURNING (if any)
+ */
+void
+deparseDirectUpdateSql(StringInfo buf, PlannerInfo *root,
+					   Index rtindex, Relation rel,
+					   RelOptInfo *foreignrel,
+					   List *targetlist,
+					   List *targetAttrs,
+					   List *remote_conds,
+					   List **params_list,
+					   List *returningList,
+					   List **retrieved_attrs)
+{
+	deparse_expr_cxt context;
+	int			nestlevel;
+	bool		first;
+	RangeTblEntry *rte = planner_rt_fetch(rtindex, root);
+	ListCell   *lc,
+			   *lc2;
+
+	/* Set up context struct for recursion */
+	context.root = root;
+	context.foreignrel = foreignrel;
+	context.scanrel = foreignrel;
+	context.buf = buf;
+	context.params_list = params_list;
+
+	appendStringInfoString(buf, "UPDATE ");
+	deparseRelation(buf, rel);
+	if (foreignrel->reloptkind == RELOPT_JOINREL)
+		appendStringInfo(buf, " %s%d", REL_ALIAS_PREFIX, rtindex);
+	appendStringInfoString(buf, " SET ");
+
+	/* Make sure any constants in the exprs are printed portably */
+	nestlevel = set_transmission_modes();
+
+	first = true;
+	forboth(lc, targetlist, lc2, targetAttrs)
+	{
+		TargetEntry *tle = lfirst_node(TargetEntry, lc);
+		int			attnum = lfirst_int(lc2);
+
+		/* update's new-value expressions shouldn't be resjunk */
+		Assert(!tle->resjunk);
+
+		if (!first)
+			appendStringInfoString(buf, ", ");
+		first = false;
+
+		deparseColumnRef(buf, rtindex, attnum, rte, false);
+		appendStringInfoString(buf, " = ");
+		deparseExpr((Expr *) tle->expr, &context);
+	}
+
+	reset_transmission_modes(nestlevel);
+
+	if (foreignrel->reloptkind == RELOPT_JOINREL)
+	{
+		List	   *ignore_conds = NIL;
+
+		appendStringInfoString(buf, " FROM ");
+		deparseFromExprForRel(buf, root, foreignrel, true, rtindex,
+							  &ignore_conds, params_list);
+		remote_conds = list_concat(remote_conds, ignore_conds);
+	}
+
+	if (remote_conds)
+	{
+		appendStringInfoString(buf, " WHERE ");
+		appendConditions(remote_conds, &context);
+	}
+
+	if (foreignrel->reloptkind == RELOPT_JOINREL)
+		deparseExplicitTargetList(returningList, true, retrieved_attrs,
+								  &context);
+	else
+		deparseReturningList(buf, rte, rtindex, rel, false,
+							 NIL, returningList, retrieved_attrs);
+}
+
+#if 0
 /*
  * deparse remote UPDATE statement
  *
@@ -1925,6 +2031,7 @@ deparseDirectUpdateSql(StringInfo buf, PlannerInfo *root,
 		deparseReturningList(buf, rte, rtindex, rel, false,
 							 NIL, returningList, retrieved_attrs);
 }
+#endif
 
 /*
  * deparse remote DELETE statement

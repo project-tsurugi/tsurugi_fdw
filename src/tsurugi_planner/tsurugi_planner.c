@@ -114,9 +114,7 @@ tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 
 	switch (parse->commandType)
 	{
-		case CMD_INSERT:
-		case CMD_UPDATE:
-		case CMD_DELETE:
+		case 0:
 		{
 			/* Generates an error if there is a FROM clause in UPDATE or DELETE */
 			if (root->oidlist != NULL && root->oidlist->length > 1 && 
@@ -143,6 +141,9 @@ tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
             }
 			break;
 		}
+		case CMD_INSERT:
+		case CMD_UPDATE:
+		case CMD_DELETE:
 		case CMD_SELECT:
 		default:
 		{
