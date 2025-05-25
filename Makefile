@@ -1,12 +1,12 @@
 # contrib/tsurugi_fdw/Makefile
 
-MODULE_big 	= tsurugi_fdw
-SRCDIR 		= ./src
-C_SRCS 		= $(shell find $(SRCDIR) -name *.c)
-CPP_SRCS	= $(shell find $(SRCDIR) -name *.cpp)
-OBJS 		= $(C_SRCS:.c=.o) $(CPP_SRCS:.cpp=.o)
+MODULE_big = tsurugi_fdw
+SRCDIR     = ./src
+C_SRCS     = $(shell find $(SRCDIR) -name *.c)
+CPP_SRCS   = $(shell find $(SRCDIR) -name *.cpp)
+OBJS       = $(C_SRCS:.c=.o) $(CPP_SRCS:.cpp=.o)
 
-PG_CPPFLAGS	= -Iinclude -I$(libpq_srcdir) -fPIC -O0 -Werror 
+PG_CPPFLAGS = -Iinclude -I$(libpq_srcdir) -fPIC -O0 -Werror 
 PG_CXXFLAGS = -Iinclude/proto \
               -Ithird_party/ogawayama/include \
               -Ithird_party/takatori/include \
@@ -21,30 +21,33 @@ EXTENSION = tsurugi_fdw
 DATA = tsurugi_fdw--1.1.1.sql \
        tsurugi_fdw--1.0.0--1.1.1.sql
 
-# REGRESS_BASIC: variable used in frontend
-REGRESS_BASIC = test_preparation create_table create_index insert_select_happy update_delete select_statements user_management \
-                udf_transaction prepare_statment prepare_select_statment prepare_decimal manual_tutorial create_table_restrict
+# REGRESS_*: variable used in frontend
+REGRESS_PRE   = test_preparation
+REGRESS_BASIC = create_table_happy create_index_happy insert_select_happy update_delete_happy select_statement_happy \
+                user_management_happy udf_transaction_happy prepare_statement_happy prepare_select_statement_happy \
+                prepare_decimal_happy manual_tutorial import_foreign_schema_happy udf_tg_show_tables_happy udf_tg_verify_tables_happy
+REGRESS_EXTRA = create_table_unhappy insert_select_unhappy prepare_decimal_unhappy udf_transaction_unhappy \
+                update_delete_unhappy user_management_unhappy prepare_select_statement_unhappy create_table_restrict \
+                import_foreign_schema_unhappy import_foreign_schema_extra \
+                udf_tg_show_tables_unhappy udf_tg_show_tables_extra udf_tg_verify_tables_unhappy udf_tg_verify_tables_extra
 
-ifdef REGRESS_EXTRA
-	# REGRESS: variable defined in PostgreSQL
-	# REGRESS = $(REGRESS_BASIC) otable_of_constr2
-	REGRESS = $(REGRESS_BASIC)
-else
-	# REGRESS: variable defined in PostgreSQL
-	REGRESS = $(REGRESS_BASIC)
+# REGRESS: variable defined in PostgreSQL
+REGRESS = $(REGRESS_PRE) $(REGRESS_BASIC)
+ifdef REGRESS_ALL
+	REGRESS += $(REGRESS_EXTRA)
 endif
 
 PGFILEDESC = "tsurugi_fdw - foreign data wrapper for Tsurugi"
 
 ifdef USE_PGXS
-        PG_CONFIG = pg_config
-        PGXS := $(shell $(PG_CONFIG) --pgxs)
-        include $(PGXS)
+	PG_CONFIG = pg_config
+	PGXS := $(shell $(PG_CONFIG) --pgxs)
+	include $(PGXS)
 else
-        subdir = contrib/tsurugi_fdw
-        top_builddir = ../../
-        include $(top_builddir)/src/Makefile.global
-        include $(top_srcdir)/contrib/contrib-global.mk
+	subdir = contrib/tsurugi_fdw
+	top_builddir = ../../
+	include $(top_builddir)/src/Makefile.global
+	include $(top_srcdir)/contrib/contrib-global.mk
 endif
 
 install_dependencies:
