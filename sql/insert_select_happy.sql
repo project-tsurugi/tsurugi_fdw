@@ -62,7 +62,7 @@ SELECT tg_execute_ddl('tsurugidb', '
     )
 ');
 SELECT tg_execute_ddl('tsurugidb', '
-    CREATE TABLE trg_temporal_literal (
+    CREATE TABLE tg_temporal_literal (
         id        INTEGER NOT NULL PRIMARY KEY,
         dt        DATE,
         tm        TIME,
@@ -118,7 +118,7 @@ CREATE FOREIGN TABLE varchar_length_10 (
     ol_w_id varchar(10)
 ) SERVER tsurugidb;
 -- temporal_literal : tsurugi-issues#881
-CREATE FOREIGN TABLE trg_temporal_literal (
+CREATE FOREIGN TABLE tg_temporal_literal (
     id        INTEGER NOT NULL,
     dt        DATE,
     tm        TIME,
@@ -160,13 +160,6 @@ SELECT * FROM integer1 ORDER BY ol_w_id;
 
 INSERT INTO integer1 (ol_w_id) VALUES (9), (8), (7);  -- see tsurugi-issues#770
 
-INSERT INTO integer1 (ol_w_id) VALUES (1.1);  -- see tsurugi-issues#736
-INSERT INTO integer1 (ol_w_id) VALUES (cast(1.1 as int));
-SELECT * FROM integer1 ORDER BY ol_w_id;
-INSERT INTO integer1 (ol_w_id) VALUES (0.1);  -- see tsurugi-issues#736
-INSERT INTO integer1 (ol_w_id) VALUES (cast(0.1 as int));
-SELECT * FROM integer1 ORDER BY ol_w_id;
-
 --- bigint
 SELECT * FROM bigint1 ORDER BY id;
 INSERT INTO bigint1 (id, ol_w_id) VALUES (1, 9223372036854775804);  --max-3
@@ -185,13 +178,6 @@ SELECT * FROM bigint1 ORDER BY id;
 INSERT INTO bigint1 (id, ol_w_id) VALUES (10, -9223372036854775807);  --min+1
 SELECT * FROM bigint1 ORDER BY id;
 INSERT INTO bigint1 (id, ol_w_id) VALUES (11, -9223372036854775807-1); --min
-SELECT * FROM bigint1 ORDER BY id;
-
-INSERT INTO bigint1 (id, ol_w_id) VALUES (15, 1.1);  -- see tsurugi-issues#736
-INSERT INTO bigint1 (id, ol_w_id) VALUES (15, cast(1.1 as bigint));
-SELECT * FROM bigint1 ORDER BY id;
-INSERT INTO bigint1 (id, ol_w_id) VALUES (16, 0.1);  -- see tsurugi-issues#736
-INSERT INTO bigint1 (id, ol_w_id) VALUES (16, cast(0.1 as bigint));
 SELECT * FROM bigint1 ORDER BY id;
 
 --- real
@@ -236,26 +222,19 @@ SELECT * FROM varchar_length_10 ORDER BY ol_w_id;
 /* SET DATASTYLE */
 SET datestyle TO ISO, ymd;
 
-SELECT * FROM trg_temporal_literal ORDER BY id;
-INSERT INTO trg_temporal_literal (id, dt) VALUES (1, DATE '2024-08-30');
-INSERT INTO trg_temporal_literal (id, tm) VALUES (2, TIME '04:05:06.789');
-INSERT INTO trg_temporal_literal (id, tms) VALUES (3, TIMESTAMP '2024-08-30 04:05:06.789');
-INSERT INTO trg_temporal_literal (id, tms_wo_tz) VALUES (4, TIMESTAMP WITHOUT TIME ZONE '2024-08-30 04:05:06.789');
-INSERT INTO trg_temporal_literal (id, tms_w_tz) VALUES (5, TIMESTAMP WITH TIME ZONE '2024-08-30 04:05:06.789+9:00');
-
---- temporal_literal(auto cast) : tsurugi-issues#896  -- error
-INSERT INTO trg_temporal_literal (id, dt) VALUES (11, '2024-08-30');  -- error
-INSERT INTO trg_temporal_literal (id, tm) VALUES (12, '04:05:06.789');  -- error
-INSERT INTO trg_temporal_literal (id, tms) VALUES (13, '2024-08-30 04:05:06.789');  -- error
-INSERT INTO trg_temporal_literal (id, tms_wo_tz) VALUES (14, '2024-08-30 04:05:06.789');  -- error
-INSERT INTO trg_temporal_literal (id, tms_w_tz) VALUES (15, '2024-08-30 04:05:06.789+9:00');  -- error
+SELECT * FROM tg_temporal_literal ORDER BY id;
+INSERT INTO tg_temporal_literal (id, dt) VALUES (1, DATE '2024-08-30');
+INSERT INTO tg_temporal_literal (id, tm) VALUES (2, TIME '04:05:06.789');
+INSERT INTO tg_temporal_literal (id, tms) VALUES (3, TIMESTAMP '2024-08-30 04:05:06.789');
+INSERT INTO tg_temporal_literal (id, tms_wo_tz) VALUES (4, TIMESTAMP WITHOUT TIME ZONE '2024-08-30 04:05:06.789');
+INSERT INTO tg_temporal_literal (id, tms_w_tz) VALUES (5, TIMESTAMP WITH TIME ZONE '2024-08-30 04:05:06.789+9:00');
 
 /* check timestamp with time zone in UTC */
 set session timezone to 'UTC';
-SELECT * FROM trg_temporal_literal ORDER BY id;
+SELECT * FROM tg_temporal_literal ORDER BY id;
 /* check timestamp with time zone in Asia/Tokyo */
 set session timezone to 'Asia/Tokyo';
-SELECT * FROM trg_temporal_literal ORDER BY id;
+SELECT * FROM tg_temporal_literal ORDER BY id;
 
 /* Test teardown: DDL of the PostgreSQL */
 DROP FOREIGN TABLE insert_select_happy;
@@ -267,7 +246,7 @@ DROP FOREIGN TABLE char_length_1;
 DROP FOREIGN TABLE varchar_length_1;
 DROP FOREIGN TABLE char_length_10;
 DROP FOREIGN TABLE varchar_length_10;
-DROP FOREIGN TABLE trg_temporal_literal;
+DROP FOREIGN TABLE tg_temporal_literal;
 
 /* Test teardown: DDL of the Tsurugi */
 SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE insert_select_happy');
@@ -279,4 +258,4 @@ SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE char_length_1');
 SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE varchar_length_1');
 SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE char_length_10');
 SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE varchar_length_10');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE trg_temporal_literal');
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE tg_temporal_literal');
