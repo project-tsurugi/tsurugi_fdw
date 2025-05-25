@@ -76,10 +76,6 @@ PREPARE select_t2_c1_c2_seisu
 -- ORDER BY #1
 PREPARE select_t2_orderby1
     AS SELECT * FROM t2_prepare_select_statement ORDER BY c6;
--- ORDER BY #2
-/* failed (10) because of ORDER BY 6 */
-PREPARE select_t2_orderby2
-    AS SELECT c1, c2, c3, c4, c5, c6, c7 FROM t2_prepare_select_statement ORDER BY 6;
 -- ORDER BY #3
 PREPARE select_t2_orderby3
     AS SELECT c1, c4, c5, c6, c7 FROM t2_prepare_select_statement WHERE c1 > 2 ORDER BY c7;
@@ -109,24 +105,14 @@ PREPARE select_t2_where6
 /* tsurugi-issue#1078 (disable due to development) */
 /* PREPARE select_t1_where7
     AS SELECT * FROM t1_prepare_select_statement WHERE c7 LIKE '%LMN%' ORDER BY c1;*/
--- WHERE #8
-/* not support EXISTS failed. (10) */
-PREPARE select_t1_where8
-    AS SELECT * FROM t1_prepare_select_statement WHERE EXISTS (SELECT * FROM t2_prepare_select_statement WHERE c2 = 22) ORDER BY c1;
 -- WHERE #9
 /* tsurugi-issue#70 */
 PREPARE select_t2_where9
     AS SELECT * FROM t2_prepare_select_statement WHERE c4 IN (1.1,3.3) ORDER BY c1;
 -- GROUP BY #1
-/* aggregate functions alias not support failed. (10) */
-PREPARE select_t2_group1_ng
-    AS SELECT count(c1) AS "count(c1)", sum(c2) AS "sum(c2)", c7 FROM t2_prepare_select_statement GROUP BY c7;
 PREPARE select_t2_group1
     AS SELECT count(c1), sum(c2), c7 FROM t2_prepare_select_statement GROUP BY c7 ORDER BY c7;
 -- GROUP BY #2
-/* aggregate functions alias not support failed. (10) */
-PREPARE select_t2_group2_ng1
-    AS SELECT count(c1) AS "count(c1)", sum(c2) AS "sum(c2)", c7 FROM t2_prepare_select_statement GROUP BY c7 HAVING sum(c2) > 55 ORDER BY c7;
 /* having support. (tsurugi-issue#739) */
 PREPARE select_t2_group2
     AS SELECT count(c1), sum(c2), c7 FROM t2_prepare_select_statement GROUP BY c7 HAVING sum(c2) > 55 ORDER BY c7;
@@ -138,10 +124,6 @@ PREPARE select_t2_group3_exe_ng1
 -- TG JOIN #1
 PREPARE select_join1
     AS SELECT * FROM t1_prepare_select_statement a INNER JOIN t2_prepare_select_statement b ON a.c1 = b.c1 WHERE b.c1 > 1 ORDER BY a.c1;
--- TG JOIN #2
-/* failed (10) : mismatched input 'USING' */
-PREPARE select_join2
-    AS SELECT a.c1, a.c2, b.c1, b.c7 FROM t1_prepare_select_statement a INNER JOIN t2_prepare_select_statement b USING (c1) ORDER BY b.c4 DESC;
 -- TG JOIN #3
 PREPARE select_join3
     AS SELECT a.c1, a.c3, b.c1, b.c6 FROM t1_prepare_select_statement a INNER JOIN t2_prepare_select_statement b ON a.c1 != b.c1 ORDER BY a.c1;
