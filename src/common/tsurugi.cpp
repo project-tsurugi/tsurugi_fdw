@@ -58,6 +58,8 @@ PG_MODULE_MAGIC;
 StubPtr Tsurugi::stub_ = nullptr;
 ConnectionPtr Tsurugi::connection_ = nullptr;
 TransactionPtr Tsurugi::transaction_ = nullptr;
+ResultSetPtr Tsurugi::result_set_ = nullptr;
+MetadataPtr Tsurugi::metadata_ = nullptr;
 
 bool GetTransactionOption(boost::property_tree::ptree&);
 bool IsTransactionProgress();
@@ -100,6 +102,8 @@ ERROR_CODE Tsurugi::init()
 {
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
 
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
     if (stub_ == nullptr)
 	{
         std::string shared_memory_name(get_shared_memory_name());
@@ -111,8 +115,8 @@ ERROR_CODE Tsurugi::init()
 		if (error != ERROR_CODE::OK) 
         {
             stub_ = nullptr;
-            elog(ERROR, "Failed to make the ogawayama-stub. (error: %d)",
-                (int) error);
+            elog(ERROR, "Failed to make the ogawayama-stub. (error: %d, %s)",
+                (int) error, stub::error_name(error).data());
 		}
 		elog(LOG, "make_stub() succeeded. (name: %s)",
             shared_memory_name.c_str());
@@ -126,8 +130,14 @@ ERROR_CODE Tsurugi::init()
 		if (error != ERROR_CODE::OK)
 		{
             connection_ = nullptr;
-            elog(ERROR, "Failed to connect to Tsurugi. (error: %d)",
-                (int) error);
+#if 0
+			elog(ERROR, "Failed to connect to Tsurugi. (error: %d, %s)\n%s",
+                (int) error, stub::error_name(error).data(), 
+				get_error_message(error).c_str());
+#else
+			Tsurugi::log(ERROR, "Failed to connect to Tsurugi. (error: %d, %s)\n%s",
+						error, stub::error_name(error), Tsurugi::get_error_message(error));
+#endif
 		}
         elog(LOG, "Stub::get_connection() succeeded. (pid: %d)", getpid());
 	}
@@ -140,6 +150,8 @@ ERROR_CODE Tsurugi::init()
  */
 ERROR_CODE Tsurugi::get_connection(stub::Connection** connection) 
 {
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
     ERROR_CODE error = init();
     if (error == ERROR_CODE::OK)
     {
@@ -155,6 +167,8 @@ ERROR_CODE Tsurugi::prepare(std::string_view sql,
 	stub::placeholders_type& placeholders, PreparedStatementPtr& prepared_statement)
 {
     ERROR_CODE error = ERROR_CODE::UNKNOWN;
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
     if (connection_ == nullptr)
     {
@@ -178,7 +192,7 @@ ERROR_CODE Tsurugi::prepare(std::string_view sql,
 
 /*
  * 	preapre
- *		Prepare the statement with the name to Tsurgui.
+ *		Prepare the statement with name to Tsurgui.
  */
 ERROR_CODE Tsurugi::prepare(std::string_view prep_name, std::string_view statement,
 						ogawayama::stub::placeholders_type& placeholders)
@@ -198,7 +212,7 @@ ERROR_CODE Tsurugi::prepare(std::string_view prep_name, std::string_view stateme
 		return ERROR_CODE::INVALID_PARAMETER;
 	}
 
-	elog(LOG, "Attempt to call Connection::prepare(). name: %s, statement:\n%s", 
+	elog(LOG, "Attempt to call Connection::prepare(). name: %s, \nstatement:\n%s", 
 		prep_name.data(), statement.data());
 	//	Prepare the statement.
 	PreparedStatementPtr pstmt{};
@@ -217,18 +231,21 @@ ERROR_CODE Tsurugi::prepare(std::string_view prep_name, std::string_view stateme
 
 /*
  *	prepare
- *		Prepare the statement without the name to Tsurugi.
+ *		Prepare the statement without name to Tsurugi.
  */
 ERROR_CODE Tsurugi::prepare(std::string_view statement,
 	            	ogawayama::stub::placeholders_type& placeholders)
 {
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
 
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
     if (connection_ == nullptr)
 		Tsurugi::init();
-
 #if 1
 	Tsurugi::deallocate();
+	elog(LOG, "Attempt to call Connection::prepare().\nstatement: \n%s", 
+		statement.data());
 	//	Preapre the statement.
 	error = connection_->prepare(statement, placeholders, prepared_statement_);
 	elog(LOG, "Connection::prepare() is done. (error: %d: %s)", 
@@ -249,19 +266,15 @@ ERROR_CODE Tsurugi::prepare(std::string_view statement,
 	return error;
 }
 
+/*
+ *	dealocate
+ *		Deallocate a preapared statement.
+ */
 ERROR_CODE Tsurugi::deallocate(std::string_view prep_name)
 {
 	ERROR_CODE error = ERROR_CODE::OK;
 
-	/*
-	auto ret = prepared_statements_.erase(prep_name.data());
-	if (ret == 0)
-	{
-		elog(WARNING, "Prepared statement \"%s\" does not exist.", 
-			prep_name.data());
-		error = ERROR_CODE::INVALID_PARAMETER;
-	}
-	*/
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	auto ite = prepared_statements_.find(prep_name.data());
 	if (ite != prepared_statements_.end())
@@ -280,8 +293,14 @@ ERROR_CODE Tsurugi::deallocate(std::string_view prep_name)
 	return error;
 }
 
+/*
+ *	dealocate
+ *		Deallocate a unnamed preapared statement.
+ */
 void Tsurugi::deallocate()
 {
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
 	prepared_statement_ = nullptr;
 }
 
@@ -291,6 +310,8 @@ void Tsurugi::deallocate()
 ERROR_CODE Tsurugi::start_transaction()
 {
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	if (IsTransactionProgress()) {
 	    elog(LOG, "there is tsurugi transaction block in progress.");
@@ -317,11 +338,48 @@ ERROR_CODE Tsurugi::start_transaction()
 
 /*
  * execute_query
+ * 	Execute the query.
+ */
+ERROR_CODE Tsurugi::execute_query(std::string_view query)
+{
+    ERROR_CODE error = ERROR_CODE::UNKNOWN;
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
+    result_set_ = nullptr;
+	if (prepared_statement.get() != nullptr) {
+	    elog(DEBUG1, "Attempt to call Transaction::execute_query(prepared_statement). \n%s",
+	        query.data());
+	    error = transaction_->execute_query(prepared_statement, parameters, result_set_);
+	} else {
+	    elog(DEBUG1, "Attempt to call Transaction::execute_query(query). \n%s",
+	        query.data());
+	    error = transaction_->execute_query(query, result_set_);
+	}
+
+    elog(LOG, "execute_query() done. (error: %d, %s)", 
+		(int) error, stub::error_name(error).data());
+
+    if (error != ERROR_CODE::OK) {
+        if (stmts_name.size() != 0) {
+            stored_prepare_statment[stmts_name] = std::move(prepared_statement);
+            stmts_name = {};
+            parameters = {};
+        }
+    }
+
+    return error;
+}
+
+/*
+ * execute_query
  */
 ERROR_CODE 
 Tsurugi::execute_query(std::string_view query, ResultSetPtr& result_set)
 {
     ERROR_CODE error = ERROR_CODE::UNKNOWN;
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
     result_set = nullptr;
 	if (prepared_statement.get() != nullptr) {
@@ -350,12 +408,14 @@ Tsurugi::execute_query(std::string_view query, ResultSetPtr& result_set)
 
 /*
  * execute_statement
- *		execute the prepared statement.
+ *		execute the SQL statement.
  */
 ERROR_CODE 
 Tsurugi::execute_statement(std::string_view statement, std::size_t& num_rows)
 {
     ERROR_CODE error = ERROR_CODE::UNKNOWN;
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
     if (transaction_ != nullptr)
     {
@@ -365,7 +425,8 @@ Tsurugi::execute_statement(std::string_view statement, std::size_t& num_rows)
 	        error = transaction_->execute_statement(
 						prepared_statement, parameters, num_rows);
 		} else {
-	        elog(DEBUG1, "tsurugi_fdw : Attempt to execute Transaction::execute_statement(). \n%s",
+	        elog(LOG, 
+				"tsurugi_fdw : Attempt to execute Transaction::execute_statement(). \n%s",
 	            statement.data());
 			// Execute the statement.
 	        error = transaction_->execute_statement(statement, num_rows);
@@ -401,6 +462,8 @@ Tsurugi::execute_statement(std::string_view prep_name,
 {
     ERROR_CODE error = ERROR_CODE::UNKNOWN;
 
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
     if (transaction_ != nullptr)
     {
 		// find prepared object.
@@ -412,10 +475,40 @@ Tsurugi::execute_statement(std::string_view prep_name,
 			return ERROR_CODE::INVALID_PARAMETER;
 		}
 
-		elog(DEBUG1, "tsurugi_fdw : Attempt to call Transaction::execute_statement. " \
-			"name: %s)", ite->first.data());	
+		elog(LOG, "tsurugi_fdw : Attempt to call Transaction::execute_statement. " \
+			"name: %s", ite->first.data());
 		// Execute the statement.
 		error = transaction_->execute_statement(ite->second, params, num_rows);
+		elog(LOG, "execute_statement() is done. (error: %d: %s)", 
+			(int) error, stub::error_name(error).data());
+	}
+    else
+    {
+        elog(WARNING, "tsurugi_fdw : there is no transaction in progress.");
+      	error = ERROR_CODE::NO_TRANSACTION;
+    }
+
+    return error;
+}
+
+/*
+ * execute_statement 
+ *		Execute the unnamed preapred statement.
+ */
+ERROR_CODE 
+Tsurugi::execute_statement(ogawayama::stub::parameters_type& params, 
+							std::size_t& num_rows)
+{
+    ERROR_CODE error = ERROR_CODE::UNKNOWN;
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
+    if (transaction_ != nullptr)
+    {
+		Tsurugi::deallocate();
+		elog(DEBUG1, "tsurugi_fdw : Attempt to call Transaction::execute_statement.");	
+		// Execute the statement.
+		error = transaction_->execute_statement(prepared_statement_, params, num_rows);
 		elog(LOG, "execute_statement() is done. (error: %d: %s)", 
 			(int) error, stub::error_name(error).data());
 	}
@@ -434,6 +527,8 @@ Tsurugi::execute_statement(std::string_view prep_name,
 ERROR_CODE Tsurugi::commit()
 {
     ERROR_CODE error = ERROR_CODE::UNKNOWN;
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	if (IsTransactionProgress()) {
 	    elog(LOG, "there is tsurugi transaction block in progress.");
@@ -464,6 +559,8 @@ ERROR_CODE Tsurugi::commit()
 ERROR_CODE Tsurugi::rollback()
 {
     ERROR_CODE error = ERROR_CODE::UNKNOWN;
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	if (IsTransactionProgress()) {
 	    elog(LOG, "there is tsurugi transaction block in progress.");
@@ -717,6 +814,14 @@ std::string Tsurugi::get_error_message(ERROR_CODE error_code)
 	}
 
 	return message;
+}
+
+void 
+Tsurugi::log(int level, std::string_view message, ERROR_CODE error, 
+			std::string_view error_name, std::string_view error_detail)
+{
+	elog(level, message.data(), (int) error, error_name.data(), 
+		error_detail.data());
 }
 
 ogawayama::stub::Metadata::ColumnType::Type 

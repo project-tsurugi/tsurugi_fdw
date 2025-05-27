@@ -49,18 +49,30 @@ public:
 	static ERROR_CODE deallocate(std::string_view prep_name);
     static void deallocate();
     static ERROR_CODE start_transaction();
+    static ERROR_CODE execute_query(std::string_view query);
     static ERROR_CODE execute_query(std::string_view query, 
                                     ResultSetPtr& result_set);
-    static ERROR_CODE execute_statement(std::string_view statement, std::size_t& num_rows);
+    static ERROR_CODE execute_statement(std::string_view statement, 
+                                        std::size_t& num_rows);
     static ERROR_CODE execute_statement(std::string_view prep_name, 
                                         ogawayama::stub::parameters_type& params, 
+                                        std::size_t& num_rows);
+    static ERROR_CODE execute_statement(ogawayama::stub::parameters_type& params, 
                                         std::size_t& num_rows);
     static ERROR_CODE commit();
     static ERROR_CODE rollback();
 
+    static void init_result_set() { result_set_ = nullptr; }
+    static ResultSetPtr get_result_set() { return result_set_; }
+    static ERROR_CODE result_set_next() { return result_set_->next(); }
+    static void init_metadata() { metadata_ = nullptr; }
+    static MetadataPtr get_metadata() { return metadata_; }
+
     static ERROR_CODE tsurugi_error(ogawayama::stub::tsurugi_error_code& code);
     static std::string get_error_detail(ERROR_CODE error);
     static std::string get_error_message(ERROR_CODE error_code);
+    static void log(int level, std::string_view message, ERROR_CODE error,
+        std::string_view error_name, std::string_view error_detail);
 
     static ERROR_CODE get_list_tables(TableListPtr& table_list);
     static ERROR_CODE get_table_metadata(std::string_view table_name, 
@@ -86,6 +98,8 @@ private:
 	static TransactionPtr transaction_;
     static std::unordered_map<std::string, PreparedStatementPtr> prepared_statements_;
     static PreparedStatementPtr prepared_statement_;
+    static ResultSetPtr result_set_;
+    static MetadataPtr metadata_;
 
     static ogawayama::stub::timestamptz_type convert_timestamptz_to_tg(Datum value);
     static takatori::decimal::triple convert_decimal_to_tg(Datum value);

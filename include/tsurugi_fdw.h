@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 Project Tsurugi.
+ * Copyright 2019-2025 Project Tsurugi.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@
 extern "C" {
 #endif
 #include "foreign/foreign.h"
+#include "funcapi.h"
 #include "lib/stringinfo.h"
 #include "nodes/execnodes.h"
 #include "nodes/pathnodes.h"
@@ -34,11 +35,147 @@ extern "C" {
 
 /* Planning Flag */
 #define __TSURUGI_PLANNER__
+#if 0
+/*
+ *	@brief	FDW status for each query execution
+ */
+typedef struct tsurugiFdwState
+{
+	const char* 	query_string;		/* SQL Query Text */
+    Relation        rel;                /* relcache entry for the foreign table */
+    TupleDesc       tupdesc;            /* tuple descriptor of scan */
+    AttInMetadata*  attinmeta;          /* attribute datatype conversion */
+    List*           retrieved_attrs;    /* list of target attribute numbers */
+
+	bool 			cursor_exists;		/* have we created the cursor? */
+    int             numParams;          /* number of parameters passed to query */
+    FmgrInfo*       param_flinfo;       /* output conversion functions for them */
+    List*           param_exprs;        /* executable expressions for param values */
+    const char**    param_values;       /* textual values of query parameters */
+    Oid*            param_types;        /* type of query parameters */
+
+	size_t 			number_of_columns;	/* Number of columns to SELECT */
+	Oid* 			column_types; 		/* Pointer to the data type (Oid) of the column to be SELECT */
+
+    int             p_nums;             /* number of parameters to transmit */
+    FmgrInfo*       p_flinfo;           /* output conversion functions for them */
+
+    /* batch operation stuff */
+    int             num_slots;          /* number of slots to insert */
+
+    List*           attr_list;          /* query attribute list */
+    List*           column_list;        /* Column list of Tsurugi Column structres */
+
+    size_t          row_nums;           /* number of rows */
+    Datum**         rows;               /* all rows of scan */
+    size_t          rowidx;             /* current index of rows */
+    bool**          rows_isnull;        /* is null*/
+    bool            for_update;         /* true if this scan is update target */
+    int             batch_size;         /* value of FDW option "batch_size" */
+
+	size_t			num_tuples;         /* # of tuples in array */
+	size_t			next_tuple;         /* index of next one to return */
+	std::vector<TupleTableSlot*>    tuples;
+	decltype(tuples)::iterator      tuple_ite;
+
+	bool			eof_reached;        /* true if last fetch reached EOF */
+} tsurugiFdwState;
+#endif
+/*
+ * Tsurugi-FDW Foreign Scan State
+ */
+typedef struct TgFdwForeignScanState
+{
+	const char* 	query_string;		/* SQL Query Text */
+    Relation        rel;                /* relcache entry for the foreign table */
+    TupleDesc       tupdesc;            /* tuple descriptor of scan */
+    AttInMetadata*  attinmeta;          /* attribute datatype conversion */
+    List*           retrieved_attrs;    /* list of target attribute numbers */
+
+	bool 			cursor_exists;		/* have we created the cursor? */
+//    int             numParams;          /* number of parameters passed to query */
+//    FmgrInfo*       param_flinfo;       /* output conversion functions for them */
+//    List*           param_exprs;        /* executable expressions for param values */
+//    const char**    param_values;       /* textual values of query parameters */
+//    Oid*            param_types;        /* type of query parameters */
+
+	size_t 			number_of_columns;	/* Number of columns to SELECT */
+	Oid* 			column_types; 		/* Pointer to the data type (Oid) of the column to be SELECT */
+
+//    int             p_nums;             /* number of parameters to transmit */
+//    FmgrInfo*       p_flinfo;           /* output conversion functions for them */
+
+    /* batch operation stuff */
+//    int             num_slots;          /* number of slots to insert */
+
+//    List*           attr_list;          /* query attribute list */
+//    List*           column_list;        /* Column list of Tsurugi Column structres */
+
+//    size_t          row_nums;           /* number of rows */
+//    Datum**         rows;               /* all rows of scan */
+    size_t          rowidx;             /* current index of rows */
+//    bool**          rows_isnull;        /* is null*/
+//    bool            for_update;         /* true if this scan is update target */
+//    int             batch_size;         /* value of FDW option "batch_size" */
+
+	size_t			num_tuples;         /* # of tuples in array */
+//	size_t			next_tuple;         /* index of next one to return */
+//	std::vector<TupleTableSlot*>    tuples;
+//	decltype(tuples)::iterator      tuple_ite;
+
+	bool			eof_reached;        /* true if last fetch reached EOF */
+
+    bool                success;
+} TgFdwForeignScanState;
 
 /*
- * Note: Diverted from postgres_fdw
+ * Tsurugi-FDW Foreign Modify State
  */
-typedef struct tsurugi_fdw_relation_info_
+typedef struct TgFdwForeignModifyState
+{
+	Relation	rel;			/* relcache entry for the foreign table */
+	AttInMetadata *attinmeta;	/* attribute datatype conversion metadata */
+
+	/* for remote query execution */
+	char	   *prep_name;		/* name of prepared statement, if created */
+
+	/* extracted fdw_private data */
+	char	   *query;			/* text of INSERT/UPDATE/DELETE command */
+	char	   *orig_query;		/* original text of INSERT command */
+	List	   *target_attrs;	/* list of target attribute numbers */
+	int			values_end;		/* length up to the end of VALUES */
+	int			batch_size;		/* value of FDW option "batch_size" */
+	bool		has_returning;	/* is there a RETURNING clause? */
+	List	   *retrieved_attrs;	/* attr numbers retrieved by RETURNING */
+
+	/* info about parameters for prepared statement */
+	AttrNumber	ctidAttno;		/* attnum of input resjunk ctid column */
+	int			p_nums;			/* number of parameters to transmit */
+	FmgrInfo   *p_flinfo;		/* output conversion functions for them */
+
+	/* batch operation stuff */
+	int			num_slots;		/* number of slots to insert */
+
+	/* working memory context */
+	MemoryContext temp_cxt;		/* context for per-tuple temporary data */
+
+	/* for update row movement if subplan result rel */
+	struct TgFdwForeignModifyState *aux_fmstate;	/* foreign-insert state, if
+											 	 	 * created */
+} TgFdwForeignModifyState;
+
+ /*
+ * Tsurugi-FDW Direct Modify State
+ */
+typedef struct TgFdwDirectModifyState
+{
+
+} TgFdwDirectModifyState;
+
+/*
+ * 
+ */
+typedef struct TgFdwRelationInfo
 {
 	/*
 	 * True means that the relation can be pushed down. Always true for simple

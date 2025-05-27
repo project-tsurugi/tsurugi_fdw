@@ -29,7 +29,33 @@ extern "C" {
 }
 #endif
 
-std::string make_tsurugi_query(std::string_view query_string);
-Datum tsurugi_convert_to_pg(Oid pgtype, ResultSetPtr result_set);
+#include "tsurugi_fdw.h"
 
+std::string make_tsurugi_query(std::string_view query_string);
+// Datum tsurugi_convert_to_pg(Oid pgtype, ResultSetPtr result_set);
+
+void make_tuple_from_result_row(ResultSetPtr result_set, 
+                                        TupleDesc tupleDescriptor,
+                                        List* retrieved_attrs,
+                                        Datum* row,
+                                        bool* is_null,
+                                        TgFdwForeignScanState* fsstate);
+
+TgFdwForeignModifyState *create_foreign_modify(EState *estate,
+											   RangeTblEntry *rte,
+											   ResultRelInfo *resultRelInfo,
+											   CmdType operation,
+											   Plan *subplan,
+											   char *query,
+											   List *target_attrs,
+											   int len,
+											   bool has_returning,
+											   List *retrieved_attrs);
+											   
+TupleTableSlot **execute_foreign_modify(EState *estate,
+					   							ResultRelInfo *resultRelInfo,
+					   							CmdType operation,
+					   							TupleTableSlot **slots,
+					   							TupleTableSlot **planSlots,
+					   							int *numSlots);
 #endif  //TSURUGI_UTILS_H
