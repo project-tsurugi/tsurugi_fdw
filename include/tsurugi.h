@@ -71,9 +71,17 @@ public:
     static ERROR_CODE tsurugi_error(ogawayama::stub::tsurugi_error_code& code);
     static std::string get_error_detail(ERROR_CODE error);
     static std::string get_error_message(ERROR_CODE error_code);
+    static void log2(int level, std::string_view message, ERROR_CODE error);
+    static void log3(int level, std::string_view message, ERROR_CODE error);
     static void log(int level, std::string_view message, ERROR_CODE error,
-        std::string_view error_name, std::string_view error_detail);
-
+            std::string_view error_name) {
+	    elog(level, message.data(), (int) error, error_name.data());
+    }
+    static void log(int level, std::string_view message, ERROR_CODE error, 
+			std::string_view error_name, std::string_view error_detail) {
+	    elog(level, message.data(), (int) error, error_name.data(), 
+		    error_detail.data());
+    }
     static ERROR_CODE get_list_tables(TableListPtr& table_list);
     static ERROR_CODE get_table_metadata(std::string_view table_name, 
             TableMetadataPtr& table_metadata);
