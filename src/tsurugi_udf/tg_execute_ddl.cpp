@@ -105,8 +105,13 @@ tg_execute_ddl(PG_FUNCTION_ARGS)
 
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
 
-	ogawayama::stub::Transaction* transaction;
-	error = Tsurugi::begin(&transaction);
+	error = Tsurugi::init();
+	if (error != ERROR_CODE::OK) {
+		ereport(ERROR, (errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
+						errmsg("%s", Tsurugi::get_error_message(error).c_str())));
+	}
+
+	error = Tsurugi::start_transaction();
 	if (error != ERROR_CODE::OK) {
 		ereport(ERROR, (errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
 						errmsg("%s", Tsurugi::get_error_message(error).c_str())));
