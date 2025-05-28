@@ -1,0 +1,782 @@
+/* Test case: 1-1-1 */
+-- Test
+SELECT tg_show_tables('tg_schema', 'tsurugidb', 'summary', true);
+            tg_show_tables             
+---------------------------------------
+ {                                    +
+     "remote_schema": {               +
+         "remote_schema": "tg_schema",+
+         "server_name": "tsurugidb",  +
+         "mode": "summary",           +
+         "tables_on_remote_schema": { +
+             "count": 0               +
+         }                            +
+     }                                +
+ }
+(1 row)
+
+/* Test case: 1-1-2 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test
+SELECT tg_show_tables('tg_schema', 'tsurugidb', 'summary', true);
+            tg_show_tables             
+---------------------------------------
+ {                                    +
+     "remote_schema": {               +
+         "remote_schema": "tg_schema",+
+         "server_name": "tsurugidb",  +
+         "mode": "summary",           +
+         "tables_on_remote_schema": { +
+             "count": 1               +
+         }                            +
+     }                                +
+ }
+(1 row)
+
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 1-1-3 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test
+SELECT tg_show_tables('tg_schema', 'tsurugidb', 'summary', true);
+            tg_show_tables             
+---------------------------------------
+ {                                    +
+     "remote_schema": {               +
+         "remote_schema": "tg_schema",+
+         "server_name": "tsurugidb",  +
+         "mode": "summary",           +
+         "tables_on_remote_schema": { +
+             "count": 2               +
+         }                            +
+     }                                +
+ }
+(1 row)
+
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 1-2-1 */
+-- Test
+SELECT tg_show_tables('tg_schema', 'tsurugidb', 'summary', false);
+                                                          tg_show_tables                                                          
+----------------------------------------------------------------------------------------------------------------------------------
+ {"remote_schema":{"remote_schema":"tg_schema","server_name":"tsurugidb","mode":"summary","tables_on_remote_schema":{"count":0}}}
+(1 row)
+
+/* Test case: 1-2-2 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test
+SELECT tg_show_tables('tg_schema', 'tsurugidb', 'summary', false);
+                                                          tg_show_tables                                                          
+----------------------------------------------------------------------------------------------------------------------------------
+ {"remote_schema":{"remote_schema":"tg_schema","server_name":"tsurugidb","mode":"summary","tables_on_remote_schema":{"count":1}}}
+(1 row)
+
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 1-2-3 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test
+SELECT tg_show_tables('tg_schema', 'tsurugidb', 'summary', false);
+                                                          tg_show_tables                                                          
+----------------------------------------------------------------------------------------------------------------------------------
+ {"remote_schema":{"remote_schema":"tg_schema","server_name":"tsurugidb","mode":"summary","tables_on_remote_schema":{"count":2}}}
+(1 row)
+
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 2-1-1 */
+-- Test
+SELECT tg_show_tables('tg_schema', 'tsurugidb', 'detail', true);
+            tg_show_tables             
+---------------------------------------
+ {                                    +
+     "remote_schema": {               +
+         "remote_schema": "tg_schema",+
+         "server_name": "tsurugidb",  +
+         "mode": "detail",            +
+         "tables_on_remote_schema": { +
+             "count": 0,              +
+             "list": []               +
+         }                            +
+     }                                +
+ }
+(1 row)
+
+/* Test case: 2-1-2 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test
+SELECT tg_show_tables('tg_schema', 'tsurugidb', 'detail', true);
+            tg_show_tables             
+---------------------------------------
+ {                                    +
+     "remote_schema": {               +
+         "remote_schema": "tg_schema",+
+         "server_name": "tsurugidb",  +
+         "mode": "detail",            +
+         "tables_on_remote_schema": { +
+             "count": 1,              +
+             "list": [                +
+                 "udf_test_table_1"   +
+             ]                        +
+         }                            +
+     }                                +
+ }
+(1 row)
+
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 2-1-3 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test
+SELECT tg_show_tables('tg_schema', 'tsurugidb', 'detail', true);
+            tg_show_tables             
+---------------------------------------
+ {                                    +
+     "remote_schema": {               +
+         "remote_schema": "tg_schema",+
+         "server_name": "tsurugidb",  +
+         "mode": "detail",            +
+         "tables_on_remote_schema": { +
+             "count": 2,              +
+             "list": [                +
+                 "udf_test_table_1",  +
+                 "udf_test_table_2"   +
+             ]                        +
+         }                            +
+     }                                +
+ }
+(1 row)
+
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 2-2-1 */
+-- Test
+SELECT tg_show_tables('tg_schema', 'tsurugidb', 'detail', false);
+                                                              tg_show_tables                                                               
+-------------------------------------------------------------------------------------------------------------------------------------------
+ {"remote_schema":{"remote_schema":"tg_schema","server_name":"tsurugidb","mode":"detail","tables_on_remote_schema":{"count":0,"list":[]}}}
+(1 row)
+
+/* Test case: 2-2-2 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test
+SELECT tg_show_tables('tg_schema', 'tsurugidb', 'detail', false);
+                                                                       tg_show_tables                                                                        
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"remote_schema":{"remote_schema":"tg_schema","server_name":"tsurugidb","mode":"detail","tables_on_remote_schema":{"count":1,"list":["udf_test_table_1"]}}}
+(1 row)
+
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 2-2-3 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test
+SELECT tg_show_tables('tg_schema', 'tsurugidb', 'detail', false);
+                                                                                 tg_show_tables                                                                                 
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"remote_schema":{"remote_schema":"tg_schema","server_name":"tsurugidb","mode":"detail","tables_on_remote_schema":{"count":2,"list":["udf_test_table_1","udf_test_table_2"]}}}
+(1 row)
+
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 3-1-1 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test
+SELECT tg_show_tables('invalid_schema', 'tsurugidb', 'detail', true);
+               tg_show_tables               
+--------------------------------------------
+ {                                         +
+     "remote_schema": {                    +
+         "remote_schema": "invalid_schema",+
+         "server_name": "tsurugidb",       +
+         "mode": "detail",                 +
+         "tables_on_remote_schema": {      +
+             "count": 2,                   +
+             "list": [                     +
+                 "udf_test_table_1",       +
+                 "udf_test_table_2"        +
+             ]                             +
+         }                                 +
+     }                                     +
+ }
+(1 row)
+
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 3-2-1 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE SERVER other_server FOREIGN DATA WRAPPER tsurugi_fdw;
+-- Test
+SELECT tg_show_tables('tg_schema', 'other_server', 'detail', true);
+             tg_show_tables             
+----------------------------------------
+ {                                     +
+     "remote_schema": {                +
+         "remote_schema": "tg_schema", +
+         "server_name": "other_server",+
+         "mode": "detail",             +
+         "tables_on_remote_schema": {  +
+             "count": 2,               +
+             "list": [                 +
+                 "udf_test_table_1",   +
+                 "udf_test_table_2"    +
+             ]                         +
+         }                             +
+     }                                 +
+ }
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP SERVER other_server;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 3-2-3 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE SERVER "Tsurugidb" FOREIGN DATA WRAPPER tsurugi_fdw;
+-- Test
+SELECT tg_show_tables('tg_schema', 'tsurugidb', 'detail', true);
+            tg_show_tables             
+---------------------------------------
+ {                                    +
+     "remote_schema": {               +
+         "remote_schema": "tg_schema",+
+         "server_name": "tsurugidb",  +
+         "mode": "detail",            +
+         "tables_on_remote_schema": { +
+             "count": 1,              +
+             "list": [                +
+                 "udf_test_table_1"   +
+             ]                        +
+         }                            +
+     }                                +
+ }
+(1 row)
+
+SELECT tg_show_tables('tg_schema', 'Tsurugidb', 'detail', true);
+            tg_show_tables             
+---------------------------------------
+ {                                    +
+     "remote_schema": {               +
+         "remote_schema": "tg_schema",+
+         "server_name": "Tsurugidb",  +
+         "mode": "detail",            +
+         "tables_on_remote_schema": { +
+             "count": 1,              +
+             "list": [                +
+                 "udf_test_table_1"   +
+             ]                        +
+         }                            +
+     }                                +
+ }
+(1 row)
+
+SELECT tg_show_tables('tg_schema', 'TSURUGIDB', 'detail', true);
+ERROR:  server "TSURUGIDB" does not exist
+-- Test teardown: DDL of the PostgreSQL
+DROP SERVER "Tsurugidb";
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 3-3-1 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test
+SELECT tg_show_tables('tg_schema', 'tsurugidb', 'Summary', false);
+                                                          tg_show_tables                                                          
+----------------------------------------------------------------------------------------------------------------------------------
+ {"remote_schema":{"remote_schema":"tg_schema","server_name":"tsurugidb","mode":"summary","tables_on_remote_schema":{"count":1}}}
+(1 row)
+
+SELECT tg_show_tables('tg_schema', 'tsurugidb', 'SUMMARY', false);
+                                                          tg_show_tables                                                          
+----------------------------------------------------------------------------------------------------------------------------------
+ {"remote_schema":{"remote_schema":"tg_schema","server_name":"tsurugidb","mode":"summary","tables_on_remote_schema":{"count":1}}}
+(1 row)
+
+SELECT tg_show_tables('tg_schema', 'tsurugidb', 'Detail', false);
+                                                                       tg_show_tables                                                                        
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"remote_schema":{"remote_schema":"tg_schema","server_name":"tsurugidb","mode":"detail","tables_on_remote_schema":{"count":1,"list":["udf_test_table_1"]}}}
+(1 row)
+
+SELECT tg_show_tables('tg_schema', 'tsurugidb', 'DETAIL', false);
+                                                                       tg_show_tables                                                                        
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"remote_schema":{"remote_schema":"tg_schema","server_name":"tsurugidb","mode":"detail","tables_on_remote_schema":{"count":1,"list":["udf_test_table_1"]}}}
+(1 row)
+
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 4-1-1 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_3 (id DECIMAL, schedule TIMESTAMP)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test
+SELECT tg_show_tables('tg_schema', 'tsurugidb', 'summary', true)->'remote_schema'->'tables_on_remote_schema'->'count';
+ ?column? 
+----------
+ 3
+(1 row)
+
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_3');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 4-1-2 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_3 (id DECIMAL, schedule TIMESTAMP)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test
+SELECT tg_show_tables('tg_schema', 'tsurugidb', 'summary', false)->'remote_schema'->'tables_on_remote_schema'->'count';
+ ?column? 
+----------
+ 3
+(1 row)
+
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_3');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 4-2-1 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_3 (id DECIMAL, schedule TIMESTAMP)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test
+SELECT tg_show_tables('tg_schema', 'tsurugidb', 'detail', true)->'remote_schema'->'tables_on_remote_schema'->'list';
+              ?column?               
+-------------------------------------
+ [                                  +
+                 "udf_test_table_1",+
+                 "udf_test_table_2",+
+                 "udf_test_table_3" +
+             ]
+(1 row)
+
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_3');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 4-2-2 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_3 (id DECIMAL, schedule TIMESTAMP)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test
+SELECT tg_show_tables('tg_schema', 'tsurugidb', 'detail', false)->'remote_schema'->'tables_on_remote_schema'->'list';
+                          ?column?                          
+------------------------------------------------------------
+ ["udf_test_table_1","udf_test_table_2","udf_test_table_3"]
+(1 row)
+
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_3');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 5-3-1 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test
+SELECT tg_show_tables('tg_schema', 'tsurugidb');
+            tg_show_tables             
+---------------------------------------
+ {                                    +
+     "remote_schema": {               +
+         "remote_schema": "tg_schema",+
+         "server_name": "tsurugidb",  +
+         "mode": "summary",           +
+         "tables_on_remote_schema": { +
+             "count": 1               +
+         }                            +
+     }                                +
+ }
+(1 row)
+
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 5-4-1 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test
+SELECT tg_show_tables('tg_schema', 'tsurugidb', 'summary');
+            tg_show_tables             
+---------------------------------------
+ {                                    +
+     "remote_schema": {               +
+         "remote_schema": "tg_schema",+
+         "server_name": "tsurugidb",  +
+         "mode": "summary",           +
+         "tables_on_remote_schema": { +
+             "count": 1               +
+         }                            +
+     }                                +
+ }
+(1 row)
+
+SELECT tg_show_tables('tg_schema', 'tsurugidb', 'detail');
+            tg_show_tables             
+---------------------------------------
+ {                                    +
+     "remote_schema": {               +
+         "remote_schema": "tg_schema",+
+         "server_name": "tsurugidb",  +
+         "mode": "detail",            +
+         "tables_on_remote_schema": { +
+             "count": 1,              +
+             "list": [                +
+                 "udf_test_table_1"   +
+             ]                        +
+         }                            +
+     }                                +
+ }
+(1 row)
+
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+

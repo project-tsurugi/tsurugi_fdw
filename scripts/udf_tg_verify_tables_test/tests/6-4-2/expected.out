@@ -1,2 +1,0 @@
-ERROR:  invalid value ("invalid_mode") for parameter "mode"
-DETAIL:  expected 'summary' or 'detail'

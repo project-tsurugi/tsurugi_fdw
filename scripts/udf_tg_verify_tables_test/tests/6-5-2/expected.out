@@ -1,3 +1,0 @@
-ERROR:  invalid input syntax for type boolean: "invalid"
-LINE 1: ...bles('tsurugidb', 'tsurugi', 'public', 'summary', 'invalid')
-                                                             ^

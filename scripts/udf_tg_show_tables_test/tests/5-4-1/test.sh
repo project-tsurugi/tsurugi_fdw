@@ -1,3 +1,0 @@
-$PSQL \
-  -c "SELECT tg_show_tables('tsurugidb', 'tsurugi', 'summary')" \
-  -c "SELECT tg_show_tables('tsurugidb', 'tsurugi', 'detail')"

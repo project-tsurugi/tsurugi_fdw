@@ -1,3 +1,0 @@
-ERROR:  unsupported tsurugi data type "11"
-DETAIL:  table:"fdw_test_type_invalid" column:"col_binary" type:11
-
