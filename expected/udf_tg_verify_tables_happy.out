@@ -1,0 +1,2933 @@
+/* Test case: 1-1-1 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'summary', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "summary",                      +
+         "tables_on_only_remote_schema": {       +
+             "count": 0                          +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 0                          +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 1                          +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 1-1-2 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_1 (id bigint, name text) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'summary', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "summary",                      +
+         "tables_on_only_remote_schema": {       +
+             "count": 0                          +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 1                          +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 0                          +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 1-1-3 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'summary', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "summary",                      +
+         "tables_on_only_remote_schema": {       +
+             "count": 1                          +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 0                          +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 1                          +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 1-1-4 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_1 (id bigint, name text) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'summary', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "summary",                      +
+         "tables_on_only_remote_schema": {       +
+             "count": 1                          +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 1                          +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 0                          +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 1-2-1 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'summary', false);
+                                                                                                                                         tg_verify_tables                                                                                                                                          
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"verification":{"remote_schema":"tg_schema","server_name":"tsurugidb","local_schema":"public","mode":"summary","tables_on_only_remote_schema":{"count":0},"foreign_tables_on_only_local_schema":{"count":0},"tables_that_need_to_be_altered":{"count":0},"available_foreign_table":{"count":1}}}
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 1-2-2 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_1 (id bigint, name text) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'summary', false);
+                                                                                                                                         tg_verify_tables                                                                                                                                          
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"verification":{"remote_schema":"tg_schema","server_name":"tsurugidb","local_schema":"public","mode":"summary","tables_on_only_remote_schema":{"count":0},"foreign_tables_on_only_local_schema":{"count":0},"tables_that_need_to_be_altered":{"count":1},"available_foreign_table":{"count":0}}}
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 1-2-3 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'summary', false);
+                                                                                                                                         tg_verify_tables                                                                                                                                          
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"verification":{"remote_schema":"tg_schema","server_name":"tsurugidb","local_schema":"public","mode":"summary","tables_on_only_remote_schema":{"count":1},"foreign_tables_on_only_local_schema":{"count":0},"tables_that_need_to_be_altered":{"count":0},"available_foreign_table":{"count":1}}}
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 1-2-4 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_1 (id bigint, name text) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'summary', false);
+                                                                                                                                         tg_verify_tables                                                                                                                                          
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"verification":{"remote_schema":"tg_schema","server_name":"tsurugidb","local_schema":"public","mode":"summary","tables_on_only_remote_schema":{"count":1},"foreign_tables_on_only_local_schema":{"count":0},"tables_that_need_to_be_altered":{"count":1},"available_foreign_table":{"count":0}}}
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 2-1-1 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "detail",                       +
+         "tables_on_only_remote_schema": {       +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 1,                         +
+             "list": [                           +
+                 "udf_test_table_1"              +
+             ]                                   +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 2-1-2 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_1 (id bigint, name text) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "detail",                       +
+         "tables_on_only_remote_schema": {       +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 1,                         +
+             "list": [                           +
+                 "udf_test_table_1"              +
+             ]                                   +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 0,                         +
+             "list": []                          +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 2-1-3 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "detail",                       +
+         "tables_on_only_remote_schema": {       +
+             "count": 1,                         +
+             "list": [                           +
+                 "udf_test_table_2"              +
+             ]                                   +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 1,                         +
+             "list": [                           +
+                 "udf_test_table_1"              +
+             ]                                   +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 2-1-4 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_1 (id bigint, name text) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "detail",                       +
+         "tables_on_only_remote_schema": {       +
+             "count": 1,                         +
+             "list": [                           +
+                 "udf_test_table_2"              +
+             ]                                   +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 1,                         +
+             "list": [                           +
+                 "udf_test_table_1"              +
+             ]                                   +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 0,                         +
+             "list": []                          +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 2-2-1 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', false);
+                                                                                                                                                                      tg_verify_tables                                                                                                                                                                      
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"verification":{"remote_schema":"tg_schema","server_name":"tsurugidb","local_schema":"public","mode":"detail","tables_on_only_remote_schema":{"count":0,"list":[]},"foreign_tables_on_only_local_schema":{"count":0,"list":[]},"tables_that_need_to_be_altered":{"count":0,"list":[]},"available_foreign_table":{"count":1,"list":["udf_test_table_1"]}}}
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 2-2-2 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_1 (id bigint, name text) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', false);
+                                                                                                                                                                      tg_verify_tables                                                                                                                                                                      
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"verification":{"remote_schema":"tg_schema","server_name":"tsurugidb","local_schema":"public","mode":"detail","tables_on_only_remote_schema":{"count":0,"list":[]},"foreign_tables_on_only_local_schema":{"count":0,"list":[]},"tables_that_need_to_be_altered":{"count":1,"list":["udf_test_table_1"]},"available_foreign_table":{"count":0,"list":[]}}}
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 2-2-3 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', false);
+                                                                                                                                                                               tg_verify_tables                                                                                                                                                                               
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"verification":{"remote_schema":"tg_schema","server_name":"tsurugidb","local_schema":"public","mode":"detail","tables_on_only_remote_schema":{"count":1,"list":["udf_test_table_2"]},"foreign_tables_on_only_local_schema":{"count":0,"list":[]},"tables_that_need_to_be_altered":{"count":0,"list":[]},"available_foreign_table":{"count":1,"list":["udf_test_table_1"]}}}
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 2-2-4 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_1 (id bigint, name text) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', false);
+                                                                                                                                                                               tg_verify_tables                                                                                                                                                                               
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"verification":{"remote_schema":"tg_schema","server_name":"tsurugidb","local_schema":"public","mode":"detail","tables_on_only_remote_schema":{"count":1,"list":["udf_test_table_2"]},"foreign_tables_on_only_local_schema":{"count":0,"list":[]},"tables_that_need_to_be_altered":{"count":1,"list":["udf_test_table_1"]},"available_foreign_table":{"count":0,"list":[]}}}
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 3-1-1 */
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "detail",                       +
+         "tables_on_only_remote_schema": {       +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 0,                         +
+             "list": []                          +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+/* Test case: 3-1-2 */
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "detail",                       +
+         "tables_on_only_remote_schema": {       +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 1,                         +
+             "list": [                           +
+                 "udf_test_table_1"              +
+             ]                                   +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 0,                         +
+             "list": []                          +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+/* Test case: 3-1-3 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "detail",                       +
+         "tables_on_only_remote_schema": {       +
+             "count": 1,                         +
+             "list": [                           +
+                 "udf_test_table_1"              +
+             ]                                   +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 0,                         +
+             "list": []                          +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 3-1-4 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_3 (id DECIMAL, schedule TIMESTAMP)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "detail",                       +
+         "tables_on_only_remote_schema": {       +
+             "count": 3,                         +
+             "list": [                           +
+                 "udf_test_table_1",             +
+                 "udf_test_table_2",             +
+                 "udf_test_table_3"              +
+             ]                                   +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 0,                         +
+             "list": []                          +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_3');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 3-1-5 */
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_2 (id bigint, since date) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_3 (id numeric, schedule timestamp) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "detail",                       +
+         "tables_on_only_remote_schema": {       +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 3,                         +
+             "list": [                           +
+                 "udf_test_table_1",             +
+                 "udf_test_table_2",             +
+                 "udf_test_table_3"              +
+             ]                                   +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 0,                         +
+             "list": []                          +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+DROP FOREIGN TABLE udf_test_table_2;
+DROP FOREIGN TABLE udf_test_table_3;
+/* Test case: 3-1-6 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_remote_1 (id INT, name VARCHAR)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_matched_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_unmatched_1 (id BIGINT, since DATE)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_unmatched_2 (id DECIMAL, schedule TIMESTAMP)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_local_1 (id integer, name text) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_local_2 (id integer, name text) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_matched_1 (id integer, name text) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_unmatched_1 (id real, since date) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_unmatched_2 (id integer, schedule timestamptz) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "detail",                       +
+         "tables_on_only_remote_schema": {       +
+             "count": 1,                         +
+             "list": [                           +
+                 "udf_test_table_remote_1"       +
+             ]                                   +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 2,                         +
+             "list": [                           +
+                 "udf_test_table_local_1",       +
+                 "udf_test_table_local_2"        +
+             ]                                   +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 2,                         +
+             "list": [                           +
+                 "udf_test_table_unmatched_1",   +
+                 "udf_test_table_unmatched_2"    +
+             ]                                   +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 1,                         +
+             "list": [                           +
+                 "udf_test_table_matched_1"      +
+             ]                                   +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_local_1;
+DROP FOREIGN TABLE udf_test_table_local_2;
+DROP FOREIGN TABLE udf_test_table_matched_1;
+DROP FOREIGN TABLE udf_test_table_unmatched_1;
+DROP FOREIGN TABLE udf_test_table_unmatched_2;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_remote_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_matched_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_unmatched_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_unmatched_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 3-1-7 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE Udf_Test_Table_1 (id BIGINT, since DATE)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE UDF_test_table_2 (id BIGINT, name VARCHAR)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
+CREATE FOREIGN TABLE "Udf_Test_Table_1" (id bigint, since date) SERVER tsurugidb;
+CREATE FOREIGN TABLE UDF_test_table_2 (id bigint, name text) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "detail",                       +
+         "tables_on_only_remote_schema": {       +
+             "count": 1,                         +
+             "list": [                           +
+                 "UDF_test_table_2"              +
+             ]                                   +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 1,                         +
+             "list": [                           +
+                 "udf_test_table_2"              +
+             ]                                   +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 2,                         +
+             "list": [                           +
+                 "Udf_Test_Table_1",             +
+                 "udf_test_table_1"              +
+             ]                                   +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+DROP FOREIGN TABLE "Udf_Test_Table_1";
+DROP FOREIGN TABLE UDF_test_table_2;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE Udf_Test_Table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE UDF_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 3-2-1 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', '
+  CREATE TABLE udf_test_table_1 (
+    id INT,
+    name CHAR(128),
+    address VARCHAR,
+    tel CHAR(24),
+    since DATE,
+    schedule TIMESTAMP
+  )
+');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_1 (
+  id integer,
+  name text,
+  address text,
+  tel text,
+  since date,
+  schedule timestamp
+) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "detail",                       +
+         "tables_on_only_remote_schema": {       +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 1,                         +
+             "list": [                           +
+                 "udf_test_table_1"              +
+             ]                                   +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 3-2-2 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', '
+  CREATE TABLE udf_test_table_1 (
+    id INT,
+    name CHAR(128),
+    address VARCHAR,
+    tel CHAR(24),
+    since DATE,
+    schedule TIMESTAMP
+  )
+');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_1 (
+  id integer,
+  name text,
+  address text,
+  since date,
+  schedule timestamp
+) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "detail",                       +
+         "tables_on_only_remote_schema": {       +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 1,                         +
+             "list": [                           +
+                 "udf_test_table_1"              +
+             ]                                   +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 0,                         +
+             "list": []                          +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 3-2-3 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', '
+  CREATE TABLE udf_test_table_1 (
+    id INT,
+    name CHAR(128),
+    address VARCHAR,
+    since DATE,
+    schedule TIMESTAMP
+  )
+');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_1 (
+  id integer,
+  name text,
+  address text,
+  tel text,
+  since date,
+  schedule timestamp
+) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "detail",                       +
+         "tables_on_only_remote_schema": {       +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 1,                         +
+             "list": [                           +
+                 "udf_test_table_1"              +
+             ]                                   +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 0,                         +
+             "list": []                          +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 3-3-1 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', '
+  CREATE TABLE udf_test_table_2 (
+    id INT, name CHAR(128), address VARCHAR, tel CHAR(24), since DATE, schedule TIMESTAMP
+  )
+');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_1 (
+  id integer
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_2 (
+  id integer,
+  name text,
+  address text,
+  tel text,
+  since date,
+  schedule timestamp
+) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "detail",                       +
+         "tables_on_only_remote_schema": {       +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 2,                         +
+             "list": [                           +
+                 "udf_test_table_1",             +
+                 "udf_test_table_2"              +
+             ]                                   +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+DROP FOREIGN TABLE udf_test_table_2;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 3-3-2 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', '
+  CREATE TABLE udf_test_table_1 (
+    col_1 INT,
+    col_2 VARCHAR,
+    col_3 VARCHAR,
+    col_4 VARCHAR,
+    col_5 VARCHAR
+  )
+');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', '
+  CREATE TABLE udf_test_table_2 (
+    col_1 INT,
+    col_2 VARCHAR,
+    col_3 VARCHAR,
+    col_4 VARCHAR,
+    col_5 VARCHAR
+  )
+');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', '
+  CREATE TABLE udf_test_table_3 (
+    col_1 INT,
+    col_2 VARCHAR,
+    col_3 VARCHAR,
+    col_4 VARCHAR,
+    col_5 VARCHAR
+  )
+');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', '
+  CREATE TABLE udf_test_table_4 (
+    col_1 INT,
+    col_2 VARCHAR,
+    col_3 VARCHAR,
+    col_4 VARCHAR,
+    col_5 VARCHAR
+  )
+');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_1 (
+  invalid integer,
+  col_2 text,
+  col_3 text,
+  col_4 text,
+  col_5 text
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_2 (
+  col_1 integer,
+  col_2 text,
+  invalid text,
+  col_4 text,
+  col_5 text
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_3 (
+  col_1 integer,
+  col_2 text,
+  col_3 text,
+  col_4 text,
+  invalid text
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_4 (
+  col_1 integer,
+  invalid_1 text,
+  col_3 text,
+  invalid_2 text,
+  col_5 text
+) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "detail",                       +
+         "tables_on_only_remote_schema": {       +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 4,                         +
+             "list": [                           +
+                 "udf_test_table_1",             +
+                 "udf_test_table_2",             +
+                 "udf_test_table_3",             +
+                 "udf_test_table_4"              +
+             ]                                   +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 0,                         +
+             "list": []                          +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE IF EXISTS udf_test_table_1;
+DROP FOREIGN TABLE IF EXISTS udf_test_table_2;
+DROP FOREIGN TABLE IF EXISTS udf_test_table_3;
+DROP FOREIGN TABLE IF EXISTS udf_test_table_4;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_3');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_4');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 3-3-3 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', '
+  CREATE TABLE udf_test_table_1 (
+    col_1 INT,
+    col_2 VARCHAR,
+    Col_2 DATE,
+    COL_2 TIME
+  )
+');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', '
+  CREATE TABLE udf_test_table_2 (
+    Col_1 INT,
+    Col_2 VARCHAR
+  )
+');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_1 (
+  col_1 integer,
+  col_2 text,
+  "Col_2" date,
+  "COL_2" time
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_2 (
+  col_1 integer,
+  col_2 text
+) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "detail",                       +
+         "tables_on_only_remote_schema": {       +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 1,                         +
+             "list": [                           +
+                 "udf_test_table_2"              +
+             ]                                   +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 1,                         +
+             "list": [                           +
+                 "udf_test_table_1"              +
+             ]                                   +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+DROP FOREIGN TABLE udf_test_table_2;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 3-4-1 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', '
+  CREATE TABLE udf_test_table_1 (
+    col_1 INT
+  )
+');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', '
+  CREATE TABLE udf_test_table_2 (
+    col_1 INT,
+    col_2 VARCHAR,
+    col_3 DATE,
+    col_4 TIME,
+    col_5 DECIMAL
+  )
+');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_1 (
+  col_1 integer
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_2 (
+  col_1 integer,
+  col_2 text,
+  col_3 date,
+  col_4 time,
+  col_5 numeric
+) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "detail",                       +
+         "tables_on_only_remote_schema": {       +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 2,                         +
+             "list": [                           +
+                 "udf_test_table_1",             +
+                 "udf_test_table_2"              +
+             ]                                   +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+DROP FOREIGN TABLE udf_test_table_2;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 3-4-2 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', '
+  CREATE TABLE udf_test_table_1 (
+    col_1 INT,
+    col_2 VARCHAR,
+    col_3 DATE,
+    col_4 TIME,
+    col_5 DECIMAL,
+    col_6 INT,
+    col_7 VARCHAR,
+    col_8 DATE,
+    col_9 TIME,
+    col_10 DECIMAL
+  )
+');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', '
+  CREATE TABLE udf_test_table_2 (
+    col_1 INT,
+    col_2 VARCHAR,
+    col_3 DATE,
+    col_4 TIME,
+    col_5 DECIMAL,
+    col_6 INT,
+    col_7 VARCHAR,
+    col_8 DATE,
+    col_9 TIME,
+    col_10 DECIMAL
+  )
+');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', '
+  CREATE TABLE udf_test_table_3 (
+    col_1 INT,
+    col_2 VARCHAR,
+    col_3 DATE,
+    col_4 TIME,
+    col_5 DECIMAL,
+    col_6 INT,
+    col_7 VARCHAR,
+    col_8 DATE,
+    col_9 TIME,
+    col_10 DECIMAL
+  )
+');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_1 (
+  col_2 text,
+  col_1 integer,
+  col_3 date,
+  col_4 time,
+  col_5 numeric,
+  col_6 integer,
+  col_7 text,
+  col_8 date,
+  col_9 time,
+  col_10 numeric
+) SERVER tsurugidb;
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_2 (
+  col_1 integer,
+  col_2 text,
+  col_3 date,
+  col_7 text,
+  col_5 numeric,
+  col_6 integer,
+  col_4 time,
+  col_8 date,
+  col_9 time,
+  col_10 numeric
+) SERVER tsurugidb;
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_3 (
+  col_10 numeric,
+  col_2 text,
+  col_3 date,
+  col_4 time,
+  col_5 numeric,
+  col_6 integer,
+  col_7 text,
+  col_8 date,
+  col_9 time,
+  col_1 integer
+) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "detail",                       +
+         "tables_on_only_remote_schema": {       +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 3,                         +
+             "list": [                           +
+                 "udf_test_table_1",             +
+                 "udf_test_table_2",             +
+                 "udf_test_table_3"              +
+             ]                                   +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 0,                         +
+             "list": []                          +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+DROP FOREIGN TABLE udf_test_table_2;
+DROP FOREIGN TABLE udf_test_table_3;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_3');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 4-1-1 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_2 (id bigint, since date) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('invalid_schema', 'tsurugidb', 'public', 'detail', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "invalid_schema",      +
+         "server_name": "tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "detail",                       +
+         "tables_on_only_remote_schema": {       +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 2,                         +
+             "list": [                           +
+                 "udf_test_table_1",             +
+                 "udf_test_table_2"              +
+             ]                                   +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+DROP FOREIGN TABLE udf_test_table_2;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 4-2-1 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_3 (id DECIMAL, schedule TIMESTAMP)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE SERVER other_server FOREIGN DATA WRAPPER tsurugi_fdw;
+CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_2 (id bigint, since date) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_3 (id numeric, schedule timestamp) SERVER other_server;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "detail",                       +
+         "tables_on_only_remote_schema": {       +
+             "count": 1,                         +
+             "list": [                           +
+                 "udf_test_table_3"              +
+             ]                                   +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 2,                         +
+             "list": [                           +
+                 "udf_test_table_1",             +
+                 "udf_test_table_2"              +
+             ]                                   +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+SELECT tg_verify_tables('tg_schema', 'other_server', 'public', 'detail', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "other_server",          +
+         "local_schema": "public",               +
+         "mode": "detail",                       +
+         "tables_on_only_remote_schema": {       +
+             "count": 2,                         +
+             "list": [                           +
+                 "udf_test_table_1",             +
+                 "udf_test_table_2"              +
+             ]                                   +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 1,                         +
+             "list": [                           +
+                 "udf_test_table_3"              +
+             ]                                   +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+DROP FOREIGN TABLE udf_test_table_2;
+DROP FOREIGN TABLE udf_test_table_3;
+DROP SERVER other_server;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_3');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 4-2-3 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_3 (id DECIMAL, schedule TIMESTAMP)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE SERVER "Tsurugidb" FOREIGN DATA WRAPPER tsurugi_fdw;
+CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_2 (id bigint, since date) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_3 (id numeric, schedule timestamp) SERVER "Tsurugidb";
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "detail",                       +
+         "tables_on_only_remote_schema": {       +
+             "count": 1,                         +
+             "list": [                           +
+                 "udf_test_table_3"              +
+             ]                                   +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 2,                         +
+             "list": [                           +
+                 "udf_test_table_1",             +
+                 "udf_test_table_2"              +
+             ]                                   +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+SELECT tg_verify_tables('tg_schema', 'Tsurugidb', 'public', 'detail', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "Tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "detail",                       +
+         "tables_on_only_remote_schema": {       +
+             "count": 2,                         +
+             "list": [                           +
+                 "udf_test_table_1",             +
+                 "udf_test_table_2"              +
+             ]                                   +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 1,                         +
+             "list": [                           +
+                 "udf_test_table_3"              +
+             ]                                   +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+DROP FOREIGN TABLE udf_test_table_2;
+DROP FOREIGN TABLE udf_test_table_3;
+DROP SERVER "Tsurugidb";
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_3');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 4-3-1 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_3 (id DECIMAL, schedule TIMESTAMP)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE SCHEMA other_schema;
+CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
+CREATE FOREIGN TABLE other_schema.udf_test_table_2 (id bigint, since date) SERVER tsurugidb;
+CREATE FOREIGN TABLE other_schema.udf_test_table_3 (id numeric, schedule timestamp) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "detail",                       +
+         "tables_on_only_remote_schema": {       +
+             "count": 2,                         +
+             "list": [                           +
+                 "udf_test_table_2",             +
+                 "udf_test_table_3"              +
+             ]                                   +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 1,                         +
+             "list": [                           +
+                 "udf_test_table_1"              +
+             ]                                   +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'other_schema', 'detail', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "other_schema",         +
+         "mode": "detail",                       +
+         "tables_on_only_remote_schema": {       +
+             "count": 1,                         +
+             "list": [                           +
+                 "udf_test_table_1"              +
+             ]                                   +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 2,                         +
+             "list": [                           +
+                 "udf_test_table_2",             +
+                 "udf_test_table_3"              +
+             ]                                   +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+DROP FOREIGN TABLE other_schema.udf_test_table_2;
+DROP FOREIGN TABLE other_schema.udf_test_table_3;
+DROP SCHEMA other_schema;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_3');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 4-3-3 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_3 (id DECIMAL, schedule TIMESTAMP)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE SCHEMA "Public";
+CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_2 (id bigint, since date) SERVER tsurugidb;
+CREATE FOREIGN TABLE "Public".udf_test_table_3 (id numeric, schedule timestamp) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "detail",                       +
+         "tables_on_only_remote_schema": {       +
+             "count": 1,                         +
+             "list": [                           +
+                 "udf_test_table_3"              +
+             ]                                   +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 2,                         +
+             "list": [                           +
+                 "udf_test_table_1",             +
+                 "udf_test_table_2"              +
+             ]                                   +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'Public', 'detail', true);
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "Public",               +
+         "mode": "detail",                       +
+         "tables_on_only_remote_schema": {       +
+             "count": 2,                         +
+             "list": [                           +
+                 "udf_test_table_1",             +
+                 "udf_test_table_2"              +
+             ]                                   +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 1,                         +
+             "list": [                           +
+                 "udf_test_table_3"              +
+             ]                                   +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+DROP FOREIGN TABLE udf_test_table_2;
+DROP FOREIGN TABLE "Public".udf_test_table_3;
+DROP SCHEMA "Public";
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_3');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 4-4-1 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'Summary', false);
+                                                                                                                                         tg_verify_tables                                                                                                                                          
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"verification":{"remote_schema":"tg_schema","server_name":"tsurugidb","local_schema":"public","mode":"summary","tables_on_only_remote_schema":{"count":0},"foreign_tables_on_only_local_schema":{"count":0},"tables_that_need_to_be_altered":{"count":0},"available_foreign_table":{"count":1}}}
+(1 row)
+
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'SUMMARY', false);
+                                                                                                                                         tg_verify_tables                                                                                                                                          
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"verification":{"remote_schema":"tg_schema","server_name":"tsurugidb","local_schema":"public","mode":"summary","tables_on_only_remote_schema":{"count":0},"foreign_tables_on_only_local_schema":{"count":0},"tables_that_need_to_be_altered":{"count":0},"available_foreign_table":{"count":1}}}
+(1 row)
+
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'Detail', false);
+                                                                                                                                                                      tg_verify_tables                                                                                                                                                                      
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"verification":{"remote_schema":"tg_schema","server_name":"tsurugidb","local_schema":"public","mode":"detail","tables_on_only_remote_schema":{"count":0,"list":[]},"foreign_tables_on_only_local_schema":{"count":0,"list":[]},"tables_that_need_to_be_altered":{"count":0,"list":[]},"available_foreign_table":{"count":1,"list":["udf_test_table_1"]}}}
+(1 row)
+
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'DETAIL', false);
+                                                                                                                                                                      tg_verify_tables                                                                                                                                                                      
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"verification":{"remote_schema":"tg_schema","server_name":"tsurugidb","local_schema":"public","mode":"detail","tables_on_only_remote_schema":{"count":0,"list":[]},"foreign_tables_on_only_local_schema":{"count":0,"list":[]},"tables_that_need_to_be_altered":{"count":0,"list":[]},"available_foreign_table":{"count":1,"list":["udf_test_table_1"]}}}
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 5-1-1 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_remote_1 (id INT, name VARCHAR)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_matched_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_unmatched_1 (id BIGINT, since DATE)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_unmatched_2 (id DECIMAL, schedule TIMESTAMP)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_local_1 (id integer, name text) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_local_2 (id integer, name text) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_matched_1 (id integer, name text) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_unmatched_1 (id real, since date) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_unmatched_2 (id integer, schedule timestamptz) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'summary', true)->'verification'->'tables_on_only_remote_schema'->'count';
+ ?column? 
+----------
+ 1
+(1 row)
+
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'summary', true)->'verification'->'foreign_tables_on_only_local_schema'->'count';
+ ?column? 
+----------
+ 2
+(1 row)
+
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'summary', true)->'verification'->'tables_that_need_to_be_altered'->'count';
+ ?column? 
+----------
+ 2
+(1 row)
+
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'summary', true)->'verification'->'available_foreign_table'->'count';
+ ?column? 
+----------
+ 1
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_local_1;
+DROP FOREIGN TABLE udf_test_table_local_2;
+DROP FOREIGN TABLE udf_test_table_matched_1;
+DROP FOREIGN TABLE udf_test_table_unmatched_1;
+DROP FOREIGN TABLE udf_test_table_unmatched_2;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_remote_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_matched_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_unmatched_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_unmatched_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 5-1-2 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_remote_1 (id INT, name VARCHAR)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_matched_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_unmatched_1 (id BIGINT, since DATE)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_unmatched_2 (id DECIMAL, schedule TIMESTAMP)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_local_1 (id integer, name text) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_local_2 (id integer, name text) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_matched_1 (id integer, name text) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_unmatched_1 (id real, since date) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_unmatched_2 (id integer, schedule timestamptz) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'summary', false)->'verification'->'tables_on_only_remote_schema'->'count';
+ ?column? 
+----------
+ 1
+(1 row)
+
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'summary', false)->'verification'->'foreign_tables_on_only_local_schema'->'count';
+ ?column? 
+----------
+ 2
+(1 row)
+
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'summary', false)->'verification'->'tables_that_need_to_be_altered'->'count';
+ ?column? 
+----------
+ 2
+(1 row)
+
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'summary', false)->'verification'->'available_foreign_table'->'count';
+ ?column? 
+----------
+ 1
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_local_1;
+DROP FOREIGN TABLE udf_test_table_local_2;
+DROP FOREIGN TABLE udf_test_table_matched_1;
+DROP FOREIGN TABLE udf_test_table_unmatched_1;
+DROP FOREIGN TABLE udf_test_table_unmatched_2;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_remote_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_matched_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_unmatched_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_unmatched_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 5-2-1 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_remote_1 (id INT, name VARCHAR)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_matched_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_unmatched_1 (id BIGINT, since DATE)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_unmatched_2 (id DECIMAL, schedule TIMESTAMP)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_local_1 (id integer, name text) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_local_2 (id integer, name text) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_matched_1 (id integer, name text) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_unmatched_1 (id real, since date) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_unmatched_2 (id integer, schedule timestamptz) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true)->'verification'->'tables_on_only_remote_schema'->'list';
+                 ?column?                  
+-------------------------------------------
+ [                                        +
+                 "udf_test_table_remote_1"+
+             ]
+(1 row)
+
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true)->'verification'->'foreign_tables_on_only_local_schema'->'list';
+                 ?column?                  
+-------------------------------------------
+ [                                        +
+                 "udf_test_table_local_1",+
+                 "udf_test_table_local_2" +
+             ]
+(1 row)
+
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true)->'verification'->'tables_that_need_to_be_altered'->'list';
+                   ?column?                    
+-----------------------------------------------
+ [                                            +
+                 "udf_test_table_unmatched_1",+
+                 "udf_test_table_unmatched_2" +
+             ]
+(1 row)
+
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true)->'verification'->'available_foreign_table'->'list';
+                  ?column?                  
+--------------------------------------------
+ [                                         +
+                 "udf_test_table_matched_1"+
+             ]
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_local_1;
+DROP FOREIGN TABLE udf_test_table_local_2;
+DROP FOREIGN TABLE udf_test_table_matched_1;
+DROP FOREIGN TABLE udf_test_table_unmatched_1;
+DROP FOREIGN TABLE udf_test_table_unmatched_2;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_remote_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_matched_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_unmatched_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_unmatched_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 5-2-2 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_remote_1 (id INT, name VARCHAR)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_matched_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_unmatched_1 (id BIGINT, since DATE)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_unmatched_2 (id DECIMAL, schedule TIMESTAMP)');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_local_1 (id integer, name text) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_local_2 (id integer, name text) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_matched_1 (id integer, name text) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_unmatched_1 (id real, since date) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_unmatched_2 (id integer, schedule timestamptz) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', false)->'verification'->'tables_on_only_remote_schema'->'list';
+          ?column?           
+-----------------------------
+ ["udf_test_table_remote_1"]
+(1 row)
+
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', false)->'verification'->'foreign_tables_on_only_local_schema'->'list';
+                      ?column?                       
+-----------------------------------------------------
+ ["udf_test_table_local_1","udf_test_table_local_2"]
+(1 row)
+
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', false)->'verification'->'tables_that_need_to_be_altered'->'list';
+                          ?column?                           
+-------------------------------------------------------------
+ ["udf_test_table_unmatched_1","udf_test_table_unmatched_2"]
+(1 row)
+
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', false)->'verification'->'available_foreign_table'->'list';
+           ?column?           
+------------------------------
+ ["udf_test_table_matched_1"]
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_local_1;
+DROP FOREIGN TABLE udf_test_table_local_2;
+DROP FOREIGN TABLE udf_test_table_matched_1;
+DROP FOREIGN TABLE udf_test_table_unmatched_1;
+DROP FOREIGN TABLE udf_test_table_unmatched_2;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_remote_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_matched_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_unmatched_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_unmatched_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 6-4-1 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public');
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "summary",                      +
+         "tables_on_only_remote_schema": {       +
+             "count": 0                          +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 0                          +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 1                          +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 6-5-1 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
+-- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'summary');
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "summary",                      +
+         "tables_on_only_remote_schema": {       +
+             "count": 0                          +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 0                          +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 1                          +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail');
+                 tg_verify_tables                 
+--------------------------------------------------
+ {                                               +
+     "verification": {                           +
+         "remote_schema": "tg_schema",           +
+         "server_name": "tsurugidb",             +
+         "local_schema": "public",               +
+         "mode": "detail",                       +
+         "tables_on_only_remote_schema": {       +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "foreign_tables_on_only_local_schema": {+
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "tables_that_need_to_be_altered": {     +
+             "count": 0,                         +
+             "list": []                          +
+         },                                      +
+         "available_foreign_table": {            +
+             "count": 1,                         +
+             "list": [                           +
+                 "udf_test_table_1"              +
+             ]                                   +
+         }                                       +
+     }                                           +
+ }
+(1 row)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_1;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+

@@ -1,2 +1,0 @@
-ERROR:  invalid value (NULL) for parameter "pretty"
-DETAIL:  expected true or false
