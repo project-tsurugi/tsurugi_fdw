@@ -31,6 +31,19 @@ extern "C" {
 
 #include "tsurugi_fdw.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+#if PG_VERSION_NUM >= 140000
+extern void rebuildInsertSql(StringInfo buf, Relation rel,
+				 			char *orig_query, List *target_attrs,
+				 			int values_end_len, int num_params,
+				 			int num_rows);
+#endif	/* PG_VERSION_NUM >= 140000 */
+#ifdef __cplusplus
+}
+#endif
+
 std::string make_tsurugi_query(std::string_view query_string);
 // Datum tsurugi_convert_to_pg(Oid pgtype, ResultSetPtr result_set);
 
@@ -51,7 +64,7 @@ TgFdwForeignModifyState *create_foreign_modify(EState *estate,
 											   int len,
 											   bool has_returning,
 											   List *retrieved_attrs);
-											   
+
 TupleTableSlot **execute_foreign_modify(EState *estate,
 					   							ResultRelInfo *resultRelInfo,
 					   							CmdType operation,

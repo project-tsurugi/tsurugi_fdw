@@ -34,7 +34,7 @@ extern "C" {
 #include "utils/relcache.h"
 
 /* Planning Flag */
-#define __TSURUGI_PLANNER__
+// #define __TSURUGI_PLANNER__
 #if 0
 /*
  *	@brief	FDW status for each query execution
@@ -137,7 +137,7 @@ typedef struct TgFdwForeignModifyState
 	AttInMetadata *attinmeta;	/* attribute datatype conversion metadata */
 
 	/* for remote query execution */
-	char	   *prep_name;		/* name of prepared statement, if created */
+//	char	   *prep_name;		/* name of prepared statement, if created */
 
 	/* extracted fdw_private data */
 	char	   *query;			/* text of INSERT/UPDATE/DELETE command */
@@ -162,6 +162,8 @@ typedef struct TgFdwForeignModifyState
 	/* for update row movement if subplan result rel */
 	struct TgFdwForeignModifyState *aux_fmstate;	/* foreign-insert state, if
 											 	 	 * created */
+	bool		is_prepared;
+	bool		start_tx;
 } TgFdwForeignModifyState;
 
  /*
@@ -169,7 +171,7 @@ typedef struct TgFdwForeignModifyState
  */
 typedef struct TgFdwDirectModifyState
 {
-
+	const char* 	query_string;		/* SQL Query Text */
 } TgFdwDirectModifyState;
 
 /*

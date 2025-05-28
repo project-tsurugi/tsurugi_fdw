@@ -116,10 +116,9 @@ ERROR_CODE Tsurugi::init()
 		if (error != ERROR_CODE::OK) 
         {
             stub_ = nullptr;
-			Tsurugi::log3(ERROR, "Failed to make the ogawayama-stub.", error);
+			Tsurugi::report_error("Failed to make shared memory for Tsurugi.", 
+									error, nullptr);
 		}
-		elog(LOG, "tsurugi_fdw : make_stub() is succeeded. (name: %s)", 
-			shared_memory_name.data());
 	}
 
 	if (connection_ == nullptr) 
@@ -132,9 +131,8 @@ ERROR_CODE Tsurugi::init()
 		if (error != ERROR_CODE::OK)
 		{
             connection_ = nullptr;
-			Tsurugi::log3(ERROR, "Failed to connect to Tsurugi.", error);		
+			Tsurugi::report_error("Failed to connecto to Tsurugi.", error, nullptr);
 		}
-        elog(LOG, "tsurugi_fdw : Stub::get_connection() succeeded. (pid: %d)", getpid());
 	}
 
 	return ERROR_CODE::OK;
@@ -307,8 +305,9 @@ ERROR_CODE Tsurugi::start_transaction()
         boost::property_tree::ptree option;
         GetTransactionOption(option);
 
-        elog(DEBUG1, "tsurugi_fdw : Attempt to call Connection::begin(). (pid: %d)", 
+        elog(LOG, "tsurugi_fdw : Attempt to call Connection::begin(). (pid: %d)", 
 			getpid());
+
 		// Start the transaction.
         error = connection_->begin(option, transaction_);
 		Tsurugi::log2(LOG, "Connection::begin() is done.", error);
@@ -337,7 +336,7 @@ ERROR_CODE Tsurugi::execute_query(std::string_view query)
 	        query.data());
 	    error = transaction_->execute_query(prepared_statement, parameters, result_set_);
 	} else {
-	    elog(LOG, "tsurugi_fdw : Attempt to call Transaction::execute_query." \
+	    elog(LOG, "tsurugi_fdw : Attempt to call Transaction::execute_query()." \
 				  " \nquery:\n%s", query.data());
 	    error = transaction_->execute_query(query, result_set_);
 	}
@@ -370,7 +369,7 @@ Tsurugi::execute_query(std::string_view query, ResultSetPtr& result_set)
 	        query.data());
 	    error = transaction_->execute_query(prepared_statement, parameters, result_set);
 	} else {
-	    elog(LOG, "tsurugi_fdw : Attempt to call Transaction::execute_query." \
+	    elog(LOG, "tsurugi_fdw : Attempt to call Transaction::execute_query()." \
 				  " \nquery:\n%s", query.data());
 	    error = transaction_->execute_query(query, result_set);
 	}
@@ -453,7 +452,7 @@ Tsurugi::execute_statement(std::string_view prep_name,
 				prep_name.data());
 			return ERROR_CODE::INVALID_PARAMETER;
 		}
-		elog(LOG, "tsurugi_fdw : Attempt to call Transaction::execute_statement." \
+		elog(LOG, "tsurugi_fdw : Attempt to call Transaction::execute_statement()." \
 			" prep_name: %s", ite->first.data());
 
 		// Execute the statement.
@@ -483,7 +482,7 @@ Tsurugi::execute_statement(ogawayama::stub::parameters_type& params,
 
     if (transaction_ != nullptr)
     {
-		elog(LOG, "tsurugi_fdw : Attempt to call Transaction::execute_statement.");	
+		elog(LOG, "tsurugi_fdw : Attempt to call Transaction::execute_statement().");	
 
 		// Execute the statement.
 		error = transaction_->execute_statement(prepared_statement_, params, num_rows);
@@ -514,8 +513,8 @@ ERROR_CODE Tsurugi::commit()
 
     if (transaction_ != nullptr) 
     {
-        elog(DEBUG1, "tsurugi_fdw : Attempt to call Transaction::commit().");
-
+        elog(LOG, "tsurugi_fdw : Attempt to call Transaction::commit().");
+		/* Commits the transaction. */
         error = transaction_->commit();
 		Tsurugi::log2(LOG, "Transaction::commit() is done.", error);
         transaction_ = nullptr;
@@ -545,8 +544,8 @@ ERROR_CODE Tsurugi::rollback()
 
     if (transaction_ != nullptr) 
     {
-        elog(DEBUG1, "tsurugi_fdw : Attempt to call Transaction::rollback().");
-
+        elog(LOG, "tsurugi_fdw : Attempt to call Transaction::rollback().");
+		/* Rolls back the transaction. */
         error = transaction_->rollback();
 		Tsurugi::log2(LOG, "Transaction::rollback() is done.", error);
         transaction_ = nullptr;
@@ -571,7 +570,7 @@ ERROR_CODE Tsurugi::get_list_tables(TableListPtr& table_list)
 
 	if (connection_ == nullptr)
 	{
-		elog(DEBUG1, "tsurugi_fdw : Attempt to call Tsurugi::init(). (pid: %d)", getpid());
+		elog(DEBUG1, "tsurugi_fdw : Attempt to call Tsurugi::init. (pid: %d)", getpid());
 
 		error = init();
 		if (error != ERROR_CODE::OK)
@@ -778,8 +777,8 @@ std::string Tsurugi::get_error_message(ERROR_CODE error_code)
 				break;
 		}
 		// build message.
-		message = "Tsurugi Server Error: " + error.name 
-									+ " (" + detail_code + ": " + error.detail + ")";
+		message = "Tsurugi Error: " + error.name 
+					+ " (" + detail_code + ": " + error.detail + ")";
 	}
 	else
 	{
@@ -816,6 +815,29 @@ void Tsurugi::log3(int level, std::string_view message, ERROR_CODE error)
 		Tsurugi::get_error_message(error).data());	
 }
 
+/*
+ * 	report_error
+ *		Report the error information of tsurugi_fdw.
+ */
+void 
+Tsurugi::report_error(const char* message, ERROR_CODE error, const char* sql)
+{
+	int			sqlstate = ERRCODE_FDW_ERROR;
+	std::string	detail = Tsurugi::get_error_message(error);
+
+	ereport(ERROR,
+			(errcode(sqlstate),
+			 errmsg("Failed to execute remote SQL."),
+			 errcontext("SQL query: %s", sql ? sql : ""),
+			 errhint("%s (error: %d{%s})\n%s", 
+					message, (int) error, stub::error_name(error).data(), 
+					detail.data())
+			));	
+}
+
+/*
+ *	get_tg_column_type
+ */
 ogawayama::stub::Metadata::ColumnType::Type 
 Tsurugi::get_tg_column_type(const Oid pg_type)
 {
@@ -872,6 +894,9 @@ Tsurugi::get_tg_column_type(const Oid pg_type)
 	return tg_type;
 }
 
+/*
+ *	convert_type_to_pg
+ */
 ogawayama::stub::value_type
 Tsurugi::convert_type_to_tg(const Oid pg_type, Datum value)
 {

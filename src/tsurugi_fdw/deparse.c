@@ -172,6 +172,12 @@ static void appendAggOrderBy(List *orderList, List *targetList,
 static void appendFunctionName(Oid funcid, deparse_expr_cxt *context);
 static Node *deparseSortGroupClause(Index ref, List *tlist, bool force_colno,
 									deparse_expr_cxt *context);
+#if PG_VERSION_NUM >= 140000
+void rebuildInsertSql(StringInfo buf, Relation rel,
+				 			char *orig_query, List *target_attrs,
+				 			int values_end_len, int num_params,
+				 			int num_rows);
+#endif	/* PG_VERSION_NUM >= 140000 */
 
 /*
  * Helper functions
@@ -3640,3 +3646,64 @@ get_relation_column_alias_ids(Var *node, RelOptInfo *foreignrel,
 	/* Shouldn't get here */
 	elog(ERROR, "unexpected expression in subquery output");
 }
+
+#if PG_VERSION_NUM >= 140000
+/*
+ * rebuild remote INSERT statement
+ *
+ * Provided a number of rows in a batch, builds INSERT statement with the
+ * right number of parameters.
+ */
+void
+rebuildInsertSql(StringInfo buf, Relation rel,
+				 char *orig_query, List *target_attrs,
+				 int values_end_len, int num_params,
+				 int num_rows)
+{
+	TupleDesc	tupdesc = RelationGetDescr(rel);
+	int			i;
+	int			pindex;
+	bool		first;
+	ListCell   *lc;
+
+	/* Make sure the values_end_len is sensible */
+	Assert((values_end_len > 0) && (values_end_len <= strlen(orig_query)));
+
+	/* Copy up to the end of the first record from the original query */
+	appendBinaryStringInfo(buf, orig_query, values_end_len);
+
+	/*
+	 * Add records to VALUES clause (we already have parameters for the first
+	 * row, so start at the right offset).
+	 */
+	pindex = num_params + 1;
+	for (i = 0; i < num_rows; i++)
+	{
+		appendStringInfoString(buf, ", (");
+
+		first = true;
+		foreach(lc, target_attrs)
+		{
+			int			attnum = lfirst_int(lc);
+			Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
+
+			if (!first)
+				appendStringInfoString(buf, ", ");
+			first = false;
+
+			if (attr->attgenerated)
+				appendStringInfoString(buf, "DEFAULT");
+			else
+			{
+				appendStringInfo(buf, "$%d", pindex);
+				pindex++;
+			}
+		}
+
+		appendStringInfoChar(buf, ')');
+	}
+
+	/* Copy stuff after VALUES clause from the original query */
+	appendStringInfoString(buf, orig_query + values_end_len);
+}
+#endif	/* PG_VERSION_NUM >= 140000 */

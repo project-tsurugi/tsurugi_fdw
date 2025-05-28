@@ -103,7 +103,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                             bool* is_null,
                             TgFdwForeignScanState* fsstate)
 {
-	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG5, "tsurugi_fdw : %s", __func__);
 
 	ListCell   *lc = NULL;
 	foreach(lc, retrieved_attrs)
@@ -429,7 +429,7 @@ create_foreign_modify(EState *estate,
 
 	/* Open connection; report that we'll create a prepared statement. */
 //	fmstate->conn = GetConnection(user, true, &fmstate->conn_state);
-	fmstate->prep_name = NULL;		/* prepared statement not made yet */
+//	fmstate->prep_name = NULL;		/* prepared statement not made yet */
 
 	/* Set up remote query information. */
 	fmstate->query = query;
@@ -442,6 +442,8 @@ create_foreign_modify(EState *estate,
 	fmstate->values_end = values_end;
 	fmstate->has_returning = has_returning;
 	fmstate->retrieved_attrs = retrieved_attrs;
+	fmstate->is_prepared = false;
+	fmstate->start_tx = false;
 
 	/* Create context for per-tuple temp workspace. */
 	fmstate->temp_cxt = AllocSetContextCreate(estate->es_query_cxt,
@@ -460,12 +462,6 @@ create_foreign_modify(EState *estate,
 	if (operation == CMD_UPDATE || operation == CMD_DELETE)
 	{
 		Assert(subplan != NULL);
-
-		/* Find the ctid resjunk column in the subplan's result */
-		fmstate->ctidAttno = ExecFindJunkAttributeInTlist(subplan->targetlist,
-														  "ctid");
-		if (!AttributeNumberIsValid(fmstate->ctidAttno))
-			elog(ERROR, "could not find junk ctid column");
 
 		/* First transmittable parameter will be ctid */
 		getTypeOutputInfo(TIDOID, &typefnoid, &isvarlena);
@@ -560,7 +556,8 @@ execute_foreign_modify(EState *estate,
 					   TupleTableSlot **planSlots,
 					   int *numSlots)
 {
-	TgFdwForeignModifyState *fmstate = (TgFdwForeignModifyState *) resultRelInfo->ri_FdwState;
+	TgFdwForeignModifyState *fmstate = 
+		(TgFdwForeignModifyState *) resultRelInfo->ri_FdwState;
 	ItemPointer ctid = NULL;
 	StringInfoData sql;
 
@@ -571,19 +568,16 @@ execute_foreign_modify(EState *estate,
 
 	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
+#if PG_VERSION_NUM >= 140000
 	/*
 	 * If the existing query was deparsed and prepared for a different number
 	 * of rows, rebuild it for the proper number.
 	 */
 	if (operation == CMD_INSERT && fmstate->num_slots != *numSlots)
 	{
-		/* Destroy the prepared statement created previously */
-//		if (fmstate->p_name)
-//			deallocate_query(fmstate);
-
 		/* Build INSERT string with numSlots records in its VALUES clause. */
 		initStringInfo(&sql);
-#if 0
+
 		rebuildInsertSql(&sql, fmstate->rel,
 						 fmstate->orig_query, fmstate->target_attrs,
 						 fmstate->values_end, fmstate->p_nums,
@@ -591,11 +585,12 @@ execute_foreign_modify(EState *estate,
 		pfree(fmstate->query);
 		fmstate->query = sql.data;
 		fmstate->num_slots = *numSlots;
-#endif
+		fmstate->is_prepared = false;
 	}
+#endif	/* PG_VERSION_NUM >= 140000 */
 
-	/* Set up the prepared statement on the remote server, if we didn't yet */
-	if (!fmstate->prep_name)
+	/* Set up the prepared statement on the remote server */
+	if (!fmstate->is_prepared)
 		prepare_foreign_modify(fmstate);
 
 	/*
@@ -624,12 +619,12 @@ execute_foreign_modify(EState *estate,
 	 * Execute the prepared statement.
 	 */
 	std::size_t	n_rows = 0;
-	ERROR_CODE error = Tsurugi::execute_statement(fmstate->prep_name, 
-													params, n_rows);
+	ERROR_CODE error = Tsurugi::execute_statement(params, n_rows);
 	if (error != ERROR_CODE::OK)
 	{
-		elog(ERROR, "Failed to execute a statement to Tsurugi. (%d)\n%s", 
-			(int) error, Tsurugi::get_error_message(error).c_str());
+		Tsurugi::report_error("Failed to execute the statement on Tsurugi.", 
+								error, fmstate->query);
+//		Tsurugi::log3(ERROR, "Failed to execute the statement on Tsurugi.", error);
 	}
 
 	MemoryContextReset(fmstate->temp_cxt);
@@ -650,8 +645,6 @@ static void
 prepare_foreign_modify(TgFdwForeignModifyState *fmstate)
 {
 	TupleDesc	tupdesc = RelationGetDescr(fmstate->rel);
-	char		prep_name[NAMEDATALEN];
-	char		*p_name;
 	stub::placeholders_type placeholders{};
 
 	assert(tupdesc != nullptr);
@@ -660,24 +653,19 @@ prepare_foreign_modify(TgFdwForeignModifyState *fmstate)
 
 	for (int i = 0; i < tupdesc->natts; i++)
 	{
-		// parameter name is 1 origin.
+		/* parameter name is 1 origin. */
 		std::string param_name = "param" + std::to_string(i+1);
 		placeholders.emplace_back(std::make_pair(param_name, 
 			Tsurugi::get_tg_column_type(tupdesc->attrs[i].atttypid)));
 	}
 
-	static int prep_stmt_number = 0;
-	snprintf(prep_name, sizeof(prep_name), "tsurugi_fdw_prep_%u", ++prep_stmt_number);
-	p_name = pstrdup(prep_name);
-
-	ERROR_CODE error = Tsurugi::prepare(prep_name, fmstate->query, placeholders);
+	ERROR_CODE error = Tsurugi::prepare(fmstate->query, placeholders);
 	if (error != ERROR_CODE::OK)
 	{
-		elog(ERROR, "Failed to prepare the statement. (%d:%s)\n%s", 
-            (int) error, stub::error_name(error).data(), 
-			Tsurugi::get_error_message(error).c_str());
+		Tsurugi::report_error("Failed to prepare the statement on Tsurugi.", 
+								error, fmstate->query);
 	}
-	fmstate->prep_name = p_name;
+	fmstate->is_prepared = true;
 }
 
 /*

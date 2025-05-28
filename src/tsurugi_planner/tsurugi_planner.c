@@ -114,6 +114,9 @@ tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 
 	switch (parse->commandType)
 	{
+		case CMD_INSERT:
+		case CMD_UPDATE:
+		case CMD_DELETE:
 		case 0:
 		{
 			/* Generates an error if there is a FROM clause in UPDATE or DELETE */
@@ -126,7 +129,8 @@ tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
             if (root->parse != NULL && root->parse->rtable != NULL &&
                 is_only_foreign_table(root, root->parse->rtable)) 
             {
-                elog(LOG, "tsurugi_fdw : %s : choose direct modify.", __func__);
+                elog(LOG, "tsurugi_fdw : %s : Selected Direct Modify.", 
+					__func__);
                 scan = create_foreign_scan(root);
                 modify = create_modify_table(root, scan);
                 plan = (Plan *) modify;
@@ -141,9 +145,6 @@ tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
             }
 			break;
 		}
-		case CMD_INSERT:
-		case CMD_UPDATE:
-		case CMD_DELETE:
 		case CMD_SELECT:
 		default:
 		{
