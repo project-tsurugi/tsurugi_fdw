@@ -558,7 +558,7 @@ execute_foreign_modify(EState *estate,
 {
 	TgFdwForeignModifyState *fmstate = 
 		(TgFdwForeignModifyState *) resultRelInfo->ri_FdwState;
-	ItemPointer ctid = NULL;
+//	ItemPointer ctid = NULL;
 	StringInfoData sql;
 
 	/* The operation should be INSERT, UPDATE, or DELETE */
@@ -592,7 +592,7 @@ execute_foreign_modify(EState *estate,
 	/* Set up the prepared statement on the remote server */
 	if (!fmstate->is_prepared)
 		prepare_foreign_modify(fmstate);
-
+#if 0
 	/*
 	 * For UPDATE/DELETE, get the ctid that was passed up as a resjunk column
 	 */
@@ -610,7 +610,7 @@ execute_foreign_modify(EState *estate,
 		ctid = (ItemPointer) DatumGetPointer(datum);
 		if (ctid == NULL) ctid = NULL;
 	}
-
+#endif
 	/* Convert parameters needed by prepared statement to text form */
 	//
 	stub::parameters_type params = bind_parameters(fmstate, slots, *numSlots);
@@ -624,7 +624,6 @@ execute_foreign_modify(EState *estate,
 	{
 		Tsurugi::report_error("Failed to execute the statement on Tsurugi.", 
 								error, fmstate->query);
-//		Tsurugi::log3(ERROR, "Failed to execute the statement on Tsurugi.", error);
 	}
 
 	MemoryContextReset(fmstate->temp_cxt);
@@ -682,31 +681,35 @@ bind_parameters(TgFdwForeignModifyState *fmstate,
 
 	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
-	int param_num = 0;
-	ListCell   *lc;
-	foreach(lc, fmstate->target_attrs)
-	{	
-		int			attnum = lfirst_int(lc);
-		Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
-		Datum		value;
-		bool		isnull;	
-		std::string param_name = "param" + std::to_string(++param_num);
+	if (slots != NULL && fmstate->target_attrs != NIL)
+	{
+		int param_num = 0;
+		ListCell   *lc;
+		foreach(lc, fmstate->target_attrs)
+		{	
+			int			attnum = lfirst_int(lc);
+			Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
+			Datum		value;
+			bool		isnull;	
+			std::string param_name = "param" + std::to_string(++param_num);
 
-		/* Ignore generated columns; they are set to DEFAULT */
-		if (attr->attgenerated)
-			continue;
-		value = slot_getattr(slots[0], attnum, &isnull);
-		if (isnull)
-		{
-			std::monostate mono{};
-			params.emplace_back(param_name, mono);
-		}
-		else
-		{
-			stub::value_type tg_type = Tsurugi::convert_type_to_tg(attr->atttypid, value);
-			params.emplace_back(param_name, tg_type);
-			elog(LOG, "tsurugi_fdw : parameter name: %s, value: %s", 
-				param_name.c_str(), OutputFunctionCall(&fmstate->p_flinfo[0], value));
+			/* Ignore generated columns; they are set to DEFAULT */
+			if (attr->attgenerated)
+				continue;
+			value = slot_getattr(slots[0], attnum, &isnull);
+			if (isnull)
+			{
+				std::monostate mono{};
+				params.emplace_back(param_name, mono);
+			}
+			else
+			{
+				stub::value_type tg_type = Tsurugi::convert_type_to_tg(attr->atttypid, value);
+				params.emplace_back(param_name, tg_type);
+				elog(LOG, "tsurugi_fdw : parameter name: %s, value: %s", 
+					param_name.c_str(), 
+					OutputFunctionCall(&fmstate->p_flinfo[param_num-1], value));
+			}
 		}
 	}
 
