@@ -1,0 +1,257 @@
+/* Test setup: DDL of the Tsurugi */
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE t1_user_management (
+        column1 INTEGER NOT NULL PRIMARY KEY
+    )
+');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE t2_user_management (
+        column1 INTEGER NOT NULL PRIMARY KEY
+    )
+');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE t3_user_management (
+        column1 INTEGER NOT NULL PRIMARY KEY
+    )
+');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+/* Test setup: DDL of the PostgreSQL */
+SET ROLE 'postgres';
+CREATE FOREIGN TABLE t1_user_management (
+    column1 INTEGER NOT NULL
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE t2_user_management (
+    column1 INTEGER NOT NULL
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE t3_user_management (
+    column1 INTEGER NOT NULL
+) SERVER tsurugidb;
+CREATE ROLE sample_role1;
+CREATE ROLE sample_role2;
+CREATE ROLE sample_role3;
+CREATE ROLE sample_role4;
+CREATE ROLE admin SUPERUSER;
+/* DML */
+SELECT
+    rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb, rolcanlogin,
+    rolreplication, rolbypassrls, rolconnlimit, rolpassword, rolvaliduntil
+FROM
+    pg_authid
+WHERE
+    rolname = 'sample_role1';
+   rolname    | rolsuper | rolinherit | rolcreaterole | rolcreatedb | rolcanlogin | rolreplication | rolbypassrls | rolconnlimit | rolpassword | rolvaliduntil 
+--------------+----------+------------+---------------+-------------+-------------+----------------+--------------+--------------+-------------+---------------
+ sample_role1 | f        | t          | f             | f           | f           | f              | f            |           -1 |             | 
+(1 row)
+
+SELECT
+    rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb, rolcanlogin,
+    rolreplication, rolbypassrls, rolconnlimit, rolpassword, rolvaliduntil
+FROM
+    pg_authid
+WHERE
+    rolname = 'sample_role2';
+   rolname    | rolsuper | rolinherit | rolcreaterole | rolcreatedb | rolcanlogin | rolreplication | rolbypassrls | rolconnlimit | rolpassword | rolvaliduntil 
+--------------+----------+------------+---------------+-------------+-------------+----------------+--------------+--------------+-------------+---------------
+ sample_role2 | f        | t          | f             | f           | f           | f              | f            |           -1 |             | 
+(1 row)
+
+SELECT
+    rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb, rolcanlogin,
+    rolreplication, rolbypassrls, rolconnlimit, rolpassword, rolvaliduntil
+FROM
+    pg_authid
+WHERE
+    rolname = 'sample_role3';
+   rolname    | rolsuper | rolinherit | rolcreaterole | rolcreatedb | rolcanlogin | rolreplication | rolbypassrls | rolconnlimit | rolpassword | rolvaliduntil 
+--------------+----------+------------+---------------+-------------+-------------+----------------+--------------+--------------+-------------+---------------
+ sample_role3 | f        | t          | f             | f           | f           | f              | f            |           -1 |             | 
+(1 row)
+
+SELECT
+    rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb, rolcanlogin,
+    rolreplication, rolbypassrls, rolconnlimit, rolpassword, rolvaliduntil
+FROM
+    pg_authid
+WHERE
+    rolname = 'sample_role4';
+   rolname    | rolsuper | rolinherit | rolcreaterole | rolcreatedb | rolcanlogin | rolreplication | rolbypassrls | rolconnlimit | rolpassword | rolvaliduntil 
+--------------+----------+------------+---------------+-------------+-------------+----------------+--------------+--------------+-------------+---------------
+ sample_role4 | f        | t          | f             | f           | f           | f              | f            |           -1 |             | 
+(1 row)
+
+SELECT
+    rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb, rolcanlogin,
+    rolreplication, rolbypassrls, rolconnlimit, rolpassword, rolvaliduntil
+FROM
+    pg_authid
+WHERE
+    rolname = 'admin';
+ rolname | rolsuper | rolinherit | rolcreaterole | rolcreatedb | rolcanlogin | rolreplication | rolbypassrls | rolconnlimit | rolpassword | rolvaliduntil 
+---------+----------+------------+---------------+-------------+-------------+----------------+--------------+--------------+-------------+---------------
+ admin   | t        | t          | f             | f           | f           | f              | f            |           -1 |             | 
+(1 row)
+
+ALTER ROLE sample_role1 LOGIN;
+SELECT
+    rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb, rolcanlogin,
+    rolreplication, rolbypassrls, rolconnlimit, rolpassword, rolvaliduntil
+FROM
+    pg_authid
+WHERE
+    rolname = 'sample_role1';
+   rolname    | rolsuper | rolinherit | rolcreaterole | rolcreatedb | rolcanlogin | rolreplication | rolbypassrls | rolconnlimit | rolpassword | rolvaliduntil 
+--------------+----------+------------+---------------+-------------+-------------+----------------+--------------+--------------+-------------+---------------
+ sample_role1 | f        | t          | f             | f           | t           | f              | f            |           -1 |             | 
+(1 row)
+
+GRANT sample_role1 TO sample_role2;
+GRANT sample_role1 TO sample_role3, sample_role4;
+GRANT sample_role2, sample_role3 TO sample_role4;
+SELECT
+    auth1.rolname , auth2.rolname, auth3.rolname, mem.admin_option
+FROM
+    pg_auth_members as mem
+    inner join pg_authid as auth1 on (mem.roleid = auth1.oid)
+    inner join pg_authid as auth2 on (mem.member = auth2.oid)
+    inner join pg_authid as auth3 on (mem.grantor = auth3.oid)
+WHERE
+    auth1.rolname = 'sample_role1' or auth1.rolname = 'sample_role2' or
+    auth1.rolname = 'sample_role3'
+ORDER BY
+    auth1.rolname, auth2.rolname, auth3.rolname;
+   rolname    |   rolname    | rolname  | admin_option 
+--------------+--------------+----------+--------------
+ sample_role1 | sample_role2 | postgres | f
+ sample_role1 | sample_role3 | postgres | f
+ sample_role1 | sample_role4 | postgres | f
+ sample_role2 | sample_role4 | postgres | f
+ sample_role3 | sample_role4 | postgres | f
+(5 rows)
+
+REVOKE sample_role1 FROM sample_role2;
+REVOKE sample_role1 FROM sample_role3, sample_role4;
+REVOKE sample_role2, sample_role3 FROM sample_role4;
+SELECT
+    auth1.rolname, auth2.rolname, mem.admin_option
+FROM
+    pg_auth_members as mem
+    inner join pg_authid as auth1 on (mem.roleid = auth1.oid)
+    inner join pg_authid as auth2 on (mem.member = auth2.oid)
+WHERE
+    auth1.rolname = 'sample_role1' or auth1.rolname = 'sample_role2' or
+    auth1.rolname = 'sample_role3'
+ORDER BY
+    auth1.rolname;
+ rolname | rolname | admin_option 
+---------+---------+--------------
+(0 rows)
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON t1_user_management to sample_role2;
+GRANT SELECT, INSERT, UPDATE ON t1_user_management to sample_role3, sample_role4;
+GRANT ALL ON t1_user_management to admin;
+GRANT SELECT, INSERT, UPDATE ON t1_user_management, t2_user_management to sample_role1;
+SELECT
+    relname, relacl
+FROM
+    pg_class
+WHERE
+    relname = 't1_user_management' or relname = 't2_user_management'
+ORDER BY
+    relname;
+      relname       |                                                                           relacl                                                                            
+--------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+ t1_user_management | {postgres=arwdDxt/postgres,sample_role2=arwd/postgres,sample_role3=arw/postgres,sample_role4=arw/postgres,admin=arwdDxt/postgres,sample_role1=arw/postgres}
+ t2_user_management | {postgres=arwdDxt/postgres,sample_role1=arw/postgres}
+(2 rows)
+
+REVOKE UPDATE,DELETE  ON t1_user_management FROM sample_role2;
+REVOKE UPDATE ON t1_user_management FROM sample_role3, sample_role4;
+REVOKE ALL ON t1_user_management FROM admin;
+REVOKE UPDATE ON t1_user_management, t2_user_management FROM sample_role1;
+SELECT
+    relname, relacl
+FROM
+    pg_class
+WHERE
+    relname = 't1_user_management' or relname = 't2_user_management'
+ORDER BY
+    relname;
+      relname       |                                                             relacl                                                              
+--------------------+---------------------------------------------------------------------------------------------------------------------------------
+ t1_user_management | {postgres=arwdDxt/postgres,sample_role2=ar/postgres,sample_role3=ar/postgres,sample_role4=ar/postgres,sample_role1=ar/postgres}
+ t2_user_management | {postgres=arwdDxt/postgres,sample_role1=ar/postgres}
+(2 rows)
+
+REVOKE
+    ALL
+ON
+    t1_user_management, t2_user_management
+FROM
+    sample_role1, sample_role2, sample_role3, sample_role4;
+SELECT
+    relname, relacl
+FROM
+    pg_class
+WHERE
+    relname = 't1_user_management' or relname = 't2_user_management'
+ORDER BY
+    relname;
+      relname       |           relacl            
+--------------------+-----------------------------
+ t1_user_management | {postgres=arwdDxt/postgres}
+ t2_user_management | {postgres=arwdDxt/postgres}
+(2 rows)
+
+DROP ROLE sample_role4;
+DROP ROLE sample_role2, sample_role3;
+DROP ROLE sample_role1, admin;
+SELECT
+    *
+FROM
+    pg_authid
+WHERE
+    rolname = 'sample_role1' or rolname = 'sample_role2' or
+    rolname = 'sample_role3' or rolname = 'sample_role4' or rolname = 'admin';
+ oid | rolname | rolsuper | rolinherit | rolcreaterole | rolcreatedb | rolcanlogin | rolreplication | rolbypassrls | rolconnlimit | rolpassword | rolvaliduntil 
+-----+---------+----------+------------+---------------+-------------+-------------+----------------+--------------+--------------+-------------+---------------
+(0 rows)
+
+/* Test teardown: DDL of the PostgreSQL */
+DROP FOREIGN TABLE t1_user_management;
+DROP FOREIGN TABLE t2_user_management;
+DROP FOREIGN TABLE t3_user_management;
+RESET ROLE;
+/* Test teardown: DDL of the Tsurugi */
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE t1_user_management');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE t2_user_management');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE t3_user_management');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+

@@ -1,0 +1,12 @@
+/* Test case: 1-4 */
+-- Test
+IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public OPTIONS (name 'value');
+ERROR:  unsupported import foreign schema option "name"
+/* Test case: --- */
+-- Test
+IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO unknown_schema;
+ERROR:  schema "unknown_schema" does not exist
+/* Test case: 5-1 */
+-- Test
+IMPORT FOREIGN SCHEMA public FROM SERVER unknown_server INTO public;
+ERROR:  server "unknown_server" does not exist

@@ -1,0 +1,161 @@
+/* Test setup: DDL of the Tsurugi */
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE t1_create_table (
+        c1 INTEGER NOT NULL PRIMARY KEY
+    )
+');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', '
+    CREATE TABLE t2_create_table (
+        c1 INTEGER NOT NULL PRIMARY KEY,
+        c2 BIGINT, c3 DOUBLE PRECISION
+    )
+');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+/* Test setup: DDL of the PostgreSQL */
+CREATE FOREIGN TABLE t1_create_table (
+    c1 INTEGER NOT NULL
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE t2_create_table (
+    c1 INTEGER NOT NULL,
+    c2 BIGINT,
+    c3 DOUBLE PRECISION
+) SERVER tsurugidb;
+/* DML */
+SELECT * FROM t1_create_table ORDER BY c1;
+ c1 
+----
+(0 rows)
+
+INSERT INTO t1_create_table (c1) VALUES (1);
+SELECT * FROM t1_create_table ORDER BY c1;
+ c1 
+----
+  1
+(1 row)
+
+SELECT * FROM t2_create_table ORDER BY c1;
+ c1 | c2 | c3 
+----+----+----
+(0 rows)
+
+INSERT INTO t2_create_table (c1, c2, c3) VALUES (1, 100, 1.1);
+INSERT INTO t2_create_table (c1, c2, c3) VALUES (2, 200, 2.2);
+SELECT * FROM t2_create_table ORDER BY c1;
+ c1 | c2  | c3  
+----+-----+-----
+  1 | 100 | 1.1
+  2 | 200 | 2.2
+(2 rows)
+
+SELECT * FROM t1_create_table ORDER BY c1;
+ c1 
+----
+  1
+(1 row)
+
+INSERT INTO t1_create_table (c1) VALUES (10);
+INSERT INTO t1_create_table (c1) VALUES (100);
+SELECT * FROM t1_create_table ORDER BY c1;
+ c1  
+-----
+   1
+  10
+ 100
+(3 rows)
+
+SELECT * FROM t2_create_table ORDER BY c1;
+ c1 | c2  | c3  
+----+-----+-----
+  1 | 100 | 1.1
+  2 | 200 | 2.2
+(2 rows)
+
+UPDATE t2_create_table SET c2 = c2+10;
+UPDATE t2_create_table SET c3 = c3+1.1 WHERE c2 = 110;
+SELECT * FROM t2_create_table ORDER BY c1;
+ c1 | c2  | c3  
+----+-----+-----
+  1 | 110 | 2.2
+  2 | 210 | 2.2
+(2 rows)
+
+SELECT * FROM t1_create_table ORDER BY c1;
+ c1  
+-----
+   1
+  10
+ 100
+(3 rows)
+
+DELETE FROM t1_create_table WHERE c1 = 10;
+SELECT * FROM t1_create_table ORDER BY c1;
+ c1  
+-----
+   1
+ 100
+(2 rows)
+
+/* Fix tsurugi-issues#568 */
+INSERT INTO public.t1_create_table (c1) VALUES (1000);
+INSERT INTO PuBlIc.t1_create_table (c1) VALUES (2000);
+INSERT INTO PUBLIC.t1_create_table (c1) VALUES (3000);
+INSERT INTO "public"."t1_create_table" (c1) VALUES (4000);
+SELECT * FROM public.t1_create_table ORDER BY c1;
+  c1  
+------
+    1
+  100
+ 1000
+ 2000
+ 3000
+ 4000
+(6 rows)
+
+UPDATE public.t1_create_table SET c1 = c1+100;
+UPDATE PuBlIc.t1_create_table SET c1 = c1+100 WHERE c1 > 1000;
+UPDATE public.t1_create_table SET c1 = c1+100 WHERE c1 > 2000;
+UPDATE "public"."t1_create_table" SET c1 = c1+100 WHERE c1 > 3000;
+SELECT * FROM "public"."t1_create_table" ORDER BY c1;
+  c1  
+------
+  101
+  200
+ 1200
+ 2300
+ 3400
+ 4400
+(6 rows)
+
+DELETE FROM public.t1_create_table WHERE c1 = 200;
+DELETE FROM "public"."t1_create_table" WHERE c1 > 1000;
+SELECT * FROM Public.t1_create_table ORDER BY c1;
+ c1  
+-----
+ 101
+(1 row)
+
+/* Test teardown: DDL of the PostgreSQL */
+DROP FOREIGN TABLE t1_create_table;
+DROP FOREIGN TABLE t2_create_table;
+/* Test teardown: DDL of the Tsurugi */
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE t1_create_table');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE t2_create_table');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
