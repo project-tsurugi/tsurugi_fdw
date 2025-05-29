@@ -559,7 +559,6 @@ execute_foreign_modify(EState *estate,
 	TgFdwForeignModifyState *fmstate = 
 		(TgFdwForeignModifyState *) resultRelInfo->ri_FdwState;
 //	ItemPointer ctid = NULL;
-	StringInfoData sql;
 
 	/* The operation should be INSERT, UPDATE, or DELETE */
 	Assert(operation == CMD_INSERT ||
@@ -575,6 +574,7 @@ execute_foreign_modify(EState *estate,
 	 */
 	if (operation == CMD_INSERT && fmstate->num_slots != *numSlots)
 	{
+		StringInfoData sql;
 		/* Build INSERT string with numSlots records in its VALUES clause. */
 		initStringInfo(&sql);
 

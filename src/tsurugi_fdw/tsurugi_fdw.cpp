@@ -321,10 +321,12 @@ extern PGDLLIMPORT PGPROC *MyProc;
 extern void handle_remote_xact(ForeignServer *server);
 
 static TgFdwForeignScanState* create_fdw_state();
+#if PG_VERSION_NUM >= 140000
 static ForeignScan *find_modifytable_subplan(PlannerInfo *root,
 						 					ModifyTable *plan,
 						 					Index rtindex,
 						 					int subplan_index);
+#endif	/* PG_VERSION_NUM >= 140000 */
 static void store_pg_data_type(TgFdwForeignScanState* fsstate, List* tlist, List** );
 
 /* ===========================================================================
