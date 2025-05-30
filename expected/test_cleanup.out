@@ -1,0 +1,748 @@
+CREATE EXTENSION IF NOT EXISTS tsurugi_fdw;
+CREATE SERVER IF NOT EXISTS tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS bigint1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS char_length_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS char_length_10');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS double1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS employee_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS employee_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS employee_i');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS fdw_test_table');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS fdw_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS fdw_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS fdw_test_table_3');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS fdw_test_table_a');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS fdw_test_table_A');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS fdw_test_Table_A');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS fdw_test_TABLE_B');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS fdw_test_table_name2_________3_________4_________5_________6__');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS fdw_test_table_name2_________3_________4_________5_________6___');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS fdw_test_table_name2_________3_________4_________5_________6____');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS fdw_test_type_datetime');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS fdw_test_type_invalid');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS fdw_test_type_num');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS fdw_test_type_str');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS insert_select_happy');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS integer1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS real1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS re_table1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS re_table2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS ri_table1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS ri_table2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS t1_create_table');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS t1_prepare_select_statement');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS t1_select_statement');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS t1_user_management');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS t2_create_table');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS t2_prepare_select_statement');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS t2_select_statement');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS t2_user_management');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS t3_create_index');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS t3_prepare_select_statement');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS t3_select_statement');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS t3_user_management');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS t4_create_index');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS tg_numeric');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS tg_numeric_s0');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS tg_numeric_s38');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS tg_table');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS tg_temporal_literal');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS tg_timedate');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS tg_timestamptz');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS tg_timetz');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_table1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS Udf_Test_Table_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS UDF_test_table_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_3');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_4');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_bigint');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_binary');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_binary_l');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_binary_varying');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_binary_varying_l');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_boolean');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_bytea');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_char');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_character');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_character_l');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_character_len');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_character_varying');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_character_varying_l');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_character_varying_len');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_char_l');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_char_len');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_char_varying');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_char_varying_l');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_char_varying_len');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_date');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_decimal');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_decimal_max');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_decimal_p');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_decimal_p2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_decimal_ps');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_decimal_ps2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_double');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_double_precision');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_float');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_int');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_matched_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_numeric_p');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_real');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_remote_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_smallint');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_time');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_time_p');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_timestamp');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_timestamp_p');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_timestamptz');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_timestamp_without_time_zone');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_timestamp_with_time_zone');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_timestamp_with_time_zone_p');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_timetz');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_time_without_time_zone');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_time_with_time_zone');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_time_with_time_zone_p');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_unmatched_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_unmatched_2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_varbinary');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_varbinary_l');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_varchar');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_varchar_l');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS udf_test_table_varchar_len');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS update_delete_bigint1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS update_delete_char1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS update_delete_double1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS update_delete_int1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS update_delete_real1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS update_delete_varchar1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS varchar_length_1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS varchar_length_10');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS weather');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS wp_table1');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE IF EXISTS wp_table2');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+DO $$
+DECLARE
+    TABLE_MAX CONSTANT INT := 1000;
+    i INT;
+BEGIN
+    FOR i IN 1..TABLE_MAX LOOP
+        EXECUTE format(
+            'SELECT tg_execute_ddl(''tsurugidb'', ''DROP TABLE IF EXISTS fdw_test_table_%s'')',
+            to_char(i, 'FM0000'));
+        EXECUTE format(
+            'SELECT tg_execute_ddl(''tsurugidb'', ''DROP TABLE IF EXISTS udf_test_table_%s'')',
+            to_char(i, 'FM0000'));
+    END LOOP;
+END $$;
