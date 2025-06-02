@@ -18,7 +18,7 @@ SHLIB_LINK_INTERNAL = $(libpq)
 SHLIB_LINK = -logawayama-stub -lmetadata-manager -lmessage-manager -lboost_filesystem
 
 EXTENSION = tsurugi_fdw
-DATA = tsurugi_fdw--1.0.0.sql
+DATA = tsurugi_fdw--1.0.0.sql tsurugi_fdw--1.0.0--1.1.1.sql
 
 # REGRESS_BASIC: Run basic tests.
 # REGRESS_EXTRA: Run extra tests.
@@ -39,7 +39,7 @@ endif
 ifdef REGRESS_EXTRA
 	REGRESS += create_table_unhappy insert_select_unhappy prepare_decimal_unhappy udf_transaction_unhappy \
 	           update_delete_unhappy user_management_unhappy prepare_select_statement_unhappy create_table_restrict \
-	           import_foreign_schema_unhappy import_foreign_schema_extra \
+	           	import_foreign_schema_unhappy import_foreign_schema_extra \
 	           udf_tg_show_tables_unhappy udf_tg_show_tables_extra udf_tg_verify_tables_unhappy udf_tg_verify_tables_extra
 endif
 
