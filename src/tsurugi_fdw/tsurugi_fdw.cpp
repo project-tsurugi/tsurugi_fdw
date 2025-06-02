@@ -38,14 +38,15 @@ extern "C" {
 #include "tsurugi_fdw.h"
 
 #include "access/xact.h"
-#include "utils/syscache.h"
 #include "access/htup_details.h"
 #include "access/sysattr.h"
 #include "access/table.h"
+#include "access/tupdesc.h"
 #include "catalog/pg_class.h"
 #include "commands/defrem.h"
 #include "commands/explain.h"
 #include "commands/vacuum.h"
+#include "fmgr.h"
 #include "foreign/fdwapi.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -71,16 +72,10 @@ extern "C" {
 #include "utils/rel.h"
 #include "utils/sampling.h"
 #include "utils/selfuncs.h"
-#include "access/tupdesc.h"
+#include "utils/syscache.h"
 #include "nodes/pg_list.h"
 
-#if PG_VERSION_NUM >= 140000
-#ifndef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
-#endif  // PG_MODULE_MAGIC
-#else
-PG_MODULE_MAGIC;
-#endif  // PG_VERSION_NUM >= 140000
 
 #ifdef __cplusplus
 }
@@ -1893,6 +1888,8 @@ tsurugiBeginForeignModify(ModifyTableState *mtstate,
 	int			values_end_len;
 	List	   *retrieved_attrs;
 	RangeTblEntry *rte;
+    ForeignTable *table;
+   	ForeignServer *server;
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
@@ -1933,14 +1930,10 @@ tsurugiBeginForeignModify(ModifyTableState *mtstate,
 
 	resultRelInfo->ri_FdwState = fmstate;
 
-	if (!Tsurugi::in_transaction_block())
-	{
-		ERROR_CODE error = Tsurugi::start_transaction();
-		if (error != ERROR_CODE::OK)
-			Tsurugi::report_error("Failed to start the transaction in Tsurugi.", 
-									error, fmstate->query);
-		fmstate->start_tx = true;
-	}
+	/* Get info about foreign table. */
+  	table = GetForeignTable(rte->relid);
+  	server = GetForeignServer(table->serverid);
+	handle_remote_xact(server);
 }
 
 /*
@@ -2011,15 +2004,11 @@ tsurugiEndForeignModify(EState *estate,
 	TgFdwForeignModifyState *fmstate = 
 		(TgFdwForeignModifyState *) resultRelInfo->ri_FdwState;
 
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw : %s : start_tx: %d", __func__, fmstate->start_tx);
 
 	/* If fmstate is NULL, we are in EXPLAIN; nothing to do */
 	if (fmstate == NULL)
 		return;
-
-	if (fmstate->start_tx)
-		Tsurugi::commit();
-	Tsurugi::deallocate();
 
 	end_prepare_processing(estate);
 }

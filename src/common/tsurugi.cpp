@@ -37,7 +37,6 @@ namespace tg_metadata = jogasaki::proto::sql::common;
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 #include "utils/elog.h"
 #include "storage/proc.h"
 #include "utils/lsyscache.h"
@@ -46,11 +45,6 @@ extern "C" {
 #include "utils/datetime.h"
 #include "utils/numeric.h"
 #include "utils/timestamp.h"
-
-#ifdef PG_MODULE_MAGIC
-PG_MODULE_MAGIC;
-#endif
-
 #ifdef __cplusplus
 }
 #endif
