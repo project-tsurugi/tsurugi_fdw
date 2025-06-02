@@ -80,6 +80,8 @@ void
 get_tsurugi_table_join_expr(JoinExpr* join,
 							std::vector<std::string>& target_tables)
 {
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	switch (nodeTag(join->larg))
 	{
 		case T_RangeVar:
@@ -120,6 +122,8 @@ transform_typenames_to_oids(const List* argtypes,
 	int nargs;
 	int i;
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	nargs = list_length(argtypes);
 	if (nargs)
 	{
@@ -157,6 +161,8 @@ deparse_query_columns(const List* cols,
 	bool first = true;
 	ListCell* lc;
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	appendStringInfoChar(buf, '(');
 	foreach(lc, cols)
 	{
@@ -181,6 +187,8 @@ deparse_value_paramref(const ParamRef* param,
 	int num = param->number;
 	col_name += "_" + std::to_string(num);
 	appendStringInfo(buf, ":%s", col_name.c_str());
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	switch (argtypes[num-1])
 	{
@@ -254,6 +262,8 @@ deparse_value_ref(const Node* value,
 {
 	bool result{true};
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	switch (nodeTag(value))
 	{
 		case T_ParamRef:
@@ -309,6 +319,9 @@ deparse_values_lists(const List* valuesLists,
 	bool result{true};
 	bool first_list = true;
 	ListCell* vtl;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	foreach(vtl, valuesLists)
 	{
 		List* values = (List *) lfirst(vtl);
@@ -351,6 +364,8 @@ deparse_column_ref(ColumnRef* cref,
 				   StringInfo buf)
 {
 	char* result;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	/*----------
 	 * The allowed syntaxes are:
@@ -448,6 +463,9 @@ deparse_a_const(Value* value,
 {
 	bool result{true};
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
+
 	switch (nodeTag(value))
 	{
 		case T_Integer:
@@ -486,6 +504,9 @@ deparse_aexpr_op(A_Expr* a,
 	std::string col_name;
 	bool result{true};
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
+
 	result = deparse_expr_recurse(lexpr, argtypes, placeholders, col_name, buf);
 	if (result != true) {
 		return result;
@@ -518,6 +539,9 @@ deparse_aexpr_between(A_Expr* a,
 	List* rexpr = (List *) a->rexpr;
 	std::string col_name;
 	bool result{true};
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 
 	result = deparse_expr_recurse(lexpr, argtypes, placeholders, col_name, buf);
 	if (result != true) {
@@ -565,6 +589,9 @@ deparse_aexpr_like(A_Expr* a,
 	std::string col_name;
 	bool result{true};
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
+
 	result = deparse_expr_recurse(lexpr, argtypes, placeholders, col_name, buf);
 	if (result != true) {
 		return result;
@@ -601,6 +628,8 @@ deparse_aexpr_in(A_Expr* a,
 	List* rexpr = (List *) a->rexpr;
 	std::string col_name;
 	bool result{true};
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	result = deparse_expr_recurse(lexpr, argtypes, placeholders, col_name, buf);
 	if (result != true) {
@@ -650,6 +679,8 @@ deparse_bool_expr(BoolExpr* a,
 	ListCell   *lc;
 	bool result{true};
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	switch (a->boolop)
 	{
 		case AND_EXPR:
@@ -693,6 +724,9 @@ deparse_expr_recurse(Node* expr,
 					 StringInfo buf)
 {
 	bool result{true};
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 
 	switch (nodeTag(expr))
 	{
@@ -797,6 +831,8 @@ deparse_where_clause(Node* expr,
 {
 	bool result{true};
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	switch (nodeTag(expr))
 	{
 		case T_A_Expr:
@@ -861,6 +897,9 @@ deparse_group_clause(List* groupClause,
 {
 	const char* sep = "";
 	ListCell* l;
+	
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	foreach(l, groupClause)
 	{
 		Node* group = (Node *) lfirst(l);
@@ -879,6 +918,9 @@ deparse_sort_clause(List* sortClause,
 {
 	const char* sep = "";
 	ListCell* l;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	foreach(l, sortClause)
 	{
 		Node* sort = (Node *) lfirst(l);
@@ -938,6 +980,8 @@ deparse_limit_clause(Node* limitCount,
 					 stub::placeholders_type& placeholders,
 					 StringInfo buf)
 {
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	if (IsA(limitCount, A_Const)) {
 		A_Const* con = (A_Const *) limitCount;
 		Value* val = &con->val;
@@ -957,6 +1001,8 @@ deparse_join_expr(JoinExpr* join,
 				  stub::placeholders_type& placeholders,
 				  StringInfo buf)
 {
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	switch (nodeTag(join->larg))
 	{
 		case T_RangeVar:
@@ -1038,6 +1084,8 @@ deparse_join_expr(JoinExpr* join,
 bool
 isGeneralSelect(const SelectStmt* selectStmt)
 {
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	/*
 	 * We have three cases to deal with: DEFAULT VALUES (selectStmt == NULL),
 	 * VALUES list, or general SELECT input.  We special-case VALUES, both for
@@ -1062,6 +1110,8 @@ deparse_insert_query(const InsertStmt* stmt,
 					 StringInfo buf)
 {
 	std::vector<std::string> col_names;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	appendStringInfo(buf, "INSERT INTO %s ", stmt->relation->relname);
 
@@ -1090,6 +1140,8 @@ deparse_update_query(const UpdateStmt* stmt,
 					 stub::placeholders_type& placeholders,
 					 StringInfo buf)
 {
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	appendStringInfo(buf, "UPDATE %s ", stmt->relation->relname);
 
 	appendStringInfoString(buf, "SET ");
@@ -1125,6 +1177,8 @@ deparse_delete_query(const DeleteStmt* stmt,
 					 stub::placeholders_type& placeholders,
 					 StringInfo buf)
 {
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	appendStringInfo(buf, "DELETE FROM %s ", stmt->relation->relname);
 
 	if (stmt->whereClause != NULL) {
@@ -1139,6 +1193,8 @@ deparse_select_query(const SelectStmt* stmt,
 					 stub::placeholders_type& placeholders,
 					 StringInfo buf)
 {
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	appendStringInfoString(buf, "SELECT ");
 
 	if (stmt->distinctClause == NIL)
@@ -1246,6 +1302,8 @@ deparse_select_operation_query(const SelectStmt* stmt,
 							   stub::placeholders_type& placeholders,
 							   StringInfo buf)
 {
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	if (stmt->larg->op == SETOP_NONE)
 	{
 		deparse_select_query(stmt->larg, argtypes, placeholders, buf);
@@ -1305,6 +1363,8 @@ after_prepare_stmt(const PrepareStmt* stmts,
 				   const char* queryString)
 {
 	Assert(stmts != nullptr);
+
+	elog(LOG, "tsurugi_fdw : %s", __func__);
 
 	if (!IsTsurugifdwInstalled()) {
 		/* Only Tsurugi will be processed */
@@ -1380,6 +1440,8 @@ make_execute_parameters(const Value* param_value,
 						const std::string param_name,
 						const int param_id)
 {
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	if (IsA(param_value, Null)) {
 		std::monostate monostate;
 		parameters.emplace_back(param_name, monostate);
@@ -1640,6 +1702,9 @@ deparse_execute_param(const ExecuteStmt* stmts,
 	List* stmt_params = stmts->params;
 	ListCell* lcp;
 	int param_count = 0;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	foreach(lcp, stmt_params)
 	{
 		param_count++;
@@ -1682,6 +1747,8 @@ deparse_execute_target_entry(const TargetEntry* target_entry,
 {
 	Expr* expr = target_entry->expr;
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	if (IsA(expr, Param)) {
 		Param* target_param = (Param *) expr;
 		if (target_entry->resname) {
@@ -1710,6 +1777,9 @@ deparse_execute_paramref(const ParamRef* param_ref,
 	List* stmt_params = stmts->params;
 	ListCell* lcp;
 	int param_count = 0;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	foreach(lcp, stmt_params)
 	{
 		param_count++;
@@ -1755,6 +1825,8 @@ deparse_execute_aexpr_op(A_Expr* a,
 	std::string col_name;
 	bool result{true};
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	result = deparse_execute_expr_recurse(lexpr, col_name, stmts);
 	if (result != true) {
 		return result;
@@ -1784,6 +1856,8 @@ deparse_execute_aexpr_between(A_Expr* a,
 	List* rexpr = (List *) a->rexpr;
 	std::string col_name;
 	bool result{true};
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	result = deparse_execute_expr_recurse(lexpr, col_name, stmts);
 	if (result != true) {
@@ -1825,6 +1899,8 @@ deparse_execute_aexpr_like(A_Expr* a,
 	std::string col_name;
 	bool result{true};
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	result = deparse_execute_expr_recurse(lexpr, col_name, stmts);
 	if (result != true) {
 		return result;
@@ -1854,6 +1930,8 @@ deparse_execute_aexpr_in(A_Expr* a,
 	List* rexpr = (List *) a->rexpr;
 	std::string col_name;
 	bool result{true};
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	result = deparse_execute_expr_recurse(lexpr, col_name, stmts);
 	if (result != true) {
@@ -1893,6 +1971,8 @@ deparse_execute_bool_expr(BoolExpr* a,
 	ListCell   *lc;
 	bool result{true};
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	switch (a->boolop)
 	{
 		case AND_EXPR:
@@ -1921,6 +2001,8 @@ deparse_execute_expr_recurse(Node* expr,
 							 const ExecuteStmt* stmts)
 {
 	bool result{true};
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	switch (nodeTag(expr))
 	{
@@ -1995,6 +2077,8 @@ void
 deparse_execute_where_clause(const Node* expr,
 							 const ExecuteStmt* stmts)
 {
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	if (expr == NULL) {
 		return;
 	}
@@ -2053,6 +2137,8 @@ void
 deparse_execute_group_clause(List* groupClause,
 							 const ExecuteStmt* stmts)
 {
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	if (groupClause != NULL) {
 		ListCell* l;
 		foreach(l, groupClause)
@@ -2068,6 +2154,8 @@ void
 deparse_execute_sort_clause(List* sortClause,
 							const ExecuteStmt* stmts)
 {
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	if (sortClause != NULL) {
 		ListCell* l;
 		foreach(l, sortClause)
@@ -2086,6 +2174,8 @@ void
 deparse_execute_limit_count(Node* limitCount,
 							const ExecuteStmt* stmts)
 {
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	if (limitCount != NULL) {
 		std::string name = "LIMIT";
 		deparse_execute_expr_recurse(limitCount, name, stmts);
@@ -2096,6 +2186,8 @@ void
 deparse_execute_select_query(const SelectStmt* stmt,
 							 const ExecuteStmt* stmts)
 {
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	if (stmt->fromClause != NULL) {
 		ListCell* l;
 		foreach(l, stmt->fromClause)
@@ -2118,6 +2210,8 @@ void
 deparse_execute_select_operation_query(const SelectStmt* stmt,
 									   const ExecuteStmt* stmts)
 {
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	if (stmt->larg->op == SETOP_NONE) {
 		deparse_execute_select_query(stmt->larg, stmts);
 	} else {
@@ -2136,6 +2230,8 @@ Datum
 get_datum_sqlvaluefunction(SQLValueFunction* svf)
 {
 	Datum result = (Datum) 0;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	switch (svf->op)
 	{
@@ -2173,6 +2269,8 @@ get_datum_funcexpr(FuncExpr* func_expr)
 
 	FmgrInfo flinfo;
 	Datum result = (Datum) 0;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	fmgr_info(func_expr->funcid, &flinfo);
 
@@ -2279,6 +2377,8 @@ analyze_execut_parameters(const ExecuteStmt* stmts,
 	int i;
 	ListCell* l;
 
+	elog(LOG, "tsurugi_fdw : %s", __func__);
+
 	pstate = make_parsestate(NULL);
 	pstate->p_sourcetext = queryString;
 	paramLI = makeParamList(num_params);
@@ -2362,6 +2462,8 @@ before_execute_stmt(const ExecuteStmt* stmts,
 	List* query_list;
 	ListCell* l;
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	if (!IsTsurugifdwInstalled()) {
 		/* Only Tsurugi will be processed */
 		return true;
@@ -2438,6 +2540,9 @@ before_execute_stmt(const ExecuteStmt* stmts,
 bool
 after_execute_stmt(const ExecuteStmt* stmts)
 {
+
+	elog(LOG, "tsurugi_fdw : %s", __func__);
+
 	if (!IsTsurugifdwInstalled()) {
 		/* Only Tsurugi will be processed */
 		return true;

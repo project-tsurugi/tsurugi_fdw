@@ -576,6 +576,7 @@ execute_foreign_modify(EState *estate,
 	if (operation == CMD_INSERT && fmstate->num_slots != *numSlots)
 	{
 		/* Build INSERT string with numSlots records in its VALUES clause. */
+		elog(LOG, "tsurugi_fdw : rebuildInsertSql().\n%s", sql.data);
 		initStringInfo(&sql);
 
 		rebuildInsertSql(&sql, fmstate->rel,
