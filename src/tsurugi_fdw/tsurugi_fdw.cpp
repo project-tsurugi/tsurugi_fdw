@@ -74,13 +74,7 @@ extern "C" {
 #include "access/tupdesc.h"
 #include "nodes/pg_list.h"
 
-#if PG_VERSION_NUM >= 140000
-#ifndef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
-#endif  // PG_MODULE_MAGIC
-#else
-PG_MODULE_MAGIC;
-#endif  // PG_VERSION_NUM >= 140000
 
 #ifdef __cplusplus
 }
