@@ -143,6 +143,8 @@ begin_prepare_processing(const EState* estate)
 		for (int i = 0; i < params->numParams; i++) {
 			std::string param_name = PREPARE_PARAM_NAME + std::to_string(i);
 			ParamExternData param = params->params[i];
+			elog(LOG, "tsurugi_fdw : preapre statement parameter: %s, pgtype_oid: %d", 
+				param_name.data(), param.ptype);
 			switch (param.ptype)
 			{
 				case INT2OID:

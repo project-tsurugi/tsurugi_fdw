@@ -1364,7 +1364,7 @@ after_prepare_stmt(const PrepareStmt* stmts,
 {
 	Assert(stmts != nullptr);
 
-	elog(LOG, "tsurugi_fdw : %s", __func__);
+	elog(LOG, "tsurugi_fdw : %s\nquery_string: \n%s", __func__, queryString);
 
 	if (!IsTsurugifdwInstalled()) {
 		/* Only Tsurugi will be processed */
@@ -2462,7 +2462,7 @@ before_execute_stmt(const ExecuteStmt* stmts,
 	List* query_list;
 	ListCell* l;
 
-	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw : %s\nquery_string: \n%s", __func__, queryString);
 
 	if (!IsTsurugifdwInstalled()) {
 		/* Only Tsurugi will be processed */
