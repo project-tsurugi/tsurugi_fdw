@@ -1,16 +1,16 @@
 /* Test setup: DDL of the Tsurugi */
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
     CREATE TABLE tg_numeric_s0 (
         id INTEGER NOT NULL PRIMARY KEY,
         num NUMERIC(38, 0)
     )
-');
-SELECT tg_execute_ddl('tsurugidb', '
+', 'tsurugidb');
+SELECT tg_execute_ddl('
     CREATE TABLE tg_numeric_s38 (
         id INTEGER NOT NULL PRIMARY KEY,
         num NUMERIC(38, 38)
     )
-');
+', 'tsurugidb');
 
 /* Test setup: DDL of the PostgreSQL */
 CREATE FOREIGN TABLE tg_numeric_s0 (
@@ -46,5 +46,5 @@ DROP FOREIGN TABLE tg_numeric_s0;
 DROP FOREIGN TABLE tg_numeric_s38;
 
 /* Test teardown: DDL of the Tsurugi */
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE tg_numeric_s0');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE tg_numeric_s38');
+SELECT tg_execute_ddl('DROP TABLE tg_numeric_s0', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE tg_numeric_s38', 'tsurugidb');

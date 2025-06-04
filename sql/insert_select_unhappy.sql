@@ -1,16 +1,16 @@
 /* Test setup: DDL of the Tsurugi */
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
     CREATE TABLE integer1 (
         ol_w_id int PRIMARY KEY
     )
-');
-SELECT tg_execute_ddl('tsurugidb', '
+', 'tsurugidb');
+SELECT tg_execute_ddl('
     CREATE TABLE bigint1 (
         id int PRIMARY KEY,
         ol_w_id bigint
     )
-');
-SELECT tg_execute_ddl('tsurugidb', '
+', 'tsurugidb');
+SELECT tg_execute_ddl('
     CREATE TABLE tg_temporal_literal (
         id        INTEGER NOT NULL PRIMARY KEY,
         dt        DATE,
@@ -18,8 +18,8 @@ SELECT tg_execute_ddl('tsurugidb', '
         tms       TIMESTAMP,
         tms_wo_tz TIMESTAMP WITHOUT TIME ZONE,
         tms_w_tz  TIMESTAMP WITH TIME ZONE
-    )'
-);
+    )
+', 'tsurugidb');
 
 /* Test setup: DDL of the PostgreSQL */
 CREATE FOREIGN TABLE integer1 (
@@ -69,6 +69,6 @@ DROP FOREIGN TABLE bigint1;
 DROP FOREIGN TABLE tg_temporal_literal;
 
 /* Test teardown: DDL of the Tsurugi */
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE integer1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE bigint1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE tg_temporal_literal');
+SELECT tg_execute_ddl('DROP TABLE integer1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE bigint1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE tg_temporal_literal', 'tsurugidb');

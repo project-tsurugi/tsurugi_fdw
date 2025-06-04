@@ -1,6 +1,6 @@
 /* Test case: 3-4-1 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  CREATE TABLE
@@ -50,7 +50,7 @@ SELECT tg_show_tables('tg_schema', 'tsurugidb', 'summary', TRUE);
 (1 row)
 
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  DROP TABLE
@@ -58,7 +58,7 @@ SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
 
 /* Test case: 3-4-2 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  CREATE TABLE
@@ -171,7 +171,7 @@ SELECT tg_show_tables('tg_schema', 'tsurugidb', 'summary', '0');
 (1 row)
 
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  DROP TABLE
@@ -192,7 +192,7 @@ BEGIN
 
     FOR i IN 1..TABLE_MAX LOOP
         EXECUTE format(
-            'SELECT tg_execute_ddl(''tsurugidb'', ''CREATE TABLE IF NOT EXISTS udf_test_table_%s (%s)'')',
+            'SELECT tg_execute_ddl(''CREATE TABLE IF NOT EXISTS udf_test_table_%s (%s)'', ''tsurugidb'')',
             to_char(i, 'FM0000'), columns_def);
     END LOOP;
 END $$;
@@ -1222,7 +1222,7 @@ DECLARE
 BEGIN
     FOR i IN 1..TABLE_MAX LOOP
         EXECUTE format(
-            'SELECT tg_execute_ddl(''tsurugidb'', ''DROP TABLE IF EXISTS udf_test_table_%s'')',
+            'SELECT tg_execute_ddl(''DROP TABLE IF EXISTS udf_test_table_%s'', ''tsurugidb'')',
             to_char(i, 'FM0000'));
     END LOOP;
 END $$;
