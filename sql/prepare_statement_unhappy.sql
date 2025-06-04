@@ -1,33 +1,33 @@
 /* Test setup: DDL of the Tsurugi */
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
     CREATE TABLE tg_timedate (
         id INTEGER NOT NULL PRIMARY KEY,
         tms TIMESTAMP DEFAULT TIMESTAMP ''2023-03-03 23:59:35.123456'',
         dt DATE DEFAULT DATE ''2023-03-03'',
         tm TIME DEFAULT TIME ''23:59:35.123456789''
     )
-');
-SELECT tg_execute_ddl('tsurugidb', '
+', 'tsurugidb');
+SELECT tg_execute_ddl('
     CREATE TABLE employee_1 (
         id INTEGER DEFAULT 1,
         name VARCHAR(100) DEFAULT ''Unknown'',
         salary NUMERIC(10, 2) DEFAULT 30000.00
     )
-');
-SELECT tg_execute_ddl('tsurugidb', '
+', 'tsurugidb');
+SELECT tg_execute_ddl('
     CREATE TABLE employee_2 (
         id INTEGER DEFAULT 1,
         name VARCHAR(100) DEFAULT ''Unknown'',
         salary NUMERIC(10, 2) DEFAULT 30000.00
     )
-');
-SELECT tg_execute_ddl('tsurugidb', '
+', 'tsurugidb');
+SELECT tg_execute_ddl('
     CREATE TABLE employee_i (
         id INTEGER DEFAULT 1,
         name VARCHAR(100) DEFAULT ''Unknown'',
         salary NUMERIC(10, 2) DEFAULT 30000.00
     )
-');
+', 'tsurugidb');
 
 /* Test setup: DDL of the PostgreSQL */
 CREATE FOREIGN TABLE tg_timedate (
@@ -91,7 +91,7 @@ DROP FOREIGN TABLE employee_2;
 DROP FOREIGN TABLE employee_i;
 
 /* Test teardown: DDL of the Tsurugi */
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE tg_timedate');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE employee_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE employee_2');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE employee_i');
+SELECT tg_execute_ddl('DROP TABLE tg_timedate', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE employee_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE employee_2', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE employee_i', 'tsurugidb');

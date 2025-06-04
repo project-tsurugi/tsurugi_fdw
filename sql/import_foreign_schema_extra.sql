@@ -3,7 +3,7 @@ SET timezone TO 'Asia/Tokyo';
 
 /* Test case: 3-1-1_4 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
   CREATE TABLE fdw_test_type_num (
     col_int INT,
     col_bigint BIGINT,
@@ -16,7 +16,7 @@ SELECT tg_execute_ddl('tsurugidb', '
     col_decimal_ps DECIMAL(3, 2),
     col_decimal_max DECIMAL(*)
   )
-');
+', 'tsurugidb');
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
@@ -40,11 +40,11 @@ SELECT * FROM fdw_test_type_num;
 DROP FOREIGN TABLE fdw_test_type_num;
 
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE fdw_test_type_num');
+SELECT tg_execute_ddl('DROP TABLE fdw_test_type_num', 'tsurugidb');
 
 /* Test case: 3-2-1_4 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
   CREATE TABLE fdw_test_type_str (
     col_char CHAR,
     col_char_l CHAR(64),
@@ -57,7 +57,7 @@ SELECT tg_execute_ddl('tsurugidb', '
     col_character_varying CHARACTER VARYING,
     col_character_varying_l CHARACTER VARYING(64)
   )
-');
+', 'tsurugidb');
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
@@ -83,11 +83,11 @@ SELECT * FROM fdw_test_type_str;
 DROP FOREIGN TABLE fdw_test_type_str;
 
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE fdw_test_type_str');
+SELECT tg_execute_ddl('DROP TABLE fdw_test_type_str', 'tsurugidb');
 
 /* Test case: 3-3-1_4 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
   CREATE TABLE fdw_test_type_datetime (
     col_date DATE,
     col_time TIME,
@@ -95,7 +95,7 @@ SELECT tg_execute_ddl('tsurugidb', '
     col_timestamp TIMESTAMP,
     col_timestamp_tz TIMESTAMP WITH TIME ZONE
   )
-');
+', 'tsurugidb');
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
@@ -117,25 +117,25 @@ SELECT * FROM fdw_test_type_datetime;
 DROP FOREIGN TABLE fdw_test_type_datetime;
 
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE fdw_test_type_datetime');
+SELECT tg_execute_ddl('DROP TABLE fdw_test_type_datetime', 'tsurugidb');
 
 /* Test case: 3-4 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
   CREATE TABLE fdw_test_type_invalid (col_binary BINARY)
-');
+', 'tsurugidb');
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
 
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE fdw_test_type_invalid');
+SELECT tg_execute_ddl('DROP TABLE fdw_test_type_invalid', 'tsurugidb');
 
 /* Test case: 4-1-1 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
   CREATE TABLE fdw_test_table_name2_________3_________4_________5_________6__ (id INT, name VARCHAR)
-');
+', 'tsurugidb');
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
@@ -146,15 +146,15 @@ IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
 DROP FOREIGN TABLE fdw_test_table_name2_________3_________4_________5_________6__;
 
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb','
+SELECT tg_execute_ddl('
   DROP TABLE fdw_test_table_name2_________3_________4_________5_________6__
-');
+', 'tsurugidb');
 
 /* Test case: 4-1-2 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
   CREATE TABLE fdw_test_table_name2_________3_________4_________5_________6___ (id INT, name VARCHAR)
-');
+', 'tsurugidb');
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
@@ -165,15 +165,15 @@ IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
 DROP FOREIGN TABLE fdw_test_table_name2_________3_________4_________5_________6___;
 
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb','
+SELECT tg_execute_ddl('
   DROP TABLE fdw_test_table_name2_________3_________4_________5_________6___
-');
+', 'tsurugidb');
 
 /* Test case: 4-1-3 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
   CREATE TABLE fdw_test_table_name2_________3_________4_________5_________6____ (id INT, name VARCHAR)
-');
+', 'tsurugidb');
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
@@ -184,15 +184,15 @@ IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
 DROP FOREIGN TABLE fdw_test_table_name2_________3_________4_________5_________6___;
 
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb','
+SELECT tg_execute_ddl('
   DROP TABLE fdw_test_table_name2_________3_________4_________5_________6____
-');
+', 'tsurugidb');
 
 /* Test case: 4-2-1 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb','
+SELECT tg_execute_ddl('
   CREATE TABLE fdw_test_table (id INT, columnname_________2_________3_________4_________5_________6__ VARCHAR)
-');
+', 'tsurugidb');
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
@@ -203,13 +203,13 @@ IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
 DROP FOREIGN TABLE fdw_test_table;
 
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb','DROP TABLE fdw_test_table');
+SELECT tg_execute_ddl('DROP TABLE fdw_test_table', 'tsurugidb');
 
 /* Test case: 4-2-2 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb','
+SELECT tg_execute_ddl('
   CREATE TABLE fdw_test_table (id INT, columnname_________2_________3_________4_________5_________6___ VARCHAR)
-');
+', 'tsurugidb');
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
@@ -220,13 +220,13 @@ IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
 DROP FOREIGN TABLE fdw_test_table;
 
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb','DROP TABLE fdw_test_table');
+SELECT tg_execute_ddl('DROP TABLE fdw_test_table', 'tsurugidb');
 
 /* Test case: 4-2-3 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb','
+SELECT tg_execute_ddl('
   CREATE TABLE fdw_test_table (id INT, columnname_________2_________3_________4_________5_________6____ VARCHAR)
-');
+', 'tsurugidb');
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
@@ -237,7 +237,7 @@ IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
 DROP FOREIGN TABLE fdw_test_table;
 
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb','DROP TABLE fdw_test_table');
+SELECT tg_execute_ddl('DROP TABLE fdw_test_table', 'tsurugidb');
 
 /* Test case: 6-1 */
 -- Test setup: DDL of the Tsurugi
@@ -254,7 +254,7 @@ BEGIN
 
     FOR i IN 1..TABLE_MAX LOOP
         EXECUTE format(
-            'SELECT tg_execute_ddl(''tsurugidb'', ''CREATE TABLE IF NOT EXISTS fdw_test_table_%s (%s)'')',
+            'SELECT tg_execute_ddl(''CREATE TABLE IF NOT EXISTS fdw_test_table_%s (%s)'', ''tsurugidb'')',
             to_char(i, 'FM0000'), columns_def);
     END LOOP;
 END $$;
@@ -275,7 +275,7 @@ DECLARE
 BEGIN
     FOR i IN 1..TABLE_MAX LOOP
         EXECUTE format(
-            'SELECT tg_execute_ddl(''tsurugidb'', ''DROP TABLE IF EXISTS fdw_test_table_%s'')',
+            'SELECT tg_execute_ddl(''DROP TABLE IF EXISTS fdw_test_table_%s'', ''tsurugidb'')',
             to_char(i, 'FM0000'));
         EXECUTE format(
             'DROP FOREIGN TABLE IF EXISTS fdw_test_table_%s',

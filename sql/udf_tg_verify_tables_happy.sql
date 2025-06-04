@@ -1,6 +1,6 @@
 /* Test case: 1-1-1 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
 -- Test
@@ -8,11 +8,11 @@ SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'summary', true);
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE udf_test_table_1;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
 
 /* Test case: 1-1-2 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_1 (id bigint, name text) SERVER tsurugidb;
 -- Test
@@ -20,12 +20,12 @@ SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'summary', true);
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE udf_test_table_1;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
 
 /* Test case: 1-1-3 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
 -- Test
@@ -33,13 +33,13 @@ SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'summary', true);
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE udf_test_table_1;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_2', 'tsurugidb');
 
 /* Test case: 1-1-4 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_1 (id bigint, name text) SERVER tsurugidb;
 -- Test
@@ -47,12 +47,12 @@ SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'summary', true);
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE udf_test_table_1;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_2', 'tsurugidb');
 
 /* Test case: 1-2-1 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
 -- Test
@@ -60,11 +60,11 @@ SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'summary', false);
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE udf_test_table_1;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
 
 /* Test case: 1-2-2 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_1 (id bigint, name text) SERVER tsurugidb;
 -- Test
@@ -72,12 +72,12 @@ SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'summary', false);
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE udf_test_table_1;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
 
 /* Test case: 1-2-3 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
 -- Test
@@ -85,13 +85,13 @@ SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'summary', false);
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE udf_test_table_1;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_2', 'tsurugidb');
 
 /* Test case: 1-2-4 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_1 (id bigint, name text) SERVER tsurugidb;
 -- Test
@@ -99,12 +99,12 @@ SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'summary', false);
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE udf_test_table_1;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_2', 'tsurugidb');
 
 /* Test case: 2-1-1 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
 -- Test
@@ -112,11 +112,11 @@ SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE udf_test_table_1;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
 
 /* Test case: 2-1-2 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_1 (id bigint, name text) SERVER tsurugidb;
 -- Test
@@ -124,12 +124,12 @@ SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE udf_test_table_1;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
 
 /* Test case: 2-1-3 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
 -- Test
@@ -137,13 +137,13 @@ SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE udf_test_table_1;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_2', 'tsurugidb');
 
 /* Test case: 2-1-4 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_1 (id bigint, name text) SERVER tsurugidb;
 -- Test
@@ -151,12 +151,12 @@ SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE udf_test_table_1;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_2', 'tsurugidb');
 
 /* Test case: 2-2-1 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
 -- Test
@@ -164,11 +164,11 @@ SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', false);
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE udf_test_table_1;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
 
 /* Test case: 2-2-2 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_1 (id bigint, name text) SERVER tsurugidb;
 -- Test
@@ -176,12 +176,12 @@ SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', false);
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE udf_test_table_1;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
 
 /* Test case: 2-2-3 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
 -- Test
@@ -189,13 +189,13 @@ SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', false);
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE udf_test_table_1;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_2', 'tsurugidb');
 
 /* Test case: 2-2-4 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_1 (id bigint, name text) SERVER tsurugidb;
 -- Test
@@ -203,8 +203,8 @@ SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', false);
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE udf_test_table_1;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_2', 'tsurugidb');
 
 /* Test case: 3-1-1 */
 -- Test
@@ -220,23 +220,23 @@ DROP FOREIGN TABLE udf_test_table_1;
 
 /* Test case: 3-1-3 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
 -- Test
 SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
 
 /* Test case: 3-1-4 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_3 (id DECIMAL, schedule TIMESTAMP)');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_3 (id DECIMAL, schedule TIMESTAMP)', 'tsurugidb');
 -- Test
 SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_3');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_2', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_3', 'tsurugidb');
 
 /* Test case: 3-1-5 */
 -- Test setup: DDL of the PostgreSQL
@@ -252,10 +252,10 @@ DROP FOREIGN TABLE udf_test_table_3;
 
 /* Test case: 3-1-6 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_remote_1 (id INT, name VARCHAR)');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_matched_1 (id INT, name CHAR(64))');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_unmatched_1 (id BIGINT, since DATE)');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_unmatched_2 (id DECIMAL, schedule TIMESTAMP)');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_remote_1 (id INT, name VARCHAR)', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_matched_1 (id INT, name CHAR(64))', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_unmatched_1 (id BIGINT, since DATE)', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_unmatched_2 (id DECIMAL, schedule TIMESTAMP)', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_local_1 (id integer, name text) SERVER tsurugidb;
 CREATE FOREIGN TABLE udf_test_table_local_2 (id integer, name text) SERVER tsurugidb;
@@ -271,16 +271,16 @@ DROP FOREIGN TABLE udf_test_table_matched_1;
 DROP FOREIGN TABLE udf_test_table_unmatched_1;
 DROP FOREIGN TABLE udf_test_table_unmatched_2;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_remote_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_matched_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_unmatched_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_unmatched_2');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_remote_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_matched_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_unmatched_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_unmatched_2', 'tsurugidb');
 
 /* Test case: 3-1-7 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE Udf_Test_Table_1 (id BIGINT, since DATE)');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE UDF_test_table_2 (id BIGINT, name VARCHAR)');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE Udf_Test_Table_1 (id BIGINT, since DATE)', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE UDF_test_table_2 (id BIGINT, name VARCHAR)', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
 CREATE FOREIGN TABLE "Udf_Test_Table_1" (id bigint, since date) SERVER tsurugidb;
@@ -292,13 +292,13 @@ DROP FOREIGN TABLE udf_test_table_1;
 DROP FOREIGN TABLE "Udf_Test_Table_1";
 DROP FOREIGN TABLE UDF_test_table_2;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE Udf_Test_Table_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE UDF_test_table_2');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE Udf_Test_Table_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE UDF_test_table_2', 'tsurugidb');
 
 /* Test case: 3-2-1 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
   CREATE TABLE udf_test_table_1 (
     id INT,
     name CHAR(128),
@@ -307,7 +307,7 @@ SELECT tg_execute_ddl('tsurugidb', '
     since DATE,
     schedule TIMESTAMP
   )
-');
+', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_1 (
   id integer,
@@ -322,11 +322,11 @@ SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE udf_test_table_1;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
 
 /* Test case: 3-2-2 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
   CREATE TABLE udf_test_table_1 (
     id INT,
     name CHAR(128),
@@ -335,7 +335,7 @@ SELECT tg_execute_ddl('tsurugidb', '
     since DATE,
     schedule TIMESTAMP
   )
-');
+', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_1 (
   id integer,
@@ -349,11 +349,11 @@ SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE udf_test_table_1;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
 
 /* Test case: 3-2-3 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
   CREATE TABLE udf_test_table_1 (
     id INT,
     name CHAR(128),
@@ -361,7 +361,7 @@ SELECT tg_execute_ddl('tsurugidb', '
     since DATE,
     schedule TIMESTAMP
   )
-');
+', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_1 (
   id integer,
@@ -376,16 +376,16 @@ SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE udf_test_table_1;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
 
 /* Test case: 3-3-1 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT)');
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT)', 'tsurugidb');
+SELECT tg_execute_ddl('
   CREATE TABLE udf_test_table_2 (
     id INT, name CHAR(128), address VARCHAR, tel CHAR(24), since DATE, schedule TIMESTAMP
   )
-');
+', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_1 (
   id integer
@@ -404,12 +404,12 @@ SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
 DROP FOREIGN TABLE udf_test_table_1;
 DROP FOREIGN TABLE udf_test_table_2;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_2', 'tsurugidb');
 
 /* Test case: 3-3-2 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
   CREATE TABLE udf_test_table_1 (
     col_1 INT,
     col_2 VARCHAR,
@@ -417,8 +417,8 @@ SELECT tg_execute_ddl('tsurugidb', '
     col_4 VARCHAR,
     col_5 VARCHAR
   )
-');
-SELECT tg_execute_ddl('tsurugidb', '
+', 'tsurugidb');
+SELECT tg_execute_ddl('
   CREATE TABLE udf_test_table_2 (
     col_1 INT,
     col_2 VARCHAR,
@@ -426,8 +426,8 @@ SELECT tg_execute_ddl('tsurugidb', '
     col_4 VARCHAR,
     col_5 VARCHAR
   )
-');
-SELECT tg_execute_ddl('tsurugidb', '
+', 'tsurugidb');
+SELECT tg_execute_ddl('
   CREATE TABLE udf_test_table_3 (
     col_1 INT,
     col_2 VARCHAR,
@@ -435,8 +435,8 @@ SELECT tg_execute_ddl('tsurugidb', '
     col_4 VARCHAR,
     col_5 VARCHAR
   )
-');
-SELECT tg_execute_ddl('tsurugidb', '
+', 'tsurugidb');
+SELECT tg_execute_ddl('
   CREATE TABLE udf_test_table_4 (
     col_1 INT,
     col_2 VARCHAR,
@@ -444,7 +444,7 @@ SELECT tg_execute_ddl('tsurugidb', '
     col_4 VARCHAR,
     col_5 VARCHAR
   )
-');
+', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_1 (
   invalid integer,
@@ -482,27 +482,27 @@ DROP FOREIGN TABLE IF EXISTS udf_test_table_2;
 DROP FOREIGN TABLE IF EXISTS udf_test_table_3;
 DROP FOREIGN TABLE IF EXISTS udf_test_table_4;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_3');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_4');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_2', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_3', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_4', 'tsurugidb');
 
 /* Test case: 3-3-3 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
   CREATE TABLE udf_test_table_1 (
     col_1 INT,
     col_2 VARCHAR,
     Col_2 DATE,
     COL_2 TIME
   )
-');
-SELECT tg_execute_ddl('tsurugidb', '
+', 'tsurugidb');
+SELECT tg_execute_ddl('
   CREATE TABLE udf_test_table_2 (
     Col_1 INT,
     Col_2 VARCHAR
   )
-');
+', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_1 (
   col_1 integer,
@@ -520,17 +520,17 @@ SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
 DROP FOREIGN TABLE udf_test_table_1;
 DROP FOREIGN TABLE udf_test_table_2;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_2', 'tsurugidb');
 
 /* Test case: 3-4-1 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
   CREATE TABLE udf_test_table_1 (
     col_1 INT
   )
-');
-SELECT tg_execute_ddl('tsurugidb', '
+', 'tsurugidb');
+SELECT tg_execute_ddl('
   CREATE TABLE udf_test_table_2 (
     col_1 INT,
     col_2 VARCHAR,
@@ -538,7 +538,7 @@ SELECT tg_execute_ddl('tsurugidb', '
     col_4 TIME,
     col_5 DECIMAL
   )
-');
+', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_1 (
   col_1 integer
@@ -556,12 +556,12 @@ SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
 DROP FOREIGN TABLE udf_test_table_1;
 DROP FOREIGN TABLE udf_test_table_2;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_2', 'tsurugidb');
 
 /* Test case: 3-4-2 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
   CREATE TABLE udf_test_table_1 (
     col_1 INT,
     col_2 VARCHAR,
@@ -574,8 +574,8 @@ SELECT tg_execute_ddl('tsurugidb', '
     col_9 TIME,
     col_10 DECIMAL
   )
-');
-SELECT tg_execute_ddl('tsurugidb', '
+', 'tsurugidb');
+SELECT tg_execute_ddl('
   CREATE TABLE udf_test_table_2 (
     col_1 INT,
     col_2 VARCHAR,
@@ -588,8 +588,8 @@ SELECT tg_execute_ddl('tsurugidb', '
     col_9 TIME,
     col_10 DECIMAL
   )
-');
-SELECT tg_execute_ddl('tsurugidb', '
+', 'tsurugidb');
+SELECT tg_execute_ddl('
   CREATE TABLE udf_test_table_3 (
     col_1 INT,
     col_2 VARCHAR,
@@ -602,7 +602,7 @@ SELECT tg_execute_ddl('tsurugidb', '
     col_9 TIME,
     col_10 DECIMAL
   )
-');
+', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_1 (
   col_2 text,
@@ -650,14 +650,14 @@ DROP FOREIGN TABLE udf_test_table_2;
 DROP FOREIGN TABLE udf_test_table_3;
 
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_3');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_2', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_3', 'tsurugidb');
 
 /* Test case: 4-1-1 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
 CREATE FOREIGN TABLE udf_test_table_2 (id bigint, since date) SERVER tsurugidb;
@@ -667,14 +667,14 @@ SELECT tg_verify_tables('invalid_schema', 'tsurugidb', 'public', 'detail', true)
 DROP FOREIGN TABLE udf_test_table_1;
 DROP FOREIGN TABLE udf_test_table_2;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_2', 'tsurugidb');
 
 /* Test case: 4-2-1 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_3 (id DECIMAL, schedule TIMESTAMP)');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_3 (id DECIMAL, schedule TIMESTAMP)', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE SERVER other_server FOREIGN DATA WRAPPER tsurugi_fdw;
 CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
@@ -689,15 +689,15 @@ DROP FOREIGN TABLE udf_test_table_2;
 DROP FOREIGN TABLE udf_test_table_3;
 DROP SERVER other_server;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_3');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_2', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_3', 'tsurugidb');
 
 /* Test case: 4-2-3 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_3 (id DECIMAL, schedule TIMESTAMP)');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_3 (id DECIMAL, schedule TIMESTAMP)', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE SERVER "Tsurugidb" FOREIGN DATA WRAPPER tsurugi_fdw;
 CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
@@ -712,15 +712,15 @@ DROP FOREIGN TABLE udf_test_table_2;
 DROP FOREIGN TABLE udf_test_table_3;
 DROP SERVER "Tsurugidb";
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_3');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_2', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_3', 'tsurugidb');
 
 /* Test case: 4-3-1 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_3 (id DECIMAL, schedule TIMESTAMP)');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_3 (id DECIMAL, schedule TIMESTAMP)', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE SCHEMA other_schema;
 CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
@@ -735,15 +735,15 @@ DROP FOREIGN TABLE other_schema.udf_test_table_2;
 DROP FOREIGN TABLE other_schema.udf_test_table_3;
 DROP SCHEMA other_schema;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_3');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_2', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_3', 'tsurugidb');
 
 /* Test case: 4-3-3 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_3 (id DECIMAL, schedule TIMESTAMP)');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_3 (id DECIMAL, schedule TIMESTAMP)', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE SCHEMA "Public";
 CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
@@ -758,13 +758,13 @@ DROP FOREIGN TABLE udf_test_table_2;
 DROP FOREIGN TABLE "Public".udf_test_table_3;
 DROP SCHEMA "Public";
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_3');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_2', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_3', 'tsurugidb');
 
 /* Test case: 4-4-1 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
 -- Test
@@ -775,14 +775,14 @@ SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'DETAIL', false);
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE udf_test_table_1;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
 
 /* Test case: 5-1-1 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_remote_1 (id INT, name VARCHAR)');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_matched_1 (id INT, name CHAR(64))');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_unmatched_1 (id BIGINT, since DATE)');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_unmatched_2 (id DECIMAL, schedule TIMESTAMP)');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_remote_1 (id INT, name VARCHAR)', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_matched_1 (id INT, name CHAR(64))', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_unmatched_1 (id BIGINT, since DATE)', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_unmatched_2 (id DECIMAL, schedule TIMESTAMP)', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_local_1 (id integer, name text) SERVER tsurugidb;
 CREATE FOREIGN TABLE udf_test_table_local_2 (id integer, name text) SERVER tsurugidb;
@@ -801,17 +801,17 @@ DROP FOREIGN TABLE udf_test_table_matched_1;
 DROP FOREIGN TABLE udf_test_table_unmatched_1;
 DROP FOREIGN TABLE udf_test_table_unmatched_2;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_remote_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_matched_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_unmatched_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_unmatched_2');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_remote_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_matched_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_unmatched_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_unmatched_2', 'tsurugidb');
 
 /* Test case: 5-1-2 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_remote_1 (id INT, name VARCHAR)');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_matched_1 (id INT, name CHAR(64))');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_unmatched_1 (id BIGINT, since DATE)');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_unmatched_2 (id DECIMAL, schedule TIMESTAMP)');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_remote_1 (id INT, name VARCHAR)', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_matched_1 (id INT, name CHAR(64))', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_unmatched_1 (id BIGINT, since DATE)', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_unmatched_2 (id DECIMAL, schedule TIMESTAMP)', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_local_1 (id integer, name text) SERVER tsurugidb;
 CREATE FOREIGN TABLE udf_test_table_local_2 (id integer, name text) SERVER tsurugidb;
@@ -830,17 +830,17 @@ DROP FOREIGN TABLE udf_test_table_matched_1;
 DROP FOREIGN TABLE udf_test_table_unmatched_1;
 DROP FOREIGN TABLE udf_test_table_unmatched_2;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_remote_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_matched_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_unmatched_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_unmatched_2');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_remote_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_matched_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_unmatched_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_unmatched_2', 'tsurugidb');
 
 /* Test case: 5-2-1 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_remote_1 (id INT, name VARCHAR)');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_matched_1 (id INT, name CHAR(64))');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_unmatched_1 (id BIGINT, since DATE)');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_unmatched_2 (id DECIMAL, schedule TIMESTAMP)');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_remote_1 (id INT, name VARCHAR)', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_matched_1 (id INT, name CHAR(64))', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_unmatched_1 (id BIGINT, since DATE)', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_unmatched_2 (id DECIMAL, schedule TIMESTAMP)', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_local_1 (id integer, name text) SERVER tsurugidb;
 CREATE FOREIGN TABLE udf_test_table_local_2 (id integer, name text) SERVER tsurugidb;
@@ -859,17 +859,17 @@ DROP FOREIGN TABLE udf_test_table_matched_1;
 DROP FOREIGN TABLE udf_test_table_unmatched_1;
 DROP FOREIGN TABLE udf_test_table_unmatched_2;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_remote_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_matched_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_unmatched_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_unmatched_2');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_remote_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_matched_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_unmatched_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_unmatched_2', 'tsurugidb');
 
 /* Test case: 5-2-2 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_remote_1 (id INT, name VARCHAR)');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_matched_1 (id INT, name CHAR(64))');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_unmatched_1 (id BIGINT, since DATE)');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_unmatched_2 (id DECIMAL, schedule TIMESTAMP)');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_remote_1 (id INT, name VARCHAR)', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_matched_1 (id INT, name CHAR(64))', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_unmatched_1 (id BIGINT, since DATE)', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_unmatched_2 (id DECIMAL, schedule TIMESTAMP)', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_local_1 (id integer, name text) SERVER tsurugidb;
 CREATE FOREIGN TABLE udf_test_table_local_2 (id integer, name text) SERVER tsurugidb;
@@ -888,14 +888,14 @@ DROP FOREIGN TABLE udf_test_table_matched_1;
 DROP FOREIGN TABLE udf_test_table_unmatched_1;
 DROP FOREIGN TABLE udf_test_table_unmatched_2;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_remote_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_matched_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_unmatched_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_unmatched_2');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_remote_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_matched_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_unmatched_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_unmatched_2', 'tsurugidb');
 
 /* Test case: 6-4-1 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
 -- Test
@@ -903,11 +903,11 @@ SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public');
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE udf_test_table_1;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
 
 /* Test case: 6-5-1 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_1 (id integer, name text) SERVER tsurugidb;
 -- Test
@@ -916,4 +916,4 @@ SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail');
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE udf_test_table_1;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
