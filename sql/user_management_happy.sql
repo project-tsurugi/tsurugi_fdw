@@ -1,19 +1,19 @@
 /* Test setup: DDL of the Tsurugi */
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
     CREATE TABLE t1_user_management (
         column1 INTEGER NOT NULL PRIMARY KEY
     )
-');
-SELECT tg_execute_ddl('tsurugidb', '
+', 'tsurugidb');
+SELECT tg_execute_ddl('
     CREATE TABLE t2_user_management (
         column1 INTEGER NOT NULL PRIMARY KEY
     )
-');
-SELECT tg_execute_ddl('tsurugidb', '
+', 'tsurugidb');
+SELECT tg_execute_ddl('
     CREATE TABLE t3_user_management (
         column1 INTEGER NOT NULL PRIMARY KEY
     )
-');
+', 'tsurugidb');
 
 /* Test setup: DDL of the PostgreSQL */
 SET ROLE 'postgres';
@@ -172,6 +172,6 @@ DROP FOREIGN TABLE t3_user_management;
 RESET ROLE;
 
 /* Test teardown: DDL of the Tsurugi */
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE t1_user_management');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE t2_user_management');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE t3_user_management');
+SELECT tg_execute_ddl('DROP TABLE t1_user_management', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE t2_user_management', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE t3_user_management', 'tsurugidb');

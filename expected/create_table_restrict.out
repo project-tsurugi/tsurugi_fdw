@@ -15,7 +15,7 @@ CREATE EXTENSION tsurugi_fdw;
                    List of installed extensions
     Name     | Version | Schema |           Description            
 -------------+---------+--------+----------------------------------
- tsurugi_fdw | 1.0.0   | public | foreign-data wrapper for tsurugi
+ tsurugi_fdw | 1.1.1   | public | foreign-data wrapper for tsurugi
 (1 row)
 
 CREATE SERVER IF NOT EXISTS tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;

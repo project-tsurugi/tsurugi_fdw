@@ -1,12 +1,12 @@
 /* Test case: 3-2-2 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  CREATE TABLE
 (1 row)
 
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  CREATE TABLE
@@ -16,13 +16,13 @@ SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, si
 SELECT tg_show_tables('tg_schema', 'unknown_server', 'detail', true);
 ERROR:  server "unknown_server" does not exist
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  DROP TABLE
 (1 row)
 
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_2', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  DROP TABLE

@@ -1,5 +1,5 @@
 /* Test setup: DDL of the Tsurugi */
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
     CREATE TABLE weather (
         id       int primary key,
         city     varchar(80),
@@ -8,7 +8,7 @@ SELECT tg_execute_ddl('tsurugidb', '
         prcp     real,
         the_date date default DATE ''2023-04-01''
     )
-');
+', 'tsurugidb');
 
 /* Test setup: DDL of the PostgreSQL */
 CREATE FOREIGN TABLE weather (
@@ -125,4 +125,4 @@ SELECT * FROM weather ORDER BY id;  -- レグレッションテスト確認用
 DROP FOREIGN TABLE weather;
 
 /* Test teardown: DDL of the Tsurugi */
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE weather');
+SELECT tg_execute_ddl('DROP TABLE weather', 'tsurugidb');

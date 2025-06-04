@@ -1,5 +1,5 @@
 /* Test setup: DDL of the Tsurugi */
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
     CREATE TABLE t1_prepare_select_statement (
         c1 INTEGER PRIMARY KEY,
         c2 INTEGER,
@@ -9,8 +9,8 @@ SELECT tg_execute_ddl('tsurugidb', '
         c6 CHAR(10),
         c7 VARCHAR(26)
     )
-');
-SELECT tg_execute_ddl('tsurugidb', '
+', 'tsurugidb');
+SELECT tg_execute_ddl('
     CREATE TABLE t2_prepare_select_statement (
         c1 INTEGER PRIMARY KEY,
         c2 INTEGER,
@@ -20,13 +20,13 @@ SELECT tg_execute_ddl('tsurugidb', '
         c6 CHAR(10),
         c7 VARCHAR(26)
     )
-');
-SELECT tg_execute_ddl('tsurugidb', '
+', 'tsurugidb');
+SELECT tg_execute_ddl('
     CREATE TABLE t3_prepare_select_statement (
         c1 INTEGER PRIMARY KEY,
         c2 CHAR(10)
     )
-');
+', 'tsurugidb');
 
 /* Test setup: DDL of the PostgreSQL */
 CREATE FOREIGN TABLE t1_prepare_select_statement (
@@ -238,6 +238,6 @@ DROP FOREIGN TABLE t2_prepare_select_statement;
 DROP FOREIGN TABLE t3_prepare_select_statement;
 
 /* Test teardown: DDL of the Tsurugi */
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE t1_prepare_select_statement');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE t2_prepare_select_statement');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE t3_prepare_select_statement');
+SELECT tg_execute_ddl('DROP TABLE t1_prepare_select_statement', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE t2_prepare_select_statement', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE t3_prepare_select_statement', 'tsurugidb');
