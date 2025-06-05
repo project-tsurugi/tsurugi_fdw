@@ -127,7 +127,7 @@ enum FdwScanPrivateIndex
  * 4) Boolean flag showing if the remote query has a RETURNING clause
  * 5) Integer list of attribute numbers retrieved by RETURNING, if any
  */
-enum FdwModifyPrivateIndex
+enum FdwForeignModifyPrivateIndex
 {
 	/* SQL statement to execute remotely (as a String node) */
 	FdwModifyPrivateUpdateSql,
@@ -139,6 +139,27 @@ enum FdwModifyPrivateIndex
 	FdwModifyPrivateHasReturning,
 	/* Integer list of attribute numbers retrieved by RETURNING */
 	FdwModifyPrivateRetrievedAttrs
+};
+
+/*
+ * Similarly, this enum describes what's kept in the fdw_private list for
+ * a ForeignScan node that modifies a foreign table directly.  We store:
+ *
+ * 1) UPDATE/DELETE statement text to be sent to the remote server
+ * 2) Boolean flag showing if the remote query has a RETURNING clause
+ * 3) Integer list of attribute numbers retrieved by RETURNING, if any
+ * 4) Boolean flag showing if we set the command es_processed
+ */
+enum FdwDirectModifyPrivateIndex
+{
+	/* SQL statement to execute remotely (as a String node) */
+	FdwDirectModifyPrivateUpdateSql,
+	/* has-returning flag (as an integer Value node) */
+	FdwDirectModifyPrivateHasReturning,
+	/* Integer list of attribute numbers retrieved by RETURNING */
+	FdwDirectModifyPrivateRetrievedAttrs,
+	/* set-processed flag (as an integer Value node) */
+	FdwDirectModifyPrivateSetProcessed
 };
 
 #if 0
@@ -1274,8 +1295,8 @@ tsurugiIterateForeignScan(ForeignScanState* node)
             /* Prepare processing when via ODBC */
             EState* estate = node->ss.ps.state;
             end_prepare_processing(estate);
-			elog(ERROR, "Failed to execute query to Tsurugi. (%d)\n%s", 
-                (int) error, Tsurugi::get_error_message(error).c_str());
+			Tsurugi::report_error("Failed to execute the query on Tsurugi.", 
+									error, query.data());
         }
         fsstate->cursor_exists = true;
         fsstate->eof_reached = false;
@@ -1586,7 +1607,6 @@ tsurugiPlanDirectModify(PlannerInfo *root,
 			elog(ERROR, "unexpected operation: %d", (int) operation);
 			break;
 	}
-
 	elog(LOG, "tsurugi_fdw : %s : \ndeparsed sql:\n%s", __func__, sql.data);
 
 	/*
@@ -1669,7 +1689,8 @@ tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
 	TgFdwDirectModifyState* dmstate = 
 		(TgFdwDirectModifyState *) palloc0(sizeof(TgFdwDirectModifyState));
 
- 	dmstate->query_string = estate->es_sourceText; 
+	dmstate->query = strVal(list_nth(fsplan->fdw_private,
+									 FdwDirectModifyPrivateUpdateSql));
     node->fdw_state = dmstate;
 
 	/* Prepare processing when via JDBC and ODBC */
@@ -1694,7 +1715,7 @@ tsurugiIterateDirectModify(ForeignScanState* node)
 	EState* estate = node->ss.ps.state;
 	ERROR_CODE error;
 
-    std::string statement = make_tsurugi_query(dmstate->query_string);
+    std::string statement = make_tsurugi_query(dmstate->query);
 	std::size_t num_rows = 0;
 	error = Tsurugi::execute_statement(statement, num_rows);
 	if (error == ERROR_CODE::OK)
@@ -1705,7 +1726,7 @@ tsurugiIterateDirectModify(ForeignScanState* node)
         /* Prepare processing when via JDBC and ODBC */
         end_prepare_processing(estate);
 		Tsurugi::report_error("Failed to execute the statement on Tsurugi.", 
-								error, dmstate->query_string);
+								error, dmstate->query);
 	}
 	
 	return slot;	
@@ -1858,7 +1879,7 @@ static List
 
 	/*
 	 * Build the fdw_private list that will be available to the executor.
-	 * Items in the list must match enum FdwModifyPrivateIndex, above.
+	 * Items in the list must match enum FdwForeignModifyPrivateIndex, above.
 	 */
 #if PG_VERSION_NUM >= 140000
 	return list_make5(makeString(sql.data),

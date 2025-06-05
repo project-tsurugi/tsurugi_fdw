@@ -171,7 +171,8 @@ typedef struct TgFdwForeignModifyState
  */
 typedef struct TgFdwDirectModifyState
 {
-	const char* 	query_string;		/* SQL Query Text */
+	const char		*query_string;		/* SQL Query Text */
+	const char		*query;
 } TgFdwDirectModifyState;
 
 /*
