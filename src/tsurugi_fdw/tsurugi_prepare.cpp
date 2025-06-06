@@ -82,6 +82,8 @@ begin_prepare_processing(const EState* estate)
 
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
+	return;
+
 	if (params == NULL) {
 		// If there is no parameter information, do nothing.
 		return;
@@ -143,6 +145,8 @@ begin_prepare_processing(const EState* estate)
 		for (int i = 0; i < params->numParams; i++) {
 			std::string param_name = PREPARE_PARAM_NAME + std::to_string(i);
 			ParamExternData param = params->params[i];
+			elog(LOG, "tsurugi_fdw : preapre statement parameter: %s, pgtype_oid: %d", 
+				param_name.data(), param.ptype);
 			switch (param.ptype)
 			{
 				case INT2OID:
@@ -450,6 +454,8 @@ end_prepare_processing(const EState* estate)
 	ParamListInfo params = estate->es_param_list_info;
 
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+
+	return;
 
 	if (params == NULL) {
 		// If there is no parameter information, do nothing.

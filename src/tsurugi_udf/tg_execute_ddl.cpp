@@ -57,10 +57,10 @@ tg_execute_ddl(PG_FUNCTION_ARGS)
 			R"_(^\s*DROP\s+(TABLE|INDEX)\s+)_"
 	};
 
-	// server_name argument
-	std::string arg_server_name(!PG_ARGISNULL(0) ? text_to_cstring(PG_GETARG_TEXT_P(0)) : "");
 	// ddl_statement argument
-	std::string arg_ddl_statement(!PG_ARGISNULL(1) ? text_to_cstring(PG_GETARG_TEXT_P(1)) : "");
+	std::string arg_ddl_statement(!PG_ARGISNULL(0) ? text_to_cstring(PG_GETARG_TEXT_P(0)) : "");
+	// server_name argument
+	std::string arg_server_name(!PG_ARGISNULL(1) ? text_to_cstring(PG_GETARG_TEXT_P(1)) : "");
 
 	/* Validate server_name argument. */
 	if (arg_server_name.empty()) {

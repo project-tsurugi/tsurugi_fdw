@@ -1,22 +1,22 @@
 /* Test setup: DDL of the Tsurugi */
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
     CREATE TABLE t3_create_index (
         c1 INTEGER NOT NULL PRIMARY KEY
     )
-');
-SELECT tg_execute_ddl('tsurugidb', '
+', 'tsurugidb');
+SELECT tg_execute_ddl('
     CREATE INDEX t3_c1_secondary_index ON t3_create_index (c1)
-');
-SELECT tg_execute_ddl('tsurugidb', '
+', 'tsurugidb');
+SELECT tg_execute_ddl('
     CREATE TABLE t4_create_index (
         c1 INTEGER NOT NULL PRIMARY KEY,
         c2 BIGINT,
         c3 DOUBLE PRECISION
     )
-');
-SELECT tg_execute_ddl('tsurugidb', '
+', 'tsurugidb');
+SELECT tg_execute_ddl('
     CREATE INDEX t4_c3_secondary_index ON t4_create_index (c3)
-');
+', 'tsurugidb');
 
 /* Test setup: DDL of the PostgreSQL */
 CREATE FOREIGN TABLE t3_create_index (
@@ -57,7 +57,7 @@ DROP FOREIGN TABLE t3_create_index;
 DROP FOREIGN TABLE t4_create_index;
 
 /* Test teardown: DDL of the Tsurugi */
-SELECT tg_execute_ddl('tsurugidb', 'DROP INDEX t3_c1_secondary_index');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE t3_create_index');
-SELECT tg_execute_ddl('tsurugidb', 'DROP INDEX t4_c3_secondary_index');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE t4_create_index');
+SELECT tg_execute_ddl('DROP INDEX t3_c1_secondary_index', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE t3_create_index', 'tsurugidb');
+SELECT tg_execute_ddl('DROP INDEX t4_c3_secondary_index', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE t4_create_index', 'tsurugidb');

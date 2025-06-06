@@ -18,7 +18,7 @@ SHLIB_LINK_INTERNAL = $(libpq)
 SHLIB_LINK = -logawayama-stub -lmetadata-manager -lmessage-manager -lboost_filesystem
 
 EXTENSION = tsurugi_fdw
-DATA = tsurugi_fdw--1.0.0.sql tsurugi_fdw--1.0.0--1.1.1.sql
+DATA = tsurugi_fdw--1.1.1.sql tsurugi_fdw--1.0.0--1.1.1.sql
 
 # REGRESS_BASIC: Run basic tests.
 # REGRESS_EXTRA: Run extra tests.

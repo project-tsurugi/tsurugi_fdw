@@ -1,12 +1,12 @@
 /* Test case: 3-2-2 */
 -- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))');
-SELECT tg_execute_ddl('tsurugidb', 'CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
+SELECT tg_execute_ddl('CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)', 'tsurugidb');
 -- Test
 SELECT tg_show_tables('tg_schema', 'unknown_server', 'detail', true);
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE udf_test_table_2');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_2', 'tsurugidb');
 
 /* Test case: 5-1-1 */
 -- Test

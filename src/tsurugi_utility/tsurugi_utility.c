@@ -128,6 +128,8 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 	{
         case T_CreateStmt:
 		{
+			elog(LOG, "tsurugi_fdw : %s : T_CreateStmt", __func__);
+
 			if (IsTsurugifdwInstalled())
 			{
 				elog(ERROR, "This database is for Tsurugi, so CREATE TABLE is not supported");
@@ -147,6 +149,8 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 
 		case T_CreateTableAsStmt:
 		{
+			elog(LOG, "tsurugi_fdw : %s : T_CreateTableAsStmt", __func__);
+
 			if (IsTsurugifdwInstalled())
 			{
 #if PG_VERSION_NUM >= 140000
@@ -177,6 +181,8 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 
 		case T_CreateForeignTableStmt:
 		{
+			elog(LOG, "tsurugi_fdw : %s : T_CreateForeignTableStmt", __func__);
+						
 			if (IsTsurugifdwInstalled())
 			{
 				ForeignServer *server;
@@ -208,6 +214,9 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 		case T_CreateExtensionStmt:
 		{
 			CreateExtensionStmt *stmt = (CreateExtensionStmt *) pstmt->utilityStmt;
+
+			elog(LOG, "tsurugi_fdw : %s : T_CreateExtensionStmt", __func__);
+
 			if (strcmp(stmt->extname, "tsurugi_fdw") == 0) {
 				if(!noTablesInDatabase()){
 					elog(ERROR, "tsurugi_fdw extension cannot be installed in the non-empty database. Please make sure there are no tables by using the \\d command.");
@@ -392,6 +401,8 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 
 		case T_PrepareStmt:
 		{
+			elog(LOG, "tsurugi_fdw : %s : T_PrepareStmt", __func__);
+
 #if PG_VERSION_NUM >= 140000
 			standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv,
 									dest, qc);
@@ -402,19 +413,24 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
 									dest, completionTag);
 #endif  // PG_VERSION_NUM >= 140000
+#if 0
 			if (!after_prepare_stmt((PrepareStmt*)parsetree, queryString))
 			{
 				elog(ERROR, "failed after_prepare_stmt() function.");
 			}
+#endif
 			break;
 		}
 
 		case T_ExecuteStmt:
 		{
+			elog(LOG, "tsurugi_fdw : %s : T_ExecuteStmt", __func__);
+#if 0 
 			if (!before_execute_stmt((ExecuteStmt*)parsetree, queryString))
 			{
 				elog(ERROR, "failed before_execute_stmt() function.");
 			}
+#endif
 #if PG_VERSION_NUM >= 140000
 			standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv,
 									dest, qc);
@@ -425,10 +441,12 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
 									dest, completionTag);
 #endif  // PG_VERSION_NUM >= 140000
+#if 0
 			if (!after_execute_stmt((ExecuteStmt*)parsetree))
 			{
 				elog(ERROR, "failed after_execute_stmt() function.");
 			}
+#endif
 			break;
 		}
 
@@ -467,7 +485,9 @@ bool noTablesInDatabase(void)
         "WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') "
         "AND pg_catalog.pg_table_is_visible(c.oid)";
 
-    if (SPI_connect() != SPI_OK_CONNECT){
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
+	if (SPI_connect() != SPI_OK_CONNECT){
         elog(ERROR, "SPI_connect failed");
 	}
 
@@ -489,6 +509,8 @@ bool IsTsurugifdwInstalled(void)
 {
 	bool found = false;
     HeapTuple tuple;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
     tuple = SearchSysCache1(FOREIGNDATAWRAPPERNAME, CStringGetDatum(EXTENSION_NAME));
     if (HeapTupleIsValid(tuple))
