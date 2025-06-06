@@ -54,17 +54,6 @@ void make_tuple_from_result_row(ResultSetPtr result_set,
                                         bool* is_null,
                                         TgFdwForeignScanState* fsstate);
 
-TgFdwForeignModifyState *create_foreign_modify(EState *estate,
-											   RangeTblEntry *rte,
-											   ResultRelInfo *resultRelInfo,
-											   CmdType operation,
-											   Plan *subplan,
-											   char *query,
-											   List *target_attrs,
-											   int len,
-											   bool has_returning,
-											   List *retrieved_attrs);
-
 TupleTableSlot **execute_foreign_modify(EState *estate,
 					   							ResultRelInfo *resultRelInfo,
 					   							CmdType operation,

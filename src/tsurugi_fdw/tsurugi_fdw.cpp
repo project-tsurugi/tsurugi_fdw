@@ -323,6 +323,9 @@ static ForeignScan *find_modifytable_subplan(PlannerInfo *root,
 						 					int subplan_index);
 #endif	/* PG_VERSION_NUM >= 140000 */
 static void store_pg_data_type(TgFdwForeignScanState* fsstate, List* tlist, List** );
+#if PG_VERSION_NUM >= 140000
+static int	get_batch_size_option(Relation rel);
+#endif
 
 /* ===========================================================================
  * 
@@ -1866,6 +1869,11 @@ static List
 					  makeInteger(values_end_len),
 					  makeInteger((retrieved_attrs != NIL)),
 					  retrieved_attrs);
+#elif PG_VERSION_NUM >= 130000
+	return list_make4(makeString(sql.data),
+					  targetAttrs,
+					  makeInteger(values_end_len),
+					  makeInteger((retrieved_attrs != NIL)));
 #else
 		return list_make3(makeString(sql.data), 
 						targetAttrs, 
@@ -1884,11 +1892,13 @@ tsurugiBeginForeignModify(ModifyTableState *mtstate,
                         int eflags)
 {
 	TgFdwForeignModifyState *fmstate;
-	char	   *query;
-	List	   *target_attrs;
-	bool		has_returning;
-	int			values_end_len;
-	List	   *retrieved_attrs;
+	EState	   *estate = mtstate->ps.state;
+	Relation	rel = resultRelInfo->ri_RelationDesc;
+	AttrNumber	n_params = 0;
+	Oid			typefnoid = InvalidOid;
+	bool		isvarlena = false;
+	ListCell   *lc = NULL;
+//	Oid			foreignTableId = InvalidOid;
 	RangeTblEntry *rte;
     ForeignTable *table;
    	ForeignServer *server;
@@ -1902,35 +1912,87 @@ tsurugiBeginForeignModify(ModifyTableState *mtstate,
 	if (eflags & EXEC_FLAG_EXPLAIN_ONLY)
 		return;
 
+	fmstate = (TgFdwForeignModifyState *) palloc0(sizeof(TgFdwForeignModifyState));
+
 	/* Deconstruct fdw_private data. */
-	query = strVal(list_nth(fdw_private,
+	fmstate->query = strVal(list_nth(fdw_private,
 							FdwModifyPrivateUpdateSql));
-	target_attrs = (List *) list_nth(fdw_private,
-									 FdwModifyPrivateTargetAttnums);
-	values_end_len = intVal(list_nth(fdw_private,
+	fmstate->target_attrs = (List *) list_nth(fdw_private,
+									 		FdwModifyPrivateTargetAttnums);
+	fmstate->values_end = intVal(list_nth(fdw_private,
 									 FdwModifyPrivateLen));
-	has_returning = intVal(list_nth(fdw_private,
+#if PG_VERSION_NUM >= 130000								 
+	fmstate->has_returning = intVal(list_nth(fdw_private,
 									FdwModifyPrivateHasReturning));
-	retrieved_attrs = (List *) list_nth(fdw_private,
+#endif
+#if PG_VERSION_NUM >= 140000								 
+	fmstate->retrieved_attrs = (List *) list_nth(fdw_private,
 										FdwModifyPrivateRetrievedAttrs);
+#endif
+	/* Begin constructing TgFdwForeignModifyState. */
+	fmstate->rel = rel;
+	fmstate->orig_query = pstrdup(fmstate->query);
+	fmstate->is_prepared = false;
+	fmstate->p_nums = 0;
+	/* Prepare for output conversion of parameters used in prepared stmt. */
+	n_params = list_length(fmstate->target_attrs) + 1;
+	fmstate->p_flinfo = (FmgrInfo *) palloc0(sizeof(FmgrInfo) * n_params);
+	fmstate->p_nums = 0;
+	/* Create context for per-tuple temp workspace. */
+	fmstate->temp_cxt = AllocSetContextCreate(estate->es_query_cxt,
+											  "tsurugi_fdw temporary data",
+											  ALLOCSET_SMALL_SIZES);
+#if 0
+	if (mtstate->operation == CMD_UPDATE || mtstate->operation == CMD_DELETE)
+	{
+		/* First transmittable parameter will be ctid */
+		getTypeOutputInfo(TIDOID, &typefnoid, &isvarlena);
+		fmgr_info(typefnoid, &fmstate->p_flinfo[fmstate->p_nums]);
+		fmstate->p_nums++;
+	}
+#endif
+	if (mtstate->operation == CMD_INSERT || mtstate->operation == CMD_UPDATE)
+	{
+		/* Set up for remaining transmittable parameters */
+		foreach(lc, fmstate->target_attrs)
+		{
+			int			attnum = lfirst_int(lc);
+			Form_pg_attribute attr = TupleDescAttr(RelationGetDescr(rel), attnum - 1);
+
+			Assert(!attr->attisdropped);
+#if PG_VERSION_NUM >= 140000
+			/* Ignore generated columns; they are set to DEFAULT */
+			if (attr->attgenerated)
+			{
+				if (list_length(fmstate->retrieved_attrs) >= 1)
+					fmstate->p_nums = 1;
+				continue;
+			}
+#endif
+			getTypeOutputInfo(attr->atttypid, &typefnoid, &isvarlena);
+			fmgr_info(typefnoid, &fmstate->p_flinfo[fmstate->p_nums]);
+			fmstate->p_nums++;
+		}
+	}
+	Assert(fmstate->p_nums <= n_params);
+
+#if PG_VERSION_NUM >= 140000
+	/* Set batch_size from foreign server/table options. */
+	if (mtstate->operation == CMD_INSERT)
+		fmstate->batch_size = get_batch_size_option(fmstate->rel);
+#endif
+
+	n_params = list_length(fmstate->retrieved_attrs);
+	fmstate->num_slots = 1;
+
+	/* Initialize auxiliary state */
+	fmstate->aux_fmstate = NULL;
+
+	resultRelInfo->ri_FdwState = fmstate;
 
 	/* Find RTE. */
 	rte = exec_rt_fetch(resultRelInfo->ri_RangeTableIndex,
 						mtstate->ps.state);
-
-	/* Construct an execution state. */
-	fmstate = create_foreign_modify(mtstate->ps.state,
-									rte,
-									resultRelInfo,
-									mtstate->operation,
-									outerPlanState(mtstate)->plan,
-									query,
-									target_attrs,
-									values_end_len,
-									has_returning,
-									retrieved_attrs);
-
-	resultRelInfo->ri_FdwState = fmstate;
 
 	/* Get info about foreign table. */
   	table = GetForeignTable(rte->relid);
@@ -2006,7 +2068,7 @@ tsurugiEndForeignModify(EState *estate,
 	TgFdwForeignModifyState *fmstate = 
 		(TgFdwForeignModifyState *) resultRelInfo->ri_FdwState;
 
-	elog(DEBUG1, "tsurugi_fdw : %s : start_tx: %d", __func__, fmstate->start_tx);
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	/* If fmstate is NULL, we are in EXPLAIN; nothing to do */
 	if (fmstate == NULL)
@@ -2413,3 +2475,46 @@ store_pg_data_type(TgFdwForeignScanState* fsstate, List* tlist, List** retrieved
 	}
 }
 
+#if PG_VERSION_NUM >= 140000
+/*
+ * Determine batch size for a given foreign table. The option specified for
+ * a table has precedence.
+ */
+static int
+get_batch_size_option(Relation rel)
+{
+	Oid			foreigntableid = RelationGetRelid(rel);
+	ForeignTable *table;
+	ForeignServer *server;
+	List	   *options;
+	ListCell   *lc;
+
+	/* we use 1 by default, which means "no batching" */
+	int			batch_size = 1;
+
+	/*
+	 * Load options for table and server. We append server options after table
+	 * options, because table options take precedence.
+	 */
+	table = GetForeignTable(foreigntableid);
+	server = GetForeignServer(table->serverid);
+
+	options = NIL;
+	options = list_concat(options, table->options);
+	options = list_concat(options, server->options);
+
+	/* See if either table or server specifies batch_size. */
+	foreach(lc, options)
+	{
+		DefElem    *def = (DefElem *) lfirst(lc);
+
+		if (strcmp(def->defname, "batch_size") == 0)
+		{
+			(void) parse_int(defGetString(def), &batch_size, 0, NULL);
+			break;
+		}
+	}
+
+	return batch_size;
+}
+#endif
