@@ -10,6 +10,18 @@
 
 ## How to build for tsurugi_fdw
 
+1. Install tsurugidb
+
+    If you haven't installed tsurugidb yet, please install it first.
+
+    [Tsurugi - next generation RDB for the new era](https://github.com/project-tsurugi/tsurugidb)
+
+    And, if the following environment variable is not set, please set them.
+
+    ```bash
+    TSURUGI_HOME=/path/to/install
+    ```
+
 1. Install required packages.
     Install required packages for building tsurugi_fdw.
 
