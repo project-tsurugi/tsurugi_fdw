@@ -3,7 +3,7 @@
 ## Requirements
 
 * C++ Compiler `>= C++17`
-* Source code of PostgreSQL `>=12.4`
+* Source code of PostgreSQL `>=12.4`, `>=13.18`
 * Access to installed dependent modules:
   * managers (metadata-manager, message-manager)
   * ogawayama
