@@ -43,7 +43,7 @@
     git submodule update --init --recursive
     ```
 
-1. Indstall takatori dependent modules.
+1. Install takatori dependent modules.
 
     See [takatori README doc](https://github.com/project-tsurugi/takatori/blob/master/README.md#install-dependent-modules).
 
