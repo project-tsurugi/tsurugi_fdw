@@ -69,7 +69,8 @@
     ```
 
     Dependent modules installed in **\<PostgreSQL install directory>**.  
-    Add **\<PostgreSQL install directory>** to LIBRARY_PATH.
+
+1. Add **\<PostgreSQL install directory>** to LIBRARY_PATH.
 
     ```sh
     export LIBRARY_PATH=$LIBRARY_PATH:<PostgreSQL install directory>/lib
