@@ -1,9 +1,9 @@
 /* Test setup: DDL of the Tsurugi */
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
     CREATE TABLE t1_create_table (
         c1 INTEGER NOT NULL PRIMARY KEY
     )
-');
+', 'tsurugidb');
 
 /* Test setup: DDL of the PostgreSQL */
 CREATE FOREIGN TABLE t1_create_table (
@@ -20,4 +20,4 @@ DELETE FROM "Public"."t1_create_table" WHERE c1 > 1000; -- error
 DROP FOREIGN TABLE t1_create_table;
 
 /* Test teardown: DDL of the Tsurugi */
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE t1_create_table');
+SELECT tg_execute_ddl('DROP TABLE t1_create_table', 'tsurugidb');

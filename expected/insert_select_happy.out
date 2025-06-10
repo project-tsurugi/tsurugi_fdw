@@ -1,5 +1,5 @@
 /* Test setup: DDL of the Tsurugi */
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
     CREATE TABLE insert_select_happy (
         col0  integer                 constraint nn0 not null PRIMARY KEY,
         col1  int                     constraint nn1 not null,
@@ -18,95 +18,95 @@ SELECT tg_execute_ddl('tsurugidb', '
         col14 varchar(1000)           constraint nn14 not null,
         col15 varchar(1000)           constraint nn15 not null,
         col16 character varying(1000) constraint nn16 not null
-    )'
-);
+    )
+', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  CREATE TABLE
 (1 row)
 
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
     CREATE TABLE integer1 (
         ol_w_id int PRIMARY KEY
     )
-');
+', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  CREATE TABLE
 (1 row)
 
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
     CREATE TABLE bigint1 (
         id int PRIMARY KEY,
         ol_w_id bigint
     )
-');
+', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  CREATE TABLE
 (1 row)
 
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
     CREATE TABLE real1 (
         ol_w_id real PRIMARY KEY
     )
-');
+', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  CREATE TABLE
 (1 row)
 
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
     CREATE TABLE double1 (
         ol_w_id double precision PRIMARY KEY
     )
-');
+', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  CREATE TABLE
 (1 row)
 
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
     CREATE TABLE char_length_1 (
         ol_w_id char(1) PRIMARY KEY
     )
-');
+', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  CREATE TABLE
 (1 row)
 
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
     CREATE TABLE varchar_length_1 (
         ol_w_id varchar(1) PRIMARY KEY
     )
-');
+', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  CREATE TABLE
 (1 row)
 
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
     CREATE TABLE char_length_10 (
         ol_w_id char(10) PRIMARY KEY
     )
-');
+', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  CREATE TABLE
 (1 row)
 
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
     CREATE TABLE varchar_length_10 (
         ol_w_id varchar(10) PRIMARY KEY
     )
-');
+', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  CREATE TABLE
 (1 row)
 
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
     CREATE TABLE tg_temporal_literal (
         id        INTEGER NOT NULL PRIMARY KEY,
         dt        DATE,
@@ -114,8 +114,8 @@ SELECT tg_execute_ddl('tsurugidb', '
         tms       TIMESTAMP,
         tms_wo_tz TIMESTAMP WITHOUT TIME ZONE,
         tms_w_tz  TIMESTAMP WITH TIME ZONE
-    )'
-);
+    )
+', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  CREATE TABLE
@@ -541,61 +541,61 @@ DROP FOREIGN TABLE char_length_10;
 DROP FOREIGN TABLE varchar_length_10;
 DROP FOREIGN TABLE tg_temporal_literal;
 /* Test teardown: DDL of the Tsurugi */
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE insert_select_happy');
+SELECT tg_execute_ddl('DROP TABLE insert_select_happy', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  DROP TABLE
 (1 row)
 
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE integer1');
+SELECT tg_execute_ddl('DROP TABLE integer1', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  DROP TABLE
 (1 row)
 
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE bigint1');
+SELECT tg_execute_ddl('DROP TABLE bigint1', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  DROP TABLE
 (1 row)
 
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE real1');
+SELECT tg_execute_ddl('DROP TABLE real1', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  DROP TABLE
 (1 row)
 
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE double1');
+SELECT tg_execute_ddl('DROP TABLE double1', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  DROP TABLE
 (1 row)
 
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE char_length_1');
+SELECT tg_execute_ddl('DROP TABLE char_length_1', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  DROP TABLE
 (1 row)
 
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE varchar_length_1');
+SELECT tg_execute_ddl('DROP TABLE varchar_length_1', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  DROP TABLE
 (1 row)
 
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE char_length_10');
+SELECT tg_execute_ddl('DROP TABLE char_length_10', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  DROP TABLE
 (1 row)
 
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE varchar_length_10');
+SELECT tg_execute_ddl('DROP TABLE varchar_length_10', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  DROP TABLE
 (1 row)
 
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE tg_temporal_literal');
+SELECT tg_execute_ddl('DROP TABLE tg_temporal_literal', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  DROP TABLE

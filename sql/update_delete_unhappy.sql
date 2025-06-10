@@ -1,40 +1,40 @@
 /* Test setup: DDL of the Tsurugi */
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
     CREATE TABLE update_delete_int1 (
         col1 int PRIMARY KEY,
         col2 int
     )
-');
-SELECT tg_execute_ddl('tsurugidb', '
+', 'tsurugidb');
+SELECT tg_execute_ddl('
     CREATE TABLE update_delete_bigint1 (
         col1 int PRIMARY KEY,
         col2 bigint
     )
-');
-SELECT tg_execute_ddl('tsurugidb', '
+', 'tsurugidb');
+SELECT tg_execute_ddl('
     CREATE TABLE update_delete_real1 (
         col1 int PRIMARY KEY,
         col2 real
     )
-');
-SELECT tg_execute_ddl('tsurugidb', '
+', 'tsurugidb');
+SELECT tg_execute_ddl('
     CREATE TABLE update_delete_double1 (
         col1 int PRIMARY KEY,
         col2 double precision
     )
-');
-SELECT tg_execute_ddl('tsurugidb', '
+', 'tsurugidb');
+SELECT tg_execute_ddl('
     CREATE TABLE update_delete_char1 (
         col1 int PRIMARY KEY,
         col2 char(2)
     )
-');
-SELECT tg_execute_ddl('tsurugidb', '
+', 'tsurugidb');
+SELECT tg_execute_ddl('
     CREATE TABLE update_delete_varchar1 (
         col1 int PRIMARY KEY,
         col2 varchar(2)
     )
-');
+', 'tsurugidb');
 
 /* Test setup: DDL of the PostgreSQL */
 CREATE FOREIGN TABLE update_delete_int1 (
@@ -163,9 +163,9 @@ DROP FOREIGN TABLE update_delete_char1;
 DROP FOREIGN TABLE update_delete_varchar1;
 
 /* Test teardown: DDL of the Tsurugi */
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE update_delete_int1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE update_delete_bigint1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE update_delete_real1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE update_delete_double1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE update_delete_char1');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE update_delete_varchar1');
+SELECT tg_execute_ddl('DROP TABLE update_delete_int1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE update_delete_bigint1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE update_delete_real1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE update_delete_double1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE update_delete_char1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE update_delete_varchar1', 'tsurugidb');

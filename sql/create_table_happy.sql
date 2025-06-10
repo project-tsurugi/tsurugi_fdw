@@ -1,15 +1,15 @@
 /* Test setup: DDL of the Tsurugi */
-SELECT tg_execute_ddl('tsurugidb', '
+SELECT tg_execute_ddl('
     CREATE TABLE t1_create_table (
         c1 INTEGER NOT NULL PRIMARY KEY
     )
-');
-SELECT tg_execute_ddl('tsurugidb', '
+', 'tsurugidb');
+SELECT tg_execute_ddl('
     CREATE TABLE t2_create_table (
         c1 INTEGER NOT NULL PRIMARY KEY,
         c2 BIGINT, c3 DOUBLE PRECISION
     )
-');
+', 'tsurugidb');
 
 /* Test setup: DDL of the PostgreSQL */
 CREATE FOREIGN TABLE t1_create_table (
@@ -70,5 +70,5 @@ DROP FOREIGN TABLE t1_create_table;
 DROP FOREIGN TABLE t2_create_table;
 
 /* Test teardown: DDL of the Tsurugi */
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE t1_create_table');
-SELECT tg_execute_ddl('tsurugidb', 'DROP TABLE t2_create_table');
+SELECT tg_execute_ddl('DROP TABLE t1_create_table', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE t2_create_table', 'tsurugidb');
