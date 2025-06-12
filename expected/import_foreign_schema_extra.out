@@ -1,0 +1,1861 @@
+SET datestyle TO ISO, YMD;
+SET timezone TO 'Asia/Tokyo';
+/* Test case: 3-1-1_4 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_test_type_num (
+    col_int INT,
+    col_bigint BIGINT,
+    col_real REAL,
+    col_float FLOAT,
+    col_double DOUBLE,
+    col_double_precision DOUBLE PRECISION,
+    col_decimal DECIMAL,
+    col_decimal_p DECIMAL(2),
+    col_decimal_ps DECIMAL(3, 2),
+    col_decimal_max DECIMAL(*)
+  )
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test
+IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
+\dE
+                   List of relations
+ Schema |       Name        |     Type      |  Owner   
+--------+-------------------+---------------+----------
+ public | fdw_test_type_num | foreign table | postgres
+(1 row)
+
+\d fdw_test_type_num;
+                        Foreign table "public.fdw_test_type_num"
+        Column        |       Type       | Collation | Nullable | Default | FDW options 
+----------------------+------------------+-----------+----------+---------+-------------
+ col_int              | integer          |           |          |         | 
+ col_bigint           | bigint           |           |          |         | 
+ col_real             | real             |           |          |         | 
+ col_float            | real             |           |          |         | 
+ col_double           | double precision |           |          |         | 
+ col_double_precision | double precision |           |          |         | 
+ col_decimal          | numeric          |           |          |         | 
+ col_decimal_p        | numeric          |           |          |         | 
+ col_decimal_ps       | numeric          |           |          |         | 
+ col_decimal_max      | numeric          |           |          |         | 
+Server: tsurugidb
+
+INSERT INTO fdw_test_type_num 
+  (col_int, col_bigint, col_real, col_float, col_double, col_double_precision,
+    col_decimal, col_decimal_p, col_decimal_ps, col_decimal_max)
+  VALUES (1, 2, 3.33, 4.44, 5.55, 6.66, 77777, 88, 9.99, 1000);
+SELECT * FROM fdw_test_type_num;
+ col_int | col_bigint | col_real | col_float | col_double | col_double_precision | col_decimal | col_decimal_p | col_decimal_ps | col_decimal_max 
+---------+------------+----------+-----------+------------+----------------------+-------------+---------------+----------------+-----------------
+       1 |          2 |     3.33 |      4.44 |       5.55 |                 6.66 |       77777 |            88 |           9.99 |            1000
+(1 row)
+
+UPDATE fdw_test_type_num
+  SET col_int = 2, col_bigint = 3, col_real = 4.567, col_float = 5.678, col_double = 6.78901,
+      col_double_precision = 7.89012, col_decimal = 890, col_decimal_p = 90, col_decimal_ps = 1.23,
+      col_decimal_max = 99999
+  WHERE col_int = 1;
+SELECT * FROM fdw_test_type_num;
+ col_int | col_bigint | col_real | col_float | col_double | col_double_precision | col_decimal | col_decimal_p | col_decimal_ps | col_decimal_max 
+---------+------------+----------+-----------+------------+----------------------+-------------+---------------+----------------+-----------------
+       2 |          3 |    4.567 |     5.678 |    6.78901 |              7.89012 |         890 |            90 |           1.23 |           99999
+(1 row)
+
+DELETE FROM fdw_test_type_num WHERE col_double = 6.78901;
+SELECT * FROM fdw_test_type_num;
+ col_int | col_bigint | col_real | col_float | col_double | col_double_precision | col_decimal | col_decimal_p | col_decimal_ps | col_decimal_max 
+---------+------------+----------+-----------+------------+----------------------+-------------+---------------+----------------+-----------------
+(0 rows)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_test_type_num;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_test_type_num', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 3-2-1_4 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_test_type_str (
+    col_char CHAR,
+    col_char_l CHAR(64),
+    col_character CHARACTER,
+    col_character_l CHARACTER(64),
+    col_varchar VARCHAR,
+    col_varchar_l VARCHAR(64),
+    col_char_varying CHAR VARYING,
+    col_char_varying_l CHAR VARYING(64),
+    col_character_varying CHARACTER VARYING,
+    col_character_varying_l CHARACTER VARYING(64)
+  )
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test
+IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
+\dE
+                   List of relations
+ Schema |       Name        |     Type      |  Owner   
+--------+-------------------+---------------+----------
+ public | fdw_test_type_str | foreign table | postgres
+(1 row)
+
+\d fdw_test_type_str;
+                   Foreign table "public.fdw_test_type_str"
+         Column          | Type | Collation | Nullable | Default | FDW options 
+-------------------------+------+-----------+----------+---------+-------------
+ col_char                | text |           |          |         | 
+ col_char_l              | text |           |          |         | 
+ col_character           | text |           |          |         | 
+ col_character_l         | text |           |          |         | 
+ col_varchar             | text |           |          |         | 
+ col_varchar_l           | text |           |          |         | 
+ col_char_varying        | text |           |          |         | 
+ col_char_varying_l      | text |           |          |         | 
+ col_character_varying   | text |           |          |         | 
+ col_character_varying_l | text |           |          |         | 
+Server: tsurugidb
+
+INSERT INTO fdw_test_type_str
+  (col_char, col_char_l, col_character, col_character_l, col_varchar, col_varchar_l,
+   col_char_varying, col_char_varying_l, col_character_varying, col_character_varying_l)
+  VALUES ('1', 'char', '2', 'character', 'varchar', 'varchar_l',
+          'char_varying', 'char_varying_l', 'character_varying', 'character_varying_l');
+SELECT * FROM fdw_test_type_str;
+ col_char |                            col_char_l                            | col_character |                         col_character_l                          | col_varchar | col_varchar_l | col_char_varying | col_char_varying_l | col_character_varying | col_character_varying_l 
+----------+------------------------------------------------------------------+---------------+------------------------------------------------------------------+-------------+---------------+------------------+--------------------+-----------------------+-------------------------
+ 1        | char                                                             | 2             | character                                                        | varchar     | varchar_l     | char_varying     | char_varying_l     | character_varying     | character_varying_l
+(1 row)
+
+UPDATE fdw_test_type_str
+  SET col_char = '3', col_char_l = 'char_upd', col_character = '4', col_character_l = 'character_upd',
+      col_varchar = 'varchar_upd', col_varchar_l = 'varchar_l_upd', col_char_varying = 'char_varying_upd',
+      col_char_varying_l = 'char_varying_l_upd', col_character_varying = 'character_varying_upd',
+      col_character_varying_l = 'character_varying_l_upd'
+  WHERE col_char = '1';
+SELECT * FROM fdw_test_type_str;
+ col_char |                            col_char_l                            | col_character |                         col_character_l                          | col_varchar | col_varchar_l | col_char_varying | col_char_varying_l | col_character_varying | col_character_varying_l 
+----------+------------------------------------------------------------------+---------------+------------------------------------------------------------------+-------------+---------------+------------------+--------------------+-----------------------+-------------------------
+ 3        | char_upd                                                         | 4             | character_upd                                                    | varchar_upd | varchar_l_upd | char_varying_upd | char_varying_l_upd | character_varying_upd | character_varying_l_upd
+(1 row)
+
+DELETE FROM fdw_test_type_str WHERE col_char = '3';
+SELECT * FROM fdw_test_type_str;
+ col_char | col_char_l | col_character | col_character_l | col_varchar | col_varchar_l | col_char_varying | col_char_varying_l | col_character_varying | col_character_varying_l 
+----------+------------+---------------+-----------------+-------------+---------------+------------------+--------------------+-----------------------+-------------------------
+(0 rows)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_test_type_str;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_test_type_str', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 3-3-1_4 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_test_type_datetime (
+    col_date DATE,
+    col_time TIME,
+    col_time_tz TIME WITH TIME ZONE,
+    col_timestamp TIMESTAMP,
+    col_timestamp_tz TIMESTAMP WITH TIME ZONE
+  )
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test
+IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
+\dE
+                     List of relations
+ Schema |          Name          |     Type      |  Owner   
+--------+------------------------+---------------+----------
+ public | fdw_test_type_datetime | foreign table | postgres
+(1 row)
+
+\d fdw_test_type_datetime;
+                         Foreign table "public.fdw_test_type_datetime"
+      Column      |            Type             | Collation | Nullable | Default | FDW options 
+------------------+-----------------------------+-----------+----------+---------+-------------
+ col_date         | date                        |           |          |         | 
+ col_time         | time without time zone      |           |          |         | 
+ col_time_tz      | time with time zone         |           |          |         | 
+ col_timestamp    | timestamp without time zone |           |          |         | 
+ col_timestamp_tz | timestamp with time zone    |           |          |         | 
+Server: tsurugidb
+
+INSERT INTO fdw_test_type_datetime
+  (col_date, col_time, col_timestamp, col_timestamp_tz)
+  VALUES (DATE '2025-01-23', TIME '08:09:10', TIMESTAMP '2025-01-23 08:09:10',
+          TIMESTAMP WITH TIME ZONE '2025-01-23 08:09:10+09');
+SELECT * FROM fdw_test_type_datetime;
+  col_date  | col_time | col_time_tz |    col_timestamp    |    col_timestamp_tz    
+------------+----------+-------------+---------------------+------------------------
+ 2025-01-23 | 08:09:10 |             | 2025-01-23 08:09:10 | 2025-01-23 08:09:10+09
+(1 row)
+
+UPDATE fdw_test_type_datetime
+  SET col_date = DATE '2025-02-12', col_time = TIME '09:10:11', col_timestamp = TIMESTAMP '2025-02-12 09:10:11',
+      col_timestamp_tz = TIMESTAMP WITH TIME ZONE '2025-02-12 09:10:11+09' WHERE col_date = DATE '2025-01-23';
+SELECT * FROM fdw_test_type_datetime;
+  col_date  | col_time | col_time_tz |    col_timestamp    |    col_timestamp_tz    
+------------+----------+-------------+---------------------+------------------------
+ 2025-02-12 | 09:10:11 |             | 2025-02-12 09:10:11 | 2025-02-12 09:10:11+09
+(1 row)
+
+DELETE FROM fdw_test_type_datetime WHERE col_date = DATE '2025-02-12';
+SELECT * FROM fdw_test_type_datetime;
+ col_date | col_time | col_time_tz | col_timestamp | col_timestamp_tz 
+----------+----------+-------------+---------------+------------------
+(0 rows)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_test_type_datetime;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_test_type_datetime', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 3-4 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_test_type_invalid (col_binary BINARY)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test
+IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
+ERROR:  unsupported tsurugi data type "11"
+DETAIL:  table:"fdw_test_type_invalid" column:"col_binary" type:11
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_test_type_invalid', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 4-1-1 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_test_table_name2_________3_________4_________5_________6__ (id INT, name VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test
+IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
+\dE
+                                         List of relations
+ Schema |                              Name                              |     Type      |  Owner   
+--------+----------------------------------------------------------------+---------------+----------
+ public | fdw_test_table_name2_________3_________4_________5_________6__ | foreign table | postgres
+(1 row)
+
+\d fdw_test_table_name2_________3_________4_________5_________6__;
+Foreign table "public.fdw_test_table_name2_________3_________4_________5_________6__"
+ Column |  Type   | Collation | Nullable | Default | FDW options 
+--------+---------+-----------+----------+---------+-------------
+ id     | integer |           |          |         | 
+ name   | text    |           |          |         | 
+Server: tsurugidb
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_test_table_name2_________3_________4_________5_________6__;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  DROP TABLE fdw_test_table_name2_________3_________4_________5_________6__
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 4-1-2 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_test_table_name2_________3_________4_________5_________6___ (id INT, name VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test
+IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
+\dE
+                                          List of relations
+ Schema |                              Name                               |     Type      |  Owner   
+--------+-----------------------------------------------------------------+---------------+----------
+ public | fdw_test_table_name2_________3_________4_________5_________6___ | foreign table | postgres
+(1 row)
+
+\d fdw_test_table_name2_________3_________4_________5_________6___;
+Foreign table "public.fdw_test_table_name2_________3_________4_________5_________6___"
+ Column |  Type   | Collation | Nullable | Default | FDW options 
+--------+---------+-----------+----------+---------+-------------
+ id     | integer |           |          |         | 
+ name   | text    |           |          |         | 
+Server: tsurugidb
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_test_table_name2_________3_________4_________5_________6___;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  DROP TABLE fdw_test_table_name2_________3_________4_________5_________6___
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 4-1-3 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_test_table_name2_________3_________4_________5_________6____ (id INT, name VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test
+IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
+NOTICE:  identifier "fdw_test_table_name2_________3_________4_________5_________6____" will be truncated to "fdw_test_table_name2_________3_________4_________5_________6___"
+\dE
+                                          List of relations
+ Schema |                              Name                               |     Type      |  Owner   
+--------+-----------------------------------------------------------------+---------------+----------
+ public | fdw_test_table_name2_________3_________4_________5_________6___ | foreign table | postgres
+(1 row)
+
+\d fdw_test_table_name2_________3_________4_________5_________6___;
+Foreign table "public.fdw_test_table_name2_________3_________4_________5_________6___"
+ Column |  Type   | Collation | Nullable | Default | FDW options 
+--------+---------+-----------+----------+---------+-------------
+ id     | integer |           |          |         | 
+ name   | text    |           |          |         | 
+Server: tsurugidb
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_test_table_name2_________3_________4_________5_________6___;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  DROP TABLE fdw_test_table_name2_________3_________4_________5_________6____
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 4-2-1 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_test_table (id INT, columnname_________2_________3_________4_________5_________6__ VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test
+IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
+\dE
+                 List of relations
+ Schema |      Name      |     Type      |  Owner   
+--------+----------------+---------------+----------
+ public | fdw_test_table | foreign table | postgres
+(1 row)
+
+\d fdw_test_table
+                                          Foreign table "public.fdw_test_table"
+                             Column                             |  Type   | Collation | Nullable | Default | FDW options 
+----------------------------------------------------------------+---------+-----------+----------+---------+-------------
+ id                                                             | integer |           |          |         | 
+ columnname_________2_________3_________4_________5_________6__ | text    |           |          |         | 
+Server: tsurugidb
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_test_table;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_test_table', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 4-2-2 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_test_table (id INT, columnname_________2_________3_________4_________5_________6___ VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test
+IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
+\dE
+                 List of relations
+ Schema |      Name      |     Type      |  Owner   
+--------+----------------+---------------+----------
+ public | fdw_test_table | foreign table | postgres
+(1 row)
+
+\d fdw_test_table
+                                          Foreign table "public.fdw_test_table"
+                             Column                              |  Type   | Collation | Nullable | Default | FDW options 
+-----------------------------------------------------------------+---------+-----------+----------+---------+-------------
+ id                                                              | integer |           |          |         | 
+ columnname_________2_________3_________4_________5_________6___ | text    |           |          |         | 
+Server: tsurugidb
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_test_table;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_test_table', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 4-2-3 */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_test_table (id INT, columnname_________2_________3_________4_________5_________6____ VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test
+IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
+NOTICE:  identifier "columnname_________2_________3_________4_________5_________6____" will be truncated to "columnname_________2_________3_________4_________5_________6___"
+\dE
+                 List of relations
+ Schema |      Name      |     Type      |  Owner   
+--------+----------------+---------------+----------
+ public | fdw_test_table | foreign table | postgres
+(1 row)
+
+\d fdw_test_table
+                                          Foreign table "public.fdw_test_table"
+                             Column                              |  Type   | Collation | Nullable | Default | FDW options 
+-----------------------------------------------------------------+---------+-----------+----------+---------+-------------
+ id                                                              | integer |           |          |         | 
+ columnname_________2_________3_________4_________5_________6___ | text    |           |          |         | 
+Server: tsurugidb
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_test_table;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_test_table', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+/* Test case: 6-1 */
+-- Test setup: DDL of the Tsurugi
+DO $$
+DECLARE
+    TABLE_MAX CONSTANT INT := 1000;
+    COLUMN_MAX CONSTANT INT := 50;
+    columns_def TEXT;
+    i INT;
+BEGIN
+    SELECT string_agg(format('col_%s INT', n), ', ')
+        INTO columns_def
+    FROM generate_series(1, COLUMN_MAX) n;
+
+    FOR i IN 1..TABLE_MAX LOOP
+        EXECUTE format(
+            'SELECT tg_execute_ddl(''CREATE TABLE IF NOT EXISTS fdw_test_table_%s (%s)'', ''tsurugidb'')',
+            to_char(i, 'FM0000'), columns_def);
+    END LOOP;
+END $$;
+-- Test
+IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
+\dE
+                    List of relations
+ Schema |        Name         |     Type      |  Owner   
+--------+---------------------+---------------+----------
+ public | fdw_test_table_0001 | foreign table | postgres
+ public | fdw_test_table_0002 | foreign table | postgres
+ public | fdw_test_table_0003 | foreign table | postgres
+ public | fdw_test_table_0004 | foreign table | postgres
+ public | fdw_test_table_0005 | foreign table | postgres
+ public | fdw_test_table_0006 | foreign table | postgres
+ public | fdw_test_table_0007 | foreign table | postgres
+ public | fdw_test_table_0008 | foreign table | postgres
+ public | fdw_test_table_0009 | foreign table | postgres
+ public | fdw_test_table_0010 | foreign table | postgres
+ public | fdw_test_table_0011 | foreign table | postgres
+ public | fdw_test_table_0012 | foreign table | postgres
+ public | fdw_test_table_0013 | foreign table | postgres
+ public | fdw_test_table_0014 | foreign table | postgres
+ public | fdw_test_table_0015 | foreign table | postgres
+ public | fdw_test_table_0016 | foreign table | postgres
+ public | fdw_test_table_0017 | foreign table | postgres
+ public | fdw_test_table_0018 | foreign table | postgres
+ public | fdw_test_table_0019 | foreign table | postgres
+ public | fdw_test_table_0020 | foreign table | postgres
+ public | fdw_test_table_0021 | foreign table | postgres
+ public | fdw_test_table_0022 | foreign table | postgres
+ public | fdw_test_table_0023 | foreign table | postgres
+ public | fdw_test_table_0024 | foreign table | postgres
+ public | fdw_test_table_0025 | foreign table | postgres
+ public | fdw_test_table_0026 | foreign table | postgres
+ public | fdw_test_table_0027 | foreign table | postgres
+ public | fdw_test_table_0028 | foreign table | postgres
+ public | fdw_test_table_0029 | foreign table | postgres
+ public | fdw_test_table_0030 | foreign table | postgres
+ public | fdw_test_table_0031 | foreign table | postgres
+ public | fdw_test_table_0032 | foreign table | postgres
+ public | fdw_test_table_0033 | foreign table | postgres
+ public | fdw_test_table_0034 | foreign table | postgres
+ public | fdw_test_table_0035 | foreign table | postgres
+ public | fdw_test_table_0036 | foreign table | postgres
+ public | fdw_test_table_0037 | foreign table | postgres
+ public | fdw_test_table_0038 | foreign table | postgres
+ public | fdw_test_table_0039 | foreign table | postgres
+ public | fdw_test_table_0040 | foreign table | postgres
+ public | fdw_test_table_0041 | foreign table | postgres
+ public | fdw_test_table_0042 | foreign table | postgres
+ public | fdw_test_table_0043 | foreign table | postgres
+ public | fdw_test_table_0044 | foreign table | postgres
+ public | fdw_test_table_0045 | foreign table | postgres
+ public | fdw_test_table_0046 | foreign table | postgres
+ public | fdw_test_table_0047 | foreign table | postgres
+ public | fdw_test_table_0048 | foreign table | postgres
+ public | fdw_test_table_0049 | foreign table | postgres
+ public | fdw_test_table_0050 | foreign table | postgres
+ public | fdw_test_table_0051 | foreign table | postgres
+ public | fdw_test_table_0052 | foreign table | postgres
+ public | fdw_test_table_0053 | foreign table | postgres
+ public | fdw_test_table_0054 | foreign table | postgres
+ public | fdw_test_table_0055 | foreign table | postgres
+ public | fdw_test_table_0056 | foreign table | postgres
+ public | fdw_test_table_0057 | foreign table | postgres
+ public | fdw_test_table_0058 | foreign table | postgres
+ public | fdw_test_table_0059 | foreign table | postgres
+ public | fdw_test_table_0060 | foreign table | postgres
+ public | fdw_test_table_0061 | foreign table | postgres
+ public | fdw_test_table_0062 | foreign table | postgres
+ public | fdw_test_table_0063 | foreign table | postgres
+ public | fdw_test_table_0064 | foreign table | postgres
+ public | fdw_test_table_0065 | foreign table | postgres
+ public | fdw_test_table_0066 | foreign table | postgres
+ public | fdw_test_table_0067 | foreign table | postgres
+ public | fdw_test_table_0068 | foreign table | postgres
+ public | fdw_test_table_0069 | foreign table | postgres
+ public | fdw_test_table_0070 | foreign table | postgres
+ public | fdw_test_table_0071 | foreign table | postgres
+ public | fdw_test_table_0072 | foreign table | postgres
+ public | fdw_test_table_0073 | foreign table | postgres
+ public | fdw_test_table_0074 | foreign table | postgres
+ public | fdw_test_table_0075 | foreign table | postgres
+ public | fdw_test_table_0076 | foreign table | postgres
+ public | fdw_test_table_0077 | foreign table | postgres
+ public | fdw_test_table_0078 | foreign table | postgres
+ public | fdw_test_table_0079 | foreign table | postgres
+ public | fdw_test_table_0080 | foreign table | postgres
+ public | fdw_test_table_0081 | foreign table | postgres
+ public | fdw_test_table_0082 | foreign table | postgres
+ public | fdw_test_table_0083 | foreign table | postgres
+ public | fdw_test_table_0084 | foreign table | postgres
+ public | fdw_test_table_0085 | foreign table | postgres
+ public | fdw_test_table_0086 | foreign table | postgres
+ public | fdw_test_table_0087 | foreign table | postgres
+ public | fdw_test_table_0088 | foreign table | postgres
+ public | fdw_test_table_0089 | foreign table | postgres
+ public | fdw_test_table_0090 | foreign table | postgres
+ public | fdw_test_table_0091 | foreign table | postgres
+ public | fdw_test_table_0092 | foreign table | postgres
+ public | fdw_test_table_0093 | foreign table | postgres
+ public | fdw_test_table_0094 | foreign table | postgres
+ public | fdw_test_table_0095 | foreign table | postgres
+ public | fdw_test_table_0096 | foreign table | postgres
+ public | fdw_test_table_0097 | foreign table | postgres
+ public | fdw_test_table_0098 | foreign table | postgres
+ public | fdw_test_table_0099 | foreign table | postgres
+ public | fdw_test_table_0100 | foreign table | postgres
+ public | fdw_test_table_0101 | foreign table | postgres
+ public | fdw_test_table_0102 | foreign table | postgres
+ public | fdw_test_table_0103 | foreign table | postgres
+ public | fdw_test_table_0104 | foreign table | postgres
+ public | fdw_test_table_0105 | foreign table | postgres
+ public | fdw_test_table_0106 | foreign table | postgres
+ public | fdw_test_table_0107 | foreign table | postgres
+ public | fdw_test_table_0108 | foreign table | postgres
+ public | fdw_test_table_0109 | foreign table | postgres
+ public | fdw_test_table_0110 | foreign table | postgres
+ public | fdw_test_table_0111 | foreign table | postgres
+ public | fdw_test_table_0112 | foreign table | postgres
+ public | fdw_test_table_0113 | foreign table | postgres
+ public | fdw_test_table_0114 | foreign table | postgres
+ public | fdw_test_table_0115 | foreign table | postgres
+ public | fdw_test_table_0116 | foreign table | postgres
+ public | fdw_test_table_0117 | foreign table | postgres
+ public | fdw_test_table_0118 | foreign table | postgres
+ public | fdw_test_table_0119 | foreign table | postgres
+ public | fdw_test_table_0120 | foreign table | postgres
+ public | fdw_test_table_0121 | foreign table | postgres
+ public | fdw_test_table_0122 | foreign table | postgres
+ public | fdw_test_table_0123 | foreign table | postgres
+ public | fdw_test_table_0124 | foreign table | postgres
+ public | fdw_test_table_0125 | foreign table | postgres
+ public | fdw_test_table_0126 | foreign table | postgres
+ public | fdw_test_table_0127 | foreign table | postgres
+ public | fdw_test_table_0128 | foreign table | postgres
+ public | fdw_test_table_0129 | foreign table | postgres
+ public | fdw_test_table_0130 | foreign table | postgres
+ public | fdw_test_table_0131 | foreign table | postgres
+ public | fdw_test_table_0132 | foreign table | postgres
+ public | fdw_test_table_0133 | foreign table | postgres
+ public | fdw_test_table_0134 | foreign table | postgres
+ public | fdw_test_table_0135 | foreign table | postgres
+ public | fdw_test_table_0136 | foreign table | postgres
+ public | fdw_test_table_0137 | foreign table | postgres
+ public | fdw_test_table_0138 | foreign table | postgres
+ public | fdw_test_table_0139 | foreign table | postgres
+ public | fdw_test_table_0140 | foreign table | postgres
+ public | fdw_test_table_0141 | foreign table | postgres
+ public | fdw_test_table_0142 | foreign table | postgres
+ public | fdw_test_table_0143 | foreign table | postgres
+ public | fdw_test_table_0144 | foreign table | postgres
+ public | fdw_test_table_0145 | foreign table | postgres
+ public | fdw_test_table_0146 | foreign table | postgres
+ public | fdw_test_table_0147 | foreign table | postgres
+ public | fdw_test_table_0148 | foreign table | postgres
+ public | fdw_test_table_0149 | foreign table | postgres
+ public | fdw_test_table_0150 | foreign table | postgres
+ public | fdw_test_table_0151 | foreign table | postgres
+ public | fdw_test_table_0152 | foreign table | postgres
+ public | fdw_test_table_0153 | foreign table | postgres
+ public | fdw_test_table_0154 | foreign table | postgres
+ public | fdw_test_table_0155 | foreign table | postgres
+ public | fdw_test_table_0156 | foreign table | postgres
+ public | fdw_test_table_0157 | foreign table | postgres
+ public | fdw_test_table_0158 | foreign table | postgres
+ public | fdw_test_table_0159 | foreign table | postgres
+ public | fdw_test_table_0160 | foreign table | postgres
+ public | fdw_test_table_0161 | foreign table | postgres
+ public | fdw_test_table_0162 | foreign table | postgres
+ public | fdw_test_table_0163 | foreign table | postgres
+ public | fdw_test_table_0164 | foreign table | postgres
+ public | fdw_test_table_0165 | foreign table | postgres
+ public | fdw_test_table_0166 | foreign table | postgres
+ public | fdw_test_table_0167 | foreign table | postgres
+ public | fdw_test_table_0168 | foreign table | postgres
+ public | fdw_test_table_0169 | foreign table | postgres
+ public | fdw_test_table_0170 | foreign table | postgres
+ public | fdw_test_table_0171 | foreign table | postgres
+ public | fdw_test_table_0172 | foreign table | postgres
+ public | fdw_test_table_0173 | foreign table | postgres
+ public | fdw_test_table_0174 | foreign table | postgres
+ public | fdw_test_table_0175 | foreign table | postgres
+ public | fdw_test_table_0176 | foreign table | postgres
+ public | fdw_test_table_0177 | foreign table | postgres
+ public | fdw_test_table_0178 | foreign table | postgres
+ public | fdw_test_table_0179 | foreign table | postgres
+ public | fdw_test_table_0180 | foreign table | postgres
+ public | fdw_test_table_0181 | foreign table | postgres
+ public | fdw_test_table_0182 | foreign table | postgres
+ public | fdw_test_table_0183 | foreign table | postgres
+ public | fdw_test_table_0184 | foreign table | postgres
+ public | fdw_test_table_0185 | foreign table | postgres
+ public | fdw_test_table_0186 | foreign table | postgres
+ public | fdw_test_table_0187 | foreign table | postgres
+ public | fdw_test_table_0188 | foreign table | postgres
+ public | fdw_test_table_0189 | foreign table | postgres
+ public | fdw_test_table_0190 | foreign table | postgres
+ public | fdw_test_table_0191 | foreign table | postgres
+ public | fdw_test_table_0192 | foreign table | postgres
+ public | fdw_test_table_0193 | foreign table | postgres
+ public | fdw_test_table_0194 | foreign table | postgres
+ public | fdw_test_table_0195 | foreign table | postgres
+ public | fdw_test_table_0196 | foreign table | postgres
+ public | fdw_test_table_0197 | foreign table | postgres
+ public | fdw_test_table_0198 | foreign table | postgres
+ public | fdw_test_table_0199 | foreign table | postgres
+ public | fdw_test_table_0200 | foreign table | postgres
+ public | fdw_test_table_0201 | foreign table | postgres
+ public | fdw_test_table_0202 | foreign table | postgres
+ public | fdw_test_table_0203 | foreign table | postgres
+ public | fdw_test_table_0204 | foreign table | postgres
+ public | fdw_test_table_0205 | foreign table | postgres
+ public | fdw_test_table_0206 | foreign table | postgres
+ public | fdw_test_table_0207 | foreign table | postgres
+ public | fdw_test_table_0208 | foreign table | postgres
+ public | fdw_test_table_0209 | foreign table | postgres
+ public | fdw_test_table_0210 | foreign table | postgres
+ public | fdw_test_table_0211 | foreign table | postgres
+ public | fdw_test_table_0212 | foreign table | postgres
+ public | fdw_test_table_0213 | foreign table | postgres
+ public | fdw_test_table_0214 | foreign table | postgres
+ public | fdw_test_table_0215 | foreign table | postgres
+ public | fdw_test_table_0216 | foreign table | postgres
+ public | fdw_test_table_0217 | foreign table | postgres
+ public | fdw_test_table_0218 | foreign table | postgres
+ public | fdw_test_table_0219 | foreign table | postgres
+ public | fdw_test_table_0220 | foreign table | postgres
+ public | fdw_test_table_0221 | foreign table | postgres
+ public | fdw_test_table_0222 | foreign table | postgres
+ public | fdw_test_table_0223 | foreign table | postgres
+ public | fdw_test_table_0224 | foreign table | postgres
+ public | fdw_test_table_0225 | foreign table | postgres
+ public | fdw_test_table_0226 | foreign table | postgres
+ public | fdw_test_table_0227 | foreign table | postgres
+ public | fdw_test_table_0228 | foreign table | postgres
+ public | fdw_test_table_0229 | foreign table | postgres
+ public | fdw_test_table_0230 | foreign table | postgres
+ public | fdw_test_table_0231 | foreign table | postgres
+ public | fdw_test_table_0232 | foreign table | postgres
+ public | fdw_test_table_0233 | foreign table | postgres
+ public | fdw_test_table_0234 | foreign table | postgres
+ public | fdw_test_table_0235 | foreign table | postgres
+ public | fdw_test_table_0236 | foreign table | postgres
+ public | fdw_test_table_0237 | foreign table | postgres
+ public | fdw_test_table_0238 | foreign table | postgres
+ public | fdw_test_table_0239 | foreign table | postgres
+ public | fdw_test_table_0240 | foreign table | postgres
+ public | fdw_test_table_0241 | foreign table | postgres
+ public | fdw_test_table_0242 | foreign table | postgres
+ public | fdw_test_table_0243 | foreign table | postgres
+ public | fdw_test_table_0244 | foreign table | postgres
+ public | fdw_test_table_0245 | foreign table | postgres
+ public | fdw_test_table_0246 | foreign table | postgres
+ public | fdw_test_table_0247 | foreign table | postgres
+ public | fdw_test_table_0248 | foreign table | postgres
+ public | fdw_test_table_0249 | foreign table | postgres
+ public | fdw_test_table_0250 | foreign table | postgres
+ public | fdw_test_table_0251 | foreign table | postgres
+ public | fdw_test_table_0252 | foreign table | postgres
+ public | fdw_test_table_0253 | foreign table | postgres
+ public | fdw_test_table_0254 | foreign table | postgres
+ public | fdw_test_table_0255 | foreign table | postgres
+ public | fdw_test_table_0256 | foreign table | postgres
+ public | fdw_test_table_0257 | foreign table | postgres
+ public | fdw_test_table_0258 | foreign table | postgres
+ public | fdw_test_table_0259 | foreign table | postgres
+ public | fdw_test_table_0260 | foreign table | postgres
+ public | fdw_test_table_0261 | foreign table | postgres
+ public | fdw_test_table_0262 | foreign table | postgres
+ public | fdw_test_table_0263 | foreign table | postgres
+ public | fdw_test_table_0264 | foreign table | postgres
+ public | fdw_test_table_0265 | foreign table | postgres
+ public | fdw_test_table_0266 | foreign table | postgres
+ public | fdw_test_table_0267 | foreign table | postgres
+ public | fdw_test_table_0268 | foreign table | postgres
+ public | fdw_test_table_0269 | foreign table | postgres
+ public | fdw_test_table_0270 | foreign table | postgres
+ public | fdw_test_table_0271 | foreign table | postgres
+ public | fdw_test_table_0272 | foreign table | postgres
+ public | fdw_test_table_0273 | foreign table | postgres
+ public | fdw_test_table_0274 | foreign table | postgres
+ public | fdw_test_table_0275 | foreign table | postgres
+ public | fdw_test_table_0276 | foreign table | postgres
+ public | fdw_test_table_0277 | foreign table | postgres
+ public | fdw_test_table_0278 | foreign table | postgres
+ public | fdw_test_table_0279 | foreign table | postgres
+ public | fdw_test_table_0280 | foreign table | postgres
+ public | fdw_test_table_0281 | foreign table | postgres
+ public | fdw_test_table_0282 | foreign table | postgres
+ public | fdw_test_table_0283 | foreign table | postgres
+ public | fdw_test_table_0284 | foreign table | postgres
+ public | fdw_test_table_0285 | foreign table | postgres
+ public | fdw_test_table_0286 | foreign table | postgres
+ public | fdw_test_table_0287 | foreign table | postgres
+ public | fdw_test_table_0288 | foreign table | postgres
+ public | fdw_test_table_0289 | foreign table | postgres
+ public | fdw_test_table_0290 | foreign table | postgres
+ public | fdw_test_table_0291 | foreign table | postgres
+ public | fdw_test_table_0292 | foreign table | postgres
+ public | fdw_test_table_0293 | foreign table | postgres
+ public | fdw_test_table_0294 | foreign table | postgres
+ public | fdw_test_table_0295 | foreign table | postgres
+ public | fdw_test_table_0296 | foreign table | postgres
+ public | fdw_test_table_0297 | foreign table | postgres
+ public | fdw_test_table_0298 | foreign table | postgres
+ public | fdw_test_table_0299 | foreign table | postgres
+ public | fdw_test_table_0300 | foreign table | postgres
+ public | fdw_test_table_0301 | foreign table | postgres
+ public | fdw_test_table_0302 | foreign table | postgres
+ public | fdw_test_table_0303 | foreign table | postgres
+ public | fdw_test_table_0304 | foreign table | postgres
+ public | fdw_test_table_0305 | foreign table | postgres
+ public | fdw_test_table_0306 | foreign table | postgres
+ public | fdw_test_table_0307 | foreign table | postgres
+ public | fdw_test_table_0308 | foreign table | postgres
+ public | fdw_test_table_0309 | foreign table | postgres
+ public | fdw_test_table_0310 | foreign table | postgres
+ public | fdw_test_table_0311 | foreign table | postgres
+ public | fdw_test_table_0312 | foreign table | postgres
+ public | fdw_test_table_0313 | foreign table | postgres
+ public | fdw_test_table_0314 | foreign table | postgres
+ public | fdw_test_table_0315 | foreign table | postgres
+ public | fdw_test_table_0316 | foreign table | postgres
+ public | fdw_test_table_0317 | foreign table | postgres
+ public | fdw_test_table_0318 | foreign table | postgres
+ public | fdw_test_table_0319 | foreign table | postgres
+ public | fdw_test_table_0320 | foreign table | postgres
+ public | fdw_test_table_0321 | foreign table | postgres
+ public | fdw_test_table_0322 | foreign table | postgres
+ public | fdw_test_table_0323 | foreign table | postgres
+ public | fdw_test_table_0324 | foreign table | postgres
+ public | fdw_test_table_0325 | foreign table | postgres
+ public | fdw_test_table_0326 | foreign table | postgres
+ public | fdw_test_table_0327 | foreign table | postgres
+ public | fdw_test_table_0328 | foreign table | postgres
+ public | fdw_test_table_0329 | foreign table | postgres
+ public | fdw_test_table_0330 | foreign table | postgres
+ public | fdw_test_table_0331 | foreign table | postgres
+ public | fdw_test_table_0332 | foreign table | postgres
+ public | fdw_test_table_0333 | foreign table | postgres
+ public | fdw_test_table_0334 | foreign table | postgres
+ public | fdw_test_table_0335 | foreign table | postgres
+ public | fdw_test_table_0336 | foreign table | postgres
+ public | fdw_test_table_0337 | foreign table | postgres
+ public | fdw_test_table_0338 | foreign table | postgres
+ public | fdw_test_table_0339 | foreign table | postgres
+ public | fdw_test_table_0340 | foreign table | postgres
+ public | fdw_test_table_0341 | foreign table | postgres
+ public | fdw_test_table_0342 | foreign table | postgres
+ public | fdw_test_table_0343 | foreign table | postgres
+ public | fdw_test_table_0344 | foreign table | postgres
+ public | fdw_test_table_0345 | foreign table | postgres
+ public | fdw_test_table_0346 | foreign table | postgres
+ public | fdw_test_table_0347 | foreign table | postgres
+ public | fdw_test_table_0348 | foreign table | postgres
+ public | fdw_test_table_0349 | foreign table | postgres
+ public | fdw_test_table_0350 | foreign table | postgres
+ public | fdw_test_table_0351 | foreign table | postgres
+ public | fdw_test_table_0352 | foreign table | postgres
+ public | fdw_test_table_0353 | foreign table | postgres
+ public | fdw_test_table_0354 | foreign table | postgres
+ public | fdw_test_table_0355 | foreign table | postgres
+ public | fdw_test_table_0356 | foreign table | postgres
+ public | fdw_test_table_0357 | foreign table | postgres
+ public | fdw_test_table_0358 | foreign table | postgres
+ public | fdw_test_table_0359 | foreign table | postgres
+ public | fdw_test_table_0360 | foreign table | postgres
+ public | fdw_test_table_0361 | foreign table | postgres
+ public | fdw_test_table_0362 | foreign table | postgres
+ public | fdw_test_table_0363 | foreign table | postgres
+ public | fdw_test_table_0364 | foreign table | postgres
+ public | fdw_test_table_0365 | foreign table | postgres
+ public | fdw_test_table_0366 | foreign table | postgres
+ public | fdw_test_table_0367 | foreign table | postgres
+ public | fdw_test_table_0368 | foreign table | postgres
+ public | fdw_test_table_0369 | foreign table | postgres
+ public | fdw_test_table_0370 | foreign table | postgres
+ public | fdw_test_table_0371 | foreign table | postgres
+ public | fdw_test_table_0372 | foreign table | postgres
+ public | fdw_test_table_0373 | foreign table | postgres
+ public | fdw_test_table_0374 | foreign table | postgres
+ public | fdw_test_table_0375 | foreign table | postgres
+ public | fdw_test_table_0376 | foreign table | postgres
+ public | fdw_test_table_0377 | foreign table | postgres
+ public | fdw_test_table_0378 | foreign table | postgres
+ public | fdw_test_table_0379 | foreign table | postgres
+ public | fdw_test_table_0380 | foreign table | postgres
+ public | fdw_test_table_0381 | foreign table | postgres
+ public | fdw_test_table_0382 | foreign table | postgres
+ public | fdw_test_table_0383 | foreign table | postgres
+ public | fdw_test_table_0384 | foreign table | postgres
+ public | fdw_test_table_0385 | foreign table | postgres
+ public | fdw_test_table_0386 | foreign table | postgres
+ public | fdw_test_table_0387 | foreign table | postgres
+ public | fdw_test_table_0388 | foreign table | postgres
+ public | fdw_test_table_0389 | foreign table | postgres
+ public | fdw_test_table_0390 | foreign table | postgres
+ public | fdw_test_table_0391 | foreign table | postgres
+ public | fdw_test_table_0392 | foreign table | postgres
+ public | fdw_test_table_0393 | foreign table | postgres
+ public | fdw_test_table_0394 | foreign table | postgres
+ public | fdw_test_table_0395 | foreign table | postgres
+ public | fdw_test_table_0396 | foreign table | postgres
+ public | fdw_test_table_0397 | foreign table | postgres
+ public | fdw_test_table_0398 | foreign table | postgres
+ public | fdw_test_table_0399 | foreign table | postgres
+ public | fdw_test_table_0400 | foreign table | postgres
+ public | fdw_test_table_0401 | foreign table | postgres
+ public | fdw_test_table_0402 | foreign table | postgres
+ public | fdw_test_table_0403 | foreign table | postgres
+ public | fdw_test_table_0404 | foreign table | postgres
+ public | fdw_test_table_0405 | foreign table | postgres
+ public | fdw_test_table_0406 | foreign table | postgres
+ public | fdw_test_table_0407 | foreign table | postgres
+ public | fdw_test_table_0408 | foreign table | postgres
+ public | fdw_test_table_0409 | foreign table | postgres
+ public | fdw_test_table_0410 | foreign table | postgres
+ public | fdw_test_table_0411 | foreign table | postgres
+ public | fdw_test_table_0412 | foreign table | postgres
+ public | fdw_test_table_0413 | foreign table | postgres
+ public | fdw_test_table_0414 | foreign table | postgres
+ public | fdw_test_table_0415 | foreign table | postgres
+ public | fdw_test_table_0416 | foreign table | postgres
+ public | fdw_test_table_0417 | foreign table | postgres
+ public | fdw_test_table_0418 | foreign table | postgres
+ public | fdw_test_table_0419 | foreign table | postgres
+ public | fdw_test_table_0420 | foreign table | postgres
+ public | fdw_test_table_0421 | foreign table | postgres
+ public | fdw_test_table_0422 | foreign table | postgres
+ public | fdw_test_table_0423 | foreign table | postgres
+ public | fdw_test_table_0424 | foreign table | postgres
+ public | fdw_test_table_0425 | foreign table | postgres
+ public | fdw_test_table_0426 | foreign table | postgres
+ public | fdw_test_table_0427 | foreign table | postgres
+ public | fdw_test_table_0428 | foreign table | postgres
+ public | fdw_test_table_0429 | foreign table | postgres
+ public | fdw_test_table_0430 | foreign table | postgres
+ public | fdw_test_table_0431 | foreign table | postgres
+ public | fdw_test_table_0432 | foreign table | postgres
+ public | fdw_test_table_0433 | foreign table | postgres
+ public | fdw_test_table_0434 | foreign table | postgres
+ public | fdw_test_table_0435 | foreign table | postgres
+ public | fdw_test_table_0436 | foreign table | postgres
+ public | fdw_test_table_0437 | foreign table | postgres
+ public | fdw_test_table_0438 | foreign table | postgres
+ public | fdw_test_table_0439 | foreign table | postgres
+ public | fdw_test_table_0440 | foreign table | postgres
+ public | fdw_test_table_0441 | foreign table | postgres
+ public | fdw_test_table_0442 | foreign table | postgres
+ public | fdw_test_table_0443 | foreign table | postgres
+ public | fdw_test_table_0444 | foreign table | postgres
+ public | fdw_test_table_0445 | foreign table | postgres
+ public | fdw_test_table_0446 | foreign table | postgres
+ public | fdw_test_table_0447 | foreign table | postgres
+ public | fdw_test_table_0448 | foreign table | postgres
+ public | fdw_test_table_0449 | foreign table | postgres
+ public | fdw_test_table_0450 | foreign table | postgres
+ public | fdw_test_table_0451 | foreign table | postgres
+ public | fdw_test_table_0452 | foreign table | postgres
+ public | fdw_test_table_0453 | foreign table | postgres
+ public | fdw_test_table_0454 | foreign table | postgres
+ public | fdw_test_table_0455 | foreign table | postgres
+ public | fdw_test_table_0456 | foreign table | postgres
+ public | fdw_test_table_0457 | foreign table | postgres
+ public | fdw_test_table_0458 | foreign table | postgres
+ public | fdw_test_table_0459 | foreign table | postgres
+ public | fdw_test_table_0460 | foreign table | postgres
+ public | fdw_test_table_0461 | foreign table | postgres
+ public | fdw_test_table_0462 | foreign table | postgres
+ public | fdw_test_table_0463 | foreign table | postgres
+ public | fdw_test_table_0464 | foreign table | postgres
+ public | fdw_test_table_0465 | foreign table | postgres
+ public | fdw_test_table_0466 | foreign table | postgres
+ public | fdw_test_table_0467 | foreign table | postgres
+ public | fdw_test_table_0468 | foreign table | postgres
+ public | fdw_test_table_0469 | foreign table | postgres
+ public | fdw_test_table_0470 | foreign table | postgres
+ public | fdw_test_table_0471 | foreign table | postgres
+ public | fdw_test_table_0472 | foreign table | postgres
+ public | fdw_test_table_0473 | foreign table | postgres
+ public | fdw_test_table_0474 | foreign table | postgres
+ public | fdw_test_table_0475 | foreign table | postgres
+ public | fdw_test_table_0476 | foreign table | postgres
+ public | fdw_test_table_0477 | foreign table | postgres
+ public | fdw_test_table_0478 | foreign table | postgres
+ public | fdw_test_table_0479 | foreign table | postgres
+ public | fdw_test_table_0480 | foreign table | postgres
+ public | fdw_test_table_0481 | foreign table | postgres
+ public | fdw_test_table_0482 | foreign table | postgres
+ public | fdw_test_table_0483 | foreign table | postgres
+ public | fdw_test_table_0484 | foreign table | postgres
+ public | fdw_test_table_0485 | foreign table | postgres
+ public | fdw_test_table_0486 | foreign table | postgres
+ public | fdw_test_table_0487 | foreign table | postgres
+ public | fdw_test_table_0488 | foreign table | postgres
+ public | fdw_test_table_0489 | foreign table | postgres
+ public | fdw_test_table_0490 | foreign table | postgres
+ public | fdw_test_table_0491 | foreign table | postgres
+ public | fdw_test_table_0492 | foreign table | postgres
+ public | fdw_test_table_0493 | foreign table | postgres
+ public | fdw_test_table_0494 | foreign table | postgres
+ public | fdw_test_table_0495 | foreign table | postgres
+ public | fdw_test_table_0496 | foreign table | postgres
+ public | fdw_test_table_0497 | foreign table | postgres
+ public | fdw_test_table_0498 | foreign table | postgres
+ public | fdw_test_table_0499 | foreign table | postgres
+ public | fdw_test_table_0500 | foreign table | postgres
+ public | fdw_test_table_0501 | foreign table | postgres
+ public | fdw_test_table_0502 | foreign table | postgres
+ public | fdw_test_table_0503 | foreign table | postgres
+ public | fdw_test_table_0504 | foreign table | postgres
+ public | fdw_test_table_0505 | foreign table | postgres
+ public | fdw_test_table_0506 | foreign table | postgres
+ public | fdw_test_table_0507 | foreign table | postgres
+ public | fdw_test_table_0508 | foreign table | postgres
+ public | fdw_test_table_0509 | foreign table | postgres
+ public | fdw_test_table_0510 | foreign table | postgres
+ public | fdw_test_table_0511 | foreign table | postgres
+ public | fdw_test_table_0512 | foreign table | postgres
+ public | fdw_test_table_0513 | foreign table | postgres
+ public | fdw_test_table_0514 | foreign table | postgres
+ public | fdw_test_table_0515 | foreign table | postgres
+ public | fdw_test_table_0516 | foreign table | postgres
+ public | fdw_test_table_0517 | foreign table | postgres
+ public | fdw_test_table_0518 | foreign table | postgres
+ public | fdw_test_table_0519 | foreign table | postgres
+ public | fdw_test_table_0520 | foreign table | postgres
+ public | fdw_test_table_0521 | foreign table | postgres
+ public | fdw_test_table_0522 | foreign table | postgres
+ public | fdw_test_table_0523 | foreign table | postgres
+ public | fdw_test_table_0524 | foreign table | postgres
+ public | fdw_test_table_0525 | foreign table | postgres
+ public | fdw_test_table_0526 | foreign table | postgres
+ public | fdw_test_table_0527 | foreign table | postgres
+ public | fdw_test_table_0528 | foreign table | postgres
+ public | fdw_test_table_0529 | foreign table | postgres
+ public | fdw_test_table_0530 | foreign table | postgres
+ public | fdw_test_table_0531 | foreign table | postgres
+ public | fdw_test_table_0532 | foreign table | postgres
+ public | fdw_test_table_0533 | foreign table | postgres
+ public | fdw_test_table_0534 | foreign table | postgres
+ public | fdw_test_table_0535 | foreign table | postgres
+ public | fdw_test_table_0536 | foreign table | postgres
+ public | fdw_test_table_0537 | foreign table | postgres
+ public | fdw_test_table_0538 | foreign table | postgres
+ public | fdw_test_table_0539 | foreign table | postgres
+ public | fdw_test_table_0540 | foreign table | postgres
+ public | fdw_test_table_0541 | foreign table | postgres
+ public | fdw_test_table_0542 | foreign table | postgres
+ public | fdw_test_table_0543 | foreign table | postgres
+ public | fdw_test_table_0544 | foreign table | postgres
+ public | fdw_test_table_0545 | foreign table | postgres
+ public | fdw_test_table_0546 | foreign table | postgres
+ public | fdw_test_table_0547 | foreign table | postgres
+ public | fdw_test_table_0548 | foreign table | postgres
+ public | fdw_test_table_0549 | foreign table | postgres
+ public | fdw_test_table_0550 | foreign table | postgres
+ public | fdw_test_table_0551 | foreign table | postgres
+ public | fdw_test_table_0552 | foreign table | postgres
+ public | fdw_test_table_0553 | foreign table | postgres
+ public | fdw_test_table_0554 | foreign table | postgres
+ public | fdw_test_table_0555 | foreign table | postgres
+ public | fdw_test_table_0556 | foreign table | postgres
+ public | fdw_test_table_0557 | foreign table | postgres
+ public | fdw_test_table_0558 | foreign table | postgres
+ public | fdw_test_table_0559 | foreign table | postgres
+ public | fdw_test_table_0560 | foreign table | postgres
+ public | fdw_test_table_0561 | foreign table | postgres
+ public | fdw_test_table_0562 | foreign table | postgres
+ public | fdw_test_table_0563 | foreign table | postgres
+ public | fdw_test_table_0564 | foreign table | postgres
+ public | fdw_test_table_0565 | foreign table | postgres
+ public | fdw_test_table_0566 | foreign table | postgres
+ public | fdw_test_table_0567 | foreign table | postgres
+ public | fdw_test_table_0568 | foreign table | postgres
+ public | fdw_test_table_0569 | foreign table | postgres
+ public | fdw_test_table_0570 | foreign table | postgres
+ public | fdw_test_table_0571 | foreign table | postgres
+ public | fdw_test_table_0572 | foreign table | postgres
+ public | fdw_test_table_0573 | foreign table | postgres
+ public | fdw_test_table_0574 | foreign table | postgres
+ public | fdw_test_table_0575 | foreign table | postgres
+ public | fdw_test_table_0576 | foreign table | postgres
+ public | fdw_test_table_0577 | foreign table | postgres
+ public | fdw_test_table_0578 | foreign table | postgres
+ public | fdw_test_table_0579 | foreign table | postgres
+ public | fdw_test_table_0580 | foreign table | postgres
+ public | fdw_test_table_0581 | foreign table | postgres
+ public | fdw_test_table_0582 | foreign table | postgres
+ public | fdw_test_table_0583 | foreign table | postgres
+ public | fdw_test_table_0584 | foreign table | postgres
+ public | fdw_test_table_0585 | foreign table | postgres
+ public | fdw_test_table_0586 | foreign table | postgres
+ public | fdw_test_table_0587 | foreign table | postgres
+ public | fdw_test_table_0588 | foreign table | postgres
+ public | fdw_test_table_0589 | foreign table | postgres
+ public | fdw_test_table_0590 | foreign table | postgres
+ public | fdw_test_table_0591 | foreign table | postgres
+ public | fdw_test_table_0592 | foreign table | postgres
+ public | fdw_test_table_0593 | foreign table | postgres
+ public | fdw_test_table_0594 | foreign table | postgres
+ public | fdw_test_table_0595 | foreign table | postgres
+ public | fdw_test_table_0596 | foreign table | postgres
+ public | fdw_test_table_0597 | foreign table | postgres
+ public | fdw_test_table_0598 | foreign table | postgres
+ public | fdw_test_table_0599 | foreign table | postgres
+ public | fdw_test_table_0600 | foreign table | postgres
+ public | fdw_test_table_0601 | foreign table | postgres
+ public | fdw_test_table_0602 | foreign table | postgres
+ public | fdw_test_table_0603 | foreign table | postgres
+ public | fdw_test_table_0604 | foreign table | postgres
+ public | fdw_test_table_0605 | foreign table | postgres
+ public | fdw_test_table_0606 | foreign table | postgres
+ public | fdw_test_table_0607 | foreign table | postgres
+ public | fdw_test_table_0608 | foreign table | postgres
+ public | fdw_test_table_0609 | foreign table | postgres
+ public | fdw_test_table_0610 | foreign table | postgres
+ public | fdw_test_table_0611 | foreign table | postgres
+ public | fdw_test_table_0612 | foreign table | postgres
+ public | fdw_test_table_0613 | foreign table | postgres
+ public | fdw_test_table_0614 | foreign table | postgres
+ public | fdw_test_table_0615 | foreign table | postgres
+ public | fdw_test_table_0616 | foreign table | postgres
+ public | fdw_test_table_0617 | foreign table | postgres
+ public | fdw_test_table_0618 | foreign table | postgres
+ public | fdw_test_table_0619 | foreign table | postgres
+ public | fdw_test_table_0620 | foreign table | postgres
+ public | fdw_test_table_0621 | foreign table | postgres
+ public | fdw_test_table_0622 | foreign table | postgres
+ public | fdw_test_table_0623 | foreign table | postgres
+ public | fdw_test_table_0624 | foreign table | postgres
+ public | fdw_test_table_0625 | foreign table | postgres
+ public | fdw_test_table_0626 | foreign table | postgres
+ public | fdw_test_table_0627 | foreign table | postgres
+ public | fdw_test_table_0628 | foreign table | postgres
+ public | fdw_test_table_0629 | foreign table | postgres
+ public | fdw_test_table_0630 | foreign table | postgres
+ public | fdw_test_table_0631 | foreign table | postgres
+ public | fdw_test_table_0632 | foreign table | postgres
+ public | fdw_test_table_0633 | foreign table | postgres
+ public | fdw_test_table_0634 | foreign table | postgres
+ public | fdw_test_table_0635 | foreign table | postgres
+ public | fdw_test_table_0636 | foreign table | postgres
+ public | fdw_test_table_0637 | foreign table | postgres
+ public | fdw_test_table_0638 | foreign table | postgres
+ public | fdw_test_table_0639 | foreign table | postgres
+ public | fdw_test_table_0640 | foreign table | postgres
+ public | fdw_test_table_0641 | foreign table | postgres
+ public | fdw_test_table_0642 | foreign table | postgres
+ public | fdw_test_table_0643 | foreign table | postgres
+ public | fdw_test_table_0644 | foreign table | postgres
+ public | fdw_test_table_0645 | foreign table | postgres
+ public | fdw_test_table_0646 | foreign table | postgres
+ public | fdw_test_table_0647 | foreign table | postgres
+ public | fdw_test_table_0648 | foreign table | postgres
+ public | fdw_test_table_0649 | foreign table | postgres
+ public | fdw_test_table_0650 | foreign table | postgres
+ public | fdw_test_table_0651 | foreign table | postgres
+ public | fdw_test_table_0652 | foreign table | postgres
+ public | fdw_test_table_0653 | foreign table | postgres
+ public | fdw_test_table_0654 | foreign table | postgres
+ public | fdw_test_table_0655 | foreign table | postgres
+ public | fdw_test_table_0656 | foreign table | postgres
+ public | fdw_test_table_0657 | foreign table | postgres
+ public | fdw_test_table_0658 | foreign table | postgres
+ public | fdw_test_table_0659 | foreign table | postgres
+ public | fdw_test_table_0660 | foreign table | postgres
+ public | fdw_test_table_0661 | foreign table | postgres
+ public | fdw_test_table_0662 | foreign table | postgres
+ public | fdw_test_table_0663 | foreign table | postgres
+ public | fdw_test_table_0664 | foreign table | postgres
+ public | fdw_test_table_0665 | foreign table | postgres
+ public | fdw_test_table_0666 | foreign table | postgres
+ public | fdw_test_table_0667 | foreign table | postgres
+ public | fdw_test_table_0668 | foreign table | postgres
+ public | fdw_test_table_0669 | foreign table | postgres
+ public | fdw_test_table_0670 | foreign table | postgres
+ public | fdw_test_table_0671 | foreign table | postgres
+ public | fdw_test_table_0672 | foreign table | postgres
+ public | fdw_test_table_0673 | foreign table | postgres
+ public | fdw_test_table_0674 | foreign table | postgres
+ public | fdw_test_table_0675 | foreign table | postgres
+ public | fdw_test_table_0676 | foreign table | postgres
+ public | fdw_test_table_0677 | foreign table | postgres
+ public | fdw_test_table_0678 | foreign table | postgres
+ public | fdw_test_table_0679 | foreign table | postgres
+ public | fdw_test_table_0680 | foreign table | postgres
+ public | fdw_test_table_0681 | foreign table | postgres
+ public | fdw_test_table_0682 | foreign table | postgres
+ public | fdw_test_table_0683 | foreign table | postgres
+ public | fdw_test_table_0684 | foreign table | postgres
+ public | fdw_test_table_0685 | foreign table | postgres
+ public | fdw_test_table_0686 | foreign table | postgres
+ public | fdw_test_table_0687 | foreign table | postgres
+ public | fdw_test_table_0688 | foreign table | postgres
+ public | fdw_test_table_0689 | foreign table | postgres
+ public | fdw_test_table_0690 | foreign table | postgres
+ public | fdw_test_table_0691 | foreign table | postgres
+ public | fdw_test_table_0692 | foreign table | postgres
+ public | fdw_test_table_0693 | foreign table | postgres
+ public | fdw_test_table_0694 | foreign table | postgres
+ public | fdw_test_table_0695 | foreign table | postgres
+ public | fdw_test_table_0696 | foreign table | postgres
+ public | fdw_test_table_0697 | foreign table | postgres
+ public | fdw_test_table_0698 | foreign table | postgres
+ public | fdw_test_table_0699 | foreign table | postgres
+ public | fdw_test_table_0700 | foreign table | postgres
+ public | fdw_test_table_0701 | foreign table | postgres
+ public | fdw_test_table_0702 | foreign table | postgres
+ public | fdw_test_table_0703 | foreign table | postgres
+ public | fdw_test_table_0704 | foreign table | postgres
+ public | fdw_test_table_0705 | foreign table | postgres
+ public | fdw_test_table_0706 | foreign table | postgres
+ public | fdw_test_table_0707 | foreign table | postgres
+ public | fdw_test_table_0708 | foreign table | postgres
+ public | fdw_test_table_0709 | foreign table | postgres
+ public | fdw_test_table_0710 | foreign table | postgres
+ public | fdw_test_table_0711 | foreign table | postgres
+ public | fdw_test_table_0712 | foreign table | postgres
+ public | fdw_test_table_0713 | foreign table | postgres
+ public | fdw_test_table_0714 | foreign table | postgres
+ public | fdw_test_table_0715 | foreign table | postgres
+ public | fdw_test_table_0716 | foreign table | postgres
+ public | fdw_test_table_0717 | foreign table | postgres
+ public | fdw_test_table_0718 | foreign table | postgres
+ public | fdw_test_table_0719 | foreign table | postgres
+ public | fdw_test_table_0720 | foreign table | postgres
+ public | fdw_test_table_0721 | foreign table | postgres
+ public | fdw_test_table_0722 | foreign table | postgres
+ public | fdw_test_table_0723 | foreign table | postgres
+ public | fdw_test_table_0724 | foreign table | postgres
+ public | fdw_test_table_0725 | foreign table | postgres
+ public | fdw_test_table_0726 | foreign table | postgres
+ public | fdw_test_table_0727 | foreign table | postgres
+ public | fdw_test_table_0728 | foreign table | postgres
+ public | fdw_test_table_0729 | foreign table | postgres
+ public | fdw_test_table_0730 | foreign table | postgres
+ public | fdw_test_table_0731 | foreign table | postgres
+ public | fdw_test_table_0732 | foreign table | postgres
+ public | fdw_test_table_0733 | foreign table | postgres
+ public | fdw_test_table_0734 | foreign table | postgres
+ public | fdw_test_table_0735 | foreign table | postgres
+ public | fdw_test_table_0736 | foreign table | postgres
+ public | fdw_test_table_0737 | foreign table | postgres
+ public | fdw_test_table_0738 | foreign table | postgres
+ public | fdw_test_table_0739 | foreign table | postgres
+ public | fdw_test_table_0740 | foreign table | postgres
+ public | fdw_test_table_0741 | foreign table | postgres
+ public | fdw_test_table_0742 | foreign table | postgres
+ public | fdw_test_table_0743 | foreign table | postgres
+ public | fdw_test_table_0744 | foreign table | postgres
+ public | fdw_test_table_0745 | foreign table | postgres
+ public | fdw_test_table_0746 | foreign table | postgres
+ public | fdw_test_table_0747 | foreign table | postgres
+ public | fdw_test_table_0748 | foreign table | postgres
+ public | fdw_test_table_0749 | foreign table | postgres
+ public | fdw_test_table_0750 | foreign table | postgres
+ public | fdw_test_table_0751 | foreign table | postgres
+ public | fdw_test_table_0752 | foreign table | postgres
+ public | fdw_test_table_0753 | foreign table | postgres
+ public | fdw_test_table_0754 | foreign table | postgres
+ public | fdw_test_table_0755 | foreign table | postgres
+ public | fdw_test_table_0756 | foreign table | postgres
+ public | fdw_test_table_0757 | foreign table | postgres
+ public | fdw_test_table_0758 | foreign table | postgres
+ public | fdw_test_table_0759 | foreign table | postgres
+ public | fdw_test_table_0760 | foreign table | postgres
+ public | fdw_test_table_0761 | foreign table | postgres
+ public | fdw_test_table_0762 | foreign table | postgres
+ public | fdw_test_table_0763 | foreign table | postgres
+ public | fdw_test_table_0764 | foreign table | postgres
+ public | fdw_test_table_0765 | foreign table | postgres
+ public | fdw_test_table_0766 | foreign table | postgres
+ public | fdw_test_table_0767 | foreign table | postgres
+ public | fdw_test_table_0768 | foreign table | postgres
+ public | fdw_test_table_0769 | foreign table | postgres
+ public | fdw_test_table_0770 | foreign table | postgres
+ public | fdw_test_table_0771 | foreign table | postgres
+ public | fdw_test_table_0772 | foreign table | postgres
+ public | fdw_test_table_0773 | foreign table | postgres
+ public | fdw_test_table_0774 | foreign table | postgres
+ public | fdw_test_table_0775 | foreign table | postgres
+ public | fdw_test_table_0776 | foreign table | postgres
+ public | fdw_test_table_0777 | foreign table | postgres
+ public | fdw_test_table_0778 | foreign table | postgres
+ public | fdw_test_table_0779 | foreign table | postgres
+ public | fdw_test_table_0780 | foreign table | postgres
+ public | fdw_test_table_0781 | foreign table | postgres
+ public | fdw_test_table_0782 | foreign table | postgres
+ public | fdw_test_table_0783 | foreign table | postgres
+ public | fdw_test_table_0784 | foreign table | postgres
+ public | fdw_test_table_0785 | foreign table | postgres
+ public | fdw_test_table_0786 | foreign table | postgres
+ public | fdw_test_table_0787 | foreign table | postgres
+ public | fdw_test_table_0788 | foreign table | postgres
+ public | fdw_test_table_0789 | foreign table | postgres
+ public | fdw_test_table_0790 | foreign table | postgres
+ public | fdw_test_table_0791 | foreign table | postgres
+ public | fdw_test_table_0792 | foreign table | postgres
+ public | fdw_test_table_0793 | foreign table | postgres
+ public | fdw_test_table_0794 | foreign table | postgres
+ public | fdw_test_table_0795 | foreign table | postgres
+ public | fdw_test_table_0796 | foreign table | postgres
+ public | fdw_test_table_0797 | foreign table | postgres
+ public | fdw_test_table_0798 | foreign table | postgres
+ public | fdw_test_table_0799 | foreign table | postgres
+ public | fdw_test_table_0800 | foreign table | postgres
+ public | fdw_test_table_0801 | foreign table | postgres
+ public | fdw_test_table_0802 | foreign table | postgres
+ public | fdw_test_table_0803 | foreign table | postgres
+ public | fdw_test_table_0804 | foreign table | postgres
+ public | fdw_test_table_0805 | foreign table | postgres
+ public | fdw_test_table_0806 | foreign table | postgres
+ public | fdw_test_table_0807 | foreign table | postgres
+ public | fdw_test_table_0808 | foreign table | postgres
+ public | fdw_test_table_0809 | foreign table | postgres
+ public | fdw_test_table_0810 | foreign table | postgres
+ public | fdw_test_table_0811 | foreign table | postgres
+ public | fdw_test_table_0812 | foreign table | postgres
+ public | fdw_test_table_0813 | foreign table | postgres
+ public | fdw_test_table_0814 | foreign table | postgres
+ public | fdw_test_table_0815 | foreign table | postgres
+ public | fdw_test_table_0816 | foreign table | postgres
+ public | fdw_test_table_0817 | foreign table | postgres
+ public | fdw_test_table_0818 | foreign table | postgres
+ public | fdw_test_table_0819 | foreign table | postgres
+ public | fdw_test_table_0820 | foreign table | postgres
+ public | fdw_test_table_0821 | foreign table | postgres
+ public | fdw_test_table_0822 | foreign table | postgres
+ public | fdw_test_table_0823 | foreign table | postgres
+ public | fdw_test_table_0824 | foreign table | postgres
+ public | fdw_test_table_0825 | foreign table | postgres
+ public | fdw_test_table_0826 | foreign table | postgres
+ public | fdw_test_table_0827 | foreign table | postgres
+ public | fdw_test_table_0828 | foreign table | postgres
+ public | fdw_test_table_0829 | foreign table | postgres
+ public | fdw_test_table_0830 | foreign table | postgres
+ public | fdw_test_table_0831 | foreign table | postgres
+ public | fdw_test_table_0832 | foreign table | postgres
+ public | fdw_test_table_0833 | foreign table | postgres
+ public | fdw_test_table_0834 | foreign table | postgres
+ public | fdw_test_table_0835 | foreign table | postgres
+ public | fdw_test_table_0836 | foreign table | postgres
+ public | fdw_test_table_0837 | foreign table | postgres
+ public | fdw_test_table_0838 | foreign table | postgres
+ public | fdw_test_table_0839 | foreign table | postgres
+ public | fdw_test_table_0840 | foreign table | postgres
+ public | fdw_test_table_0841 | foreign table | postgres
+ public | fdw_test_table_0842 | foreign table | postgres
+ public | fdw_test_table_0843 | foreign table | postgres
+ public | fdw_test_table_0844 | foreign table | postgres
+ public | fdw_test_table_0845 | foreign table | postgres
+ public | fdw_test_table_0846 | foreign table | postgres
+ public | fdw_test_table_0847 | foreign table | postgres
+ public | fdw_test_table_0848 | foreign table | postgres
+ public | fdw_test_table_0849 | foreign table | postgres
+ public | fdw_test_table_0850 | foreign table | postgres
+ public | fdw_test_table_0851 | foreign table | postgres
+ public | fdw_test_table_0852 | foreign table | postgres
+ public | fdw_test_table_0853 | foreign table | postgres
+ public | fdw_test_table_0854 | foreign table | postgres
+ public | fdw_test_table_0855 | foreign table | postgres
+ public | fdw_test_table_0856 | foreign table | postgres
+ public | fdw_test_table_0857 | foreign table | postgres
+ public | fdw_test_table_0858 | foreign table | postgres
+ public | fdw_test_table_0859 | foreign table | postgres
+ public | fdw_test_table_0860 | foreign table | postgres
+ public | fdw_test_table_0861 | foreign table | postgres
+ public | fdw_test_table_0862 | foreign table | postgres
+ public | fdw_test_table_0863 | foreign table | postgres
+ public | fdw_test_table_0864 | foreign table | postgres
+ public | fdw_test_table_0865 | foreign table | postgres
+ public | fdw_test_table_0866 | foreign table | postgres
+ public | fdw_test_table_0867 | foreign table | postgres
+ public | fdw_test_table_0868 | foreign table | postgres
+ public | fdw_test_table_0869 | foreign table | postgres
+ public | fdw_test_table_0870 | foreign table | postgres
+ public | fdw_test_table_0871 | foreign table | postgres
+ public | fdw_test_table_0872 | foreign table | postgres
+ public | fdw_test_table_0873 | foreign table | postgres
+ public | fdw_test_table_0874 | foreign table | postgres
+ public | fdw_test_table_0875 | foreign table | postgres
+ public | fdw_test_table_0876 | foreign table | postgres
+ public | fdw_test_table_0877 | foreign table | postgres
+ public | fdw_test_table_0878 | foreign table | postgres
+ public | fdw_test_table_0879 | foreign table | postgres
+ public | fdw_test_table_0880 | foreign table | postgres
+ public | fdw_test_table_0881 | foreign table | postgres
+ public | fdw_test_table_0882 | foreign table | postgres
+ public | fdw_test_table_0883 | foreign table | postgres
+ public | fdw_test_table_0884 | foreign table | postgres
+ public | fdw_test_table_0885 | foreign table | postgres
+ public | fdw_test_table_0886 | foreign table | postgres
+ public | fdw_test_table_0887 | foreign table | postgres
+ public | fdw_test_table_0888 | foreign table | postgres
+ public | fdw_test_table_0889 | foreign table | postgres
+ public | fdw_test_table_0890 | foreign table | postgres
+ public | fdw_test_table_0891 | foreign table | postgres
+ public | fdw_test_table_0892 | foreign table | postgres
+ public | fdw_test_table_0893 | foreign table | postgres
+ public | fdw_test_table_0894 | foreign table | postgres
+ public | fdw_test_table_0895 | foreign table | postgres
+ public | fdw_test_table_0896 | foreign table | postgres
+ public | fdw_test_table_0897 | foreign table | postgres
+ public | fdw_test_table_0898 | foreign table | postgres
+ public | fdw_test_table_0899 | foreign table | postgres
+ public | fdw_test_table_0900 | foreign table | postgres
+ public | fdw_test_table_0901 | foreign table | postgres
+ public | fdw_test_table_0902 | foreign table | postgres
+ public | fdw_test_table_0903 | foreign table | postgres
+ public | fdw_test_table_0904 | foreign table | postgres
+ public | fdw_test_table_0905 | foreign table | postgres
+ public | fdw_test_table_0906 | foreign table | postgres
+ public | fdw_test_table_0907 | foreign table | postgres
+ public | fdw_test_table_0908 | foreign table | postgres
+ public | fdw_test_table_0909 | foreign table | postgres
+ public | fdw_test_table_0910 | foreign table | postgres
+ public | fdw_test_table_0911 | foreign table | postgres
+ public | fdw_test_table_0912 | foreign table | postgres
+ public | fdw_test_table_0913 | foreign table | postgres
+ public | fdw_test_table_0914 | foreign table | postgres
+ public | fdw_test_table_0915 | foreign table | postgres
+ public | fdw_test_table_0916 | foreign table | postgres
+ public | fdw_test_table_0917 | foreign table | postgres
+ public | fdw_test_table_0918 | foreign table | postgres
+ public | fdw_test_table_0919 | foreign table | postgres
+ public | fdw_test_table_0920 | foreign table | postgres
+ public | fdw_test_table_0921 | foreign table | postgres
+ public | fdw_test_table_0922 | foreign table | postgres
+ public | fdw_test_table_0923 | foreign table | postgres
+ public | fdw_test_table_0924 | foreign table | postgres
+ public | fdw_test_table_0925 | foreign table | postgres
+ public | fdw_test_table_0926 | foreign table | postgres
+ public | fdw_test_table_0927 | foreign table | postgres
+ public | fdw_test_table_0928 | foreign table | postgres
+ public | fdw_test_table_0929 | foreign table | postgres
+ public | fdw_test_table_0930 | foreign table | postgres
+ public | fdw_test_table_0931 | foreign table | postgres
+ public | fdw_test_table_0932 | foreign table | postgres
+ public | fdw_test_table_0933 | foreign table | postgres
+ public | fdw_test_table_0934 | foreign table | postgres
+ public | fdw_test_table_0935 | foreign table | postgres
+ public | fdw_test_table_0936 | foreign table | postgres
+ public | fdw_test_table_0937 | foreign table | postgres
+ public | fdw_test_table_0938 | foreign table | postgres
+ public | fdw_test_table_0939 | foreign table | postgres
+ public | fdw_test_table_0940 | foreign table | postgres
+ public | fdw_test_table_0941 | foreign table | postgres
+ public | fdw_test_table_0942 | foreign table | postgres
+ public | fdw_test_table_0943 | foreign table | postgres
+ public | fdw_test_table_0944 | foreign table | postgres
+ public | fdw_test_table_0945 | foreign table | postgres
+ public | fdw_test_table_0946 | foreign table | postgres
+ public | fdw_test_table_0947 | foreign table | postgres
+ public | fdw_test_table_0948 | foreign table | postgres
+ public | fdw_test_table_0949 | foreign table | postgres
+ public | fdw_test_table_0950 | foreign table | postgres
+ public | fdw_test_table_0951 | foreign table | postgres
+ public | fdw_test_table_0952 | foreign table | postgres
+ public | fdw_test_table_0953 | foreign table | postgres
+ public | fdw_test_table_0954 | foreign table | postgres
+ public | fdw_test_table_0955 | foreign table | postgres
+ public | fdw_test_table_0956 | foreign table | postgres
+ public | fdw_test_table_0957 | foreign table | postgres
+ public | fdw_test_table_0958 | foreign table | postgres
+ public | fdw_test_table_0959 | foreign table | postgres
+ public | fdw_test_table_0960 | foreign table | postgres
+ public | fdw_test_table_0961 | foreign table | postgres
+ public | fdw_test_table_0962 | foreign table | postgres
+ public | fdw_test_table_0963 | foreign table | postgres
+ public | fdw_test_table_0964 | foreign table | postgres
+ public | fdw_test_table_0965 | foreign table | postgres
+ public | fdw_test_table_0966 | foreign table | postgres
+ public | fdw_test_table_0967 | foreign table | postgres
+ public | fdw_test_table_0968 | foreign table | postgres
+ public | fdw_test_table_0969 | foreign table | postgres
+ public | fdw_test_table_0970 | foreign table | postgres
+ public | fdw_test_table_0971 | foreign table | postgres
+ public | fdw_test_table_0972 | foreign table | postgres
+ public | fdw_test_table_0973 | foreign table | postgres
+ public | fdw_test_table_0974 | foreign table | postgres
+ public | fdw_test_table_0975 | foreign table | postgres
+ public | fdw_test_table_0976 | foreign table | postgres
+ public | fdw_test_table_0977 | foreign table | postgres
+ public | fdw_test_table_0978 | foreign table | postgres
+ public | fdw_test_table_0979 | foreign table | postgres
+ public | fdw_test_table_0980 | foreign table | postgres
+ public | fdw_test_table_0981 | foreign table | postgres
+ public | fdw_test_table_0982 | foreign table | postgres
+ public | fdw_test_table_0983 | foreign table | postgres
+ public | fdw_test_table_0984 | foreign table | postgres
+ public | fdw_test_table_0985 | foreign table | postgres
+ public | fdw_test_table_0986 | foreign table | postgres
+ public | fdw_test_table_0987 | foreign table | postgres
+ public | fdw_test_table_0988 | foreign table | postgres
+ public | fdw_test_table_0989 | foreign table | postgres
+ public | fdw_test_table_0990 | foreign table | postgres
+ public | fdw_test_table_0991 | foreign table | postgres
+ public | fdw_test_table_0992 | foreign table | postgres
+ public | fdw_test_table_0993 | foreign table | postgres
+ public | fdw_test_table_0994 | foreign table | postgres
+ public | fdw_test_table_0995 | foreign table | postgres
+ public | fdw_test_table_0996 | foreign table | postgres
+ public | fdw_test_table_0997 | foreign table | postgres
+ public | fdw_test_table_0998 | foreign table | postgres
+ public | fdw_test_table_0999 | foreign table | postgres
+ public | fdw_test_table_1000 | foreign table | postgres
+(1000 rows)
+
+\d fdw_test_table_0001
+           Foreign table "public.fdw_test_table_0001"
+ Column |  Type   | Collation | Nullable | Default | FDW options 
+--------+---------+-----------+----------+---------+-------------
+ col_1  | integer |           |          |         | 
+ col_2  | integer |           |          |         | 
+ col_3  | integer |           |          |         | 
+ col_4  | integer |           |          |         | 
+ col_5  | integer |           |          |         | 
+ col_6  | integer |           |          |         | 
+ col_7  | integer |           |          |         | 
+ col_8  | integer |           |          |         | 
+ col_9  | integer |           |          |         | 
+ col_10 | integer |           |          |         | 
+ col_11 | integer |           |          |         | 
+ col_12 | integer |           |          |         | 
+ col_13 | integer |           |          |         | 
+ col_14 | integer |           |          |         | 
+ col_15 | integer |           |          |         | 
+ col_16 | integer |           |          |         | 
+ col_17 | integer |           |          |         | 
+ col_18 | integer |           |          |         | 
+ col_19 | integer |           |          |         | 
+ col_20 | integer |           |          |         | 
+ col_21 | integer |           |          |         | 
+ col_22 | integer |           |          |         | 
+ col_23 | integer |           |          |         | 
+ col_24 | integer |           |          |         | 
+ col_25 | integer |           |          |         | 
+ col_26 | integer |           |          |         | 
+ col_27 | integer |           |          |         | 
+ col_28 | integer |           |          |         | 
+ col_29 | integer |           |          |         | 
+ col_30 | integer |           |          |         | 
+ col_31 | integer |           |          |         | 
+ col_32 | integer |           |          |         | 
+ col_33 | integer |           |          |         | 
+ col_34 | integer |           |          |         | 
+ col_35 | integer |           |          |         | 
+ col_36 | integer |           |          |         | 
+ col_37 | integer |           |          |         | 
+ col_38 | integer |           |          |         | 
+ col_39 | integer |           |          |         | 
+ col_40 | integer |           |          |         | 
+ col_41 | integer |           |          |         | 
+ col_42 | integer |           |          |         | 
+ col_43 | integer |           |          |         | 
+ col_44 | integer |           |          |         | 
+ col_45 | integer |           |          |         | 
+ col_46 | integer |           |          |         | 
+ col_47 | integer |           |          |         | 
+ col_48 | integer |           |          |         | 
+ col_49 | integer |           |          |         | 
+ col_50 | integer |           |          |         | 
+Server: tsurugidb
+
+\d fdw_test_table_0050
+           Foreign table "public.fdw_test_table_0050"
+ Column |  Type   | Collation | Nullable | Default | FDW options 
+--------+---------+-----------+----------+---------+-------------
+ col_1  | integer |           |          |         | 
+ col_2  | integer |           |          |         | 
+ col_3  | integer |           |          |         | 
+ col_4  | integer |           |          |         | 
+ col_5  | integer |           |          |         | 
+ col_6  | integer |           |          |         | 
+ col_7  | integer |           |          |         | 
+ col_8  | integer |           |          |         | 
+ col_9  | integer |           |          |         | 
+ col_10 | integer |           |          |         | 
+ col_11 | integer |           |          |         | 
+ col_12 | integer |           |          |         | 
+ col_13 | integer |           |          |         | 
+ col_14 | integer |           |          |         | 
+ col_15 | integer |           |          |         | 
+ col_16 | integer |           |          |         | 
+ col_17 | integer |           |          |         | 
+ col_18 | integer |           |          |         | 
+ col_19 | integer |           |          |         | 
+ col_20 | integer |           |          |         | 
+ col_21 | integer |           |          |         | 
+ col_22 | integer |           |          |         | 
+ col_23 | integer |           |          |         | 
+ col_24 | integer |           |          |         | 
+ col_25 | integer |           |          |         | 
+ col_26 | integer |           |          |         | 
+ col_27 | integer |           |          |         | 
+ col_28 | integer |           |          |         | 
+ col_29 | integer |           |          |         | 
+ col_30 | integer |           |          |         | 
+ col_31 | integer |           |          |         | 
+ col_32 | integer |           |          |         | 
+ col_33 | integer |           |          |         | 
+ col_34 | integer |           |          |         | 
+ col_35 | integer |           |          |         | 
+ col_36 | integer |           |          |         | 
+ col_37 | integer |           |          |         | 
+ col_38 | integer |           |          |         | 
+ col_39 | integer |           |          |         | 
+ col_40 | integer |           |          |         | 
+ col_41 | integer |           |          |         | 
+ col_42 | integer |           |          |         | 
+ col_43 | integer |           |          |         | 
+ col_44 | integer |           |          |         | 
+ col_45 | integer |           |          |         | 
+ col_46 | integer |           |          |         | 
+ col_47 | integer |           |          |         | 
+ col_48 | integer |           |          |         | 
+ col_49 | integer |           |          |         | 
+ col_50 | integer |           |          |         | 
+Server: tsurugidb
+
+\d fdw_test_table_0256
+           Foreign table "public.fdw_test_table_0256"
+ Column |  Type   | Collation | Nullable | Default | FDW options 
+--------+---------+-----------+----------+---------+-------------
+ col_1  | integer |           |          |         | 
+ col_2  | integer |           |          |         | 
+ col_3  | integer |           |          |         | 
+ col_4  | integer |           |          |         | 
+ col_5  | integer |           |          |         | 
+ col_6  | integer |           |          |         | 
+ col_7  | integer |           |          |         | 
+ col_8  | integer |           |          |         | 
+ col_9  | integer |           |          |         | 
+ col_10 | integer |           |          |         | 
+ col_11 | integer |           |          |         | 
+ col_12 | integer |           |          |         | 
+ col_13 | integer |           |          |         | 
+ col_14 | integer |           |          |         | 
+ col_15 | integer |           |          |         | 
+ col_16 | integer |           |          |         | 
+ col_17 | integer |           |          |         | 
+ col_18 | integer |           |          |         | 
+ col_19 | integer |           |          |         | 
+ col_20 | integer |           |          |         | 
+ col_21 | integer |           |          |         | 
+ col_22 | integer |           |          |         | 
+ col_23 | integer |           |          |         | 
+ col_24 | integer |           |          |         | 
+ col_25 | integer |           |          |         | 
+ col_26 | integer |           |          |         | 
+ col_27 | integer |           |          |         | 
+ col_28 | integer |           |          |         | 
+ col_29 | integer |           |          |         | 
+ col_30 | integer |           |          |         | 
+ col_31 | integer |           |          |         | 
+ col_32 | integer |           |          |         | 
+ col_33 | integer |           |          |         | 
+ col_34 | integer |           |          |         | 
+ col_35 | integer |           |          |         | 
+ col_36 | integer |           |          |         | 
+ col_37 | integer |           |          |         | 
+ col_38 | integer |           |          |         | 
+ col_39 | integer |           |          |         | 
+ col_40 | integer |           |          |         | 
+ col_41 | integer |           |          |         | 
+ col_42 | integer |           |          |         | 
+ col_43 | integer |           |          |         | 
+ col_44 | integer |           |          |         | 
+ col_45 | integer |           |          |         | 
+ col_46 | integer |           |          |         | 
+ col_47 | integer |           |          |         | 
+ col_48 | integer |           |          |         | 
+ col_49 | integer |           |          |         | 
+ col_50 | integer |           |          |         | 
+Server: tsurugidb
+
+\d fdw_test_table_0512
+           Foreign table "public.fdw_test_table_0512"
+ Column |  Type   | Collation | Nullable | Default | FDW options 
+--------+---------+-----------+----------+---------+-------------
+ col_1  | integer |           |          |         | 
+ col_2  | integer |           |          |         | 
+ col_3  | integer |           |          |         | 
+ col_4  | integer |           |          |         | 
+ col_5  | integer |           |          |         | 
+ col_6  | integer |           |          |         | 
+ col_7  | integer |           |          |         | 
+ col_8  | integer |           |          |         | 
+ col_9  | integer |           |          |         | 
+ col_10 | integer |           |          |         | 
+ col_11 | integer |           |          |         | 
+ col_12 | integer |           |          |         | 
+ col_13 | integer |           |          |         | 
+ col_14 | integer |           |          |         | 
+ col_15 | integer |           |          |         | 
+ col_16 | integer |           |          |         | 
+ col_17 | integer |           |          |         | 
+ col_18 | integer |           |          |         | 
+ col_19 | integer |           |          |         | 
+ col_20 | integer |           |          |         | 
+ col_21 | integer |           |          |         | 
+ col_22 | integer |           |          |         | 
+ col_23 | integer |           |          |         | 
+ col_24 | integer |           |          |         | 
+ col_25 | integer |           |          |         | 
+ col_26 | integer |           |          |         | 
+ col_27 | integer |           |          |         | 
+ col_28 | integer |           |          |         | 
+ col_29 | integer |           |          |         | 
+ col_30 | integer |           |          |         | 
+ col_31 | integer |           |          |         | 
+ col_32 | integer |           |          |         | 
+ col_33 | integer |           |          |         | 
+ col_34 | integer |           |          |         | 
+ col_35 | integer |           |          |         | 
+ col_36 | integer |           |          |         | 
+ col_37 | integer |           |          |         | 
+ col_38 | integer |           |          |         | 
+ col_39 | integer |           |          |         | 
+ col_40 | integer |           |          |         | 
+ col_41 | integer |           |          |         | 
+ col_42 | integer |           |          |         | 
+ col_43 | integer |           |          |         | 
+ col_44 | integer |           |          |         | 
+ col_45 | integer |           |          |         | 
+ col_46 | integer |           |          |         | 
+ col_47 | integer |           |          |         | 
+ col_48 | integer |           |          |         | 
+ col_49 | integer |           |          |         | 
+ col_50 | integer |           |          |         | 
+Server: tsurugidb
+
+\d fdw_test_table_0999
+           Foreign table "public.fdw_test_table_0999"
+ Column |  Type   | Collation | Nullable | Default | FDW options 
+--------+---------+-----------+----------+---------+-------------
+ col_1  | integer |           |          |         | 
+ col_2  | integer |           |          |         | 
+ col_3  | integer |           |          |         | 
+ col_4  | integer |           |          |         | 
+ col_5  | integer |           |          |         | 
+ col_6  | integer |           |          |         | 
+ col_7  | integer |           |          |         | 
+ col_8  | integer |           |          |         | 
+ col_9  | integer |           |          |         | 
+ col_10 | integer |           |          |         | 
+ col_11 | integer |           |          |         | 
+ col_12 | integer |           |          |         | 
+ col_13 | integer |           |          |         | 
+ col_14 | integer |           |          |         | 
+ col_15 | integer |           |          |         | 
+ col_16 | integer |           |          |         | 
+ col_17 | integer |           |          |         | 
+ col_18 | integer |           |          |         | 
+ col_19 | integer |           |          |         | 
+ col_20 | integer |           |          |         | 
+ col_21 | integer |           |          |         | 
+ col_22 | integer |           |          |         | 
+ col_23 | integer |           |          |         | 
+ col_24 | integer |           |          |         | 
+ col_25 | integer |           |          |         | 
+ col_26 | integer |           |          |         | 
+ col_27 | integer |           |          |         | 
+ col_28 | integer |           |          |         | 
+ col_29 | integer |           |          |         | 
+ col_30 | integer |           |          |         | 
+ col_31 | integer |           |          |         | 
+ col_32 | integer |           |          |         | 
+ col_33 | integer |           |          |         | 
+ col_34 | integer |           |          |         | 
+ col_35 | integer |           |          |         | 
+ col_36 | integer |           |          |         | 
+ col_37 | integer |           |          |         | 
+ col_38 | integer |           |          |         | 
+ col_39 | integer |           |          |         | 
+ col_40 | integer |           |          |         | 
+ col_41 | integer |           |          |         | 
+ col_42 | integer |           |          |         | 
+ col_43 | integer |           |          |         | 
+ col_44 | integer |           |          |         | 
+ col_45 | integer |           |          |         | 
+ col_46 | integer |           |          |         | 
+ col_47 | integer |           |          |         | 
+ col_48 | integer |           |          |         | 
+ col_49 | integer |           |          |         | 
+ col_50 | integer |           |          |         | 
+Server: tsurugidb
+
+\d fdw_test_table_1000
+           Foreign table "public.fdw_test_table_1000"
+ Column |  Type   | Collation | Nullable | Default | FDW options 
+--------+---------+-----------+----------+---------+-------------
+ col_1  | integer |           |          |         | 
+ col_2  | integer |           |          |         | 
+ col_3  | integer |           |          |         | 
+ col_4  | integer |           |          |         | 
+ col_5  | integer |           |          |         | 
+ col_6  | integer |           |          |         | 
+ col_7  | integer |           |          |         | 
+ col_8  | integer |           |          |         | 
+ col_9  | integer |           |          |         | 
+ col_10 | integer |           |          |         | 
+ col_11 | integer |           |          |         | 
+ col_12 | integer |           |          |         | 
+ col_13 | integer |           |          |         | 
+ col_14 | integer |           |          |         | 
+ col_15 | integer |           |          |         | 
+ col_16 | integer |           |          |         | 
+ col_17 | integer |           |          |         | 
+ col_18 | integer |           |          |         | 
+ col_19 | integer |           |          |         | 
+ col_20 | integer |           |          |         | 
+ col_21 | integer |           |          |         | 
+ col_22 | integer |           |          |         | 
+ col_23 | integer |           |          |         | 
+ col_24 | integer |           |          |         | 
+ col_25 | integer |           |          |         | 
+ col_26 | integer |           |          |         | 
+ col_27 | integer |           |          |         | 
+ col_28 | integer |           |          |         | 
+ col_29 | integer |           |          |         | 
+ col_30 | integer |           |          |         | 
+ col_31 | integer |           |          |         | 
+ col_32 | integer |           |          |         | 
+ col_33 | integer |           |          |         | 
+ col_34 | integer |           |          |         | 
+ col_35 | integer |           |          |         | 
+ col_36 | integer |           |          |         | 
+ col_37 | integer |           |          |         | 
+ col_38 | integer |           |          |         | 
+ col_39 | integer |           |          |         | 
+ col_40 | integer |           |          |         | 
+ col_41 | integer |           |          |         | 
+ col_42 | integer |           |          |         | 
+ col_43 | integer |           |          |         | 
+ col_44 | integer |           |          |         | 
+ col_45 | integer |           |          |         | 
+ col_46 | integer |           |          |         | 
+ col_47 | integer |           |          |         | 
+ col_48 | integer |           |          |         | 
+ col_49 | integer |           |          |         | 
+ col_50 | integer |           |          |         | 
+Server: tsurugidb
+
+-- Test teardown: DDL of the Tsurugi/PostgreSQL
+DO $$
+DECLARE
+    TABLE_MAX CONSTANT INT := 1000;
+    i INT;
+BEGIN
+    FOR i IN 1..TABLE_MAX LOOP
+        EXECUTE format(
+            'SELECT tg_execute_ddl(''DROP TABLE IF EXISTS fdw_test_table_%s'', ''tsurugidb'')',
+            to_char(i, 'FM0000'));
+        EXECUTE format(
+            'DROP FOREIGN TABLE IF EXISTS fdw_test_table_%s',
+            to_char(i, 'FM0000'));
+    END LOOP;
+END $$;

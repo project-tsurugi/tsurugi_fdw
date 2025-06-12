@@ -1,0 +1,867 @@
+/* Test setup: DDL of the Tsurugi */
+SELECT tg_execute_ddl('
+    CREATE TABLE udf_table1 (
+        column1 INTEGER NOT NULL PRIMARY KEY
+    )
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('
+    CREATE TABLE wp_table1 (
+        column1 INTEGER NOT NULL PRIMARY KEY
+    )
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('
+    CREATE TABLE wp_table2 (
+        column1 INTEGER NOT NULL PRIMARY KEY
+    )
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('
+    CREATE TABLE ri_table1 (
+        column1 INTEGER NOT NULL PRIMARY KEY
+    )
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('
+    CREATE TABLE ri_table2 (
+        column1 INTEGER NOT NULL PRIMARY KEY
+    )
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+/* Test setup: DDL of the PostgreSQL */
+CREATE FOREIGN TABLE udf_table1 (
+    column1 INTEGER NOT NULL
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE wp_table1 (
+    column1 INTEGER NOT NULL
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE wp_table2 (
+    column1 INTEGER NOT NULL
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE ri_table1 (
+    column1 INTEGER NOT NULL
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE ri_table2 (
+    column1 INTEGER NOT NULL
+) SERVER tsurugidb;
+/* set option (error) */
+SELECT tg_set_transaction('short transaction');
+ERROR:  Invalid Transaction Type parameter. (type: short transaction)
+SELECT tg_set_transaction('wait');
+ERROR:  Invalid Transaction Type parameter. (type: wait)
+SELECT tg_set_transaction('short', 'exlude');
+ERROR:  Invalid Transaction Priority parameter. (priority: exlude)
+SELECT tg_set_transaction('short', 'wait', '');
+ERROR:  Invalid Transaction Label parameter. (label: empty)
+/* set write preserve (error) */
+SELECT tg_set_write_preserve('wp_table3');
+            tg_set_write_preserve             
+----------------------------------------------
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": "wp_table3"        +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_write_preserve('wp_table1', 'wp_table2', 'wp_table3');
+            tg_set_write_preserve             
+----------------------------------------------
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": "wp_table1"        +
+         },                                  +
+         {                                   +
+             "tableName": "wp_table2"        +
+         },                                  +
+         {                                   +
+             "tableName": "wp_table3"        +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_write_preserve(NULL);
+ERROR:  Table lists may not contain nulls.
+SELECT tg_set_write_preserve('wp_table1', 'wp_table2', NULL);
+ERROR:  Table lists may not contain nulls.
+/* set inclusive read areas (error) */
+SELECT tg_set_inclusive_read_areas('ri_table3');
+         tg_set_inclusive_read_areas          
+----------------------------------------------
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": "wp_table1"        +
+         },                                  +
+         {                                   +
+             "tableName": "wp_table2"        +
+         },                                  +
+         {                                   +
+             "tableName": "wp_table3"        +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": "ri_table3"        +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": ""                 +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_inclusive_read_areas('ri_table1', 'ri_table2', 'ri_table3');
+         tg_set_inclusive_read_areas          
+----------------------------------------------
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": "wp_table1"        +
+         },                                  +
+         {                                   +
+             "tableName": "wp_table2"        +
+         },                                  +
+         {                                   +
+             "tableName": "wp_table3"        +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": "ri_table1"        +
+         },                                  +
+         {                                   +
+             "tableName": "ri_table2"        +
+         },                                  +
+         {                                   +
+             "tableName": "ri_table3"        +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": ""                 +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_inclusive_read_areas(NULL);
+ERROR:  Table lists may not contain nulls.
+SELECT tg_set_inclusive_read_areas('ri_table1', 'ri_table2', NULL);
+ERROR:  Table lists may not contain nulls.
+/* set exclusive read areas (error) */
+SELECT tg_set_exclusive_read_areas('re_table3');
+         tg_set_exclusive_read_areas          
+----------------------------------------------
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": "wp_table1"        +
+         },                                  +
+         {                                   +
+             "tableName": "wp_table2"        +
+         },                                  +
+         {                                   +
+             "tableName": "wp_table3"        +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": "ri_table1"        +
+         },                                  +
+         {                                   +
+             "tableName": "ri_table2"        +
+         },                                  +
+         {                                   +
+             "tableName": "ri_table3"        +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": "re_table3"        +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_exclusive_read_areas('re_table1', 're_table2', 're_table3');
+         tg_set_exclusive_read_areas          
+----------------------------------------------
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": "wp_table1"        +
+         },                                  +
+         {                                   +
+             "tableName": "wp_table2"        +
+         },                                  +
+         {                                   +
+             "tableName": "wp_table3"        +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": "ri_table1"        +
+         },                                  +
+         {                                   +
+             "tableName": "ri_table2"        +
+         },                                  +
+         {                                   +
+             "tableName": "ri_table3"        +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": "re_table1"        +
+         },                                  +
+         {                                   +
+             "tableName": "re_table2"        +
+         },                                  +
+         {                                   +
+             "tableName": "re_table3"        +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_exclusive_read_areas(NULL);
+ERROR:  Table lists may not contain nulls.
+SELECT tg_set_exclusive_read_areas('re_table1', 're_table2', NULL);
+ERROR:  Table lists may not contain nulls.
+SELECT tg_set_transaction('short'); -- reset tableName
+              tg_set_transaction              
+----------------------------------------------
+ {                                           +
+     "transactionType": "1",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
+ }                                           +
+ 
+(1 row)
+
+/* start transaction */
+BEGIN;
+BEGIN; -- warning
+WARNING:  there is already a transaction in progress
+COMMIT;
+/* commit */
+COMMIT; -- warning
+WARNING:  there is no transaction in progress
+/* rollback */
+ROLLBACK; -- warning
+WARNING:  there is no transaction in progress
+BEGIN;
+ROLLBACK;
+/* Explicit transaction (rollback) */
+BEGIN;
+INSERT INTO udf_table1 (column1) VALUES (300);
+INSERT INTO udf_table2 (column1) VALUES (400);
+ERROR:  relation "udf_table2" does not exist
+LINE 1: INSERT INTO udf_table2 (column1) VALUES (400);
+                    ^
+COMMIT;
+SELECT * FROM udf_table1 ORDER BY column1;
+ column1 
+---------
+(0 rows)
+
+/* transaction */
+INSERT INTO udf_table1 (column1) VALUES (400);
+/* Long transaction */
+SELECT tg_set_transaction('long');
+              tg_set_transaction              
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": "",                    +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
+ }                                           +
+ 
+(1 row)
+
+SELECT tg_set_write_preserve('wp_table1', 'wp_table2');
+            tg_set_write_preserve             
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": "wp_table1"        +
+         },                                  +
+         {                                   +
+             "tableName": "wp_table2"        +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
+ }                                           +
+ 
+(1 row)
+
+INSERT INTO udf_table1 (column1) VALUES (500); -- error
+ERROR:  Failed to execute statement to Tsurugi. (13)
+Tsurugi Server Error: LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
+SELECT * FROM udf_table1 ORDER BY column1;
+ column1 
+---------
+     400
+(1 row)
+
+UPDATE udf_table1 SET column1 = column1+1; -- error
+ERROR:  Failed to execute statement to Tsurugi. (13)
+Tsurugi Server Error: LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
+SELECT * FROM udf_table1 ORDER BY column1;
+ column1 
+---------
+     400
+(1 row)
+
+DELETE FROM udf_table1 WHERE column1 = 400; -- error
+ERROR:  Failed to execute statement to Tsurugi. (13)
+Tsurugi Server Error: LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
+SELECT * FROM udf_table1 ORDER BY column1;
+ column1 
+---------
+     400
+(1 row)
+
+SELECT tg_set_write_preserve('wp_table1');
+            tg_set_write_preserve             
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": "wp_table1"        +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
+ }                                           +
+ 
+(1 row)
+
+INSERT INTO wp_table1 (column1) VALUES (200);
+INSERT INTO wp_table2 (column1) VALUES (200); -- error
+ERROR:  Failed to execute statement to Tsurugi. (13)
+Tsurugi Server Error: LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
+INSERT INTO udf_table1 (column1) VALUES (500); -- error
+ERROR:  Failed to execute statement to Tsurugi. (13)
+Tsurugi Server Error: LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
+SELECT * FROM wp_table1 ORDER BY column1;
+ column1 
+---------
+     200
+(1 row)
+
+SELECT * FROM wp_table2 ORDER BY column1;
+ column1 
+---------
+(0 rows)
+
+SELECT * FROM udf_table1 ORDER BY column1;
+ column1 
+---------
+     400
+(1 row)
+
+UPDATE wp_table1 SET column1 = column1+1;
+UPDATE udf_table1 SET column1 = column1+1; -- error
+ERROR:  Failed to execute statement to Tsurugi. (13)
+Tsurugi Server Error: LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
+SELECT * FROM wp_table1 ORDER BY column1;
+ column1 
+---------
+     201
+(1 row)
+
+SELECT * FROM wp_table2 ORDER BY column1;
+ column1 
+---------
+(0 rows)
+
+SELECT * FROM udf_table1 ORDER BY column1;
+ column1 
+---------
+     400
+(1 row)
+
+DELETE FROM wp_table1 WHERE column1 = 201;
+DELETE FROM udf_table1 WHERE column1 = 400; -- error
+ERROR:  Failed to execute statement to Tsurugi. (13)
+Tsurugi Server Error: LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
+SELECT * FROM wp_table1 ORDER BY column1;
+ column1 
+---------
+(0 rows)
+
+SELECT * FROM wp_table2 ORDER BY column1;
+ column1 
+---------
+(0 rows)
+
+SELECT * FROM udf_table1 ORDER BY column1;
+ column1 
+---------
+     400
+(1 row)
+
+/* Explicit long transaction (tg_set_write_preserve) */
+SELECT tg_set_write_preserve('wp_table3');
+            tg_set_write_preserve             
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": "wp_table3"        +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
+ }                                           +
+ 
+(1 row)
+
+BEGIN;
+SELECT * FROM wp_table1 ORDER BY column1;
+ERROR:  Failed to begin the Tsurugi transaction. (13)
+Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null write_preserves:{ wp_table3 })
+COMMIT;
+SELECT tg_set_write_preserve('wp_table3', 'wp_table4');
+            tg_set_write_preserve             
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": "wp_table3"        +
+         },                                  +
+         {                                   +
+             "tableName": "wp_table4"        +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
+ }                                           +
+ 
+(1 row)
+
+BEGIN;
+SELECT * FROM wp_table1 ORDER BY column1;
+ERROR:  Failed to begin the Tsurugi transaction. (13)
+Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null write_preserves:{ wp_table3 wp_table4 })
+SELECT * FROM wp_table2 ORDER BY column1;
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+COMMIT;
+SELECT tg_set_write_preserve('wp_table1', 'wp_table3');
+            tg_set_write_preserve             
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": "wp_table1"        +
+         },                                  +
+         {                                   +
+             "tableName": "wp_table3"        +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
+ }                                           +
+ 
+(1 row)
+
+BEGIN;
+INSERT INTO wp_table1 (column1) VALUES (100);
+ERROR:  Failed to begin the Tsurugi transaction. (13)
+Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null write_preserves:{ wp_table1 wp_table3 })
+COMMIT;
+SELECT tg_set_write_preserve('');
+            tg_set_write_preserve             
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": "",                +
+     "exclusiveReadArea": ""                 +
+ }                                           +
+ 
+(1 row)
+
+/* Explicit long transaction (tg_set_inclusive_read_areas) */
+SELECT tg_set_inclusive_read_areas('ri_table3');
+         tg_set_inclusive_read_areas          
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": "ri_table3"        +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": ""                 +
+ }                                           +
+ 
+(1 row)
+
+BEGIN;
+SELECT * FROM ri_table1 ORDER BY column1;
+ERROR:  Failed to begin the Tsurugi transaction. (13)
+Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null read_areas_inclusive:{ ri_table3 })
+COMMIT;
+SELECT tg_set_inclusive_read_areas('ri_table3', 'ri_table4');
+         tg_set_inclusive_read_areas          
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": "ri_table3"        +
+         },                                  +
+         {                                   +
+             "tableName": "ri_table4"        +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": ""                 +
+ }                                           +
+ 
+(1 row)
+
+BEGIN;
+SELECT * FROM ri_table1 ORDER BY column1;
+ERROR:  Failed to begin the Tsurugi transaction. (13)
+Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null read_areas_inclusive:{ ri_table3 ri_table4 })
+SELECT * FROM ri_table2 ORDER BY column1;
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+COMMIT;
+SELECT tg_set_inclusive_read_areas('ri_table1', 'ri_table3');
+         tg_set_inclusive_read_areas          
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": "ri_table1"        +
+         },                                  +
+         {                                   +
+             "tableName": "ri_table3"        +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": ""                 +
+ }                                           +
+ 
+(1 row)
+
+BEGIN;
+SELECT * FROM ri_table1 ORDER BY column1;
+ERROR:  Failed to begin the Tsurugi transaction. (13)
+Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null read_areas_inclusive:{ ri_table1 ri_table3 })
+COMMIT;
+SELECT tg_set_inclusive_read_areas('');
+         tg_set_inclusive_read_areas          
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": ""                 +
+ }                                           +
+ 
+(1 row)
+
+/* Explicit long transaction (tg_set_exclusive_read_areas) */
+SELECT tg_set_exclusive_read_areas('re_table3');
+         tg_set_exclusive_read_areas          
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": "re_table3"        +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+BEGIN;
+SELECT * FROM udf_table1 ORDER BY column1;
+ERROR:  Failed to begin the Tsurugi transaction. (13)
+Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null read_areas_exclusive:{ re_table3 })
+COMMIT;
+SELECT tg_set_exclusive_read_areas('re_table3', 're_table4');
+         tg_set_exclusive_read_areas          
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": "re_table3"        +
+         },                                  +
+         {                                   +
+             "tableName": "re_table4"        +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+BEGIN;
+SELECT * FROM udf_table1 ORDER BY column1;
+ERROR:  Failed to begin the Tsurugi transaction. (13)
+Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null read_areas_exclusive:{ re_table3 re_table4 })
+COMMIT;
+SELECT tg_set_exclusive_read_areas('wp_table1', 'wp_table3');
+         tg_set_exclusive_read_areas          
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": "wp_table1"        +
+         },                                  +
+         {                                   +
+             "tableName": "wp_table3"        +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+BEGIN;
+SELECT * FROM udf_table1 ORDER BY column1;
+ERROR:  Failed to begin the Tsurugi transaction. (13)
+Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null read_areas_exclusive:{ wp_table1 wp_table3 })
+COMMIT;
+SELECT tg_set_exclusive_read_areas('');
+         tg_set_exclusive_read_areas          
+----------------------------------------------
+ {                                           +
+     "transactionType": "2",                 +
+     "transactionPriority": "0",             +
+     "transactionLabel": "pgsql-transaction",+
+     "writePreserve": [                      +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "inclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ],                                      +
+     "exclusiveReadArea": [                  +
+         {                                   +
+             "tableName": ""                 +
+         }                                   +
+     ]                                       +
+ }                                           +
+ 
+(1 row)
+
+/* Since tsurugi_fdw 1.0.0, the following UDF is no longer supported.*/
+SELECT tg_start_transaction();
+ERROR:  function tg_start_transaction() does not exist
+LINE 2: SELECT tg_start_transaction();
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+SELECT tg_start_transaction('short');
+ERROR:  function tg_start_transaction(unknown) does not exist
+LINE 1: SELECT tg_start_transaction('short');
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+SELECT tg_start_transaction('short', 'interrupt');
+ERROR:  function tg_start_transaction(unknown, unknown) does not exist
+LINE 1: SELECT tg_start_transaction('short', 'interrupt');
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+SELECT tg_start_transaction('short', 'interrupt', 'test-label');
+ERROR:  function tg_start_transaction(unknown, unknown, unknown) does not exist
+LINE 1: SELECT tg_start_transaction('short', 'interrupt', 'test-labe...
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+SELECT tg_commit();
+ERROR:  function tg_commit() does not exist
+LINE 1: SELECT tg_commit();
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+SELECT tg_rollback();
+ERROR:  function tg_rollback() does not exist
+LINE 1: SELECT tg_rollback();
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+/* Test teardown: DDL of the PostgreSQL */
+DROP FOREIGN TABLE udf_table1;
+DROP FOREIGN TABLE wp_table1;
+DROP FOREIGN TABLE wp_table2;
+DROP FOREIGN TABLE ri_table1;
+DROP FOREIGN TABLE ri_table2;
+/* Test teardown: DDL of the Tsurugi */
+SELECT tg_execute_ddl('DROP TABLE udf_table1', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('DROP TABLE wp_table1', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('DROP TABLE wp_table2', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('DROP TABLE ri_table1', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('DROP TABLE ri_table2', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+

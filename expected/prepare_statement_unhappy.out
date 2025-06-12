@@ -1,0 +1,166 @@
+/* Test setup: DDL of the Tsurugi */
+SELECT tg_execute_ddl('
+    CREATE TABLE tg_timedate (
+        id INTEGER NOT NULL PRIMARY KEY,
+        tms TIMESTAMP DEFAULT TIMESTAMP ''2023-03-03 23:59:35.123456'',
+        dt DATE DEFAULT DATE ''2023-03-03'',
+        tm TIME DEFAULT TIME ''23:59:35.123456789''
+    )
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('
+    CREATE TABLE employee_1 (
+        id INTEGER DEFAULT 1,
+        name VARCHAR(100) DEFAULT ''Unknown'',
+        salary NUMERIC(10, 2) DEFAULT 30000.00
+    )
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('
+    CREATE TABLE employee_2 (
+        id INTEGER DEFAULT 1,
+        name VARCHAR(100) DEFAULT ''Unknown'',
+        salary NUMERIC(10, 2) DEFAULT 30000.00
+    )
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('
+    CREATE TABLE employee_i (
+        id INTEGER DEFAULT 1,
+        name VARCHAR(100) DEFAULT ''Unknown'',
+        salary NUMERIC(10, 2) DEFAULT 30000.00
+    )
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+/* Test setup: DDL of the PostgreSQL */
+CREATE FOREIGN TABLE tg_timedate (
+    id INTEGER NOT NULL,
+    tms TIMESTAMP DEFAULT '2023-03-03 23:59:35.123456',
+    dt DATE DEFAULT '2023-03-03',
+    tm TIME DEFAULT '23:59:35.123456789'
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE employee_1 (
+    id INTEGER DEFAULT 1,
+    name VARCHAR(100) DEFAULT 'Unknown',
+    salary NUMERIC(10, 2) DEFAULT 30000.00
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE employee_2 (
+    id INTEGER DEFAULT 1,
+    name VARCHAR(100) DEFAULT 'Unknown',
+    salary NUMERIC(10, 2) DEFAULT 30000.00
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE employee_i (
+    id INTEGER DEFAULT 1,
+    name VARCHAR(100) DEFAULT 'Unknown',
+    salary NUMERIC(10, 2) DEFAULT 30000.00
+) SERVER tsurugidb;
+/* SET DATASTYLE */
+SET datestyle TO ISO, ymd;
+/* PREPARE */
+PREPARE add_tg_timedate_dt (int, date) AS INSERT INTO tg_timedate (id, dt) VALUES ($1, $2);
+EXECUTE add_tg_timedate_dt (9999, '1/8/1999');  -- error
+ERROR:  date/time field value out of range: "1/8/1999"
+LINE 1: EXECUTE add_tg_timedate_dt (9999, '1/8/1999');
+                                           ^
+HINT:  Perhaps you need a different "datestyle" setting.
+EXECUTE add_tg_timedate_dt (9999, '1/18/1999');  -- error
+ERROR:  date/time field value out of range: "1/18/1999"
+LINE 1: EXECUTE add_tg_timedate_dt (9999, '1/18/1999');
+                                           ^
+HINT:  Perhaps you need a different "datestyle" setting.
+EXECUTE add_tg_timedate_dt (9999, '08-Jan-99');  -- error
+ERROR:  date/time field value out of range: "08-Jan-99"
+LINE 1: EXECUTE add_tg_timedate_dt (9999, '08-Jan-99');
+                                           ^
+HINT:  Perhaps you need a different "datestyle" setting.
+EXECUTE add_tg_timedate_dt (9999, 'Jan-08-99');  -- error
+ERROR:  date/time field value out of range: "Jan-08-99"
+LINE 1: EXECUTE add_tg_timedate_dt (9999, 'Jan-08-99');
+                                           ^
+HINT:  Perhaps you need a different "datestyle" setting.
+EXECUTE add_tg_timedate_dt (9999, 'January 8, 99 BC');  -- error
+ERROR:  date/time field value out of range: "January 8, 99 BC"
+LINE 1: EXECUTE add_tg_timedate_dt (9999, 'January 8, 99 BC');
+                                           ^
+HINT:  Perhaps you need a different "datestyle" setting.
+/* limit r682 */
+-- Error:SYNTAX_EXCEPTION
+PREPARE limit_all AS SELECT * FROM employee_2 ORDER BY id, name limit all;
+ERROR:  Failed to prepare SQL statement to Tsurugi. (13)
+	sql:SELECT * FROM employee_2 ORDER BY id, name LIMIT ALL 
+Tsurugi Server Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "ALL", expected one of {(, +, -, ABS, AVG, ...}" region:"region(begin=49, end=52)")
+-- Error:TYPE_ANALYZE_EXCEPTION
+PREPARE limit_x (int) AS SELECT * FROM employee_2 ORDER BY id, name limit $1;
+ERROR:  Failed to prepare SQL statement to Tsurugi. (13)
+	sql:SELECT * FROM employee_2 ORDER BY id, name LIMIT :LIMIT_1
+Tsurugi Server Error: TYPE_ANALYZE_EXCEPTION (SQL-03003: compile failed with error:invalid_unsigned_integer message:"must be a unsigned integer: variable_reference" location:<input>:1:50+8)
+/* set operators r687 */
+-- Error:UNSUPPORTED_COMPILER_FEATURE_EXCEPTION
+PREPARE exce_all AS SELECT * FROM employee_1 except all SELECT * FROM employee_2 ORDER BY id, name;
+ERROR:  Failed to prepare SQL statement to Tsurugi. (13)
+	sql:SELECT * FROM employee_1 EXCEPT ALL SELECT * FROM employee_2 ORDER BY id, name
+Tsurugi Server Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"difference operator is unsupported" location:(unknown))
+-- Error:UNSUPPORTED_COMPILER_FEATURE_EXCEPTION
+PREPARE inte_all AS SELECT * FROM employee_1 intersect all SELECT * FROM employee_2 ORDER BY id, name;
+ERROR:  Failed to prepare SQL statement to Tsurugi. (13)
+	sql:SELECT * FROM employee_1 INTERSECT ALL SELECT * FROM employee_2 ORDER BY id, name
+Tsurugi Server Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"intersection operator is unsupported" location:(unknown))
+-- EXECUTE see:r711
+/* group by r707 */
+-- Error:UNSUPPORTED_COMPILER_FEATURE_EXCEPTION
+PREPARE group_num AS SELECT id, count(name), sum(salary) FROM employee_2 GROUP BY 1 ORDER BY id;
+ERROR:  Failed to prepare SQL statement to Tsurugi. (13)
+	sql:SELECT id, count(name), sum(salary) FROM employee_2 GROUP BY 1  ORDER BY id
+Tsurugi Server Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"plain variable is required in GROUP BY clause" location:<input>:1:62+1)
+/* order by r708 */
+-- Error:UNSUPPORTED_COMPILER_FEATURE_EXCEPTION
+PREPARE order_num AS SELECT * FROM employee_2 ORDER BY 1, 2;
+ERROR:  Failed to prepare SQL statement to Tsurugi. (13)
+	sql:SELECT * FROM employee_2 ORDER BY 1 , 2 
+Tsurugi Server Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"plain literal is not allowed in ORDER BY clause" location:<input>:1:35+1)
+/* Test teardown: DDL of the PostgreSQL */
+DROP FOREIGN TABLE tg_timedate;
+DROP FOREIGN TABLE employee_1;
+DROP FOREIGN TABLE employee_2;
+DROP FOREIGN TABLE employee_i;
+/* Test teardown: DDL of the Tsurugi */
+SELECT tg_execute_ddl('DROP TABLE tg_timedate', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('DROP TABLE employee_1', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('DROP TABLE employee_2', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('DROP TABLE employee_i', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
