@@ -17,9 +17,22 @@ _MESSAGE_MANAGER_DIR="${_THIRD_PARTY_DIR}/message-manager"
 if ldconfig -p | grep -F --quiet libmpdec++; then
   echo -e "\n[SKIPPED Install_mpdecimal]"
 else
-  echo -e "\nThe dependency module (mpdecimal) for takatori is not installed."
-  echo -e "Please follow the takatori README to install mpdecimal.\n"
-  exit 1
+  echo -e "\n[Install_mpdecimal]"
+  if [ ! -f "${_SCRIPTS_DIR}/mpdecimal-2.5.1.tar.gz" ]; then
+    cd ${_SCRIPTS_DIR}
+    curl --retry 3 --retry-all-errors -OL https://www.bytereef.org/software/mpdecimal/releases/mpdecimal-2.5.1.tar.gz
+    cd $OLDPWD
+  fi
+  rm -fr build-mpdecimal
+  mkdir build-mpdecimal
+  cd build-mpdecimal
+  tar xf ${_SCRIPTS_DIR}/mpdecimal-2.5.1.tar.gz
+  cd mpdecimal-2.5.1
+  ./configure --prefix="${_FDW_DEPS_INSTALL_DIR}"
+  make -j4
+  make install
+  cd ../..
+  rm -fr build-mpdecimal
 fi
 
 echo -e "\n[Install Takatori]"
