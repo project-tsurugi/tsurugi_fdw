@@ -82,8 +82,6 @@ begin_prepare_processing(const EState* estate)
 
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
-	return;
-
 	if (params == NULL) {
 		// If there is no parameter information, do nothing.
 		return;
@@ -454,8 +452,6 @@ end_prepare_processing(const EState* estate)
 	ParamListInfo params = estate->es_param_list_info;
 
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-
-	return;
 
 	if (params == NULL) {
 		// If there is no parameter information, do nothing.

@@ -792,8 +792,8 @@ void Tsurugi::log2(int level, std::string_view message, ERROR_CODE error)
 	std::string ext_message{"tsurugi_fdw : "};
 
 	ext_message += message;
-	ext_message += " (error: %d{%s})";
-	elog(level, ext_message.data(),  (int)error, stub::error_name(error).data());	
+	ext_message += " (error: %s(%d))";
+	elog(level, ext_message.data(),  stub::error_name(error).data(), (int)error);	
 }
 
 /*
@@ -805,8 +805,8 @@ void Tsurugi::log3(int level, std::string_view message, ERROR_CODE error)
 	std::string ext_message{"tsurugi_fdw : "};
 
 	ext_message += message;
-	ext_message += " (error: %d{%s})\n%s";
-	elog(level, ext_message.data(), (int)error, stub::error_name(error).data(), 
+	ext_message += " (error: %s(%d))\n%s";
+	elog(level, ext_message.data(), stub::error_name(error).data(), (int)error, 
 		Tsurugi::get_error_message(error).data());	
 }
 
@@ -824,8 +824,8 @@ Tsurugi::report_error(const char* message, ERROR_CODE error, const char* sql)
 			(errcode(sqlstate),
 			 errmsg("Failed to execute remote SQL."),
 			 errcontext("SQL query: %s", sql ? sql : ""),
-			 errhint("%s (error: %d{%s})\n%s", 
-					message, (int) error, stub::error_name(error).data(), 
+			 errhint("%s (error: %s(%d))\n%s", 
+					message, stub::error_name(error).data(), (int) error, 
 					detail.data())
 			));	
 }

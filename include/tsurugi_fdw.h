@@ -34,7 +34,7 @@ extern "C" {
 #include "utils/relcache.h"
 
 /* Planning Flag */
-// #define __TSURUGI_PLANNER__
+#define __TSURUGI_PLANNER__
 #if 0
 /*
  *	@brief	FDW status for each query execution
@@ -171,8 +171,37 @@ typedef struct TgFdwForeignModifyState
  */
 typedef struct TgFdwDirectModifyState
 {
-	const char		*query_string;		/* SQL Query Text */
-	const char		*query;
+	ForeignServer *server;		/* Foreign server handle */
+	ForeignTable  *table;		/* Foreign scan deal with this foreign table */
+
+	Relation	rel;			/* relcache entry for the foreign table */
+	AttInMetadata *attinmeta;	/* attribute datatype conversion metadata */
+
+	/* extracted fdw_private data */
+	const char *orig_query;
+	char	   *query;			/* text of UPDATE/DELETE command */
+	bool		has_returning;	/* is there a RETURNING clause? */
+	List	   *retrieved_attrs;	/* attr numbers retrieved by RETURNING */
+	bool		set_processed;	/* do we set the command es_processed? */
+
+	/* for remote query execution */
+	int			numParams;		/* number of parameters passed to query */
+	FmgrInfo   *param_flinfo;	/* output conversion functions for them */
+	List	   *param_exprs;	/* executable expressions for param values */
+	const char **param_values;	/* textual values of query parameters */
+	Oid		   *param_types;	/* type of query parameters */
+
+	/* for storing result tuples */
+	size_t		num_tuples;		/* # of result tuples */
+	int			next_tuple;		/* index of next one to return */
+	Relation	resultRel;		/* relcache entry for the target relation */
+	AttrNumber *attnoMap;		/* array of attnums of input user columns */
+	AttrNumber	ctidAttno;		/* attnum of input ctid column */
+	AttrNumber	oidAttno;		/* attnum of input oid column */
+	bool		hasSystemCols;	/* are there system columns of resultRel? */
+
+	/* working memory context */
+	MemoryContext temp_cxt;		/* context for per-tuple temporary data */
 } TgFdwDirectModifyState;
 
 /*
@@ -296,9 +325,7 @@ extern void deparseInsertSql(StringInfo buf, RangeTblEntry *rte,
 				 List **retrieved_attrs, int *values_end_len);
 extern void deparseUpdateSql(StringInfo buf, RangeTblEntry *rte,
 							 Index rtindex, Relation rel,
-							 List *targetAttrs,
-							 List *withCheckOptionList, List *returningList,
-							 List **retrieved_attrs);
+							 List *targetAttrs);
 extern void deparseDirectUpdateSql(StringInfo buf, PlannerInfo *root,
 								   Index rtindex, Relation rel,
 								   RelOptInfo *foreignrel,

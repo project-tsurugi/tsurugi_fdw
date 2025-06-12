@@ -20,9 +20,10 @@
 #include <regex>
 #include <string>
 #include <boost/multiprecision/cpp_int.hpp>
+#include "ogawayama/stub/error_code.h"
 #include "tsurugi_fdw.h"
 #include "tsurugi.h"
-#include "ogawayama/stub/error_code.h"
+#include "tsurugi_prepare.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -50,19 +51,21 @@ using namespace ogawayama;
 static const std::string PUBLIC_SCHEMA_NAME = "public\\.";
 static const std::string PUBLIC_DOUBLE_QUOTATION = "\"public\"\\.";
 
-static void prepare_foreign_modify(TgFdwForeignModifyState *fmstate);
-static ogawayama::stub::parameters_type bind_parameters(TgFdwForeignModifyState *fmstate,
-			 											TupleTableSlot **slots,
-			 											int numSlots);
-
+std::string make_tsurugi_query(std::string_view query_string);
+static ogawayama::stub::parameters_type bind_parameters(Relation rel,
+                                                        List* target_attrs,
+                                                        FmgrInfo* flinfo,
+                                                        TupleTableSlot **slots,
+                                                        int numSlots);
 /*
- *  
+ *  make_tsurugi_query
+ *      
  */
 std::string make_tsurugi_query(std::string_view query_string)
 {
     std::string tsurugi_query(query_string);
 
-	elog(DEBUG1, "tsurugi_fdw : input query string : \"%s\"", query_string.data());
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	// erase public schema.
 	std::smatch regex_match;
@@ -84,8 +87,6 @@ std::string make_tsurugi_query(std::string_view query_string)
     {
         tsurugi_query.pop_back();
     }
-
-    elog(DEBUG1, "tsurugi_fdw : remote query string : \"%s\"", tsurugi_query.c_str());
 
     return tsurugi_query;
 }
@@ -385,103 +386,198 @@ make_tuple_from_result_row(ResultSetPtr result_set,
 }
 
 /*
- * 	execute_foreign_modify
- *		Execute foreign modify.
+ *	bind_parameters
+ *		Bind parameters of prepared statement.
  */
-TupleTableSlot **
-execute_foreign_modify(EState *estate,
-					   ResultRelInfo *resultRelInfo,
-					   CmdType operation,
-					   TupleTableSlot **slots,
-					   TupleTableSlot **planSlots,
-					   int *numSlots)
+static ogawayama::stub::parameters_type
+bind_parameters(Relation rel,
+                List* target_attrs,
+                FmgrInfo* flinfo,
+			 	TupleTableSlot **slots,
+			 	int numSlots)
 {
-	TgFdwForeignModifyState *fmstate = 
-		(TgFdwForeignModifyState *) resultRelInfo->ri_FdwState;
-//	ItemPointer ctid = NULL;
+	TupleDesc	tupdesc = RelationGetDescr(rel);
+	stub::parameters_type params{};
 
-	/* The operation should be INSERT, UPDATE, or DELETE */
-	Assert(operation == CMD_INSERT ||
-		   operation == CMD_UPDATE ||
-		   operation == CMD_DELETE);
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
+	if (slots != NULL && target_attrs != NIL)
+	{
+		int param_num = 0;
+		ListCell   *lc;
+		foreach(lc, target_attrs)
+		{	
+			int			attnum = lfirst_int(lc);
+			Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
+			Datum		value;
+			bool		isnull;	
+			std::string param_name = "param" + std::to_string(++param_num);
+
+			/* Ignore generated columns; they are set to DEFAULT */
+			if (attr->attgenerated)
+				continue;
+			value = slot_getattr(slots[0], attnum, &isnull);
+			if (isnull)
+			{
+				std::monostate mono{};
+				params.emplace_back(param_name, mono);
+			}
+			else
+			{
+				stub::value_type tg_type = Tsurugi::convert_type_to_tg(attr->atttypid, 
+                                                                        value);
+				params.emplace_back(param_name, tg_type);
+				elog(LOG, "tsurugi_fdw : parameter name: %s, value: %s", 
+					param_name.c_str(), 
+					OutputFunctionCall(&flinfo[param_num-1], value));
+			}
+		}
+        elog(LOG, "tsurugi_fdw : parameter count: %d", param_num);
+	}
+
+	return params;
+}
+
+/*
+ *	bind_parameters
+ *		Bind parameters of prepared statement.
+ */
+static ogawayama::stub::parameters_type
+bind_parameters2(ExprContext* econtext,
+                FmgrInfo* param_flinfo,
+                List* param_exprs,
+                Relation rel)
+{
+	TupleDesc	tupdesc = RelationGetDescr(rel);
+    stub::parameters_type params{};
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
+    int param_num = 0;
+    ListCell   *lc;
+    foreach(lc, param_exprs)
+    {	
+        ExprState*  expr_state = (ExprState*) lfirst(lc);
+        Datum       expr_value;
+        bool		isNull;	
+        Form_pg_attribute attr = TupleDescAttr(tupdesc, param_num - 1);
+        /* parameter number is 1 origin. */
+        std::string param_name = "param" + std::to_string(++param_num);
+
+        expr_value = ExecEvalExpr(expr_state, econtext, &isNull);
+
+        if (isNull)
+        {
+            std::monostate mono{};
+            params.emplace_back(param_name, mono);
+        }
+        else
+        {
+            stub::value_type tg_type = Tsurugi::convert_type_to_tg(attr->atttypid, 
+                                                                    expr_value);
+            params.emplace_back(param_name, tg_type);
+            elog(LOG, "tsurugi_fdw : parameter name: %s, value: %s", 
+                param_name.c_str(), 
+                OutputFunctionCall(&param_flinfo[param_num-1], expr_value));
+        }
+        param_num++;
+    }
+
+    elog(LOG, "tsurugi_fdw : parameter count: %d", param_num);
+
+	return params;
+}
+
+/*
+ *	prepare_direct_modify
+ *		Prepare a statement for direct modify.
+ */
+void
+prepare_direct_modify(TgFdwDirectModifyState* dmstate)
+{
+	TupleDesc	tupdesc = RelationGetDescr(dmstate->rel);
+	stub::placeholders_type placeholders{};
+
+	assert(tupdesc != nullptr);
 
 	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
-#if PG_VERSION_NUM >= 140000
-	/*
-	 * If the existing query was deparsed and prepared for a different number
-	 * of rows, rebuild it for the proper number.
-	 */
-	if (operation == CMD_INSERT && fmstate->num_slots != *numSlots)
+	for (int i = 0; i < tupdesc->natts; i++)
 	{
-		StringInfoData sql;
-		/* Build INSERT string with numSlots records in its VALUES clause. */
-		elog(LOG, "tsurugi_fdw : rebuildInsertSql().\n%s", sql.data);
-		initStringInfo(&sql);
-
-		rebuildInsertSql(&sql, fmstate->rel,
-						 fmstate->orig_query, fmstate->target_attrs,
-						 fmstate->values_end, fmstate->p_nums,
-						 *numSlots - 1);
-		pfree(fmstate->query);
-		fmstate->query = sql.data;
-		fmstate->num_slots = *numSlots;
-		fmstate->is_prepared = false;
+		/* parameter name is 1 origin. */
+		std::string param_name = "param" + std::to_string(i+1);
+		placeholders.emplace_back(std::make_pair(param_name, 
+			Tsurugi::get_tg_column_type(tupdesc->attrs[i].atttypid)));
 	}
-#endif	/* PG_VERSION_NUM >= 140000 */
 
-	/* Set up the prepared statement on the remote server */
-	if (!fmstate->is_prepared)
-		prepare_foreign_modify(fmstate);
-#if 0
-	/*
-	 * For UPDATE/DELETE, get the ctid that was passed up as a resjunk column
-	 */
-	if (operation == CMD_UPDATE || operation == CMD_DELETE)
-	{
-		Datum		datum;
-		bool		isNull;
-
-		datum = ExecGetJunkAttribute(planSlots[0],
-									 fmstate->ctidAttno,
-									 &isNull);
-		/* shouldn't ever get a null result... */
-		if (isNull)
-			elog(ERROR, "ctid is NULL");
-		ctid = (ItemPointer) DatumGetPointer(datum);
-		if (ctid == NULL) ctid = NULL;
-	}
-#endif
-	/* Convert parameters needed by prepared statement to text form */
-	//
-	stub::parameters_type params = bind_parameters(fmstate, slots, *numSlots);
-
-	/*
-	 * Execute the prepared statement.
-	 */
-	std::size_t	n_rows = 0;
-	ERROR_CODE error = Tsurugi::execute_statement(params, n_rows);
+	ERROR_CODE error = Tsurugi::prepare(dmstate->query, placeholders);
 	if (error != ERROR_CODE::OK)
 	{
-		Tsurugi::report_error("Failed to execute the statement on Tsurugi.", 
-								error, fmstate->query);
+		Tsurugi::report_error("Failed to prepare the statement on Tsurugi.", 
+								error, dmstate->query);
 	}
+}
 
-	MemoryContextReset(fmstate->temp_cxt);
+/*
+ *  execute_direct_modify
+ *      Execute a direct UPDATE/DELETE statement.
+ */
+void
+execute_direct_modify(ForeignScanState* node)
+{
+    elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
-	*numSlots = n_rows;
+	TgFdwDirectModifyState *dmstate = (TgFdwDirectModifyState *) node->fdw_state;
+    EState* estate = node->ss.ps.state;
+    dmstate->set_processed = false;
 
-	/*
-	 * Return NULL if nothing was inserted/updated/deleted on the remote end
-	 */
-	return (n_rows > 0) ? slots : NULL;
+    std::string stmt = make_tsurugi_query(dmstate->orig_query);
+	ERROR_CODE error = Tsurugi::execute_statement(stmt, dmstate->num_tuples);
+	if (error != ERROR_CODE::OK)
+    {
+        /* Prepare processing when via JDBC and ODBC */
+        end_prepare_processing(estate);
+		Tsurugi::report_error("Failed to execute the statement on Tsurugi.", 
+								error, stmt.data());
+	}
+    dmstate->set_processed = true;
+}
+
+/*
+ *  execute_direct_modify_with_deparse_sql
+ *      Execute a direct UPDATE/DELETE statement using depared sql.
+ */
+void 
+execute_direct_modify_with_deparse_sql(ForeignScanState* node)
+{
+    elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
+    TgFdwDirectModifyState *dmstate = (TgFdwDirectModifyState *) node->fdw_state;
+    EState* estate = node->ss.ps.state;
+    ExprContext *econtext = node->ss.ps.ps_ExprContext;
+    dmstate->set_processed = false;
+
+	stub::parameters_type params = bind_parameters2(econtext, 
+                                                    dmstate->param_flinfo,
+                                                    dmstate->param_exprs,
+                                                    dmstate->rel);
+
+	ERROR_CODE error = Tsurugi::execute_statement(params, dmstate->num_tuples);
+	if (error != ERROR_CODE::OK)
+    {
+        /* Prepare processing when via JDBC and ODBC */
+        end_prepare_processing(estate);
+		Tsurugi::report_error("Failed to execute the statement on Tsurugi.", 
+								error, dmstate->query);
+	}
+    dmstate->set_processed = true;
 }
 
 /*
  *	prepare_foreign_modify
  *		Prepare a statement for foreign modify.
  */
-static void
+void
 prepare_foreign_modify(TgFdwForeignModifyState *fmstate)
 {
 	TupleDesc	tupdesc = RelationGetDescr(fmstate->rel);
@@ -509,50 +605,51 @@ prepare_foreign_modify(TgFdwForeignModifyState *fmstate)
 }
 
 /*
- *	bind_parameters
- *		Bind parameters of prepared statement.
+ * 	execute_foreign_modify
+ *		Execute a INSERT statement.
  */
-static ogawayama::stub::parameters_type
-bind_parameters(TgFdwForeignModifyState *fmstate,
-			 	TupleTableSlot **slots,
-			 	int numSlots)
+TupleTableSlot **
+execute_foreign_modify(EState *estate,
+					   ResultRelInfo *resultRelInfo,
+					   CmdType operation,
+					   TupleTableSlot **slots,
+					   TupleTableSlot **planSlots,
+					   int *numSlots)
 {
-	TupleDesc	tupdesc = RelationGetDescr(fmstate->rel);
-	stub::parameters_type params{};
+	TgFdwForeignModifyState *fmstate = 
+		(TgFdwForeignModifyState *) resultRelInfo->ri_FdwState;
+
+	/* The operation should be INSERT, UPDATE, or DELETE */
+	Assert(operation == CMD_INSERT ||
+		   operation == CMD_UPDATE ||
+		   operation == CMD_DELETE);
 
 	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
-	if (slots != NULL && fmstate->target_attrs != NIL)
-	{
-		int param_num = 0;
-		ListCell   *lc;
-		foreach(lc, fmstate->target_attrs)
-		{	
-			int			attnum = lfirst_int(lc);
-			Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
-			Datum		value;
-			bool		isnull;	
-			std::string param_name = "param" + std::to_string(++param_num);
+	/* Convert parameters needed by prepared statement to text form */
+	//
+	stub::parameters_type params = bind_parameters(fmstate->rel,
+                                                    fmstate->target_attrs,
+                                                    fmstate->p_flinfo, 
+                                                    slots, *numSlots);
 
-			/* Ignore generated columns; they are set to DEFAULT */
-			if (attr->attgenerated)
-				continue;
-			value = slot_getattr(slots[0], attnum, &isnull);
-			if (isnull)
-			{
-				std::monostate mono{};
-				params.emplace_back(param_name, mono);
-			}
-			else
-			{
-				stub::value_type tg_type = Tsurugi::convert_type_to_tg(attr->atttypid, value);
-				params.emplace_back(param_name, tg_type);
-				elog(LOG, "tsurugi_fdw : parameter name: %s, value: %s", 
-					param_name.c_str(), 
-					OutputFunctionCall(&fmstate->p_flinfo[param_num-1], value));
-			}
-		}
+	/*
+	 * Execute the prepared statement.
+	 */
+	std::size_t	n_rows = 0;
+	ERROR_CODE error = Tsurugi::execute_statement(params, n_rows);
+	if (error != ERROR_CODE::OK)
+	{
+		Tsurugi::report_error("Failed to execute the statement on Tsurugi.", 
+								error, fmstate->query);
 	}
 
-	return params;
+	MemoryContextReset(fmstate->temp_cxt);
+
+	*numSlots = n_rows;
+
+	/*
+	 * Return NULL if nothing was inserted/updated/deleted on the remote end
+	 */
+	return (n_rows > 0) ? slots : NULL;
 }

@@ -2462,7 +2462,7 @@ before_execute_stmt(const ExecuteStmt* stmts,
 	List* query_list;
 	ListCell* l;
 
-	elog(DEBUG3, "tsurugi_fdw : %s\nquery_string: \n%s", __func__, queryString);
+	elog(DEBUG1, "tsurugi_fdw : %s\nquery_string: \n%s", __func__, queryString);
 
 	if (!IsTsurugifdwInstalled()) {
 		/* Only Tsurugi will be processed */
@@ -2530,8 +2530,11 @@ before_execute_stmt(const ExecuteStmt* stmts,
 				 (int) nodeTag(raw_stmt->stmt));
 			break;
 	}
-
-	prepared_statement = std::move(stored_prepare_statment.at(stmts->name));
+	try {
+		prepared_statement = std::move(stored_prepare_statment.at(stmts->name));
+	} catch (std::exception* e) {
+		elog(ERROR, "tsurugi_fdw : %s", e->what());
+	}
 	stmts_name = stmts->name;
 
 	return true;
@@ -2541,7 +2544,7 @@ bool
 after_execute_stmt(const ExecuteStmt* stmts)
 {
 
-	elog(LOG, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	if (!IsTsurugifdwInstalled()) {
 		/* Only Tsurugi will be processed */
