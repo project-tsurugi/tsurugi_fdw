@@ -45,13 +45,14 @@
     ```
 
 1. Install libraries required to build dependent modules.
-    For libraries required, refer to README of each dependent module.
 
     ```sh
     sudo apt -y install build-essential cmake ninja-build \
       libboost-container-dev libboost-stacktrace-dev libicu-dev flex bison libssl-dev \
       libboost-thread-dev libgoogle-glog-dev libprotobuf-dev protobuf-compiler
     ```
+
+    For libraries required, refer to README of each dependent module.
 
 1. Build and Install dependent modules.
 
