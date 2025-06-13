@@ -50,7 +50,7 @@ jobs:
           cd postgresql-${{ matrix.postgresql }}/contrib/tsurugi_fdw
           export LIBRARY_PATH=$LIBRARY_PATH:${GITHUB_WORKSPACE}/pgsql/lib
           echo ${LIBRARY_PATH}
-          make install_dependencies
+          make install_deps
           make -j8
           make install
 
