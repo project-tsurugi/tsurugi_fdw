@@ -26,9 +26,9 @@
     * From now on, this directory is defined as **\<PostgreSQL install directory>**.
     * Refer to the PostgreSQL documentation or online manuals for the installation of PostgreSQL.
 
-    ```sh
-    sudo apt -y install curl bzip2 libreadline-dev libz-dev
-    ```
+        ```sh
+        sudo apt -y install curl bzip2 libreadline-dev libz-dev
+        ```
 
     ```sh
     curl -sL https://ftp.postgresql.org/pub/source/v12.4/postgresql-12.4.tar.bz2 | tar -xj
