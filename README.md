@@ -14,10 +14,9 @@
 1. Install required packages.
     Install required packages for building tsurugi_fdw.
     If you already know that the required packages are installed, skip this procedure.
-    * Refer to the PostgreSQL documentation or online manuals for the required packages to build PostgreSQL(bzip2 libreadline-dev libz-dev).
 
     ```sh
-    sudo apt -y install curl bzip2 libreadline-dev libz-dev make gcc g++ git libboost-filesystem-dev
+    sudo apt -y install make gcc g++ git libboost-filesystem-dev
     ```
 
 1. Build and Install PostgreSQL.
@@ -26,6 +25,10 @@
     * Specify the PostgreSQL install directory to "--prefix". In the following example, $HOME/pgsql is specified.
     * From now on, this directory is defined as **\<PostgreSQL install directory>**.
     * Refer to the PostgreSQL documentation or online manuals for the installation of PostgreSQL.
+
+    ```sh
+    sudo apt -y install curl bzip2 libreadline-dev libz-dev
+    ```
 
     ```sh
     curl -sL https://ftp.postgresql.org/pub/source/v12.4/postgresql-12.4.tar.bz2 | tar -xj
