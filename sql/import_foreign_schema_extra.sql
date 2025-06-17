@@ -20,7 +20,7 @@ SELECT tg_execute_ddl('
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
+\det
 \d fdw_test_type_num;
 INSERT INTO fdw_test_type_num 
   (col_int, col_bigint, col_real, col_float, col_double, col_double_precision,
@@ -61,7 +61,7 @@ SELECT tg_execute_ddl('
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
+\det
 \d fdw_test_type_str;
 INSERT INTO fdw_test_type_str
   (col_char, col_char_l, col_character, col_character_l, col_varchar, col_varchar_l,
@@ -99,7 +99,7 @@ SELECT tg_execute_ddl('
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
+\det
 \d fdw_test_type_datetime;
 INSERT INTO fdw_test_type_datetime
   (col_date, col_time, col_timestamp, col_timestamp_tz)
@@ -139,7 +139,7 @@ SELECT tg_execute_ddl('
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
+\det
 \d fdw_test_table_name2_________3_________4_________5_________6__;
 
 -- Test teardown: DDL of the PostgreSQL
@@ -158,7 +158,7 @@ SELECT tg_execute_ddl('
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
+\det
 \d fdw_test_table_name2_________3_________4_________5_________6___;
 
 -- Test teardown: DDL of the PostgreSQL
@@ -177,7 +177,7 @@ SELECT tg_execute_ddl('
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
+\det
 \d fdw_test_table_name2_________3_________4_________5_________6___;
 
 -- Test teardown: DDL of the PostgreSQL
@@ -196,7 +196,7 @@ SELECT tg_execute_ddl('
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
+\det
 \d fdw_test_table
 
 -- Test teardown: DDL of the PostgreSQL
@@ -213,7 +213,7 @@ SELECT tg_execute_ddl('
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
+\det
 \d fdw_test_table
 
 -- Test teardown: DDL of the PostgreSQL
@@ -230,7 +230,7 @@ SELECT tg_execute_ddl('
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
+\det
 \d fdw_test_table
 
 -- Test teardown: DDL of the PostgreSQL
@@ -260,7 +260,7 @@ BEGIN
 END $$;
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
+\det
 \d fdw_test_table_0001
 \d fdw_test_table_0050
 \d fdw_test_table_0256

@@ -7,7 +7,7 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_1 (id INT, name CHAR(64))', '
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
+\det
 \d fdw_test_table_*
 
 -- Test teardown: DDL of the PostgreSQL
@@ -23,7 +23,7 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_2 (id BIGINT, since DATE)', '
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
+\det
 \d fdw_test_table_*
 
 -- Test teardown: DDL of the PostgreSQL
@@ -37,7 +37,7 @@ SELECT tg_execute_ddl('DROP TABLE fdw_test_table_2', 'tsurugidb');
 /* Test case: 1-1-3 */
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
+\det
 
 /* Test case: 1-1-4 */
 -- Test setup: DDL of the Tsurugi
@@ -45,7 +45,7 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_1 (id INT)', 'tsurugidb');
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
+\det
 \d fdw_test_table_*
 
 -- Test teardown: DDL of the PostgreSQL
@@ -63,8 +63,8 @@ CREATE SCHEMA other_schema;
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO other_schema;
-\dE
-\dE other_schema.*
+\det
+\det other_schema.*
 \d other_schema.fdw_test_table_1
 
 -- Test teardown: DDL of the PostgreSQL
@@ -82,7 +82,7 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_3 (id INT, timer TIME)', 'tsu
 
 -- Test
 IMPORT FOREIGN SCHEMA public LIMIT TO (fdw_test_table_2) FROM SERVER tsurugidb INTO public;
-\dE
+\det
 \d fdw_test_table_*
 
 -- Test teardown: DDL of the PostgreSQL
@@ -101,7 +101,7 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_3 (id INT, timer TIME)', 'tsu
 
 -- Test
 IMPORT FOREIGN SCHEMA public LIMIT TO (fdw_test_table_1, fdw_test_table_3) FROM SERVER tsurugidb INTO public;
-\dE
+\det
 \d fdw_test_table_*
 DROP FOREIGN TABLE fdw_test_table_1;
 DROP FOREIGN TABLE fdw_test_table_3;
@@ -119,7 +119,7 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_3 (id INT, timer TIME)', 'tsu
 
 -- Test
 IMPORT FOREIGN SCHEMA public LIMIT TO (not_exist) FROM SERVER tsurugidb INTO public;
-\dE
+\det
 
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table_1', 'tsurugidb');
@@ -134,7 +134,7 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_3 (id INT, timer TIME)', 'tsu
 
 -- Test
 IMPORT FOREIGN SCHEMA public LIMIT TO (not_exist, fdw_test_table_2) FROM SERVER tsurugidb INTO public;
-\dE
+\det
 \d fdw_test_table_*
 
 -- Test teardown: DDL of the PostgreSQL
@@ -148,7 +148,7 @@ SELECT tg_execute_ddl('DROP TABLE fdw_test_table_3', 'tsurugidb');
 /* Test case: 1-2-5 */
 -- Test
 IMPORT FOREIGN SCHEMA public LIMIT TO (fdw_test_table_1) FROM SERVER tsurugidb INTO public;
-\dE
+\det
 
 /* Test case: 1-3-1 */
 -- Test setup: DDL of the Tsurugi
@@ -158,7 +158,7 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_3 (id INT, timer TIME)', 'tsu
 
 -- Test
 IMPORT FOREIGN SCHEMA public EXCEPT (fdw_test_table_2) FROM SERVER tsurugidb INTO public;
-\dE
+\det
 \d fdw_test_table_*
 
 -- Test teardown: DDL of the PostgreSQL
@@ -178,7 +178,7 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_3 (id INT, timer TIME)', 'tsu
 
 -- Test
 IMPORT FOREIGN SCHEMA public EXCEPT (fdw_test_table_1, fdw_test_table_3) FROM SERVER tsurugidb INTO public;
-\dE
+\det
 \d fdw_test_table_*
 
 -- Test teardown: DDL of the PostgreSQL
@@ -197,7 +197,7 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_3 (id INT, timer TIME)', 'tsu
 
 -- Test
 IMPORT FOREIGN SCHEMA public EXCEPT (not_exist) FROM SERVER tsurugidb INTO public;
-\dE
+\det
 \d fdw_test_table_*
 
 -- Test teardown: DDL of the PostgreSQL
@@ -218,7 +218,7 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_3 (id INT, timer TIME)', 'tsu
 
 -- Test
 IMPORT FOREIGN SCHEMA public EXCEPT (not_exist, fdw_test_table_2) FROM SERVER tsurugidb INTO public;
-\dE
+\det
 \d fdw_test_table_*
 
 -- Test teardown: DDL of the PostgreSQL
@@ -233,7 +233,7 @@ SELECT tg_execute_ddl('DROP TABLE fdw_test_table_3', 'tsurugidb');
 /* Test case: 1-3-5 */
 -- Test
 IMPORT FOREIGN SCHEMA public EXCEPT (fdw_test_table_1) FROM SERVER tsurugidb INTO public;
-\dE
+\det
 
 /* Test case: 2-1-1 */
 -- Test setup: DDL of the Tsurugi
@@ -246,7 +246,7 @@ IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
 INSERT INTO "fdw_test_table_A" VALUES (1, 'information');
 INSERT INTO "fdw_test_Table_A" VALUES (1, DATE '2025-01-02');
 INSERT INTO "fdw_test_table_a" VALUES (1, TIME '11:22:33');
-\dE
+\det
 \d "fdw_test_table_A"
 \d "fdw_test_Table_A"
 \d "fdw_test_table_a"
@@ -271,7 +271,7 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_a (col_a INT, Col_a CHAR(64),
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
 INSERT INTO fdw_test_table_a VALUES (111, 'abcdefg', DATE '2025-01-02');
-\dE
+\det
 \d fdw_test_table_a
 SELECT * FROM fdw_test_table_a;
 
@@ -290,7 +290,7 @@ CREATE FOREIGN TABLE fdw_test_table_2 (id INT, since DATE) SERVER tsurugidb;
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
+\det
 
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_test_table_2;
@@ -309,7 +309,7 @@ CREATE FOREIGN TABLE "fdw_test_table_b" (col1 INT, col2 DATE) SERVER tsurugidb;
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
+\det
 \d "fdw_test_table_a"
 \d "fdw_test_TABLE_B"
 
@@ -331,7 +331,7 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_a (id DECIMAL, timer TIME)', 
 
 -- Test
 IMPORT FOREIGN SCHEMA public LIMIT TO (fdw_test_Table_A) FROM SERVER tsurugidb INTO public;
-\dE
+\det
 \d fdw_test_table_*
 
 -- Test teardown: DDL of the PostgreSQL
@@ -350,7 +350,7 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_a (id DECIMAL, timer TIME)', 
 
 -- Test
 IMPORT FOREIGN SCHEMA public LIMIT TO ("fdw_test_Table_A") FROM SERVER tsurugidb INTO public;
-\dE
+\det
 \d fdw_test_*
 
 -- Test teardown: DDL of the PostgreSQL
@@ -369,7 +369,7 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_a (id DECIMAL, timer TIME)', 
 
 -- Test
 IMPORT FOREIGN SCHEMA public EXCEPT (fdw_test_Table_A) FROM SERVER tsurugidb INTO public;
-\dE
+\det
 \d "fdw_test_table_A"
 \d "fdw_test_Table_A"
 
@@ -390,7 +390,7 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_a (id DECIMAL, timer TIME)', 
 
 -- Test
 IMPORT FOREIGN SCHEMA public EXCEPT ("fdw_test_Table_A") FROM SERVER tsurugidb INTO public;
-\dE
+\det
 \d "fdw_test_table_A"
 \d "fdw_test_table_a"
 
@@ -422,7 +422,7 @@ SELECT tg_execute_ddl('
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
+\det
 \d fdw_test_type_num;
 
 -- Test teardown: DDL of the PostgreSQL
@@ -450,7 +450,7 @@ SELECT tg_execute_ddl('
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
+\det
 \d fdw_test_type_str;
 
 -- Test teardown: DDL of the PostgreSQL
@@ -473,7 +473,7 @@ SELECT tg_execute_ddl('
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
+\det
 \d fdw_test_type_datetime;
 
 -- Test teardown: DDL of the PostgreSQL
