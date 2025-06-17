@@ -53,9 +53,11 @@ void make_tuple_from_result_row(ResultSetPtr result_set,
                                         Datum* row,
                                         bool* is_null,
                                         TgFdwForeignScanState* fsstate);
-void prepare_direct_modify(TgFdwDirectModifyState* dmstate);
+void prepare_direct_modify(TgFdwDirectModifyState* dmstate, List *fdw_exprs);
+void prepare_direct_modify_with_deparsed_sql(TgFdwDirectModifyState* dmstate, 
+											List *fdw_exprs);
 void execute_direct_modify(ForeignScanState* node);
-void execute_direct_modify_with_deparse_sql(ForeignScanState* node);
+void execute_direct_modify_with_deparsed_sql(ForeignScanState* node);
 void prepare_foreign_modify(TgFdwForeignModifyState *fmstate);
 
 TupleTableSlot **execute_foreign_modify(EState *estate,

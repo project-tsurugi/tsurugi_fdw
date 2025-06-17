@@ -162,54 +162,6 @@ enum FdwDirectModifyPrivateIndex
 	FdwDirectModifyPrivateSetProcessed
 };
 
-#if 0
-/*
- *	@brief 	FDW status per session
- */
-typedef struct tsurugi_fdw_info_
-{
-	ResultSetPtr 		result_set = nullptr;
-	MetadataPtr 		metadata = nullptr;
-    bool                success = false;
-} TsurugiFdwInfo;
-#endif
-#if 0
-/*
- * Execution state of a foreign insert/update/delete operation.
- */
-typedef struct TgFdwForeignModifyState
-{
-	Relation	rel;			/* relcache entry for the foreign table */
-	AttInMetadata *attinmeta;	/* attribute datatype conversion metadata */
-
-	/* for remote query execution */
-	char	   *prep_name;		/* name of prepared statement, if created */
-
-	/* extracted fdw_private data */
-	char	   *query;			/* text of INSERT/UPDATE/DELETE command */
-	char	   *orig_query;		/* original text of INSERT command */
-	List	   *target_attrs;	/* list of target attribute numbers */
-	int			values_end;		/* length up to the end of VALUES */
-	int			batch_size;		/* value of FDW option "batch_size" */
-	bool		has_returning;	/* is there a RETURNING clause? */
-	List	   *retrieved_attrs;	/* attr numbers retrieved by RETURNING */
-
-	/* info about parameters for prepared statement */
-	AttrNumber	ctidAttno;		/* attnum of input resjunk ctid column */
-	int			p_nums;			/* number of parameters to transmit */
-	FmgrInfo   *p_flinfo;		/* output conversion functions for them */
-
-	/* batch operation stuff */
-	int			num_slots;		/* number of slots to insert */
-
-	/* working memory context */
-	MemoryContext temp_cxt;		/* context for per-tuple temporary data */
-
-	/* for update row movement if subplan result rel */
-	struct TgFdwForeignModifyState *aux_fmstate;	/* foreign-insert state, if
-											 	 	 * created */
-} TgFdwForeignModifyState;
-#endif
 /*
  * This enum describes what's kept in the fdw_private list for a ForeignPath.
  * We store:
@@ -1218,7 +1170,7 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 
 	EState* estate = node->ss.ps.state;
 
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	/*
 	 * We'll save private state in node->fdw_state.
@@ -1236,17 +1188,10 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 	table = GetForeignTable(rte->relid);
 	server = GetForeignServer(table->serverid);
 
-#ifdef __TSURUGI_PLANNER__
 	fsstate->query_string = strVal(list_nth(fsplan->fdw_private,
-								FdwScanPrivateSelectSql));
+									FdwScanPrivateSelectSql));
 	fsstate->retrieved_attrs = (List*) list_nth(fsplan->fdw_private, 
-								FdwScanPrivateRetrievedAttrs);
-#else
-	fsstate->query_string = strVal(list_nth(fsplan->fdw_private,
-		FdwScanPrivateSelectSql));
-	fsstate->retrieved_attrs = (List*) list_nth(fsplan->fdw_private, 
-		FdwScanPrivateRetrievedAttrs);
-#endif
+												FdwScanPrivateRetrievedAttrs);
   	fsstate->cursor_exists = false;
 
 	/*
@@ -1279,14 +1224,12 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 static TupleTableSlot* 
 tsurugiIterateForeignScan(ForeignScanState* node)
 {
-	elog(DEBUG5, "tsurugi_fdw : %s", __func__);
-
 	Assert(node != nullptr);
 
 	TgFdwForeignScanState* fsstate = (TgFdwForeignScanState*) node->fdw_state;
 	TupleTableSlot* tupleSlot = node->ss.ss_ScanTupleSlot;
 
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG5, "tsurugi_fdw : %s", __func__);
 
 	if (!fsstate->cursor_exists)
     {
@@ -1324,7 +1267,8 @@ tsurugiIterateForeignScan(ForeignScanState* node)
         }
         else if (error == ERROR_CODE::END_OF_ROW) 
         {
-            elog(LOG, "End of rows. (rows: %d)", (int) fsstate->num_tuples);
+            elog(LOG, "tsurugi_fdw : End of rows. (rows: %d)", 
+				(int) fsstate->num_tuples);
             Tsurugi::init_result_set();
             fsstate->eof_reached = true;
         }
@@ -1349,7 +1293,7 @@ tsurugiIterateForeignScan(ForeignScanState* node)
 static void 
 tsurugiReScanForeignScan(ForeignScanState* node)
 {
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 }
 
 /*
@@ -1359,7 +1303,7 @@ tsurugiReScanForeignScan(ForeignScanState* node)
 static void 
 tsurugiEndForeignScan(ForeignScanState* node)
 {
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	/* Prepare processing when via ODBC */
 	EState* estate = node->ss.ps.state;
@@ -1436,7 +1380,7 @@ tsurugiPlanDirectModify(PlannerInfo *root,
 	 * The table modification must be an UPDATE or DELETE.
 	 */
  	if (operation != CMD_UPDATE && operation != CMD_DELETE)
-		return false;
+		return true;
 
 #if PG_VERSION_NUM >= 140000
 	/*
@@ -1654,6 +1598,7 @@ tsurugiPlanDirectModify(PlannerInfo *root,
 
 	table_close(rel, NoLock);
 	elog(LOG, "tsurugi_fdw : %s : Selected Direct Modify.", __func__);
+
 	return true;
 }
 
@@ -1690,9 +1635,8 @@ tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
 	TgFdwDirectModifyState* dmstate = 
 		(TgFdwDirectModifyState *) palloc0(sizeof(TgFdwDirectModifyState));
 	dmstate->num_tuples = -1;	/* -1 means not set yet */	
-	
 	dmstate->orig_query = estate->es_sourceText;
-#if 0
+#ifndef __TSURUGI_PLANNER__
 	dmstate->query = strVal(list_nth(fsplan->fdw_private,
 									 FdwDirectModifyPrivateUpdateSql));
 	dmstate->has_returning = intVal(list_nth(fsplan->fdw_private,
@@ -1701,16 +1645,19 @@ tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
 												 FdwDirectModifyPrivateRetrievedAttrs);									 
 	dmstate->set_processed = intVal(list_nth(fsplan->fdw_private,
 											 FdwDirectModifyPrivateSetProcessed));
+#endif
 	if (fsplan->scan.scanrelid == 0)
 		dmstate->rel = ExecOpenScanRelation(estate, rtindex, eflags);
 	else
 		dmstate->rel = node->ss.ss_currentRelation;
-	numParams = list_length(fsplan->fdw_exprs);
-	dmstate->numParams = numParams;
-#endif
+	dmstate->numParams = list_length(fsplan->fdw_exprs);
+	dmstate->param_exprs = (List *) ExecInitExprList(fsplan->fdw_exprs, (PlanState*) node);
+	dmstate->param_flinfo = NULL;
+	dmstate->param_types = NULL;
+	dmstate->prep_name = NULL;
     node->fdw_state = dmstate;
-#if 0
-	prepare_direct_modify(dmstate);
+#ifndef __TSURUGI_PLANNER__
+		prepare_direct_modify_with_deparsed_sql(dmstate, fsplan->fdw_exprs);
 #endif
 	/* Prepare processing when via JDBC and ODBC */
 	begin_prepare_processing(estate);
@@ -1724,17 +1671,20 @@ tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
 static TupleTableSlot* 
 tsurugiIterateDirectModify(ForeignScanState* node)
 {
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
-
 	Assert(node != nullptr);
 
 	TgFdwDirectModifyState* dmstate = (TgFdwDirectModifyState*) node->fdw_state;
 	EState* estate = node->ss.ps.state;
 	TupleTableSlot *slot = node->ss.ss_ScanTupleSlot;
 
-	if (dmstate->num_tuples == (size_t) -1)
-		execute_direct_modify(node);
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
+	if (dmstate->num_tuples == (size_t) -1)
+#ifdef __TSURUGI_PLANNER__
+		execute_direct_modify(node);
+#else
+		execute_direct_modify_with_deparsed_sql(node);
+#endif
 	/* Increment the command es_processed count if necessary. */
 	if (dmstate->set_processed)
 		estate->es_processed += dmstate->num_tuples;
@@ -1872,11 +1822,6 @@ static List
 			deparseUpdateSql(&sql, rte, resultRelation, rel,
 							 targetAttrs);
 			break;
-		case CMD_DELETE:
-			deparseDeleteSql(&sql, rte, resultRelation, rel,
-							 returningList,
-							 &retrieved_attrs);
-			break;
 		default:
 			elog(ERROR, "unexpected operation: %d", (int) operation);
 			break;
@@ -1968,7 +1913,7 @@ tsurugiBeginForeignModify(ModifyTableState *mtstate,
 	fmstate->temp_cxt = AllocSetContextCreate(estate->es_query_cxt,
 											  "tsurugi_fdw temporary data",
 											  ALLOCSET_SMALL_SIZES);
-#if 0
+#if 1
 	if (mtstate->operation == CMD_UPDATE || mtstate->operation == CMD_DELETE)
 	{
 		/* First transmittable parameter will be ctid */
@@ -2067,6 +2012,9 @@ tsurugiExecForeignUpdate(
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 	slot = nullptr;
+
+	elog(ERROR, "tsurugi_fdw does not support execForeignUpdate().");
+
     return slot;
 }
 
@@ -2082,6 +2030,9 @@ tsurugiExecForeignDelete(
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 	slot = nullptr;
+
+	elog(ERROR, "tsurugi_fdw does not support execForeignDelete().");
+
 	return slot;
 }
 

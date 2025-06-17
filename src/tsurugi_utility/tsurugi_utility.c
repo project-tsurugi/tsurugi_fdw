@@ -413,24 +413,20 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
 									dest, completionTag);
 #endif  // PG_VERSION_NUM >= 140000
-#if 1
 			if (!after_prepare_stmt((PrepareStmt*)parsetree, queryString))
 			{
 				elog(ERROR, "failed after_prepare_stmt() function.");
 			}
-#endif
 			break;
 		}
 
 		case T_ExecuteStmt:
 		{
 			elog(LOG, "tsurugi_fdw : %s : T_ExecuteStmt", __func__);
-#if 1 
 			if (!before_execute_stmt((ExecuteStmt*)parsetree, queryString))
 			{
 				elog(ERROR, "failed before_execute_stmt() function.");
 			}
-#endif
 #if PG_VERSION_NUM >= 140000
 			standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv,
 									dest, qc);
@@ -441,12 +437,10 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
 									dest, completionTag);
 #endif  // PG_VERSION_NUM >= 140000
-#if 1
 			if (!after_execute_stmt((ExecuteStmt*)parsetree))
 			{
 				elog(ERROR, "failed after_execute_stmt() function.");
 			}
-#endif
 			break;
 		}
 

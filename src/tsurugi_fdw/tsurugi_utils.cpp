@@ -20,10 +20,12 @@
 #include <regex>
 #include <string>
 #include <boost/multiprecision/cpp_int.hpp>
-#include "ogawayama/stub/error_code.h"
+
 #include "tsurugi_fdw.h"
 #include "tsurugi.h"
 #include "tsurugi_prepare.h"
+
+#include "ogawayama/stub/error_code.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,6 +34,7 @@ extern "C" {
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "fmgr.h"
+#include "nodes/nodeFuncs.h"
 #include "funcapi.h"
 #include "utils/date.h"
 #include "utils/fmgrprotos.h"
@@ -451,6 +454,10 @@ bind_parameters2(ExprContext* econtext,
 	TupleDesc	tupdesc = RelationGetDescr(rel);
     stub::parameters_type params{};
 
+    Assert(econtext != nullptr);
+    Assert(param_flinfo != nullptr);
+    Assert(param_exprs != nullptr);
+
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
     int param_num = 0;
@@ -460,12 +467,10 @@ bind_parameters2(ExprContext* econtext,
         ExprState*  expr_state = (ExprState*) lfirst(lc);
         Datum       expr_value;
         bool		isNull;	
-        Form_pg_attribute attr = TupleDescAttr(tupdesc, param_num - 1);
         /* parameter number is 1 origin. */
         std::string param_name = "param" + std::to_string(++param_num);
-
+        elog(LOG, "tsurugi_fdw : ExecEvalExpr()");
         expr_value = ExecEvalExpr(expr_state, econtext, &isNull);
-
         if (isNull)
         {
             std::monostate mono{};
@@ -473,6 +478,15 @@ bind_parameters2(ExprContext* econtext,
         }
         else
         {
+            Form_pg_attribute attr = TupleDescAttr(tupdesc, param_num - 1);
+            char	   *outputString = NULL;
+            Oid			outputFunctionId = InvalidOid;
+            bool		typeVarLength = false;
+
+            getTypeOutputInfo(attr->atttypid, &outputFunctionId, &typeVarLength);
+            outputString = OidOutputFunctionCall(outputFunctionId, expr_value);
+            elog(LOG, "tsurugi_fdw : expr_value: %s", outputString);
+
             stub::value_type tg_type = Tsurugi::convert_type_to_tg(attr->atttypid, 
                                                                     expr_value);
             params.emplace_back(param_name, tg_type);
@@ -484,6 +498,10 @@ bind_parameters2(ExprContext* econtext,
     }
 
     elog(LOG, "tsurugi_fdw : parameter count: %d", param_num);
+    if (param_num ==0)
+    {
+        elog(ERROR, "tsurugi_fdw : Parameters for prepared statement not found.");
+    }
 
 	return params;
 }
@@ -493,15 +511,73 @@ bind_parameters2(ExprContext* econtext,
  *		Prepare a statement for direct modify.
  */
 void
-prepare_direct_modify(TgFdwDirectModifyState* dmstate)
+prepare_direct_modify(TgFdwDirectModifyState* dmstate, List* fdw_exprs)
 {
 	TupleDesc	tupdesc = RelationGetDescr(dmstate->rel);
-	stub::placeholders_type placeholders{};
+	ListCell   *lc;
+    
+	Assert(tupdesc != nullptr);
 
-	assert(tupdesc != nullptr);
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
-	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+	/* Prepare for output conversion of parameters used in remote query. */
+	dmstate->param_flinfo = (FmgrInfo *) palloc0(sizeof(FmgrInfo) * dmstate->numParams);
+	dmstate->param_types = (Oid *) palloc0(sizeof(Oid) * dmstate->numParams);
+	int i = 0;
+	foreach(lc, fdw_exprs)
+	{
+		Node	   *param_expr = (Node *) lfirst(lc);
+		Oid			typefnoid;
+		bool		isvarlena;
 
+		(dmstate->param_types)[i] = exprType(param_expr);
+		getTypeOutputInfo(exprType(param_expr), &typefnoid, &isvarlena);
+		fmgr_info(typefnoid, &(dmstate->param_flinfo)[i]);
+		i++;
+	}
+
+    // Remove 'Prepare' clause.
+    char* orig_query = strdup(dmstate->orig_query);
+    std::string stmt{};
+    std::string name{};
+    bool name_flag = false;
+    bool stmt_flag = false;
+    char* token = strtok(orig_query, " ");   
+    while (token != nullptr) {
+        // prepare name
+        if (!pg_strcasecmp(token, "prepare"))
+        {
+            name_flag = true;
+        }
+        else if (name_flag)
+        {
+            name = token;
+            name_flag = false;
+        }
+        // statement
+        if (!pg_strcasecmp(token, "as"))
+        {
+            stmt_flag = true;
+        }
+        else if (stmt_flag)
+        {
+            stmt += token;
+            stmt += ' ';
+        }
+        token = strtok(NULL, " ");
+    }
+    stmt.pop_back();    // remove a last space character.
+
+    // Replace place holder characters.
+    size_t pos = 0;
+    std::string from{"$"};
+    std::string to{":param"};
+    while ((pos = stmt.find(from, pos)) != std::string::npos) {
+        stmt.replace(pos, from.length(), to);
+        pos += to.length();
+    }
+
+    stub::placeholders_type placeholders{};
 	for (int i = 0; i < tupdesc->natts; i++)
 	{
 		/* parameter name is 1 origin. */
@@ -510,12 +586,63 @@ prepare_direct_modify(TgFdwDirectModifyState* dmstate)
 			Tsurugi::get_tg_column_type(tupdesc->attrs[i].atttypid)));
 	}
 
-	ERROR_CODE error = Tsurugi::prepare(dmstate->query, placeholders);
+    std::string prep_stmt = make_tsurugi_query(stmt);
+//    std::string prep_stmt = make_tsurugi_query(dmstate->query);
+	ERROR_CODE error = Tsurugi::prepare(prep_stmt, placeholders);
 	if (error != ERROR_CODE::OK)
 	{
 		Tsurugi::report_error("Failed to prepare the statement on Tsurugi.", 
-								error, dmstate->query);
+								error, prep_stmt);
 	}
+    dmstate->prep_stmt = strdup(prep_stmt.c_str());
+}
+
+/*
+ *	prepare_direct_modify_with_deparsed_sql
+ *		Prepare a statement for direct modify.
+ */
+void
+prepare_direct_modify_with_deparsed_sql(TgFdwDirectModifyState* dmstate, List* fdw_exprs)
+{
+	TupleDesc	tupdesc = RelationGetDescr(dmstate->rel);
+	ListCell   *lc;
+    
+	Assert(tupdesc != nullptr);
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
+	/* Prepare for output conversion of parameters used in remote query. */
+	dmstate->param_flinfo = (FmgrInfo *) palloc0(sizeof(FmgrInfo) * dmstate->numParams);
+	dmstate->param_types = (Oid *) palloc0(sizeof(Oid) * dmstate->numParams);
+	int i = 0;
+	foreach(lc, fdw_exprs)
+	{
+		Node	   *param_expr = (Node *) lfirst(lc);
+		Oid			typefnoid;
+		bool		isvarlena;
+
+		(dmstate->param_types)[i] = exprType(param_expr);
+		getTypeOutputInfo(exprType(param_expr), &typefnoid, &isvarlena);
+		fmgr_info(typefnoid, &(dmstate->param_flinfo)[i]);
+		i++;
+	}
+    stub::placeholders_type placeholders{};
+	for (int i = 0; i < tupdesc->natts; i++)
+	{
+		/* parameter name is 1 origin. */
+		std::string param_name = "param" + std::to_string(i+1);
+		placeholders.emplace_back(std::make_pair(param_name, 
+			Tsurugi::get_tg_column_type(tupdesc->attrs[i].atttypid)));
+	}
+
+    std::string prep_stmt = make_tsurugi_query(dmstate->query);
+	ERROR_CODE error = Tsurugi::prepare(prep_stmt, placeholders);
+	if (error != ERROR_CODE::OK)
+	{
+		Tsurugi::report_error("Failed to prepare the statement on Tsurugi.", 
+								error, prep_stmt);
+	}
+    dmstate->prep_stmt = strdup(prep_stmt.c_str());
 }
 
 /*
@@ -531,15 +658,16 @@ execute_direct_modify(ForeignScanState* node)
     EState* estate = node->ss.ps.state;
     dmstate->set_processed = false;
 
+    // Execute the original statement.
     std::string stmt = make_tsurugi_query(dmstate->orig_query);
-	ERROR_CODE error = Tsurugi::execute_statement(stmt, dmstate->num_tuples);
-	if (error != ERROR_CODE::OK)
+    ERROR_CODE error = Tsurugi::execute_statement(stmt, dmstate->num_tuples);
+    if (error != ERROR_CODE::OK)
     {
         /* Prepare processing when via JDBC and ODBC */
         end_prepare_processing(estate);
-		Tsurugi::report_error("Failed to execute the statement on Tsurugi.", 
-								error, stmt.data());
-	}
+        Tsurugi::report_error("Failed to execute the statement on Tsurugi.", 
+                                error, stmt.data());
+    }
     dmstate->set_processed = true;
 }
 
@@ -548,28 +676,48 @@ execute_direct_modify(ForeignScanState* node)
  *      Execute a direct UPDATE/DELETE statement using depared sql.
  */
 void 
-execute_direct_modify_with_deparse_sql(ForeignScanState* node)
+execute_direct_modify_with_deparsed_sql(ForeignScanState* node)
 {
     elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
-    TgFdwDirectModifyState *dmstate = (TgFdwDirectModifyState *) node->fdw_state;
+	TgFdwDirectModifyState *dmstate = (TgFdwDirectModifyState *) node->fdw_state;
     EState* estate = node->ss.ps.state;
-    ExprContext *econtext = node->ss.ps.ps_ExprContext;
     dmstate->set_processed = false;
 
-	stub::parameters_type params = bind_parameters2(econtext, 
-                                                    dmstate->param_flinfo,
-                                                    dmstate->param_exprs,
-                                                    dmstate->rel);
-
-	ERROR_CODE error = Tsurugi::execute_statement(params, dmstate->num_tuples);
-	if (error != ERROR_CODE::OK)
+    if (dmstate->prep_stmt != nullptr)
     {
-        /* Prepare processing when via JDBC and ODBC */
-        end_prepare_processing(estate);
-		Tsurugi::report_error("Failed to execute the statement on Tsurugi.", 
-								error, dmstate->query);
-	}
+        // Execute the prepared statement.
+        stub::parameters_type params;
+        ExprContext *econtext = node->ss.ps.ps_ExprContext;
+        if (dmstate->numParams > 0)
+            params = bind_parameters2(econtext,
+                                    dmstate->param_flinfo,
+                                    dmstate->param_exprs,
+                                    dmstate->rel);
+        elog(LOG, "tsurugi_fdw : %s\nstmt:\n%s", __func__, dmstate->prep_stmt);                                    
+        ERROR_CODE error =Tsurugi::execute_statement(params,
+                                                    dmstate->num_tuples);
+        if (error != ERROR_CODE::OK)
+        {
+            /* Prepare processing when via JDBC and ODBC */
+            end_prepare_processing(estate);
+            Tsurugi::report_error("Failed to execute the statement on Tsurugi.", 
+                                    error, dmstate->prep_stmt);
+        }        
+    }
+    else
+    {
+        // Execute the original statement.
+        std::string stmt = make_tsurugi_query(dmstate->orig_query);
+        ERROR_CODE error = Tsurugi::execute_statement(stmt, dmstate->num_tuples);
+        if (error != ERROR_CODE::OK)
+        {
+            /* Prepare processing when via JDBC and ODBC */
+            end_prepare_processing(estate);
+            Tsurugi::report_error("Failed to execute the statement on Tsurugi.", 
+                                    error, stmt.data());
+        }
+    }
     dmstate->set_processed = true;
 }
 

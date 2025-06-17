@@ -35,52 +35,7 @@ extern "C" {
 
 /* Planning Flag */
 #define __TSURUGI_PLANNER__
-#if 0
-/*
- *	@brief	FDW status for each query execution
- */
-typedef struct tsurugiFdwState
-{
-	const char* 	query_string;		/* SQL Query Text */
-    Relation        rel;                /* relcache entry for the foreign table */
-    TupleDesc       tupdesc;            /* tuple descriptor of scan */
-    AttInMetadata*  attinmeta;          /* attribute datatype conversion */
-    List*           retrieved_attrs;    /* list of target attribute numbers */
 
-	bool 			cursor_exists;		/* have we created the cursor? */
-    int             numParams;          /* number of parameters passed to query */
-    FmgrInfo*       param_flinfo;       /* output conversion functions for them */
-    List*           param_exprs;        /* executable expressions for param values */
-    const char**    param_values;       /* textual values of query parameters */
-    Oid*            param_types;        /* type of query parameters */
-
-	size_t 			number_of_columns;	/* Number of columns to SELECT */
-	Oid* 			column_types; 		/* Pointer to the data type (Oid) of the column to be SELECT */
-
-    int             p_nums;             /* number of parameters to transmit */
-    FmgrInfo*       p_flinfo;           /* output conversion functions for them */
-
-    /* batch operation stuff */
-    int             num_slots;          /* number of slots to insert */
-
-    List*           attr_list;          /* query attribute list */
-    List*           column_list;        /* Column list of Tsurugi Column structres */
-
-    size_t          row_nums;           /* number of rows */
-    Datum**         rows;               /* all rows of scan */
-    size_t          rowidx;             /* current index of rows */
-    bool**          rows_isnull;        /* is null*/
-    bool            for_update;         /* true if this scan is update target */
-    int             batch_size;         /* value of FDW option "batch_size" */
-
-	size_t			num_tuples;         /* # of tuples in array */
-	size_t			next_tuple;         /* index of next one to return */
-	std::vector<TupleTableSlot*>    tuples;
-	decltype(tuples)::iterator      tuple_ite;
-
-	bool			eof_reached;        /* true if last fetch reached EOF */
-} tsurugiFdwState;
-#endif
 /*
  * Tsurugi-FDW Foreign Scan State
  */
@@ -185,6 +140,8 @@ typedef struct TgFdwDirectModifyState
 	bool		set_processed;	/* do we set the command es_processed? */
 
 	/* for remote query execution */
+	char	   *prep_name;		/* name of prepared statement, if created */
+	char	   *prep_stmt;
 	int			numParams;		/* number of parameters passed to query */
 	FmgrInfo   *param_flinfo;	/* output conversion functions for them */
 	List	   *param_exprs;	/* executable expressions for param values */

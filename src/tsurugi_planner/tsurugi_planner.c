@@ -199,7 +199,7 @@ is_only_foreign_table(TsurugiPlannerInfo *root, List *rtable)
 	ListCell	*rtable_list_cell;
 	Oid			currentserverid;
 
-	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	foreach(rtable_list_cell, rtable)
 	{
@@ -293,7 +293,7 @@ contain_foreign_tables(TsurugiPlannerInfo *root, List *rtable)
 	Oid			currentserverid;
 	bool contained = false;
 
-	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	foreach(rtable_list_cell, rtable)
 	{
@@ -386,7 +386,7 @@ create_foreign_scan(TsurugiPlannerInfo *root)
 	ForeignScan *fnode;
 	fnode = makeNode(ForeignScan);
 
-	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	fnode->scan.plan.targetlist = 0;
 	fnode->scan.plan.qual = 0;
@@ -430,7 +430,7 @@ create_modify_table(TsurugiPlannerInfo *root, ForeignScan *scan)
 	List *subplan = NIL;
 	subplan = lappend(subplan, scan);
 
-	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 #if PG_VERSION_NUM >= 140000
 	modify->plan.lefttree = (Plan *)scan;
@@ -516,21 +516,20 @@ is_valid_targetentry(ForeignScan *scan, TsurugiPlannerInfo *root)
 		{
 			case T_Var:
 			{
+				/* for fdw_scan_tlist */
 				var = (Var *) node;
 				newfste = makeTargetEntry((Expr *) node,
-								    attno,
-								    NULL,
-								    te->resjunk);
-
+											attno,
+											NULL,
+											te->resjunk);
 				scan->fdw_scan_tlist = lappend(scan->fdw_scan_tlist, newfste);
-
+				/* for targetlist */
 				newvar = makeVar(var->varno,
 						       attno,
 						       var->vartype,
 						       var->vartypmod,
 						       var->varcollid,
 						       0);
-
 				newvar->varno = INDEX_VAR;
 #if PG_VERSION_NUM >= 130000
 				newvar->varattnosyn = var->varattnosyn;
@@ -538,21 +537,25 @@ is_valid_targetentry(ForeignScan *scan, TsurugiPlannerInfo *root)
 				newvar->varoattno = var->varoattno;
 #endif
 				newvar->location = var->location;
-
 				newte = makeTargetEntry((Expr *) newvar,
-				 				  attno,
-								  te->resname,
-								  te->resjunk);
-
+										attno,
+										te->resname,
+										te->resjunk);
 				newte->resorigtbl = te->resorigtbl;
 				newte->resorigcol = te->resorigcol;
 				newte->ressortgroupref = 0;
-
 				scan->scan.plan.targetlist = lappend(scan->scan.plan.targetlist, newte);
 				break;
 			}
 			case T_Aggref:
 			{
+				/* for fdw_scan_tlist */
+				newfste = makeTargetEntry((Expr *) node,
+										   attno,
+										   NULL,
+										   false);
+				scan->fdw_scan_tlist = lappend(scan->fdw_scan_tlist, newfste);
+				/* for targetlist */
 				aggref = (Aggref *) node;
 				newvar = makeVar(INDEX_VAR,
 								  attno,
@@ -560,20 +563,12 @@ is_valid_targetentry(ForeignScan *scan, TsurugiPlannerInfo *root)
 								  -1,
 								  InvalidOid,
 								  0);
-
 				newte = makeTargetEntry((Expr *) newvar,
 										 attno,
 										 te->resname,
 										 te->resjunk);
-
 				newte->ressortgroupref = 0;
 				scan->scan.plan.targetlist = lappend(scan->scan.plan.targetlist, newte);
-
-				newfste = makeTargetEntry((Expr *) node,
-										   attno,
-										   NULL,
-										   false);
-				scan->fdw_scan_tlist = lappend(scan->fdw_scan_tlist, newfste);
 				break;
 			}
 			case T_Const:
@@ -625,7 +620,7 @@ create_planned_stmt(TsurugiPlannerInfo *root, Plan *plan)
 	PlannedStmt *stmt = makeNode(PlannedStmt);
 	Query *parse = root->parse;
 
-	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	stmt->commandType = parse->commandType;
 	stmt->queryId = parse->queryId;
@@ -684,7 +679,7 @@ preprocess_targetlist2(Query *parse, ForeignScan *scan)
 	TargetEntry *tle;
 #endif  // PG_VERSION_NUM >= 140000
 
-	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	target_rte = rt_fetch(parse->resultRelation, parse->rtable);
 
@@ -725,7 +720,7 @@ expand_targetlist(List *tlist, int command_type,
 	int			attrno,
 				numattrs;
 
-	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	tlist_item = list_head(tlist);
 
