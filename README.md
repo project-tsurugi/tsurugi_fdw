@@ -14,7 +14,7 @@
 1. Install required packages.
     Install required packages for building tsurugi_fdw.
     If you already know that the required packages are installed, skip this procedure.
-    * Refer to the PostgreSQL documentation or online manuals for the required packages to build PostgreSQL.
+    * Refer to the PostgreSQL documentation or online manuals for the required packages to build PostgreSQL(bzip2 libreadline-dev libz-dev).
 
     ```sh
     sudo apt -y install curl bzip2 libreadline-dev libz-dev make gcc g++ git libboost-filesystem-dev
@@ -49,9 +49,14 @@
 1. Install libraries required to build dependent modules.
 
     ```sh
-    sudo apt -y install build-essential cmake ninja-build \
-      libboost-container-dev libboost-stacktrace-dev libicu-dev flex bison libssl-dev \
-      libboost-thread-dev libgoogle-glog-dev libprotobuf-dev protobuf-compiler
+    # Common dependency library for each dependent module.
+    sudo apt -y install build-essential cmake ninja-build
+    # Dependency libraries for takarori.
+    sudo apt -y install libboost-container-dev libboost-stacktrace-dev libicu-dev flex bison
+    # Dependency libraries for metadata-manager.
+    sudo apt -y install libssl-dev
+    # Dependency libraries for ogawayama(stub).
+    sudo apt -y install libboost-thread-dev libgoogle-glog-dev libprotobuf-dev protobuf-compiler
     ```
 
     For libraries required, refer to README of each dependent module.
