@@ -2387,8 +2387,8 @@ deparseExpr(Expr *node, deparse_expr_cxt *context)
 			deparseVar((Var *) node, context);
 			break;
 		case T_Const:
-			/* eable cast characters */
-			deparseConst((Const *) node, context, 0);
+			/* disable cast */
+			deparseConst((Const *) node, context, -1);
 			break;
 		case T_Param:
 			deparseParam((Param *) node, context);
@@ -2532,42 +2532,6 @@ deparseConst(Const *node, deparse_expr_cxt *context, int showtype)
 	if(node->consttype == TEXTOID) 
 		node->consttype = VARCHAROID;
 
-	/*
-	 * For showtype == 0, append ::typename unless the constant will be
-	 * implicitly typed as the right type when it is read in.
-	 *
-	 * XXX this code has to be kept in sync with the behavior of the parser,
-	 * especially make_const.
-	 */
-	switch (node->consttype)
-	{
-		case BOOLOID:
-		case INT4OID:
-		case UNKNOWNOID:
-			needlabel = false;
-			break;
-		case NUMERICOID:
-			needlabel = !isfloat || (node->consttypmod >= 0);
-			break;
-		case BPCHAROID:
-			/* bpchar type is postgresql specific. */
-			needlabel = (node->consttypmod >= 0);
-			showtype = 0;
-			break;
-		case DATEOID:
-		case TIMEOID:
-		case TIMESTAMPOID:
-		case TIMESTAMPTZOID:
-			needlabel = false;
-			showtype = 0;
-			break;
-		default:
-			needlabel = true;
-			break;
-	}
-	if (needlabel || showtype > 0) 
-		appendStringInfo(buf, "cast(");
-
 	getTypeOutputInfo(node->consttype,
 					  &typoutput, &typIsVarlena);
 	extval = OidOutputFunctionCall(typoutput, node->constvalue);
@@ -2582,6 +2546,7 @@ deparseConst(Const *node, deparse_expr_cxt *context, int showtype)
 		case FLOAT8OID:
 		case NUMERICOID:
 			{
+
 				/*
 				 * No need to quote unless it's a special value such as 'NaN'.
 				 * See comments in get_const_expr().
@@ -2613,13 +2578,6 @@ deparseConst(Const *node, deparse_expr_cxt *context, int showtype)
 		case TIMEOID:
 		case TIMESTAMPOID:
 		case TIMESTAMPTZOID:
-			if (strcasecmp(extval, "infinite"))
-			{
-				strcpy(extval, ":param1");
-				appendStringInfoString(buf, extval);
-				break;
-			}
-//				elog(ERROR, "tsurugi_fdw does not support infinite timestamp value.");
 			/* add type name. */
 			appendStringInfoString(buf, 
 									deparse_type_name(node->consttype, 
@@ -2637,11 +2595,6 @@ deparseConst(Const *node, deparse_expr_cxt *context, int showtype)
 	if (showtype < 0)
 		return;
 
-	if (needlabel || showtype > 0) 
-		appendStringInfo(buf, " as %s)",
-						 deparse_type_name(node->consttype,
-										   node->consttypmod));
-#if 0
 	/*
 	 * For showtype == 0, append ::typename unless the constant will be
 	 * implicitly typed as the right type when it is read in.
@@ -2679,7 +2632,6 @@ deparseConst(Const *node, deparse_expr_cxt *context, int showtype)
 		appendStringInfo(buf, "::%s",
 						 deparse_type_name(node->consttype,
 										   node->consttypmod));
-#endif
 }
 
 /*
@@ -3507,7 +3459,8 @@ deparseSortGroupClause(Index ref, List *tlist, bool force_colno,
 		 * BY 2", which will be misconstrued as a column position rather than
 		 * a constant.
 		 */
-		deparseConst((Const *) expr, context, 0);
+		/* disable cast */
+		deparseConst((Const *) expr, context, -1);
 	}
 	else if (!expr || IsA(expr, Var))
 		deparseExpr(expr, context);
