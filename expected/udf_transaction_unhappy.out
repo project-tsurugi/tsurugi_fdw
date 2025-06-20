@@ -354,8 +354,10 @@ SELECT tg_set_write_preserve('wp_table1', 'wp_table2');
 (1 row)
 
 INSERT INTO udf_table1 (column1) VALUES (500); -- error
-ERROR:  Failed to execute statement to Tsurugi. (13)
-Tsurugi Server Error: LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
+CONTEXT:  SQL query: INSERT INTO udf_table1 (column1) VALUES (500)
 SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
@@ -363,8 +365,10 @@ SELECT * FROM udf_table1 ORDER BY column1;
 (1 row)
 
 UPDATE udf_table1 SET column1 = column1+1; -- error
-ERROR:  Failed to execute statement to Tsurugi. (13)
-Tsurugi Server Error: LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
+CONTEXT:  SQL query: UPDATE udf_table1 SET column1 = column1+1
 SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
@@ -372,8 +376,10 @@ SELECT * FROM udf_table1 ORDER BY column1;
 (1 row)
 
 DELETE FROM udf_table1 WHERE column1 = 400; -- error
-ERROR:  Failed to execute statement to Tsurugi. (13)
-Tsurugi Server Error: LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
+CONTEXT:  SQL query: DELETE FROM udf_table1 WHERE column1 = 400
 SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
@@ -400,11 +406,15 @@ SELECT tg_set_write_preserve('wp_table1');
 
 INSERT INTO wp_table1 (column1) VALUES (200);
 INSERT INTO wp_table2 (column1) VALUES (200); -- error
-ERROR:  Failed to execute statement to Tsurugi. (13)
-Tsurugi Server Error: LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
+CONTEXT:  SQL query: INSERT INTO wp_table2 (column1) VALUES (200)
 INSERT INTO udf_table1 (column1) VALUES (500); -- error
-ERROR:  Failed to execute statement to Tsurugi. (13)
-Tsurugi Server Error: LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
+CONTEXT:  SQL query: INSERT INTO udf_table1 (column1) VALUES (500)
 SELECT * FROM wp_table1 ORDER BY column1;
  column1 
 ---------
@@ -424,8 +434,10 @@ SELECT * FROM udf_table1 ORDER BY column1;
 
 UPDATE wp_table1 SET column1 = column1+1;
 UPDATE udf_table1 SET column1 = column1+1; -- error
-ERROR:  Failed to execute statement to Tsurugi. (13)
-Tsurugi Server Error: LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
+CONTEXT:  SQL query: UPDATE udf_table1 SET column1 = column1+1
 SELECT * FROM wp_table1 ORDER BY column1;
  column1 
 ---------
@@ -445,8 +457,10 @@ SELECT * FROM udf_table1 ORDER BY column1;
 
 DELETE FROM wp_table1 WHERE column1 = 201;
 DELETE FROM udf_table1 WHERE column1 = 400; -- error
-ERROR:  Failed to execute statement to Tsurugi. (13)
-Tsurugi Server Error: LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
+CONTEXT:  SQL query: DELETE FROM udf_table1 WHERE column1 = 400
 SELECT * FROM wp_table1 ORDER BY column1;
  column1 
 ---------
@@ -485,7 +499,7 @@ SELECT tg_set_write_preserve('wp_table3');
 BEGIN;
 SELECT * FROM wp_table1 ORDER BY column1;
 ERROR:  Failed to begin the Tsurugi transaction. (13)
-Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null write_preserves:{ wp_table3 })
+Tsurugi Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null write_preserves:{ wp_table3 })
 COMMIT;
 SELECT tg_set_write_preserve('wp_table3', 'wp_table4');
             tg_set_write_preserve             
@@ -511,7 +525,7 @@ SELECT tg_set_write_preserve('wp_table3', 'wp_table4');
 BEGIN;
 SELECT * FROM wp_table1 ORDER BY column1;
 ERROR:  Failed to begin the Tsurugi transaction. (13)
-Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null write_preserves:{ wp_table3 wp_table4 })
+Tsurugi Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null write_preserves:{ wp_table3 wp_table4 })
 SELECT * FROM wp_table2 ORDER BY column1;
 ERROR:  current transaction is aborted, commands ignored until end of transaction block
 COMMIT;
@@ -539,7 +553,7 @@ SELECT tg_set_write_preserve('wp_table1', 'wp_table3');
 BEGIN;
 INSERT INTO wp_table1 (column1) VALUES (100);
 ERROR:  Failed to begin the Tsurugi transaction. (13)
-Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null write_preserves:{ wp_table1 wp_table3 })
+Tsurugi Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null write_preserves:{ wp_table1 wp_table3 })
 COMMIT;
 SELECT tg_set_write_preserve('');
             tg_set_write_preserve             
@@ -585,7 +599,7 @@ SELECT tg_set_inclusive_read_areas('ri_table3');
 BEGIN;
 SELECT * FROM ri_table1 ORDER BY column1;
 ERROR:  Failed to begin the Tsurugi transaction. (13)
-Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null read_areas_inclusive:{ ri_table3 })
+Tsurugi Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null read_areas_inclusive:{ ri_table3 })
 COMMIT;
 SELECT tg_set_inclusive_read_areas('ri_table3', 'ri_table4');
          tg_set_inclusive_read_areas          
@@ -615,7 +629,7 @@ SELECT tg_set_inclusive_read_areas('ri_table3', 'ri_table4');
 BEGIN;
 SELECT * FROM ri_table1 ORDER BY column1;
 ERROR:  Failed to begin the Tsurugi transaction. (13)
-Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null read_areas_inclusive:{ ri_table3 ri_table4 })
+Tsurugi Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null read_areas_inclusive:{ ri_table3 ri_table4 })
 SELECT * FROM ri_table2 ORDER BY column1;
 ERROR:  current transaction is aborted, commands ignored until end of transaction block
 COMMIT;
@@ -647,7 +661,7 @@ SELECT tg_set_inclusive_read_areas('ri_table1', 'ri_table3');
 BEGIN;
 SELECT * FROM ri_table1 ORDER BY column1;
 ERROR:  Failed to begin the Tsurugi transaction. (13)
-Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null read_areas_inclusive:{ ri_table1 ri_table3 })
+Tsurugi Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null read_areas_inclusive:{ ri_table1 ri_table3 })
 COMMIT;
 SELECT tg_set_inclusive_read_areas('');
          tg_set_inclusive_read_areas          
@@ -701,7 +715,7 @@ SELECT tg_set_exclusive_read_areas('re_table3');
 BEGIN;
 SELECT * FROM udf_table1 ORDER BY column1;
 ERROR:  Failed to begin the Tsurugi transaction. (13)
-Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null read_areas_exclusive:{ re_table3 })
+Tsurugi Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null read_areas_exclusive:{ re_table3 })
 COMMIT;
 SELECT tg_set_exclusive_read_areas('re_table3', 're_table4');
          tg_set_exclusive_read_areas          
@@ -735,7 +749,7 @@ SELECT tg_set_exclusive_read_areas('re_table3', 're_table4');
 BEGIN;
 SELECT * FROM udf_table1 ORDER BY column1;
 ERROR:  Failed to begin the Tsurugi transaction. (13)
-Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null read_areas_exclusive:{ re_table3 re_table4 })
+Tsurugi Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null read_areas_exclusive:{ re_table3 re_table4 })
 COMMIT;
 SELECT tg_set_exclusive_read_areas('wp_table1', 'wp_table3');
          tg_set_exclusive_read_areas          
@@ -769,7 +783,7 @@ SELECT tg_set_exclusive_read_areas('wp_table1', 'wp_table3');
 BEGIN;
 SELECT * FROM udf_table1 ORDER BY column1;
 ERROR:  Failed to begin the Tsurugi transaction. (13)
-Tsurugi Server Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null read_areas_exclusive:{ wp_table1 wp_table3 })
+Tsurugi Error: TARGET_NOT_FOUND_EXCEPTION (SQL-02014: Target specified in transaction option is not found. type:ltx label:pgsql-transaction modifies_definitions:false scan_parallel:null read_areas_exclusive:{ wp_table1 wp_table3 })
 COMMIT;
 SELECT tg_set_exclusive_read_areas('');
          tg_set_exclusive_read_areas          
