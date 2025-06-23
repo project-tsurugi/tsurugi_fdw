@@ -28,7 +28,6 @@
 #include "tcop/utility.h"
 
 #include <string.h>
-#include "prepare_execute.h"
 #include "foreign/foreign.h"
 #include "utils/builtins.h"
 #include "utils/rel.h"
@@ -413,20 +412,12 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
 									dest, completionTag);
 #endif  // PG_VERSION_NUM >= 140000
-			if (!after_prepare_stmt((PrepareStmt*)parsetree, queryString))
-			{
-				elog(ERROR, "failed after_prepare_stmt() function.");
-			}
 			break;
 		}
 
 		case T_ExecuteStmt:
 		{
 			elog(LOG, "tsurugi_fdw : %s : T_ExecuteStmt", __func__);
-			if (!before_execute_stmt((ExecuteStmt*)parsetree, queryString))
-			{
-				elog(ERROR, "failed before_execute_stmt() function.");
-			}
 #if PG_VERSION_NUM >= 140000
 			standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv,
 									dest, qc);
@@ -437,10 +428,6 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
 									dest, completionTag);
 #endif  // PG_VERSION_NUM >= 140000
-			if (!after_execute_stmt((ExecuteStmt*)parsetree))
-			{
-				elog(ERROR, "failed after_execute_stmt() function.");
-			}
 			break;
 		}
 

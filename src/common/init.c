@@ -59,5 +59,7 @@ _PG_init(void)
 #else
 	planner_hook = NULL;
 #endif
+#if 0
   ProcessUtility_hook = tsurugi_ProcessUtility;
+#endif
 }

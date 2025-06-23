@@ -55,20 +55,16 @@ ConnectionPtr Tsurugi::connection_ = nullptr;
 TransactionPtr Tsurugi::transaction_ = nullptr;
 ResultSetPtr Tsurugi::result_set_ = nullptr;
 MetadataPtr Tsurugi::metadata_ = nullptr;
+std::unordered_map<std::string, PreparedStatementPtr> Tsurugi::prepared_statements_;
+PreparedStatementPtr Tsurugi::prepared_statement_ = nullptr;
 
 bool GetTransactionOption(boost::property_tree::ptree&);
 bool IsTransactionProgress();
 
-extern PreparedStatementPtr prepared_statement;
-extern stub::parameters_type parameters;
-extern std::string stmts_name;
-extern std::map<std::string, PreparedStatementPtr> stored_prepare_statment;
-
-std::unordered_map<std::string, PreparedStatementPtr> Tsurugi::prepared_statements_;
-PreparedStatementPtr Tsurugi::prepared_statement_ = nullptr;
-
-/*
- *  get_shared_memory_name
+/**
+ *  @brief 	
+ *  @param 	
+ *  @return	
  */
 std::string get_shared_memory_name()
 {
@@ -90,8 +86,10 @@ std::string get_shared_memory_name()
     return name;
 }
 
-/*
- * init
+/**
+ *  @brief 	Initialize ogawayama stub.
+ *  @param 	none.
+ *  @return	error code of ogawayama.
  */
 ERROR_CODE Tsurugi::init()
 {
@@ -122,7 +120,7 @@ ERROR_CODE Tsurugi::init()
 			getpid());
 
 		error = stub_->get_connection(getpid(), connection_);
-		Tsurugi::error_log2(LOG, "Stub::connection() is done.", error);		
+		Tsurugi::error_log2(LOG, "Stub::get_connection() is done.", error);		
 		if (error != ERROR_CODE::OK)
 		{
             connection_ = nullptr;
@@ -133,8 +131,10 @@ ERROR_CODE Tsurugi::init()
 	return ERROR_CODE::OK;
 }
 
-/*
- * get_connection
+/**
+ *  @brief 	Establish a connection to tsurugidb.
+ *  @param 	(connection) pointer to Connection object.
+ *  @return	error code of ogawayama.
  */
 ERROR_CODE Tsurugi::get_connection(stub::Connection** connection) 
 {
@@ -148,40 +148,12 @@ ERROR_CODE Tsurugi::get_connection(stub::Connection** connection)
     return error;
 }
 
-/*
- *	prepare
- */
-ERROR_CODE Tsurugi::prepare(std::string_view sql, 
-	stub::placeholders_type& placeholders, PreparedStatementPtr& prepared_statement)
-{
-    ERROR_CODE error = ERROR_CODE::UNKNOWN;
-
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
-
-    if (connection_ == nullptr)
-    {
-        error = Tsurugi::init();
-        if (error != ERROR_CODE::OK)
-        {
-            elog(ERROR, "Can not connect to Tsurugi.");
-            return error;
-        }
-    }
-
-    elog(DEBUG1, "tsurugi_fdw : Attempt to call Connection::prepare(). (pid: %d)", 
-		getpid());
-    elog(LOG, "sql = \n%s", sql.data());
-
-    error = connection_->prepare(sql, placeholders, prepared_statement);
-
-    elog(LOG, "Connection::prepare() done. (error: %d)", (int) error);
-
-    return error;
-}
-
-/*
- * 	preapre
- *		Prepare the statement with name to Tsurgui.
+/**
+ *  @brief 	Prepare a statement to tsurugidb.
+ *  @param 	(prep_name)	prepare name.
+ * 			(statement)	SQL statement.
+ * 			(placeholders) information of placeholders in statement.
+ *  @return	error code of ogawayama.
  */
 ERROR_CODE Tsurugi::prepare(std::string_view prep_name, std::string_view statement,
 						ogawayama::stub::placeholders_type& placeholders)
@@ -204,23 +176,26 @@ ERROR_CODE Tsurugi::prepare(std::string_view prep_name, std::string_view stateme
 	elog(LOG, "tsurugi_fdw : Attempt to call Connection::prepare().\nname: %s, \nstatement:\n%s", 
 		prep_name.data(), statement.data());
 
-	//	Prepare the statement.
+	//	Prepare statement.
 	PreparedStatementPtr pstmt{};
     error = connection_->prepare(statement, placeholders, pstmt);
 	Tsurugi::error_log2(LOG, "Connection::prepare() is done.", error);
 
 	if (error == ERROR_CODE::OK)
 	{	
-		// Add the statement to prepared statements list.
+		// Add statement to prepared statements list.
 		prepared_statements_.emplace(prep_name, std::move(pstmt));
 	}
 
     return error;	
 }
 
-/*
- *	prepare
- *		Prepare the statement without name to Tsurugi.
+/**
+ *  @brief 	Prepare astatement to tsurugidb without name.
+ *  @param 	(statement)	SQL statement
+ * 			(placeholders) information of placeholders in statement.
+ *  @return	error code of ogawayama.
+ * 	@note	Prepared statement has a one-time lifespan.
  */
 ERROR_CODE Tsurugi::prepare(std::string_view statement,
 	            	ogawayama::stub::placeholders_type& placeholders)
@@ -243,9 +218,10 @@ ERROR_CODE Tsurugi::prepare(std::string_view statement,
 	return error;
 }
 
-/*
- *	dealocate
- *		Deallocate a preapared statement.
+/**
+ *  @brief 	Deallocate a preapared statement.
+ *  @param 	(prep_name)	prepare name.
+ *  @return	error code of ogawayama.
  */
 ERROR_CODE Tsurugi::deallocate(std::string_view prep_name)
 {
@@ -270,9 +246,10 @@ ERROR_CODE Tsurugi::deallocate(std::string_view prep_name)
 	return error;
 }
 
-/*
- *	dealocate
- *		Deallocate a unnamed preapared statement.
+/**
+ *  @brief 	Deallocate a unnamed preapared statement.
+ *  @param 	none.
+ *  @return	none.
  */
 void Tsurugi::deallocate()
 {
@@ -281,8 +258,10 @@ void Tsurugi::deallocate()
 	prepared_statement_ = nullptr;
 }
 
-/*
- *	start_transaction
+/**
+ *  @brief 	Begin a transaction of tsurugidb.
+ *  @param 	none.
+ *  @return	error code of ogawayama.
  */
 ERROR_CODE Tsurugi::start_transaction()
 {
@@ -315,9 +294,10 @@ ERROR_CODE Tsurugi::start_transaction()
 	return error;
 }
 
-/*
- * execute_query
- * 	Execute the query.
+/**
+ *  @brief 	Execute a query on tsurugidb without result set.
+ *  @param 	(query)	SQL query.
+ *  @return	error code of ogawayama.
  */
 ERROR_CODE Tsurugi::execute_query(std::string_view query)
 {
@@ -325,31 +305,27 @@ ERROR_CODE Tsurugi::execute_query(std::string_view query)
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
-    result_set_ = nullptr;
-	if (prepared_statement.get() != nullptr) {
-	    elog(DEBUG1, "tsurugi_fdw : Attempt to call Transaction::execute_query(prepared_statement). \n%s",
-	        query.data());
-	    error = transaction_->execute_query(prepared_statement, parameters, result_set_);
-	} else {
-	    elog(LOG, "tsurugi_fdw : Attempt to call Transaction::execute_query()." \
-				  " \nquery:\n%s", query.data());
-	    error = transaction_->execute_query(query, result_set_);
+	if (transaction_ != nullptr)
+	{
+		elog(LOG, "tsurugi_fdw : Attempt to call Transaction::execute_query()." \
+					" \nquery:\n%s", query.data());
+		result_set_ = nullptr;
+		error = transaction_->execute_query(query, result_set_);
+		Tsurugi::error_log2(LOG,"Transaction::execute_query() is done.", error);
 	}
-	Tsurugi::error_log2(LOG,"Transaction::execute_query() is done.", error);
-
-    if (error != ERROR_CODE::OK) {
-        if (stmts_name.size() != 0) {
-            stored_prepare_statment[stmts_name] = std::move(prepared_statement);
-            stmts_name = {};
-            parameters = {};
-        }
-    }
-
+	else
+	{
+        elog(WARNING, "There is no transaction in progress.");
+      	error = ERROR_CODE::NO_TRANSACTION;		
+	}
     return error;
 }
 
-/*
- * execute_query
+/**
+ *  @brief 	Execute a query on tsurugidb.
+ *  @param 	(query)	SQL query.
+ * 			(result_set) result set of a query.
+ *  @return	error code of ogawayama.
  */
 ERROR_CODE 
 Tsurugi::execute_query(std::string_view query, ResultSetPtr& result_set)
@@ -358,32 +334,28 @@ Tsurugi::execute_query(std::string_view query, ResultSetPtr& result_set)
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
-    result_set = nullptr;
-	if (prepared_statement.get() != nullptr) {
-	    elog(DEBUG1, "tsurugi_fdw : Attempt to call Transaction::execute_query(prepared_statement). \n%s",
-	        query.data());
-	    error = transaction_->execute_query(prepared_statement, parameters, result_set);
-	} else {
-	    elog(LOG, "tsurugi_fdw : Attempt to call Transaction::execute_query()." \
-				  " \nquery:\n%s", query.data());
-	    error = transaction_->execute_query(query, result_set);
+	if (transaction_ != nullptr)
+	{
+		elog(LOG, "tsurugi_fdw : Attempt to call Transaction::execute_query()." \
+					" \nquery:\n%s", query.data());
+		result_set = nullptr;
+		error = transaction_->execute_query(query, result_set);
+		Tsurugi::error_log2(LOG, "Transaction::execute_query() is done.", error);
 	}
-    Tsurugi::error_log2(LOG, "Transaction::execute_query() is done.", error);
-
-    if (error != ERROR_CODE::OK) {
-        if (stmts_name.size() != 0) {
-            stored_prepare_statment[stmts_name] = std::move(prepared_statement);
-            stmts_name = {};
-            parameters = {};
-        }
-    }
+	else
+	{
+        elog(WARNING, "There is no transaction in progress.");
+      	error = ERROR_CODE::NO_TRANSACTION;
+	}
 
     return error;
 }
 
-/*
- * execute_statement
- *		execute the SQL statement.
+/**
+ *  @brief 	Execute a statement on tsurugidb.
+ *  @param 	(statement) SQL statement.
+ * 			(num_rows) number of rows updated. 
+ *  @return	error code of ogawayama.
  */
 ERROR_CODE 
 Tsurugi::execute_statement(std::string_view statement, std::size_t& num_rows)
@@ -394,26 +366,11 @@ Tsurugi::execute_statement(std::string_view statement, std::size_t& num_rows)
 
     if (transaction_ != nullptr)
     {
-		if (prepared_statement.get() != nullptr) {
-	        elog(DEBUG1, "tsurugi-fdw: Attempt to execute the prepared statement. \n%s",
-	            statement.data());
-	        error = transaction_->execute_statement(
-						prepared_statement, parameters, num_rows);
-		} else {
-	        elog(LOG, "tsurugi_fdw : Attempt to execute Transaction::execute_statement()." \
-					  "\nstatement:\n%s", statement.data());
-			// Execute the statement.
-	        error = transaction_->execute_statement(statement, num_rows);
-		}
+		elog(LOG, "tsurugi_fdw : Attempt to execute Transaction::execute_statement()." \
+					"\nstatement:\n%s", statement.data());
+		// Execute the statement.
+		error = transaction_->execute_statement(statement, num_rows);
 		Tsurugi::error_log2(LOG, "Transaction::execute_statement() is done.", error);
-
-        if (error != ERROR_CODE::OK) {
-            if (stmts_name.size() != 0) {
-                stored_prepare_statment[stmts_name] = std::move(prepared_statement);
-                stmts_name = {};
-                parameters = {};
-            }
-        }
     }
     else
     {
@@ -424,9 +381,12 @@ Tsurugi::execute_statement(std::string_view statement, std::size_t& num_rows)
     return error;
 }
 
-/*
- * execute_statement 
- *		Execute the preapred statement.
+/**
+ *  @brief 	Execute a prepared statement on tsurugidb.
+ *  @param 	(prep_name) prepared object name.
+ * 			(params) parameters of prepared statement.
+ * 			(num_rows) number of rows updated.
+ *  @return	error code of ogawayama.
  */
 ERROR_CODE 
 Tsurugi::execute_statement(std::string_view prep_name, 
@@ -439,7 +399,7 @@ Tsurugi::execute_statement(std::string_view prep_name,
 
     if (transaction_ != nullptr)
     {
-		// find prepared object.
+		// find a prepared object.
 		auto ite = prepared_statements_.find(prep_name.data());
 		if (ite == prepared_statements_.end())
 		{
@@ -450,7 +410,7 @@ Tsurugi::execute_statement(std::string_view prep_name,
 		elog(LOG, "tsurugi_fdw : Attempt to call Transaction::execute_statement()." \
 			" prep_name: %s", ite->first.data());
 
-		// Execute the statement.
+		// Execute a statement.
 		error = transaction_->execute_statement(ite->second, params, num_rows);
 		Tsurugi::error_log2(LOG, "Transaction::execute_statement() is done.", error);
 	}
@@ -463,9 +423,11 @@ Tsurugi::execute_statement(std::string_view prep_name,
     return error;
 }
 
-/*
- * execute_statement 
- *		Execute the unnamed preapred statement.
+/**
+ *  @brief 	Execute a unnamed preapred statement.
+ *  @param 	(params) parameters of prepared statement.
+ * 			(num_rows) number of rows updated.
+ *  @return	error code of ogawayama.
  */
 ERROR_CODE 
 Tsurugi::execute_statement(ogawayama::stub::parameters_type& params, 
@@ -479,7 +441,7 @@ Tsurugi::execute_statement(ogawayama::stub::parameters_type& params,
     {
 		elog(LOG, "tsurugi_fdw : Attempt to call Transaction::execute_statement().");	
 
-		// Execute the statement.
+		// Execute a statement.
 		error = transaction_->execute_statement(prepared_statement_, params, num_rows);
 		Tsurugi::error_log2(LOG, "Transaction::execute_statement() is done.", error);
 	}
@@ -492,8 +454,10 @@ Tsurugi::execute_statement(ogawayama::stub::parameters_type& params,
     return error;
 }
 
-/*
- * commit
+/**
+ *  @brief 	commit a transaction on tsurugidb.
+ *  @param 	none.
+ *  @return	error code of ogawayama.
  */
 ERROR_CODE Tsurugi::commit()
 {
@@ -523,6 +487,11 @@ ERROR_CODE Tsurugi::commit()
     return error;
 }
 
+/**
+ *  @brief 	Rollback a transaction on tsurugidb.
+ *  @param 	none.
+ *  @return	error code of ogawayama.
+ */
 /*
  * rollback
  */
@@ -722,9 +691,11 @@ std::string Tsurugi::get_error_detail(ERROR_CODE error)
 	return error_detail;
 }
 
-/*
-	get detail message of tsurugi server error.
-*/
+/**
+ *  @brief 	Get detail message of tsurug server.
+ *  @param 	(error_code) error code of ogawayama.
+ *  @return	detail error message.
+ */
 std::string Tsurugi::get_error_message(ERROR_CODE error_code)
 {
 	std::string message = "No detail message.";
@@ -783,36 +754,45 @@ std::string Tsurugi::get_error_message(ERROR_CODE error_code)
 	return message;
 }
 
-/*
- *	error_log2
- *		Output a error log with error name and error code.
+/**
+ *  @brief 	Output error log which has a error message and error code.
+ *  @param 	(level) log level.
+ * 			(message) error message.
+ * 			(error) error code of ogawayama.
+ *  @return	none.
  */
 void Tsurugi::error_log2(int level, std::string_view message, ERROR_CODE error)
 {
 	std::string ext_message{"tsurugi_fdw : "};
 
 	ext_message += message;
-	ext_message += " (error: %s(%d))";
+	ext_message += " (error: %s{%d})";
 	elog(level, ext_message.data(),  stub::error_name(error).data(), (int)error);	
 }
 
-/*
- *	error_log3
- *		Output a error log with error name, error code and error detail.
+/**
+ *  @brief 	Output error log which has a error message, error code and a detail message.
+ *  @param 	(level) log level.
+ * 			(message) error message.
+ * 			(error) error code of ogawayama.
+ *  @return	none.
  */
 void Tsurugi::error_log3(int level, std::string_view message, ERROR_CODE error)
 {
 	std::string ext_message{"tsurugi_fdw : "};
 
 	ext_message += message;
-	ext_message += " (error: %s(%d))\n%s";
+	ext_message += " (error: %s{%d})\n%s";
 	elog(level, ext_message.data(), stub::error_name(error).data(), (int)error, 
 		Tsurugi::get_error_message(error).data());	
 }
 
-/*
- * 	report_error
- *		Report the error information of tsurugi_fdw.
+/**
+ *  @brief 	Report the error information of tsurugi_fdw.
+ *  @param 	(message) error message.
+ * 			(error) error code.
+ * 			(sql) the statement that was attempted to be sent to tsurugidb.
+ *  @return	
  */
 void 
 Tsurugi::report_error(const char* message, ERROR_CODE error, const char* sql)
@@ -830,15 +810,23 @@ Tsurugi::report_error(const char* message, ERROR_CODE error, const char* sql)
 			));	
 }
 
+/**
+ *  @brief 	Report the error information of tsurugi_fdw.
+ *  @param 	(message) error message.
+ * 			(error) error code.
+ * 			(sql) the statement that was attempted to be sent to tsurugidb.
+ *  @return	
+ */
 void 
 Tsurugi::report_error(const char* message, ERROR_CODE error, std::string_view sql)
 {
 	Tsurugi::report_error(message, error, sql.data());
 }
 
-
-/*
- *	get_tg_column_type
+/**
+ *  @brief 	Convert a data type id from PostgreSQL to tsurugidb.
+ *  @param 	(pg_type) oid of PostgreSQL data type.
+ *  @return	data type id of tsurugidb.
  */
 ogawayama::stub::Metadata::ColumnType::Type 
 Tsurugi::get_tg_column_type(const Oid pg_type)
@@ -896,16 +884,18 @@ Tsurugi::get_tg_column_type(const Oid pg_type)
 	return tg_type;
 }
 
-/*
- *	convert_type_to_pg
+/**
+ *  @brief 	Convert a value from PostgreSQL to tsurugidb.
+ *  @param 	(pg_type) oid of PostgreSQL data type.
+ * 			(value) PostgreSQL datum.
+ *  @return	value type of tsurugidb.
  */
 ogawayama::stub::value_type
 Tsurugi::convert_type_to_tg(const Oid pg_type, Datum value)
 {
+	elog(DEBUG1, "tsurugi_fdw : %s : pg_type: %d", __func__, (int) pg_type);
+
 	ogawayama::stub::value_type param{};
-
-	elog(DEBUG3, "tsurugi_fdw : %s : pg_type: %d", __func__, (int) pg_type);
-
 	switch (pg_type)
 	{
 		case INT2OID:
@@ -929,11 +919,8 @@ Tsurugi::convert_type_to_tg(const Oid pg_type, Datum value)
 			{
 				Oid typoutput;
 				bool typisvarlena;
-				char* pstring;
 				getTypeOutputInfo(pg_type, &typoutput, &typisvarlena);
-				pstring = OidOutputFunctionCall(typoutput, value);
-				param = pstring;
-				pfree(pstring);
+				param = OidOutputFunctionCall(typoutput, value);
 				break;
 			}
 		case DATEOID:
@@ -1123,9 +1110,10 @@ Tsurugi::convert_type_to_tg(const Oid pg_type, Datum value)
 	return param;
 }
 
-/*
- *	convert_timestamptz_to_tg
- *		Convert structure of timestamptz value from PostgreSQL to Tsurugi.
+/**
+ *  @brief 	Convert structure of timestamptz value from PostgreSQL to tsurugidb.
+ *  @param 	(value) PostgreSQL datum.
+ *  @return	timestamptz type of tsurugidb.
  */
 ogawayama::stub::timestamptz_type convert_timestamptz_to_tg(Datum value)
 {
@@ -1162,11 +1150,13 @@ ogawayama::stub::timestamptz_type convert_timestamptz_to_tg(Datum value)
 	return tg_time_point_with_time_zone;
 }
 
-/*
- *	convert_decimal_to_tg
- *		Convert structure of decimal value from PostgreSQL to Tsurugi.
+/**
+ *  @brief 	Convert structure of decimal value from PostgreSQL to tsurugidb.
+ *  @param 	(value) PostgreSQL datum.
+ *  @return	decimal value of tsurugidb.
  */
-takatori::decimal::triple Tsurugi::convert_decimal_to_tg(Datum value)
+takatori::decimal::triple 
+Tsurugi::convert_decimal_to_tg(Datum value)
 {
 	// Convert PostgreSQL NUMERIC type to string.
 	std::string pg_numeric = DatumGetCString(DirectFunctionCall1(numeric_out, value));

@@ -46,6 +46,8 @@ typedef struct TgFdwForeignScanState
     TupleDesc       tupdesc;            /* tuple descriptor of scan */
     AttInMetadata*  attinmeta;          /* attribute datatype conversion */
     List*           retrieved_attrs;    /* list of target attribute numbers */
+	const char*		orig_query;
+	const char*		prep_stmt;
 
 	bool 			cursor_exists;		/* have we created the cursor? */
 //    int             numParams;          /* number of parameters passed to query */
@@ -53,6 +55,7 @@ typedef struct TgFdwForeignScanState
 //    List*           param_exprs;        /* executable expressions for param values */
 //    const char**    param_values;       /* textual values of query parameters */
 //    Oid*            param_types;        /* type of query parameters */
+	ParamListInfo param_linfo;
 
 	size_t 			number_of_columns;	/* Number of columns to SELECT */
 	Oid* 			column_types; 		/* Pointer to the data type (Oid) of the column to be SELECT */
@@ -79,8 +82,6 @@ typedef struct TgFdwForeignScanState
 //	decltype(tuples)::iterator      tuple_ite;
 
 	bool			eof_reached;        /* true if last fetch reached EOF */
-
-    bool                success;
 } TgFdwForeignScanState;
 
 /*
@@ -147,6 +148,8 @@ typedef struct TgFdwDirectModifyState
 	List	   *param_exprs;	/* executable expressions for param values */
 	const char **param_values;	/* textual values of query parameters */
 	Oid		   *param_types;	/* type of query parameters */
+	ParamListInfo param_linfo;
+	TupleTableSlot* slot;
 
 	/* for storing result tuples */
 	size_t		num_tuples;		/* # of result tuples */
