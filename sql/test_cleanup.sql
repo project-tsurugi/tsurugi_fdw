@@ -1,5 +1,3 @@
-CREATE EXTENSION IF NOT EXISTS tsurugi_fdw;
-CREATE SERVER IF NOT EXISTS tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
 SELECT tg_execute_ddl('DROP TABLE IF EXISTS bigint1', 'tsurugidb');
 SELECT tg_execute_ddl('DROP TABLE IF EXISTS char_length_1', 'tsurugidb');
 SELECT tg_execute_ddl('DROP TABLE IF EXISTS char_length_10', 'tsurugidb');
