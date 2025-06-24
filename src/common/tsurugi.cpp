@@ -112,6 +112,7 @@ ERROR_CODE Tsurugi::init()
 			Tsurugi::report_error("Failed to make shared memory for Tsurugi.", 
 									error, nullptr);
 		}
+		connection_ = nullptr;
 	}
 
 	if (connection_ == nullptr) 
@@ -126,6 +127,7 @@ ERROR_CODE Tsurugi::init()
             connection_ = nullptr;
 			Tsurugi::report_error("Failed to connecto to Tsurugi.", error, nullptr);
 		}
+		transaction_ = nullptr;
 	}
 
 	return ERROR_CODE::OK;
@@ -146,6 +148,27 @@ ERROR_CODE Tsurugi::get_connection(stub::Connection** connection)
         *connection = connection_.get();
     }
     return error;
+}
+
+/**
+ *  @brief 	Confirm the prepared statement exsists.
+ *  @param 	(prep_name) prepare name.
+ *  @return	Return true if exsists.
+ */
+bool Tsurugi::exsists_prepared_statement(std::string_view prep_name)
+{
+	elog(DEBUG1, "tsurugi_fdw : %s : name: %s", __func__, prep_name.data());
+
+	bool exists = false;
+
+	auto ite = prepared_statements_.find(prep_name.data());
+	if (ite != prepared_statements_.end())
+	{
+		elog(DEBUG3, "Prepared statement \"%s\" exists.", prep_name.data());
+		exists = true;
+	}
+
+	return exists;
 }
 
 /**
@@ -248,7 +271,7 @@ ERROR_CODE Tsurugi::deallocate(std::string_view prep_name)
 
 /**
  *  @brief 	Deallocate a unnamed preapared statement.
- *  @param 	none.
+ *  @param	none.
  *  @return	none.
  */
 void Tsurugi::deallocate()
@@ -1033,7 +1056,8 @@ Tsurugi::convert_type_to_tg(const Oid pg_type, Datum value)
 		case NUMERICOID:
 			{
 				// Convert PostgreSQL NUMERIC type to string.
-				std::string pg_numeric = DatumGetCString(DirectFunctionCall1(numeric_out, value));
+				std::string pg_numeric = DatumGetCString(
+											DirectFunctionCall1(numeric_out, value));
 				elog(DEBUG5, "orignal: pg_numeric = %s", pg_numeric.c_str());
 				auto pos_period = pg_numeric.find(".");
 				if (pos_period != std::string::npos) {
@@ -1055,14 +1079,16 @@ Tsurugi::convert_type_to_tg(const Oid pg_type, Datum value)
 				int numeric_dscale;
 				int numeric_sign;
 				if (numeric_is_short) {
-					numeric_dscale = (numeric_data->choice.n_short.n_header & NUMERIC_SHORT_DSCALE_MASK) >>
-									NUMERIC_SHORT_DSCALE_SHIFT;
+					numeric_dscale = 
+						(numeric_data->choice.n_short.n_header & NUMERIC_SHORT_DSCALE_MASK) 
+						>> NUMERIC_SHORT_DSCALE_SHIFT;
 					if (numeric_data->choice.n_short.n_header & NUMERIC_SHORT_SIGN_MASK)
 						numeric_sign = NUMERIC_NEG;
 					else
 						numeric_sign = NUMERIC_POS;
 				} else {
-					numeric_dscale = numeric_data->choice.n_long.n_sign_dscale & NUMERIC_DSCALE_MASK;
+					numeric_dscale = 
+						numeric_data->choice.n_long.n_sign_dscale & NUMERIC_DSCALE_MASK;
 					numeric_sign = numeric_data->choice.n_header & NUMERIC_SIGN_MASK;
 				}
 
@@ -1097,7 +1123,8 @@ Tsurugi::convert_type_to_tg(const Oid pg_type, Datum value)
 										sign, coefficient_high, coefficient_high, 
 										coefficient_low, coefficient_low, exponent);
 
-				auto tg_decimal = takatori::decimal::triple{sign, coefficient_high, coefficient_low, exponent};
+				auto tg_decimal = takatori::decimal::triple{
+									sign, coefficient_high, coefficient_low, exponent};
 				param = tg_decimal;
 //				param = convert_decimal_to_tg(value);
 				break;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Project Tsurugi.
+ * Copyright 2023-2025 Project Tsurugi.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,11 +58,13 @@ static const std::string PUBLIC_DOUBLE_QUOTATION = "\"public\"\\.";
 
 std::string make_tsurugi_query(std::string_view query_string);
 static ogawayama::stub::parameters_type bind_parameters(ParamListInfo param_linfo);
+#if !defined (__TSURUGI_PLANNER__)
 static ogawayama::stub::parameters_type bind_parameters2(Relation rel,
                                                         List* target_attrs,
                                                         FmgrInfo* flinfo,
                                                         TupleTableSlot **slots,
                                                         int numSlots);
+#endif                                                        
 /*
  *  make_tsurugi_query
  *      
@@ -511,13 +513,15 @@ bool
 is_prepare_statement(TgFdwDirectModifyState* dmstate)
 {
     return (boost::algorithm::icontains(dmstate->orig_query, "prepare ") 
-                || boost::algorithm::icontains(dmstate->orig_query, "$")
-                || (dmstate->param_linfo != nullptr && dmstate->param_linfo->numParams > 0));
+                || (boost::algorithm::icontains(dmstate->orig_query, "$")
+                    && (dmstate->param_linfo != nullptr 
+                        && dmstate->param_linfo->numParams > 0)));
 }
 
-/*
- *	prepare_direct_modify
- *		Prepare a statement for direct modify.
+/**
+ *  @brief  Prepare a statement for direct modify.
+ *  @param  
+ *  @return	
  */
 void
 prepare_direct_modify(TgFdwDirectModifyState* dmstate)
@@ -640,9 +644,11 @@ prepare_direct_modify(TgFdwDirectModifyState* dmstate, List* fdw_exprs)
     dmstate->prep_stmt = strdup(prep_stmt.c_str());
 }
 #endif
-/*
- *	bind_parameters2
- *		Bind parameters of a prepared statement.
+
+/**
+ *  @brief  Bind parameters of a prepared statement.
+ *  @param  
+ *  @return	
  */
 static ogawayama::stub::parameters_type
 bind_parameters(ParamListInfo param_linfo)
@@ -673,10 +679,12 @@ bind_parameters(ParamListInfo param_linfo)
 
     return params;
 }
+
 #ifdef __TSURUGI_PLANNER__
-/*
- *  execute_direct_modify
- *      Execute a direct UPDATE/DELETE statement.
+/**
+ *  @brief  Execute a direct modification.
+ *  @param  
+ *  @return	
  */
 void
 execute_direct_modify(ForeignScanState* node)
@@ -766,6 +774,7 @@ execute_direct_modify(ForeignScanState* node)
     dmstate->set_processed = true;
 }
 #endif
+#ifndef __TSURUGI_PLANNER__
 /*
  *	prepare_foreign_modify
  *		Prepare a statement for foreign modify.
@@ -899,3 +908,4 @@ execute_foreign_modify(EState *estate,
 	 */
 	return (n_rows > 0) ? slots : NULL;
 }
+#endif

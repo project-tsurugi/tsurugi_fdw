@@ -44,6 +44,7 @@ public:
     static ERROR_CODE commit();
     static ERROR_CODE rollback();
 
+    static bool exsists_prepared_statement(std::string_view name);
     static ERROR_CODE prepare(std::string_view sql,
                               ogawayama::stub::placeholders_type& placeholders,
                               PreparedStatementPtr& prepared_statement);

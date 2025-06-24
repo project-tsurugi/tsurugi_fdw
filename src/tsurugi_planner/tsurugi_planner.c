@@ -64,22 +64,17 @@ static bool is_only_foreign_table(TsurugiPlannerInfo *root, List *rtable);
 static TsurugiPlannerInfo *init_TsurugiPlannerInfo(Query *parse);
 static ForeignScan *create_foreign_scan(TsurugiPlannerInfo *root); 
 static ModifyTable *create_modify_table(TsurugiPlannerInfo *root, ForeignScan *scan); 
-static void is_valid_targetentry(ForeignScan *scan, TsurugiPlannerInfo *root); 
+static void set_target_entry(ForeignScan *scan, TsurugiPlannerInfo *root); 
 static PlannedStmt *create_planned_stmt(TsurugiPlannerInfo *root, Plan *plan);
 static void preprocess_targetlist2(Query *parse, ForeignScan *scan);
 static List *expand_targetlist(List *tlist, int command_type, Index result_relation, Relation rel);
 static bool contain_foreign_tables(TsurugiPlannerInfo *root, List *rtable);
 
-/*
- * tsurugi_planner
- *
- * input
- * Query *parse2             ...
- * int cursorOptions         ...
- * ParamListInfo boundParams ...
- *
- * output
- * PlannedStmt stmt          ...
+/**
+ *  @brief 	Alternative planner for tsurugidb.
+ * 			This planner make a plan to push down a query to remote database.
+ *  @param 	-
+ *  @return	pointer to PlannedStmt.
  */
 struct PlannedStmt *
 #if PG_VERSION_NUM >= 130000
@@ -96,6 +91,7 @@ tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 	ModifyTable *modify = NULL;
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(LOG, "tsurugi_fdw : query: %s", query_string);
 
 	if ((root->parse != NULL && root->parse->rtable == NULL) || 
 		!contain_foreign_tables(root, root->parse->rtable))
@@ -117,7 +113,6 @@ tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 		case CMD_INSERT:
 		case CMD_UPDATE:
 		case CMD_DELETE:
-		case 0:
 		{
 			/* Generates an error if there is a FROM clause in UPDATE or DELETE */
 			if (root->oidlist != NULL && root->oidlist->length > 1 && 
@@ -129,7 +124,7 @@ tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
             if (root->parse != NULL && root->parse->rtable != NULL &&
                 is_only_foreign_table(root, root->parse->rtable)) 
             {
-                elog(LOG, "tsurugi_fdw : %s : Selected Direct Modify.", 
+                elog(LOG, "tsurugi_fdw : %s : Selected direct modify.", 
 					__func__);
                 scan = create_foreign_scan(root);
                 modify = create_modify_table(root, scan);
@@ -158,9 +153,16 @@ tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 
 	stmt = create_planned_stmt(root, plan);
 
+	elog(LOG, "tsurugi_fdw : tsurugi_planner() is done.");
+
 	return stmt;
 }
 
+/**
+ *  @brief 	
+ *  @param 	
+ *  @return	
+ */
 /*
  * init_TsurugiPlannerInfo
  *
@@ -183,6 +185,11 @@ TsurugiPlannerInfo
 	return root;
 }
 
+/**
+ *  @brief 	
+ *  @param 	
+ *  @return	
+ */
 /*
  * is_only_foreign_table
  *
@@ -283,8 +290,10 @@ is_only_foreign_table(TsurugiPlannerInfo *root, List *rtable)
 	return true;
 }
 
-/*
- *
+/**
+ *  @brief 	
+ *  @param 	
+ *  @return	
  */
 bool
 contain_foreign_tables(TsurugiPlannerInfo *root, List *rtable)
@@ -367,58 +376,46 @@ contain_foreign_tables(TsurugiPlannerInfo *root, List *rtable)
 	return contained;
 }
 
-/*
- * create_foreign_scan
- *
- * input
- * TsurugiPlannerInfo *root ... 
- *                          
- *
- * output
- * ForeignScan *fnode   ... 
- *                          
+/**
+ *  @brief 	
+ *  @param 	
+ *  @return	
  */
 ForeignScan *
 create_foreign_scan(TsurugiPlannerInfo *root)
 {
 	Bitmapset  *fs_relids = NULL;
-
 	ForeignScan *fnode;
 	fnode = makeNode(ForeignScan);
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
-	fnode->scan.plan.targetlist = 0;
-	fnode->scan.plan.qual = 0;
+	fnode->scan.plan.targetlist = NIL;
+	fnode->scan.plan.qual = NIL;
 	fnode->scan.plan.lefttree = NULL;
 	fnode->scan.plan.righttree = NULL;
 	fnode->scan.scanrelid = 0;
 	fnode->operation = root->parse->commandType;
 	fnode->fs_server = root->serverid;
-	fnode->fdw_exprs = 0;
-	fnode->fdw_private = 0;
-	fnode->fdw_scan_tlist = 0;
-	fnode->fdw_recheck_quals = 0;
+	fnode->fdw_exprs = NIL;
+	fnode->fdw_private = NIL;
+	fnode->fdw_scan_tlist = NIL;
+	fnode->fdw_recheck_quals = NIL;
 	fnode->fs_relids = NULL;
 	fnode->fsSystemCol = false;
 
 	fs_relids = bms_add_member(fs_relids, 1);
 	fnode->fs_relids = fs_relids;
 
-	is_valid_targetentry(fnode, root);
+	set_target_entry(fnode, root);
 
 	return fnode;
 }
 
-/*
- * create_modify_table
- *
- * input
- * TsurugiPlannerInfo *root ... 
- * ForeignScan *scan    ... 
- *
- * output
- * ModifyTable *modify  ... 
+/**
+ *  @brief 	
+ *  @param 	
+ *  @return	
  */
 ModifyTable *
 create_modify_table(TsurugiPlannerInfo *root, ForeignScan *scan)
@@ -480,19 +477,13 @@ create_modify_table(TsurugiPlannerInfo *root, ForeignScan *scan)
 	return modify;
 }
 
-/*
- * is_valid_targetentry
- *
- * input
- * ForeignScan *scan    ...
- * TsurugiPlannerInfo *root ...
- *
- * output
- * --
- *
+/**
+ *  @brief 	
+ *  @param 	
+ *  @return	
  */
 void
-is_valid_targetentry(ForeignScan *scan, TsurugiPlannerInfo *root)
+set_target_entry(ForeignScan *scan, TsurugiPlannerInfo *root)
 {
 	List *pte = root->parse->targetList;
 	ListCell *lc = NULL;
@@ -605,14 +596,10 @@ is_valid_targetentry(ForeignScan *scan, TsurugiPlannerInfo *root)
 	}
 }
 
-/*
- * create_planned_stmt
- *
- * input
- * TsurugiPlannerInfo *root ... 
- * Plan *plan           ... 
- * output
- * PlannedStmt *stmt    ... 
+/**
+ *  @brief 	
+ *  @param 	
+ *  @return	
  */
 PlannedStmt *
 create_planned_stmt(TsurugiPlannerInfo *root, Plan *plan)
@@ -661,12 +648,10 @@ create_planned_stmt(TsurugiPlannerInfo *root, Plan *plan)
 	return stmt;
 }
 
-/*
- * preprocess_targetlist
- *
- * input
- * Query *parse      ... 
- * ForeignScan *scan ... 
+/**
+ *  @brief 	
+ *  @param 	
+ *  @return	
  */
 void
 preprocess_targetlist2(Query *parse, ForeignScan *scan)
@@ -705,6 +690,11 @@ preprocess_targetlist2(Query *parse, ForeignScan *scan)
 
 }
 
+/**
+ *  @brief 	
+ *  @param 	
+ *  @return	
+ */
 /*
  * expand_targetlist
  *	  Given a target list as generated by the parser and a result relation,

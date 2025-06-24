@@ -206,7 +206,7 @@ classifyConditions(PlannerInfo *root,
 	*remote_conds = NIL;
 	*local_conds = NIL;
 
-	elog(DEBUG4, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	foreach(lc, input_conds)
 	{

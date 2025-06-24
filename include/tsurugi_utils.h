@@ -46,7 +46,6 @@ extern void rebuildInsertSql(StringInfo buf, Relation rel,
 
 bool is_prepare_statement(TgFdwDirectModifyState* dmstate);
 std::string make_tsurugi_query(std::string_view query_string);
-// Datum tsurugi_convert_to_pg(Oid pgtype, ResultSetPtr result_set);
 
 void make_tuple_from_result_row(ResultSetPtr result_set, 
                                         TupleDesc tupleDescriptor,
@@ -58,6 +57,7 @@ void prepare_foreign_scan(TgFdwForeignScanState* fsstate);
 void execute_foreignscan(TgFdwForeignScanState* fsstate);					
 void prepare_direct_modify(TgFdwDirectModifyState* dmstate);
 void execute_direct_modify(ForeignScanState* node);
+#if !defined (__TSURUGI_PLANNER__)
 void prepare_foreign_modify(TgFdwForeignModifyState *fmstate);
 TupleTableSlot **execute_foreign_modify(EState *estate,
 					   							ResultRelInfo *resultRelInfo,
@@ -65,4 +65,5 @@ TupleTableSlot **execute_foreign_modify(EState *estate,
 					   							TupleTableSlot **slots,
 					   							TupleTableSlot **planSlots,
 					   							int *numSlots);
+#endif												
 #endif  //TSURUGI_UTILS_H
