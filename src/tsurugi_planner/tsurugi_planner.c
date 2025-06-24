@@ -91,7 +91,9 @@ tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 	ModifyTable *modify = NULL;
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+#if PG_VERSION_NUM >= 130000
 	elog(LOG, "tsurugi_fdw : query: %s", query_string);
+#endif
 
 	if ((root->parse != NULL && root->parse->rtable == NULL) || 
 		!contain_foreign_tables(root, root->parse->rtable))
