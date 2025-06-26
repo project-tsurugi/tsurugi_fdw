@@ -493,6 +493,31 @@ make_placeholders(List* fdw_exprs)
 }
 
 /**
+ *  @brief  Set placeholders of prepare statement.
+ *  @param  (fdw_exprs) parameter node list.
+ *  @return	placeholders_type object.
+ */
+static ogawayama::stub::placeholders_type
+make_placeholders(ParamListInfo param_linfo)
+{
+    stub::placeholders_type placeholders{};
+
+    if (param_linfo != nullptr)
+    {
+        for (auto i = 0; i < param_linfo->numParams; i++)
+        {
+            /* parameter name is 1 origin. */
+            std::string param_name = "param" + std::to_string(i+1);
+            stub::Metadata::ColumnType::Type tg_type = 
+                Tsurugi::get_tg_column_type(param_linfo->params[i].ptype);
+            placeholders.emplace_back(param_name, tg_type);
+        }
+    }
+
+    return placeholders;
+}
+
+/**
  *  @brief  Prepare a statement to tsurugidb.
  *  @param  (query) original query.
  *          (node)  Pointer to PlanState structure.
@@ -673,65 +698,13 @@ prepare_direct_modify(TgFdwDirectModifyState* dmstate)
 
     elog(LOG, "tsurugi_fdw :\norig_query:\n%s", dmstate->orig_query);
 
-    std::string prep_name{};
-    std::string prep_stmt{dmstate->orig_query};
-    std::string orig_query{dmstate->orig_query};
-    if (boost::algorithm::icontains(orig_query, "prepare "))
-    {
-        // Remove 'PREPARE' clause.
-        prep_stmt.clear();
-        std::string prev_token{};
-        std::vector<std::string> tokens;
-        boost::split(tokens, orig_query, boost::is_any_of(" "));
-        for (auto& token : tokens)
-        {
-            if (!pg_strcasecmp(prev_token.c_str(), "prepare"))
-                prep_name = token;
-            else if (!pg_strcasecmp(prev_token.c_str(), "as") || !prep_stmt.empty())
-                prep_stmt += token + " ";
-            prev_token = token;
-        }
-        prep_stmt.pop_back();  // remove a last space.       
-    }
-    elog(LOG, "tsurugi_fdw : prep_name: %s,\nprepare statement = \n%s", 
-        prep_name.c_str(), prep_stmt.c_str());
-
-    stub::placeholders_type placeholders{};
-    if (param_linfo != nullptr && param_linfo->numParams > 0)
-    {
-        try {
-            // Replace place holder characters.
-            size_t pos = 0;
-            size_t offset = 0;
-            std::string from{"$"};
-            std::string to{":param"};
-            while ((pos = prep_stmt.find(from, offset)) != std::string::npos) {
-                prep_stmt.replace(pos, from.length(), to);
-                offset = pos + to.length();
-            }
-        } catch (const std::logic_error& e) {
-            elog(ERROR, "tsurugi_fdw : An exception occurred. what: %s", e.what());
-        } catch (const std::exception& e) {
-            elog(ERROR, "tsurugi_fdw : An exception occurred. what: %s", e.what());          
-        }
-        elog(LOG, "tsurugi_fdw : prep_name: %s,\nprepare statement = \n%s", 
-            prep_name.c_str(), prep_stmt.c_str());
-
-        for (int i = 0; i < param_linfo->numParams; i++)
-        {
-            /* parameter name is 1 origin. */
-            std::string param_name = "param" + std::to_string(i+1);
-            stub::Metadata::ColumnType::Type tg_type = 
-                Tsurugi::get_tg_column_type(param_linfo->params[i].ptype);
-            placeholders.emplace_back(param_name, tg_type);
-        }
-    }
-
-    prep_stmt = make_tsurugi_query(prep_stmt);
+    auto prep = make_prepare_statement(dmstate->orig_query);
+    auto placeholders = make_placeholders(param_linfo);
+    auto prep_stmt = make_tsurugi_query(prep.second);
 	ERROR_CODE error = Tsurugi::prepare(prep_stmt, placeholders);
 	if (error != ERROR_CODE::OK)
 	{
-		Tsurugi::report_error("Failed to prepare the statement on Tsurugi.", 
+		Tsurugi::report_error("Failed to prepare the statement to Tsurugi.", 
 								error, prep_stmt);
 	}
     dmstate->prep_stmt = strdup(prep_stmt.c_str());
