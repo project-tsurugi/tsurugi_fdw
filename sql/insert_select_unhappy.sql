@@ -39,7 +39,7 @@ CREATE FOREIGN TABLE tg_temporal_literal (
     tms_w_tz  TIMESTAMP WITH TIME ZONE
 ) SERVER tsurugidb;
 
-/* DML */
+-- DML
 --- int
 INSERT INTO integer1 (ol_w_id) VALUES (1.1);  -- see tsurugi-issues#736
 INSERT INTO integer1 (ol_w_id) VALUES (cast(1.1 as int));
