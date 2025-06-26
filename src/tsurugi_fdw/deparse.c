@@ -2929,12 +2929,17 @@ deparseScalarArrayOpExpr(ScalarArrayOpExpr *node, deparse_expr_cxt *context)
 {
 	StringInfo	buf = context->buf;
 	HeapTuple	tuple;
-	Form_pg_operator form;
 	Expr	   *arg1;
 	Expr	   *arg2;
+	Form_pg_operator form;
+	char	   *opname = NULL;
+	Oid			typoutput;
+	bool		typIsVarlena;
+	char	   *extval;
+	bool		useIn = false;
 
 	elog(DEBUG4, "tsurugi_fdw : %s\ndeparsed sql:\n%s", __func__, buf->data);
-
+		
 	/* Retrieve information about the operator from system catalog. */
 	tuple = SearchSysCache1(OPEROID, ObjectIdGetDatum(node->opno));
 	if (!HeapTupleIsValid(tuple))
@@ -2944,28 +2949,188 @@ deparseScalarArrayOpExpr(ScalarArrayOpExpr *node, deparse_expr_cxt *context)
 	/* Sanity check. */
 	Assert(list_length(node->args) == 2);
 
-	/* Always parenthesize the expression. */
-	appendStringInfoChar(buf, '(');
-
-	/* Deparse left operand. */
-	arg1 = linitial(node->args);
-	deparseExpr(arg1, context);
-	appendStringInfoChar(buf, ' ');
-
-	/* Deparse operator name plus decoration. */
-	deparseOperatorName(buf, form);
-	appendStringInfo(buf, " %s (", node->useOr ? "ANY" : "ALL");
-
-	/* Deparse right operand. */
-	arg2 = lsecond(node->args);
-	deparseExpr(arg2, context);
-
-	appendStringInfoChar(buf, ')');
-
-	/* Always parenthesize the expression. */
-	appendStringInfoChar(buf, ')');
-
+	opname = pstrdup(NameStr(form->oprname));
 	ReleaseSysCache(tuple);
+
+	/* Using IN clause for '= ANY' and NOT IN clause for '<> ALL' */
+	if ((strcmp(opname, "=") == 0 && node->useOr == true) ||
+		(strcmp(opname, "<>") == 0 && node->useOr == false))
+		useIn = true;
+
+	/* Get left and right argument for deparsing */
+	arg1 = linitial(node->args);
+	arg2 = lsecond(node->args);
+
+	if (useIn)
+	{
+		/* Deparse left operand. */
+		deparseExpr(arg1, context);
+		appendStringInfoChar(buf, ' ');
+
+		/* Add IN clause */
+		if (strcmp(opname, "<>") == 0)
+		{
+			appendStringInfoString(buf, "NOT IN (");
+		}
+		else if (strcmp(opname, "=") == 0)
+		{
+			appendStringInfoString(buf, "IN (");
+		}
+	}
+
+	switch (nodeTag((Node *) arg2))
+	{
+		case T_Const:
+			{
+				Const	   *c = (Const *) arg2;
+				bool		isstr = false;
+				const char *valptr;
+				int			i = -1;
+				bool		deparseLeft = true;
+
+				if (!c->constisnull)
+				{
+					getTypeOutputInfo(c->consttype,
+									  &typoutput, &typIsVarlena);
+					extval = OidOutputFunctionCall(typoutput, c->constvalue);
+
+					/* Determine array type */
+					switch (c->consttype)
+					{
+						case INT4ARRAYOID:
+						case INT8ARRAYOID:
+						case INT2ARRAYOID:
+						case BOOLARRAYOID:
+						case OIDARRAYOID:
+						case NUMERICARRAYOID:
+						case FLOAT4ARRAYOID:
+						case FLOAT8ARRAYOID:
+							isstr = false;
+							break;
+						default:
+							isstr = true;
+							break;
+					}
+
+					for (valptr = extval; *valptr; valptr++)
+					{
+						char		ch = *valptr;
+
+						i++;
+
+						if (useIn)
+						{
+							if (i == 0 && isstr)
+								appendStringInfoChar(buf, '\'');
+						}
+						else if (deparseLeft)
+						{
+							/* Deparse left operand. */
+							deparseExpr(arg1, context);
+							/* Append operator */
+							appendStringInfo(buf, " %s ", opname);
+							if (isstr)
+								appendStringInfoChar(buf, '\'');
+							deparseLeft = false;
+						}
+
+						/*
+						 * Remove '{', '}' and \" character from the string.
+						 * Because this syntax is not recognize by the remote
+						 * Sqlite server.
+						 */
+						if ((ch == '{' && i == 0) || (ch == '}' && (i == (strlen(extval) - 1))) || ch == '\"')
+							continue;
+
+						if (ch == ',')
+						{
+							if (useIn)
+							{
+								if (isstr)
+									appendStringInfoChar(buf, '\'');
+								appendStringInfoChar(buf, ch);
+								appendStringInfoChar(buf, ' ');
+								if (isstr)
+									appendStringInfoChar(buf, '\'');
+							}
+							else
+							{
+								if (isstr)
+									appendStringInfoChar(buf, '\'');
+								if (node->useOr)
+									appendStringInfoString(buf, " OR ");
+								else
+									appendStringInfoString(buf, " AND ");
+								deparseLeft = true;
+							}
+							continue;
+						}
+
+						if (SQL_STR_DOUBLE(ch, true))
+							appendStringInfoChar(buf, ch);
+						appendStringInfoChar(buf, ch);
+					}
+
+					if (isstr)
+						appendStringInfoChar(buf, '\'');
+				}
+				else
+				{
+					appendStringInfoString(buf, " NULL");
+					return;
+				}
+			}
+			break;
+		case T_ArrayExpr:
+			{
+				bool		first = true;
+				ListCell   *lc;
+
+				foreach(lc, ((ArrayExpr *) arg2)->elements)
+				{
+					if (!first)
+					{
+						if (useIn)
+						{
+							appendStringInfoString(buf, ", ");
+						}
+						else
+						{
+							if (node->useOr)
+								appendStringInfoString(buf, " OR ");
+							else
+								appendStringInfoString(buf, " AND ");
+						}
+					}
+
+					if (useIn)
+					{
+						deparseExpr(lfirst(lc), context);
+					}
+					else
+					{
+						/* Deparse left argument */
+						appendStringInfoChar(buf, '(');
+						deparseExpr(arg1, context);
+
+						appendStringInfo(buf, " %s ", opname);
+
+						/* Deparse each element in right argument */
+						deparseExpr(lfirst(lc), context);
+						appendStringInfoChar(buf, ')');
+					}
+					first = false;
+				}
+				break;
+			}
+		default:
+			elog(ERROR, "tsurugi_fdw : unsupported expression type for deparse: %d", (int) nodeTag(node));
+			break;
+	}
+
+	/* Close IN clause */
+	if (useIn)
+		appendStringInfoChar(buf, ')');
 }
 
 /*
