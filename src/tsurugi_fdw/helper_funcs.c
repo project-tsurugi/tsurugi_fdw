@@ -65,6 +65,8 @@ get_useful_ecs_for_relation(PlannerInfo *root, RelOptInfo *rel)
 	ListCell   *lc;
 	Relids		relids;
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	/*
 	 * First, consider whether any active EC is potentially useful for a merge
 	 * join against this relation.
@@ -162,6 +164,8 @@ get_useful_pathkeys_for_relation(PlannerInfo *root, RelOptInfo *rel)
 	TgFdwRelationInfo *fpinfo = (TgFdwRelationInfo *) rel->fdw_private;
 	EquivalenceClass *query_ec = NULL;
 	ListCell   *lc;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	/*
 	 * Pushing the query_pathkeys to the remote server is always worth
@@ -274,6 +278,8 @@ ec_member_matches_foreign(PlannerInfo *root, RelOptInfo *rel,
 	ec_member_foreign_arg *state = (ec_member_foreign_arg *) arg;
 	Expr	   *expr = em->em_expr;
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	/*
 	 * If we've identified what we're processing in the current scan, we only
 	 * want to match that expression.
@@ -312,6 +318,8 @@ int
 set_transmission_modes(void)
 {
 	int			nestlevel = NewGUCNestLevel();
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	/*
 	 * The values set here should match what pg_dump does.  See also
@@ -354,6 +362,8 @@ build_remote_returning(Index rtindex, Relation rel, List *returningList)
 	List	   *tlist = NIL;
 	List	   *vars;
 	ListCell   *lc;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	Assert(returningList);
 
@@ -455,6 +465,8 @@ rebuild_fdw_scan_tlist(ForeignScan *fscan, List *tlist)
 	List	   *old_tlist = fscan->fdw_scan_tlist;
 	ListCell   *lc;
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	foreach(lc, old_tlist)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(lc);
@@ -472,27 +484,6 @@ rebuild_fdw_scan_tlist(ForeignScan *fscan, List *tlist)
 }
 
 /*
- * Parse options from foreign table and apply them to fpinfo.
- *
- * New options might also require tweaking merge_fdw_options().
- */
-void
-apply_table_options(TgFdwRelationInfo *fpinfo)
-{
-	ListCell   *lc;
-
-	foreach(lc, fpinfo->table->options)
-	{
-		DefElem    *def = (DefElem *) lfirst(lc);
-
-		if (strcmp(def->defname, "use_remote_estimate") == 0)
-			fpinfo->use_remote_estimate = defGetBoolean(def);
-		else if (strcmp(def->defname, "fetch_size") == 0)
-			fpinfo->fetch_size = strtol(defGetString(def), NULL, 10);
-	}
-}
-
-/*
  * Merge FDW options from input relations into a new set of options for a join
  * or an upper rel.
  *
@@ -506,6 +497,8 @@ merge_fdw_options(TgFdwRelationInfo *fpinfo,
 				  const TgFdwRelationInfo *fpinfo_o,
 				  const TgFdwRelationInfo *fpinfo_i)
 {
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	/* We must always have fpinfo_o. */
 	Assert(fpinfo_o);
 
@@ -563,6 +556,8 @@ tsurugi_foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 	ListCell   *lc;
 	int			i;
 	List	   *tlist = NIL;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	/* We currently don't support pushing Grouping Sets. */
 	if (query->groupingSets)
@@ -703,7 +698,6 @@ tsurugi_foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 			 * RestrictInfos, so we must make our own.
 			 */
 			Assert(!IsA(expr, RestrictInfo));
-#if PG_VERSION_NUM >= 140000
 			rinfo = make_restrictinfo(root,
 									  expr,
 									  true,
@@ -713,16 +707,6 @@ tsurugi_foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 									  grouped_rel->relids,
 									  NULL,
 									  NULL);
-#else
-			rinfo = make_restrictinfo(expr,
-									  true,
-									  false,
-									  false,
-									  root->qual_security_level,
-									  grouped_rel->relids,
-									  NULL,
-									  NULL);
-#endif  // PG_VERSION_NUM >= 140000
 			if (is_foreign_expr(root, grouped_rel, expr))
 				fpinfo->remote_conds = lappend(fpinfo->remote_conds, rinfo);
 			else
@@ -786,11 +770,12 @@ tsurugi_foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 
 	/*
 	 * Set the string describing this grouped relation to be used in EXPLAIN
-	 * output of corresponding ForeignScan.
+	 * output of corresponding ForeignScan.  Note that the decoration we add
+	 * to the base relation name mustn't include any digits, or it'll confuse
+	 * postgresExplainForeignScan.
 	 */
-	fpinfo->relation_name = makeStringInfo();
-	appendStringInfo(fpinfo->relation_name, "Aggregate on (%s)",
-					 ofpinfo->relation_name->data);
+	fpinfo->relation_name = psprintf("Aggregate on (%s)",
+									 ofpinfo->relation_name);
 
 	return true;
 }
@@ -815,6 +800,8 @@ add_foreign_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 	int			width = 0;
 	Cost		startup_cost = 0;
 	Cost		total_cost = 0;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	/* Nothing to be done, if there is no grouping or aggregation required. */
 	if (!parse->groupClause && !parse->groupingSets && !parse->hasAggs &&
@@ -909,6 +896,8 @@ add_foreign_ordered_paths(PlannerInfo *root, RelOptInfo *input_rel,
 	List	   *fdw_private;
 	ForeignPath *ordered_path;
 	ListCell   *lc;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	/* Shouldn't get here unless the query has ORDER BY */
 	Assert(parse->sortClause);
@@ -1039,6 +1028,8 @@ add_foreign_final_paths(PlannerInfo *root, RelOptInfo *input_rel,
 	Cost		total_cost;
 	List	   *fdw_private;
 	ForeignPath *final_path;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	/*
 	 * Currently, we only support this for SELECT commands
@@ -1258,6 +1249,8 @@ find_em_expr_for_rel(EquivalenceClass *ec, RelOptInfo *rel)
 {
 	ListCell   *lc_em;
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	foreach(lc_em, ec->ec_members)
 	{
 		EquivalenceMember *em = (EquivalenceMember *) lfirst(lc_em);
@@ -1289,6 +1282,8 @@ find_em_expr_for_input_target(PlannerInfo *root,
 {
 	ListCell   *lc1;
 	int			i;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	i = 0;
 	foreach(lc1, target->exprs)
@@ -1365,7 +1360,58 @@ add_paths_with_pathkeys_for_rel(PlannerInfo *root, RelOptInfo *rel,
 	List	   *useful_pathkeys_list = NIL; /* List of all pathkeys */
 	ListCell   *lc;
 
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
 	useful_pathkeys_list = get_useful_pathkeys_for_relation(root, rel);
+
+	/*
+	 * Before creating sorted paths, arrange for the passed-in EPQ path, if
+	 * any, to return columns needed by the parent ForeignScan node so that
+	 * they will propagate up through Sort nodes injected below, if necessary.
+	 */
+	if (epq_path != NULL && useful_pathkeys_list != NIL)
+	{
+		TgFdwRelationInfo *fpinfo = (TgFdwRelationInfo *) rel->fdw_private;
+		PathTarget *target = copy_pathtarget(epq_path->pathtarget);
+
+		/* Include columns required for evaluating PHVs in the tlist. */
+		add_new_columns_to_pathtarget(target,
+									  pull_var_clause((Node *) target->exprs,
+													  PVC_RECURSE_PLACEHOLDERS));
+
+		/* Include columns required for evaluating the local conditions. */
+		foreach(lc, fpinfo->local_conds)
+		{
+			RestrictInfo *rinfo = lfirst_node(RestrictInfo, lc);
+
+			add_new_columns_to_pathtarget(target,
+										  pull_var_clause((Node *) rinfo->clause,
+														  PVC_RECURSE_PLACEHOLDERS));
+		}
+
+		/*
+		 * If we have added any new columns, adjust the tlist of the EPQ path.
+		 *
+		 * Note: the plan created using this path will only be used to execute
+		 * EPQ checks, where accuracy of the plan cost and width estimates
+		 * would not be important, so we do not do set_pathtarget_cost_width()
+		 * for the new pathtarget here.  See also postgresGetForeignPlan().
+		 */
+		if (list_length(target->exprs) > list_length(epq_path->pathtarget->exprs))
+		{
+			/* The EPQ path is a join path, so it is projection-capable. */
+			Assert(is_projection_capable_path(epq_path));
+
+			/*
+			 * Use create_projection_path() here, so as to avoid modifying it
+			 * in place.
+			 */
+			epq_path = (Path *) create_projection_path(root,
+													   rel,
+													   epq_path,
+													   target);
+		}
+	}
 
 	/* Create one path for each set of pathkeys we found above. */
 	foreach(lc, useful_pathkeys_list)
@@ -1374,7 +1420,7 @@ add_paths_with_pathkeys_for_rel(PlannerInfo *root, RelOptInfo *rel,
 		int			width;
 		Cost		startup_cost;
 		Cost		total_cost;
-		List	   *useful_pathkeys = (List *) lfirst(lc);
+		List	   *useful_pathkeys = lfirst(lc);
 		Path	   *sorted_epq_path;
 
 		estimate_path_cost_size(root, rel, NIL, useful_pathkeys, NULL,
@@ -1435,6 +1481,8 @@ tsurugi_foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointyp
 	TgFdwRelationInfo *fpinfo_i;
 	ListCell   *lc;
 	List	   *joinclauses;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	/*
 	 * We support pushing down INNER, LEFT, RIGHT and FULL OUTER joins.
@@ -1523,7 +1571,7 @@ tsurugi_foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointyp
 	 */
 	foreach(lc, root->placeholder_list)
 	{
-		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(lc);
+		PlaceHolderInfo *phinfo = lfirst(lc);
 		Relids		relids;
 
 		/* PlaceHolderInfo refers to parent relids, not child relids. */
@@ -1578,23 +1626,23 @@ tsurugi_foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointyp
 	{
 		case JOIN_INNER:
 			fpinfo->remote_conds = list_concat(fpinfo->remote_conds,
-											   list_copy(fpinfo_i->remote_conds));
+											   fpinfo_i->remote_conds);
 			fpinfo->remote_conds = list_concat(fpinfo->remote_conds,
-											   list_copy(fpinfo_o->remote_conds));
+											   fpinfo_o->remote_conds);
 			break;
 
 		case JOIN_LEFT:
 			fpinfo->joinclauses = list_concat(fpinfo->joinclauses,
-											  list_copy(fpinfo_i->remote_conds));
+											  fpinfo_i->remote_conds);
 			fpinfo->remote_conds = list_concat(fpinfo->remote_conds,
-											   list_copy(fpinfo_o->remote_conds));
+											   fpinfo_o->remote_conds);
 			break;
 
 		case JOIN_RIGHT:
 			fpinfo->joinclauses = list_concat(fpinfo->joinclauses,
-											  list_copy(fpinfo_o->remote_conds));
+											  fpinfo_o->remote_conds);
 			fpinfo->remote_conds = list_concat(fpinfo->remote_conds,
-											   list_copy(fpinfo_i->remote_conds));
+											   fpinfo_i->remote_conds);
 			break;
 
 		case JOIN_FULL:
@@ -1665,13 +1713,14 @@ tsurugi_foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointyp
 
 	/*
 	 * Set the string describing this join relation to be used in EXPLAIN
-	 * output of corresponding ForeignScan.
+	 * output of corresponding ForeignScan.  Note that the decoration we add
+	 * to the base relation names mustn't include any digits, or it'll confuse
+	 * postgresExplainForeignScan.
 	 */
-	fpinfo->relation_name = makeStringInfo();
-	appendStringInfo(fpinfo->relation_name, "(%s) %s JOIN (%s)",
-					 fpinfo_o->relation_name->data,
-					 get_jointype_name(fpinfo->jointype),
-					 fpinfo_i->relation_name->data);
+	fpinfo->relation_name = psprintf("(%s) %s JOIN (%s)",
+									 fpinfo_o->relation_name,
+									 get_jointype_name(fpinfo->jointype),
+									 fpinfo_i->relation_name);
 
 	/*
 	 * Set the relation index.  This is defined as the position of this

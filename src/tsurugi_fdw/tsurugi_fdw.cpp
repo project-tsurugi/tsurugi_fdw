@@ -20,8 +20,6 @@
  *	@brief 	Foreign Data Wrapper for Tsurugi.
  */
 #include <boost/format.hpp>
-#include "ogawayama/stub/error_code.h"
-#include "ogawayama/stub/api.h"
 
 #include "tsurugi.h"
 #include "tsurugi_utils.h"
@@ -38,6 +36,7 @@ extern "C" {
 #include "access/table.h"
 #include "access/tupdesc.h"
 #include "catalog/pg_class.h"
+#include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "commands/explain.h"
 #include "commands/vacuum.h"
@@ -46,18 +45,25 @@ extern "C" {
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-#if PG_VERSION_NUM >= 140000
-#include "optimizer/appendinfo.h"	// get_translated_update_targetlist
+#include "nodes/nodes.h"
+#include "nodes/primnodes.h"
+#if PG_VERSION_NUM >= 120000
+	#include "optimizer/appendinfo.h"	// get_translated_update_targetlist
 #endif  // PG_VERSION_NUM >= 140000
-#include "optimizer/clauses.h"
+#if (PG_VERSION_NUM < 140000)
+	#include "optimizer/clauses.h"
+#endif
 #include "optimizer/cost.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
+#include "optimizer/planner.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/tlist.h"
 #include "parser/parsetree.h"
+#include "parser/parse_coerce.h"
+#include "parser/parse_type.h"
 #include "utils/builtins.h"
 #include "utils/float.h"
 #include "utils/guc.h"
@@ -259,14 +265,13 @@ static void tsurugiEndForeignInsert(EState *estate,
 /*
  * FDW callback routines (Others)
  */
-#if !defined (__TSURUGI_PLANNER__)
 static void tsurugiExplainForeignScan(ForeignScanState* node, 
 									    ExplainState* es);
 static void tsurugiExplainDirectModify(ForeignScanState* node, 
 										 ExplainState* es);
-static bool tsurugiAnalyzeForeignTable(
-	Relation relation, AcquireSampleRowsFunc* func, BlockNumber* totalpages);
-#endif
+static bool tsurugiAnalyzeForeignTable(Relation relation, 
+										AcquireSampleRowsFunc* func, 
+										BlockNumber* totalpages);
 static List* tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt, 
 										  Oid serverOid);
 static void tsurugiGetForeignJoinPaths(PlannerInfo *root,
@@ -330,14 +335,12 @@ tsurugi_fdw_handler(PG_FUNCTION_ARGS)
 	routine->IterateDirectModify = tsurugiIterateDirectModify;
 	routine->EndDirectModify = tsurugiEndDirectModify;
 
-#if !defined (__TSURUGI_PLANNER__)
 	/*Support functions for EXPLAIN*/
 	routine->ExplainForeignScan = tsurugiExplainForeignScan;
 	routine->ExplainDirectModify = tsurugiExplainDirectModify;
-
 	/*Support functions for ANALYZE*/
 	routine->AnalyzeForeignTable = tsurugiAnalyzeForeignTable;
-#endif
+
 	/*Support functions for IMPORT FOREIGN SCHEMA*/
 	routine->ImportForeignSchema = tsurugiImportForeignSchema;
    /*Functions for foreign modify*/
@@ -358,7 +361,6 @@ tsurugi_fdw_handler(PG_FUNCTION_ARGS)
 	{
 		elog(ERROR, "tsurugi_fdw : Tsurugi::init() failed. (%d)", (int) error);
 	}
-	elog(LOG, "tsurugi_fdw : tsurugi_fdw handler has been initialized.");
 
 	PG_RETURN_POINTER(routine);
 }
@@ -372,15 +374,13 @@ tsurugi_fdw_handler(PG_FUNCTION_ARGS)
 /*
  * tsurugiGetForeignRelSize
  */
-static void tsurugiGetForeignRelSize(
-	PlannerInfo* root, RelOptInfo* baserel, Oid foreigntableid)
+static void tsurugiGetForeignRelSize(PlannerInfo* root, 
+										RelOptInfo* baserel, 
+										Oid foreigntableid)
 {
 	TgFdwRelationInfo *fpinfo;
 	ListCell   *lc;
 	RangeTblEntry *rte = planner_rt_fetch(baserel->relid, root);
-	const char *namespace_string;
-	const char *relname;
-	const char *refname;
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
@@ -399,15 +399,16 @@ static void tsurugiGetForeignRelSize(
 	fpinfo->server = GetForeignServer(fpinfo->table->serverid);
 
 	/*
-	 * Extract user-settable option values.  Note that per-table setting of
-	 * use_remote_estimate overrides per-server setting.
+	 * Extract user-settable option values.  Note that per-table settings of
+	 * use_remote_estimate, fetch_size and async_capable override per-server
+	 * settings of them, respectively.
 	 */
-	fpinfo->use_remote_estimate = true;
+	fpinfo->use_remote_estimate = false;
 	fpinfo->fdw_startup_cost = DEFAULT_FDW_STARTUP_COST;
 	fpinfo->fdw_tuple_cost = DEFAULT_FDW_TUPLE_COST;
-
-/*	apply_server_options(fpinfo);	*/
-	apply_table_options(fpinfo);
+	fpinfo->shippable_extensions = NIL;
+	fpinfo->fetch_size = 100;
+	fpinfo->async_capable = false;
 
 	/*
 	 * If the table or the server is configured to use remote estimates,
@@ -415,7 +416,14 @@ static void tsurugiGetForeignRelSize(
 	 * should match what ExecCheckRTEPerms() does.  If we fail due to lack of
 	 * permissions, the query would have failed at runtime anyway.
 	 */
-	fpinfo->user = NULL;
+	if (fpinfo->use_remote_estimate)
+	{
+		Oid			userid = rte->checkAsUser ? rte->checkAsUser : GetUserId();
+
+		fpinfo->user = GetUserMapping(userid, fpinfo->server->serverid);
+	}
+	else
+		fpinfo->user = NULL;
 
 	/*
 	 * Identify which baserestrictinfo clauses can be sent to the remote
@@ -472,38 +480,55 @@ static void tsurugiGetForeignRelSize(
 	 * average row width.  Otherwise, estimate using whatever statistics we
 	 * have locally, in a way similar to ordinary tables.
 	 */
-
-	/*
-	 * If the foreign table has never been ANALYZEd, it will have relpages
-	 * and reltuples equal to zero, which most likely has nothing to do
-	 * with reality.  We can't do a whole lot about that if we're not
-	 * allowed to consult the remote server, but we can use a hack similar
-	 * to plancat.c's treatment of empty relations: use a minimum size
-	 * estimate of 10 pages, and divide by the column-datatype-based width
-	 * estimate to get the corresponding number of tuples.
-	 */
-	if (baserel->pages == 0 && baserel->tuples == 0)
+	if (fpinfo->use_remote_estimate)
 	{
-		baserel->pages = 10;
-		baserel->tuples =
-			(10 * BLCKSZ) / (baserel->reltarget->width +
-								MAXALIGN(SizeofHeapTupleHeader));
+		/*
+		 * Get cost/size estimates with help of remote server.  Save the
+		 * values in fpinfo so we don't need to do it again to generate the
+		 * basic foreign path.
+		 */
+		estimate_path_cost_size(root, baserel, NIL, NIL, NULL,
+								&fpinfo->rows, &fpinfo->width,
+								&fpinfo->startup_cost, &fpinfo->total_cost);
+
+		/* Report estimated baserel size to planner. */
+		baserel->rows = fpinfo->rows;
+		baserel->reltarget->width = fpinfo->width;
+	}
+	else
+	{
+		/*
+		 * If the foreign table has never been ANALYZEd, it will have
+		 * reltuples < 0, meaning "unknown".  We can't do much if we're not
+		 * allowed to consult the remote server, but we can use a hack similar
+		 * to plancat.c's treatment of empty relations: use a minimum size
+		 * estimate of 10 pages, and divide by the column-datatype-based width
+		 * estimate to get the corresponding number of tuples.
+		 */
+#if (PG_VERSION_NUM >= 140000)
+		if (baserel->tuples < 0)
+#else
+		if (baserel->pages == 0 && baserel->tuples == 0)
+#endif
+		{
+			baserel->pages = 10;
+			baserel->tuples =
+				(10 * BLCKSZ) / (baserel->reltarget->width +
+									MAXALIGN(SizeofHeapTupleHeader));
+		}
+
+		/* Estimate baserel size as best we can with local statistics. */
+		set_baserel_size_estimates(root, baserel);
+
+		/* Fill in basically-bogus cost estimates for use later. */
+		estimate_path_cost_size(root, baserel, NIL, NIL, NULL,
+								&fpinfo->rows, &fpinfo->width,
+								&fpinfo->startup_cost, &fpinfo->total_cost);
 	}
 
-	/* Estimate baserel size as best we can with local statistics. */
-	set_baserel_size_estimates(root, baserel);
-
-	/* Fill in basically-bogus cost estimates for use later. */
-	estimate_path_cost_size(root, baserel, NIL, NIL, NULL,
-							&fpinfo->rows, &fpinfo->width,
-							&fpinfo->startup_cost, &fpinfo->total_cost);
-
-	/*
-	 * Set the name of relation in fpinfo, while we are constructing it here.
-	 * It will be used to build the string describing the join relation in
-	 * EXPLAIN output. We can't know whether VERBOSE option is specified or
-	 * not, so always schema-qualify the foreign table name.
-	 */
+#if 1
+	fpinfo->relation_name = psprintf("%u", baserel->relid);
+#else
 	fpinfo->relation_name = makeStringInfo();
 	namespace_string = get_namespace_name(get_rel_namespace(foreigntableid));
 	relname = get_rel_name(foreigntableid);
@@ -514,6 +539,7 @@ static void tsurugiGetForeignRelSize(
 	if (*refname && strcmp(refname, relname) != 0)
 		appendStringInfo(fpinfo->relation_name, " %s",
 						 quote_identifier(rte->eref->aliasname));
+#endif
 
 	/* No outer and inner relations. */
 	fpinfo->make_outerrel_subquery = false;
@@ -553,7 +579,7 @@ tsurugiGetForeignUpperPaths(PlannerInfo *root, UpperRelationKind stage,
 		return;
 
 	fpinfo = (TgFdwRelationInfo *) palloc0(sizeof(TgFdwRelationInfo));
-	fpinfo->pushdown_safe = true;
+	fpinfo->pushdown_safe = false;
 	fpinfo->stage = stage;
 	output_rel->fdw_private = fpinfo;
 
@@ -759,6 +785,7 @@ tsurugiGetForeignPaths(PlannerInfo *root,
 		int			width;
 		Cost		startup_cost = 0;
 		Cost		total_cost = 0;
+
 		/* Get a cost estimate from the remote */
 		estimate_path_cost_size(root, baserel,
 								param_info->ppi_clauses, NIL, NULL,
@@ -805,7 +832,6 @@ tsurugiGetForeignPlan(PlannerInfo *root,
 	List	   *local_exprs = NIL;
 	List	   *params_list = NIL;
 	List	   *fdw_scan_tlist = NIL;
-	List	   *remote_conds = NIL;
 	List	   *fdw_recheck_quals = NIL;
 	List	   *retrieved_attrs;
 	StringInfoData sql;
@@ -813,7 +839,7 @@ tsurugiGetForeignPlan(PlannerInfo *root,
 	bool		has_limit = false;
 	ListCell   *lc;
 
-	elog(LOG, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	/*
 	 * Get FDW private data created by postgresGetForeignUpperPaths(), if any.
@@ -833,28 +859,39 @@ tsurugiGetForeignPlan(PlannerInfo *root,
 		 */
 		scan_relid = foreignrel->relid;
 
+		/*
+		 * In a base-relation scan, we must apply the given scan_clauses.
+		 *
+		 * Separate the scan_clauses into those that can be executed remotely
+		 * and those that can't.  baserestrictinfo clauses that were
+		 * previously determined to be safe or unsafe by classifyConditions
+		 * are found in fpinfo->remote_conds and fpinfo->local_conds. Anything
+		 * else in the scan_clauses list will be a join clause, which we have
+		 * to check for remote-safety.
+		 *
+		 * Note: the join clauses we see here should be the exact same ones
+		 * previously examined by postgresGetForeignPaths.  Possibly it'd be
+		 * worth passing forward the classification work done then, rather
+		 * than repeating it here.
+		 *
+		 * This code must match "extract_actual_clauses(scan_clauses, false)"
+		 * except for the additional decision about remote versus local
+		 * execution.
+		 */		
 		foreach(lc, scan_clauses)
 		{
 			RestrictInfo *rinfo = lfirst_node(RestrictInfo, lc);
-
-			Assert(IsA(rinfo, RestrictInfo));
 
 			/* Ignore any pseudoconstants, they're dealt with elsewhere */
 			if (rinfo->pseudoconstant)
 				continue;
 
 			if (list_member_ptr(fpinfo->remote_conds, rinfo))
-			{	
-				remote_conds = lappend(remote_conds, rinfo);
 				remote_exprs = lappend(remote_exprs, rinfo->clause);
-			}
 			else if (list_member_ptr(fpinfo->local_conds, rinfo))
 				local_exprs = lappend(local_exprs, rinfo->clause);
 			else if (is_foreign_expr(root, foreignrel, rinfo->clause))
-			{
-				remote_conds = lappend(remote_conds, rinfo);
 				remote_exprs = lappend(remote_exprs, rinfo->clause);
-			}
 			else
 				local_exprs = lappend(local_exprs, rinfo->clause);
 		}
@@ -966,7 +1003,7 @@ tsurugiGetForeignPlan(PlannerInfo *root,
 							has_final_sort, has_limit, false,
 							&retrieved_attrs, &params_list);
 
-	elog(LOG, "tsurugi_fdw : \ndeparsed sql:\n%s", sql.data);
+	elog(DEBUG1, "tsurugi_fdw : \ndeparsed sql:\n%s", sql.data);
 
 	/* Remember remote_exprs for possible use by tsurugiPlanDirectModify */
 	fpinfo->final_remote_exprs = remote_exprs;
@@ -980,7 +1017,7 @@ tsurugiGetForeignPlan(PlannerInfo *root,
 							 makeInteger(fpinfo->fetch_size));
 	if (IS_JOIN_REL(foreignrel) || IS_UPPER_REL(foreignrel))
 		fdw_private = lappend(fdw_private,
-							  makeString(fpinfo->relation_name->data));
+							  makeString(fpinfo->relation_name));
 
 	/*
 	 * Create the ForeignScan node for the given relation.
@@ -997,7 +1034,7 @@ tsurugiGetForeignPlan(PlannerInfo *root,
 							fdw_scan_tlist,
 							fdw_recheck_quals,
 							outer_plan);
-}											
+}
 
 /*
  * tsurugiGetForeignJoinPaths
@@ -1020,6 +1057,8 @@ tsurugiGetForeignJoinPaths(PlannerInfo *root,
 	Path	   *epq_path;		/* Path to create plan to be executed when
 								 * EvalPlanQual gets triggered. */
 
+ 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
 	/*
 	 * Skip if this join combination has been considered already.
 	 */
@@ -1041,7 +1080,7 @@ tsurugiGetForeignJoinPaths(PlannerInfo *root,
 	 * the entry.
 	 */
 	fpinfo = (TgFdwRelationInfo *) palloc0(sizeof(TgFdwRelationInfo));
-	fpinfo->pushdown_safe = false;
+	fpinfo->pushdown_safe = true;
 	joinrel->fdw_private = fpinfo;
 	/* attrs_used is only for base relations. */
 	fpinfo->attrs_used = NULL;
@@ -1147,12 +1186,11 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 
 	ForeignScan* fsplan = (ForeignScan*) node->ss.ps.plan;
 	TgFdwForeignScanState* fsstate;
-
 	RangeTblEntry *rte;
 	ForeignTable *table;
 	ForeignServer *server;
 	int			rtindex;
-	EState* estate = node->ss.ps.state;
+	EState* 	estate = node->ss.ps.state;
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
@@ -1168,7 +1206,6 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 	fsstate->retrieved_attrs = (List*) list_nth(fsplan->fdw_private, 
 												FdwScanPrivateRetrievedAttrs);
   	fsstate->cursor_exists = false;
-	fsstate->orig_query = strdup(fsstate->query_string);
 
 	/*
 	 * Get info we'll need for converting data fetched from the foreign server
@@ -1211,17 +1248,7 @@ tsurugiIterateForeignScan(ForeignScanState* node)
 	elog(DEBUG5, "tsurugi_fdw : %s", __func__);
 
 	if (!fsstate->cursor_exists)
-    {
-        std::string query = make_tsurugi_query(fsstate->query_string);
-        ERROR_CODE error = Tsurugi::execute_query(query);
-        if (error != ERROR_CODE::OK)
-        {
-			Tsurugi::report_error("Failed to execute the query on Tsurugi.", 
-									error, query.data());
-        }
-        fsstate->cursor_exists = true;
-        fsstate->eof_reached = false;
-    }
+		create_cursor(node);
 
 	ExecClearTuple(tupleSlot);
 
@@ -1282,7 +1309,6 @@ tsurugiEndForeignScan(ForeignScanState* node)
  * FDW Modify functions.
  *
  */
- 
 /*
  * tsurugiAddForeignUpdateTargets
  *      
@@ -1618,7 +1644,7 @@ tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
 	dmstate->param_linfo = estate->es_param_list_info;
     node->fdw_state = dmstate;
 #ifdef __TSURUGI_PLANNER__
-	if (is_prepare_statement(dmstate))
+	if (is_prepare_statement(dmstate->orig_query))
 		prepare_direct_modify(dmstate);
 #else
 	prepare_direct_modify(dmstate, fsplan->fdw_exprs);
@@ -2044,12 +2070,12 @@ tsurugiEndForeignInsert(EState *estate,
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 }
 #endif
+
 /* ===========================================================================
  *
  * FDW Explain functions.
  *
  */
-#if !defined (__TSURUGI_PLANNER__)
 /*
  * tsurugiExplainForeignScan
  *		Produce extra output for EXPLAIN of a ForeignScan on a foreign table
@@ -2110,7 +2136,7 @@ tsurugiAnalyzeForeignTable(Relation relation,
 
 	return true;
 }
-#endif
+
 /* ===========================================================================
  *
  * FDW Import Foreign Schema functions.
@@ -2295,6 +2321,8 @@ find_modifytable_subplan(PlannerInfo *root,
 {
 	Plan	   *subplan = outerPlan(plan);
 
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
 	/*
 	 * The cases we support are (1) the desired ForeignScan is the immediate
 	 * child of ModifyTable, or (2) it is the subplan_index'th child of an
@@ -2414,6 +2442,8 @@ get_batch_size_option(Relation rel)
 
 	/* we use 1 by default, which means "no batching" */
 	int			batch_size = 1;
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	/*
 	 * Load options for table and server. We append server options after table

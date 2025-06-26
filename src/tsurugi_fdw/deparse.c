@@ -2857,27 +2857,47 @@ deparseOpExpr(OpExpr *node, deparse_expr_cxt *context)
 static void
 deparseOperatorName(StringInfo buf, Form_pg_operator opform)
 {
-	char	   *opname;
-
-	elog(DEBUG4, "tsurugi_fdw : %s\ndeparsed sql:\n%s", __func__, buf->data);
+	char	   *cur_opname = NULL;
 
 	/* opname is not a SQL identifier, so we should not quote it. */
-	opname = NameStr(opform->oprname);
+	cur_opname = NameStr(opform->oprname);
 
-	/* Print schema name only if it's not pg_catalog */
+	/*
+	 * Non built-in operators, for example PostGIS
+	 * This operators doesn't belong to pg_catalog
+	 */
 	if (opform->oprnamespace != PG_CATALOG_NAMESPACE)
 	{
-		const char *opnspname;
+		/* Don't use fully qualified operator name for SQLite, only name. */
+		appendStringInfoString(buf, cur_opname);
 
-		opnspname = get_namespace_name(opform->oprnamespace);
-		/* Print fully qualified operator name. */
-		appendStringInfo(buf, "OPERATOR(%s.%s)",
-						 quote_identifier(opnspname), opname);
 	}
 	else
 	{
-		/* Just print operator name. */
-		appendStringInfoString(buf, opname);
+		if (strcmp(cur_opname, "~~") == 0)
+		{
+			appendStringInfoString(buf, "LIKE");
+		}
+		else if (strcmp(cur_opname, "!~~") == 0)
+		{
+			appendStringInfoString(buf, "NOT LIKE");
+		}
+		else if (strcmp(cur_opname, "~~*") == 0 ||
+				 strcmp(cur_opname, "!~~*") == 0 ||
+				 /* ~ operator is both one of text RegEx operators and bit string NOT */
+				 (strcmp(cur_opname, "~") == 0 && opform->oprresult != VARBITOID && opform->oprresult != BITOID) ||
+				 strcmp(cur_opname, "!~") == 0 ||
+				 strcmp(cur_opname, "~*") == 0 ||
+				 strcmp(cur_opname, "!~*") == 0)
+		{
+			ereport(ERROR, (errcode(ERRCODE_FDW_ERROR),
+							errmsg("SQL operator is not supported"),
+							errhint("operator name: %s", cur_opname)));
+		}
+		else
+		{
+			appendStringInfoString(buf, cur_opname);
+		}
 	}
 }
 
@@ -3213,12 +3233,10 @@ appendAggOrderBy(List *orderList, List *targetList, deparse_expr_cxt *context)
 			deparseOperatorName(buf, operform);
 			ReleaseSysCache(opertup);
 		}
-#if 0 // tsurugi does not support NULLS FIRST/LAST
 		if (srt->nulls_first)
 			appendStringInfoString(buf, " NULLS FIRST");
 		else
 			appendStringInfoString(buf, " NULLS LAST");
-#endif
 	}
 }
 
@@ -3352,12 +3370,10 @@ appendOrderByClause(List *pathkeys, bool has_final_sort,
 			appendStringInfoString(buf, " ASC");
 		else
 			appendStringInfoString(buf, " DESC");
-#if 0 // tsurugi does not support NULLS FIRST/LAST
 		if (pathkey->pk_nulls_first)
 			appendStringInfoString(buf, " NULLS FIRST");
 		else
 			appendStringInfoString(buf, " NULLS LAST");
-#endif
 		delim = ", ";
 	}
 	reset_transmission_modes(nestlevel);

@@ -73,7 +73,7 @@ std::string make_tsurugi_query(std::string_view query_string)
 {
     std::string tsurugi_query(query_string);
 
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
 	// erase public schema.
 	std::smatch regex_match;
@@ -394,28 +394,35 @@ make_tuple_from_result_row(ResultSetPtr result_set,
 }
 
 #ifdef __TSURUGI_PLANNER__
+
 /**
- *  @brief 
- *  @param 
+ *  @brief  
+ *  @param  
  *  @return	
  */
-void
-prepare_foreign_scan(TgFdwForeignScanState* fsstate)
+bool
+is_prepare_statement(const char* query)
 {
-   	Assert(dmstate->param_linfo != nullptr);
+    return (boost::algorithm::icontains(query, "prepare ") 
+                || boost::algorithm::icontains(query, "$") 
+                || boost::algorithm::icontains(query, ":param"));
+}
 
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
-    ParamListInfo param_linfo = fsstate->param_linfo;
-
-    elog(LOG, "tsurugi_fdw :\norig_query:\n%s", fsstate->orig_query);
-
+/**
+ *  @brief  Make prepare statement for tsurugidb.
+ *  @param  (query)     SQL query.
+ *  @return	(first)     prepare name.
+ *          (second)    prepare statement.
+ */
+static std::pair<std::string, std::string>
+make_prepare_statement(const char* query)
+{
+    std::string orig_query{query};
     std::string prep_name{};
-    std::string prep_stmt{fsstate->orig_query};
-    std::string orig_query{fsstate->orig_query};
+    std::string prep_stmt{};
     if (boost::algorithm::icontains(orig_query, "prepare "))
     {
         // Remove 'PREPARE' clause.
-        prep_stmt.clear();
         std::string prev_token{};
         std::vector<std::string> tokens;
         boost::split(tokens, orig_query, boost::is_any_of(" "));
@@ -429,11 +436,14 @@ prepare_foreign_scan(TgFdwForeignScanState* fsstate)
         }
         prep_stmt.pop_back();  // remove a last space.       
     }
+    else
+    {
+        prep_stmt = orig_query;
+    }
     elog(LOG, "tsurugi_fdw : prep_name: %s,\nprepare statement = \n%s", 
         prep_name.c_str(), prep_stmt.c_str());
 
-    if (param_linfo->numParams > 0)
-    {
+    try {
         // Replace place holder characters.
         size_t pos = 0;
         size_t offset = 0;
@@ -443,58 +453,199 @@ prepare_foreign_scan(TgFdwForeignScanState* fsstate)
             prep_stmt.replace(pos, from.length(), to);
             offset = pos + to.length();
         }
+    } catch (const std::logic_error& e) {
+        elog(ERROR, "tsurugi_fdw : A logic_error exception occurred. what: %s", e.what());
+    } catch (const std::exception& e) {
+        elog(ERROR, "tsurugi_fdw : An exception occurred. what: %s", e.what());          
     }
     elog(LOG, "tsurugi_fdw : prep_name: %s,\nprepare statement = \n%s", 
         prep_name.c_str(), prep_stmt.c_str());
 
-    stub::placeholders_type placeholders{};
-	for (int i = 0; i < param_linfo->numParams; i++)
-	{
-		/* parameter name is 1 origin. */
-		std::string param_name = "param" + std::to_string(i+1);
-		placeholders.emplace_back(std::make_pair(param_name, 
-			Tsurugi::get_tg_column_type(param_linfo->params[i].ptype)));
-	}
-
-    prep_stmt = make_tsurugi_query(prep_stmt);
-	ERROR_CODE error = Tsurugi::prepare(prep_stmt, placeholders);
-	if (error != ERROR_CODE::OK)
-	{
-		Tsurugi::report_error("Failed to prepare the statement on Tsurugi.", 
-								error, prep_stmt);
-	}
-    fsstate->prep_stmt = strdup(prep_stmt.c_str());
+    return std::make_pair(prep_name, prep_stmt);
 }
 
 /**
- *  @brief 
- *  @param 
- *  @return	
+ *  @brief  Set placeholders of prepare statement.
+ *  @param  (fdw_exprs) parameter node list.
+ *  @return	placeholders_type object.
  */
-void
-execute_foreignscan(TgFdwForeignScanState* fsstate)
+static ogawayama::stub::placeholders_type
+make_placeholders(List* fdw_exprs)
+{
+    stub::placeholders_type placeholders{};    
+	ListCell   *lc;
+    
+    elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
+	int i = 0;
+	foreach(lc, fdw_exprs)
+	{
+		Node*   param_expr = (Node*) lfirst(lc);
+    
+        /* parameter name is 1 origin. */
+        std::string param_name = "param" + std::to_string(i+1);
+        placeholders.emplace_back(param_name, 
+            Tsurugi::get_tg_column_type(exprType(param_expr)));
+		i++;
+	}
+
+    return placeholders;
+}
+
+/**
+ *  @brief  Prepare a statement to tsurugidb.
+ *  @param  (query) original query.
+ *          (node)  Pointer to PlanState structure.
+ *          (fdw_exprs) parameter node list.
+ *  @return	(first)     prepare name.
+ *          (second)    prepare statement.
+ */
+static std::pair<std::string, std::string>
+tsurugi_prepare_wrapper(const char* query, 
+                        PlanState* node, 
+                        List* fdw_exprs)
 {
  	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
-    ParamListInfo param_linfo = fsstate->param_linfo;
-    std::string query = make_tsurugi_query(fsstate->query_string);
-    if (fsstate->prep_stmt != nullptr)
+    auto prep = make_prepare_statement(query);
+    auto placeholders = make_placeholders(fdw_exprs);
+    auto prep_stmt = make_tsurugi_query(prep.second);
+	ERROR_CODE error = Tsurugi::prepare(prep_stmt, placeholders);
+	if (error != ERROR_CODE::OK)
+	{
+		Tsurugi::report_error("Failed to prepare the statement to Tsurugi.", 
+								error, prep_stmt);
+	}
+
+    return prep;
+}
+
+/**
+ *  @brief  Bind parameters of a prepared statement.
+ *  @param  (econtext)  Pointer toExprContext structure.
+ *          (param_exprs)   ExprState List.
+ *          (param_flinfo)  Pointer to FmgrInfo structure. (for log output)
+ *  @return	paramters_type object.
+ */
+static ogawayama::stub::parameters_type
+bind_parameters(ExprContext* econtext,
+				List* param_exprs,
+				FmgrInfo* param_flinfo)
+{
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
+    stub::parameters_type params{};
+
+	auto i = 0;
+	ListCell   *lc;
+	foreach(lc, param_exprs)
+	{
+		ExprState*  expr_state = (ExprState*) lfirst(lc);
+		bool		isNull;
+        
+        /* parameter number is 1 origin. */
+        auto param_name = "param" + std::to_string(i+1);
+
+        /* Evaluate the parameter expression */
+		Datum expr_value = ExecEvalExpr(expr_state, econtext, &isNull);
+
+		/*
+		 * Get string representation of each parameter value by invoking
+		 * type-specific output function, unless the value is null.
+		 */
+		if (isNull)
+        {
+			std::monostate mono{};
+            params.emplace_back(param_name, mono);
+        }
+		else
+        {
+//          Oid typoid = ((Param *)expr_state->expr)->paramtype;
+            Oid typoid = exprType((Node*) expr_state->expr);
+ 			auto value = Tsurugi::convert_type_to_tg(typoid, expr_value);
+            params.emplace_back(param_name, value);
+
+            elog(LOG, "tsurugi_fdw : parameter name: %s, value: %s",
+                param_name.c_str(), OutputFunctionCall(&param_flinfo[i], expr_value));
+        }
+        i++;
+	}
+
+    return params;
+}
+
+
+/**
+ *  @brief  Bind parameters of a prepared statement.
+ *  @param  (param_linfo) ParamListInfo structure.
+ *  @return	parameters_type object.
+ */
+static ogawayama::stub::parameters_type
+bind_parameters(ParamListInfo param_linfo)
+{
+    Assert(param_linfo != nullptr);
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
+    stub::parameters_type params{};
+    for (auto i = 0; i < param_linfo->numParams; i++)
+    {	
+        /* parameter number is 1 origin. */
+        auto param_name = "param" + std::to_string(i+1);
+        ParamExternData param = param_linfo->params[i];
+        if (param.isnull)
+        {
+            std::monostate mono{};
+            params.emplace_back(param_name, mono);
+        }
+        else
+        {
+            auto value = Tsurugi::convert_type_to_tg(param.ptype, param.value);
+            params.emplace_back(param_name, value);
+        }
+    }
+
+    return params;
+}
+
+/**
+ *  @brief  Execute the query.
+ *  @param  (node) Pointer to ForeignScanState structure.
+ *  @return	none.
+ */
+void
+create_cursor(ForeignScanState* node)
+{
+ 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
+	TgFdwForeignScanState* fsstate = (TgFdwForeignScanState*) node->fdw_state;
+	ExprContext *econtext = node->ss.ps.ps_ExprContext;
+
+    ForeignScan* fsplan = (ForeignScan*) node->ss.ps.plan;
+    if (fsstate->numParams > 0)
     {
+        // Prepare the statement.
+        auto prep = tsurugi_prepare_wrapper(fsstate->query_string, 
+                                            (PlanState *) node,
+                                            fsplan->fdw_exprs);
         // Execute the prepared statement.
-        stub::parameters_type params;
-        if (param_linfo != NULL && param_linfo->numParams > 0)
-            params = bind_parameters(param_linfo);
-        elog(LOG, "tsurugi_fdw : %s\nstmt:\n%s", __func__, fsstate->prep_stmt);                                    
-        ERROR_CODE error =Tsurugi::execute_statement(params,
-                                                    fsstate->num_tuples);
+        auto params = bind_parameters(econtext, 
+                                        fsstate->param_exprs,
+                                        fsstate->param_flinfo);
+
+        elog(LOG, "tsurugi_fdw : Execute the prepared statement \nstmt:\n%s", 
+            prep.second.c_str());                                    
+        ERROR_CODE error =Tsurugi::execute_query(params);
         if (error != ERROR_CODE::OK)
         {
             Tsurugi::report_error("Failed to execute the statement on Tsurugi.", 
-                                    error, fsstate->prep_stmt);
+                                    error, prep.second);
         }           
     }
     else
     {
+        // Execute the query.
+        auto query = make_tsurugi_query(fsstate->query_string);
         ERROR_CODE error = Tsurugi::execute_query(query);
         if (error != ERROR_CODE::OK)
         {
@@ -502,26 +653,15 @@ execute_foreignscan(TgFdwForeignScanState* fsstate)
                                     error, query.data());
         }
     }
-}
-
-/**
- *  @brief  
- *  @param  
- *  @return	
- */
-bool
-is_prepare_statement(TgFdwDirectModifyState* dmstate)
-{
-    return (boost::algorithm::icontains(dmstate->orig_query, "prepare ") 
-                || (boost::algorithm::icontains(dmstate->orig_query, "$")
-                    && (dmstate->param_linfo != nullptr 
-                        && dmstate->param_linfo->numParams > 0)));
+    fsstate->cursor_exists = true;
+    fsstate->eof_reached = false;
+    fsstate->num_tuples = 0;
 }
 
 /**
  *  @brief  Prepare a statement for direct modify.
- *  @param  
- *  @return	
+ *  @param  (dmstate) Pointer to Direct Modify State structre.
+ *  @return	none.
  */
 void
 prepare_direct_modify(TgFdwDirectModifyState* dmstate)
@@ -581,8 +721,9 @@ prepare_direct_modify(TgFdwDirectModifyState* dmstate)
         {
             /* parameter name is 1 origin. */
             std::string param_name = "param" + std::to_string(i+1);
-            placeholders.emplace_back(std::make_pair(param_name, 
-                Tsurugi::get_tg_column_type(param_linfo->params[i].ptype)));
+            stub::Metadata::ColumnType::Type tg_type = 
+                Tsurugi::get_tg_column_type(param_linfo->params[i].ptype);
+            placeholders.emplace_back(param_name, tg_type);
         }
     }
 
@@ -645,46 +786,11 @@ prepare_direct_modify(TgFdwDirectModifyState* dmstate, List* fdw_exprs)
 }
 #endif
 
-/**
- *  @brief  Bind parameters of a prepared statement.
- *  @param  
- *  @return	
- */
-static ogawayama::stub::parameters_type
-bind_parameters(ParamListInfo param_linfo)
-{
-    Assert(param_linfo != nullptr);
-
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
-
-    elog(LOG, "tsurugi_fdw : number of parameters: %d", param_linfo->numParams);
-    stub::parameters_type params{};
-    for (int i = 0; i < param_linfo->numParams; i++)
-    {	
-        /* parameter number is 1 origin. */
-        std::string param_name = "param" + std::to_string(i+1);
-        ParamExternData param = param_linfo->params[i];
-        if (param.isnull)
-        {
-            std::monostate mono{};
-            params.emplace_back(param_name, mono);
-        }
-        else
-        {
-            stub::value_type value = 
-                Tsurugi::convert_type_to_tg(param.ptype, param.value);
-            params.emplace_back(param_name, value);
-        }
-    }
-
-    return params;
-}
-
 #ifdef __TSURUGI_PLANNER__
 /**
  *  @brief  Execute a direct modification.
- *  @param  
- *  @return	
+ *  @param  (node) Pointer to ForeignScanStte structure.
+ *  @return	none.
  */
 void
 execute_direct_modify(ForeignScanState* node)
@@ -713,7 +819,7 @@ execute_direct_modify(ForeignScanState* node)
     else
     {
         // Execute the original statement.
-        std::string stmt = make_tsurugi_query(dmstate->orig_query);
+        auto stmt = make_tsurugi_query(dmstate->orig_query);
         ERROR_CODE error = Tsurugi::execute_statement(stmt, dmstate->num_tuples);
         if (error != ERROR_CODE::OK)
         {

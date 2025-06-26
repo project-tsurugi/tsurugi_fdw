@@ -55,8 +55,7 @@ public:
 	static ERROR_CODE deallocate(std::string_view prep_name);
     static void deallocate();
     static ERROR_CODE execute_query(std::string_view query);
-    static ERROR_CODE execute_query(std::string_view query, 
-                                    ResultSetPtr& result_set);
+    static ERROR_CODE execute_query(ogawayama::stub::parameters_type& params);
     static ERROR_CODE execute_statement(std::string_view statement, 
                                         std::size_t& num_rows);
     static ERROR_CODE execute_statement(std::string_view prep_name, 

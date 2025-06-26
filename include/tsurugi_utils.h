@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Project Tsurugi.
+ * Copyright 2023-2025 Project Tsurugi.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ extern void rebuildInsertSql(StringInfo buf, Relation rel,
 }
 #endif
 
-bool is_prepare_statement(TgFdwDirectModifyState* dmstate);
+bool is_prepare_statement(const char* query);
 std::string make_tsurugi_query(std::string_view query_string);
 
 void make_tuple_from_result_row(ResultSetPtr result_set, 
@@ -53,8 +53,7 @@ void make_tuple_from_result_row(ResultSetPtr result_set,
                                         Datum* row,
                                         bool* is_null,
                                         TgFdwForeignScanState* fsstate);
-void prepare_foreign_scan(TgFdwForeignScanState* fsstate);
-void execute_foreignscan(TgFdwForeignScanState* fsstate);					
+void create_cursor(ForeignScanState* node);					
 void prepare_direct_modify(TgFdwDirectModifyState* dmstate);
 void execute_direct_modify(ForeignScanState* node);
 #if !defined (__TSURUGI_PLANNER__)

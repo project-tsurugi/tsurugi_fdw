@@ -92,9 +92,8 @@ tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 #if PG_VERSION_NUM >= 130000
-	elog(LOG, "tsurugi_fdw : query: %s", query_string);
+	elog(LOG, "tsurugi_fdw : \nquery: \n%s", query_string);
 #endif
-
 	if ((root->parse != NULL && root->parse->rtable == NULL) || 
 		!contain_foreign_tables(root, root->parse->rtable))
 	{
@@ -131,13 +130,14 @@ tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
                 scan = create_foreign_scan(root);
                 modify = create_modify_table(root, scan);
                 plan = (Plan *) modify;
+				stmt = create_planned_stmt(root, plan);
             } 
             else 
             {
 #if PG_VERSION_NUM >= 130000
-				return standard_planner(parse2, query_string, cursorOptions, boundParams);
+				stmt = standard_planner(parse2, query_string, cursorOptions, boundParams);
 #else
-        		return standard_planner(parse2, cursorOptions, boundParams);    
+        		stmt = standard_planner(parse2, cursorOptions, boundParams);    
 #endif
             }
 			break;
@@ -146,14 +146,13 @@ tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 		default:
 		{
 #if PG_VERSION_NUM >= 130000
-			return standard_planner(parse2, query_string, cursorOptions, boundParams);
+			stmt = standard_planner(parse2, query_string, cursorOptions, boundParams);
 #else
-			return standard_planner(parse2, cursorOptions, boundParams);
+			stmt = standard_planner(parse2, cursorOptions, boundParams);
 #endif
+			break;
 		}
 	}
-
-	stmt = create_planned_stmt(root, plan);
 
 	elog(LOG, "tsurugi_fdw : tsurugi_planner() is done.");
 
@@ -223,9 +222,7 @@ is_only_foreign_table(TsurugiPlannerInfo *root, List *rtable)
 				if (range_table_entry->relkind == 'f')
 				{
 					currentserverid = GetForeignServerIdByRelId(range_table_entry->relid);
-
 					root->oidlist = lappend_oid(root->oidlist, range_table_entry->relid);
-
 					if (root->serverid == 0)
 					{
 						root->serverid = currentserverid;
@@ -233,7 +230,7 @@ is_only_foreign_table(TsurugiPlannerInfo *root, List *rtable)
 					}
 					else if (root->serverid != currentserverid)
 					{
-						elog(NOTICE, "Mix of different types of servers.");
+						elog(NOTICE, "tsurugi_fdw : Mix of different types of servers.");
 						return false;
 					}
 				}
@@ -297,7 +294,7 @@ is_only_foreign_table(TsurugiPlannerInfo *root, List *rtable)
  *  @param 	
  *  @return	
  */
-bool
+bool 
 contain_foreign_tables(TsurugiPlannerInfo *root, List *rtable)
 {
 	ListCell	*rtable_list_cell;
@@ -318,9 +315,7 @@ contain_foreign_tables(TsurugiPlannerInfo *root, List *rtable)
 				{
 					contained = true;
 					currentserverid = GetForeignServerIdByRelId(range_table_entry->relid);
-
 					root->oidlist = lappend_oid(root->oidlist, range_table_entry->relid);
-
 					if (root->serverid == 0)
 					{
 						root->serverid = currentserverid;
@@ -328,7 +323,9 @@ contain_foreign_tables(TsurugiPlannerInfo *root, List *rtable)
 					}
 					else if (root->serverid != currentserverid)
 					{
-						elog(NOTICE, "Mix of different types of servers.");
+						elog(NOTICE, 
+							"tsurugi_ fdw : Mix of different types of servers. (serverid: %d) (currentserverid: %d)",
+							root->serverid, currentserverid);
 						return false;
 					}
 				}
@@ -829,7 +826,7 @@ expand_targetlist(List *tlist, int command_type,
 					}
 					break;
 				default:
-					elog(ERROR, "unrecognized command_type: %d",
+					elog(ERROR, "tsurugi_fdw : unrecognized command_type: %d",
 						 (int) command_type);
 					new_expr = NULL;	/* keep compiler quiet */
 					break;

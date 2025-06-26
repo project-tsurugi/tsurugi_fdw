@@ -46,41 +46,17 @@ typedef struct TgFdwForeignScanState
     TupleDesc       tupdesc;            /* tuple descriptor of scan */
     AttInMetadata*  attinmeta;          /* attribute datatype conversion */
     List*           retrieved_attrs;    /* list of target attribute numbers */
-	const char*		orig_query;
-	const char*		prep_stmt;
 
 	bool 			cursor_exists;		/* have we created the cursor? */
-//    int             numParams;          /* number of parameters passed to query */
-//    FmgrInfo*       param_flinfo;       /* output conversion functions for them */
-//    List*           param_exprs;        /* executable expressions for param values */
-//    const char**    param_values;       /* textual values of query parameters */
-//    Oid*            param_types;        /* type of query parameters */
-	ParamListInfo param_linfo;
-
+    int             numParams;          /* number of parameters passed to query */
+    FmgrInfo*       param_flinfo;       /* output conversion functions for them */
+    List*           param_exprs;        /* executable expressions for param values */
 	size_t 			number_of_columns;	/* Number of columns to SELECT */
 	Oid* 			column_types; 		/* Pointer to the data type (Oid) of the column to be SELECT */
 
-//    int             p_nums;             /* number of parameters to transmit */
-//    FmgrInfo*       p_flinfo;           /* output conversion functions for them */
-
     /* batch operation stuff */
-//    int             num_slots;          /* number of slots to insert */
-
-//    List*           attr_list;          /* query attribute list */
-//    List*           column_list;        /* Column list of Tsurugi Column structres */
-
-//    size_t          row_nums;           /* number of rows */
-//    Datum**         rows;               /* all rows of scan */
     size_t          rowidx;             /* current index of rows */
-//    bool**          rows_isnull;        /* is null*/
-//    bool            for_update;         /* true if this scan is update target */
-//    int             batch_size;         /* value of FDW option "batch_size" */
-
 	size_t			num_tuples;         /* # of tuples in array */
-//	size_t			next_tuple;         /* index of next one to return */
-//	std::vector<TupleTableSlot*>    tuples;
-//	decltype(tuples)::iterator      tuple_ite;
-
 	bool			eof_reached;        /* true if last fetch reached EOF */
 } TgFdwForeignScanState;
 
@@ -219,6 +195,7 @@ typedef struct TgFdwRelationInfo
 	Cost		fdw_startup_cost;
 	Cost		fdw_tuple_cost;
 	List	   *shippable_extensions;	/* OIDs of whitelisted extensions */
+	bool		async_capable;
 
 	/* Cached catalog information. */
 	ForeignTable *table;
@@ -232,7 +209,7 @@ typedef struct TgFdwRelationInfo
 	 * relations but is set for all relations. For join relation, the name
 	 * indicates which foreign tables are being joined and the join type used.
 	 */
-	StringInfo	relation_name;
+	char	   *relation_name;
 
 	/* Join information */
 	RelOptInfo *outerrel;
@@ -260,6 +237,9 @@ typedef struct TgFdwRelationInfo
 	 * representing the relation.
 	 */
 	int			relation_index;
+
+	/* Function pushdown surppot in target list */
+	bool		is_tlist_func_pushdown;
 } TgFdwRelationInfo;
 
 /* in postgres_fdw.c */
@@ -369,6 +349,7 @@ extern void add_foreign_final_paths(PlannerInfo *root,
 									RelOptInfo *input_rel,
 									RelOptInfo *final_rel,
 									FinalPathExtraData *extra);
+extern void apply_server_options(TgFdwRelationInfo *fpinfo);
 extern void apply_table_options(TgFdwRelationInfo *fpinfo);
 extern void merge_fdw_options(TgFdwRelationInfo *fpinfo,
 							  const TgFdwRelationInfo *fpinfo_o,

@@ -93,7 +93,7 @@ std::string get_shared_memory_name()
  */
 ERROR_CODE Tsurugi::init()
 {
-	ERROR_CODE error = ERROR_CODE::UNKNOWN;
+	auto error{ERROR_CODE::UNKNOWN};
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
@@ -142,12 +142,13 @@ ERROR_CODE Tsurugi::get_connection(stub::Connection** connection)
 {
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
-    ERROR_CODE error = init();
+    auto error = init();
     if (error == ERROR_CODE::OK)
-    {
+	{
         *connection = connection_.get();
-    }
-    return error;
+	}
+
+	return error;
 }
 
 /**
@@ -159,7 +160,7 @@ bool Tsurugi::exsists_prepared_statement(std::string_view prep_name)
 {
 	elog(DEBUG1, "tsurugi_fdw : %s : name: %s", __func__, prep_name.data());
 
-	bool exists = false;
+	bool exists{false};
 
 	auto ite = prepared_statements_.find(prep_name.data());
 	if (ite != prepared_statements_.end())
@@ -181,7 +182,7 @@ bool Tsurugi::exsists_prepared_statement(std::string_view prep_name)
 ERROR_CODE Tsurugi::prepare(std::string_view prep_name, std::string_view statement,
 						ogawayama::stub::placeholders_type& placeholders)
 {
-    ERROR_CODE error = ERROR_CODE::UNKNOWN;
+    auto error{ERROR_CODE::UNKNOWN};
 
 	elog(DEBUG1, "tsurugi_fdw : %s : name: %s", __func__, prep_name.data());
 
@@ -223,7 +224,7 @@ ERROR_CODE Tsurugi::prepare(std::string_view prep_name, std::string_view stateme
 ERROR_CODE Tsurugi::prepare(std::string_view statement,
 	            	ogawayama::stub::placeholders_type& placeholders)
 {
-	ERROR_CODE error = ERROR_CODE::UNKNOWN;
+	auto error{ERROR_CODE::UNKNOWN};
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
@@ -248,7 +249,7 @@ ERROR_CODE Tsurugi::prepare(std::string_view statement,
  */
 ERROR_CODE Tsurugi::deallocate(std::string_view prep_name)
 {
-	ERROR_CODE error = ERROR_CODE::OK;
+	auto error{ERROR_CODE::OK};
 
 	elog(DEBUG1, "tsurugi_fdw : %s : prep_name:%s", __func__, prep_name.data());
 
@@ -288,12 +289,12 @@ void Tsurugi::deallocate()
  */
 ERROR_CODE Tsurugi::start_transaction()
 {
-	ERROR_CODE error = ERROR_CODE::UNKNOWN;
+	auto error{ERROR_CODE::UNKNOWN};
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
-	if (IsTransactionProgress()) {
-	    elog(LOG, "tsurugi_fw : There is tsurugi transaction block in progress.");
+	if (transaction_ != nullptr) {
+	    elog(NOTICE, "tsurugi_fdw : There is already transaction block in progress.");
 	    return ERROR_CODE::OK;
 	}
 
@@ -318,13 +319,14 @@ ERROR_CODE Tsurugi::start_transaction()
 }
 
 /**
- *  @brief 	Execute a query on tsurugidb without result set.
+ *  @brief 	Execute a query on tsurugidb.
  *  @param 	(query)	SQL query.
  *  @return	error code of ogawayama.
  */
-ERROR_CODE Tsurugi::execute_query(std::string_view query)
+ERROR_CODE 
+Tsurugi::execute_query(std::string_view query)
 {
-    ERROR_CODE error = ERROR_CODE::UNKNOWN;
+    auto error{ERROR_CODE::UNKNOWN};
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
@@ -334,35 +336,35 @@ ERROR_CODE Tsurugi::execute_query(std::string_view query)
 					" \nquery:\n%s", query.data());
 		result_set_ = nullptr;
 		error = transaction_->execute_query(query, result_set_);
-		Tsurugi::error_log2(LOG,"Transaction::execute_query() is done.", error);
+		Tsurugi::error_log2(LOG, "Transaction::execute_query() is done.", error);
 	}
 	else
 	{
         elog(WARNING, "There is no transaction in progress.");
-      	error = ERROR_CODE::NO_TRANSACTION;		
+      	error = ERROR_CODE::NO_TRANSACTION;
 	}
+
     return error;
 }
 
 /**
- *  @brief 	Execute a query on tsurugidb.
+ *  @brief 	Execute a prepared statement on tsurugidb.
  *  @param 	(query)	SQL query.
- * 			(result_set) result set of a query.
+ * 			(params) parameters for prepated statement.
  *  @return	error code of ogawayama.
  */
 ERROR_CODE 
-Tsurugi::execute_query(std::string_view query, ResultSetPtr& result_set)
+Tsurugi::execute_query(ogawayama::stub::parameters_type& params)
 {
-    ERROR_CODE error = ERROR_CODE::UNKNOWN;
+    auto error = ERROR_CODE::UNKNOWN;
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	if (transaction_ != nullptr)
 	{
-		elog(LOG, "tsurugi_fdw : Attempt to call Transaction::execute_query()." \
-					" \nquery:\n%s", query.data());
-		result_set = nullptr;
-		error = transaction_->execute_query(query, result_set);
+		elog(LOG, "tsurugi_fdw : Attempt to call Transaction::execute_query().");
+		result_set_ = nullptr;
+		error = transaction_->execute_query(prepared_statement_, params, result_set_);
 		Tsurugi::error_log2(LOG, "Transaction::execute_query() is done.", error);
 	}
 	else
@@ -383,7 +385,7 @@ Tsurugi::execute_query(std::string_view query, ResultSetPtr& result_set)
 ERROR_CODE 
 Tsurugi::execute_statement(std::string_view statement, std::size_t& num_rows)
 {
-    ERROR_CODE error = ERROR_CODE::UNKNOWN;
+    auto error = ERROR_CODE::UNKNOWN;
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
@@ -416,7 +418,7 @@ Tsurugi::execute_statement(std::string_view prep_name,
 							ogawayama::stub::parameters_type& params, 
 							std::size_t& num_rows)
 {
-    ERROR_CODE error = ERROR_CODE::UNKNOWN;
+    auto error{ERROR_CODE::UNKNOWN};
 
 	elog(DEBUG1, "tsurugi_fdw : %s : prep_name:%s ", __func__, prep_name.data());
 
@@ -456,7 +458,7 @@ ERROR_CODE
 Tsurugi::execute_statement(ogawayama::stub::parameters_type& params, 
 							std::size_t& num_rows)
 {
-    ERROR_CODE error = ERROR_CODE::UNKNOWN;
+    auto error{ERROR_CODE::UNKNOWN};
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
@@ -484,14 +486,9 @@ Tsurugi::execute_statement(ogawayama::stub::parameters_type& params,
  */
 ERROR_CODE Tsurugi::commit()
 {
-    ERROR_CODE error = ERROR_CODE::UNKNOWN;
+    auto error{ERROR_CODE::UNKNOWN};
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
-
-	if (IsTransactionProgress()) {
-	    elog(LOG, "tsurugi_fdw : There is tsurugi transaction block in progress.");
-	    return ERROR_CODE::OK;
-	}
 
     if (transaction_ != nullptr) 
     {
@@ -520,14 +517,9 @@ ERROR_CODE Tsurugi::commit()
  */
 ERROR_CODE Tsurugi::rollback()
 {
-    ERROR_CODE error = ERROR_CODE::UNKNOWN;
+    auto error{ERROR_CODE::UNKNOWN};
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
-
-	if (IsTransactionProgress()) {
-	    elog(LOG, "tsurugi_fdw : There is tsurugi transaction block in progress.");
-	    return ERROR_CODE::OK;
-	}
 
     if (transaction_ != nullptr) 
     {
@@ -739,7 +731,7 @@ std::string Tsurugi::get_error_message(ERROR_CODE error_code)
 
 	//  get error message from Tsurugi.
 	stub::tsurugi_error_code error{};
-	ERROR_CODE ret_code = connection_->tsurugi_error(error);
+	auto ret_code = connection_->tsurugi_error(error);
 	if (ret_code == ERROR_CODE::OK)
 	{
 		elog(LOG, "ERROR_CODE::SERVER_ERROR\n\t"
@@ -854,8 +846,7 @@ Tsurugi::report_error(const char* message, ERROR_CODE error, std::string_view sq
 ogawayama::stub::Metadata::ColumnType::Type 
 Tsurugi::get_tg_column_type(const Oid pg_type)
 {
-	stub::Metadata::ColumnType::Type tg_type = 
-		stub::Metadata::ColumnType::Type::NULL_VALUE;
+	auto tg_type = stub::Metadata::ColumnType::Type::NULL_VALUE;
 
 	elog(DEBUG5, "tsurugi_fdw : %s : pg_type: %d", __func__, (int) pg_type);
 
