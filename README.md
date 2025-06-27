@@ -3,15 +3,17 @@
 ## Requirements
 
 * C++ Compiler `>= C++17`
-* Source code of PostgreSQL `>=12.4`
+* Source code of PostgreSQL 12 or 13 `>=12.4`, `>=13.18`
 * Access to installed dependent modules:
-  * managers (metadata-manager, message-manager)
-  * ogawayama
+  * managers ([metadata-manager](https://github.com/project-tsurugi/metadata-manager), [message-manager](https://github.com/project-tsurugi/message-manager))
+  * [takatori](https://github.com/project-tsurugi/takatori)
+  * [ogawayama](https://github.com/project-tsurugi/ogawayama)
 
 ## How to build for tsurugi_fdw
 
 1. Install required packages.
     Install required packages for building tsurugi_fdw.
+    If you already know that the required packages are installed, skip this procedure.
 
     ```sh
     sudo apt -y install make gcc g++ git libboost-filesystem-dev
@@ -23,6 +25,10 @@
     * Specify the PostgreSQL install directory to "--prefix". In the following example, $HOME/pgsql is specified.
     * From now on, this directory is defined as **\<PostgreSQL install directory>**.
     * Refer to the PostgreSQL documentation or online manuals for the installation of PostgreSQL.
+
+        ```sh
+        sudo apt -y install curl bzip2 libreadline-dev libz-dev
+        ```
 
     ```sh
     curl -sL https://ftp.postgresql.org/pub/source/v12.4/postgresql-12.4.tar.bz2 | tar -xj
@@ -43,6 +49,21 @@
     git submodule update --init --recursive
     ```
 
+1. Install libraries required to build dependent modules.
+
+    ```sh
+    # Common dependency library for each dependent module.
+    sudo apt -y install build-essential cmake ninja-build
+    # Dependency libraries for takarori.
+    sudo apt -y install libboost-container-dev libboost-stacktrace-dev libicu-dev flex bison
+    # Dependency libraries for metadata-manager.
+    sudo apt -y install libssl-dev
+    # Dependency libraries for ogawayama(stub).
+    sudo apt -y install libboost-thread-dev libgoogle-glog-dev libprotobuf-dev protobuf-compiler
+    ```
+
+    For libraries required, refer to README of each dependent module.
+
 1. Build and Install dependent modules.
 
     ```sh
@@ -57,7 +78,8 @@
     ```
 
     Dependent modules installed in **\<PostgreSQL install directory>**.  
-    Add **\<PostgreSQL install directory>** to LIBRARY_PATH.
+
+1. Add **\<PostgreSQL install directory>** to LIBRARY_PATH.
 
     ```sh
     export LIBRARY_PATH=$LIBRARY_PATH:<PostgreSQL install directory>/lib
