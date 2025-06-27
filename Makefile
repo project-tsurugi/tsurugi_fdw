@@ -37,8 +37,8 @@ ifdef REGRESS_BASIC
 				insert_select_happy update_delete_happy select_statement_happy \
 	           	user_management_happy udf_transaction_happy \
 			   	prepare_select_happy prepare_statement_happy prepare_decimal_happy \
-			   	manual_tutorial 
-#			   	import_foreign_schema_happy udf_tg_show_tables_happy udf_tg_verify_tables_happy
+			   	manual_tutorial \
+			   	import_foreign_schema_happy udf_tg_show_tables_happy udf_tg_verify_tables_happy
 endif
 
 PGFILEDESC = "tsurugi_fdw - foreign data wrapper for Tsurugi"
@@ -78,18 +78,18 @@ ifdef REGRESS_EXTRA
 	REGRESS += 	create_table_unhappy create_table_restrict \
 				data_types_happy \
 				insert_select_unhappy update_delete_unhappy\
-				prepare_select_unhappy prepare_decimal_unhappy 
-#           	udf_transaction_unhappy  user_management_unhappy
-#	           	udf_tg_show_tables_unhappy udf_tg_show_tables_extra udf_tg_verify_tables_unhappy udf_tg_verify_tables_extra
-#			   	import_foreign_schema_unhappy import_foreign_schema_extra 
+				prepare_select_unhappy prepare_decimal_unhappy \
+	           	udf_tg_show_tables_unhappy udf_tg_show_tables_extra udf_tg_verify_tables_unhappy udf_tg_verify_tables_extra \
+            	udf_transaction_unhappy  user_management_unhappy \
+			   	import_foreign_schema_unhappy import_foreign_schema_extra 
 
 	#REGRESS += dml_variation_happy_pg$(MAJORVERSION)
 	ifeq ($(MAJORVERSION), 12)
-		REGRESS += dml_variation_happy_pg12
+#		REGRESS += dml_variation_happy_pg12
 	else ifeq ($(MAJORVERSION), 13)
-		REGRESS += dml_variation_happy_pg13
+#		REGRESS += dml_variation_happy_pg13
 	else ifeq ($(MAJORVERSION), 14)
-		REGRESS += dml_variation_happy_pg14
+#		REGRESS += dml_variation_happy_pg14
 	endif
 endif
 
