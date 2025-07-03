@@ -28,6 +28,7 @@
 #include "catalog/pg_collation.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_operator.h"
+#include "catalog/pg_opfamily.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
@@ -105,6 +106,10 @@ static bool foreign_expr_walker(Node *node,
 								foreign_glob_cxt *glob_cxt,
 								foreign_loc_cxt *outer_cxt);
 static char *deparse_type_name(Oid type_oid, int32 typemod);
+
+bool is_foreign_pathkey(PlannerInfo *root,
+							   RelOptInfo *baserel,
+							   PathKey *pathkey);
 
 /*
  * Functions to construct string representation of a node tree.
@@ -904,6 +909,33 @@ is_foreign_param(PlannerInfo *root,
 			break;
 	}
 	return false;
+}
+
+/*
+ * Returns true if it's safe to push down the sort expression described by
+ * 'pathkey' to the foreign server.
+ */
+bool
+is_foreign_pathkey(PlannerInfo *root,
+				   RelOptInfo *baserel,
+				   PathKey *pathkey)
+{
+	EquivalenceClass *pathkey_ec = pathkey->pk_eclass;
+	TgFdwRelationInfo *fpinfo = (TgFdwRelationInfo *) baserel->fdw_private;
+
+	/*
+	 * is_foreign_expr would detect volatile expressions as well, but checking
+	 * ec_has_volatile here saves some cycles.
+	 */
+	if (pathkey_ec->ec_has_volatile)
+		return false;
+
+	/* can't push down the sort if the pathkey's opfamily is not shippable */
+	if (!is_shippable(pathkey->pk_opfamily, OperatorFamilyRelationId, fpinfo))
+		return false;
+
+	/* can push if a suitable EC member exists */
+	return (find_em_for_rel(root, pathkey_ec, baserel) != NULL);
 }
 
 /*

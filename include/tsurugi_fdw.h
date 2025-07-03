@@ -357,10 +357,12 @@ extern void merge_fdw_options(TgFdwRelationInfo *fpinfo,
 extern List *build_remote_returning(Index rtindex, Relation rel,
 									List *returningList);
 extern void rebuild_fdw_scan_tlist(ForeignScan *fscan, List *tlist);
-extern bool
-tsurugi_foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
-        				RelOptInfo *outerrel, RelOptInfo *innerrel,
-		        		JoinPathExtraData *extra);
+extern bool tsurugi_foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
+									RelOptInfo *outerrel, RelOptInfo *innerrel,
+									JoinPathExtraData *extra);
+extern EquivalenceMember *find_em_for_rel(PlannerInfo *root, 
+										EquivalenceClass *ec, 
+										RelOptInfo *rel);
 
 /* in shippable.c */
 extern bool is_builtin(Oid objectId);
