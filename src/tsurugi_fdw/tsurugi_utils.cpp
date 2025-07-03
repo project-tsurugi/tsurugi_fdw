@@ -32,8 +32,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "access/htup_details.h"
-#include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "fmgr.h"
 #include "nodes/nodeFuncs.h"
@@ -45,7 +43,6 @@ extern "C" {
 #include "utils/memutils.h"
 #include "utils/numeric.h"
 #include "utils/rel.h"
-#include "utils/syscache.h"
 #include "utils/timestamp.h"
 #ifdef __cplusplus
 }
@@ -108,8 +105,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                             TupleDesc tupleDescriptor,
                             List* retrieved_attrs,
                             Datum* row,
-                            bool* is_null,
-                            TgFdwForeignScanState* fsstate)
+                            bool* is_null)
 {
 	elog(DEBUG5, "tsurugi_fdw : %s", __func__);
 
@@ -117,280 +113,16 @@ make_tuple_from_result_row(ResultSetPtr result_set,
 	foreach(lc, retrieved_attrs)
 	{
 		int     attnum = lfirst_int(lc) - 1;
-		Oid     	pgtype = TupleDescAttr(tupleDescriptor, attnum)->atttypid;
-        HeapTuple 	heap_tuple;
-        regproc 	typinput;
-        int 		typemod;
+		Oid     pgtype = TupleDescAttr(tupleDescriptor, attnum)->atttypid;
 
 		elog(DEBUG5, "tsurugi_fdw : %s : attnum: %d", __func__, attnum + 1);
 
-		heap_tuple = SearchSysCache1(TYPEOID, 
-                                    ObjectIdGetDatum(pgtype));
-        if (!HeapTupleIsValid(heap_tuple))
-        {
-            elog(ERROR, "tsurugi_fdw : cache lookup failed for type %u", pgtype);
-        }
-        typinput = ((Form_pg_type) GETSTRUCT(heap_tuple))->typinput;
-        typemod = ((Form_pg_type) GETSTRUCT(heap_tuple))->typtypmod;
-        ReleaseSysCache(heap_tuple);
-
-        is_null[attnum] = true;
-        switch (pgtype)
-        {
-            case INT2OID:
-                {
-                    std::int16_t value;
-					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is INT2OID.", __func__);
-                    if (result_set->next_column(value) == ERROR_CODE::OK)
-                    {
-                        is_null[attnum] = false;
-                        row[attnum] = Int16GetDatum(value);
-                    }
-                }
-                break;
-
-            case INT4OID:
-                {
-                    std::int32_t value;
-					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is INT4OID.", __func__);
-                    if (result_set->next_column(value) == ERROR_CODE::OK)
-                    {
-                        is_null[attnum] = false;
-                        row[attnum] =  Int32GetDatum(value);
-                    }
-                }
-                break;
-
-            case INT8OID:
-                {
-                    std::int64_t value;
-					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is INT8OID.", __func__);
-                    if (result_set->next_column(value) == ERROR_CODE::OK)
-                    {
-                        is_null[attnum] = false;
-                        row[attnum] = Int64GetDatum(value);
-                    }
-                }
-                break;
-
-            case FLOAT4OID:
-                {
-                    float4 value;
-					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is FLOAT4OID.", __func__);
-                    if (result_set->next_column(value) == ERROR_CODE::OK)
-                    {
-                        is_null[attnum] = false;
-                        row[attnum] = Float4GetDatum(value);
-                    }
-                }
-                break;
-
-            case FLOAT8OID:
-                {
-                    float8 value;
-					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is FLOAT8OID.", __func__);
-                    if (result_set->next_column(value) == ERROR_CODE::OK)
-                    {
-                        is_null[attnum] = false;
-                        row[attnum] = Float8GetDatum(value);
-                    }
-                }
-                break;
-
-            case BPCHAROID:
-            case VARCHAROID:
-            case TEXTOID:
-                {
-					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is BPCHAROID/VARCHAROID/TEXTOID.", __func__);
-					std::string value;
-                    Datum value_datum;
-                    ERROR_CODE result = result_set->next_column(value);
-					if (result == ERROR_CODE::OK)
-                    {
-                        value_datum = CStringGetDatum(value.c_str());
-                        if (value_datum == (Datum) nullptr)
-                        {
-                            break;
-                        }
-                        is_null[attnum] = false;
-                        row[attnum] = (Datum) OidFunctionCall3(typinput,
-                                                    value_datum, 
-                                                    ObjectIdGetDatum(InvalidOid),
-                                                    Int32GetDatum(typemod));
-                    }
-                }
-                break;
-
-            case DATEOID:
-                {
-                    stub::date_type value;
-					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is DATEOID.", __func__);
-                    if (result_set->next_column(value) == ERROR_CODE::OK)
-                    {
-                        DateADT date;
-                        date = value.days_since_epoch();
-                        date = date - (POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE);
-                        row[attnum] = DateADTGetDatum(date);
-                        is_null[attnum] = false;
-                    }
-                }
-                break;
-
-            case TIMEOID:
-                {
-                    stub::time_type value;
-					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is TIMEOID.", __func__);
-                    if (result_set->next_column(value) == ERROR_CODE::OK)
-                    {
-                        TimeADT time;
-                        auto subsecond = value.subsecond().count();
-                        time = (value.hour() * MINS_PER_HOUR) + value.minute();
-                        time = (time * SECS_PER_MINUTE) + value.second();
-                        time = time * USECS_PER_SEC;
-                        if (subsecond != 0) {
-                            subsecond = round(subsecond / 1000.0);
-                            time = time + subsecond;
-                        }
-                        row[attnum] = TimeADTGetDatum(time);
-                        is_null[attnum] = false;
-                    }
-                }
-                break;
-
-            case TIMETZOID:
-                {
-                    stub::timetz_type value;
-					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is TIMETZOID.", __func__);
-					if (result_set->next_column(value) == ERROR_CODE::OK)
-                    {
-                        TimeTzADT timetz;
-                        auto subsecond = value.first.subsecond().count();
-                        timetz.time = (value.first.hour() * MINS_PER_HOUR) + value.first.minute();
-                        timetz.time = (timetz.time * SECS_PER_MINUTE) + value.first.second();
-                        timetz.time = timetz.time * USECS_PER_SEC;
-                        if (subsecond != 0) {
-                            subsecond = round(subsecond / 1000.0);
-                            timetz.time = timetz.time + subsecond;
-                        }
-                        timetz.zone = -value.second * SECS_PER_MINUTE;
-
-                        elog(DEBUG5, "time_of_day = %d:%d:%d.%d, time_zone = %d",
-                                        value.first.hour(), value.first.minute(), value.first.second(),
-                                        subsecond, value.second);
-
-                        row[attnum] = TimeTzADTPGetDatum(&timetz);
-                        is_null[attnum] = false;
-                    }
-                }
-                break;
-
-            case TIMESTAMPTZOID:
-                {
-                    stub::timestamptz_type value;
-					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is TIMESTAMPTZOID.", __func__);
-                    if (result_set->next_column(value) == ERROR_CODE::OK)
-                    {
-                        Timestamp timestamp;
-                        auto subsecond = value.first.subsecond().count();
-                        timestamp = value.first.seconds_since_epoch().count() -
-                            ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
-                        timestamp = timestamp * USECS_PER_SEC;
-                        if (subsecond != 0) {
-                            subsecond = round(subsecond / 1000.0);
-                            timestamp = timestamp + subsecond;
-                        }
-                        auto time_zone = value.second * SECS_PER_MINUTE;
-                        timestamp = timestamp - (time_zone * USECS_PER_SEC);
-
-                        elog(DEBUG5, "seconds_since_epoch = %ld, subsecond = %d, time_zone = %d",
-                                        value.first.seconds_since_epoch().count(),
-                                        value.first.subsecond().count(),
-                                        value.second);
-
-                        row[attnum] = TimestampTzGetDatum(timestamp);
-                        is_null[attnum] = false;
-                    }
-                }
-                break;
-
-            case TIMESTAMPOID:
-                {
-                    stub::timestamp_type value;
-					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is TIMESTAMPOID.", __func__);
-                    if (result_set->next_column(value) == ERROR_CODE::OK)
-                    {
-                        Timestamp timestamp;
-                        auto subsecond = value.subsecond().count();
-                        timestamp = value.seconds_since_epoch().count() -
-                            ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
-                        timestamp = timestamp * USECS_PER_SEC;
-                        if (subsecond != 0) {
-                            subsecond = round(subsecond / 1000.0);
-                            timestamp = timestamp + subsecond;
-                        }
-                        row[attnum] = TimestampGetDatum(timestamp);
-                        is_null[attnum] = false;
-                    }
-                }
-                break;
-
-            case NUMERICOID:
-                {
-                    stub::decimal_type value;
-					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is NUMERICOID.", __func__);
-                    auto error_code = result_set->next_column(value);
-                    if (error_code == ERROR_CODE::OK)
-                    {
-                        const auto sign = value.sign();
-                        const auto coefficient_high = value.coefficient_high();
-                        const auto coefficient_low = value.coefficient_low();
-                        const auto exponent = value.exponent();
-                        elog(DEBUG5, "triple(%d, %lu(0x%lX), %lu(0x%lX), %d)",
-                                                sign, coefficient_high, coefficient_high,
-                                                coefficient_low, coefficient_low, exponent);
-
-                        int scale = 0;
-                        if (exponent < 0) {
-                            scale =- exponent;
-                        }
-
-                        boost::multiprecision::uint128_t mp_coefficient;
-                        boost::multiprecision::uint128_t mp_high = coefficient_high;
-                        mp_coefficient = mp_high << 64;
-                        mp_coefficient |= coefficient_low;
-
-                        std::string coefficient;
-                        coefficient = mp_coefficient.str();
-                        if (exponent != 0) {
-                            if (scale >= (int)coefficient.size()) {
-                                // padding decimal point with zero
-                                std::stringstream ss;
-                                ss << std::setw(scale+1) << std::setfill('0') << coefficient;
-                                coefficient = ss.str();
-                            }
-                            coefficient.insert(coefficient.end() + exponent, '.');
-                        }
-                        if (sign < 0) {
-                            coefficient = "-" + coefficient;
-                        }
-                        elog(DEBUG5, "numeric_in(%s)", coefficient.c_str());
-
-                        row[attnum] = DirectFunctionCall3(numeric_in,
-                                                     CStringGetDatum(coefficient.c_str()),
-                                                     ObjectIdGetDatum(InvalidOid),
-                                                     Int32GetDatum(((NUMERIC_MAX_PRECISION << 16) |
-                                                                             scale) + VARHDRSZ));
-                        is_null[attnum] = false;
-
-                    }
-                }
-                break;
-
-            default:
-                elog(ERROR, "Invalid data type of PG. (%u)", pgtype);
-                break;
-        }
+        auto value = Tsurugi::convert_type_to_pg(result_set, pgtype);
+        is_null[attnum] = value.first;
+        if (!is_null[attnum])
+            row[attnum] = value.second;
     }
+    result_set = nullptr;
 }
 
 #ifdef __TSURUGI_PLANNER__
@@ -678,9 +410,6 @@ create_cursor(ForeignScanState* node)
                                     error, query.data());
         }
     }
-    fsstate->cursor_exists = true;
-    fsstate->eof_reached = false;
-    fsstate->num_tuples = 0;
 }
 
 /**

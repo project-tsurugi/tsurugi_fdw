@@ -1248,39 +1248,38 @@ tsurugiIterateForeignScan(ForeignScanState* node)
 	elog(DEBUG5, "tsurugi_fdw : %s", __func__);
 
 	if (!fsstate->cursor_exists)
+	{
 		create_cursor(node);
+		fsstate->num_tuples = 0;
+	    fsstate->cursor_exists = true;
+	}
 
 	ExecClearTuple(tupleSlot);
 
-    /* No point in another fetch if we already detected EOF, though. */
-    if (!fsstate->eof_reached) 
-    {
-        ERROR_CODE error = Tsurugi::result_set_next_row();
-        if (error == ERROR_CODE::OK)
-        {
-            make_tuple_from_result_row(Tsurugi::get_result_set(), 
-                                        tupleSlot->tts_tupleDescriptor,
-                                        fsstate->retrieved_attrs,
-                                        tupleSlot->tts_values,
-                                        tupleSlot->tts_isnull,
-                                        fsstate);
-            ExecStoreVirtualTuple(tupleSlot);
-            fsstate->num_tuples++;
-        }
-        else if (error == ERROR_CODE::END_OF_ROW) 
-        {
-            elog(LOG, "tsurugi_fdw : End of rows. (rows: %d)", 
-				(int) fsstate->num_tuples);
-            Tsurugi::init_result_set();
-            fsstate->eof_reached = true;
-        }
-        else
-        {
-            Tsurugi::init_result_set();
-			Tsurugi::report_error("Failed to retrieve result set from Tsurugi.", 
-									error, fsstate->query_string);
-        }
-    }
+	ERROR_CODE error = Tsurugi::result_set_next_row();
+	if (error == ERROR_CODE::OK)
+	{
+		make_tuple_from_result_row(Tsurugi::get_result_set(), 
+  								   tupleSlot->tts_tupleDescriptor,
+								   fsstate->retrieved_attrs,
+								   tupleSlot->tts_values,
+								   tupleSlot->tts_isnull);
+		ExecStoreVirtualTuple(tupleSlot);
+		fsstate->num_tuples++;
+	}
+	else if (error == ERROR_CODE::END_OF_ROW) 
+	{
+		/* No more rows/data exists */
+		Tsurugi::init_result_set();
+		elog(LOG, "tsurugi_fdw : End of rows. (rows: %d)", 
+			(int) fsstate->num_tuples);
+	}
+	else
+	{
+		Tsurugi::init_result_set();
+		Tsurugi::report_error("Failed to retrieve result set from Tsurugi.", 
+								error, fsstate->query_string);
+	}
 
 	return tupleSlot;
 }

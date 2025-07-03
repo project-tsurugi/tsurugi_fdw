@@ -51,8 +51,7 @@ void make_tuple_from_result_row(ResultSetPtr result_set,
                                         TupleDesc tupleDescriptor,
                                         List* retrieved_attrs,
                                         Datum* row,
-                                        bool* is_null,
-                                        TgFdwForeignScanState* fsstate);
+                                        bool* is_null);
 void create_cursor(ForeignScanState* node);					
 void prepare_direct_modify(TgFdwDirectModifyState* dmstate);
 void execute_direct_modify(ForeignScanState* node);

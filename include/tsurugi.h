@@ -38,7 +38,6 @@ extern "C" {
 class Tsurugi {
 public:
 	static ERROR_CODE init();
-    static ERROR_CODE get_connection(ogawayama::stub::Connection** connection);
     static ERROR_CODE start_transaction();
     static bool in_transaction_block() { return (transaction_ != nullptr); }
     static ERROR_CODE commit();
@@ -64,7 +63,7 @@ public:
     static ERROR_CODE execute_statement(ogawayama::stub::parameters_type& params, 
                                         std::size_t& num_rows);
 
-    static void init_result_set() { result_set_ = nullptr; }
+    static void init_result_set() { result_set_.reset(); }
     static ResultSetPtr get_result_set() { return result_set_; }
     static ERROR_CODE result_set_next_row() { return result_set_->next(); }
     static void init_metadata() { metadata_ = nullptr; }
@@ -77,18 +76,19 @@ public:
     static void error_log3(int level, std::string_view message, ERROR_CODE error);
     static void report_error(const char* message, ERROR_CODE error, const char* sql);
     static void report_error(const char* message, ERROR_CODE error, std::string_view sql);
+
     static ERROR_CODE get_list_tables(TableListPtr& table_list);
     static ERROR_CODE get_table_metadata(std::string_view table_name, 
             TableMetadataPtr& table_metadata);
 
-	static std::optional<std::string_view> convert_type_to_pg(
-		jogasaki::proto::sql::common::AtomType tg_type);
-
-    static ogawayama::stub::Metadata::ColumnType::Type
-            get_tg_column_type(const Oid pg_type);
-
-    static ogawayama::stub::value_type
-            convert_type_to_tg(const Oid pg_type, Datum value);
+	static std::optional<std::string_view> 
+        convert_type_to_pg(jogasaki::proto::sql::common::AtomType tg_type);
+	static std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, 
+                                                     const Oid pgtype);
+    static ogawayama::stub::Metadata::ColumnType::Type 
+        get_tg_column_type(const Oid pg_type);
+    static ogawayama::stub::value_type convert_type_to_tg(const Oid pg_type, 
+                                                          Datum value);
 /*
     static ogawayama::stub::value_type
             get_tg_value_type(const Oid pg_type, Datum value);
