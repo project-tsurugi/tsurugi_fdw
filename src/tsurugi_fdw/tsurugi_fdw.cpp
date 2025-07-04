@@ -525,21 +525,7 @@ static void tsurugiGetForeignRelSize(PlannerInfo* root,
 								&fpinfo->rows, &fpinfo->width,
 								&fpinfo->startup_cost, &fpinfo->total_cost);
 	}
-
-#if 1
 	fpinfo->relation_name = psprintf("%u", baserel->relid);
-#else
-	fpinfo->relation_name = makeStringInfo();
-	namespace_string = get_namespace_name(get_rel_namespace(foreigntableid));
-	relname = get_rel_name(foreigntableid);
-	refname = rte->eref->aliasname;
-	appendStringInfo(fpinfo->relation_name, "%s.%s",
-					 quote_identifier(namespace_string),
-					 quote_identifier(relname));
-	if (*refname && strcmp(refname, relname) != 0)
-		appendStringInfo(fpinfo->relation_name, " %s",
-						 quote_identifier(rte->eref->aliasname));
-#endif
 
 	/* No outer and inner relations. */
 	fpinfo->make_outerrel_subquery = false;

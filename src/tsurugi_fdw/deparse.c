@@ -2357,13 +2357,8 @@ deparseRelation(StringInfo buf, Relation rel)
 		nspname = get_namespace_name(RelationGetNamespace(rel));
 	if (relname == NULL)
 		relname = RelationGetRelationName(rel);
-#if 1
 	appendStringInfo(buf, "%s.%s",
 					 quote_identifier(nspname), quote_identifier(relname));
-#else
-	appendStringInfo(buf, "%s",
-					 quote_identifier(relname));
-#endif
 	elog(DEBUG4, "schema_name: %s, table_name: %s", nspname, relname);
 	elog(DEBUG4, "sql_buf: %s", buf->data);
 }

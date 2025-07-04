@@ -215,7 +215,6 @@ ERROR_CODE Tsurugi::rollback()
         error = transaction_->rollback();
 		Tsurugi::error_log2(LOG, "Transaction::rollback() is done.", error);
         transaction_ = nullptr;
-		connection_ = nullptr;
     }
     else
     {
@@ -433,7 +432,7 @@ Tsurugi::execute_statement(std::string_view statement, std::size_t& num_rows)
     {
 		elog(LOG, "tsurugi_fdw : Attempt to execute Transaction::execute_statement()." \
 					"\nstatement:\n%s", statement.data());
-		// Execute the statement.
+		// Execute a statement.
 		error = transaction_->execute_statement(statement, num_rows);
 		Tsurugi::error_log2(LOG, "Transaction::execute_statement() is done.", error);
     }
