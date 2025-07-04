@@ -105,32 +105,6 @@ SELECT * FROM bigint1 ORDER BY id;
  16 |       0
 (2 rows)
 
---- temporal_literal(auto cast) : tsurugi-issues#896  -- error
-INSERT INTO tg_temporal_literal (id, dt) VALUES (11, '2024-08-30');  -- error
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: UNSUPPORTED_RUNTIME_FEATURE_EXCEPTION (SQL-02050: unsupported expression)
-CONTEXT:  SQL query: INSERT INTO tg_temporal_literal (id, dt) VALUES (11, '2024-08-30')
-INSERT INTO tg_temporal_literal (id, tm) VALUES (12, '04:05:06.789');  -- error
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: UNSUPPORTED_RUNTIME_FEATURE_EXCEPTION (SQL-02050: unsupported expression)
-CONTEXT:  SQL query: INSERT INTO tg_temporal_literal (id, tm) VALUES (12, '04:05:06.789')
-INSERT INTO tg_temporal_literal (id, tms) VALUES (13, '2024-08-30 04:05:06.789');  -- error
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: UNSUPPORTED_RUNTIME_FEATURE_EXCEPTION (SQL-02050: unsupported expression)
-CONTEXT:  SQL query: INSERT INTO tg_temporal_literal (id, tms) VALUES (13, '2024-08-30 04:05:06.789')
-INSERT INTO tg_temporal_literal (id, tms_wo_tz) VALUES (14, '2024-08-30 04:05:06.789');  -- error
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: UNSUPPORTED_RUNTIME_FEATURE_EXCEPTION (SQL-02050: unsupported expression)
-CONTEXT:  SQL query: INSERT INTO tg_temporal_literal (id, tms_wo_tz) VALUES (14, '2024-08-30 04:05:06.789')
-INSERT INTO tg_temporal_literal (id, tms_w_tz) VALUES (15, '2024-08-30 04:05:06.789+9:00');  -- error
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: UNSUPPORTED_RUNTIME_FEATURE_EXCEPTION (SQL-02050: unsupported expression)
-CONTEXT:  SQL query: INSERT INTO tg_temporal_literal (id, tms_w_tz) VALUES (15, '2024-08-30 04:05:06.789+9:00')
 /* Test teardown: DDL of the PostgreSQL */
 DROP FOREIGN TABLE integer1;
 DROP FOREIGN TABLE bigint1;

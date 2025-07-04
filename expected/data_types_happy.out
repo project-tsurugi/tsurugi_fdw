@@ -487,11 +487,7 @@ INSERT INTO fdw_type_date VALUES (DATE '2025-01-01');
 INSERT INTO fdw_type_date VALUES (DATE '0001-01-01');
 INSERT INTO fdw_type_date VALUES (DATE '9999-12-31');
 INSERT INTO fdw_type_date VALUES (NULL);
-INSERT INTO fdw_type_date VALUES ('2025-01-01');  -- error
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: UNSUPPORTED_RUNTIME_FEATURE_EXCEPTION (SQL-02050: unsupported expression)
-CONTEXT:  SQL query: INSERT INTO fdw_type_date VALUES ('2025-01-01')
+INSERT INTO fdw_type_date VALUES ('2025-01-01');
 INSERT INTO fdw_type_date VALUES (DATE '1/8/1999');  -- error
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
@@ -542,7 +538,8 @@ SELECT * FROM fdw_type_date;
  0001-01-01
  9999-12-31
  
-(4 rows)
+ 2025-01-01
+(5 rows)
 
 SET datestyle TO 'default';
 --- time
@@ -551,11 +548,7 @@ INSERT INTO fdw_type_time VALUES (TIME '01:02:03.456789012');
 INSERT INTO fdw_type_time VALUES (TIME '00:00:00');
 INSERT INTO fdw_type_time VALUES (TIME '23:59:59.999999');
 INSERT INTO fdw_type_time VALUES (NULL);
-INSERT INTO fdw_type_time VALUES ('01:02:03.456');  -- error
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: UNSUPPORTED_RUNTIME_FEATURE_EXCEPTION (SQL-02050: unsupported expression)
-CONTEXT:  SQL query: INSERT INTO fdw_type_time VALUES ('01:02:03.456')
+INSERT INTO fdw_type_time VALUES ('01:02:03.456');
 INSERT INTO fdw_type_time VALUES (DATE '2025/01/01');  -- error
 ERROR:  column "c" is of type time without time zone but expression is of type date
 LINE 1: INSERT INTO fdw_type_time VALUES (DATE '2025/01/01');
@@ -587,7 +580,8 @@ SELECT * FROM fdw_type_time;
  00:00:00
  23:59:59.999999
  
-(5 rows)
+ 01:02:03.456
+(6 rows)
 
 SET datestyle TO 'default';
 --- time with time zone
@@ -612,11 +606,7 @@ INSERT INTO fdw_type_timestamp VALUES (TIMESTAMP '2025-01-01 00:00:00');
 INSERT INTO fdw_type_timestamp VALUES (TIMESTAMP '0001-01-01 00:00:00');
 INSERT INTO fdw_type_timestamp VALUES (TIMESTAMP '9999-12-31 23:59:59.999999');
 INSERT INTO fdw_type_timestamp VALUES (NULL);
-INSERT INTO fdw_type_timestamp VALUES ('2025-01-01 00:00:00');  -- error
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: UNSUPPORTED_RUNTIME_FEATURE_EXCEPTION (SQL-02050: unsupported expression)
-CONTEXT:  SQL query: INSERT INTO fdw_type_timestamp VALUES ('2025-01-01 00:00:00')
+INSERT INTO fdw_type_timestamp VALUES ('2025-01-01 00:00:00');
 INSERT INTO fdw_type_timestamp VALUES (TIMESTAMP '2025/01/01');  -- error
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
@@ -655,7 +645,8 @@ SELECT * FROM fdw_type_timestamp;
  0001-01-01 00:00:00
  9999-12-31 23:59:59.999999
  
-(4 rows)
+ 2025-01-01 00:00:00
+(5 rows)
 
 SET datestyle TO 'default';
 --- timestamp without time zone
@@ -663,11 +654,7 @@ INSERT INTO fdw_type_timestamp_wo_tz VALUES (TIMESTAMP WITHOUT TIME ZONE '2025-0
 INSERT INTO fdw_type_timestamp_wo_tz VALUES (TIMESTAMP WITHOUT TIME ZONE '0001-01-01 00:00:00');
 INSERT INTO fdw_type_timestamp_wo_tz VALUES (TIMESTAMP WITHOUT TIME ZONE '9999-12-31 23:59:59.999999');
 INSERT INTO fdw_type_timestamp_wo_tz VALUES (NULL);
-INSERT INTO fdw_type_timestamp_wo_tz VALUES ('2025-01-01 00:00:00');  -- error
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: UNSUPPORTED_RUNTIME_FEATURE_EXCEPTION (SQL-02050: unsupported expression)
-CONTEXT:  SQL query: INSERT INTO fdw_type_timestamp_wo_tz VALUES ('2025-01-01 00:00:00')
+INSERT INTO fdw_type_timestamp_wo_tz VALUES ('2025-01-01 00:00:00');
 INSERT INTO fdw_type_timestamp_wo_tz VALUES (TIMESTAMP WITHOUT TIME ZONE '2025/01/01');  -- error
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
@@ -706,7 +693,8 @@ SELECT * FROM fdw_type_timestamp_wo_tz;
  0001-01-01 00:00:00
  9999-12-31 23:59:59.999999
  
-(4 rows)
+ 2025-01-01 00:00:00
+(5 rows)
 
 SET datestyle TO 'default';
 --- timestamp with time zone
@@ -718,11 +706,7 @@ INSERT INTO fdw_type_timestamp_tz VALUES (TIMESTAMP WITH TIME ZONE '2025-01-01T1
 INSERT INTO fdw_type_timestamp_tz VALUES (TIMESTAMP WITH TIME ZONE '0001-01-01 00:00:00+00');
 INSERT INTO fdw_type_timestamp_tz VALUES (TIMESTAMP WITH TIME ZONE '9999-12-31 23:59:59.999999+14');
 INSERT INTO fdw_type_timestamp_tz VALUES (NULL);
-INSERT INTO fdw_type_timestamp_tz VALUES ('2025-01-01 12:01:02.34567+9:00');  -- error
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: UNSUPPORTED_RUNTIME_FEATURE_EXCEPTION (SQL-02050: unsupported expression)
-CONTEXT:  SQL query: INSERT INTO fdw_type_timestamp_tz VALUES ('2025-01-01 12:01:02.34567+9:00')
+INSERT INTO fdw_type_timestamp_tz VALUES ('2025-01-01 12:01:02.34567+9:00');
 INSERT INTO fdw_type_timestamp_tz VALUES (TIME WITH TIME ZONE '04:05:06.789+9:00');  -- error
 ERROR:  column "c" is of type timestamp with time zone but expression is of type time with time zone
 LINE 1: ...fdw_type_timestamp_tz VALUES (TIME WITH TIME ZONE '04:05:06....
@@ -771,7 +755,8 @@ SELECT * FROM fdw_type_timestamp_tz;
  0001-01-01 00:00:00+00
  9999-12-31 09:59:59.999999+00
  
-(8 rows)
+ 2025-01-01 03:01:02.34567+00
+(9 rows)
 
 SET datestyle TO 'default';
 /* Test teardown: DDL of the PostgreSQL */

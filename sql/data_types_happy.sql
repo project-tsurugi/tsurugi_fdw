@@ -180,7 +180,7 @@ INSERT INTO fdw_type_date VALUES (DATE '2025-01-01');
 INSERT INTO fdw_type_date VALUES (DATE '0001-01-01');
 INSERT INTO fdw_type_date VALUES (DATE '9999-12-31');
 INSERT INTO fdw_type_date VALUES (NULL);
-INSERT INTO fdw_type_date VALUES ('2025-01-01');  -- error
+INSERT INTO fdw_type_date VALUES ('2025-01-01');
 INSERT INTO fdw_type_date VALUES (DATE '1/8/1999');  -- error
 INSERT INTO fdw_type_date VALUES (DATE '1/18/1999');  -- error
 INSERT INTO fdw_type_date VALUES (DATE '08-Jan-99');  -- error
@@ -200,7 +200,7 @@ INSERT INTO fdw_type_time VALUES (TIME '01:02:03.456789012');
 INSERT INTO fdw_type_time VALUES (TIME '00:00:00');
 INSERT INTO fdw_type_time VALUES (TIME '23:59:59.999999');
 INSERT INTO fdw_type_time VALUES (NULL);
-INSERT INTO fdw_type_time VALUES ('01:02:03.456');  -- error
+INSERT INTO fdw_type_time VALUES ('01:02:03.456');
 INSERT INTO fdw_type_time VALUES (DATE '2025/01/01');  -- error
 INSERT INTO fdw_type_time VALUES (TIME '2025/01/01');  -- error
 INSERT INTO fdw_type_time VALUES (TIME '25:00:00');  -- error
@@ -233,7 +233,7 @@ INSERT INTO fdw_type_timestamp VALUES (TIMESTAMP '2025-01-01 00:00:00');
 INSERT INTO fdw_type_timestamp VALUES (TIMESTAMP '0001-01-01 00:00:00');
 INSERT INTO fdw_type_timestamp VALUES (TIMESTAMP '9999-12-31 23:59:59.999999');
 INSERT INTO fdw_type_timestamp VALUES (NULL);
-INSERT INTO fdw_type_timestamp VALUES ('2025-01-01 00:00:00');  -- error
+INSERT INTO fdw_type_timestamp VALUES ('2025-01-01 00:00:00');
 INSERT INTO fdw_type_timestamp VALUES (TIMESTAMP '2025/01/01');  -- error
 INSERT INTO fdw_type_timestamp VALUES (TIMESTAMP '2025/01/01 12:00');  -- error
 INSERT INTO fdw_type_timestamp VALUES (TIMESTAMP '01:02:03.456');  -- error
@@ -250,7 +250,7 @@ INSERT INTO fdw_type_timestamp_wo_tz VALUES (TIMESTAMP WITHOUT TIME ZONE '2025-0
 INSERT INTO fdw_type_timestamp_wo_tz VALUES (TIMESTAMP WITHOUT TIME ZONE '0001-01-01 00:00:00');
 INSERT INTO fdw_type_timestamp_wo_tz VALUES (TIMESTAMP WITHOUT TIME ZONE '9999-12-31 23:59:59.999999');
 INSERT INTO fdw_type_timestamp_wo_tz VALUES (NULL);
-INSERT INTO fdw_type_timestamp_wo_tz VALUES ('2025-01-01 00:00:00');  -- error
+INSERT INTO fdw_type_timestamp_wo_tz VALUES ('2025-01-01 00:00:00');
 INSERT INTO fdw_type_timestamp_wo_tz VALUES (TIMESTAMP WITHOUT TIME ZONE '2025/01/01');  -- error
 INSERT INTO fdw_type_timestamp_wo_tz VALUES (TIMESTAMP WITHOUT TIME ZONE '2025/01/01 12:00');  -- error
 INSERT INTO fdw_type_timestamp_wo_tz VALUES (TIMESTAMP WITHOUT TIME ZONE '01:02:03.456');  -- error
@@ -271,7 +271,7 @@ INSERT INTO fdw_type_timestamp_tz VALUES (TIMESTAMP WITH TIME ZONE '2025-01-01T1
 INSERT INTO fdw_type_timestamp_tz VALUES (TIMESTAMP WITH TIME ZONE '0001-01-01 00:00:00+00');
 INSERT INTO fdw_type_timestamp_tz VALUES (TIMESTAMP WITH TIME ZONE '9999-12-31 23:59:59.999999+14');
 INSERT INTO fdw_type_timestamp_tz VALUES (NULL);
-INSERT INTO fdw_type_timestamp_tz VALUES ('2025-01-01 12:01:02.34567+9:00');  -- error
+INSERT INTO fdw_type_timestamp_tz VALUES ('2025-01-01 12:01:02.34567+9:00');
 INSERT INTO fdw_type_timestamp_tz VALUES (TIME WITH TIME ZONE '04:05:06.789+9:00');  -- error
 INSERT INTO fdw_type_timestamp_tz VALUES (TIMESTAMP WITH TIME ZONE '2025-01-01 12:01:02.34567 UTC');  -- error
 INSERT INTO fdw_type_timestamp_tz VALUES (TIMESTAMP WITH TIME ZONE '2025-01-01 12:01:02.34567 Universal');  -- error
