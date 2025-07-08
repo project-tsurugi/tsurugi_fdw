@@ -57,7 +57,6 @@ typedef struct TgFdwForeignScanState
     /* batch operation stuff */
     size_t          rowidx;             /* current index of rows */
 	size_t			num_tuples;         /* # of tuples in array */
-	bool			eof_reached;        /* true if last fetch reached EOF */
 } TgFdwForeignScanState;
 
 /*

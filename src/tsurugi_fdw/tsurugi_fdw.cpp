@@ -1181,6 +1181,12 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	/*
+	 * Do nothing in EXPLAIN (no ANALYZE) case.  node->fdw_state stays NULL.
+	 */
+	if (eflags & EXEC_FLAG_EXPLAIN_ONLY)
+		return;
+
+	/*
 	 * We'll save private state in node->fdw_state.
 	 */
 	fsstate = (TgFdwForeignScanState*) palloc0(sizeof(TgFdwForeignScanState));
@@ -1271,12 +1277,25 @@ tsurugiIterateForeignScan(ForeignScanState* node)
 }
 
 /*
- *	@note	Not in used.
+ *	
  */
 static void 
 tsurugiReScanForeignScan(ForeignScanState* node)
 {
+	TgFdwForeignScanState *fsstate = (TgFdwForeignScanState *) node->fdw_state;
+
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
+	/* If we haven't created the cursor yet, nothing to do. */
+	if (!fsstate->cursor_exists)
+		return;
+	
+	Tsurugi::deallocate();
+	Tsurugi::init_result_set();
+
+	fsstate->cursor_exists = false;
+	fsstate->rowidx = 0;
+	fsstate->num_tuples = 0;
 }
 
 /*
