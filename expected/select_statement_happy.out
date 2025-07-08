@@ -70,21 +70,21 @@ CREATE FOREIGN TABLE t3_select_statement (
 INSERT INTO
     t1_select_statement(c1, c2, c3, c4, c5, c6, c7)
 VALUES
-    (1, 11, 111, 1.1, 1.11, 'first', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+    (1, 11, 111, 1.1, 1.11, 'first', 'ABCDEFGH_LMN_XYZ');
 INSERT INTO
     t1_select_statement(c1, c2, c3, c4, c5, c6, c7)
 VALUES
-    (2, 22, 222, 2.2, 2.22, 'second', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+    (2, 22, 222, 2.2, 2.22, 'second', 'ABCDEFGHIJKLM');
 INSERT INTO
     t1_select_statement(c1, c2, c3, c4, c5, c6, c7)
 VALUES
-    (3, 33, 333, 3.3, 3.33, 'third', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+    (3, 33, 333, 3.3, 3.33, 'third', 'XYZOPQRS');
 SELECT * FROM t1_select_statement ORDER BY c1;
- c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
-----+----+-----+-----+------+------------+----------------------------
-  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
-  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+ c1 | c2 | c3  | c4  |  c5  |     c6     |        c7        
+----+----+-----+-----+------+------------+------------------
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGH_LMN_XYZ
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLM
+  3 | 33 | 333 | 3.3 | 3.33 | third      | XYZOPQRS
 (3 rows)
 
 INSERT INTO
@@ -149,11 +149,11 @@ SELECT * FROM t3_select_statement ORDER BY c1;
 
 -- SELECT
 SELECT * FROM t1_select_statement ORDER BY c1;
- c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
-----+----+-----+-----+------+------------+----------------------------
-  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
-  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+ c1 | c2 | c3  | c4  |  c5  |     c6     |        c7        
+----+----+-----+-----+------+------------+------------------
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGH_LMN_XYZ
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLM
+  3 | 33 | 333 | 3.3 | 3.33 | third      | XYZOPQRS
 (3 rows)
 
 SELECT c2, c4, c6 FROM t2_select_statement ORDER BY c2;
@@ -290,10 +290,10 @@ WHERE
     c1 = 1 OR c1 = 3
 ORDER BY
     c1;
- c1 | c2 |     c6     |             c7             
-----+----+------------+----------------------------
-  1 | 11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
-  3 | 33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+ c1 | c2 |     c6     |        c7        
+----+----+------------+------------------
+  1 | 11 | first      | ABCDEFGH_LMN_XYZ
+  3 | 33 | third      | XYZOPQRS
 (2 rows)
 
 -- WHERE #4
@@ -305,9 +305,9 @@ WHERE
     c1 = 2
 ORDER BY
     c1;
- c1 | c3  |  c5  |             c7             
-----+-----+------+----------------------------
-  2 | 222 | 2.22 | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+ c1 | c3  |  c5  |      c7       
+----+-----+------+---------------
+  2 | 222 | 2.22 | ABCDEFGHIJKLM
 (1 row)
 
 -- WHERE #5
@@ -319,10 +319,10 @@ WHERE
     c4 >= 2.2 AND c4 < 5.5
 ORDER BY
     c1;
- c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
-----+----+-----+-----+------+------------+----------------------------
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
-  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+ c1 | c2 | c3  | c4  |  c5  |     c6     |      c7       
+----+----+-----+-----+------+------------+---------------
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLM
+  3 | 33 | 333 | 3.3 | 3.33 | third      | XYZOPQRS
 (2 rows)
 
 -- WHERE #6
@@ -343,14 +343,19 @@ ORDER BY
 
 -- WHERE #7
 /* tsurugi-issue#1078 (disable due to development) */
-/*SELECT
+SELECT
     *
 FROM
     t1_select_statement
 WHERE
     c7 LIKE '%LMN%'
 ORDER BY
-    c1;*/
+    c1;
+ c1 | c2 | c3  | c4  |  c5  |     c6     |        c7        
+----+----+-----+-----+------+------------+------------------
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGH_LMN_XYZ
+(1 row)
+
 -- WHERE #8
 /*
 SELECT
@@ -422,10 +427,10 @@ WHERE
     b.c1 > 1
 ORDER BY
     a.c1;
- c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
-----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
-  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
+ c1 | c2 | c3  | c4  |  c5  |     c6     |      c7       | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
+----+----+-----+-----+------+------------+---------------+----+----+-----+-----+------+------------+-----
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLM |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
+  3 | 33 | 333 | 3.3 | 3.33 | third      | XYZOPQRS      |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
 (2 rows)
 
 -- TG JOIN #2 /* tsurugi-issue#863 */
@@ -476,9 +481,9 @@ FROM
     t1_select_statement AS a JOIN t2_select_statement AS b ON a.c4=b.c4 JOIN t1_select_statement AS c ON b.c4=c.c4
 WHERE
     a.c2=22;
- c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  | c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
-----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----+----+----+-----+-----+------+------------+----------------------------
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ |  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+ c1 | c2 | c3  | c4  |  c5  |     c6     |      c7       | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  | c1 | c2 | c3  | c4  |  c5  |     c6     |      c7       
+----+----+-----+-----+------+------------+---------------+----+----+-----+-----+------+------------+-----+----+----+-----+-----+------+------------+---------------
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLM |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ |  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLM
 (1 row)
 
 -- TG /* tsurugi-issue#863 */
@@ -488,23 +493,23 @@ FROM
     t1_select_statement AS a CROSS JOIN t2_select_statement AS b
 ORDER BY
     b.c1;
- c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
-----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----
-  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
-  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
-  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
-  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
-  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
-  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
-  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       | 
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       | 
-  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       | 
-  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
-  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
+ c1 | c2 | c3  | c4  |  c5  |     c6     |        c7        | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
+----+----+-----+-----+------+------------+------------------+----+----+-----+-----+------+------------+-----
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGH_LMN_XYZ |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLM    |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
+  3 | 33 | 333 | 3.3 | 3.33 | third      | XYZOPQRS         |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGH_LMN_XYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLM    |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
+  3 | 33 | 333 | 3.3 | 3.33 | third      | XYZOPQRS         |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGH_LMN_XYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLM    |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
+  3 | 33 | 333 | 3.3 | 3.33 | third      | XYZOPQRS         |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGH_LMN_XYZ |  4 |    |     |     |      | NULL       | 
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLM    |  4 |    |     |     |      | NULL       | 
+  3 | 33 | 333 | 3.3 | 3.33 | third      | XYZOPQRS         |  4 |    |     |     |      | NULL       | 
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGH_LMN_XYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLM    |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
+  3 | 33 | 333 | 3.3 | 3.33 | third      | XYZOPQRS         |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
 (15 rows)
 
 -- TG /* tsurugi-issue#863 */
@@ -514,11 +519,11 @@ FROM
     t1_select_statement AS a JOIN t1_select_statement AS b ON a.c3=b.c3
 ORDER BY
     a.c3;
- c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
-----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+----------------------------
-  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
-  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+ c1 | c2 | c3  | c4  |  c5  |     c6     |        c7        | c1 | c2 | c3  | c4  |  c5  |     c6     |        c7        
+----+----+-----+-----+------+------------+------------------+----+----+-----+-----+------+------------+------------------
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGH_LMN_XYZ |  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGH_LMN_XYZ
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLM    |  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLM
+  3 | 33 | 333 | 3.3 | 3.33 | third      | XYZOPQRS         |  3 | 33 | 333 | 3.3 | 3.33 | third      | XYZOPQRS
 (3 rows)
 
 /* Test teardown: DDL of the PostgreSQL */

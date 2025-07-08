@@ -118,8 +118,8 @@ PREPARE select_t2_where6
     AS SELECT * FROM t2_prepare_select_statement WHERE c4 BETWEEN 2.2 AND 5.5 ORDER BY c1;
 -- WHERE #7
 /* tsurugi-issue#1078 (disable due to development) */
-/* PREPARE select_t1_where7
-    AS SELECT * FROM t1_prepare_select_statement WHERE c7 LIKE '%LMN%' ORDER BY c1;*/
+PREPARE select_t1_where7
+    AS SELECT * FROM t1_prepare_select_statement WHERE c7 LIKE '%LMN%' ORDER BY c1;
 -- WHERE #8
 PREPARE select_t1_where8
     AS SELECT * FROM t1_prepare_select_statement WHERE EXISTS (SELECT * FROM t2_prepare_select_statement WHERE c2 = 22) ORDER BY c1;
@@ -161,15 +161,15 @@ PREPARE select_pg_join_tg8
 /***************/
 /*** EXECUTE ***/
 /***************/
-EXECUTE insert_t1 (1, 11, 111, 1.1, 1.11, 'first', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
-EXECUTE insert_t1 (2, 22, 222, 2.2, 2.22, 'second', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
-EXECUTE insert_t1 (3, 33, 333, 3.3, 3.33, 'third', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+EXECUTE insert_t1 (1, 11, 111, 1.1, 1.11, 'first', 'ABCDEFGH_LMN_XYZ');
+EXECUTE insert_t1 (2, 22, 222, 2.2, 2.22, 'second', 'ABCDEFGHIJKLM');
+EXECUTE insert_t1 (3, 33, 333, 3.3, 3.33, 'third', 'XYZOPQRS');
 EXECUTE select_t1_all;
- c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
-----+----+-----+-----+------+------------+----------------------------
-  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
-  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+ c1 | c2 | c3  | c4  |  c5  |     c6     |        c7        
+----+----+-----+-----+------+------------+------------------
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGH_LMN_XYZ
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLM
+  3 | 33 | 333 | 3.3 | 3.33 | third      | XYZOPQRS
 (3 rows)
 
 EXECUTE insert_t2 (1, 11, 111, 1.1, 1.11, 'one', 'ABC');
@@ -204,11 +204,11 @@ EXECUTE select_t3_all;
 
 -- SELECT
 EXECUTE select_t1_all;
- c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
-----+----+-----+-----+------+------------+----------------------------
-  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
-  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+ c1 | c2 | c3  | c4  |  c5  |     c6     |        c7        
+----+----+-----+-----+------+------------+------------------
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGH_LMN_XYZ
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLM
+  3 | 33 | 333 | 3.3 | 3.33 | third      | XYZOPQRS
 (3 rows)
 
 EXECUTE select_t2_c2_c4_c6;
@@ -300,25 +300,25 @@ EXECUTE select_t2_where2;
 
 -- WHERE #3
 EXECUTE select_t1_where3;
- c1 | c2 |     c6     |             c7             
-----+----+------------+----------------------------
-  1 | 11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
-  3 | 33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+ c1 | c2 |     c6     |        c7        
+----+----+------------+------------------
+  1 | 11 | first      | ABCDEFGH_LMN_XYZ
+  3 | 33 | third      | XYZOPQRS
 (2 rows)
 
 -- WHERE #4
 EXECUTE select_t1_where4;
- c1 | c3  |  c5  |             c7             
-----+-----+------+----------------------------
-  2 | 222 | 2.22 | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+ c1 | c3  |  c5  |      c7       
+----+-----+------+---------------
+  2 | 222 | 2.22 | ABCDEFGHIJKLM
 (1 row)
 
 -- WHERE #5
 EXECUTE select_t1_where5;
- c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
-----+----+-----+-----+------+------------+----------------------------
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
-  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+ c1 | c2 | c3  | c4  |  c5  |     c6     |      c7       
+----+----+-----+-----+------+------------+---------------
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLM
+  3 | 33 | 333 | 3.3 | 3.33 | third      | XYZOPQRS
 (2 rows)
 
 -- WHERE #6
@@ -333,14 +333,19 @@ EXECUTE select_t2_where6;
 
 -- WHERE #7
 /* tsurugi-issue#1078 (disable due to development) */
-/* EXECUTE select_t1_where7;*/
+EXECUTE select_t1_where7;
+ c1 | c2 | c3  | c4  |  c5  |     c6     |        c7        
+----+----+-----+-----+------+------------+------------------
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGH_LMN_XYZ
+(1 row)
+
 -- WHERE #8
 EXECUTE select_t1_where8;
- c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
-----+----+-----+-----+------+------------+----------------------------
-  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
-  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+ c1 | c2 | c3  | c4  |  c5  |     c6     |        c7        
+----+----+-----+-----+------+------------+------------------
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGH_LMN_XYZ
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLM
+  3 | 33 | 333 | 3.3 | 3.33 | third      | XYZOPQRS
 (3 rows)
 
 -- WHERE #9
@@ -385,10 +390,10 @@ EXECUTE select_t2_group3_exe_ng1;
 -- FOREIGN TABLE JOIN
 -- TG JOIN #1
 EXECUTE select_join1;
- c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
-----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
-  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
+ c1 | c2 | c3  | c4  |  c5  |     c6     |      c7       | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
+----+----+-----+-----+------+------------+---------------+----+----+-----+-----+------+------------+-----
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLM |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
+  3 | 33 | 333 | 3.3 | 3.33 | third      | XYZOPQRS      |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
 (2 rows)
 
 -- TG JOIN #2
@@ -420,39 +425,39 @@ EXECUTE select_join3;
 
 -- PG JOIN #6
 EXECUTE select_pg_join_tg6;
- c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  | c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
-----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----+----+----+-----+-----+------+------------+----------------------------
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ |  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+ c1 | c2 | c3  | c4  |  c5  |     c6     |      c7       | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  | c1 | c2 | c3  | c4  |  c5  |     c6     |      c7       
+----+----+-----+-----+------+------------+---------------+----+----+-----+-----+------+------------+-----+----+----+-----+-----+------+------------+---------------
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLM |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ |  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLM
 (1 row)
 
 -- PG JOIN #7
 EXECUTE select_pg_join_tg7;
- c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
-----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+-----
-  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
-  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
-  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
-  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
-  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
-  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
-  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       | 
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       | 
-  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  4 |    |     |     |      | NULL       | 
-  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
-  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
+ c1 | c2 | c3  | c4  |  c5  |     c6     |        c7        | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
+----+----+-----+-----+------+------------+------------------+----+----+-----+-----+------+------------+-----
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGH_LMN_XYZ |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLM    |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
+  3 | 33 | 333 | 3.3 | 3.33 | third      | XYZOPQRS         |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGH_LMN_XYZ |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLM    |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
+  3 | 33 | 333 | 3.3 | 3.33 | third      | XYZOPQRS         |  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGH_LMN_XYZ |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLM    |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
+  3 | 33 | 333 | 3.3 | 3.33 | third      | XYZOPQRS         |  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGH_LMN_XYZ |  4 |    |     |     |      | NULL       | 
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLM    |  4 |    |     |     |      | NULL       | 
+  3 | 33 | 333 | 3.3 | 3.33 | third      | XYZOPQRS         |  4 |    |     |     |      | NULL       | 
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGH_LMN_XYZ |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLM    |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
+  3 | 33 | 333 | 3.3 | 3.33 | third      | XYZOPQRS         |  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
 (15 rows)
 
 -- PG JOIN #8
 EXECUTE select_pg_join_tg8;
- c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             | c1 | c2 | c3  | c4  |  c5  |     c6     |             c7             
-----+----+-----+-----+------+------------+----------------------------+----+----+-----+-----+------+------------+----------------------------
-  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
-  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLMNOPQRSTUVWXYZ
-  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ |  3 | 33 | 333 | 3.3 | 3.33 | third      | ABCDEFGHIJKLMNOPQRSTUVWXYZ
+ c1 | c2 | c3  | c4  |  c5  |     c6     |        c7        | c1 | c2 | c3  | c4  |  c5  |     c6     |        c7        
+----+----+-----+-----+------+------------+------------------+----+----+-----+-----+------+------------+------------------
+  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGH_LMN_XYZ |  1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGH_LMN_XYZ
+  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLM    |  2 | 22 | 222 | 2.2 | 2.22 | second     | ABCDEFGHIJKLM
+  3 | 33 | 333 | 3.3 | 3.33 | third      | XYZOPQRS         |  3 | 33 | 333 | 3.3 | 3.33 | third      | XYZOPQRS
 (3 rows)
 
 /* Test teardown: DDL of the PostgreSQL */

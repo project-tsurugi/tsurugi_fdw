@@ -59,15 +59,15 @@ CREATE FOREIGN TABLE t3_select_statement (
 INSERT INTO
     t1_select_statement(c1, c2, c3, c4, c5, c6, c7)
 VALUES
-    (1, 11, 111, 1.1, 1.11, 'first', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+    (1, 11, 111, 1.1, 1.11, 'first', 'ABCDEFGH_LMN_XYZ');
 INSERT INTO
     t1_select_statement(c1, c2, c3, c4, c5, c6, c7)
 VALUES
-    (2, 22, 222, 2.2, 2.22, 'second', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+    (2, 22, 222, 2.2, 2.22, 'second', 'ABCDEFGHIJKLM');
 INSERT INTO
     t1_select_statement(c1, c2, c3, c4, c5, c6, c7)
 VALUES
-    (3, 33, 333, 3.3, 3.33, 'third', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+    (3, 33, 333, 3.3, 3.33, 'third', 'XYZOPQRS');
 SELECT * FROM t1_select_statement ORDER BY c1;
 
 INSERT INTO
@@ -218,14 +218,14 @@ ORDER BY
 
 -- WHERE #7
 /* tsurugi-issue#1078 (disable due to development) */
-/*SELECT
+SELECT
     *
 FROM
     t1_select_statement
 WHERE
     c7 LIKE '%LMN%'
 ORDER BY
-    c1;*/
+    c1;
 
 -- WHERE #8
 /*

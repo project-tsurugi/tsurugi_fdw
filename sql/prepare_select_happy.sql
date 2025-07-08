@@ -106,8 +106,8 @@ PREPARE select_t2_where6
     AS SELECT * FROM t2_prepare_select_statement WHERE c4 BETWEEN 2.2 AND 5.5 ORDER BY c1;
 -- WHERE #7
 /* tsurugi-issue#1078 (disable due to development) */
-/* PREPARE select_t1_where7
-    AS SELECT * FROM t1_prepare_select_statement WHERE c7 LIKE '%LMN%' ORDER BY c1;*/
+PREPARE select_t1_where7
+    AS SELECT * FROM t1_prepare_select_statement WHERE c7 LIKE '%LMN%' ORDER BY c1;
 -- WHERE #8
 PREPARE select_t1_where8
     AS SELECT * FROM t1_prepare_select_statement WHERE EXISTS (SELECT * FROM t2_prepare_select_statement WHERE c2 = 22) ORDER BY c1;
@@ -152,9 +152,9 @@ PREPARE select_pg_join_tg8
 /***************/
 /*** EXECUTE ***/
 /***************/
-EXECUTE insert_t1 (1, 11, 111, 1.1, 1.11, 'first', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
-EXECUTE insert_t1 (2, 22, 222, 2.2, 2.22, 'second', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
-EXECUTE insert_t1 (3, 33, 333, 3.3, 3.33, 'third', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+EXECUTE insert_t1 (1, 11, 111, 1.1, 1.11, 'first', 'ABCDEFGH_LMN_XYZ');
+EXECUTE insert_t1 (2, 22, 222, 2.2, 2.22, 'second', 'ABCDEFGHIJKLM');
+EXECUTE insert_t1 (3, 33, 333, 3.3, 3.33, 'third', 'XYZOPQRS');
 EXECUTE select_t1_all;
 
 EXECUTE insert_t2 (1, 11, 111, 1.1, 1.11, 'one', 'ABC');
@@ -201,7 +201,7 @@ EXECUTE select_t1_where5;
 EXECUTE select_t2_where6;
 -- WHERE #7
 /* tsurugi-issue#1078 (disable due to development) */
-/* EXECUTE select_t1_where7;*/
+EXECUTE select_t1_where7;
 -- WHERE #8
 EXECUTE select_t1_where8;
 -- WHERE #9
