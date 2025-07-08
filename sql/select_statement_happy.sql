@@ -228,14 +228,14 @@ ORDER BY
     c1;
 
 -- WHERE #8
-/*
-SELECT
+/*SELECT
     *
 FROM
-    t1_select_statement
+    t1_select_statement t1
 WHERE
-    EXISTS (SELECT * FROM t2_select_statement WHERE c2 = 22);
-*/
+    EXISTS (SELECT * FROM t2_select_statement WHERE c2 = t1.c2)
+ORDER BY
+    c1;*/
 -- WHERE #9
 /*	Tsurugi does not yet support "IN(ANY)" clause.
 SELECT
