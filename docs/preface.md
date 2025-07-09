@@ -9,7 +9,7 @@ Tsurugi FDWは、PostgreSQLをユーザインタフェースとしてTsurugiを�
 これにより、PostgreSQLを利用しているユーザは、PostgreSQLが持つライブラリやJDBCドライバを活かしつつTsurugiにアクセスすることができます。  
 
 > [!NOTE]
-> PostgreSQLとTsurugiはアーキテクチャおよびその性質が異なるためTsurugi FDWには[注意事項](./appendixes.md#注意事項)および[制約事項](./appendixes.md#制約事項)があります。  
+> PostgreSQLとTsurugiはアーキテクチャおよびその性質が異なるためTsurugi FDWには[注意事項](./appendixes.md#注意事項)および[制限事項](./appendixes.md#制約事項)があります。  
 > また、Tsurugi FDWはPostgreSQLを経由するオーバーヘッドがかかるため他のTsurugi外部インタフェースと比べてパフォーマンスが劣る点に留意ください。
 
 ### Tsurugi FDWの機能
