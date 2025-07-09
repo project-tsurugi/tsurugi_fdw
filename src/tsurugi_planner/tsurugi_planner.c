@@ -110,7 +110,19 @@ tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 	}
 
 	switch (parse->commandType)
-	{
+	{		
+		case CMD_SELECT:
+		{
+			if ( root->oidlist->length > 1 && !root->hasjoin )
+			{
+				root->hasjoin = true;
+				elog(ERROR, "tsurugi_fdw : tsurugi_fdw doesn't yet support implicit JOIN." );
+			}
+			scan = create_foreign_scan(root);
+			plan = (Plan *) scan;
+			stmt = create_planned_stmt(root, plan);
+			break;
+		}
 		case CMD_INSERT:
 		case CMD_UPDATE:
 		case CMD_DELETE:
@@ -125,8 +137,6 @@ tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
             if (root->parse != NULL && root->parse->rtable != NULL &&
                 is_only_foreign_table(root, root->parse->rtable)) 
             {
-                elog(LOG, "tsurugi_fdw : %s : Selected direct modify.", 
-					__func__);
                 scan = create_foreign_scan(root);
                 modify = create_modify_table(root, scan);
                 plan = (Plan *) modify;
@@ -142,7 +152,6 @@ tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
             }
 			break;
 		}
-		case CMD_SELECT:
 		default:
 		{
 #if PG_VERSION_NUM >= 130000
@@ -484,81 +493,82 @@ create_modify_table(TsurugiPlannerInfo *root, ForeignScan *scan)
 void
 set_target_entry(ForeignScan *scan, TsurugiPlannerInfo *root)
 {
-	List *pte = root->parse->targetList;
+	List *parent_target_list = root->parse->targetList;
 	ListCell *lc = NULL;
+	Var *parent_var = NULL;
 	Var *var = NULL;
-	Var *newvar = NULL;
 	Aggref *aggref = NULL;
-	TargetEntry *newte = NULL;
-	TargetEntry *newfste = NULL;
+	TargetEntry *entry = NULL;
+	TargetEntry *fs_entry = NULL;
 
 	/* attribute number is 1 origin. */
 	int attno = 1;
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
-	foreach(lc, pte)
+	foreach(lc, parent_target_list)
 	{
-		TargetEntry *te = (TargetEntry *) lfirst(lc);
-		Node *node = (Node *) te->expr;
-
+		TargetEntry *parent_entry = (TargetEntry *) lfirst(lc);
+		Node *node = (Node *) parent_entry->expr;
 		switch (nodeTag(node))
 		{
 			case T_Var:
 			{
+				elog(DEBUG3, "tsurugi_fdw : target entry: attno: %d type: T_Var", attno);
 				/* for fdw_scan_tlist */
-				var = (Var *) node;
-				newfste = makeTargetEntry((Expr *) node,
+				parent_var = (Var *) node;
+				fs_entry = makeTargetEntry((Expr *) node,
 											attno,
 											NULL,
-											te->resjunk);
-				scan->fdw_scan_tlist = lappend(scan->fdw_scan_tlist, newfste);
+											parent_entry->resjunk);
+				scan->fdw_scan_tlist = lappend(scan->fdw_scan_tlist, fs_entry);
 				/* for targetlist */
-				newvar = makeVar(var->varno,
+				var = makeVar(parent_var->varno,
 						       attno,
-						       var->vartype,
-						       var->vartypmod,
-						       var->varcollid,
+						       parent_var->vartype,
+						       parent_var->vartypmod,
+						       parent_var->varcollid,
 						       0);
-				newvar->varno = INDEX_VAR;
+				var->varno = INDEX_VAR;
 #if PG_VERSION_NUM >= 130000
-				newvar->varattnosyn = var->varattnosyn;
+				var->varattnosyn = parent_var->varattnosyn;
 #else
-				newvar->varoattno = var->varoattno;
+				var->varoattno = parent_var->varoattno;
 #endif
-				newvar->location = var->location;
-				newte = makeTargetEntry((Expr *) newvar,
+				var->location = parent_var->location;
+				entry = makeTargetEntry((Expr *) var,
 										attno,
-										te->resname,
-										te->resjunk);
-				newte->resorigtbl = te->resorigtbl;
-				newte->resorigcol = te->resorigcol;
-				newte->ressortgroupref = 0;
-				scan->scan.plan.targetlist = lappend(scan->scan.plan.targetlist, newte);
+										parent_entry->resname,
+										parent_entry->resjunk);
+				entry->resorigtbl = parent_entry->resorigtbl;
+				entry->resorigcol = parent_entry->resorigcol;
+				entry->ressortgroupref = 0;
+				scan->scan.plan.targetlist = lappend(scan->scan.plan.targetlist, entry);
 				break;
 			}
 			case T_Aggref:
 			{
+				elog(DEBUG3, "tsurugi_fdw : target entry: attno: %d type: T_Aggref", attno);
 				/* for fdw_scan_tlist */
-				newfste = makeTargetEntry((Expr *) node,
+				fs_entry = makeTargetEntry((Expr *) node,
 										   attno,
 										   NULL,
 										   false);
-				scan->fdw_scan_tlist = lappend(scan->fdw_scan_tlist, newfste);
+				scan->fdw_scan_tlist = lappend(scan->fdw_scan_tlist, fs_entry);
 				/* for targetlist */
 				aggref = (Aggref *) node;
-				newvar = makeVar(INDEX_VAR,
+				var = makeVar(INDEX_VAR,
 								  attno,
 								  aggref->aggtype,
 								  -1,
 								  InvalidOid,
 								  0);
-				newte = makeTargetEntry((Expr *) newvar,
+				entry = makeTargetEntry((Expr *) var,
 										 attno,
-										 te->resname,
-										 te->resjunk);
-				newte->ressortgroupref = 0;
-				scan->scan.plan.targetlist = lappend(scan->scan.plan.targetlist, newte);
+										 parent_entry->resname,
+										 parent_entry->resjunk);
+				entry->ressortgroupref = 0;
+				scan->scan.plan.targetlist = lappend(scan->scan.plan.targetlist, entry);
 				break;
 			}
 			case T_Const:
@@ -581,7 +591,9 @@ set_target_entry(ForeignScan *scan, TsurugiPlannerInfo *root)
 			{
 				if (root->parse->commandType == CMD_SELECT)
 				{
-					elog(NOTICE, "Contains an unsupported TargetEntry.");
+					elog(ERROR, 
+						"tsurugi_fdw : Contains an unsupported target entry. (%d)",
+						nodeTag(node));
 				}
 				break;
 			}
@@ -717,7 +729,7 @@ expand_targetlist(List *tlist, int command_type,
 	 * The rewriter should have already ensured that the TLEs are in correct
 	 * order; but we have to insert TLEs for any missing attributes.
 	 *
-	 * Scan the tuple description in the relation's relcache entry to make
+	 * Scan the tuple description in the relation's relcache parent_entry to make
 	 * sure we have all the user attributes in the right order.
 	 */
 	numattrs = RelationGetNumberOfAttributes(rel);
@@ -745,7 +757,7 @@ expand_targetlist(List *tlist, int command_type,
 		if (new_tle == NULL)
 		{
 			/*
-			 * Didn't find a matching tlist entry, so make one.
+			 * Didn't find a matching tlist parent_entry, so make one.
 			 *
 			 * For INSERT, generate a NULL constant.  (We assume the rewriter
 			 * would have inserted any available default value.) Also, if the

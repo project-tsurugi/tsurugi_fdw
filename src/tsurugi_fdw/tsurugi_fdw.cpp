@@ -192,6 +192,7 @@ PG_FUNCTION_INFO_V1(tsurugi_fdw_handler);
 /*
  * FDW callback routines (Scan)
  */
+#ifndef __TSURUGI_PLANNER__
 static void tsurugiGetForeignRelSize(PlannerInfo* root, 
 									   RelOptInfo* baserel, 
 								   	   Oid foreigntableid);
@@ -205,13 +206,22 @@ static ForeignScan *tsurugiGetForeignPlan(PlannerInfo *root,
 											List *tlist,
 											List *scan_clauses,
 											Plan *outer_plan);
+#endif
 static void tsurugiBeginForeignScan(ForeignScanState* node, int eflags);
 static TupleTableSlot* tsurugiIterateForeignScan(ForeignScanState* node);
 static void tsurugiReScanForeignScan(ForeignScanState* node);
 static void tsurugiEndForeignScan(ForeignScanState* node);
+#ifndef __TSURUGI_PLANNER__
 static void tsurugiGetForeignUpperPaths(PlannerInfo *root, UpperRelationKind stage,
 							 			RelOptInfo *input_rel, RelOptInfo *output_rel,
 							 			void *extra);
+static void tsurugiGetForeignJoinPaths(PlannerInfo *root,
+										RelOptInfo *joinrel,
+										RelOptInfo *outerrel,
+										RelOptInfo *innerrel,
+										JoinType jointype,
+										JoinPathExtraData *extra);
+#endif
 /*
  * FDW callback routines (Insert/Update/Delete)
  */
@@ -274,12 +284,6 @@ static bool tsurugiAnalyzeForeignTable(Relation relation,
 										BlockNumber* totalpages);
 static List* tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt, 
 										  Oid serverOid);
-static void tsurugiGetForeignJoinPaths(PlannerInfo *root,
-										RelOptInfo *joinrel,
-										RelOptInfo *outerrel,
-										RelOptInfo *innerrel,
-										JoinType jointype,
-										JoinPathExtraData *extra);
 #ifdef __cplusplus
 }
 #endif
@@ -296,6 +300,7 @@ static ForeignScan *find_modifytable_subplan(PlannerInfo *root,
 						 					Index rtindex,
 						 					int subplan_index);
 #endif	/* PG_VERSION_NUM >= 140000 */
+static void make_retrieved_attrs(List* telist, List** retrieved_attrs);
 static void store_pg_data_type(TgFdwForeignScanState* fsstate, List* tlist, List** );
 #if !defined (__TSURUGI_PLANNER__)
 static int	get_batch_size_option(Relation rel);
@@ -318,14 +323,20 @@ tsurugi_fdw_handler(PG_FUNCTION_ARGS)
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	/*Functions for scanning foreign tables*/
+#ifndef __TSURUGI_PLANNER__
 	routine->GetForeignRelSize = tsurugiGetForeignRelSize;
 	routine->GetForeignPaths = tsurugiGetForeignPaths;
 	routine->GetForeignPlan = tsurugiGetForeignPlan;
+#endif
 	routine->BeginForeignScan = tsurugiBeginForeignScan;
 	routine->IterateForeignScan = tsurugiIterateForeignScan;
 	routine->ReScanForeignScan = tsurugiReScanForeignScan;
 	routine->EndForeignScan = tsurugiEndForeignScan;
+#ifndef __TSURUGI_PLANNER__
 	routine->GetForeignUpperPaths = tsurugiGetForeignUpperPaths;
+	/* Support functions for join push-down */
+	routine->GetForeignJoinPaths = tsurugiGetForeignJoinPaths;
+#endif
 
 	/*Functions for updating foreign tables*/
 	routine->AddForeignUpdateTargets = tsurugiAddForeignUpdateTargets;
@@ -353,8 +364,6 @@ tsurugi_fdw_handler(PG_FUNCTION_ARGS)
 	routine->BeginForeignInsert = tsurugiBeginForeignInsert;
 	routine->EndForeignInsert = tsurugiEndForeignInsert;
 #endif
-	/* Support functions for join push-down */
-	routine->GetForeignJoinPaths = tsurugiGetForeignJoinPaths;
 
 	ERROR_CODE error = Tsurugi::init();
 	if (error != ERROR_CODE::OK) 
@@ -370,7 +379,7 @@ tsurugi_fdw_handler(PG_FUNCTION_ARGS)
  * FDW Scan functions. 
  * 
  */
-
+#ifndef __TSURUGI_PLANNER__
 /*
  * tsurugiGetForeignRelSize
  */
@@ -545,10 +554,10 @@ tsurugiGetForeignUpperPaths(PlannerInfo *root, UpperRelationKind stage,
 							 RelOptInfo *input_rel, RelOptInfo *output_rel,
 							 void *extra)
 {
-	TgFdwRelationInfo *fpinfo;
+//	TgFdwRelationInfo *fpinfo;
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
-
+#if 0
 	/*
 	 * If input rel is not safe to pushdown, then simply return as we cannot
 	 * perform any post-join operations on the foreign server.
@@ -586,6 +595,7 @@ tsurugiGetForeignUpperPaths(PlannerInfo *root, UpperRelationKind stage,
 			elog(ERROR, "unexpected upper relation: %d", (int) stage);
 			break;
 	}
+#endif
 }
 
 /*
@@ -1046,6 +1056,30 @@ tsurugiGetForeignJoinPaths(PlannerInfo *root,
  	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	/*
+	 * Currently we don't push-down joins in query for UPDATE/DELETE.
+	 * This would require a path for EvalPlanQual.
+	 * This restriction might be relaxed in a later release.
+	 */
+	if (root->parse->commandType != CMD_SELECT)
+	{
+		elog(DEBUG2, "tsurugi_fdw: don't push down join because it is no SELECT");
+		return;
+	}
+
+	if (root->rowMarks)
+	{
+		elog(DEBUG2, "tsurugi_fdw: don't push down join with FOR UPDATE");
+		return;
+	}
+
+	/*
+	 * N-way join is not supported, due to the column definition infrastracture.
+	 * If we can track relid mapping of join relations, we can support N-way join.
+	 */
+	if (! IS_SIMPLE_REL(outerrel) || ! IS_SIMPLE_REL(innerrel))
+		return;	
+
+	/*
 	 * Skip if this join combination has been considered already.
 	 */
 	if (joinrel->fdw_private)
@@ -1161,7 +1195,7 @@ tsurugiGetForeignJoinPaths(PlannerInfo *root,
 
 	/* XXX Consider parameterized paths for the join relation */
 }                            
-
+#endif
 /**
  *  @brief  Preparation for scanning foreign tables.
  */
@@ -1193,11 +1227,17 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
     node->fdw_state = (void*) fsstate;
     fsstate->rowidx = 0;
 	fsstate->number_of_columns = 0;
+#ifdef __TSURUGI_PLANNER__
+	fsstate->query_string = estate->es_sourceText;
+	make_retrieved_attrs(fsplan->scan.plan.targetlist, &fsstate->retrieved_attrs);
+#else
 	fsstate->query_string = strVal(list_nth(fsplan->fdw_private,
 									FdwScanPrivateSelectSql));
 	fsstate->retrieved_attrs = (List*) list_nth(fsplan->fdw_private, 
 												FdwScanPrivateRetrievedAttrs);
+#endif
   	fsstate->cursor_exists = false;
+	fsstate->param_linfo = estate->es_param_list_info;
 
 	/*
 	 * Get info we'll need for converting data fetched from the foreign server
@@ -2373,6 +2413,27 @@ find_modifytable_subplan(PlannerInfo *root,
 }
 #endif  // PG_VERSION_NUM >= 140000
 
+static void
+make_retrieved_attrs(List* telist, List** retrieved_attrs)
+{
+	ListCell *lc;
+	int i;
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
+	*retrieved_attrs = NIL;
+
+	i = 0;
+	foreach (lc, telist)
+	{
+		TargetEntry* entry = (TargetEntry*) lfirst(lc);
+		elog(DEBUG3, "tsurugi_fdw : %s : attr_number: %d, res_name: %s, resno: %d, resorigcol: %d", 
+			__func__, i, entry->resname, entry->resno, entry->resorigcol);
+		*retrieved_attrs = lappend_int(*retrieved_attrs, i + 1);
+		i++;
+	}
+}
+
 /*
  * 	@biref	Scanning data type of target list from PG tables.
  * 	@param	[in/out] Store data type information.
@@ -2394,6 +2455,7 @@ store_pg_data_type(TgFdwForeignScanState* fsstate, List* tlist, List** retrieved
 	if (tlist != NULL)
 	{
 		Oid *data_types = (Oid *) palloc(sizeof(Oid) * tlist->length + 1);
+
 
 		int i = 0;
 		int count = 0;
