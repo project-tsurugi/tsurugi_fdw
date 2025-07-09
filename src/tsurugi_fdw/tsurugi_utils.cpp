@@ -132,12 +132,26 @@ make_tuple_from_result_row(ResultSetPtr result_set,
  *  @param  
  *  @return	
  */
+std::string removeSqlComments(const std::string& query) {
+    std::regex commentPattern(R"((--[^\n]*)|(/\*[\s\S]*?\*/))");
+    
+    std::string result = std::regex_replace(query, commentPattern, "");
+    
+    return result;
+}
+
+/**
+ *  @brief  
+ *  @param  
+ *  @return	
+ */
 bool
 is_prepare_statement(const char* query)
 {
-    return (boost::algorithm::icontains(query, "prepare ") 
-                || boost::algorithm::icontains(query, "$") 
-                || boost::algorithm::icontains(query, ":param"));
+    auto sql = removeSqlComments(query);
+    return (boost::algorithm::icontains(sql, "prepare ") 
+                || boost::algorithm::icontains(sql, "$") 
+                || boost::algorithm::icontains(sql, ":param"));
 }
 
 /**
@@ -149,7 +163,7 @@ is_prepare_statement(const char* query)
 static std::pair<std::string, std::string>
 make_prepare_statement(const char* query)
 {
-    std::string orig_query{query};
+    auto orig_query = removeSqlComments(query);
     std::string prep_name{};
     std::string prep_stmt{};
     if (boost::algorithm::icontains(orig_query, "prepare "))
@@ -175,20 +189,23 @@ make_prepare_statement(const char* query)
     elog(LOG, "tsurugi_fdw : prep_name: %s,\nprepare statement = \n%s", 
         prep_name.c_str(), prep_stmt.c_str());
 
-    try {
-        // Replace place holder characters.
-        size_t pos = 0;
-        size_t offset = 0;
-        std::string from{"$"};
-        std::string to{":param"};
-        while ((pos = prep_stmt.find(from, offset)) != std::string::npos) {
-            prep_stmt.replace(pos, from.length(), to);
-            offset = pos + to.length();
+    if (boost::algorithm::icontains(query, "$") )
+    {
+        try {
+            // Replace place holder characters.
+            size_t pos = 0;
+            size_t offset = 0;
+            std::string from{"$"};
+            std::string to{":param"};
+            while ((pos = prep_stmt.find(from, offset)) != std::string::npos) {
+                prep_stmt.replace(pos, from.length(), to);
+                offset = pos + to.length();
+            }
+        } catch (const std::logic_error& e) {
+            elog(ERROR, "tsurugi_fdw : A logic_error exception occurred. what: %s", e.what());
+        } catch (const std::exception& e) {
+            elog(ERROR, "tsurugi_fdw : An exception occurred. what: %s", e.what());          
         }
-    } catch (const std::logic_error& e) {
-        elog(ERROR, "tsurugi_fdw : A logic_error exception occurred. what: %s", e.what());
-    } catch (const std::exception& e) {
-        elog(ERROR, "tsurugi_fdw : An exception occurred. what: %s", e.what());          
     }
     elog(LOG, "tsurugi_fdw : prep_name: %s,\nprepare statement = \n%s", 
         prep_name.c_str(), prep_stmt.c_str());
@@ -196,34 +213,7 @@ make_prepare_statement(const char* query)
     return std::make_pair(prep_name, prep_stmt);
 }
 
-/**
- *  @brief  Set placeholders of prepare statement.
- *  @param  (fdw_exprs) parameter node list.
- *  @return	placeholders_type object.
- */
-static ogawayama::stub::placeholders_type
-make_placeholders(List* fdw_exprs)
-{
-    stub::placeholders_type placeholders{};    
-	ListCell   *lc;
-    
-    elog(DEBUG3, "tsurugi_fdw : %s", __func__);
-
-	int i = 0;
-	foreach(lc, fdw_exprs)
-	{
-		Node*   param_expr = (Node*) lfirst(lc);
-    
-        /* parameter name is 1 origin. */
-        std::string param_name = "param" + std::to_string(i+1);
-        placeholders.emplace_back(param_name, 
-            Tsurugi::get_tg_column_type(exprType(param_expr)));
-		i++;
-	}
-
-    return placeholders;
-}
-
+#ifdef __TSURUGI_PLANNER__
 /**
  *  @brief  Set placeholders of prepare statement.
  *  @param  (fdw_exprs) parameter node list.
@@ -232,8 +222,9 @@ make_placeholders(List* fdw_exprs)
 static ogawayama::stub::placeholders_type
 make_placeholders(ParamListInfo param_linfo)
 {
-    stub::placeholders_type placeholders{};
+ 	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
+    stub::placeholders_type placeholders{};
     if (param_linfo != nullptr)
     {
         for (auto i = 0; i < param_linfo->numParams; i++)
@@ -244,10 +235,41 @@ make_placeholders(ParamListInfo param_linfo)
                 Tsurugi::get_tg_column_type(param_linfo->params[i].ptype);
             placeholders.emplace_back(param_name, tg_type);
         }
+        elog(DEBUG1, "tsurugi_fdw : placeholders: %d", param_linfo->numParams);
     }
 
     return placeholders;
 }
+#else
+/**
+ *  @brief  Set placeholders of prepare statement.
+ *  @param  (fdw_exprs) parameter node list.
+ *  @return	placeholders_type object.
+ */
+static ogawayama::stub::placeholders_type
+make_placeholders(List* fdw_exprs)
+{
+ 	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
+    stub::placeholders_type placeholders{};  
+	ListCell   *lc;
+	int i = 0;
+	foreach(lc, fdw_exprs)
+	{
+		Node*   param_expr = (Node*) lfirst(lc);
+    
+        /* parameter name is 1 origin. */
+        std::string param_name = "param" + std::to_string(i+1);
+        placeholders.emplace_back(
+            param_name, 
+            Tsurugi::get_tg_column_type(exprType(param_expr)));
+		i++;
+	}
+    elog(DEBUG1, "tsurugi_fdw : placeholders: %d", i);
+
+    return placeholders;
+}
+#endif
 
 /**
  *  @brief  Prepare a statement to tsurugidb.
@@ -257,12 +279,38 @@ make_placeholders(ParamListInfo param_linfo)
  *  @return	(first)     prepare name.
  *          (second)    prepare statement.
  */
+#ifdef __TSURUGI_PLANNER__
+/**
+ *  @brief  Prepare a statement to tsurugidb.
+ *  @param  (query) original query.
+ *  @return	(first)     prepare name.
+ *          (second)    prepare statement.
+ */
+static std::pair<std::string, std::string>
+tsurugi_prepare_wrapper(const char* query, 
+                        ParamListInfo param_linfo)
+{
+ 	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
+    auto prep = make_prepare_statement(query);
+    auto placeholders = make_placeholders(param_linfo);
+    auto prep_stmt = make_tsurugi_query(prep.second);
+	ERROR_CODE error = Tsurugi::prepare(prep_stmt, placeholders);
+	if (error != ERROR_CODE::OK)
+	{
+		Tsurugi::report_error("Failed to prepare the statement to Tsurugi.", 
+								error, prep_stmt);
+	}
+
+    return prep;
+}
+#else
 static std::pair<std::string, std::string>
 tsurugi_prepare_wrapper(const char* query, 
                         PlanState* node, 
                         List* fdw_exprs)
 {
- 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+ 	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
     auto prep = make_prepare_statement(query);
     auto placeholders = make_placeholders(fdw_exprs);
@@ -276,7 +324,42 @@ tsurugi_prepare_wrapper(const char* query,
 
     return prep;
 }
+#endif
+#ifdef __TSURUGI_PLANNER__
+/**
+ *  @brief  Bind parameters of a prepared statement.
+ *  @param  (param_linfo) ParamListInfo structure.
+ *  @return	parameters_type object.
+ */
+static ogawayama::stub::parameters_type
+bind_parameters(ParamListInfo param_linfo)
+{
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
+    stub::parameters_type params{};
+    if (param_linfo != nullptr)
+    {
+        for (auto i = 0; i < param_linfo->numParams; i++)
+        {	
+            /* parameter number is 1 origin. */
+            auto param_name = "param" + std::to_string(i+1);
+            ParamExternData param = param_linfo->params[i];
+            if (param.isnull)
+            {
+                std::monostate mono{};
+                params.emplace_back(param_name, mono);
+            }
+            else
+            {
+                auto value = Tsurugi::convert_type_to_tg(param.ptype, param.value);
+                params.emplace_back(param_name, value);
+            }
+        }
+    }
+
+    return params;
+}
+#else
 /**
  *  @brief  Bind parameters of a prepared statement.
  *  @param  (econtext)  Pointer toExprContext structure.
@@ -317,7 +400,6 @@ bind_parameters(ExprContext* econtext,
         }
 		else
         {
-//          Oid typoid = ((Param *)expr_state->expr)->paramtype;
             Oid typoid = exprType((Node*) expr_state->expr);
  			auto value = Tsurugi::convert_type_to_tg(typoid, expr_value);
             params.emplace_back(param_name, value);
@@ -330,40 +412,7 @@ bind_parameters(ExprContext* econtext,
 
     return params;
 }
-
-
-/**
- *  @brief  Bind parameters of a prepared statement.
- *  @param  (param_linfo) ParamListInfo structure.
- *  @return	parameters_type object.
- */
-static ogawayama::stub::parameters_type
-bind_parameters(ParamListInfo param_linfo)
-{
-    Assert(param_linfo != nullptr);
-
-	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
-
-    stub::parameters_type params{};
-    for (auto i = 0; i < param_linfo->numParams; i++)
-    {	
-        /* parameter number is 1 origin. */
-        auto param_name = "param" + std::to_string(i+1);
-        ParamExternData param = param_linfo->params[i];
-        if (param.isnull)
-        {
-            std::monostate mono{};
-            params.emplace_back(param_name, mono);
-        }
-        else
-        {
-            auto value = Tsurugi::convert_type_to_tg(param.ptype, param.value);
-            params.emplace_back(param_name, value);
-        }
-    }
-
-    return params;
-}
+#endif
 
 /**
  *  @brief  Execute the query.
@@ -376,19 +425,15 @@ create_cursor(ForeignScanState* node)
  	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	TgFdwForeignScanState* fsstate = (TgFdwForeignScanState*) node->fdw_state;
-	ExprContext *econtext = node->ss.ps.ps_ExprContext;
-
-    ForeignScan* fsplan = (ForeignScan*) node->ss.ps.plan;
-    if (fsstate->numParams > 0)
+//	ExprContext *econtext = node->ss.ps.ps_ExprContext;
+//    ForeignScan* fsplan = (ForeignScan*) node->ss.ps.plan;
+    if (is_prepare_statement(fsstate->query_string))
     {
         // Prepare the statement.
         auto prep = tsurugi_prepare_wrapper(fsstate->query_string, 
-                                            (PlanState *) node,
-                                            fsplan->fdw_exprs);
+                                            fsstate->param_linfo);
         // Execute the prepared statement.
-        auto params = bind_parameters(econtext, 
-                                        fsstate->param_exprs,
-                                        fsstate->param_flinfo);
+        auto params = bind_parameters(fsstate->param_linfo);
 
         elog(LOG, "tsurugi_fdw : Execute the prepared statement \nstmt:\n%s", 
             prep.second.c_str());                                    

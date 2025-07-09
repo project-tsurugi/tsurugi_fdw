@@ -50,7 +50,8 @@ typedef struct TgFdwForeignScanState
 	bool 			cursor_exists;		/* have we created the cursor? */
     int             numParams;          /* number of parameters passed to query */
     FmgrInfo*       param_flinfo;       /* output conversion functions for them */
-    List*           param_exprs;        /* executable expressions for param values */
+	ParamListInfo 	param_linfo;
+	List*           param_exprs;        /* executable expressions for param values */
 	size_t 			number_of_columns;	/* Number of columns to SELECT */
 	Oid* 			column_types; 		/* Pointer to the data type (Oid) of the column to be SELECT */
 
