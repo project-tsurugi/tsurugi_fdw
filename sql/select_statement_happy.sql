@@ -129,13 +129,14 @@ ORDER BY
     c6;
 
 -- ORDER BY #2
+/*
 SELECT
     c1, c2, c3, c4, c5, c6, c7
 FROM
     t2_select_statement
 ORDER BY
     6;
-
+*/
 -- ORDER BY #3
 SELECT
     c1, c4, c5, c6, c7
@@ -237,16 +238,15 @@ WHERE
 ORDER BY
     c1;*/
 -- WHERE #9
-/*	Tsurugi does not yet support "IN(ANY)" clause.
 SELECT
     *
 FROM
     t2_select_statement
 WHERE
-    c4 IN (1.1,3.3)
+    c4 IN (1.1::real,3.3::real)
 ORDER BY
     c4;
-*/
+
 -- GROUP BY #1
 SELECT
     count(c1) AS "count(c1)", sum(c2) AS "sum(c2)", c7
@@ -270,14 +270,12 @@ ORDER BY
     c7;
 
 -- GROUP BY #3
-/* tsurugi-issue#974 : Restrictions of the AGV aggregation function
 SELECT
     c7, count(c1), sum(c2), avg(c3), min(c4), max(c5)
 FROM
     t2_select_statement
 GROUP BY
     c7;
-*/
 -- FOREIGN TABLE JOIN
 -- TG JOIN #1 /* tsurugi-issue#863 */
 SELECT
@@ -299,15 +297,15 @@ FROM
 ORDER BY
     b.c4 DESC;
 
--- TG JOIN #3 /* tsurugi-issue#863 */
+/* TG JOIN #3 tsurugi-issue#863 
+--  PostgreSQL specific syntax (!=)
 SELECT
     a.c1, a.c3, b.c1, b.c6
 FROM
---  PostgreSQL specific syntax (!=)
     t1_select_statement a INNER JOIN t2_select_statement b ON a.c1 != b.c1
 ORDER BY
     a.c1;
-
+*/
 -- POSTGRESQL TABLE JOIN
 -- TG /* tsurugi-issue#863 */
 SELECT

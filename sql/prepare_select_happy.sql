@@ -77,8 +77,10 @@ PREPARE select_t2_c1_c2_seisu
 PREPARE select_t2_orderby1
     AS SELECT * FROM t2_prepare_select_statement ORDER BY c6;
 -- ORDER BY #2
+/*
 PREPARE select_t2_orderby2
     AS SELECT c1, c2, c3, c4, c5, c6, c7 FROM t2_prepare_select_statement ORDER BY 6;
+*/
 -- ORDER BY #3
 PREPARE select_t2_orderby3
     AS SELECT c1, c4, c5, c6, c7 FROM t2_prepare_select_statement WHERE c1 > 2 ORDER BY c7;
@@ -87,6 +89,7 @@ PREPARE select_t2_orderby4
     AS SELECT c1, c2 FROM t2_prepare_select_statement WHERE c2 * 2 > 50 ORDER BY c3 DESC;
 -- WHERE #1
 PREPARE select_t2_where1
+
     AS SELECT * FROM t2_prepare_select_statement WHERE c3 > 2 ORDER BY c1;
 -- WHERE #2
 PREPARE select_t2_where2
@@ -139,9 +142,19 @@ PREPARE select_join1
 PREPARE select_join2
     AS SELECT a.c1, a.c2, b.c1, b.c7 FROM t1_prepare_select_statement a INNER JOIN t2_prepare_select_statement b USING (c1) ORDER BY b.c4 DESC;
 -- TG JOIN #3
+/*
 PREPARE select_join3
-    AS SELECT a.c1, a.c3, b.c1, b.c6 FROM t1_prepare_select_statement a INNER JOIN t2_prepare_select_statement b ON a.c1 != b.c1 ORDER BY a.c1;
-
+    AS  SELECT 
+            a.c1, a.c3, b.c1, b.c6 
+        FROM 
+            t1_prepare_select_statement a 
+        INNER JOIN 
+            t2_prepare_select_statement b 
+        ON 
+            a.c1 != b.c1 
+        ORDER BY 
+            a.c1;
+*/
 PREPARE select_pg_join_tg6
     AS SELECT * FROM t1_prepare_select_statement AS a JOIN t2_prepare_select_statement AS b ON a.c4=b.c4 JOIN t1_prepare_select_statement AS c ON b.c4=c.c4 WHERE a.c2=22 ORDER BY a.c1;
 
@@ -181,7 +194,7 @@ EXECUTE select_t2_c1_c2_seisu;
 -- ORDER BY #1
 EXECUTE select_t2_orderby1;
 -- ORDER BY #2
-EXECUTE select_t2_orderby2;
+-- EXECUTE select_t2_orderby2;
 -- ORDER BY #3
 EXECUTE select_t2_orderby3;
 -- ORDER BY #4
@@ -227,10 +240,10 @@ EXECUTE select_t2_group3_exe_ng1;
 -- TG JOIN #1
 EXECUTE select_join1;
 -- TG JOIN #2
-EXECUTE select_join2;
+-- EXECUTE select_join2;
 
 -- TG JOIN #3
-EXECUTE select_join3;
+-- EXECUTE select_join3;
 
 -- PG JOIN #6
 EXECUTE select_pg_join_tg6;

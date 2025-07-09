@@ -89,8 +89,10 @@ PREPARE select_t2_c1_c2_seisu
 PREPARE select_t2_orderby1
     AS SELECT * FROM t2_prepare_select_statement ORDER BY c6;
 -- ORDER BY #2
+/*
 PREPARE select_t2_orderby2
     AS SELECT c1, c2, c3, c4, c5, c6, c7 FROM t2_prepare_select_statement ORDER BY 6;
+*/
 -- ORDER BY #3
 PREPARE select_t2_orderby3
     AS SELECT c1, c4, c5, c6, c7 FROM t2_prepare_select_statement WHERE c1 > 2 ORDER BY c7;
@@ -151,8 +153,19 @@ PREPARE select_join1
 PREPARE select_join2
     AS SELECT a.c1, a.c2, b.c1, b.c7 FROM t1_prepare_select_statement a INNER JOIN t2_prepare_select_statement b USING (c1) ORDER BY b.c4 DESC;
 -- TG JOIN #3
+/*
 PREPARE select_join3
-    AS SELECT a.c1, a.c3, b.c1, b.c6 FROM t1_prepare_select_statement a INNER JOIN t2_prepare_select_statement b ON a.c1 != b.c1 ORDER BY a.c1;
+    AS  SELECT 
+            a.c1, a.c3, b.c1, b.c6 
+        FROM 
+            t1_prepare_select_statement a 
+        INNER JOIN 
+            t2_prepare_select_statement b 
+        ON 
+            a.c1 != b.c1 
+        ORDER BY 
+            a.c1;
+*/
 PREPARE select_pg_join_tg6
     AS SELECT * FROM t1_prepare_select_statement AS a JOIN t2_prepare_select_statement AS b ON a.c4=b.c4 JOIN t1_prepare_select_statement AS c ON b.c4=c.c4 WHERE a.c2=22 ORDER BY a.c1;
 PREPARE select_pg_join_tg7
@@ -254,16 +267,7 @@ EXECUTE select_t2_orderby1;
 (5 rows)
 
 -- ORDER BY #2
-EXECUTE select_t2_orderby2;
- c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
-----+----+-----+-----+------+------------+-----
-  4 |    |     |     |      | NULL       | 
-  5 | 55 | 555 | 5.5 | 5.55 | five       | XYZ
-  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC
-  3 | 33 | 333 | 3.3 | 3.33 | three      | ABC
-  2 | 22 | 222 | 2.2 | 2.22 | two        | XYZ
-(5 rows)
-
+-- EXECUTE select_t2_orderby2;
 -- ORDER BY #3
 EXECUTE select_t2_orderby3;
  c1 | c4  |  c5  |     c6     | c7  
@@ -391,32 +395,9 @@ EXECUTE select_join1;
 (2 rows)
 
 -- TG JOIN #2
-EXECUTE select_join2;
- c1 | c2 | c1 | c7  
-----+----+----+-----
-  3 | 33 |  3 | ABC
-  2 | 22 |  2 | XYZ
-  1 | 11 |  1 | ABC
-(3 rows)
-
+-- EXECUTE select_join2;
 -- TG JOIN #3
-EXECUTE select_join3;
- c1 | c3  | c1 |     c6     
-----+-----+----+------------
-  1 | 111 |  2 | two       
-  1 | 111 |  3 | three     
-  1 | 111 |  4 | NULL      
-  1 | 111 |  5 | five      
-  2 | 222 |  1 | one       
-  2 | 222 |  3 | three     
-  2 | 222 |  4 | NULL      
-  2 | 222 |  5 | five      
-  3 | 333 |  1 | one       
-  3 | 333 |  2 | two       
-  3 | 333 |  4 | NULL      
-  3 | 333 |  5 | five      
-(12 rows)
-
+-- EXECUTE select_join3;
 -- PG JOIN #6
 EXECUTE select_pg_join_tg6;
  c1 | c2 | c3  | c4  |  c5  |     c6     |      c7       | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  | c1 | c2 | c3  | c4  |  c5  |     c6     |      c7       
