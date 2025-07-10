@@ -1,4 +1,4 @@
-# tsurugi_fdw ドキュメント
+# tsurugi_fdw
 
 ## 概要
 
