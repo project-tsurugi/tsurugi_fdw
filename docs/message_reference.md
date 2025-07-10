@@ -5,43 +5,29 @@
 Tsurugi FDWが異常時に出力するメッセージについて説明します。  
 メッセージのSQLSTATE値はすべてinternal_errorを示す `XX000` となります。  
 その他のメッセージはPostgreSQLのメッセージ仕様に準じます。
-詳細は [PostgreSQLのドキュメント](https://www.postgresql.jp/document/12/html/errcodes-appendix.html) を参照してください。
 
 ### Tsurugi FDWのエラーメッセージ
 
-Tsurugi FDWからTsurugiの操作中に異常が発生した場合に返されるメッセージです。
-エラーの詳細および対処はメッセージ中の *<error_code>* から判断します。
+PostgreSQLからTsurugiにアクセスした際にエラーが発生すると以下のようなエラーメッセージが出力されます。
 
-- **メッセージ**  
-"Failed to make the Ogawayama Stub. (error: *<error_code>*)"  
-"Failed to connect to Tsurugi. (error: *<error_code>*)"  
-"Failed to begin the Tsurugi transaction. (error: *<error_code>*)"  
-"Failed to commit the Tsurugi transaction. (error: *<error_code>*)"  
-"Failed to rollback the Tsurugi transaction. (error: *<error_code>*)"  
-"Failed to prepare SQL statement to Tsurugi. (error: *<error_code>*)"  
-"Failed to execute statement to Tsurugi. (error: *<error_code>*)"  
-"Failed to execute query to Tsurugi. (error: *<error_code>*)"  
-"Failed to retrieve result set from Tsurugi. (error: *<error_code>*)"  
-"Failed to retrieve table list from Tsurugi. (error: *<error_code>*)"  
-"Failed to retrieve table metadata from Tsurugi. (error: *<error_code>*)"  
+```sql
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the query on Tsurugi. error: (エラー名、エラー番号)
+Tsurugi Error: （Tsurugiからのエラーメッセージ）
+CONTEXT:  SQL query: （Tsurugiに送信した実際のSQL文）
+```
 
+例）PostgreSQL固有の命令文を実行した場合（`SELECT DISTINCT ON`）
 
-- **エラーコード**  
+```sql
+tsurugi=# SELECT DISTINCT ON (id) id, name FROM test_table1 ORDER BY id;
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "ON", expected one of {(, *, +, -, ?, ...}" region:"region(begin=16, end=18)")
+CONTEXT:  SQL query: SELECT DISTINCT ON (id) id, name FROM test_table1 ORDER BY id
+```
 
-    | error_code | 意味 |
-    | :-: | :- |
-    | 4 | Tsurugi FDWで内部エラーが発生しました。内部エラーが`COLUMN_TYPE_MISMATCH`であることを示す追加情報が出力されます。 |
-    | 5 | Tsurugi FDWがサポートしていないSQL文が実行されました（`UNSUPPORTED`）。</BR>Tsurugi FDWがサポートするSQL文については[リファレンス（SQL）](./sql_reference.md)を確認ください。 |
-    | 6 | Tsurugi FDWで内部エラーが発生しました。内部エラーが`NO_TRANSACTION`であることを示す追加情報が出力されます。 |
-    | 7 | Tsurugi FDWで内部エラーが発生しました。内部エラーが`INVALID_PARAMETER`であることを示す追加情報が出力されます。 |
-    | 8 | Tsurugi FDWで内部エラーが発生しました。内部エラーが`FILE_IO_ERROR`であることを示す追加情報が出力されます。 |
-    | 9 | Tsurugi FDWで内部エラーが発生しました。内部エラーが`UNKNOWN`であることを示す追加情報が出力されます。 |
-    | 10 | Tsurugi FDWで内部エラーが発生しました。内部エラーが`SERVER_FAILURE`であることを示す追加情報が出力されます。 |
-    | 11 | Tsurugi FDWで内部エラーが発生しました。内部エラーが`TIMEOUT`であることを示す追加情報が出力されます。 |
-    | 12 | Tsurugi FDWで内部エラーが発生しました。内部エラーが`TRANSACTION_ALREADY_STARTED`であることを示す追加情報が出力されます。 |
-    | 13 | Tsurugiでエラーが発生しました。Tsurugiのエラー情報が追加情報として出力されます。</BR>Tsurugiのエラー情報については[Error Code of Tsurugi Services](https://github.com/project-tsurugi/tsurugidb/blob/master/docs/error-code-tsurugi-services.md)を確認ください。 |
-
-- **その他のメッセージ**
+- **その他メッセージ**
 
   - **"This database is for Tsurugi, so CREATE TABLE is not supported"**  
     Tsurugi FDWをインストールしたデータベースにPostgreSQLのテーブルは作成できません。  

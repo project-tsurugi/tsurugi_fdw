@@ -20,13 +20,15 @@
 #include <string_view>
 #include <unordered_map>
 
+#include <boost/multiprecision/cpp_int.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
 
+#include "tsurugi.h"
 #include "ogawayama/stub/error_code.h"
 #include "ogawayama/stub/api.h"
-#include "tsurugi.h"
+#include "tg_numeric.h"
 
 using namespace ogawayama;
 
@@ -35,15 +37,17 @@ namespace tg_metadata = jogasaki::proto::sql::common;
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "postgres.h"
-#include "utils/elog.h"
+#include "access/htup_details.h"
+#include "catalog/pg_type.h"
 #include "storage/proc.h"
-
-#ifdef PG_MODULE_MAGIC
-PG_MODULE_MAGIC;
-#endif
-
+#include "utils/builtins.h"
+#include "utils/date.h"
+#include "utils/datetime.h"
+#include "utils/elog.h"
+#include "utils/lsyscache.h"
+#include "utils/numeric.h"
+#include "utils/syscache.h"
+#include "utils/timestamp.h"
 #ifdef __cplusplus
 }
 #endif
@@ -51,21 +55,21 @@ PG_MODULE_MAGIC;
 StubPtr Tsurugi::stub_ = nullptr;
 ConnectionPtr Tsurugi::connection_ = nullptr;
 TransactionPtr Tsurugi::transaction_ = nullptr;
+ResultSetPtr Tsurugi::result_set_ = nullptr;
+MetadataPtr Tsurugi::metadata_ = nullptr;
+std::unordered_map<std::string, PreparedStatementPtr> Tsurugi::prepared_statements_;
+PreparedStatementPtr Tsurugi::prepared_statement_ = nullptr;
 
 bool GetTransactionOption(boost::property_tree::ptree&);
-bool IsTransactionProgress();
 
-extern PreparedStatementPtr prepared_statement;
-extern stub::parameters_type parameters;
-extern std::string stmts_name;
-extern std::map<std::string, PreparedStatementPtr> stored_prepare_statment;
-
-/*
- *  get_shared_memory_name
+/**
+ *  @brief 	
+ *  @param 	
+ *  @return	
  */
 std::string get_shared_memory_name()
 {
-    std::string name(ogawayama::common::param::SHARED_MEMORY_NAME);  
+    std::string name{ogawayama::common::param::SHARED_MEMORY_NAME};
     boost::property_tree::ptree pt;
     const boost::filesystem::path conf_file("tsurugi_fdw.conf");
     boost::system::error_code error;
@@ -83,317 +87,435 @@ std::string get_shared_memory_name()
     return name;
 }
 
-/*
- * init
+/**
+ *  @brief 	Initialize ogawayama stub.
+ *  @param 	none.
+ *  @return	error code of ogawayama.
  */
 ERROR_CODE Tsurugi::init()
 {
-	ERROR_CODE error = ERROR_CODE::UNKNOWN;
+	auto error{ERROR_CODE::UNKNOWN};
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
     if (stub_ == nullptr)
 	{
         std::string shared_memory_name(get_shared_memory_name());
-		elog(DEBUG1, "Attempt to call make_stub(). (shared memory: %s)", 
-            shared_memory_name.c_str());
+
+		elog(LOG, "tsurugi_fdw : Attempt to call make_stub(). (name: %s)", 
+            shared_memory_name.data());
 
 		error = make_stub(stub_, shared_memory_name);
+		Tsurugi::error_log2(LOG, "make_stub() is done.", error);		
 		if (error != ERROR_CODE::OK) 
         {
-            elog(ERROR, "Failed to make the Ogawayama Stub. (error: %d)",
-                (int) error);
             stub_ = nullptr;
-			return error;
+			Tsurugi::report_error("Failed to make shared memory for Tsurugi.", 
+									error, nullptr);
 		}
-
-		elog(LOG, "make_stub() succeeded. (shared memory: %s)",
-            shared_memory_name.c_str());
+		connection_ = nullptr;
 	}
 
 	if (connection_ == nullptr) 
     {
-		elog(DEBUG1, "Attempt to call Stub::get_connection(). (pid: %d)", getpid());
+		elog(LOG, "tsurugi_fdw : Attempt to call Stub::get_connection(). (pid: %d)", 
+			getpid());
 
 		error = stub_->get_connection(getpid(), connection_);
+		Tsurugi::error_log2(LOG, "Stub::get_connection() is done.", error);		
 		if (error != ERROR_CODE::OK)
 		{
-            elog(ERROR, "Failed to connect to Tsurugi. (error: %d)",
-                (int) error);
             connection_ = nullptr;
-			return error;
+			Tsurugi::report_error("Failed to connecto to Tsurugi.", error, nullptr);
 		}
-
-        elog(LOG, "Stub::get_connection() succeeded. (pid: %d)", 
-            getpid());
+		transaction_ = nullptr;
 	}
 
-	error = ERROR_CODE::OK;
-
-	return error;
+	return ERROR_CODE::OK;
 }
 
-/*
- * get_connection
- */
-ERROR_CODE Tsurugi::get_connection(stub::Connection** connection) 
-{
-    ERROR_CODE error = init();
-    if (error == ERROR_CODE::OK)
-    {
-        *connection = connection_.get();
-    }
-    return error;
-}
-
-/*
- *	prepare
- */
-ERROR_CODE Tsurugi::prepare(std::string_view sql, stub::placeholders_type& placeholders, PreparedStatementPtr& prepared_statement)
-{
-    ERROR_CODE error = ERROR_CODE::UNKNOWN;
-
-    if (connection_ == nullptr)
-    {
-        elog(DEBUG1, "Attempt to call Tsurugi::init(). (pid: %d)", getpid());
-
-        error = init();
-
-        if (error != ERROR_CODE::OK)
-        {
-            elog(ERROR, "there can not connect to Tsurugi.");
-            return error;
-        }
-    }
-
-    elog(DEBUG1, "Attempt to call Connection::prepare(). (pid: %d)", getpid());
-    elog(LOG, "sql = \n%s", sql.data());
-
-    error = connection_->prepare(sql, placeholders, prepared_statement);
-
-    elog(LOG, "Connection::prepare() done. (error: %d)", (int) error);
-
-    return error;
-}
-
-/*
- *	start_transaction
+/**
+ *  @brief 	Begin a transaction of tsurugidb.
+ *  @param 	none.
+ *  @return	error code of ogawayama.
  */
 ERROR_CODE Tsurugi::start_transaction()
 {
-	ERROR_CODE error = ERROR_CODE::UNKNOWN;
+	auto error{ERROR_CODE::UNKNOWN};
 
-	if (IsTransactionProgress()) {
-	    elog(LOG, "there is tsurugi transaction block in progress.");
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
+	if (transaction_ != nullptr) {
+	    elog(NOTICE, "tsurugi_fdw : There is already transaction block in progress.");
 	    return ERROR_CODE::OK;
 	}
 
-    if (connection_ != nullptr)
-    {
-        boost::property_tree::ptree option;
-        GetTransactionOption(option);
+	if (connection_ == nullptr)
+		Tsurugi::init();
 
-        elog(DEBUG1, "Attempt to call Connection::begin(). (pid: %d)", getpid());
+	boost::property_tree::ptree option;
+	GetTransactionOption(option);
 
-        error = connection_->begin(option, transaction_);
+	elog(LOG, "tsurugi_fdw : Attempt to call Connection::begin(). (pid: %d)", 
+		getpid());
 
-        elog(LOG, "Connection::begin() done. (error: %d)", (int) error);
-    }
-    else
-    {
-        elog(WARNING, "there is no connection to Tsurugi.");
-    }
+	// Start the transaction.
+	error = connection_->begin(option, transaction_);
+	Tsurugi::error_log2(LOG, "Connection::begin() is done.", error);
 
 	return error;
 }
 
-/*
- * execute_query
+/**
+ *  @brief 	commit a transaction on tsurugidb.
+ *  @param 	none.
+ *  @return	error code of ogawayama.
  */
-ERROR_CODE 
-Tsurugi::execute_query(std::string_view query, ResultSetPtr& result_set)
+ERROR_CODE Tsurugi::commit()
 {
-    ERROR_CODE error = ERROR_CODE::UNKNOWN;
+    auto error{ERROR_CODE::UNKNOWN};
 
-    result_set = nullptr;
-	if (prepared_statement.get() != nullptr) {
-	    elog(DEBUG1, "Attempt to call Transaction::execute_query(prepared_statement). \n%s",
-	        query.data());
-	    error = transaction_->execute_query(prepared_statement, parameters, result_set);
-	} else {
-	    elog(DEBUG1, "Attempt to call Transaction::execute_query(query). \n%s",
-	        query.data());
-	    error = transaction_->execute_query(query, result_set);
-	}
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
-    elog(LOG, "execute_query() done. (error: %d)", (int) error);
-
-    if (error != ERROR_CODE::OK) {
-        if (stmts_name.size() != 0) {
-            stored_prepare_statment[stmts_name] = std::move(prepared_statement);
-            stmts_name = {};
-            parameters = {};
-        }
+    if (transaction_ != nullptr) 
+    {
+        elog(LOG, "tsurugi_fdw : Attempt to call Transaction::commit().");
+		/* Commits the transaction. */
+        error = transaction_->commit();
+		Tsurugi::error_log2(LOG, "Transaction::commit() is done.", error);
+        transaction_ = nullptr;
+    }
+    else
+    {
+        elog(WARNING, "There is no transaction in progress");
+        error = ERROR_CODE::NO_TRANSACTION;
     }
 
     return error;
 }
 
+/**
+ *  @brief 	Rollback a transaction on tsurugidb.
+ *  @param 	none.
+ *  @return	error code of ogawayama.
+ */
 /*
- * execute_statement
+ * rollback
+ */
+ERROR_CODE Tsurugi::rollback()
+{
+    auto error{ERROR_CODE::UNKNOWN};
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
+    if (transaction_ != nullptr) 
+    {
+        elog(LOG, "tsurugi_fdw : Attempt to call Transaction::rollback().");
+		/* Rolls back the transaction. */
+        error = transaction_->rollback();
+		Tsurugi::error_log2(LOG, "Transaction::rollback() is done.", error);
+        transaction_ = nullptr;
+    }
+    else
+    {
+        elog(WARNING, "There is no transaction in progress.");
+        error = ERROR_CODE::NO_TRANSACTION;
+    }
+
+    return error;
+}
+
+/**
+ *  @brief 	Confirm the prepared statement exsists.
+ *  @param 	(prep_name) prepare name.
+ *  @return	Return true if exsists.
+ */
+bool Tsurugi::exsists_prepared_statement(std::string_view prep_name)
+{
+	elog(DEBUG1, "tsurugi_fdw : %s : name: %s", __func__, prep_name.data());
+
+	bool exists{false};
+
+	auto ite = prepared_statements_.find(prep_name.data());
+	if (ite != prepared_statements_.end())
+	{
+		elog(DEBUG3, "Prepared statement \"%s\" exists.", prep_name.data());
+		exists = true;
+	}
+
+	return exists;
+}
+
+/**
+ *  @brief 	Prepare a statement to tsurugidb.
+ *  @param 	(prep_name)	prepare name.
+ * 			(statement)	SQL statement.
+ * 			(placeholders) information of placeholders in statement.
+ *  @return	error code of ogawayama.
+ */
+ERROR_CODE Tsurugi::prepare(std::string_view prep_name, std::string_view statement,
+						ogawayama::stub::placeholders_type& placeholders)
+{
+    auto error{ERROR_CODE::UNKNOWN};
+
+	elog(DEBUG1, "tsurugi_fdw : %s : name: %s", __func__, prep_name.data());
+
+    if (connection_ == nullptr) 
+		Tsurugi::init();
+
+	auto ite = prepared_statements_.find(prep_name.data());
+	if (ite != prepared_statements_.end())
+	{
+		elog(WARNING, "Prepared statement \"%s\" already exists.", 
+			prep_name.data());
+		return ERROR_CODE::INVALID_PARAMETER;
+	}
+
+	elog(LOG, "tsurugi_fdw : Attempt to call Connection::prepare().\nname: %s, \nstatement:\n%s", 
+		prep_name.data(), statement.data());
+
+	//	Prepare statement.
+	PreparedStatementPtr pstmt{};
+    error = connection_->prepare(statement, placeholders, pstmt);
+	Tsurugi::error_log2(LOG, "Connection::prepare() is done.", error);
+
+	if (error == ERROR_CODE::OK)
+	{	
+		// Add statement to prepared statements list.
+		prepared_statements_.emplace(prep_name, std::move(pstmt));
+	}
+
+    return error;	
+}
+
+/**
+ *  @brief 	Prepare astatement to tsurugidb without name.
+ *  @param 	(statement)	SQL statement
+ * 			(placeholders) information of placeholders in statement.
+ *  @return	error code of ogawayama.
+ * 	@note	Prepared statement has a one-time lifespan.
+ */
+ERROR_CODE Tsurugi::prepare(std::string_view statement,
+	            	ogawayama::stub::placeholders_type& placeholders)
+{
+	auto error{ERROR_CODE::UNKNOWN};
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
+    if (connection_ == nullptr)
+		Tsurugi::init();
+
+	Tsurugi::deallocate();
+	elog(LOG, "tsurugi_fdw : Attempt to call Connection::prepare().\nstatement: \n%s", 
+		statement.data());
+
+	//	Preapre the statement.
+	error = connection_->prepare(statement, placeholders, prepared_statement_);
+	Tsurugi::error_log2(LOG, "Connection::prepare() is done.", error);
+
+	return error;
+}
+
+/**
+ *  @brief 	Deallocate a preapared statement.
+ *  @param 	(prep_name)	prepare name.
+ *  @return	error code of ogawayama.
+ */
+ERROR_CODE Tsurugi::deallocate(std::string_view prep_name)
+{
+	auto error{ERROR_CODE::OK};
+
+	elog(DEBUG1, "tsurugi_fdw : %s : prep_name:%s", __func__, prep_name.data());
+
+	auto ite = prepared_statements_.find(prep_name.data());
+	if (ite != prepared_statements_.end())
+	{
+		ite->second = nullptr;
+		prepared_statements_.erase(ite);
+		error = ERROR_CODE::OK;
+	}
+	else
+	{
+		elog(WARNING, "Prepared statement \"%s\" does not exist.", 
+			prep_name.data());
+		error = ERROR_CODE::INVALID_PARAMETER;
+	}
+
+	return error;
+}
+
+/**
+ *  @brief 	Deallocate a unnamed preapared statement.
+ *  @param	none.
+ *  @return	none.
+ */
+void Tsurugi::deallocate()
+{
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
+	prepared_statement_ = nullptr;
+}
+
+/**
+ *  @brief 	Execute a query on tsurugidb.
+ *  @param 	(query)	SQL query.
+ *  @return	error code of ogawayama.
+ */
+ERROR_CODE 
+Tsurugi::execute_query(std::string_view query)
+{
+    auto error{ERROR_CODE::UNKNOWN};
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
+	if (transaction_ != nullptr)
+	{
+		elog(LOG, 
+			"tsurugi_fdw : Attempt to call Transaction::execute_query(). \nquery:\n%s", 
+			query.data());
+		result_set_ = nullptr;
+		error = transaction_->execute_query(query, result_set_);
+		Tsurugi::error_log2(LOG, "Transaction::execute_query() is done.", error);
+	}
+	else
+	{
+        elog(WARNING, "There is no transaction in progress.");
+      	error = ERROR_CODE::NO_TRANSACTION;
+	}
+
+    return error;
+}
+
+/**
+ *  @brief 	Execute a prepared statement on tsurugidb.
+ *  @param 	(query)	SQL query.
+ * 			(params) parameters for prepated statement.
+ *  @return	error code of ogawayama.
+ */
+ERROR_CODE 
+Tsurugi::execute_query(ogawayama::stub::parameters_type& params)
+{
+    auto error{ERROR_CODE::UNKNOWN};
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
+	if (transaction_ != nullptr)
+	{
+		elog(LOG, "tsurugi_fdw : Attempt to call Transaction::execute_query().");
+		result_set_ = nullptr;
+		error = transaction_->execute_query(prepared_statement_, params, result_set_);
+		Tsurugi::error_log2(LOG, "Transaction::execute_query() is done.", error);
+	}
+	else
+	{
+        elog(WARNING, "There is no transaction in progress.");
+      	error = ERROR_CODE::NO_TRANSACTION;
+	}
+
+    return error;
+}
+
+/**
+ *  @brief 	Execute a statement on tsurugidb.
+ *  @param 	(statement) SQL statement.
+ * 			(num_rows) number of rows updated. 
+ *  @return	error code of ogawayama.
  */
 ERROR_CODE 
 Tsurugi::execute_statement(std::string_view statement, std::size_t& num_rows)
 {
-    ERROR_CODE error = ERROR_CODE::UNKNOWN;
+    auto error{ERROR_CODE::UNKNOWN};
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
     if (transaction_ != nullptr)
     {
-		if (prepared_statement.get() != nullptr) {
-	        elog(DEBUG1, "tsurugi-fdw: Attempt to execute the prepared statement. \n%s",
-	            statement.data());
-	        error = transaction_->execute_statement(prepared_statement, parameters, num_rows);
-		} else {
-	        elog(DEBUG1, "tsurugi-fdw: Attempt to execute the statement. \n%s",
-	            statement.data());
-	        error = transaction_->execute_statement(statement, num_rows);
-		}
-
-        elog(LOG, "tsurugi-fdw: execute_statement() done. (error: %d)",
-            (int) error);
-
-        if (error != ERROR_CODE::OK) {
-            if (stmts_name.size() != 0) {
-                stored_prepare_statment[stmts_name] = std::move(prepared_statement);
-                stmts_name = {};
-                parameters = {};
-            }
-        }
+		elog(LOG, "tsurugi_fdw : Attempt to execute Transaction::execute_statement()." \
+					"\nstatement:\n%s", statement.data());
+		// Execute a statement.
+		error = transaction_->execute_statement(statement, num_rows);
+		Tsurugi::error_log2(LOG, "Transaction::execute_statement() is done.", error);
     }
     else
     {
-        elog(WARNING, "there is no transaction in progress.");
+        elog(WARNING, "There is no transaction in progress.");
       	error = ERROR_CODE::NO_TRANSACTION;
     }
 
     return error;
 }
 
-/*
- * commit
+/**
+ *  @brief 	Execute a prepared statement on tsurugidb.
+ *  @param 	(prep_name) prepared object name.
+ * 			(params) parameters of prepared statement.
+ * 			(num_rows) number of rows updated.
+ *  @return	error code of ogawayama.
  */
-ERROR_CODE Tsurugi::commit()
+ERROR_CODE 
+Tsurugi::execute_statement(std::string_view prep_name, 
+							ogawayama::stub::parameters_type& params, 
+							std::size_t& num_rows)
 {
-    ERROR_CODE error = ERROR_CODE::UNKNOWN;
+    auto error{ERROR_CODE::UNKNOWN};
 
-	if (IsTransactionProgress()) {
-	    elog(LOG, "there is tsurugi transaction block in progress.");
-	    return ERROR_CODE::OK;
-	}
+	elog(DEBUG1, "tsurugi_fdw : %s : prep_name:%s ", __func__, prep_name.data());
 
-    if (transaction_ != nullptr) 
+    if (transaction_ != nullptr)
     {
-        elog(DEBUG1, "Attempt to call Transaction::commit().");
+		// find a prepared object.
+		auto ite = prepared_statements_.find(prep_name.data());
+		if (ite == prepared_statements_.end())
+		{
+			elog(WARNING, "Preapred statement \"%s\" does not exist.", 
+				prep_name.data());
+			return ERROR_CODE::INVALID_PARAMETER;
+		}
+		elog(LOG, "tsurugi_fdw : Attempt to call Transaction::execute_statement()." \
+			" prep_name: %s", ite->first.data());
 
-        error = transaction_->commit();
-        transaction_ = nullptr;
-
-        elog(LOG, "Transaction::commit() done. (error: %d)", (int) error);
-    }
+		// Execute a statement.
+		error = transaction_->execute_statement(ite->second, params, num_rows);
+		Tsurugi::error_log2(LOG, "Transaction::execute_statement() is done.", error);
+	}
     else
     {
-        elog(WARNING, "there is no transaction in progress");
-        error = ERROR_CODE::NO_TRANSACTION;
+        elog(WARNING, "There is no transaction in progress.");
+      	error = ERROR_CODE::NO_TRANSACTION;
     }
 
     return error;
 }
 
-/*
- * rollback
+/**
+ *  @brief 	Execute a unnamed preapred statement.
+ *  @param 	(params) parameters of prepared statement.
+ * 			(num_rows) number of rows updated.
+ *  @return	error code of ogawayama.
  */
-ERROR_CODE Tsurugi::rollback()
+ERROR_CODE 
+Tsurugi::execute_statement(ogawayama::stub::parameters_type& params, 
+							std::size_t& num_rows)
 {
-    ERROR_CODE error = ERROR_CODE::UNKNOWN;
+    auto error{ERROR_CODE::UNKNOWN};
 
-	if (IsTransactionProgress()) {
-	    elog(LOG, "there is tsurugi transaction block in progress.");
-	    return ERROR_CODE::OK;
-	}
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
-    if (transaction_ != nullptr) 
+    if (transaction_ != nullptr)
     {
-        elog(DEBUG1, "Attempt to call Transaction::rollback().");
+		elog(LOG, "tsurugi_fdw : Attempt to call Transaction::execute_statement().");	
 
-        error = transaction_->rollback();
-        transaction_ = nullptr;
-
-        elog(LOG, "Transaction::rollback() done. (error: %d)", (int) error);
-    }
+		// Execute a statement.
+		error = transaction_->execute_statement(prepared_statement_, params, num_rows);
+		Tsurugi::error_log2(LOG, "Transaction::execute_statement() is done.", error);
+	}
     else
     {
-        elog(WARNING, "there is no transaction in progress.");
-        error = ERROR_CODE::NO_TRANSACTION;
+        elog(WARNING, "There is no transaction in progress.");
+      	error = ERROR_CODE::NO_TRANSACTION;
     }
 
     return error;
-}
-
-/*
- *	@brief:	
- */
-ERROR_CODE Tsurugi::begin(stub::Transaction** transaction)
-{
-	ERROR_CODE error = ERROR_CODE::UNKNOWN;
-
-	if (IsTransactionProgress()) {
-		elog(DEBUG1, "begin : there is tsurugi transaction block in progress.");
-		return ERROR_CODE::OK;
-	}
-
-	if (stub_ == nullptr) {
-		error = init();
-		if (error != ERROR_CODE::OK) {
-			std::cerr << "init() failed. " << (int) error << std::endl;
-			return error;
-		}
-	}
-
-	if (connection_ == nullptr) {
-		ERROR_CODE error = stub_->get_connection(getpid() , connection_);
-		if (error != ERROR_CODE::OK)
-		{
-			std::cerr << "Failed to connect to Tsurugi. " << (int) error << std::endl;
-			return error;
-		}
-	}
-
-	if (transaction_ == nullptr) {
-		boost::property_tree::ptree option;
-		GetTransactionOption(option);
-		ERROR_CODE error = connection_->begin(option, transaction_);
-		if (error != ERROR_CODE::OK)
-		{
-			std::cerr << "Connection::begin() failed. " << (int) error << std::endl;
-			return error;
-		}
-	}
-	*transaction = transaction_.get();
-
-	elog(DEBUG1, "Transaction started.");
-	error = ERROR_CODE::OK;
-
-	return error;
-}
-
-/*
- * 	@brief: 
- */
-void Tsurugi::end()
-{
-	if (IsTransactionProgress()) {
-		elog(DEBUG1, "end : there is tsurugi transaction block in progress.");
-		return;
-	}
-	transaction_ = nullptr;
 }
 
 /*
@@ -407,7 +529,7 @@ ERROR_CODE Tsurugi::get_list_tables(TableListPtr& table_list)
 
 	if (connection_ == nullptr)
 	{
-		elog(DEBUG1, "Attempt to call Tsurugi::init(). (pid: %d)", getpid());
+		elog(DEBUG1, "tsurugi_fdw : Attempt to call Tsurugi::init. (pid: %d)", getpid());
 
 		error = init();
 		if (error != ERROR_CODE::OK)
@@ -419,7 +541,7 @@ ERROR_CODE Tsurugi::get_list_tables(TableListPtr& table_list)
 		}
 	}
 
-	elog(DEBUG1, "Attempt to call Connection::get_list_tables(). (pid: %d)", getpid());
+	elog(DEBUG1, "tsurugi_fdw : Attempt to call Connection::get_list_tables(). (pid: %d)", getpid());
 
 	/* Get a list of table names from Tsurugi. */
 	error = connection_->get_list_tables(table_list);
@@ -564,31 +686,32 @@ std::string Tsurugi::get_error_detail(ERROR_CODE error)
 	return error_detail;
 }
 
-/*
-	get detail message of tsurugi server error.
-*/
+/**
+ *  @brief 	Get detail message of tsurug server.
+ *  @param 	(error_code) error code of ogawayama.
+ *  @return	detail error message.
+ */
 std::string Tsurugi::get_error_message(ERROR_CODE error_code)
 {
 	std::string message = "No detail message.";
 
-	elog(LOG, "Tsurugi::get_error_message() started");
+	elog(LOG, "tsurugi_fdw : %s", __func__);
 
 	if (error_code != ERROR_CODE::SERVER_ERROR)
 	{
-		elog(LOG, "Error code is not SERVER_ERROR. (error code: %s)", 
-			stub::error_name(error_code).data());
+		Tsurugi::error_log2(LOG, "Error code is not SERVER_ERROR.", error_code);
 		return message;
 	}
 
 	if (connection_ == nullptr)
 	{
-		elog(LOG, "There is no connection for Tsurugi.");
+		elog(LOG, "tsurugi_fdw : There is no connection to Tsurugi.");
 		return message;
 	}
 
 	//  get error message from Tsurugi.
 	stub::tsurugi_error_code error{};
-	ERROR_CODE ret_code = connection_->tsurugi_error(error);
+	auto ret_code = connection_->tsurugi_error(error);
 	if (ret_code == ERROR_CODE::OK)
 	{
 		elog(LOG, "ERROR_CODE::SERVER_ERROR\n\t"
@@ -615,14 +738,777 @@ std::string Tsurugi::get_error_message(ERROR_CODE error_code)
 				break;
 		}
 		// build message.
-		message = "Tsurugi Server Error: " + error.name 
-									+ " (" + detail_code + ": " + error.detail + ")";
+		message = "Tsurugi Error: " + error.name 
+					+ " (" + detail_code + ": " + error.detail + ")";
 	}
 	else
 	{
-		elog(ERROR, "It failed to get Tsurugi Server Error. (erro code: %s)", 
-				stub::error_name(ret_code).data());
+		Tsurugi::error_log2(ERROR, "Failed to get Tsurugi Server Error.", ret_code);
 	}
 
 	return message;
+}
+
+/**
+ *  @brief 	Output error log which has a error message and error code.
+ *  @param 	(level) log level.
+ * 			(message) error message.
+ * 			(error) error code of ogawayama.
+ *  @return	none.
+ */
+void Tsurugi::error_log2(int level, std::string_view message, ERROR_CODE error)
+{
+	std::string ext_message{"tsurugi_fdw : "};
+
+	ext_message += message;
+	ext_message += " (error: %s{%d})";
+	elog(level, ext_message.data(),  stub::error_name(error).data(), (int)error);	
+}
+
+/**
+ *  @brief 	Output error log which has a error message, error code and a detail message.
+ *  @param 	(level) log level.
+ * 			(message) error message.
+ * 			(error) error code of ogawayama.
+ *  @return	none.
+ */
+void Tsurugi::error_log3(int level, std::string_view message, ERROR_CODE error)
+{
+	std::string ext_message{"tsurugi_fdw : "};
+
+	ext_message += message;
+	ext_message += " (error: %s{%d})\n%s";
+	elog(level, ext_message.data(), stub::error_name(error).data(), (int)error, 
+		Tsurugi::get_error_message(error).data());	
+}
+
+/**
+ *  @brief 	Report the error information of tsurugi_fdw.
+ *  @param 	(message) error message.
+ * 			(error) error code.
+ * 			(sql) the statement that was attempted to be sent to tsurugidb.
+ *  @return	
+ */
+void 
+Tsurugi::report_error(const char* message, ERROR_CODE error, const char* sql)
+{
+	int			sqlstate = ERRCODE_FDW_ERROR;
+	std::string	detail = Tsurugi::get_error_message(error);
+
+	ereport(ERROR,
+			(errcode(sqlstate),
+			 errmsg("Failed to execute remote SQL."),
+			 errcontext("SQL query: %s", sql ? sql : ""),
+			 errhint("%s error: %s(%d)\n%s", 
+					message, stub::error_name(error).data(), (int) error, 
+					detail.data())
+			));	
+}
+
+/**
+ *  @brief 	Report the error information of tsurugi_fdw.
+ *  @param 	(message) error message.
+ * 			(error) error code.
+ * 			(sql) the statement that was attempted to be sent to tsurugidb.
+ *  @return	
+ */
+void 
+Tsurugi::report_error(const char* message, ERROR_CODE error, std::string_view sql)
+{
+	Tsurugi::report_error(message, error, sql.data());
+}
+
+/**
+ *  @brief 	Convert a data type id from PostgreSQL to tsurugidb.
+ *  @param 	(pg_type) oid of PostgreSQL data type.
+ *  @return	data type id of tsurugidb.
+ */
+ogawayama::stub::Metadata::ColumnType::Type 
+Tsurugi::get_tg_column_type(const Oid pg_type)
+{
+	auto tg_type = stub::Metadata::ColumnType::Type::NULL_VALUE;
+
+	elog(DEBUG5, "tsurugi_fdw : %s : pg_type: %d", __func__, (int) pg_type);
+
+	switch (pg_type)
+	{
+		case INT2OID:
+			tg_type = stub::Metadata::ColumnType::Type::INT16;
+			break;
+		case INT4OID:
+			tg_type = stub::Metadata::ColumnType::Type::INT32;
+			break;
+		case INT8OID:
+			tg_type = stub::Metadata::ColumnType::Type::INT64;
+			break;
+		case FLOAT4OID:
+			tg_type = stub::Metadata::ColumnType::Type::FLOAT32;
+			break;
+		case FLOAT8OID:
+			tg_type = stub::Metadata::ColumnType::Type::FLOAT64;
+			break;
+		case BPCHAROID:
+		case VARCHAROID:
+		case TEXTOID:
+			tg_type = stub::Metadata::ColumnType::Type::TEXT;
+			break;
+		case DATEOID:
+			tg_type = stub::Metadata::ColumnType::Type::DATE;
+			break;
+		case TIMEOID:
+			tg_type = stub::Metadata::ColumnType::Type::TIME;
+			break;
+		case TIMESTAMPOID:
+			tg_type = stub::Metadata::ColumnType::Type::TIMESTAMP;
+			break;
+		case TIMETZOID:
+			tg_type = stub::Metadata::ColumnType::Type::TIMETZ;
+			break;
+		case TIMESTAMPTZOID:
+			tg_type = stub::Metadata::ColumnType::Type::TIMESTAMPTZ;
+			break;
+		case NUMERICOID:
+			tg_type = stub::Metadata::ColumnType::Type::DECIMAL;
+			break;
+		default:
+			elog(ERROR, "tsurugi_fdw : unrecognized type oid: %d", (int) pg_type);
+			break;
+	}
+
+	return tg_type;
+}
+
+
+/**
+ *  @brief 	Convert value from tsurugidb to PostgreSQL.
+ *  @param 	(resultset)	Pointer to ResultSet object.
+ * 			(pgtype) OID of PostgreSQL data type.
+ *  @return	(first)	flag of null value.
+ * 			(second) PG value.
+ */
+std::pair<bool, Datum>
+Tsurugi::convert_type_to_pg(ResultSetPtr result_set, const Oid pgtype) 
+{
+	bool is_null = true;
+	Datum row_value;
+
+	switch (pgtype)
+	{
+		case INT2OID:
+			{
+				std::int16_t value;
+				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is INT2OID.", __func__);
+				if (result_set->next_column(value) == ERROR_CODE::OK)
+				{
+					is_null = false;
+					row_value = Int16GetDatum(value);
+				}
+			}
+			break;
+
+		case INT4OID:
+			{
+				std::int32_t value;
+				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is INT4OID.", __func__);
+				if (result_set->next_column(value) == ERROR_CODE::OK)
+				{
+					is_null = false;
+					row_value =  Int32GetDatum(value);
+				}
+			}
+			break;
+
+		case INT8OID:
+			{
+				std::int64_t value;
+				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is INT8OID.", __func__);
+				if (result_set->next_column(value) == ERROR_CODE::OK)
+				{
+					is_null = false;
+					row_value = Int64GetDatum(value);
+				}
+			}
+			break;
+
+		case FLOAT4OID:
+			{
+				float4 value;
+				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is FLOAT4OID.", __func__);
+				if (result_set->next_column(value) == ERROR_CODE::OK)
+				{
+					is_null = false;
+					row_value = Float4GetDatum(value);
+				}
+			}
+			break;
+
+		case FLOAT8OID:
+			{
+				float8 value;
+				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is FLOAT8OID.", __func__);
+				if (result_set->next_column(value) == ERROR_CODE::OK)
+				{
+					is_null = false;
+					row_value = Float8GetDatum(value);
+				}
+			}
+			break;
+
+		case BPCHAROID:
+		case VARCHAROID:
+		case TEXTOID:
+			{
+				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is BPCHAROID/VARCHAROID/TEXTOID.", __func__);
+				std::string value;
+				Datum value_datum;
+				HeapTuple 	heap_tuple;
+				regproc 	typinput;
+				int 		typemod;
+
+				heap_tuple = SearchSysCache1(TYPEOID, 
+											ObjectIdGetDatum(pgtype));
+				if (!HeapTupleIsValid(heap_tuple))
+				{
+					elog(ERROR, "tsurugi_fdw : cache lookup failed for type %u", pgtype);
+				}
+				typinput = ((Form_pg_type) GETSTRUCT(heap_tuple))->typinput;
+				typemod = ((Form_pg_type) GETSTRUCT(heap_tuple))->typtypmod;
+				ReleaseSysCache(heap_tuple);
+
+				ERROR_CODE result = result_set->next_column(value);
+				if (result == ERROR_CODE::OK)
+				{
+					value_datum = CStringGetDatum(value.c_str());
+					if (value_datum == (Datum) nullptr)
+					{
+						break;
+					}
+					is_null = false;
+					row_value = (Datum) OidFunctionCall3(typinput,
+												value_datum, 
+												ObjectIdGetDatum(InvalidOid),
+												Int32GetDatum(typemod));
+				}
+			}
+			break;
+
+		case DATEOID:
+			{
+				stub::date_type value;
+				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is DATEOID.", __func__);
+				if (result_set->next_column(value) == ERROR_CODE::OK)
+				{
+					DateADT date;
+					date = value.days_since_epoch();
+					date = date - (POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE);
+					row_value = DateADTGetDatum(date);
+					is_null = false;
+				}
+			}
+			break;
+
+		case TIMEOID:
+			{
+				stub::time_type value;
+				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is TIMEOID.", __func__);
+				if (result_set->next_column(value) == ERROR_CODE::OK)
+				{
+					TimeADT time;
+					auto subsecond = value.subsecond().count();
+					time = (value.hour() * MINS_PER_HOUR) + value.minute();
+					time = (time * SECS_PER_MINUTE) + value.second();
+					time = time * USECS_PER_SEC;
+					if (subsecond != 0) {
+						subsecond = round(subsecond / 1000.0);
+						time = time + subsecond;
+					}
+					row_value = TimeADTGetDatum(time);
+					is_null = false;
+				}
+			}
+			break;
+
+		case TIMETZOID:
+			{
+				stub::timetz_type value;
+				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is TIMETZOID.", __func__);
+				if (result_set->next_column(value) == ERROR_CODE::OK)
+				{
+					TimeTzADT timetz;
+					auto subsecond = value.first.subsecond().count();
+					timetz.time = (value.first.hour() * MINS_PER_HOUR) + value.first.minute();
+					timetz.time = (timetz.time * SECS_PER_MINUTE) + value.first.second();
+					timetz.time = timetz.time * USECS_PER_SEC;
+					if (subsecond != 0) {
+						subsecond = round(subsecond / 1000.0);
+						timetz.time = timetz.time + subsecond;
+					}
+					timetz.zone = -value.second * SECS_PER_MINUTE;
+
+					elog(DEBUG5, "time_of_day = %d:%d:%d.%d, time_zone = %d",
+									value.first.hour(), value.first.minute(), value.first.second(),
+									subsecond, value.second);
+
+					row_value = TimeTzADTPGetDatum(&timetz);
+					is_null = false;
+				}
+			}
+			break;
+
+		case TIMESTAMPTZOID:
+			{
+				stub::timestamptz_type value;
+				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is TIMESTAMPTZOID.", __func__);
+				if (result_set->next_column(value) == ERROR_CODE::OK)
+				{
+					Timestamp timestamp;
+					auto subsecond = value.first.subsecond().count();
+					timestamp = value.first.seconds_since_epoch().count() -
+						((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
+					timestamp = timestamp * USECS_PER_SEC;
+					if (subsecond != 0) {
+						subsecond = round(subsecond / 1000.0);
+						timestamp = timestamp + subsecond;
+					}
+					auto time_zone = value.second * SECS_PER_MINUTE;
+					timestamp = timestamp - (time_zone * USECS_PER_SEC);
+
+					elog(DEBUG5, "seconds_since_epoch = %ld, subsecond = %d, time_zone = %d",
+									value.first.seconds_since_epoch().count(),
+									value.first.subsecond().count(),
+									value.second);
+
+					row_value = TimestampTzGetDatum(timestamp);
+					is_null = false;
+				}
+			}
+			break;
+
+		case TIMESTAMPOID:
+			{
+				stub::timestamp_type value;
+				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is TIMESTAMPOID.", __func__);
+				if (result_set->next_column(value) == ERROR_CODE::OK)
+				{
+					Timestamp timestamp;
+					auto subsecond = value.subsecond().count();
+					timestamp = value.seconds_since_epoch().count() -
+						((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
+					timestamp = timestamp * USECS_PER_SEC;
+					if (subsecond != 0) {
+						subsecond = round(subsecond / 1000.0);
+						timestamp = timestamp + subsecond;
+					}
+					row_value = TimestampGetDatum(timestamp);
+					is_null = false;
+				}
+			}
+			break;
+
+		case NUMERICOID:
+			{
+				stub::decimal_type value;
+				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is NUMERICOID.", __func__);
+				auto error_code = result_set->next_column(value);
+				if (error_code == ERROR_CODE::OK)
+				{
+					const auto sign = value.sign();
+					const auto coefficient_high = value.coefficient_high();
+					const auto coefficient_low = value.coefficient_low();
+					const auto exponent = value.exponent();
+					elog(DEBUG5, "triple(%d, %lu(0x%lX), %lu(0x%lX), %d)",
+											sign, coefficient_high, coefficient_high,
+											coefficient_low, coefficient_low, exponent);
+
+					int scale = 0;
+					if (exponent < 0) {
+						scale =- exponent;
+					}
+
+					boost::multiprecision::uint128_t mp_coefficient;
+					boost::multiprecision::uint128_t mp_high = coefficient_high;
+					mp_coefficient = mp_high << 64;
+					mp_coefficient |= coefficient_low;
+
+					std::string coefficient;
+					coefficient = mp_coefficient.str();
+					if (exponent != 0) {
+						if (scale >= (int)coefficient.size()) {
+							// padding decimal point with zero
+							std::stringstream ss;
+							ss << std::setw(scale+1) << std::setfill('0') << coefficient;
+							coefficient = ss.str();
+						}
+						coefficient.insert(coefficient.end() + exponent, '.');
+					}
+					if (sign < 0) {
+						coefficient = "-" + coefficient;
+					}
+					elog(DEBUG5, "numeric_in(%s)", coefficient.c_str());
+
+					row_value = DirectFunctionCall3(numeric_in,
+													CStringGetDatum(coefficient.c_str()),
+													ObjectIdGetDatum(InvalidOid),
+													Int32GetDatum(((NUMERIC_MAX_PRECISION << 16) |
+																			scale) + VARHDRSZ));
+					is_null = false;
+
+				}
+			}
+			break;
+
+		default:
+			elog(ERROR, "Invalid data type of PG. (%u)", pgtype);
+			break;
+	}
+
+	return std::make_pair(is_null, row_value);
+}
+
+/**
+ *  @brief 	Convert value from PostgreSQL to tsurugidb.
+ *  @param 	(pg_type) oid of PostgreSQL data type.
+ * 			(value) PostgreSQL datum.
+ *  @return	value type of tsurugidb.
+ */
+ogawayama::stub::value_type
+Tsurugi::convert_type_to_tg(const Oid pg_type, Datum value)
+{
+	elog(DEBUG1, "tsurugi_fdw : %s : pg_type: %d", __func__, (int) pg_type);
+
+	ogawayama::stub::value_type param{};
+	switch (pg_type)
+	{
+		case INT2OID:
+			param = static_cast<std::int16_t>(DatumGetInt16(value));
+			break;
+		case INT4OID:
+			param = static_cast<std::int32_t>(DatumGetInt32(value));
+			break;
+		case INT8OID:
+			param = static_cast<std::int64_t>(DatumGetInt64(value));
+			break;
+		case FLOAT4OID:
+			param =	static_cast<float>(DatumGetFloat4(value));
+			break;
+		case FLOAT8OID:
+			param = static_cast<double>(DatumGetFloat8(value));
+			break;
+		case BPCHAROID:
+		case VARCHAROID:
+		case TEXTOID:
+			{
+				Oid typoutput;
+				bool typisvarlena;
+				getTypeOutputInfo(pg_type, &typoutput, &typisvarlena);
+				param = OidOutputFunctionCall(typoutput, value);
+				break;
+			}
+		case DATEOID:
+			{
+				DateADT date = DatumGetDateADT(value);
+				struct pg_tm tm;
+				j2date(date + POSTGRES_EPOCH_JDATE,
+						&(tm.tm_year), &(tm.tm_mon), &(tm.tm_mday));
+				auto tg_date = takatori::datetime::date(
+										static_cast<std::int32_t>(tm.tm_year),
+										static_cast<std::int32_t>(tm.tm_mon),
+										static_cast<std::int32_t>(tm.tm_mday));
+				param = tg_date;
+				break;
+			}
+		case TIMEOID:
+			{
+				TimeADT time = DatumGetTimeADT(value);
+				struct pg_tm tt, *tm = &tt;
+				fsec_t fsec;
+				time2tm(time, tm, &fsec);
+				auto tg_time_of_day = takatori::datetime::time_of_day(
+										static_cast<std::int64_t>(tm->tm_hour),
+										static_cast<std::int64_t>(tm->tm_min),
+										static_cast<std::int64_t>(tm->tm_sec),
+										std::chrono::nanoseconds(fsec*1000));
+				param = tg_time_of_day;
+				break;
+			}
+		case TIMETZOID:
+			{
+				TimeTzADT* timetz = DatumGetTimeTzADTP(value);
+				struct pg_tm tt, *tm = &tt;
+				fsec_t fsec;
+				time2tm(timetz->time, tm, &fsec);
+				auto tg_time_of_day = takatori::datetime::time_of_day(
+										static_cast<std::int64_t>(tm->tm_hour),
+										static_cast<std::int64_t>(tm->tm_min),
+										static_cast<std::int64_t>(tm->tm_sec),
+										std::chrono::nanoseconds(fsec*1000));
+				std::int32_t tg_time_zone = 0;
+				if (timetz->zone != 0) {
+					tg_time_zone = -timetz->zone / SECS_PER_MINUTE;
+				}
+				auto tg_time_of_day_with_time_zone =
+					std::pair<takatori::datetime::time_of_day, std::int32_t>{tg_time_of_day, tg_time_zone};
+				elog(DEBUG5, "time_of_day = %d:%d:%d.%d, time_zone = %d",
+								tm->tm_hour, tm->tm_min, tm->tm_sec, fsec, tg_time_zone);
+				param = tg_time_of_day_with_time_zone;
+				break;
+			}
+		case TIMESTAMPTZOID:
+			{
+				TimestampTz timestamptz = DatumGetTimestampTz(value);
+				struct pg_tm tt, *tm = &tt;
+				fsec_t fsec;
+				int tz;
+				if (timestamp2tm(timestamptz, &tz, tm, &fsec, NULL, NULL) != 0)
+					ereport(ERROR,
+							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+								errmsg("timestamp out of range")));
+				auto tg_date = takatori::datetime::date(
+										static_cast<std::int32_t>(tm->tm_year),
+										static_cast<std::int32_t>(tm->tm_mon),
+										static_cast<std::int32_t>(tm->tm_mday));
+				auto tg_time_of_day = takatori::datetime::time_of_day(
+										static_cast<std::int64_t>(tm->tm_hour),
+										static_cast<std::int64_t>(tm->tm_min),
+										static_cast<std::int64_t>(tm->tm_sec),
+										std::chrono::nanoseconds(fsec*1000));
+				auto tg_time_point = takatori::datetime::time_point(
+										tg_date,
+										tg_time_of_day);
+				std::int32_t tg_time_zone = 0;
+				if (tz != 0) {
+					tg_time_zone = -tz / SECS_PER_MINUTE;
+				}
+				auto tg_time_point_with_time_zone =
+					std::pair<takatori::datetime::time_point, std::int32_t>{tg_time_point, tg_time_zone};
+				elog(DEBUG5, "date = %d/%d/%d, time_of_day = %d:%d:%d.%d, time_zone = %d",
+								tm->tm_year, tm->tm_mon, tm->tm_mday,
+								tm->tm_hour, tm->tm_min, tm->tm_sec, fsec, tg_time_zone);
+				param = tg_time_point_with_time_zone;
+//				param = convert_timestamptz_to_tg(value);
+				break;
+			}
+		case TIMESTAMPOID:
+			{
+				Timestamp timestamp = DatumGetTimestamp(value);
+				struct pg_tm tt, *tm = &tt;
+				fsec_t fsec;
+				if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0) {
+					elog(ERROR, "timestamp out of range");
+				}
+				auto tg_date = takatori::datetime::date(
+										static_cast<std::int32_t>(tm->tm_year),
+										static_cast<std::int32_t>(tm->tm_mon),
+										static_cast<std::int32_t>(tm->tm_mday));
+				auto tg_time_of_day = takatori::datetime::time_of_day(
+										static_cast<std::int64_t>(tm->tm_hour),
+										static_cast<std::int64_t>(tm->tm_min),
+										static_cast<std::int64_t>(tm->tm_sec),
+										std::chrono::nanoseconds(fsec*1000));
+				auto tg_time_point = takatori::datetime::time_point(
+										tg_date,
+										tg_time_of_day);
+				param = tg_time_point;
+				break;
+			}
+		case NUMERICOID:
+			{
+				// Convert PostgreSQL NUMERIC type to string.
+				std::string pg_numeric = DatumGetCString(
+											DirectFunctionCall1(numeric_out, value));
+				elog(DEBUG5, "orignal: pg_numeric = %s", pg_numeric.c_str());
+				auto pos_period = pg_numeric.find(".");
+				if (pos_period != std::string::npos) {
+					pg_numeric.erase(pos_period, 1);
+				}
+				auto pos_negative = pg_numeric.find("-");
+				if (pos_negative != std::string::npos) {
+					pg_numeric.erase(pos_negative, 1);
+				}
+				while (pg_numeric.at(0) == '0' && pg_numeric.size() > 1) {
+					// The first zero is deleted. Because identified as an octal number.
+					pg_numeric.erase(0, 1);
+				}
+				elog(DEBUG5, "after: pg_numeric = %s", pg_numeric.c_str());
+
+				// Get display scale and sign from NumericData.
+				Numeric numeric_data = DatumGetNumeric(value);
+				bool numeric_is_short = numeric_data->choice.n_header & 0x8000;
+				int numeric_dscale;
+				int numeric_sign;
+				if (numeric_is_short) {
+					numeric_dscale = 
+						(numeric_data->choice.n_short.n_header & NUMERIC_SHORT_DSCALE_MASK) 
+						>> NUMERIC_SHORT_DSCALE_SHIFT;
+					if (numeric_data->choice.n_short.n_header & NUMERIC_SHORT_SIGN_MASK)
+						numeric_sign = NUMERIC_NEG;
+					else
+						numeric_sign = NUMERIC_POS;
+				} else {
+					numeric_dscale = 
+						numeric_data->choice.n_long.n_sign_dscale & NUMERIC_DSCALE_MASK;
+					numeric_sign = numeric_data->choice.n_header & NUMERIC_SIGN_MASK;
+				}
+
+				// Generate parameters for takatori::decimal::triple.
+				std::int64_t sign = 0;
+				switch (numeric_sign)
+				{
+					case NUMERIC_POS:
+						sign = 1;
+						break;
+					case NUMERIC_NEG:
+						sign = -1;
+						break;
+					case NUMERIC_NAN:
+						sign = 0;
+						break;
+					default:
+						elog(ERROR, "unrecognized numeric sign = 0x%x", numeric_sign);
+						break;
+				}
+
+				boost::multiprecision::cpp_int mp_coefficient(pg_numeric);
+				if (mp_coefficient > std::numeric_limits<boost::multiprecision::uint128_t>::max()) {
+					elog(ERROR, "numeric coefficient field overflow");
+				}
+				std::uint64_t coefficient_high = static_cast<std::uint64_t>(mp_coefficient >> 64);
+				std::uint64_t coefficient_low  = static_cast<std::uint64_t>(mp_coefficient);
+
+				std::int32_t exponent = -numeric_dscale;
+
+				elog(DEBUG5, "triple(%ld, %lu(0x%lX), %lu(0x%lX), %d)",
+										sign, coefficient_high, coefficient_high, 
+										coefficient_low, coefficient_low, exponent);
+
+				auto tg_decimal = takatori::decimal::triple{
+									sign, coefficient_high, coefficient_low, exponent};
+				param = tg_decimal;
+//				param = convert_decimal_to_tg(value);
+				break;
+			}
+		default:
+			elog(ERROR, "unrecognized type oid: %d", (int) pg_type);
+			break;
+	}
+
+	return param;
+}
+
+/**
+ *  @brief 	Convert structure of timestamptz value from PostgreSQL to tsurugidb.
+ *  @param 	(value) PostgreSQL datum.
+ *  @return	timestamptz type of tsurugidb.
+ */
+ogawayama::stub::timestamptz_type convert_timestamptz_to_tg(Datum value)
+{
+	TimestampTz timestamptz = DatumGetTimestampTz(value);
+	struct pg_tm tt, *tm = &tt;
+	fsec_t fsec;
+	int tz;
+	if (timestamp2tm(timestamptz, &tz, tm, &fsec, NULL, NULL) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					errmsg("timestamp out of range")));
+	auto tg_date = takatori::datetime::date(
+							static_cast<std::int32_t>(tm->tm_year),
+							static_cast<std::int32_t>(tm->tm_mon),
+							static_cast<std::int32_t>(tm->tm_mday));
+	auto tg_time_of_day = takatori::datetime::time_of_day(
+							static_cast<std::int64_t>(tm->tm_hour),
+							static_cast<std::int64_t>(tm->tm_min),
+							static_cast<std::int64_t>(tm->tm_sec),
+							std::chrono::nanoseconds(fsec*1000));
+	auto tg_time_point = takatori::datetime::time_point(
+							tg_date,
+							tg_time_of_day);
+	std::int32_t tg_time_zone = 0;
+	if (tz != 0) {
+		tg_time_zone = -tz / SECS_PER_MINUTE;
+	}
+	auto tg_time_point_with_time_zone =
+		std::pair<takatori::datetime::time_point, std::int32_t>{tg_time_point, tg_time_zone};
+	elog(DEBUG5, "date = %d/%d/%d, time_of_day = %d:%d:%d.%d, time_zone = %d",
+					tm->tm_year, tm->tm_mon, tm->tm_mday,
+					tm->tm_hour, tm->tm_min, tm->tm_sec, fsec, tg_time_zone);
+
+	return tg_time_point_with_time_zone;
+}
+
+/**
+ *  @brief 	Convert structure of decimal value from PostgreSQL to tsurugidb.
+ *  @param 	(value) PostgreSQL datum.
+ *  @return	decimal value of tsurugidb.
+ */
+takatori::decimal::triple 
+Tsurugi::convert_decimal_to_tg(Datum value)
+{
+	// Convert PostgreSQL NUMERIC type to string.
+	std::string pg_numeric = DatumGetCString(DirectFunctionCall1(numeric_out, value));
+	elog(DEBUG5, "orignal: pg_numeric = %s", pg_numeric.c_str());
+	auto pos_period = pg_numeric.find(".");
+	if (pos_period != std::string::npos) {
+		pg_numeric.erase(pos_period, 1);
+	}
+	auto pos_negative = pg_numeric.find("-");
+	if (pos_negative != std::string::npos) {
+		pg_numeric.erase(pos_negative, 1);
+	}
+	while (pg_numeric.at(0) == '0' && pg_numeric.size() > 1) {
+		// The first zero is deleted. Because identified as an octal number.
+		pg_numeric.erase(0, 1);
+	}
+	elog(DEBUG5, "after: pg_numeric = %s", pg_numeric.c_str());
+
+	// Get display scale and sign from NumericData.
+	Numeric numeric_data = DatumGetNumeric(value);
+	bool numeric_is_short = numeric_data->choice.n_header & 0x8000;
+	int numeric_dscale;
+	int numeric_sign;
+	if (numeric_is_short) {
+		numeric_dscale = 
+			(numeric_data->choice.n_short.n_header & NUMERIC_SHORT_DSCALE_MASK) >>
+			NUMERIC_SHORT_DSCALE_SHIFT;
+		if (numeric_data->choice.n_short.n_header & NUMERIC_SHORT_SIGN_MASK)
+			numeric_sign = NUMERIC_NEG;
+		else
+			numeric_sign = NUMERIC_POS;
+	} else {
+		numeric_dscale = 
+			numeric_data->choice.n_long.n_sign_dscale & NUMERIC_DSCALE_MASK;
+		numeric_sign = numeric_data->choice.n_header & NUMERIC_SIGN_MASK;
+	}
+
+	// Generate parameters for takatori::decimal::triple.
+	std::int64_t sign = 0;
+	switch (numeric_sign)
+	{
+		case NUMERIC_POS:
+			sign = 1;
+			break;
+		case NUMERIC_NEG:
+			sign = -1;
+			break;
+		case NUMERIC_NAN:
+			sign = 0;
+			break;
+		default:
+			elog(ERROR, "unrecognized numeric sign = 0x%x", numeric_sign);
+			break;
+	}
+
+	boost::multiprecision::cpp_int mp_coefficient(pg_numeric);
+	if (mp_coefficient > std::numeric_limits<boost::multiprecision::uint128_t>::max()) {
+		elog(ERROR, "numeric coefficient field overflow");
+	}
+	std::uint64_t coefficient_high = static_cast<std::uint64_t>(mp_coefficient >> 64);
+	std::uint64_t coefficient_low  = static_cast<std::uint64_t>(mp_coefficient);
+
+	std::int32_t exponent = -numeric_dscale;
+
+	elog(DEBUG5, "triple(%ld, %lu(0x%lX), %lu(0x%lX), %d)",
+							sign, coefficient_high, coefficient_high, 
+							coefficient_low, coefficient_low, exponent);
+
+	return takatori::decimal::triple{sign, coefficient_high, coefficient_low, exponent};
 }

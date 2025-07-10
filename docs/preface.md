@@ -1,6 +1,6 @@
 # [Tsurugi FDW for Tsurugi](./tsurugi_fdw.md)
 
-## はじめに
+## 概要
 
 ### Tsurugi FDWについて
 
@@ -9,7 +9,7 @@ Tsurugi FDWは、PostgreSQLをユーザインタフェースとしてTsurugiを�
 これにより、PostgreSQLを利用しているユーザは、PostgreSQLが持つライブラリやJDBCドライバを活かしつつTsurugiにアクセスすることができます。  
 
 > [!NOTE]
-> PostgreSQLとTsurugiはアーキテクチャおよびその性質が異なるためTsurugi FDWには[注意事項](./appendixes.md#注意事項)および[制約事項](./appendixes.md#制約事項)があります。  
+> PostgreSQLとTsurugiはアーキテクチャおよびその性質が異なるためTsurugi FDWには[注意事項](./appendixes.md#注意事項)および[制限事項](./appendixes.md#制限事項)があります。  
 > また、Tsurugi FDWはPostgreSQLを経由するオーバーヘッドがかかるため他のTsurugi外部インタフェースと比べてパフォーマンスが劣る点に留意ください。
 
 ### Tsurugi FDWの機能
@@ -39,3 +39,5 @@ PostgreSQLからTsurugi固有のトランザクション特性を設定するユ
   - tg_set_inclusive_read_areas -- Longトランザクションの読み込み予約テーブルを設定する
   - tg_set_exclusive_read_areas -- Longトランザクションの読み込み制約テーブルを設定する
   - tg_show_transaction -- デフォルトのトランザクション特性を表示する
+  - [tg_show_tables](udf_reference/tg_show_tables.md) -- Tsurugiのテーブル定義を表示する
+  - [tg_verify_tables](udf_reference/tg_verify_tables.md) -- Tsurugiのテーブル定義とPostgreSQLの外部テーブル定義を比較検証する

@@ -236,6 +236,14 @@ SELECT * FROM tg_temporal_literal ORDER BY id;
 set session timezone to 'Asia/Tokyo';
 SELECT * FROM tg_temporal_literal ORDER BY id;
 
+--- temporal_literal(auto cast) : tsurugi-issues#896
+INSERT INTO tg_temporal_literal (id, dt) VALUES (6, '2024-08-30');
+INSERT INTO tg_temporal_literal (id, tm) VALUES (7, '04:05:06.789');
+INSERT INTO tg_temporal_literal (id, tms) VALUES (8, '2024-08-30 04:05:06.789');
+INSERT INTO tg_temporal_literal (id, tms_wo_tz) VALUES (9, '2024-08-30 04:05:06.789');
+INSERT INTO tg_temporal_literal (id, tms_w_tz) VALUES (10, '2024-08-30 04:05:06.789+9:00');
+SELECT * FROM tg_temporal_literal ORDER BY id;
+
 /* Test teardown: DDL of the PostgreSQL */
 DROP FOREIGN TABLE insert_select_happy;
 DROP FOREIGN TABLE integer1;

@@ -20,12 +20,7 @@
  *	@brief 	Foreign Data Wrapper for Tsurugi.
  */
 #include <boost/format.hpp>
-#include <boost/multiprecision/cpp_int.hpp>
-#include <memory>
-#include <regex>
-#include <string>
-#include "ogawayama/stub/error_code.h"
-#include "ogawayama/stub/api.h"
+
 #include "tsurugi.h"
 #include "tsurugi_utils.h"
 
@@ -36,29 +31,39 @@ extern "C" {
 #include "tsurugi_fdw.h"
 
 #include "access/xact.h"
-#include "utils/syscache.h"
-#include "utils/date.h"
 #include "access/htup_details.h"
 #include "access/sysattr.h"
 #include "access/table.h"
+#include "access/tupdesc.h"
 #include "catalog/pg_class.h"
+#include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "commands/explain.h"
 #include "commands/vacuum.h"
+#include "fmgr.h"
 #include "foreign/fdwapi.h"
-#include "funcapi.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-#include "optimizer/clauses.h"
+#include "nodes/nodes.h"
+#include "nodes/primnodes.h"
+#if PG_VERSION_NUM >= 120000
+	#include "optimizer/appendinfo.h"	// get_translated_update_targetlist
+#endif  // PG_VERSION_NUM >= 140000
+#if (PG_VERSION_NUM < 140000)
+	#include "optimizer/clauses.h"
+#endif
 #include "optimizer/cost.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
+#include "optimizer/planner.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/tlist.h"
 #include "parser/parsetree.h"
+#include "parser/parse_coerce.h"
+#include "parser/parse_type.h"
 #include "utils/builtins.h"
 #include "utils/float.h"
 #include "utils/guc.h"
@@ -68,7 +73,7 @@ extern "C" {
 #include "utils/rel.h"
 #include "utils/sampling.h"
 #include "utils/selfuncs.h"
-#include "access/tupdesc.h"
+#include "utils/syscache.h"
 #include "nodes/pg_list.h"
 
 PG_MODULE_MAGIC;
@@ -76,10 +81,6 @@ PG_MODULE_MAGIC;
 #ifdef __cplusplus
 }
 #endif
-
-#include "tsurugi_prepare.h"
-
-using namespace ogawayama;
 
 int unused PG_USED_FOR_ASSERTS_ONLY;
 
@@ -116,89 +117,51 @@ enum FdwScanPrivateIndex
 };
 
 /*
- *	@brief	FDW status for each query execution
+ * Similarly, this enum describes what's kept in the fdw_private list for
+ * a ModifyTable node referencing a postgres_fdw foreign table.  We store:
+ *
+ * 1) INSERT/UPDATE/DELETE statement text to be sent to the remote server
+ * 2) Integer list of target attribute numbers for INSERT/UPDATE
+ *	  (NIL for a DELETE)
+ * 3) Length till the end of VALUES clause for INSERT
+ *	  (-1 for a DELETE/UPDATE)
+ * 4) Boolean flag showing if the remote query has a RETURNING clause
+ * 5) Integer list of attribute numbers retrieved by RETURNING, if any
  */
-typedef struct tsurugiFdwState
+enum FdwForeignModifyPrivateIndex
 {
-	const char* 	query_string;		/* SQL Query Text */
-    Relation        rel;                /* relcache entry for the foreign table */
-    TupleDesc       tupdesc;            /* tuple descriptor of scan */
-    AttInMetadata*  attinmeta;          /* attribute datatype conversion */
-    List*           retrieved_attrs;    /* list of target attribute numbers */
-
-	bool 			cursor_exists;		/* have we created the cursor? */
-    int             numParams;          /* number of parameters passed to query */
-    FmgrInfo*       param_flinfo;       /* output conversion functions for them */
-    List*           param_exprs;        /* executable expressions for param values */
-    const char**    param_values;       /* textual values of query parameters */
-    Oid*            param_types;        /* type of query parameters */
-
-	size_t 			number_of_columns;	/* Number of columns to SELECT */
-	Oid* 			column_types; 		/* Pointer to the data type (Oid) of the column to be SELECT */
-
-    int             p_nums;             /* number of parameters to transmit */
-    FmgrInfo*       p_flinfo;           /* output conversion functions for them */
-
-    /* batch operation stuff */
-    int             num_slots;          /* number of slots to insert */
-
-    List*           attr_list;          /* query attribute list */
-    List*           column_list;        /* Column list of Tsurugi Column structres */
-
-    size_t          row_nums;           /* number of rows */
-    Datum**         rows;               /* all rows of scan */
-    size_t          rowidx;             /* current index of rows */
-    bool**          rows_isnull;        /* is null*/
-    bool            for_update;         /* true if this scan is update target */
-    int             batch_size;         /* value of FDW option "batch_size" */
-
-	size_t			num_tuples;         /* # of tuples in array */
-	size_t			next_tuple;         /* index of next one to return */
-	std::vector<TupleTableSlot*>    tuples;
-	decltype(tuples)::iterator      tuple_ite;
-
-	bool			eof_reached;        /* true if last fetch reached EOF */
-} tsurugiFdwState;
+	/* SQL statement to execute remotely (as a String node) */
+	FdwModifyPrivateUpdateSql,
+	/* Integer list of target attribute numbers for INSERT/UPDATE */
+	FdwModifyPrivateTargetAttnums,
+	/* Length till the end of VALUES clause (as an integer Value node) */
+	FdwModifyPrivateLen,
+	/* has-returning flag (as an integer Value node) */
+	FdwModifyPrivateHasReturning,
+	/* Integer list of attribute numbers retrieved by RETURNING */
+	FdwModifyPrivateRetrievedAttrs
+};
 
 /*
- *	@brief 	FDW status per session
+ * Similarly, this enum describes what's kept in the fdw_private list for
+ * a ForeignScan node that modifies a foreign table directly.  We store:
+ *
+ * 1) UPDATE/DELETE statement text to be sent to the remote server
+ * 2) Boolean flag showing if the remote query has a RETURNING clause
+ * 3) Integer list of attribute numbers retrieved by RETURNING, if any
+ * 4) Boolean flag showing if we set the command es_processed
  */
-typedef struct tsurugi_fdw_info_
+enum FdwDirectModifyPrivateIndex
 {
- 	ResultSetPtr 		result_set = nullptr;
-	MetadataPtr 		metadata = nullptr;
-    bool                success = false;
-} TsurugiFdwInfo;
-
-/*
- * Execution state of a foreign insert/update/delete operation.
- */
-typedef struct tsurugiFdwModifyState
-{
-	Relation	rel;			/* relcache entry for the foreign table */
-	AttInMetadata *attinmeta;	/* attribute datatype conversion metadata */
-
-	/* for remote query execution */
-	char	   *p_name;			/* name of prepared statement, if created */
-
-	/* extracted fdw_private data */
-	char	   *query;			/* text of INSERT/UPDATE/DELETE command */
-	List	   *target_attrs;	/* list of target attribute numbers */
-	bool		has_returning;	/* is there a RETURNING clause? */
-	List	   *retrieved_attrs;	/* attr numbers retrieved by RETURNING */
-
-	/* info about parameters for prepared statement */
-	AttrNumber	ctidAttno;		/* attnum of input resjunk ctid column */
-	int			p_nums;			/* number of parameters to transmit */
-	FmgrInfo   *p_flinfo;		/* output conversion functions for them */
-
-	/* working memory context */
-	MemoryContext temp_cxt;		/* context for per-tuple temporary data */
-
-	/* for update row movement if subplan result rel */
-	struct tsurugiFdwModifyState *aux_fmstate;	/* foreign-insert state, if
-											 	 * created */
-} tsurugiFdwModifyState;
+	/* SQL statement to execute remotely (as a String node) */
+	FdwDirectModifyPrivateUpdateSql,
+	/* has-returning flag (as an integer Value node) */
+	FdwDirectModifyPrivateHasReturning,
+	/* Integer list of attribute numbers retrieved by RETURNING */
+	FdwDirectModifyPrivateRetrievedAttrs,
+	/* set-processed flag (as an integer Value node) */
+	FdwDirectModifyPrivateSetProcessed
+};
 
 /*
  * This enum describes what's kept in the fdw_private list for a ForeignPath.
@@ -215,6 +178,11 @@ enum FdwPathPrivateIndex
 	FdwPathPrivateHasLimit
 };
 
+/* ===========================================================================
+ * 
+ * Prototype declarations
+ * 
+ */
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -224,6 +192,7 @@ PG_FUNCTION_INFO_V1(tsurugi_fdw_handler);
 /*
  * FDW callback routines (Scan)
  */
+#ifndef __TSURUGI_PLANNER__
 static void tsurugiGetForeignRelSize(PlannerInfo* root, 
 									   RelOptInfo* baserel, 
 								   	   Oid foreigntableid);
@@ -237,19 +206,35 @@ static ForeignScan *tsurugiGetForeignPlan(PlannerInfo *root,
 											List *tlist,
 											List *scan_clauses,
 											Plan *outer_plan);
+#endif
 static void tsurugiBeginForeignScan(ForeignScanState* node, int eflags);
 static TupleTableSlot* tsurugiIterateForeignScan(ForeignScanState* node);
 static void tsurugiReScanForeignScan(ForeignScanState* node);
 static void tsurugiEndForeignScan(ForeignScanState* node);
+#ifndef __TSURUGI_PLANNER__
 static void tsurugiGetForeignUpperPaths(PlannerInfo *root, UpperRelationKind stage,
-							 RelOptInfo *input_rel, RelOptInfo *output_rel,
-							 void *extra);
+							 			RelOptInfo *input_rel, RelOptInfo *output_rel,
+							 			void *extra);
+static void tsurugiGetForeignJoinPaths(PlannerInfo *root,
+										RelOptInfo *joinrel,
+										RelOptInfo *outerrel,
+										RelOptInfo *innerrel,
+										JoinType jointype,
+										JoinPathExtraData *extra);
+#endif
 /*
  * FDW callback routines (Insert/Update/Delete)
  */
+#if PG_VERSION_NUM >= 140000
+static void tsurugiAddForeignUpdateTargets(PlannerInfo *root,
+											Index rtindex,
+											RangeTblEntry *target_rte,
+											Relation target_relation);
+#else
 static void tsurugiAddForeignUpdateTargets(Query *parsetree,
 											RangeTblEntry *target_rte,
 											Relation target_relation);
+#endif  // PG_VERSION_NUM >= 140000
 static List *tsurugiPlanForeignModify(PlannerInfo *root,
 									   ModifyTable *plan,
 									   Index resultRelation,
@@ -266,26 +251,27 @@ static void tsurugiBeginForeignModify(ModifyTableState *mtstate,
                                         List *fdw_private,
                                         int subplan_index,
                                         int eflags);
+static TupleTableSlot* tsurugiExecForeignInsert(EState *estate, 
+                                                ResultRelInfo *resultRelInfo, 
+                                                TupleTableSlot *slot, 
+                                                TupleTableSlot *planSlot);
 static TupleTableSlot* tsurugiExecForeignUpdate(EState *estate, 
-                                                ResultRelInfo *rinfo, 
+                                                ResultRelInfo *resultRelInfo, 
                                                 TupleTableSlot *slot, 
                                                 TupleTableSlot *planSlot);
 
 static TupleTableSlot* tsurugiExecForeignDelete(EState *estate, 
-                                                ResultRelInfo *rinfo, 
+                                                ResultRelInfo *resultRelInfo, 
                                                 TupleTableSlot *slot, 
                                                 TupleTableSlot *planSlot);
 static void tsurugiEndForeignModify(EState *estate,
                                     ResultRelInfo *rinfo);
+#if !defined (__TSURUGI_PLANNER__)
 static void tsurugiBeginForeignInsert(ModifyTableState *mtstate,
                                     ResultRelInfo *rinfo);
-static TupleTableSlot* tsurugiExecForeignInsert(EState *estate, 
-                                                ResultRelInfo *rinfo, 
-                                                TupleTableSlot *slot, 
-                                                TupleTableSlot *planSlot);
 static void tsurugiEndForeignInsert(EState *estate,
                                     ResultRelInfo *rinfo);
-
+#endif
 /*
  * FDW callback routines (Others)
  */
@@ -293,16 +279,11 @@ static void tsurugiExplainForeignScan(ForeignScanState* node,
 									    ExplainState* es);
 static void tsurugiExplainDirectModify(ForeignScanState* node, 
 										 ExplainState* es);
-static bool tsurugiAnalyzeForeignTable(
-	Relation relation, AcquireSampleRowsFunc* func, BlockNumber* totalpages);
+static bool tsurugiAnalyzeForeignTable(Relation relation, 
+										AcquireSampleRowsFunc* func, 
+										BlockNumber* totalpages);
 static List* tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt, 
 										  Oid serverOid);
-static void tsurugiGetForeignJoinPaths(PlannerInfo *root,
-										RelOptInfo *joinrel,
-										RelOptInfo *outerrel,
-										RelOptInfo *innerrel,
-										JoinType jointype,
-										JoinPathExtraData *extra);
 #ifdef __cplusplus
 }
 #endif
@@ -310,21 +291,26 @@ static void tsurugiGetForeignJoinPaths(PlannerInfo *root,
 /*
  * Helper functions
  */
-static tsurugiFdwState* create_fdw_state();
-static void free_fdw_state(tsurugiFdwState* fdw_state);
-static void store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist, List** );
-static void make_tuple_from_result_row(ResultSetPtr result_set, 
-                                        TupleDesc tupleDescriptor,
-                                        List* retrieved_attrs,
-                                        Datum* row,
-                                        bool* is_null,
-                                        tsurugiFdwState* fdw_state);
+extern PGDLLIMPORT PGPROC *MyProc;
 extern void handle_remote_xact(ForeignServer *server);
 
-extern PGDLLIMPORT PGPROC *MyProc;
+#if PG_VERSION_NUM >= 140000
+static ForeignScan *find_modifytable_subplan(PlannerInfo *root,
+						 					ModifyTable *plan,
+						 					Index rtindex,
+						 					int subplan_index);
+#endif	/* PG_VERSION_NUM >= 140000 */
+static void make_retrieved_attrs(List* telist, List** retrieved_attrs);
+static void store_pg_data_type(TgFdwForeignScanState* fsstate, List* tlist, List** );
+#if !defined (__TSURUGI_PLANNER__)
+static int	get_batch_size_option(Relation rel);
+#endif
 
-static TsurugiFdwInfo fdw_info_;
-
+/* ===========================================================================
+ * 
+ * FDW Handler
+ *
+ */
 /*
  * Foreign-data wrapper handler function: return a struct with pointers
  * to my callback routines.
@@ -334,17 +320,23 @@ tsurugi_fdw_handler(PG_FUNCTION_ARGS)
 {
 	FdwRoutine* routine = makeNode(FdwRoutine);
 
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	/*Functions for scanning foreign tables*/
+#ifndef __TSURUGI_PLANNER__
 	routine->GetForeignRelSize = tsurugiGetForeignRelSize;
 	routine->GetForeignPaths = tsurugiGetForeignPaths;
 	routine->GetForeignPlan = tsurugiGetForeignPlan;
+#endif
 	routine->BeginForeignScan = tsurugiBeginForeignScan;
 	routine->IterateForeignScan = tsurugiIterateForeignScan;
 	routine->ReScanForeignScan = tsurugiReScanForeignScan;
 	routine->EndForeignScan = tsurugiEndForeignScan;
+#ifndef __TSURUGI_PLANNER__
 	routine->GetForeignUpperPaths = tsurugiGetForeignUpperPaths;
+	/* Support functions for join push-down */
+	routine->GetForeignJoinPaths = tsurugiGetForeignJoinPaths;
+#endif
 
 	/*Functions for updating foreign tables*/
 	routine->AddForeignUpdateTargets = tsurugiAddForeignUpdateTargets;
@@ -357,52 +349,49 @@ tsurugi_fdw_handler(PG_FUNCTION_ARGS)
 	/*Support functions for EXPLAIN*/
 	routine->ExplainForeignScan = tsurugiExplainForeignScan;
 	routine->ExplainDirectModify = tsurugiExplainDirectModify;
-
 	/*Support functions for ANALYZE*/
 	routine->AnalyzeForeignTable = tsurugiAnalyzeForeignTable;
 
 	/*Support functions for IMPORT FOREIGN SCHEMA*/
 	routine->ImportForeignSchema = tsurugiImportForeignSchema;
-
    /*Functions for foreign modify*/
-    routine->BeginForeignModify = tsurugiBeginForeignModify;
+	routine->BeginForeignModify = tsurugiBeginForeignModify;
+	routine->ExecForeignInsert = tsurugiExecForeignInsert;
 	routine->ExecForeignUpdate = tsurugiExecForeignUpdate;
 	routine->ExecForeignDelete = tsurugiExecForeignDelete;
-    routine->EndForeignModify = tsurugiEndForeignModify;
-    routine->BeginForeignInsert = tsurugiBeginForeignInsert;
-	routine->ExecForeignInsert = tsurugiExecForeignInsert;
-    routine->EndForeignInsert = tsurugiEndForeignInsert;
-
-	/* Support functions for join push-down */
-	routine->GetForeignJoinPaths = tsurugiGetForeignJoinPaths;
+	routine->EndForeignModify = tsurugiEndForeignModify;
+#if !defined (__TSURUGI_PLANNER__)
+	routine->BeginForeignInsert = tsurugiBeginForeignInsert;
+	routine->EndForeignInsert = tsurugiEndForeignInsert;
+#endif
 
 	ERROR_CODE error = Tsurugi::init();
 	if (error != ERROR_CODE::OK) 
 	{
-		elog(ERROR, "Tsurugi::init() failed. (%d)", (int) error);
+		elog(ERROR, "tsurugi_fdw : Tsurugi::init() failed. (%d)", (int) error);
 	}
 
 	PG_RETURN_POINTER(routine);
 }
 
-/*
+/* ===========================================================================
+ *
  * FDW Scan functions. 
+ * 
  */
-
+#ifndef __TSURUGI_PLANNER__
 /*
  * tsurugiGetForeignRelSize
  */
-static void tsurugiGetForeignRelSize(
-	PlannerInfo* root, RelOptInfo* baserel, Oid foreigntableid)
+static void tsurugiGetForeignRelSize(PlannerInfo* root, 
+										RelOptInfo* baserel, 
+										Oid foreigntableid)
 {
 	TgFdwRelationInfo *fpinfo;
 	ListCell   *lc;
 	RangeTblEntry *rte = planner_rt_fetch(baserel->relid, root);
-	const char *namespace_string;
-	const char *relname;
-	const char *refname;
 
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	/*
 	 * We use TgFdwRelationInfo to pass various information to subsequent
@@ -419,17 +408,16 @@ static void tsurugiGetForeignRelSize(
 	fpinfo->server = GetForeignServer(fpinfo->table->serverid);
 
 	/*
-	 * Extract user-settable option values.  Note that per-table setting of
-	 * use_remote_estimate overrides per-server setting.
+	 * Extract user-settable option values.  Note that per-table settings of
+	 * use_remote_estimate, fetch_size and async_capable override per-server
+	 * settings of them, respectively.
 	 */
 	fpinfo->use_remote_estimate = false;
 	fpinfo->fdw_startup_cost = DEFAULT_FDW_STARTUP_COST;
 	fpinfo->fdw_tuple_cost = DEFAULT_FDW_TUPLE_COST;
 	fpinfo->shippable_extensions = NIL;
 	fpinfo->fetch_size = 100;
-
-/*	apply_server_options(fpinfo);	*/
-	apply_table_options(fpinfo);
+	fpinfo->async_capable = false;
 
 	/*
 	 * If the table or the server is configured to use remote estimates,
@@ -437,7 +425,14 @@ static void tsurugiGetForeignRelSize(
 	 * should match what ExecCheckRTEPerms() does.  If we fail due to lack of
 	 * permissions, the query would have failed at runtime anyway.
 	 */
-	fpinfo->user = NULL;
+	if (fpinfo->use_remote_estimate)
+	{
+		Oid			userid = rte->checkAsUser ? rte->checkAsUser : GetUserId();
+
+		fpinfo->user = GetUserMapping(userid, fpinfo->server->serverid);
+	}
+	else
+		fpinfo->user = NULL;
 
 	/*
 	 * Identify which baserestrictinfo clauses can be sent to the remote
@@ -494,48 +489,52 @@ static void tsurugiGetForeignRelSize(
 	 * average row width.  Otherwise, estimate using whatever statistics we
 	 * have locally, in a way similar to ordinary tables.
 	 */
-
-	/*
-	 * If the foreign table has never been ANALYZEd, it will have relpages
-	 * and reltuples equal to zero, which most likely has nothing to do
-	 * with reality.  We can't do a whole lot about that if we're not
-	 * allowed to consult the remote server, but we can use a hack similar
-	 * to plancat.c's treatment of empty relations: use a minimum size
-	 * estimate of 10 pages, and divide by the column-datatype-based width
-	 * estimate to get the corresponding number of tuples.
-	 */
-	if (baserel->pages == 0 && baserel->tuples == 0)
+	if (fpinfo->use_remote_estimate)
 	{
-		baserel->pages = 10;
-		baserel->tuples =
-			(10 * BLCKSZ) / (baserel->reltarget->width +
-								MAXALIGN(SizeofHeapTupleHeader));
+		/*
+		 * Get cost/size estimates with help of remote server.  Save the
+		 * values in fpinfo so we don't need to do it again to generate the
+		 * basic foreign path.
+		 */
+		estimate_path_cost_size(root, baserel, NIL, NIL, NULL,
+								&fpinfo->rows, &fpinfo->width,
+								&fpinfo->startup_cost, &fpinfo->total_cost);
+
+		/* Report estimated baserel size to planner. */
+		baserel->rows = fpinfo->rows;
+		baserel->reltarget->width = fpinfo->width;
 	}
+	else
+	{
+		/*
+		 * If the foreign table has never been ANALYZEd, it will have
+		 * reltuples < 0, meaning "unknown".  We can't do much if we're not
+		 * allowed to consult the remote server, but we can use a hack similar
+		 * to plancat.c's treatment of empty relations: use a minimum size
+		 * estimate of 10 pages, and divide by the column-datatype-based width
+		 * estimate to get the corresponding number of tuples.
+		 */
+#if (PG_VERSION_NUM >= 140000)
+		if (baserel->tuples < 0)
+#else
+		if (baserel->pages == 0 && baserel->tuples == 0)
+#endif
+		{
+			baserel->pages = 10;
+			baserel->tuples =
+				(10 * BLCKSZ) / (baserel->reltarget->width +
+									MAXALIGN(SizeofHeapTupleHeader));
+		}
 
-	/* Estimate baserel size as best we can with local statistics. */
-	set_baserel_size_estimates(root, baserel);
+		/* Estimate baserel size as best we can with local statistics. */
+		set_baserel_size_estimates(root, baserel);
 
-	/* Fill in basically-bogus cost estimates for use later. */
-	estimate_path_cost_size(root, baserel, NIL, NIL, NULL,
-							&fpinfo->rows, &fpinfo->width,
-							&fpinfo->startup_cost, &fpinfo->total_cost);
-
-	/*
-	 * Set the name of relation in fpinfo, while we are constructing it here.
-	 * It will be used to build the string describing the join relation in
-	 * EXPLAIN output. We can't know whether VERBOSE option is specified or
-	 * not, so always schema-qualify the foreign table name.
-	 */
-	fpinfo->relation_name = makeStringInfo();
-	namespace_string = get_namespace_name(get_rel_namespace(foreigntableid));
-	relname = get_rel_name(foreigntableid);
-	refname = rte->eref->aliasname;
-	appendStringInfo(fpinfo->relation_name, "%s.%s",
-					 quote_identifier(namespace_string),
-					 quote_identifier(relname));
-	if (*refname && strcmp(refname, relname) != 0)
-		appendStringInfo(fpinfo->relation_name, " %s",
-						 quote_identifier(rte->eref->aliasname));
+		/* Fill in basically-bogus cost estimates for use later. */
+		estimate_path_cost_size(root, baserel, NIL, NIL, NULL,
+								&fpinfo->rows, &fpinfo->width,
+								&fpinfo->startup_cost, &fpinfo->total_cost);
+	}
+	fpinfo->relation_name = psprintf("%u", baserel->relid);
 
 	/* No outer and inner relations. */
 	fpinfo->make_outerrel_subquery = false;
@@ -555,8 +554,10 @@ tsurugiGetForeignUpperPaths(PlannerInfo *root, UpperRelationKind stage,
 							 RelOptInfo *input_rel, RelOptInfo *output_rel,
 							 void *extra)
 {
-	TgFdwRelationInfo *fpinfo;
+//	TgFdwRelationInfo *fpinfo;
 
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+#if 0
 	/*
 	 * If input rel is not safe to pushdown, then simply return as we cannot
 	 * perform any post-join operations on the foreign server.
@@ -594,6 +595,7 @@ tsurugiGetForeignUpperPaths(PlannerInfo *root, UpperRelationKind stage,
 			elog(ERROR, "unexpected upper relation: %d", (int) stage);
 			break;
 	}
+#endif
 }
 
 /*
@@ -609,7 +611,7 @@ tsurugiGetForeignPaths(PlannerInfo *root,
 	List	   *ppi_list;
 	ListCell   *lc;
 
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	/*
 	 * Create simplest ForeignScan path node and add it to baserel.  This path
@@ -779,6 +781,7 @@ tsurugiGetForeignPaths(PlannerInfo *root,
 		int			width;
 		Cost		startup_cost = 0;
 		Cost		total_cost = 0;
+
 		/* Get a cost estimate from the remote */
 		estimate_path_cost_size(root, baserel,
 								param_info->ppi_clauses, NIL, NULL,
@@ -832,7 +835,7 @@ tsurugiGetForeignPlan(PlannerInfo *root,
 	bool		has_limit = false;
 	ListCell   *lc;
 
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	/*
 	 * Get FDW private data created by postgresGetForeignUpperPaths(), if any.
@@ -870,7 +873,7 @@ tsurugiGetForeignPlan(PlannerInfo *root,
 		 * This code must match "extract_actual_clauses(scan_clauses, false)"
 		 * except for the additional decision about remote versus local
 		 * execution.
-		 */
+		 */		
 		foreach(lc, scan_clauses)
 		{
 			RestrictInfo *rinfo = lfirst_node(RestrictInfo, lc);
@@ -996,6 +999,8 @@ tsurugiGetForeignPlan(PlannerInfo *root,
 							has_final_sort, has_limit, false,
 							&retrieved_attrs, &params_list);
 
+	elog(DEBUG1, "tsurugi_fdw : \ndeparsed sql:\n%s", sql.data);
+
 	/* Remember remote_exprs for possible use by tsurugiPlanDirectModify */
 	fpinfo->final_remote_exprs = remote_exprs;
 
@@ -1008,7 +1013,7 @@ tsurugiGetForeignPlan(PlannerInfo *root,
 							 makeInteger(fpinfo->fetch_size));
 	if (IS_JOIN_REL(foreignrel) || IS_UPPER_REL(foreignrel))
 		fdw_private = lappend(fdw_private,
-							  makeString(fpinfo->relation_name->data));
+							  makeString(fpinfo->relation_name));
 
 	/*
 	 * Create the ForeignScan node for the given relation.
@@ -1025,7 +1030,7 @@ tsurugiGetForeignPlan(PlannerInfo *root,
 							fdw_scan_tlist,
 							fdw_recheck_quals,
 							outer_plan);
-}											
+}
 
 /*
  * tsurugiGetForeignJoinPaths
@@ -1048,6 +1053,32 @@ tsurugiGetForeignJoinPaths(PlannerInfo *root,
 	Path	   *epq_path;		/* Path to create plan to be executed when
 								 * EvalPlanQual gets triggered. */
 
+ 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
+	/*
+	 * Currently we don't push-down joins in query for UPDATE/DELETE.
+	 * This would require a path for EvalPlanQual.
+	 * This restriction might be relaxed in a later release.
+	 */
+	if (root->parse->commandType != CMD_SELECT)
+	{
+		elog(DEBUG2, "tsurugi_fdw: don't push down join because it is no SELECT");
+		return;
+	}
+
+	if (root->rowMarks)
+	{
+		elog(DEBUG2, "tsurugi_fdw: don't push down join with FOR UPDATE");
+		return;
+	}
+
+	/*
+	 * N-way join is not supported, due to the column definition infrastracture.
+	 * If we can track relid mapping of join relations, we can support N-way join.
+	 */
+	if (! IS_SIMPLE_REL(outerrel) || ! IS_SIMPLE_REL(innerrel))
+		return;	
+
 	/*
 	 * Skip if this join combination has been considered already.
 	 */
@@ -1069,7 +1100,7 @@ tsurugiGetForeignJoinPaths(PlannerInfo *root,
 	 * the entry.
 	 */
 	fpinfo = (TgFdwRelationInfo *) palloc0(sizeof(TgFdwRelationInfo));
-	fpinfo->pushdown_safe = false;
+	fpinfo->pushdown_safe = true;
 	joinrel->fdw_private = fpinfo;
 	/* attrs_used is only for base relations. */
 	fpinfo->attrs_used = NULL;
@@ -1164,10 +1195,9 @@ tsurugiGetForeignJoinPaths(PlannerInfo *root,
 
 	/* XXX Consider parameterized paths for the join relation */
 }                            
-
-/*
- *  tsurugiBeginForeignScan
- *	    Preparation for scanning foreign tables.
+#endif
+/**
+ *  @brief  Preparation for scanning foreign tables.
  */
 static void 
 tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
@@ -1175,45 +1205,39 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 	Assert(node != nullptr);
 
 	ForeignScan* fsplan = (ForeignScan*) node->ss.ps.plan;
-	tsurugiFdwState* fdw_state = create_fdw_state();
+	TgFdwForeignScanState* fsstate;
 	RangeTblEntry *rte;
 	ForeignTable *table;
 	ForeignServer *server;
 	int			rtindex;
+	EState* 	estate = node->ss.ps.state;
 
-	/* Prepare processing when via ODBC */
-	EState* estate = node->ss.ps.state;
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+	/*
+	 * Do nothing in EXPLAIN (no ANALYZE) case.  node->fdw_state stays NULL.
+	 */
+	if (eflags & EXEC_FLAG_EXPLAIN_ONLY)
+		return;
 
 	/*
 	 * We'll save private state in node->fdw_state.
 	 */
-    node->fdw_state = (void*) fdw_state;
-    fdw_state->rowidx = 0;
-
-	if (fsplan->scan.scanrelid > 0)
-		rtindex = fsplan->scan.scanrelid;
-	else
-		rtindex = bms_next_member(fsplan->fs_relids, -1);
-	rte = exec_rt_fetch(rtindex, estate);
-
-	/* Get info about foreign table. */
-	table = GetForeignTable(rte->relid);
-	server = GetForeignServer(table->serverid);
-
+	fsstate = (TgFdwForeignScanState*) palloc0(sizeof(TgFdwForeignScanState));
+    node->fdw_state = (void*) fsstate;
+    fsstate->rowidx = 0;
+	fsstate->number_of_columns = 0;
 #ifdef __TSURUGI_PLANNER__
-	fdw_state->query_string = strVal(list_nth(fsplan->fdw_private,
-								FdwScanPrivateSelectSql));
-	fdw_state->retrieved_attrs = (List*) list_nth(fsplan->fdw_private, 
-								FdwScanPrivateRetrievedAttrs);
+	fsstate->query_string = estate->es_sourceText;
+	make_retrieved_attrs(fsplan->scan.plan.targetlist, &fsstate->retrieved_attrs);
 #else
-	fdw_state->query_string = strVal(list_nth(fsplan->fdw_private,
-		FdwScanPrivateSelectSql));
-	fdw_state->retrieved_attrs = (List*) list_nth(fsplan->fdw_private, 
-		FdwScanPrivateRetrievedAttrs);
+	fsstate->query_string = strVal(list_nth(fsplan->fdw_private,
+									FdwScanPrivateSelectSql));
+	fsstate->retrieved_attrs = (List*) list_nth(fsplan->fdw_private, 
+												FdwScanPrivateRetrievedAttrs);
 #endif
-  	fdw_state->cursor_exists = false;
+  	fsstate->cursor_exists = false;
+	fsstate->param_linfo = estate->es_param_list_info;
 
 	/*
 	 * Get info we'll need for converting data fetched from the foreign server
@@ -1221,20 +1245,24 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 	 */
 	if (fsplan->scan.scanrelid > 0)
 	{
-		fdw_state->rel = node->ss.ss_currentRelation;
-		fdw_state->tupdesc = RelationGetDescr(fdw_state->rel);
+		fsstate->rel = node->ss.ss_currentRelation;
+		fsstate->tupdesc = RelationGetDescr(fsstate->rel);
 	}
 	else
 	{
-		fdw_state->rel = NULL;
-		fdw_state->tupdesc = node->ss.ss_ScanTupleSlot->tts_tupleDescriptor;
+		fsstate->rel = NULL;
+		fsstate->tupdesc = node->ss.ss_ScanTupleSlot->tts_tupleDescriptor;
 	} 
+	fsstate->attinmeta = TupleDescGetAttInMetadata(fsstate->tupdesc);
 
-	fdw_state->attinmeta = TupleDescGetAttInMetadata(fdw_state->tupdesc);
-
-	begin_prepare_processing(estate);
+	if (fsplan->scan.scanrelid > 0)
+		rtindex = fsplan->scan.scanrelid;
+	else
+		rtindex = bms_next_member(fsplan->fs_relids, -1);
+	rte = exec_rt_fetch(rtindex, estate);
+	table = GetForeignTable(rte->relid);
+	server = GetForeignServer(table->serverid);
 	handle_remote_xact(server);
-	fdw_info_.success = true;
 }
 
 /*
@@ -1244,77 +1272,70 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 static TupleTableSlot* 
 tsurugiIterateForeignScan(ForeignScanState* node)
 {
-	elog(DEBUG5, "tsurugi_fdw : %s", __func__);
-
 	Assert(node != nullptr);
 
-	tsurugiFdwState* fdw_state = (tsurugiFdwState*) node->fdw_state;
+	TgFdwForeignScanState* fsstate = (TgFdwForeignScanState*) node->fdw_state;
 	TupleTableSlot* tupleSlot = node->ss.ss_ScanTupleSlot;
 
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG5, "tsurugi_fdw : %s", __func__);
 
-	if (!fdw_state->cursor_exists)
-    {
-        std::string query = make_tsurugi_query(fdw_state->query_string);
-        fdw_info_.result_set = nullptr;
-        ERROR_CODE error = Tsurugi::execute_query(query, fdw_info_.result_set);
-        if (error != ERROR_CODE::OK)
-        {
-            fdw_info_.success = false;
-            /* Prepare processing when via ODBC */
-            EState* estate = node->ss.ps.state;
-            end_prepare_processing(estate);
-			elog(ERROR, "Failed to execute query to Tsurugi. (%d)\n%s", 
-                (int) error, Tsurugi::get_error_message(error).c_str());
-        }
-        fdw_state->cursor_exists = true;
-        fdw_state->eof_reached = false;
-    }
+	if (!fsstate->cursor_exists)
+	{
+		create_cursor(node);
+		fsstate->num_tuples = 0;
+	    fsstate->cursor_exists = true;
+	}
 
 	ExecClearTuple(tupleSlot);
 
-    /* No point in another fetch if we already detected EOF, though. */
-    if (!fdw_state->eof_reached) 
-    {
-        ERROR_CODE error = fdw_info_.result_set->next();
-        if (error == ERROR_CODE::OK)
-        {
-            make_tuple_from_result_row(fdw_info_.result_set, 
-                                        tupleSlot->tts_tupleDescriptor,
-                                        fdw_state->retrieved_attrs,
-                                        tupleSlot->tts_values,
-                                        tupleSlot->tts_isnull,
-                                        fdw_state);
-            ExecStoreVirtualTuple(tupleSlot);
-            fdw_state->num_tuples++;
-        }
-        else if (error == ERROR_CODE::END_OF_ROW) 
-        {
-            elog(LOG, "End of rows. (rows: %d)", (int) fdw_state->num_tuples);
-            fdw_info_.result_set = nullptr;
-            fdw_state->eof_reached = true;
-        }
-        else
-        {
-            fdw_info_.success = false;
-            /* Prepare processing when via ODBC */
-            EState* estate = node->ss.ps.state;
-            end_prepare_processing(estate);
-            elog(ERROR, "Failed to retrieve result set from Tsurugi. (error: %d)",
-                (int) error);
-        }
-    }
+	ERROR_CODE error = Tsurugi::result_set_next_row();
+	if (error == ERROR_CODE::OK)
+	{
+		make_tuple_from_result_row(Tsurugi::get_result_set(), 
+  								   tupleSlot->tts_tupleDescriptor,
+								   fsstate->retrieved_attrs,
+								   tupleSlot->tts_values,
+								   tupleSlot->tts_isnull);
+		ExecStoreVirtualTuple(tupleSlot);
+		fsstate->num_tuples++;
+	}
+	else if (error == ERROR_CODE::END_OF_ROW) 
+	{
+		/* No more rows/data exists */
+		Tsurugi::init_result_set();
+		elog(LOG, "tsurugi_fdw : End of rows. (rows: %d)", 
+			(int) fsstate->num_tuples);
+	}
+	else
+	{
+		Tsurugi::init_result_set();
+		Tsurugi::report_error("Failed to retrieve result set from Tsurugi.", 
+								error, fsstate->query_string);
+	}
 
 	return tupleSlot;
 }
 
 /*
- *	@note	Not in used.
+ *	
  */
 static void 
 tsurugiReScanForeignScan(ForeignScanState* node)
 {
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+	TgFdwForeignScanState *fsstate = (TgFdwForeignScanState *) node->fdw_state;
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
+	/* If we haven't created the cursor yet, nothing to do. */
+	if (!fsstate->cursor_exists)
+		return;
+	
+	Tsurugi::deallocate();
+	Tsurugi::init_result_set();
+
+	fsstate->cursor_exists = false;
+	fsstate->rowidx = 0;
+	fsstate->num_tuples = 0;
 }
 
 /*
@@ -1324,132 +1345,34 @@ tsurugiReScanForeignScan(ForeignScanState* node)
 static void 
 tsurugiEndForeignScan(ForeignScanState* node)
 {
-	tsurugiFdwState* fdw_state = (tsurugiFdwState*) node->fdw_state;
-
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-
-	/* Prepare processing when via ODBC */
-	EState* estate = node->ss.ps.state;
-	end_prepare_processing(estate);
-
-	if (fdw_state != nullptr) 
-    {
-		free_fdw_state(fdw_state);
-    }
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 }
 
-/*
- * FDW Update functions.
+/* ===========================================================================
+ *
+ * FDW Modify functions.
+ *
  */
-
-/*
- * tsurugiBeginDirectModify
- *      Preparation for modifying foreign tables.
- */
-static void 
-tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
-{
-	RangeTblEntry *rte;
-    ForeignTable *table;
-    ForeignServer *server;
-	ForeignScan* fsplan = (ForeignScan*) node->ss.ps.plan;
-	int      rtindex;
-
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-
-	Assert(node != nullptr);
-
-	EState* estate = node->ss.ps.state;
-
-	if (fsplan->scan.scanrelid > 0)
-    	rtindex = fsplan->scan.scanrelid;
-  	else
-    	rtindex = bms_next_member(fsplan->fs_relids, -1);
-  	rte = exec_rt_fetch(rtindex, estate);
-  	/* Get info about foreign table. */
-  	table = GetForeignTable(rte->relid);
-  	server = GetForeignServer(table->serverid);
-
-	tsurugiFdwState* fdw_state = create_fdw_state();
-
- 	fdw_state->query_string = estate->es_sourceText; 
-    node->fdw_state = fdw_state;
-
-	/* Prepare processing when via JDBC and ODBC */
-	begin_prepare_processing(estate);
-
-	handle_remote_xact(server);
-
-    fdw_info_.success = true;
-}
-
-/*
- * tsurugiIterateDirectModify
- *      Execute Insert/Upate/Delete command to foreign tables.
- */
-static TupleTableSlot* 
-tsurugiIterateDirectModify(ForeignScanState* node)
-{
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-
-	Assert(node != nullptr);
-	Assert(fdw_info_.transaction != nullptr);
-
-	tsurugiFdwState* fdw_state = (tsurugiFdwState*) node->fdw_state;
-	TupleTableSlot* slot = nullptr;
-	EState* estate = node->ss.ps.state;
-	ERROR_CODE error;
-
-    std::string statement = make_tsurugi_query(fdw_state->query_string);
-	std::size_t num_rows = 0;
-	error = Tsurugi::execute_statement(statement, num_rows);
-	if (error != ERROR_CODE::OK)
-    {
-        fdw_info_.success = false;
-        /* Prepare processing when via JDBC and ODBC */
-        end_prepare_processing(estate);
-		elog(ERROR, "Failed to execute statement to Tsurugi. (%d)\n%s", 
-                (int) error, Tsurugi::get_error_message(error).c_str());
-	} else {
-		/* Increment the command es_processed count if necessary. */
-		estate->es_processed += num_rows;
-	}
-	
-	return slot;	
-}
-
-/*
- * tsurugiEndDirectModify
- *      Clean up for modifying foreign tables.
- */
-static void 
-tsurugiEndDirectModify(ForeignScanState* node)
-{
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-
-	/* Prepare processing when via JDBC and ODBC */
-	EState* estate = node->ss.ps.state;
-	end_prepare_processing(estate);
-
-	if (node->fdw_state != nullptr)
-    {
-		free_fdw_state((tsurugiFdwState*) node->fdw_state);
-    }
-}
-
-
 /*
  * tsurugiAddForeignUpdateTargets
  *      
  */
+#if PG_VERSION_NUM >= 140000
+static void
+tsurugiAddForeignUpdateTargets(PlannerInfo *root,
+								Index rtindex,
+								RangeTblEntry *target_rte,
+								Relation target_relation)
+#else
 static void 
 tsurugiAddForeignUpdateTargets(Query *parsetree,
 								RangeTblEntry *target_rte,
 								Relation target_relation)
+#endif  // PG_VERSION_NUM >= 140000
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 
-}	
+}
 
 /*
  * tsurugiPlanDirectModify
@@ -1465,21 +1388,28 @@ tsurugiPlanDirectModify(PlannerInfo *root,
 						int subplan_index)
 {
 	CmdType		operation = plan->operation;
+#if PG_VERSION_NUM < 140000
 	Plan	   *subplan;
+#endif  // PG_VERSION_NUM < 140000
 	RelOptInfo *foreignrel;
 	RangeTblEntry *rte;
 	TgFdwRelationInfo *fpinfo;
 	Relation	rel;
 	StringInfoData sql;
 	ForeignScan *fscan;
+#if PG_VERSION_NUM >= 140000
+	List	   *processed_tlist = NIL;
+#endif  // PG_VERSION_NUM >= 140000
 	List	   *targetAttrs = NIL;
-	List	   *remote_exprs;
+	List	   *remote_exprs = NIL;
 	List	   *params_list = NIL;
 	List	   *returningList = NIL;
 	List	   *retrieved_attrs = NIL;
+	static const char *operations[] = {"SELECT", "UPDATE", "INSERT", "DELETE", "UTILITY"};
 
 	/* operation - 1:SELECT, 2:UPDATE, 3:INSERT, 4:DELETE, 5:UTILITY */
-	elog(DEBUG2, "tsurugi_fdw : %s (operation= %d)", __func__, (int) operation);
+	elog(LOG, "tsurugi_fdw : %s (operation= %s(%d))", 
+		__func__, operations[operation-1], (int) operation);
 
 	/*
 	 * Decide whether it is safe to modify a foreign table directly.
@@ -1488,12 +1418,17 @@ tsurugiPlanDirectModify(PlannerInfo *root,
 	/*
 	 * The table modification must be an UPDATE or DELETE.
 	 */
-	if (operation != CMD_UPDATE && operation != CMD_DELETE)
-#ifdef __TSURUGI_PLANNER__
+ 	if (operation != CMD_UPDATE && operation != CMD_DELETE)
 		return true;
-#else
+
+#if PG_VERSION_NUM >= 140000
+	/*
+	 * Try to locate the ForeignScan subplan that's scanning resultRelation.
+	 */
+	fscan = find_modifytable_subplan(root, plan, resultRelation, subplan_index);
+	if (!fscan)
 		return false;
-#endif
+#else
 	/*
 	 * It's unsafe to modify a foreign table directly if there are any local
 	 * joins needed.
@@ -1502,12 +1437,17 @@ tsurugiPlanDirectModify(PlannerInfo *root,
 	if (!IsA(subplan, ForeignScan))
 		return false;
 	fscan = (ForeignScan *) subplan;
+#endif  // PG_VERSION_NUM >= 140000
 
 	/*
 	 * It's unsafe to modify a foreign table directly if there are any quals
 	 * that should be evaluated locally.
 	 */
+#if PG_VERSION_NUM >= 140000
+	if (fscan->scan.plan.qual != NIL)
+#else
 	if (subplan->qual != NIL)
+#endif  // PG_VERSION_NUM >= 140000
 		return false;
 
 	/* Safe to fetch data about the target foreign rel */
@@ -1528,6 +1468,31 @@ tsurugiPlanDirectModify(PlannerInfo *root,
 	 */
 	if (operation == CMD_UPDATE)
 	{
+#if PG_VERSION_NUM >= 140000
+		ListCell   *lc,
+				   *lc2;
+
+		/*
+		 * The expressions of concern are the first N columns of the processed
+		 * targetlist, where N is the length of the rel's update_colnos.
+		 */
+		get_translated_update_targetlist(root, resultRelation,
+										 &processed_tlist, &targetAttrs);
+		forboth(lc, processed_tlist, lc2, targetAttrs)
+		{
+			TargetEntry *tle = lfirst_node(TargetEntry, lc);
+			AttrNumber	attno = lfirst_int(lc2);
+
+			/* update's new-value expressions shouldn't be resjunk */
+			Assert(!tle->resjunk);
+
+			if (attno <= InvalidAttrNumber) /* shouldn't happen */
+				elog(ERROR, "system-column update is not supported");
+
+			if (!is_foreign_expr(root, foreignrel, (Expr *) tle->expr))
+				return false;
+		}
+#else
 		int			col;
 
 		/*
@@ -1555,6 +1520,7 @@ tsurugiPlanDirectModify(PlannerInfo *root,
 
 			targetAttrs = lappend_int(targetAttrs, attno);
 		}
+#endif  // PG_VERSION_NUM >= 140000
 	}
 
 	/*
@@ -1604,7 +1570,11 @@ tsurugiPlanDirectModify(PlannerInfo *root,
 		case CMD_UPDATE:
 			deparseDirectUpdateSql(&sql, root, resultRelation, rel,
 								   foreignrel,
+#if PG_VERSION_NUM >= 140000
+								   processed_tlist,
+#else
 								   ((Plan *) fscan)->targetlist,
+#endif  // PG_VERSION_NUM >= 140000
 								   targetAttrs,
 								   remote_exprs, &params_list,
 								   returningList, &retrieved_attrs);
@@ -1619,13 +1589,15 @@ tsurugiPlanDirectModify(PlannerInfo *root,
 			elog(ERROR, "unexpected operation: %d", (int) operation);
 			break;
 	}
-
-	elog(DEBUG2, "tsurugi_fdw : sql = \"%s\"", sql.data);
+	elog(LOG, "tsurugi_fdw : \ndeparsed sql:\n%s", sql.data);
 
 	/*
 	 * Update the operation info.
 	 */
 	fscan->operation = operation;
+#if PG_VERSION_NUM >= 140000
+	fscan->resultRelation = resultRelation;
+#endif  // PG_VERSION_NUM >= 140000
 
 	/*
 	 * Update the fdw_exprs list that will be available to the executor.
@@ -1654,9 +1626,114 @@ tsurugiPlanDirectModify(PlannerInfo *root,
 			rebuild_fdw_scan_tlist(fscan, returningList);
 	}
 
+#if PG_VERSION_NUM >= 140000
+	/*
+	 * Finally, unset the async-capable flag if it is set, as we currently
+	 * don't support asynchronous execution of direct modifications.
+	 */
+	if (fscan->scan.plan.async_capable)
+		fscan->scan.plan.async_capable = false;
+#endif  // PG_VERSION_NUM >= 140000
+
 	table_close(rel, NoLock);
-	elog(DEBUG2, "tsurugi_fdw : Direct Modify is true.");
+	elog(LOG, "tsurugi_fdw : %s : Selected Direct Modify.", __func__);
+
 	return true;
+}
+
+/*
+ * tsurugiBeginDirectModify
+ *      Preparation for modifying foreign tables.
+ */
+static void 
+tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
+{
+	RangeTblEntry *rte;
+    ForeignTable *table;
+    ForeignServer *server;
+	ForeignScan* fsplan = (ForeignScan*) node->ss.ps.plan;
+	int      	rtindex;
+	EState* estate = node->ss.ps.state;
+
+	Assert(node != nullptr);
+	Assert(fsplan != nullptr);
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
+	/* Initialize state variable */
+	TgFdwDirectModifyState* dmstate = 
+		(TgFdwDirectModifyState *) palloc0(sizeof(TgFdwDirectModifyState));
+	dmstate->num_tuples = -1;	/* -1 means not set yet */	
+	dmstate->orig_query = estate->es_sourceText;
+#if !defined (__TSURUGI_PLANNER__)
+	dmstate->query = strVal(list_nth(fsplan->fdw_private,
+									 FdwDirectModifyPrivateUpdateSql));
+	dmstate->has_returning = intVal(list_nth(fsplan->fdw_private,
+											 FdwDirectModifyPrivateHasReturning));
+	dmstate->retrieved_attrs = (List *) list_nth(fsplan->fdw_private,
+												 FdwDirectModifyPrivateRetrievedAttrs);									 
+	dmstate->set_processed = intVal(list_nth(fsplan->fdw_private,
+											 FdwDirectModifyPrivateSetProcessed));
+#endif
+	if (fsplan->scan.scanrelid > 0)
+    	rtindex = fsplan->scan.scanrelid;
+  	else
+    	rtindex = bms_next_member(fsplan->fs_relids, -1);
+	if (fsplan->scan.scanrelid == 0)
+		dmstate->rel = ExecOpenScanRelation(estate, rtindex, eflags);
+	else
+		dmstate->rel = node->ss.ss_currentRelation;
+	dmstate->param_types = NULL;
+	dmstate->prep_name = NULL;
+	dmstate->param_linfo = estate->es_param_list_info;
+    node->fdw_state = dmstate;
+#ifdef __TSURUGI_PLANNER__
+	if (is_prepare_statement(dmstate->orig_query))
+		prepare_direct_modify(dmstate);
+#else
+	prepare_direct_modify(dmstate, fsplan->fdw_exprs);
+#endif
+
+  	rte = exec_rt_fetch(rtindex, estate);
+  	table = GetForeignTable(rte->relid);
+  	server = GetForeignServer(table->serverid);
+	handle_remote_xact(server);
+}
+
+/*
+ * tsurugiIterateDirectModify
+ *      Execute Insert/Upate/Delete command to foreign tables.
+ */
+static TupleTableSlot* 
+tsurugiIterateDirectModify(ForeignScanState* node)
+{
+	Assert(node != nullptr);
+
+	TgFdwDirectModifyState* dmstate = (TgFdwDirectModifyState*) node->fdw_state;
+	EState* estate = node->ss.ps.state;
+	TupleTableSlot *slot = node->ss.ss_ScanTupleSlot;
+	dmstate->slot = node->ss.ss_ScanTupleSlot;
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
+	if (dmstate->num_tuples == (size_t) -1)
+		execute_direct_modify(node);
+
+	/* Increment the command es_processed count if necessary. */
+	if (dmstate->set_processed)
+		estate->es_processed += dmstate->num_tuples;
+
+	return ExecClearTuple(slot);	
+}
+
+/*
+ * tsurugiEndDirectModify
+ *      Clean up for modifying foreign tables.
+ */
+static void 
+tsurugiEndDirectModify(ForeignScanState* node)
+{
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 }
 
 /*
@@ -1668,8 +1745,143 @@ static List
 						   Index resultRelation,
 						   int subplan_index)
 {
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
+#if !defined (__TSURUGI_PLANNER__)
+	CmdType		operation = plan->operation;
+	RangeTblEntry *rte = planner_rt_fetch(resultRelation, root);
+	Relation	rel;
+	StringInfoData sql;
+	List	   *targetAttrs = NIL;
+	List	   *withCheckOptionList = NIL;
+	List	   *returningList = NIL;
+	List	   *retrieved_attrs = NIL;
+	bool		doNothing = false;
+	int			values_end_len = -1;
+
+	elog(DEBUG1, "tsurugi_fdw : %s : operation: %d", __func__, operation);
+
+	initStringInfo(&sql);
+
+	/*
+	 * Core code already has some lock on each rel being planned, so we can
+	 * use NoLock here.
+	 */
+	rel = table_open(rte->relid, NoLock);
+
+	/*
+	 * In an INSERT, we transmit all columns that are defined in the foreign
+	 * table.  In an UPDATE, if there are BEFORE ROW UPDATE triggers on the
+	 * foreign table, we transmit all columns like INSERT; else we transmit
+	 * only columns that were explicitly targets of the UPDATE, so as to avoid
+	 * unnecessary data transmission.  (We can't do that for INSERT since we
+	 * would miss sending default values for columns not listed in the source
+	 * statement, and for UPDATE if there are BEFORE ROW UPDATE triggers since
+	 * those triggers might change values for non-target columns, in which
+	 * case we would miss sending changed values for those columns.)
+	 */
+	if (operation == CMD_INSERT ||
+		(operation == CMD_UPDATE &&
+		 rel->trigdesc &&
+		 rel->trigdesc->trig_update_before_row))
+	{
+		TupleDesc	tupdesc = RelationGetDescr(rel);
+		int			attnum;
+
+		for (attnum = 1; attnum <= tupdesc->natts; attnum++)
+		{
+			Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
+
+			if (!attr->attisdropped)
+				targetAttrs = lappend_int(targetAttrs, attnum);
+		}
+	}
+	else if (operation == CMD_UPDATE)
+	{
+		int			col;
+		Bitmapset  *allUpdatedCols = bms_union(rte->updatedCols, rte->extraUpdatedCols);
+
+		col = -1;
+		while ((col = bms_next_member(allUpdatedCols, col)) >= 0)
+		{
+			/* bit numbers are offset by FirstLowInvalidHeapAttributeNumber */
+			AttrNumber	attno = col + FirstLowInvalidHeapAttributeNumber;
+
+			if (attno <= InvalidAttrNumber) /* shouldn't happen */
+				elog(ERROR, "system-column update is not supported");
+			targetAttrs = lappend_int(targetAttrs, attno);
+		}
+	}
+
+	/*
+	 * Extract the relevant WITH CHECK OPTION list if any.
+	 */
+	if (plan->withCheckOptionLists)
+		withCheckOptionList = (List *) list_nth(plan->withCheckOptionLists,
+												subplan_index);
+
+	if (plan->returningLists)
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+				 errmsg("RETURNING clause is not supported")));
+
+	/*
+	 * ON CONFLICT DO UPDATE and DO NOTHING case with inference specification
+	 * should have already been rejected in the optimizer, as presently there
+	 * is no way to recognize an arbiter index on a foreign table.  Only DO
+	 * NOTHING is supported without an inference specification.
+	 */
+	if (plan->onConflictAction == ONCONFLICT_NOTHING)
+		doNothing = true;
+	else if (plan->onConflictAction != ONCONFLICT_NONE)
+		elog(ERROR, "unexpected ON CONFLICT specification: %d",
+			 (int) plan->onConflictAction);
+
+	/*
+	 * Construct the SQL command string.
+	 */
+	switch (operation)
+	{
+		case CMD_INSERT:
+			deparseInsertSql(&sql, rte, resultRelation, rel,
+							 targetAttrs, doNothing,
+							 withCheckOptionList, returningList,
+							 &retrieved_attrs, &values_end_len);
+			break;
+		case CMD_UPDATE:
+			deparseUpdateSql(&sql, rte, resultRelation, rel,
+							 targetAttrs);
+			break;
+		default:
+			elog(ERROR, "unexpected operation: %d", (int) operation);
+			break;
+	}
+
+	elog(LOG, "tsurugi_fdw : %s : \ndeparsed sql:\n%s", __func__, sql.data);
+
+	table_close(rel, NoLock);
+
+	/*
+	 * Build the fdw_private list that will be available to the executor.
+	 * Items in the list must match enum FdwForeignModifyPrivateIndex, above.
+	 */
+#if PG_VERSION_NUM >= 140000
+	return list_make5(makeString(sql.data),
+					  targetAttrs,
+					  makeInteger(values_end_len),
+					  makeInteger((retrieved_attrs != NIL)),
+					  retrieved_attrs);
+#elif PG_VERSION_NUM >= 130000
+	return list_make4(makeString(sql.data),
+					  targetAttrs,
+					  makeInteger(values_end_len),
+					  makeInteger((retrieved_attrs != NIL)));
+#else
+	return list_make3(makeString(sql.data), 
+					targetAttrs, 
+					makeInteger(values_end_len));
+#endif
+#else
 	return NULL;
+#endif	// __TSURUGI_PLANNER__
 }
 
 /*
@@ -1682,8 +1894,116 @@ tsurugiBeginForeignModify(ModifyTableState *mtstate,
                         int subplan_index,
                         int eflags)
 {
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-	return;
+#if !defined (__TSURUGI_PLANNER__)
+	TgFdwForeignModifyState *fmstate;
+	EState	   *estate = mtstate->ps.state;
+	Relation	rel = resultRelInfo->ri_RelationDesc;
+	AttrNumber	n_params = 0;
+	Oid			typefnoid = InvalidOid;
+	bool		isvarlena = false;
+	ListCell   *lc = NULL;
+	RangeTblEntry *rte;
+    ForeignTable *table;
+   	ForeignServer *server;
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
+	/*
+	 * Do nothing in EXPLAIN (no ANALYZE) case.  resultRelInfo->ri_FdwState
+	 * stays NULL.
+	 */
+	if (eflags & EXEC_FLAG_EXPLAIN_ONLY)
+		return;
+
+	fmstate = (TgFdwForeignModifyState *) palloc0(sizeof(TgFdwForeignModifyState));
+
+	/* Deconstruct fdw_private data. */
+	fmstate->query = strVal(list_nth(fdw_private,
+							FdwModifyPrivateUpdateSql));
+	fmstate->target_attrs = (List *) list_nth(fdw_private,
+									 		FdwModifyPrivateTargetAttnums);
+	fmstate->values_end = intVal(list_nth(fdw_private,
+									 FdwModifyPrivateLen));
+#if PG_VERSION_NUM >= 130000								 
+	fmstate->has_returning = intVal(list_nth(fdw_private,
+									FdwModifyPrivateHasReturning));
+#endif
+#if PG_VERSION_NUM >= 140000								 
+	fmstate->retrieved_attrs = (List *) list_nth(fdw_private,
+										FdwModifyPrivateRetrievedAttrs);
+#endif
+	/* Begin constructing TgFdwForeignModifyState. */
+	fmstate->rel = rel;
+	fmstate->orig_query = pstrdup(fmstate->query);
+	fmstate->is_prepared = false;
+	fmstate->p_nums = 0;
+	/* Prepare for output conversion of parameters used in prepared stmt. */
+	n_params = list_length(fmstate->target_attrs) + 1;
+	fmstate->p_flinfo = (FmgrInfo *) palloc0(sizeof(FmgrInfo) * n_params);
+	fmstate->p_nums = 0;
+	/* Create context for per-tuple temp workspace. */
+	fmstate->temp_cxt = AllocSetContextCreate(estate->es_query_cxt,
+											  "tsurugi_fdw temporary data",
+											  ALLOCSET_SMALL_SIZES);
+
+	if (mtstate->operation == CMD_UPDATE || mtstate->operation == CMD_DELETE)
+	{
+		/* First transmittable parameter will be ctid */
+		getTypeOutputInfo(TIDOID, &typefnoid, &isvarlena);
+		fmgr_info(typefnoid, &fmstate->p_flinfo[fmstate->p_nums]);
+		fmstate->p_nums++;
+	}
+
+	if (mtstate->operation == CMD_INSERT || mtstate->operation == CMD_UPDATE)
+	{
+		/* Set up for remaining transmittable parameters */
+		foreach(lc, fmstate->target_attrs)
+		{
+			int			attnum = lfirst_int(lc);
+			Form_pg_attribute attr = TupleDescAttr(RelationGetDescr(rel), attnum - 1);
+
+			Assert(!attr->attisdropped);
+#if PG_VERSION_NUM >= 140000
+			/* Ignore generated columns; they are set to DEFAULT */
+			if (attr->attgenerated)
+			{
+				if (list_length(fmstate->retrieved_attrs) >= 1)
+					fmstate->p_nums = 1;
+				continue;
+			}
+#endif
+			getTypeOutputInfo(attr->atttypid, &typefnoid, &isvarlena);
+			fmgr_info(typefnoid, &fmstate->p_flinfo[fmstate->p_nums]);
+			fmstate->p_nums++;
+		}
+	}
+	Assert(fmstate->p_nums <= n_params);
+
+#if PG_VERSION_NUM >= 140000
+	/* Set batch_size from foreign server/table options. */
+	if (mtstate->operation == CMD_INSERT)
+		fmstate->batch_size = get_batch_size_option(fmstate->rel);
+#endif
+
+	n_params = list_length(fmstate->retrieved_attrs);
+	fmstate->num_slots = 1;
+
+	/* Initialize auxiliary state */
+	fmstate->aux_fmstate = NULL;
+
+	resultRelInfo->ri_FdwState = fmstate;
+
+	/* Find RTE. */
+	rte = exec_rt_fetch(resultRelInfo->ri_RangeTableIndex,
+						mtstate->ps.state);
+
+	prepare_foreign_modify(fmstate);
+
+	/* Get info about foreign table. */
+  	table = GetForeignTable(rte->relid);
+  	server = GetForeignServer(table->serverid);
+	handle_remote_xact(server);
+#endif
 }
 
 /*
@@ -1696,32 +2016,29 @@ tsurugiExecForeignInsert(
 	TupleTableSlot *slot, 
 	TupleTableSlot *planSlot)
 {
-	Assert(rinfo != nullptr);
-	Assert(rinfo->ri_FdwState != nullptr);
+#if !defined(__TSURUGI_PLANNER__)
+	TgFdwForeignModifyState *fmstate = (TgFdwForeignModifyState *) rinfo->ri_FdwState;
+	TupleTableSlot **rslot;
+	int			numSlots = 1;
 
-	tsurugiFdwState* fdw_state = (tsurugiFdwState*) rinfo->ri_FdwState;
-	ERROR_CODE error;
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
-	elog(DEBUG2, "tsurugi_fdw : %s : query string: %s", __func__, fdw_state->query_string);
- 	std::string query(fdw_state->query_string);
-	std::size_t num_rows = 0;
-
+	if (fmstate->aux_fmstate)
+		rinfo->ri_FdwState = fmstate->aux_fmstate;
+	rslot = execute_foreign_modify(estate, rinfo, CMD_INSERT,
+								   &slot, &planSlot, &numSlots);
+	/* Revert that change */
+	if (fmstate->aux_fmstate)
+		rinfo->ri_FdwState = fmstate;
+	return rslot ? *rslot : NULL;
+#else
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-
-#if 0
-	query = std::regex_replace(query, std::regex("\\$\\d"), "%s");
-    query = (boost::format(query) % slot->tts_values[0] % slot->tts_values[1]).str();
-#endif
-	make_tsurugi_query(query);
-	error = Tsurugi::execute_statement(query, num_rows);
-	if (error != ERROR_CODE::OK) 
-    {
-        elog(ERROR, "transaction::execute_statement() failed. (%d)", 
-            (int) error);
-	}
-	
 	slot = nullptr;
+
+	elog(ERROR, "tsurugi_fdw does not support execForeignInsert().");
+
     return slot;
+#endif
 }
 
 /*
@@ -1736,6 +2053,9 @@ tsurugiExecForeignUpdate(
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 	slot = nullptr;
+
+	elog(ERROR, "tsurugi_fdw does not support execForeignUpdate().");
+
     return slot;
 }
 
@@ -1751,6 +2071,9 @@ tsurugiExecForeignDelete(
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 	slot = nullptr;
+
+	elog(ERROR, "tsurugi_fdw does not support execForeignDelete().");
+
 	return slot;
 }
 
@@ -1759,11 +2082,18 @@ tsurugiExecForeignDelete(
  */
 static void 
 tsurugiEndForeignModify(EState *estate,
-                        ResultRelInfo *rinfo)
+                        ResultRelInfo *resultRelInfo)
 {
-	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-}
+	TgFdwForeignModifyState *fmstate = 
+		(TgFdwForeignModifyState *) resultRelInfo->ri_FdwState;
 
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
+	/* If fmstate is NULL, we are in EXPLAIN; nothing to do */
+	if (fmstate == NULL)
+		return;
+}
+#if !defined (__TSURUGI_PLANNER__)
 /*
  * tsurugiBeginForeignInsert
  */
@@ -1772,77 +2102,6 @@ tsurugiBeginForeignInsert(ModifyTableState *mtstate,
                         ResultRelInfo *resultRelInfo)
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
-
-	ModifyTable *plan = castNode(ModifyTable, mtstate->ps.plan);
-	EState	   *estate = mtstate->ps.state;
-	Index		resultRelation = resultRelInfo->ri_RangeTableIndex;
-	Relation	rel = resultRelInfo->ri_RelationDesc;
-	RangeTblEntry *rte;
-	TupleDesc	tupdesc = RelationGetDescr(rel);
-	int			attnum;
-	StringInfoData sql;
-	List	   *targetAttrs = NIL;
-	List	   *retrieved_attrs = NIL;
-	bool		doNothing = false;
-
-	initStringInfo(&sql);
-
-	/* We transmit all columns that are defined in the foreign table. */
-	for (attnum = 1; attnum <= tupdesc->natts; attnum++)
-	{
-		Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
-
-		if (!attr->attisdropped)
-			targetAttrs = lappend_int(targetAttrs, attnum);
-	}
-
-	/*
-	 * If the foreign table is a partition, we need to create a new RTE
-	 * describing the foreign table for use by deparseInsertSql and
-	 * create_foreign_modify() below, after first copying the parent's RTE and
-	 * modifying some fields to describe the foreign partition to work on.
-	 * However, if this is invoked by UPDATE, the existing RTE may already
-	 * correspond to this partition if it is one of the UPDATE subplan target
-	 * rels; in that case, we can just use the existing RTE as-is.
-	 */
-	rte = exec_rt_fetch(resultRelation, estate);
-	if (rte->relid != RelationGetRelid(rel))
-	{
-/*		rte = copyObject(rte);	*/
-        rte = (RangeTblEntry*) copyObjectImpl(rte);
-		rte->relid = RelationGetRelid(rel);
-		rte->relkind = RELKIND_FOREIGN_TABLE;
-
-		/*
-		 * For UPDATE, we must use the RT index of the first subplan target
-		 * rel's RTE, because the core code would have built expressions for
-		 * the partition, such as RETURNING, using that RT index as varno of
-		 * Vars contained in those expressions.
-		 */
-		if (plan && plan->operation == CMD_UPDATE &&
-			resultRelation == plan->rootRelation)
-			resultRelation = mtstate->resultRelInfo[0].ri_RangeTableIndex;
-	}
-
-	/* Construct the SQL command string. */
-	deparseInsertSql(&sql, rte, resultRelation, rel, targetAttrs, doNothing,
-					 resultRelInfo->ri_WithCheckOptions,
-					 resultRelInfo->ri_returningList,
-					 &retrieved_attrs);
-
-	tsurugiFdwState* fdw_state = create_fdw_state();
-
-    elog(DEBUG2, "deparse sql : %s", sql.data);
-
- 	fdw_state->query_string = sql.data;
-    resultRelInfo->ri_FdwState = fdw_state;
-
-	ERROR_CODE error = Tsurugi::start_transaction();
-	if (error != ERROR_CODE::OK)
-	{
-		elog(ERROR, "Failed to begin the Tsurugi transaction. (%d)\n%s", 
-            (int) error, Tsurugi::get_error_message(error).c_str());
-	}
 }
 
 /*
@@ -1850,15 +2109,17 @@ tsurugiBeginForeignInsert(ModifyTableState *mtstate,
  */
 static void 
 tsurugiEndForeignInsert(EState *estate,
-                        ResultRelInfo *rinfo)
+                        ResultRelInfo *resultRelInfo)
 {
 	elog(DEBUG2, "tsurugi_fdw : %s", __func__);
 }
+#endif
 
-/*
+/* ===========================================================================
+ *
  * FDW Explain functions.
+ *
  */
-
 /*
  * tsurugiExplainForeignScan
  *		Produce extra output for EXPLAIN of a ForeignScan on a foreign table
@@ -1920,8 +2181,10 @@ tsurugiAnalyzeForeignTable(Relation relation,
 	return true;
 }
 
-/*
+/* ===========================================================================
+ *
  * FDW Import Foreign Schema functions.
+ *
  */
 
 /*
@@ -2080,57 +2343,95 @@ static List* tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt, Oid serve
 	return result_commands;
 }
 
-/*
- *  Helper functions.
+/* ===========================================================================
+ *
+ * Helper functions.
+ * 
  */
-
+#if PG_VERSION_NUM >= 140000
 /*
- *	create_fdw_state
- *      Create tsurugiFdwState structure.
+ * find_modifytable_subplan
+ *		Helper routine for postgresPlanDirectModify to find the
+ *		ModifyTable subplan node that scans the specified RTI.
+ *
+ * Returns NULL if the subplan couldn't be identified.  That's not a fatal
+ * error condition, we just abandon trying to do the update directly.
  */
-static tsurugiFdwState* 
-create_fdw_state()
+static ForeignScan *
+find_modifytable_subplan(PlannerInfo *root,
+						 ModifyTable *plan,
+						 Index rtindex,
+						 int subplan_index)
 {
-	tsurugiFdwState* fdw_state = 
-		(tsurugiFdwState*) palloc0(sizeof(tsurugiFdwState));
-	
-	if (fdw_state == nullptr)
+	Plan	   *subplan = outerPlan(plan);
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
+	/*
+	 * The cases we support are (1) the desired ForeignScan is the immediate
+	 * child of ModifyTable, or (2) it is the subplan_index'th child of an
+	 * Append node that is the immediate child of ModifyTable.  There is no
+	 * point in looking further down, as that would mean that local joins are
+	 * involved, so we can't do the update directly.
+	 *
+	 * There could be a Result atop the Append too, acting to compute the
+	 * UPDATE targetlist values.  We ignore that here; the tlist will be
+	 * checked by our caller.
+	 *
+	 * In principle we could examine all the children of the Append, but it's
+	 * currently unlikely that the core planner would generate such a plan
+	 * with the children out-of-order.  Moreover, such a search risks costing
+	 * O(N^2) time when there are a lot of children.
+	 */
+	if (IsA(subplan, Append))
 	{
-		elog(ERROR, "tsurugi_fdw : %s : palloc0() failed.", __func__);
+		Append	   *appendplan = (Append *) subplan;
+
+		if (subplan_index < list_length(appendplan->appendplans))
+			subplan = (Plan *) list_nth(appendplan->appendplans, subplan_index);
+	}
+	else if (IsA(subplan, Result) &&
+			 outerPlan(subplan) != NULL &&
+			 IsA(outerPlan(subplan), Append))
+	{
+		Append	   *appendplan = (Append *) outerPlan(subplan);
+
+		if (subplan_index < list_length(appendplan->appendplans))
+			subplan = (Plan *) list_nth(appendplan->appendplans, subplan_index);
 	}
 
-	fdw_state->cursor_exists = false;
-	fdw_state->number_of_columns = 0;
-	fdw_state->column_types = nullptr;
+	/* Now, have we got a ForeignScan on the desired rel? */
+	if (IsA(subplan, ForeignScan))
+	{
+		ForeignScan *fscan = (ForeignScan *) subplan;
 
-	return fdw_state;
+		if (bms_is_member(rtindex, fscan->fs_relids))
+			return fscan;
+	}
+
+	return NULL;
 }
+#endif  // PG_VERSION_NUM >= 140000
 
-/*
- * free_fdw_state
- *      Free allocated memories.
- */
-static void 
-free_fdw_state(tsurugiFdwState* fdw_state)
+static void
+make_retrieved_attrs(List* telist, List** retrieved_attrs)
 {
-	if (fdw_state->column_types != nullptr) 
-	{
-		pfree(fdw_state->column_types);
-		fdw_state->column_types = nullptr;
-	}
+	ListCell *lc;
+	int i;
 
-	if (!fdw_state->tuples.empty())
-	{
-		for (auto ite = fdw_state->tuples.begin(); ite == fdw_state->tuples.end(); ite++)
-		{
-			TupleTableSlot* tuple = *ite;
-			free(tuple->tts_values);
-			free(tuple->tts_isnull);
-			free(tuple);
-		}
-	}
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
- 	pfree(fdw_state);
+	*retrieved_attrs = NIL;
+
+	i = 0;
+	foreach (lc, telist)
+	{
+		TargetEntry* entry = (TargetEntry*) lfirst(lc);
+		elog(DEBUG3, "tsurugi_fdw : %s : attr_number: %d, res_name: %s, resno: %d, resorigcol: %d", 
+			__func__, i, entry->resname, entry->resno, entry->resorigcol);
+		*retrieved_attrs = lappend_int(*retrieved_attrs, i + 1);
+		i++;
+	}
 }
 
 /*
@@ -2143,7 +2444,7 @@ free_fdw_state(tsurugiFdwState* fdw_state)
  * 	understand PostgreSQL data types.
  */
 [[maybe_unused]] static void 
-store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist, List** retrieved_attrs)
+store_pg_data_type(TgFdwForeignScanState* fsstate, List* tlist, List** retrieved_attrs)
 {
 	ListCell* lc = NULL;
 
@@ -2154,6 +2455,7 @@ store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist, List** retrieved_att
 	if (tlist != NULL)
 	{
 		Oid *data_types = (Oid *) palloc(sizeof(Oid) * tlist->length + 1);
+
 
 		int i = 0;
 		int count = 0;
@@ -2185,301 +2487,54 @@ store_pg_data_type(tsurugiFdwState* fdw_state, List* tlist, List** retrieved_att
 			*retrieved_attrs = lappend_int(*retrieved_attrs, i + 1);
 			i++;
 		}
-		fdw_state->column_types = data_types;
-		fdw_state->number_of_columns = count;
+		fsstate->column_types = data_types;
+		fsstate->number_of_columns = count;
 	}
 }
-
+#if !defined (__TSURUGI_PLANNER__)
+#if PG_VERSION_NUM >= 140000
 /*
- * make_tuple_from_result_row
- *      Obtain tuple data from Ogawayama and convert data type.
+ * Determine batch size for a given foreign table. The option specified for
+ * a table has precedence.
  */
-static void 
-make_tuple_from_result_row(ResultSetPtr result_set, 
-                            TupleDesc tupleDescriptor,
-                            List* retrieved_attrs,
-                            Datum* row,
-                            bool* is_null,
-                            tsurugiFdwState* fdw_state)
+static int
+get_batch_size_option(Relation rel)
 {
-	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+	Oid			foreigntableid = RelationGetRelid(rel);
+	ForeignTable *table;
+	ForeignServer *server;
+	List	   *options;
+	ListCell   *lc;
 
-	ListCell   *lc = NULL;
-	foreach(lc, retrieved_attrs)
+	/* we use 1 by default, which means "no batching" */
+	int			batch_size = 1;
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
+	/*
+	 * Load options for table and server. We append server options after table
+	 * options, because table options take precedence.
+	 */
+	table = GetForeignTable(foreigntableid);
+	server = GetForeignServer(table->serverid);
+
+	options = NIL;
+	options = list_concat(options, table->options);
+	options = list_concat(options, server->options);
+
+	/* See if either table or server specifies batch_size. */
+	foreach(lc, options)
 	{
-		int     attnum = lfirst_int(lc) - 1;
-		Oid     	pgtype = TupleDescAttr(tupleDescriptor, attnum)->atttypid;
-        HeapTuple 	heap_tuple;
-        regproc 	typinput;
-        int 		typemod;
+		DefElem    *def = (DefElem *) lfirst(lc);
 
-		elog(DEBUG5, "tsurugi_fdw : %s : attnum: %d", __func__, attnum + 1);
+		if (strcmp(def->defname, "batch_size") == 0)
+		{
+			(void) parse_int(defGetString(def), &batch_size, 0, NULL);
+			break;
+		}
+	}
 
-		heap_tuple = SearchSysCache1(TYPEOID, 
-                                    ObjectIdGetDatum(pgtype));
-        if (!HeapTupleIsValid(heap_tuple))
-        {
-            elog(ERROR, "tsurugi_fdw : cache lookup failed for type %u", pgtype);
-        }
-        typinput = ((Form_pg_type) GETSTRUCT(heap_tuple))->typinput;
-        typemod = ((Form_pg_type) GETSTRUCT(heap_tuple))->typtypmod;
-        ReleaseSysCache(heap_tuple);
-
-        is_null[attnum] = true;
-        switch (pgtype)
-        {
-            case INT2OID:
-                {
-                    std::int16_t value;
-					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is INT2OID.", __func__);
-                    if (result_set->next_column(value) == ERROR_CODE::OK)
-                    {
-                        is_null[attnum] = false;
-                        row[attnum] = Int16GetDatum(value);
-                    }
-                }
-                break;
-
-            case INT4OID:
-                {
-                    std::int32_t value;
-					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is INT4OID.", __func__);
-                    if (result_set->next_column(value) == ERROR_CODE::OK)
-                    {
-                        is_null[attnum] = false;
-                        row[attnum] =  Int32GetDatum(value);
-                    }
-                }
-                break;
-
-            case INT8OID:
-                {
-                    std::int64_t value;
-					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is INT8OID.", __func__);
-                    if (result_set->next_column(value) == ERROR_CODE::OK)
-                    {
-                        is_null[attnum] = false;
-                        row[attnum] = Int64GetDatum(value);
-                    }
-                }
-                break;
-
-            case FLOAT4OID:
-                {
-                    float4 value;
-					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is FLOAT4OID.", __func__);
-                    if (result_set->next_column(value) == ERROR_CODE::OK)
-                    {
-                        is_null[attnum] = false;
-                        row[attnum] = Float4GetDatum(value);
-                    }
-                }
-                break;
-
-            case FLOAT8OID:
-                {
-                    float8 value;
-					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is FLOAT8OID.", __func__);
-                    if (result_set->next_column(value) == ERROR_CODE::OK)
-                    {
-                        is_null[attnum] = false;
-                        row[attnum] = Float8GetDatum(value);
-                    }
-                }
-                break;
-
-            case BPCHAROID:
-            case VARCHAROID:
-            case TEXTOID:
-                {
-					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is BPCHAROID/VARCHAROID/TEXTOID.", __func__);
-					std::string value;
-                    Datum value_datum;
-                    ERROR_CODE result = result_set->next_column(value);
-					if (result == ERROR_CODE::OK)
-                    {
-                        value_datum = CStringGetDatum(value.c_str());
-                        if (value_datum == (Datum) nullptr)
-                        {
-                            break;
-                        }
-                        is_null[attnum] = false;
-                        row[attnum] = (Datum) OidFunctionCall3(typinput,
-                                                    value_datum, 
-                                                    ObjectIdGetDatum(InvalidOid),
-                                                    Int32GetDatum(typemod));
-                    }
-                }
-                break;
-
-            case DATEOID:
-                {
-                    stub::date_type value;
-					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is DATEOID.", __func__);
-                    if (result_set->next_column(value) == ERROR_CODE::OK)
-                    {
-                        DateADT date;
-                        date = value.days_since_epoch();
-                        date = date - (POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE);
-                        row[attnum] = DateADTGetDatum(date);
-                        is_null[attnum] = false;
-                    }
-                }
-                break;
-
-            case TIMEOID:
-                {
-                    stub::time_type value;
-					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is TIMEOID.", __func__);
-                    if (result_set->next_column(value) == ERROR_CODE::OK)
-                    {
-                        TimeADT time;
-                        auto subsecond = value.subsecond().count();
-                        time = (value.hour() * MINS_PER_HOUR) + value.minute();
-                        time = (time * SECS_PER_MINUTE) + value.second();
-                        time = time * USECS_PER_SEC;
-                        if (subsecond != 0) {
-                            subsecond = round(subsecond / 1000.0);
-                            time = time + subsecond;
-                        }
-                        row[attnum] = TimeADTGetDatum(time);
-                        is_null[attnum] = false;
-                    }
-                }
-                break;
-
-            case TIMETZOID:
-                {
-                    stub::timetz_type value;
-					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is TIMETZOID.", __func__);
-					if (result_set->next_column(value) == ERROR_CODE::OK)
-                    {
-                        TimeTzADT timetz;
-                        auto subsecond = value.first.subsecond().count();
-                        timetz.time = (value.first.hour() * MINS_PER_HOUR) + value.first.minute();
-                        timetz.time = (timetz.time * SECS_PER_MINUTE) + value.first.second();
-                        timetz.time = timetz.time * USECS_PER_SEC;
-                        if (subsecond != 0) {
-                            subsecond = round(subsecond / 1000.0);
-                            timetz.time = timetz.time + subsecond;
-                        }
-                        timetz.zone = -value.second * SECS_PER_MINUTE;
-
-                        elog(DEBUG5, "time_of_day = %d:%d:%d.%d, time_zone = %d",
-                                        value.first.hour(), value.first.minute(), value.first.second(),
-                                        subsecond, value.second);
-
-                        row[attnum] = TimeTzADTPGetDatum(&timetz);
-                        is_null[attnum] = false;
-                    }
-                }
-                break;
-
-            case TIMESTAMPTZOID:
-                {
-                    stub::timestamptz_type value;
-					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is TIMESTAMPTZOID.", __func__);
-                    if (result_set->next_column(value) == ERROR_CODE::OK)
-                    {
-                        Timestamp timestamp;
-                        auto subsecond = value.first.subsecond().count();
-                        timestamp = value.first.seconds_since_epoch().count() -
-                            ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
-                        timestamp = timestamp * USECS_PER_SEC;
-                        if (subsecond != 0) {
-                            subsecond = round(subsecond / 1000.0);
-                            timestamp = timestamp + subsecond;
-                        }
-                        auto time_zone = value.second * SECS_PER_MINUTE;
-                        timestamp = timestamp - (time_zone * USECS_PER_SEC);
-
-                        elog(DEBUG5, "seconds_since_epoch = %ld, subsecond = %d, time_zone = %d",
-                                        value.first.seconds_since_epoch().count(),
-                                        value.first.subsecond().count(),
-                                        value.second);
-
-                        row[attnum] = TimestampTzGetDatum(timestamp);
-                        is_null[attnum] = false;
-                    }
-                }
-                break;
-
-            case TIMESTAMPOID:
-                {
-                    stub::timestamp_type value;
-					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is TIMESTAMPOID.", __func__);
-                    if (result_set->next_column(value) == ERROR_CODE::OK)
-                    {
-                        Timestamp timestamp;
-                        auto subsecond = value.subsecond().count();
-                        timestamp = value.seconds_since_epoch().count() -
-                            ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
-                        timestamp = timestamp * USECS_PER_SEC;
-                        if (subsecond != 0) {
-                            subsecond = round(subsecond / 1000.0);
-                            timestamp = timestamp + subsecond;
-                        }
-                        row[attnum] = TimestampGetDatum(timestamp);
-                        is_null[attnum] = false;
-                    }
-                }
-                break;
-
-            case NUMERICOID:
-                {
-                    stub::decimal_type value;
-					elog(DEBUG5, "tsurugi_fdw : %s : pgtype is NUMERICOID.", __func__);
-                    auto error_code = result_set->next_column(value);
-                    if (error_code == ERROR_CODE::OK)
-                    {
-                        const auto sign = value.sign();
-                        const auto coefficient_high = value.coefficient_high();
-                        const auto coefficient_low = value.coefficient_low();
-                        const auto exponent = value.exponent();
-                        elog(DEBUG5, "triple(%d, %lu(0x%lX), %lu(0x%lX), %d)",
-                                                sign, coefficient_high, coefficient_high,
-                                                coefficient_low, coefficient_low, exponent);
-
-                        int scale = 0;
-                        if (exponent < 0) {
-                            scale =- exponent;
-                        }
-
-                        boost::multiprecision::uint128_t mp_coefficient;
-                        boost::multiprecision::uint128_t mp_high = coefficient_high;
-                        mp_coefficient = mp_high << 64;
-                        mp_coefficient |= coefficient_low;
-
-                        std::string coefficient;
-                        coefficient = mp_coefficient.str();
-                        if (exponent != 0) {
-                            if (scale >= (int)coefficient.size()) {
-                                // padding decimal point with zero
-                                std::stringstream ss;
-                                ss << std::setw(scale+1) << std::setfill('0') << coefficient;
-                                coefficient = ss.str();
-                            }
-                            coefficient.insert(coefficient.end() + exponent, '.');
-                        }
-                        if (sign < 0) {
-                            coefficient = "-" + coefficient;
-                        }
-                        elog(DEBUG5, "numeric_in(%s)", coefficient.c_str());
-
-                        row[attnum] = DirectFunctionCall3(numeric_in,
-                                                     CStringGetDatum(coefficient.c_str()),
-                                                     ObjectIdGetDatum(InvalidOid),
-                                                     Int32GetDatum(((NUMERIC_MAX_PRECISION << 16) |
-                                                                             scale) + VARHDRSZ));
-                        is_null[attnum] = false;
-
-                    }
-                }
-                break;
-
-            default:
-                elog(ERROR, "Invalid data type of PG. (%u)", pgtype);
-                break;
-        }
-    }
+	return batch_size;
 }
+#endif
+#endif

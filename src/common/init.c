@@ -28,19 +28,28 @@ extern PGDLLIMPORT ProcessUtility_hook_type ProcessUtility_hook;
 extern void _PG_init(void);
 #if PG_VERSION_NUM >= 130000
 extern PlannedStmt *tsurugi_planner(Query *parse2, const char *query_string, int cursorOptions, ParamListInfo boundParams);
+#else
+extern PlannedStmt *tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams);
+#endif  // PG_VERSION_NUM >= 130000
+#if PG_VERSION_NUM >= 140000
+extern void tsurugi_ProcessUtility(PlannedStmt *pstmt, const char *query_string,
+                                   bool readOnlyTree, ProcessUtilityContext context,
+                                   ParamListInfo params,
+                                   QueryEnvironment *queryEnv,
+                                   DestReceiver *dest, QueryCompletion *qc);
+#elif PG_VERSION_NUM >= 130000
 extern void tsurugi_ProcessUtility(PlannedStmt *pstmt,
                                    const char *query_string, ProcessUtilityContext context,
                                    ParamListInfo params,
                                    QueryEnvironment *queryEnv,
                                    DestReceiver *dest, QueryCompletion *qc);
 #else
-extern PlannedStmt *tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams);
 extern void tsurugi_ProcessUtility(PlannedStmt *pstmt, 
                             	   const char *query_string, ProcessUtilityContext context, 
                             	   ParamListInfo params, 
                             	   QueryEnvironment *queryEnv, 
                             	   DestReceiver *dest, char *completionTag);
-#endif
+#endif  // PG_VERSION_NUM >= 140000
 
 void
 _PG_init(void)

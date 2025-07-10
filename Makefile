@@ -18,8 +18,8 @@ SHLIB_LINK_INTERNAL = $(libpq)
 SHLIB_LINK = -logawayama-stub -lmetadata-manager -lmessage-manager -lboost_filesystem
 
 EXTENSION = tsurugi_fdw
-DATA = tsurugi_fdw--1.1.0.sql \
-       tsurugi_fdw--1.0.0--1.1.0.sql
+DATA = tsurugi_fdw--1.2.0.sql \
+		tsurugi_fdw--1.0.0--1.1.0.sql
 
 # REGRESS_BASIC: Run basic tests.
 # REGRESS_EXTRA: Run extra tests.
@@ -30,18 +30,15 @@ ifndef REGRESS_BASIC
 	endif
 endif
 
-# REGRESS: variable defined in PostgreSQL
+# Test settings according to regression test type
 REGRESS := test_preparation
 ifdef REGRESS_BASIC
-	REGRESS += create_table_happy create_index_happy insert_select_happy update_delete_happy select_statement_happy \
-	           user_management_happy udf_transaction_happy prepare_statement_happy prepare_select_statement_happy \
-	           prepare_decimal_happy manual_tutorial import_foreign_schema_happy udf_tg_show_tables_happy udf_tg_verify_tables_happy
-endif
-ifdef REGRESS_EXTRA
-	REGRESS += create_table_unhappy insert_select_unhappy prepare_decimal_unhappy udf_transaction_unhappy \
-	           update_delete_unhappy user_management_unhappy prepare_select_statement_unhappy create_table_restrict \
-	           import_foreign_schema_unhappy import_foreign_schema_extra \
-	           udf_tg_show_tables_unhappy udf_tg_show_tables_extra udf_tg_verify_tables_unhappy udf_tg_verify_tables_extra
+	REGRESS += 	create_table_happy create_index_happy \
+				insert_select_happy update_delete_happy select_statement_happy \
+			   	prepare_select_happy prepare_statement_happy prepare_decimal_happy \
+			   	manual_tutorial \
+	           	udf_transaction_happy udf_tg_show_tables_happy udf_tg_verify_tables_happy \
+				import_foreign_schema_happy 
 endif
 
 PGFILEDESC = "tsurugi_fdw - foreign data wrapper for Tsurugi"
@@ -55,6 +52,29 @@ else
 	top_builddir = ../../
 	include $(top_builddir)/src/Makefile.global
 	include $(top_srcdir)/contrib/contrib-global.mk
+endif
+
+ifndef MAJORVERSION
+	MAJORVERSION := $(basename $(VERSION))
+endif
+
+ifdef REGRESS_EXTRA
+	REGRESS += 	create_table_unhappy create_table_restrict \
+				data_types_happy \
+				insert_select_unhappy update_delete_unhappy\
+				prepare_select_unhappy prepare_decimal_unhappy \
+	           	udf_tg_show_tables_unhappy udf_tg_show_tables_extra udf_tg_verify_tables_unhappy udf_tg_verify_tables_extra \
+            	udf_transaction_unhappy \
+			   	import_foreign_schema_unhappy import_foreign_schema_extra 
+
+	#REGRESS += dml_variation_happy_pg$(MAJORVERSION)
+	ifeq ($(MAJORVERSION), 12)
+#		REGRESS += dml_variation_happy_pg12
+	else ifeq ($(MAJORVERSION), 13)
+#		REGRESS += dml_variation_happy_pg13
+	else ifeq ($(MAJORVERSION), 14)
+#		REGRESS += dml_variation_happy_pg14
+	endif
 endif
 
 install_dependencies:

@@ -52,11 +52,13 @@ CREATE FOREIGN TABLE tg_temporal_literal (
     tms_wo_tz TIMESTAMP WITHOUT TIME ZONE,
     tms_w_tz  TIMESTAMP WITH TIME ZONE
 ) SERVER tsurugidb;
-/* DML */
+-- DML
 --- int
 INSERT INTO integer1 (ol_w_id) VALUES (1.1);  -- see tsurugi-issues#736
-ERROR:  Failed to execute statement to Tsurugi. (13)
-Tsurugi Server Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
+CONTEXT:  SQL query: INSERT INTO integer1 (ol_w_id) VALUES (1.1)
 INSERT INTO integer1 (ol_w_id) VALUES (cast(1.1 as int));
 SELECT * FROM integer1 ORDER BY ol_w_id;
  ol_w_id 
@@ -65,8 +67,10 @@ SELECT * FROM integer1 ORDER BY ol_w_id;
 (1 row)
 
 INSERT INTO integer1 (ol_w_id) VALUES (0.1);  -- see tsurugi-issues#736
-ERROR:  Failed to execute statement to Tsurugi. (13)
-Tsurugi Server Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
+CONTEXT:  SQL query: INSERT INTO integer1 (ol_w_id) VALUES (0.1)
 INSERT INTO integer1 (ol_w_id) VALUES (cast(0.1 as int));
 SELECT * FROM integer1 ORDER BY ol_w_id;
  ol_w_id 
@@ -77,8 +81,10 @@ SELECT * FROM integer1 ORDER BY ol_w_id;
 
 --- bigint
 INSERT INTO bigint1 (id, ol_w_id) VALUES (15, 1.1);  -- see tsurugi-issues#736
-ERROR:  Failed to execute statement to Tsurugi. (13)
-Tsurugi Server Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
+CONTEXT:  SQL query: INSERT INTO bigint1 (id, ol_w_id) VALUES (15, 1.1)
 INSERT INTO bigint1 (id, ol_w_id) VALUES (15, cast(1.1 as bigint));
 SELECT * FROM bigint1 ORDER BY id;
  id | ol_w_id 
@@ -87,8 +93,10 @@ SELECT * FROM bigint1 ORDER BY id;
 (1 row)
 
 INSERT INTO bigint1 (id, ol_w_id) VALUES (16, 0.1);  -- see tsurugi-issues#736
-ERROR:  Failed to execute statement to Tsurugi. (13)
-Tsurugi Server Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
+CONTEXT:  SQL query: INSERT INTO bigint1 (id, ol_w_id) VALUES (16, 0.1)
 INSERT INTO bigint1 (id, ol_w_id) VALUES (16, cast(0.1 as bigint));
 SELECT * FROM bigint1 ORDER BY id;
  id | ol_w_id 
@@ -97,22 +105,6 @@ SELECT * FROM bigint1 ORDER BY id;
  16 |       0
 (2 rows)
 
---- temporal_literal(auto cast) : tsurugi-issues#896  -- error
-INSERT INTO tg_temporal_literal (id, dt) VALUES (11, '2024-08-30');  -- error
-ERROR:  Failed to execute statement to Tsurugi. (13)
-Tsurugi Server Error: UNSUPPORTED_RUNTIME_FEATURE_EXCEPTION (SQL-02050: unsupported expression)
-INSERT INTO tg_temporal_literal (id, tm) VALUES (12, '04:05:06.789');  -- error
-ERROR:  Failed to execute statement to Tsurugi. (13)
-Tsurugi Server Error: UNSUPPORTED_RUNTIME_FEATURE_EXCEPTION (SQL-02050: unsupported expression)
-INSERT INTO tg_temporal_literal (id, tms) VALUES (13, '2024-08-30 04:05:06.789');  -- error
-ERROR:  Failed to execute statement to Tsurugi. (13)
-Tsurugi Server Error: UNSUPPORTED_RUNTIME_FEATURE_EXCEPTION (SQL-02050: unsupported expression)
-INSERT INTO tg_temporal_literal (id, tms_wo_tz) VALUES (14, '2024-08-30 04:05:06.789');  -- error
-ERROR:  Failed to execute statement to Tsurugi. (13)
-Tsurugi Server Error: UNSUPPORTED_RUNTIME_FEATURE_EXCEPTION (SQL-02050: unsupported expression)
-INSERT INTO tg_temporal_literal (id, tms_w_tz) VALUES (15, '2024-08-30 04:05:06.789+9:00');  -- error
-ERROR:  Failed to execute statement to Tsurugi. (13)
-Tsurugi Server Error: UNSUPPORTED_RUNTIME_FEATURE_EXCEPTION (SQL-02050: unsupported expression)
 /* Test teardown: DDL of the PostgreSQL */
 DROP FOREIGN TABLE integer1;
 DROP FOREIGN TABLE bigint1;

@@ -4,47 +4,55 @@
 
 ### 注意事項
 
-PostgreSQLとTsurugiはアーキテクチャおよびその性質が異なるため、PostgreSQLをユーザインタフェースとしてTsurugiを利用する際は以下の点に注意する必要があります。
+PostgreSQLとTsurugiはアーキテクチャおよびその性質が異なるため、PostgreSQLをTsurugiのユーザインタフェースとして利用する際は以下の点に注意する必要があります。
 
-- ORDER BY句を利用して文字列型のデータを問い合わせた場合、対象データの大文字小文字をソート条件に含みます。PostgreSQLは大文字小文字を区別しません。
+1. ORDER BY句を利用して文字列型のデータを問い合わせた場合、対象データの大文字小文字を区別して並べ替えます。PostgreSQLは大文字小文字を区別しません。
 
-- ORDER BY句のNULLSオプションのデフォルトがNULLS FIRSTとなります。PostgreSQLはNULLS LASTです。
+2. ORDER BY句のNULLSオプションのデフォルトが`NULLS FIRST`になります。PostgreSQLは`NULLS LAST`です。
 
-- SQLのINSERTコマンドに`insert-option`（OR REPLACE/OR IGNORE/IF NOT EXISTS）が指定できません。PostgreSQLは`insert-option`を指定することができません。
+3. SQLのINSERTコマンドに`insert-option`（OR REPLACE/OR IGNORE/IF NOT EXISTS）が指定できません。PostgreSQLは`insert-option`を指定することができません。
 
-- Tsurugiのデータ型とそれに対応するJDBC API(Java)およびPostgreSQLのデータ型は適切にマッピングする必要があります。※ PostgreSQL JDBDドライバは`TIME WITH TIME ZONE`型を[非サポート](https://jdbc.postgresql.org/documentation/query/#using-java-8-date-and-time-classes)としています。
+4. Tsurugiのデータ型とそれに対応するJDBC API(Java)およびPostgreSQLのデータ型は適切にマッピングする必要があります。  
 
-    | Tsurugi | Java(JDBC) | PostgreSQL |
-    | :---: | :---: | :---: |
-    | INT | int・Integer | integer |
-    | BIGINT | long・Long | bigint |
-    | REAL | float・Float | real |
-    | FLOAT | double・Double | double precision |
-    | DOUBLE | double・Double | double precision |
-    | DECIMAL | java.math.BigDecimal | decimal・numeric |
-    | CHAR・CHARACTER | String | char・character |
-    | VARCHAR・CHAR VARYING・CHARACTER VARYING | String | varchar・character varying |
-    | BINARY | byte[] | bytea |
-    | VARBINARY・BINARY VARYING | byte[] | bytea |
-    | DATE | java.sql.Date・LocalDate | date |
-    | TIME | java.sql.Time・LocalTime | time |
-    | TIME WITH TIME ZONE | - [※]((https://jdbc.postgresql.org/documentation/query/#using-java-8-date-and-time-classes)) | time with time zone |
-    | TIMESTAMP | java.sql.Timestamp・LocalDateTme | timestamp |
-    | TIMESTAMP WITH TIME ZONE | OffsetDateTime | timestamp with time zone |
+    |#| Tsurugi | Java(JDBC) | PostgreSQL |
+    |:---:| :---: | :---: | :---: |
+    |1.| INT | int・Integer | integer |
+    |2.| BIGINT | long・Long | bigint |
+    |3.| REAL | float・Float | real |
+    |4.| FLOAT | double・Double | double precision |
+    |5.| DOUBLE | double・Double | double precision |
+    |6.| DECIMAL | java.math.BigDecimal | decimal・numeric |
+    |7.| CHAR・CHARACTER | String | char・character |
+    |8.| VARCHAR・CHAR VARYING・CHARACTER VARYING | String | varchar・character varying |
+    |9.| BINARY | byte[] | bytea |
+    |10.| VARBINARY・BINARY VARYING | byte[] | bytea |
+    |11.| DATE | java.sql.Date・LocalDate | date |
+    |12.| TIME | java.sql.Time・LocalTime | time |
+    |13.| TIME WITH TIME ZONE | - [※]((https://jdbc.postgresql.org/documentation/query/#using-java-8-date-and-time-classes)) | time with time zone |
+    |14.| TIMESTAMP | java.sql.Timestamp・LocalDateTme | timestamp |
+    |15.| TIMESTAMP WITH TIME ZONE | OffsetDateTime | timestamp with time zone |
 
-- JDBC APIで送信可能なSQL文は、Tsurugi_FDWがサポートする[SQLコマンド](./sql_reference.md)および[ユーザ定義関数](./udf_reference.md)に限ります。  
+    ※ PostgreSQL JDBDドライバは`TIME WITH TIME ZONE`型を[非サポート](https://jdbc.postgresql.org/documentation/query/#using-java-8-date-and-time-classes)としています。
 
-- JDBC APIのPreparedStatementではSELECT文のステートメントキャッシュが利用できません。このためPreparedStatementを使用した場合でもSELECT文の性能向上は見込めません。  
-  PreparedStatementでのINSERT/UPDATE/DELETE文はステートメントキャッシュを利用することができます。  
-  なお、SQLのPREPAREコマンドを使用する場合はSELECT/INSERT/UPDATE/DELETE文のすべてでステートメントキャッシュを利用することはできます。
+5. JDBC APIで送信可能なSQL文は、Tsurugi_FDWがサポートする[SQLコマンド](./sql_reference.md)および[ユーザ定義関数](./udf_reference.md)に限ります。  
 
-### 制約事項
+6. JDBC APIのPreparedStatementではPostgreSQLに対してはステートメントキャッシュが効きますが、PostgreSQLからTsurugiへの実行においてはステートメントキャッシュは効きません。
 
-現バージョン（Tsurugi 1.2.0とTsurugi FDWの組み合わせ環境）では以下の機能を制限とします。
+### 制限事項
 
-- バイナリデータ型（BINARY/VARBINARY/BINARY VARYING）を操作することはできません。
-- SQLのPREPAREコマンドでプリペアするSQL文に集合演算子（UNION/EXCEPT/INTERSECT）があるとEXECUTEコマンドで正しい結果を得ることができません。
-- publicスキーマに外部テーブルを作成してください。publicスキーマ以外では外部テーブルを経由してTsurugiのデータを操作をすることはできません。
+制限事項は以下の通りです。
+
+1. publicスキーマに外部テーブルを作成してください。publicスキーマ以外では外部テーブルを経由してTsurugiのデータを操作をすることはできません。
+
+2. バイナリデータ型（BINARY/VARBINARY/BINARY VARYING）を操作することはできません。
+
+3. SQLのPREPAREコマンドでプリペアするSQL文に集合演算子（UNION/EXCEPT/INTERSECT）があるとEXECUTEコマンドで正しい結果を得ることができません。
+
+4. PostgreSQL固有の文法を含むクエリーを実行すると失敗する場合があります。
+
+5. SELECT文の選択リストとして指定できるのは列の参照と集約式のみです。
+
+6. 暗黙的なJOINを含むクエリーは実行できません。
 
 ### サードパーティライセンス
 
@@ -81,12 +89,21 @@ Tsurugi FDWには、ライセンス規定または著作権の表示が必要な
 
 ### 修正履歴
 
-- 1.0.0
-  - 初版
-- 1.1.0
-  - SQLのPREPAREコマンドで制約事項としていた以下のSQL構文の使用を解除  
-    SELECT文で指定可能なset-quantifier（ALL/DISTINCT）  
-    SELECT文で指定可能なLIMIT句  
-    INSERT文のinsert-sourceで指定可能なDEFAULT VALUES  
-    INSERT文のinsert-sourceで指定可能なquery-expression  
-  - SQLのIMPORT FOREIGN SCHEMAコマンドを追加 
+#### 1.0.0
+
+- 初版
+
+#### 1.1.0
+
+- SQLのPREPAREコマンドで制約事項としていた以下のSQL構文の使用を解除  
+  SELECT文で指定可能なset-quantifier（ALL/DISTINCT）  
+  SELECT文で指定可能なLIMIT句  
+  INSERT文のinsert-sourceで指定可能なDEFAULT VALUES  
+  INSERT文のinsert-sourceで指定可能なquery-expression  
+- SQLのIMPORT FOREIGN SCHEMAコマンドを追加
+
+#### 1.2.0
+
+- 制限事項を追加（3, 4, 5）
+
+以上

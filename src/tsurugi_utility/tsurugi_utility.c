@@ -28,7 +28,6 @@
 #include "tcop/utility.h"
 
 #include <string.h>
-#include "prepare_execute.h"
 #include "foreign/foreign.h"
 #include "utils/builtins.h"
 #include "utils/rel.h"
@@ -50,7 +49,12 @@ PG_MODULE_MAGIC;
 #endif
 
 /* ProcessUtility_hook function */
-#if PG_VERSION_NUM >= 130000
+#if PG_VERSION_NUM >= 140000
+void tsurugi_ProcessUtility(PlannedStmt* pstmt, const char* query_string, bool readOnlyTree,
+                            ProcessUtilityContext context, ParamListInfo params,
+                            QueryEnvironment* queryEnv, DestReceiver* dest,
+                            QueryCompletion *qc);
+#elif PG_VERSION_NUM >= 130000
 void tsurugi_ProcessUtility(PlannedStmt* pstmt, const char* query_string,
                             ProcessUtilityContext context, ParamListInfo params,
                             QueryEnvironment* queryEnv, DestReceiver* dest,
@@ -60,7 +64,7 @@ void tsurugi_ProcessUtility(PlannedStmt* pstmt, const char* query_string,
                             ProcessUtilityContext context, ParamListInfo params,
                             QueryEnvironment* queryEnv, DestReceiver* dest,
                             char* completionTag);
-#endif
+#endif  // PG_VERSION_NUM >= 140000
 bool noTablesInDatabase(void);
 bool IsTsurugifdwInstalled(void);
 
@@ -70,13 +74,24 @@ extern bool IsTransactionBlock(void);
 extern void check_stack_depth(void);
 extern void check_xact_readonly(Node* parsetree);
 extern ParseState* make_parsestate(ParseState* parentParseState);
+#if PG_VERSION_NUM < 140000
 extern int CommandCounterIncrement(void);
+#endif  // PG_VERSION_NUM < 140000
 extern List *transformCreateStmt(CreateStmt *stmt, const char *queryString);
 
 /*
  *  @brief:
  */
-#if PG_VERSION_NUM >= 130000
+#if PG_VERSION_NUM >= 140000
+void
+tsurugi_ProcessUtility(PlannedStmt *pstmt,
+                       const char *queryString,
+                       bool readOnlyTree,
+                       ProcessUtilityContext context,
+                       ParamListInfo params,
+                       QueryEnvironment *queryEnv,
+                       DestReceiver *dest, QueryCompletion *qc)
+#elif PG_VERSION_NUM >= 130000
 void
 tsurugi_ProcessUtility(PlannedStmt *pstmt,
                        const char *queryString,
@@ -92,7 +107,7 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
                        ParamListInfo params,
                        QueryEnvironment *queryEnv,
                        DestReceiver *dest, char *completionTag)
-#endif
+#endif  // PG_VERSION_NUM >= 140000
 {
 	Node	   *parsetree = pstmt->utilityStmt;
 	ParseState *pstate;
@@ -112,15 +127,20 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 	{
         case T_CreateStmt:
 		{
+			elog(LOG, "tsurugi_fdw : %s : T_CreateStmt", __func__);
+
 			if (IsTsurugifdwInstalled())
 			{
 				elog(ERROR, "This database is for Tsurugi, so CREATE TABLE is not supported");
 			}
-#if PG_VERSION_NUM >= 130000
-			standard_ProcessUtility(pstmt, queryString,context, params, queryEnv,
+#if PG_VERSION_NUM >= 140000
+			standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv,
+									dest, qc);
+#elif PG_VERSION_NUM >= 130000
+			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
 									dest, qc);
 #else
-			standard_ProcessUtility(pstmt, queryString,context, params, queryEnv,
+			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
 									dest, completionTag);
 #endif
             break;
@@ -128,9 +148,15 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 
 		case T_CreateTableAsStmt:
 		{
+			elog(LOG, "tsurugi_fdw : %s : T_CreateTableAsStmt", __func__);
+
 			if (IsTsurugifdwInstalled())
 			{
+#if PG_VERSION_NUM >= 140000
+				switch (((CreateTableAsStmt *) parsetree)->objtype)
+#else
 				switch (((CreateTableAsStmt *) parsetree)->relkind)
+#endif  // PG_VERSION_NUM >= 140000
             	{
                 	case OBJECT_TABLE:
 						elog(ERROR, "This database is for Tsurugi, so CREATE TABLE AS is not supported");
@@ -139,18 +165,23 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 						break;
 				}
 			}
-#if PG_VERSION_NUM >= 130000
-			standard_ProcessUtility(pstmt, queryString,context, params, queryEnv,
+#if PG_VERSION_NUM >= 140000
+			standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv,
+									dest, qc);
+#elif PG_VERSION_NUM >= 130000
+			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
 									dest, qc);
 #else
-			standard_ProcessUtility(pstmt, queryString,context, params, queryEnv,
+			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
 									dest, completionTag);
-#endif
+#endif  // PG_VERSION_NUM >= 140000
             break;
 		}
 
 		case T_CreateForeignTableStmt:
 		{
+			elog(LOG, "tsurugi_fdw : %s : T_CreateForeignTableStmt", __func__);
+						
 			if (IsTsurugifdwInstalled())
 			{
 				ForeignServer *server;
@@ -163,7 +194,11 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 					elog(ERROR, "This database is for Tsurugi, so CREATE FOREIGN TABLE for non-Tsurugi foreign table is not supported");
 				}
 			}
-#if PG_VERSION_NUM >= 130000
+#if PG_VERSION_NUM >= 140000
+			standard_ProcessUtility(pstmt, queryString, readOnlyTree,
+									context, params, queryEnv,
+									dest, qc);
+#elif PG_VERSION_NUM >= 130000
 			standard_ProcessUtility(pstmt, queryString,
 									context, params, queryEnv,
 									dest, qc);
@@ -171,213 +206,41 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 			standard_ProcessUtility(pstmt, queryString,
 									context, params, queryEnv,
 									dest, completionTag);
-#endif
+#endif  // PG_VERSION_NUM >= 140000
 			break;
 		}
 
 		case T_CreateExtensionStmt:
 		{
 			CreateExtensionStmt *stmt = (CreateExtensionStmt *) pstmt->utilityStmt;
+
+			elog(LOG, "tsurugi_fdw : %s : T_CreateExtensionStmt", __func__);
+
 			if (strcmp(stmt->extname, "tsurugi_fdw") == 0) {
 				if(!noTablesInDatabase()){
 					elog(ERROR, "tsurugi_fdw extension cannot be installed in the non-empty database. Please make sure there are no tables by using the \\d command.");
 				}
 			}
-#if PG_VERSION_NUM >= 130000
+#if PG_VERSION_NUM >= 140000
+			standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv,
+									dest, qc);
+#elif PG_VERSION_NUM >= 130000
 			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
 									dest, qc);
 #else
 			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
 									dest, completionTag);
-#endif
-			break;
-		}
-
-#if 0 // Since user and access control is not implemented in Tsurugi, it runs on the standard.
-		case T_CreateRoleStmt:
-		{
-#if PG_VERSION_NUM >= 130000
-			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
-									dest, qc);
-#else
-			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
-									dest, completionTag);
-#endif
-			if (!after_create_role((CreateRoleStmt*)parsetree))
-			{
-				elog(ERROR, "failed after_create_role() function.");
-			}
-			break;
-		}
-
-		case T_DropRoleStmt: 
-		{
-			int64_t* objectIdList;
-			bool before_function_success = false;
-			DropRoleStmt* tmpDropStmt = (DropRoleStmt*) parsetree;
-			objectIdList = malloc(sizeof(int64_t) * tmpDropStmt->roles->length);
-			if (objectIdList == NULL) 
-			{
-				/*
-				 * If malloc fails, display an error message and exit.
-				 */
-				elog(ERROR,
-					"abort DROP ROLE statement because malloc function failed.");
-				break;
-			}
-
-			before_function_success =
-				before_drop_role((DropRoleStmt*) parsetree, objectIdList);
-			if (!before_function_success)
-			{
-				elog(ERROR, "failed before_drop_role() function.");
-			}
-			/*
- 			 * No skip PostgreSQL processing even if preprocessing fails.
-			 * Because PostgreSQL error messages are no longer output.
-			 */
-#if PG_VERSION_NUM >= 130000
-			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
-									dest, qc);
-#else
-			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
-									dest, completionTag);
-#endif
-
-			/*
-			 * The message is sent in post-processing.
-			 * Because sending a DROP message even though DROP has failed
-			 * may cause problems.
-			 * If pre-processing fails, the object ID cannot be obtained,
-			 * so post-processing is skipped.
-			 */
-			if (before_function_success)
-			{
-				if (!after_drop_role((DropRoleStmt*)parsetree, objectIdList))
-				elog(ERROR, "failed after_drop_role() function.");
-			}
-			/*
-			* Delete dynamically allocated area.
-			*/
-			free(objectIdList);
-			break;
-		}	
-
-		case T_AlterRoleStmt:
-		{
-#if PG_VERSION_NUM >= 130000
-			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
-									dest, qc);
-#else
-			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
-									dest, completionTag);
-#endif
-			/*
-			* The message will be sent in post-processing.
-			*/
-			if (!after_alter_role((AlterRoleStmt*)parsetree))
-				elog(ERROR, "failed after_alter_role() function.");
-			break;
-		}
-
-		case T_GrantStmt:
-		{
-			/*
-			* GRANT/REVOKE
-			* For TABLE, grant privileges to the foreign table using PostgreSQL functionality.
-			* Therefore, similar to GRANT/REVOKE ROLE, send the message in post-processing.
-			*/
-			GrantStmt* stmts = (GrantStmt*) parsetree;
-
-			/* When ACL_TARGET_OBJECT and other than OBJECT_TABLE, normal operation only */
-			if (stmts->targtype == ACL_TARGET_OBJECT &&
-				stmts->objtype == OBJECT_TABLE) 
-			{
-#if PG_VERSION_NUM >= 130000
-				standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
-										dest, qc);
-#else
-				standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
-										dest, completionTag);
-#endif
-				if (!after_grant_revoke_table((GrantStmt*)parsetree))
-				{
-					elog(ERROR, "failed after_grant_revoke_table() function.");
-				}
-			} 
-			else 
-			{
-#if PG_VERSION_NUM >= 130000
-				standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
-										dest, qc);
-#else
-				standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
-										dest, completionTag);
-#endif
-			}
-			break;
-		}
-
-		case T_GrantRoleStmt: 
-		{
-			/*
-			 * Both GRANT and REVOKE are the same function.
-			 * Judge the message sent with stmt->is_grant.
-			 */
-#if PG_VERSION_NUM >= 130000
-			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
-									dest, qc);
-#else
-			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
-									dest, completionTag);
-#endif
-			if (!after_grant_revoke_role((GrantRoleStmt*)parsetree))
-			{
-				elog(ERROR, "failed after_grant_revoke_role() function.");
-			}
-			break;
-		}
-#endif // Since user and access control is not implemented in Tsurugi, it runs on the standard.
-
-		case T_PrepareStmt:
-		{
-#if PG_VERSION_NUM >= 130000
-			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
-									dest, qc);
-#else
-			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
-									dest, completionTag);
-#endif
-			if (!after_prepare_stmt((PrepareStmt*)parsetree, queryString))
-			{
-				elog(ERROR, "failed after_prepare_stmt() function.");
-			}
-			break;
-		}
-
-		case T_ExecuteStmt:
-		{
-			if (!before_execute_stmt((ExecuteStmt*)parsetree, queryString))
-			{
-				elog(ERROR, "failed before_execute_stmt() function.");
-			}
-#if PG_VERSION_NUM >= 130000
-			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
-									dest, qc);
-#else
-			standard_ProcessUtility(pstmt, queryString, context, params, queryEnv,
-									dest, completionTag);
-#endif
-			if (!after_execute_stmt((ExecuteStmt*)parsetree))
-			{
-				elog(ERROR, "failed after_execute_stmt() function.");
-			}
+#endif  // PG_VERSION_NUM >= 140000
 			break;
 		}
 
 		default:
 		{
-#if PG_VERSION_NUM >= 130000
+#if PG_VERSION_NUM >= 140000
+			standard_ProcessUtility(pstmt, queryString, readOnlyTree,
+				   					context, params, queryEnv,
+									dest, qc);
+#elif PG_VERSION_NUM >= 130000
 			standard_ProcessUtility(pstmt, queryString,
 									context, params, queryEnv,
 									dest, qc);
@@ -385,7 +248,7 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 		    standard_ProcessUtility(pstmt, queryString,
 			    					context, params, queryEnv,
 				    				dest, completionTag);
-#endif
+#endif  // PG_VERSION_NUM >= 140000
 			break;
 		}
 	}
@@ -406,7 +269,9 @@ bool noTablesInDatabase(void)
         "WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') "
         "AND pg_catalog.pg_table_is_visible(c.oid)";
 
-    if (SPI_connect() != SPI_OK_CONNECT){
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
+	if (SPI_connect() != SPI_OK_CONNECT){
         elog(ERROR, "SPI_connect failed");
 	}
 
@@ -428,6 +293,8 @@ bool IsTsurugifdwInstalled(void)
 {
 	bool found = false;
     HeapTuple tuple;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
 
     tuple = SearchSysCache1(FOREIGNDATAWRAPPERNAME, CStringGetDatum(EXTENSION_NAME));
     if (HeapTupleIsValid(tuple))

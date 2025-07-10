@@ -158,8 +158,8 @@ EXECUTE add_tg_timedate_tms (10, '1999-01-08 04:05:06');
 EXECUTE add_tg_timedate_tms (11, '1999-01-08 04:05:06 -8:00');
 EXECUTE add_tg_timedate_tms (12, TIMESTAMP '2004-10-19 10:23:54');
 EXECUTE add_tg_timedate_tms (13, TIMESTAMP '2004-10-19 10:23:54+02');
-EXECUTE add_tg_timedate_tms (14, 'epoch');
-EXECUTE add_tg_timedate_tms (15, 'infinity');
+ EXECUTE add_tg_timedate_tms (14, 'epoch');
+ EXECUTE add_tg_timedate_tms (15, 'infinity');
 -- Can't test with regression EXECUTE add_tg_timedate_tms (9999, 'now');
 -- Can't test with regression EXECUTE add_tg_timedate_tms (9999, 'tomorrow');
 -- Can't test with regression EXECUTE add_tg_timedate_tms (9999, 'yesterday');
@@ -201,8 +201,8 @@ PREPARE tg_timedate_where_tm (time)       AS DELETE FROM tg_timedate WHERE tm = 
 
 EXECUTE tg_timedate_where_tms ('1999-01-08 04:05:06');
 EXECUTE tg_timedate_where_tms (TIMESTAMP '2004-10-19 10:23:54');
-EXECUTE tg_timedate_where_tms ('epoch');
-EXECUTE tg_timedate_where_tms ('infinity');
+ EXECUTE tg_timedate_where_tms ('epoch');
+ EXECUTE tg_timedate_where_tms ('infinity');
 EXECUTE tg_timedate_where_tms ('2004-10-19 allballs');
 select * from tg_timedate order by id;
 

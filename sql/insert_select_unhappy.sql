@@ -39,7 +39,7 @@ CREATE FOREIGN TABLE tg_temporal_literal (
     tms_w_tz  TIMESTAMP WITH TIME ZONE
 ) SERVER tsurugidb;
 
-/* DML */
+-- DML
 --- int
 INSERT INTO integer1 (ol_w_id) VALUES (1.1);  -- see tsurugi-issues#736
 INSERT INTO integer1 (ol_w_id) VALUES (cast(1.1 as int));
@@ -55,13 +55,6 @@ SELECT * FROM bigint1 ORDER BY id;
 INSERT INTO bigint1 (id, ol_w_id) VALUES (16, 0.1);  -- see tsurugi-issues#736
 INSERT INTO bigint1 (id, ol_w_id) VALUES (16, cast(0.1 as bigint));
 SELECT * FROM bigint1 ORDER BY id;
-
---- temporal_literal(auto cast) : tsurugi-issues#896  -- error
-INSERT INTO tg_temporal_literal (id, dt) VALUES (11, '2024-08-30');  -- error
-INSERT INTO tg_temporal_literal (id, tm) VALUES (12, '04:05:06.789');  -- error
-INSERT INTO tg_temporal_literal (id, tms) VALUES (13, '2024-08-30 04:05:06.789');  -- error
-INSERT INTO tg_temporal_literal (id, tms_wo_tz) VALUES (14, '2024-08-30 04:05:06.789');  -- error
-INSERT INTO tg_temporal_literal (id, tms_w_tz) VALUES (15, '2024-08-30 04:05:06.789+9:00');  -- error
 
 /* Test teardown: DDL of the PostgreSQL */
 DROP FOREIGN TABLE integer1;

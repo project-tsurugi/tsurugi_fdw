@@ -81,6 +81,8 @@ void handle_remote_xact(ForeignServer *server)
 	ConnCacheEntry *entry;
 	ConnCacheKey key;
 
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
 	if (ConnectionHash == NULL){
 
 		HASHCTL         ctl;
@@ -125,6 +127,8 @@ void handle_remote_xact(ForeignServer *server)
 
 void begin_remote_xact(ConnCacheEntry *entry)
 {
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
 	/* Start main transaction if we haven't yet */
 	if (entry->xact_depth <= 0)
 	{
@@ -147,6 +151,8 @@ static void tsurugifdw_xact_callback(XactEvent event, void *arg)
 	HASH_SEQ_STATUS scan;
 	ConnCacheEntry *entry;
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
   	/* Quick exit if no connections were touched in this transaction. */
 	if (!xact_got_connection)
@@ -225,6 +231,8 @@ tsurugifdw_inval_callback(Datum arg, int cacheid, uint32 hashvalue)
 	ConnCacheEntry *entry;
 
 	Assert(cacheid == FOREIGNSERVEROID);
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	/* ConnectionHash must exist already, if we're registered */
 	hash_seq_init(&scan, ConnectionHash);
