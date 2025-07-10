@@ -3,7 +3,7 @@
 ## Requirements
 
 * C++ Compiler `>= C++17`
-* Source code of PostgreSQL 12 or 13 `>=12.4`, `>=13.18`
+* Source code of PostgreSQL 12 or 13 `>=12.4`, `>=13.18`, `>=14.18`
 * Access to installed dependent modules:
   * managers ([metadata-manager](https://github.com/project-tsurugi/metadata-manager), [message-manager](https://github.com/project-tsurugi/message-manager))
   * [takatori](https://github.com/project-tsurugi/takatori)
@@ -120,12 +120,6 @@
 
     ```sh
     pg_ctl -D <PostgreSQL install directory>/data/ start
-    ```
-
-1. Define metadata tables and load initial metadata.
-
-    ```sh
-    psql postgres < <tsurugi_fdw clone directory>/third_party/metadata-manager/sql/ddl.sql
     ```
 
 1. Install tsurugi_fdw extension
