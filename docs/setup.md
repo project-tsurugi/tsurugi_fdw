@@ -33,8 +33,8 @@ make install
 GitHubのリポジトリからPostgreSQLのcontribディレクトリにクローンします。
 
 ~~~ sh
-$ cd <PostgreSQL build directory>/contrib/
-$ git clone https://github.com/project-tsurugi/tsurugi_fdw
+cd <PostgreSQL build directory>/contrib/
+git clone https://github.com/project-tsurugi/tsurugi_fdw
 ~~~
 
 #### 2) サブモジュールの更新
@@ -43,8 +43,8 @@ Tsurugi FDWのサブモジュールを更新します。
 以降、このディレクトリを **`<tsurugi_fdw build directory>`** と定義します。
 
 ~~~ sh
-$ cd <PostgreSQL build directory>/contrib/tsurugi_fdw
-$ git submodule update --init --recursive
+cd <PostgreSQL build directory>/contrib/tsurugi_fdw
+git submodule update --init --recursive
 ~~~
 
 #### 3) 依存モジュールのビルドとインストール
@@ -52,20 +52,20 @@ $ git submodule update --init --recursive
 Tsurugi FDWの依存モジュールをビルドして、PostgreSQLにインストールします。
 
 ~~~ sh
-$ make install_dependencies
+make install_dependencies
 ~~~
 
 PostgreSQLのcontribディレクトリ以外にTsuguri FDWをクローンした場合は、pg_configが存在するディレクトリをPATHに追加し`USE_PGXS=1`を指定した上でビルドとインストールを行ってください。
 
 ~~~ sh
-$ make install_dependencies USE_PGXS=1
+make install_dependencies USE_PGXS=1
 ~~~
 
 PostgreSQLのライブラリパスをライブラリ検索パスに設定します。  
 
 ~~~ sh
-$ LIBRARY_PATH=<PostgreSQL install directory>/lib:$LIBRARY_PATH
-$ export LIBRARY_PATH
+LIBRARY_PATH=<PostgreSQL install directory>/lib:$LIBRARY_PATH
+export LIBRARY_PATH
 ~~~
 
 #### 4) Tsurugi FDWのビルドとインストール
@@ -73,15 +73,15 @@ $ export LIBRARY_PATH
 Tsurugi FDWをビルドして、PostgreSQLにインストールします。
 
 ~~~ sh
-$ make
-$ make install
+make
+make install
 ~~~
 
 PostgreSQLのcontribディレクトリ以外にTsuguri FDWをクローンした場合は、pg_configが存在するディレクトリをPATHに追加し`USE_PGXS=1`を指定した上でビルドとインストールを行ってください。
 
 ~~~ sh
-$ make USE_PGXS=1
-$ make install USE_PGXS=1
+make USE_PGXS=1
+make install USE_PGXS=1
 ~~~
 
 ### Tsurugi FDWの初期設定
@@ -101,8 +101,8 @@ Tsurugiを利用するためのデータベースクラスタを作成します�
 ディレクトリの場所は任意です。
 
 ~~~ sh
-$ mkdir <PostgreSQL install directory>/data
-$ initdb -D <PostgreSQL install directory>/data
+mkdir <PostgreSQL install directory>/data
+initdb -D <PostgreSQL install directory>/data
 ~~~
 
 #### 2) Tsurugi FDWの登録
@@ -120,30 +120,22 @@ shared_preload_libraries = 'tsurugi_fdw'
 PostgreSQLのサーバを起動します。
 
 ~~~ sh
-$ pg_ctl -D <PostgreSQL install directory>/data/ start
+pg_ctl -D <PostgreSQL install directory>/data/ start
 ~~~
 
-#### 4) メタデータ管理基盤の初期化
-
-Tsurugiのメタデータ管理基盤を初期化します。
-
-~~~ sh
-$ psql postgres < <tsurugi_fdw build directory>/third_party/metadata-manager/sql/ddl.sql
-~~~
-
-#### 5) データベースへの接続
+#### 4) データベースへの接続
 
 PostgreSQLの `psql` を使用して データベースへ接続します。
 
 ~~~ sh
-$ psql postgres
+psql postgres
 psql (12.4)
 Type "help" for help.
 
 postgres=#
 ~~~
 
-#### 6) エクステンションのインストール
+#### 5) エクステンションのインストール
 
 CREATE EXTENTIONコマンドを実行して、Tsurugi FDWをインストールします。
 
@@ -161,7 +153,7 @@ postgres=# \dew
     tsurugi_fdw | postgres | tsurugi_fdw_handler | -
 ~~~
 
-#### 7) 外部サーバの登録
+#### 6) 外部サーバの登録
 
 CREATE SERVERコマンドを実行して、Tsurugiを使用するための外部サーバを登録します。
 
@@ -179,7 +171,7 @@ Name    |  Owner   | Foreign-data wrapper
 tsurugi | postgres | tsurugi_fdw
 ~~~
 
-#### 8) PostgreSQLのサーバ終了
+#### 7) PostgreSQLのサーバ終了
 
 Tsurugi FDWの初期設定が完了しました。必要に応じてPostgreSQLのサーバを終了します。
 

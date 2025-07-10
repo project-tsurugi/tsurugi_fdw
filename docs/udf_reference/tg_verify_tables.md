@@ -2,7 +2,7 @@
 
 ## tg_verify_tables
 
-tg_verify_tables -  Tsurugiのテーブル定義とPostgreSQLの外部テーブル定義の検証結果を表示する
+tg_verify_tables -  Tsurugiのテーブル定義とPostgreSQLの外部テーブル定義を比較検証する。
 
 ### 概要
 
@@ -11,8 +11,8 @@ tg_verify_tables(remote_schema, server_name, local_schema [, mode [, pretty] ] )
 ```
 
 ### 説明
-Tsurugiのスキーマ(`remote_schema`)に配置されたテーブルと、  
-PostgreSQLのスキーマ(`local_schema`)に配置された外部テーブルについて検証結果を表示します。
+
+Tsurugiのスキーマ(`remote_schema`)に配置されたテーブルと、PostgreSQLのスキーマ(`local_schema`)に配置された外部テーブルを比較し、差分情報を表示します。
 
 検証結果として以下の項目を表示します。
 
@@ -34,37 +34,41 @@ PostgreSQLのスキーマ(`local_schema`)に配置された外部テーブルに
 「列のデータ型」は[IMPORT FOREIGN SCHEMA](../sql_reference/import_foreign_schema.md) の [列データ型の変換ルール](../sql_reference/import_foreign_schema.md#列データ型の変換ルール) に基づいて判定します。
 
 `mode`、`pretty`について、引数を指定しない場合は以下のデフォルトの設定が適用されます。
+
 - mode - 'summary'
 - pretty - true
 
 ### パラメータ
 
 #### remote_schema
-テーブル定義情報を表示するTsurugiのスキーマ名を指定します。 
+
+テーブル定義情報を表示するTsurugiのスキーマ名を指定します。
 
 現バージョンではTsurugiでスキーマに該当する機能がないため、"tsurugi_schema"等を記述します。  
 今後、仕様変更の可能性があります。
 
 #### server_name
+
 テーブルの定義情報を検証するTsurugiに紐づいた外部サーバ名を指定します。  
-外部サーバ名としてCREATE SERVERコマンドで定義した値を記述します。
+外部サーバ名として`CREATE SERVER`コマンドで定義した値を記述します。
 
 #### local_schema
-外部テーブルの定義情報を検証するPostgreSQLのスキーマ名を指定します。 
+
+外部テーブルの定義情報を検証するPostgreSQLのスキーマ名を指定します。
 
 #### mode
+
 表示するテーブル定義情報の情報量を設定します。
 以下のいずれかの文字列を記述します。
 
 - **'summary'**  
-  定義されているテーブルの数のみを表示します。
-  
+  差分があるテーブルの数のみを表示します。
 
 - **'detail'**  
-  定義されているテーブルの数、およびテーブル名のリストを表示します。
-
+  差分があるテーブルの数、およびテーブル名のリストを表示します。
 
 #### pretty
+
 テーブル定義情報を持つJSONオブジェクトの表示形式を設定します。
 以下のいずれかの文字列を記述します。
 
@@ -78,9 +82,8 @@ PostgreSQLのスキーマ(`local_schema`)に配置された外部テーブルに
 
 #### 検証結果として対象のテーブル数のみを表示する
 
-
-  ```sql
-  SELECT tg_verify_tables('tsurugi_schema', 'tsurugi', 'public', 'summary');
+```sql
+  SELECT tg_verify_tables('tsurugi_schema', 'tsurugi', 'public');
                    tg_verify_tables
   --------------------------------------------------
    {                                               +

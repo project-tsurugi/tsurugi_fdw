@@ -6,13 +6,13 @@
 
 PostgreSQLとTsurugiはアーキテクチャおよびその性質が異なるため、PostgreSQLをTsurugiのユーザインタフェースとして利用する際は以下の点に注意する必要があります。
 
-- ORDER BY句を利用して文字列型のデータを問い合わせた場合、対象データの大文字小文字をソート条件に含みます。PostgreSQLは大文字小文字を区別しません。
+1. ORDER BY句を利用して文字列型のデータを問い合わせた場合、対象データの大文字小文字を区別して並べ替えます。PostgreSQLは大文字小文字を区別しません。
 
-- ORDER BY句のNULLSオプションのデフォルトがNULLS FIRSTとなります。PostgreSQLはNULLS LASTです。
+2. ORDER BY句のNULLSオプションのデフォルトが`NULLS FIRST`になります。PostgreSQLは`NULLS LAST`です。
 
-- SQLのINSERTコマンドに`insert-option`（OR REPLACE/OR IGNORE/IF NOT EXISTS）が指定できません。PostgreSQLは`insert-option`を指定することができません。
+3. SQLのINSERTコマンドに`insert-option`（OR REPLACE/OR IGNORE/IF NOT EXISTS）が指定できません。PostgreSQLは`insert-option`を指定することができません。
 
-- Tsurugiのデータ型とそれに対応するJDBC API(Java)およびPostgreSQLのデータ型は適切にマッピングする必要があります。※ PostgreSQL JDBDドライバは`TIME WITH TIME ZONE`型を[非サポート](https://jdbc.postgresql.org/documentation/query/#using-java-8-date-and-time-classes)としています。
+4. Tsurugiのデータ型とそれに対応するJDBC API(Java)およびPostgreSQLのデータ型は適切にマッピングする必要があります。  
 
     |#| Tsurugi | Java(JDBC) | PostgreSQL |
     |:---:| :---: | :---: | :---: |
@@ -32,9 +32,11 @@ PostgreSQLとTsurugiはアーキテクチャおよびその性質が異なるた
     |14.| TIMESTAMP | java.sql.Timestamp・LocalDateTme | timestamp |
     |15.| TIMESTAMP WITH TIME ZONE | OffsetDateTime | timestamp with time zone |
 
-- JDBC APIで送信可能なSQL文は、Tsurugi_FDWがサポートする[SQLコマンド](./sql_reference.md)および[ユーザ定義関数](./udf_reference.md)に限ります。  
+    ※ PostgreSQL JDBDドライバは`TIME WITH TIME ZONE`型を[非サポート](https://jdbc.postgresql.org/documentation/query/#using-java-8-date-and-time-classes)としています。
 
-- JDBC APIのPreparedStatementではPostgreSQLに対してはステートメントキャッシュが効きますが、PostgreSQLからTsurugiへの実行においてはステートメントキャッシュは効きません。
+5. JDBC APIで送信可能なSQL文は、Tsurugi_FDWがサポートする[SQLコマンド](./sql_reference.md)および[ユーザ定義関数](./udf_reference.md)に限ります。  
+
+6. JDBC APIのPreparedStatementではPostgreSQLに対してはステートメントキャッシュが効きますが、PostgreSQLからTsurugiへの実行においてはステートメントキャッシュは効きません。
 
 ### 制限事項
 
@@ -46,7 +48,7 @@ PostgreSQLとTsurugiはアーキテクチャおよびその性質が異なるた
 
 3. SQLのPREPAREコマンドでプリペアするSQL文に集合演算子（UNION/EXCEPT/INTERSECT）があるとEXECUTEコマンドで正しい結果を得ることができません。
 
-4. PostgreSQL固有の機能を実行することはできません。
+4. PostgreSQL固有の文法を含むクエリーを実行すると失敗する場合があります。
 
 5. SELECT文の選択リストとして指定できるのは列の参照と集約式のみです。
 

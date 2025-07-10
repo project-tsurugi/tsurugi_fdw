@@ -3,7 +3,7 @@
 ## Requirements
 
 * C++ Compiler `>= C++17`
-* Source code of PostgreSQL 12 or 13 `>=12.4`, `>=13.18`, `>=14.18`
+* Source code of PostgreSQL 12/13/14 `>=12.4`, `>=13.18`, `>=14.18`
 * Access to installed dependent modules:
   * managers ([metadata-manager](https://github.com/project-tsurugi/metadata-manager), [message-manager](https://github.com/project-tsurugi/message-manager))
   * [takatori](https://github.com/project-tsurugi/takatori)
