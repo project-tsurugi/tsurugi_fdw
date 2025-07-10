@@ -7,21 +7,22 @@ Tsurugi FDWがサポートするSQLコマンドについて説明します。
 Tsurugiでコンパイルされる以下のSQLコマンドはTsurugiのSQLコマンド仕様に準じます。
 詳細は [Tsurugiのドキュメント](https://github.com/project-tsurugi/tsurugidb/blob/master/docs/sql-features.md) を参照してください。
 
-- Definitions (DDL)
-  - CREATE TABLE
-  - CREATE INDEX
-  - DROP TABLE
-  - DROP INDEX
 - Statements (DML)
   - SELECT
   - INSERT
   - UPDATE
   - DELETE
 
-その他のSQLコマンドはPostgreSQLのSQLコマンド仕様に準じます。
-詳細は [PostgreSQLのドキュメント](https://www.postgresql.jp/document/12/html/sql-commands.html) を参照してください。
+tsurugi_fdw は一般的なFDWと異なり、PostgreSQLに入力されたクエリーをほぼそのままTsurugiに転送します。そのため、PostgreSQLがサポートしていてもTsurugiがサポートしていない命令を入力した場合は実行に失敗する場合があります。
+
+- Tsurugiがサポートしていない関数、演算子や文法
+- PostgreSQL固有の命令
+
+など
 
 ### SQLコマンド一覧
+
+- IMPORT FOREIGN SCHEMAについて、Tsurugi FDW固有の仕様は [IMPORT FOREIGN SCHEMA for Tsurugi FDW](sql_reference/import_foreign_schema.md) を参照してください。
 
 | コマンド名 | 説明 | サポート |
 | :--- | :--- | :---: |
@@ -34,8 +35,8 @@ Tsurugiでコンパイルされる以下のSQLコマンドはTsurugiのSQLコマ
 | ALTER DOMAIN | ドメイン定義を変更する | × |
 | ALTER EVENT TRIGGER | イベントトリガの定義を変更する | × |
 | ALTER EXTENSION | 拡張の定義を変更する | × |
-| ALTER FOREIGN DATA WRAPPER | 外部データラッパの定義を変更する | × |
-| ALTER FOREIGN TABLE | 外部テーブルの定義を変更する | × |
+| ALTER FOREIGN DATA WRAPPER | 外部データラッパの定義を変更する | ○ |
+| ALTER FOREIGN TABLE | 外部テーブルの定義を変更する | ○ |
 | ALTER FUNCTION | 関数定義を変更する | × |
 | ALTER GROUP | ロールの名前またはメンバ資格を変更する | × |
 | ALTER INDEX | インデックス定義を変更する | × |
@@ -53,7 +54,7 @@ Tsurugiでコンパイルされる以下のSQLコマンドはTsurugiのSQLコマ
 | ALTER RULE | ルールの定義を変更する | × |
 | ALTER SCHEMA | スキーマ定義を変更する | × |
 | ALTER SEQUENCE | シーケンスジェネレータの定義を変更する | × |
-| ALTER SERVER | 外部サーバの定義を変更する | × |
+| ALTER SERVER | 外部サーバの定義を変更する | ○ |
 | ALTER STATISTICS | 拡張統計オブジェクトの定義を変更する | × |
 | ALTER SUBSCRIPTION | サブスクリプションの定義を変更する | × |
 | ALTER SYSTEM | サーバの設定パラメータを変更する | × |
@@ -86,9 +87,9 @@ Tsurugiでコンパイルされる以下のSQLコマンドはTsurugiのSQLコマ
 | CREATE DATABASE | 新しいデータベースを作成する | × |
 | CREATE DOMAIN | 新しいドメインを定義する | × |
 | CREATE EVENT TRIGGER | 新しいイベントトリガを定義する | × |
-| CREATE EXTENSION | 拡張をインストールする | × |
-| CREATE FOREIGN DATA WRAPPER | 新しい外部データラッパを定義する | × |
-| CREATE FOREIGN TABLE | 新しい外部テーブルを定義する | × |
+| CREATE EXTENSION | 拡張をインストールする | ○ |
+| CREATE FOREIGN DATA WRAPPER | 新しい外部データラッパを定義する | ○ |
+| CREATE FOREIGN TABLE | 新しい外部テーブルを定義する | ○ |
 | CREATE FUNCTION | 新しい関数を定義する | × |
 | CREATE GROUP | 新しいデータベースロールを定義する | × |
 | CREATE INDEX | 新しいインデックスを定義する | × |
@@ -104,7 +105,7 @@ Tsurugiでコンパイルされる以下のSQLコマンドはTsurugiのSQLコマ
 | CREATE RULE | 新しい書き換えルールを定義する | × |
 | CREATE SCHEMA | 新しいスキーマを定義する | × |
 | CREATE SEQUENCE | 新しいシーケンスジェネレータを定義する | × |
-| CREATE SERVER | 新しい外部サーバを定義する | × |
+| CREATE SERVER | 新しい外部サーバを定義する | ○ |
 | CREATE STATISTICS | 拡張統計情報を定義する | × |
 | CREATE SUBSCRIPTION | 新しいサブスクリプションを定義する | × |
 | CREATE TABLE | 新しいテーブルを定義する | × |
@@ -133,9 +134,9 @@ Tsurugiでコンパイルされる以下のSQLコマンドはTsurugiのSQLコマ
 | DROP DATABASE | データベースを削除する | × |
 | DROP DOMAIN | ドメインを削除する | × |
 | DROP EVENT TRIGGER | イベントトリガを削除する | × |
-| DROP EXTENSION | 拡張を削除する | × |
-| DROP FOREIGN DATA WRAPPER | 外部データラッパを削除する | × |
-| DROP FOREIGN TABLE | 外部テーブルを削除する | × |
+| DROP EXTENSION | 拡張を削除する | ○ |
+| DROP FOREIGN DATA WRAPPER | 外部データラッパを削除する | ○ |
+| DROP FOREIGN TABLE | 外部テーブルを削除する | ○ |
 | DROP FUNCTION | 関数を削除する | × |
 | DROP GROUP | データベースロールを削除する | × |
 | DROP INDEX | インデックスを削除する | × |
@@ -153,7 +154,7 @@ Tsurugiでコンパイルされる以下のSQLコマンドはTsurugiのSQLコマ
 | DROP RULE | 書き換えルールを削除する | × |
 | DROP SCHEMA | スキーマを削除する | × |
 | DROP SEQUENCE | シーケンスを削除する | × |
-| DROP SERVER | 外部サーバの記述子を削除する | × |
+| DROP SERVER | 外部サーバの記述子を削除する | ○ |
 | DROP STATISTICS | 拡張統計を削除する | × |
 | DROP SUBSCRIPTION | サブスクリプションを削除する | × |
 | DROP TABLE | テーブルを削除する | × |
@@ -207,6 +208,3 @@ Tsurugiでコンパイルされる以下のSQLコマンドはTsurugiのSQLコマ
 | UPDATE | テーブルの行を更新する | 〇 |
 | VACUUM | データベースの不要領域の回収とデータベースの解析を行う | × |
 | VALUES | 行セットを計算する | × |
-
-
-- IMPORT FOREIGN SCHEMAについて、Tsurugi FDW固有の仕様は [IMPORT FOREIGN SCHEMA for Tsurugi FDW のドキュメント](sql_reference/import_foreign_schema.md) を参照してください。
