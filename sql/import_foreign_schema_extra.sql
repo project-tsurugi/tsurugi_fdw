@@ -1,5 +1,24 @@
+/* Test setup: PostgreSQL environment */
 SET datestyle TO ISO, YMD;
 SET timezone TO 'Asia/Tokyo';
+
+/* Test setup: PostgreSQL functions */
+CREATE OR REPLACE FUNCTION drop_foreign_tables()
+RETURNS text AS $$
+DECLARE
+  r RECORD;
+BEGIN
+  FOR r IN
+    SELECT n.nspname, c.relname
+    FROM pg_foreign_table ft
+      JOIN pg_class c ON c.oid = ft.ftrelid
+      JOIN pg_namespace n ON n.oid = c.relnamespace
+  LOOP
+    EXECUTE format('DROP FOREIGN TABLE %I.%I;', r.nspname, r.relname);
+  END LOOP;
+  RETURN 'DROP FOREIGN TABLE';
+END;
+$$ LANGUAGE plpgsql;
 
 /* Test case: 3-1-1_4 */
 -- Test setup: DDL of the Tsurugi
@@ -20,25 +39,27 @@ SELECT tg_execute_ddl('
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
-\d fdw_test_type_num;
+\det fdw_test_type_num
+\d fdw_test_type_num
+
 INSERT INTO fdw_test_type_num 
   (col_int, col_bigint, col_real, col_float, col_double, col_double_precision,
     col_decimal, col_decimal_p, col_decimal_ps, col_decimal_max)
   VALUES (1, 2, 3.33, 4.44, 5.55, 6.66, 77777, 88, 9.99, 1000);
 SELECT * FROM fdw_test_type_num;
+
 UPDATE fdw_test_type_num
   SET col_int = 2, col_bigint = 3, col_real = 4.567, col_float = 5.678, col_double = 6.78901,
       col_double_precision = 7.89012, col_decimal = 890, col_decimal_p = 90, col_decimal_ps = 1.23,
       col_decimal_max = 99999
   WHERE col_int = 1;
 SELECT * FROM fdw_test_type_num;
+
 DELETE FROM fdw_test_type_num WHERE col_double = 6.78901;
 SELECT * FROM fdw_test_type_num;
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_test_type_num;
-
+SELECT drop_foreign_tables();
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_type_num', 'tsurugidb');
 
@@ -61,14 +82,16 @@ SELECT tg_execute_ddl('
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
-\d fdw_test_type_str;
+\det fdw_test_type_str
+\d fdw_test_type_str
+
 INSERT INTO fdw_test_type_str
   (col_char, col_char_l, col_character, col_character_l, col_varchar, col_varchar_l,
    col_char_varying, col_char_varying_l, col_character_varying, col_character_varying_l)
   VALUES ('1', 'char', '2', 'character', 'varchar', 'varchar_l',
           'char_varying', 'char_varying_l', 'character_varying', 'character_varying_l');
 SELECT * FROM fdw_test_type_str;
+
 UPDATE fdw_test_type_str
   SET col_char = '3', col_char_l = 'char_upd', col_character = '4', col_character_l = 'character_upd',
       col_varchar = 'varchar_upd', col_varchar_l = 'varchar_l_upd', col_char_varying = 'char_varying_upd',
@@ -76,12 +99,12 @@ UPDATE fdw_test_type_str
       col_character_varying_l = 'character_varying_l_upd'
   WHERE col_char = '1';
 SELECT * FROM fdw_test_type_str;
+
 DELETE FROM fdw_test_type_str WHERE col_char = '3';
 SELECT * FROM fdw_test_type_str;
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_test_type_str;
-
+SELECT drop_foreign_tables();
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_type_str', 'tsurugidb');
 
@@ -99,23 +122,25 @@ SELECT tg_execute_ddl('
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
-\d fdw_test_type_datetime;
+\det fdw_test_type_datetime
+\d fdw_test_type_datetime
+
 INSERT INTO fdw_test_type_datetime
   (col_date, col_time, col_timestamp, col_timestamp_tz)
   VALUES (DATE '2025-01-23', TIME '08:09:10', TIMESTAMP '2025-01-23 08:09:10',
           TIMESTAMP WITH TIME ZONE '2025-01-23 08:09:10+09');
 SELECT * FROM fdw_test_type_datetime;
+
 UPDATE fdw_test_type_datetime
   SET col_date = DATE '2025-02-12', col_time = TIME '09:10:11', col_timestamp = TIMESTAMP '2025-02-12 09:10:11',
       col_timestamp_tz = TIMESTAMP WITH TIME ZONE '2025-02-12 09:10:11+09' WHERE col_date = DATE '2025-01-23';
 SELECT * FROM fdw_test_type_datetime;
+
 DELETE FROM fdw_test_type_datetime WHERE col_date = DATE '2025-02-12';
 SELECT * FROM fdw_test_type_datetime;
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_test_type_datetime;
-
+SELECT drop_foreign_tables();
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_type_datetime', 'tsurugidb');
 
@@ -128,6 +153,8 @@ SELECT tg_execute_ddl('
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
 
+-- Test teardown: DDL of the PostgreSQL
+SELECT drop_foreign_tables();
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_type_invalid', 'tsurugidb');
 
@@ -139,12 +166,11 @@ SELECT tg_execute_ddl('
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
-\d fdw_test_table_name2_________3_________4_________5_________6__;
+\det fdw_test_table_name2_________3_________4_________5_________6__
+\d fdw_test_table_name2_________3_________4_________5_________6__
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_test_table_name2_________3_________4_________5_________6__;
-
+SELECT drop_foreign_tables();
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('
   DROP TABLE fdw_test_table_name2_________3_________4_________5_________6__
@@ -158,12 +184,11 @@ SELECT tg_execute_ddl('
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
-\d fdw_test_table_name2_________3_________4_________5_________6___;
+\det fdw_test_table_name2_________3_________4_________5_________6___
+\d fdw_test_table_name2_________3_________4_________5_________6___
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_test_table_name2_________3_________4_________5_________6___;
-
+SELECT drop_foreign_tables();
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('
   DROP TABLE fdw_test_table_name2_________3_________4_________5_________6___
@@ -177,12 +202,11 @@ SELECT tg_execute_ddl('
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
-\d fdw_test_table_name2_________3_________4_________5_________6___;
+\det fdw_test_table_name2_________3_________4_________5_________6___
+\d fdw_test_table_name2_________3_________4_________5_________6___
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_test_table_name2_________3_________4_________5_________6___;
-
+SELECT drop_foreign_tables();
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('
   DROP TABLE fdw_test_table_name2_________3_________4_________5_________6____
@@ -196,12 +220,11 @@ SELECT tg_execute_ddl('
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
+\det fdw_test_table
 \d fdw_test_table
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_test_table;
-
+SELECT drop_foreign_tables();
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table', 'tsurugidb');
 
@@ -213,12 +236,11 @@ SELECT tg_execute_ddl('
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
+\det fdw_test_table
 \d fdw_test_table
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_test_table;
-
+SELECT drop_foreign_tables();
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table', 'tsurugidb');
 
@@ -230,12 +252,11 @@ SELECT tg_execute_ddl('
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
+\det fdw_test_table
 \d fdw_test_table
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_test_table;
-
+SELECT drop_foreign_tables();
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table', 'tsurugidb');
 
@@ -260,14 +281,17 @@ BEGIN
 END $$;
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
+\det fdw_test_table_*
 \d fdw_test_table_0001
 \d fdw_test_table_0050
 \d fdw_test_table_0256
 \d fdw_test_table_0512
 \d fdw_test_table_0999
 \d fdw_test_table_1000
--- Test teardown: DDL of the Tsurugi/PostgreSQL
+
+-- Test teardown: DDL of the PostgreSQL
+SELECT drop_foreign_tables();
+-- Test teardown: DDL of the Tsurugi
 DO $$
 DECLARE
     TABLE_MAX CONSTANT INT := 1000;
@@ -276,9 +300,6 @@ BEGIN
     FOR i IN 1..TABLE_MAX LOOP
         EXECUTE format(
             'SELECT tg_execute_ddl(''DROP TABLE IF EXISTS fdw_test_table_%s'', ''tsurugidb'')',
-            to_char(i, 'FM0000'));
-        EXECUTE format(
-            'DROP FOREIGN TABLE IF EXISTS fdw_test_table_%s',
             to_char(i, 'FM0000'));
     END LOOP;
 END $$;

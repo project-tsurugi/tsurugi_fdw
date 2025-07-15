@@ -1,5 +1,23 @@
+/* Test setup: PostgreSQL environment */
 SET datestyle TO ISO, YMD;
 SET timezone TO 'Asia/Tokyo';
+/* Test setup: PostgreSQL functions */
+CREATE OR REPLACE FUNCTION drop_foreign_tables()
+RETURNS text AS $$
+DECLARE
+  r RECORD;
+BEGIN
+  FOR r IN
+    SELECT n.nspname, c.relname
+    FROM pg_foreign_table ft
+      JOIN pg_class c ON c.oid = ft.ftrelid
+      JOIN pg_namespace n ON n.oid = c.relnamespace
+  LOOP
+    EXECUTE format('DROP FOREIGN TABLE %I.%I;', r.nspname, r.relname);
+  END LOOP;
+  RETURN 'DROP FOREIGN TABLE';
+END;
+$$ LANGUAGE plpgsql;
 /* Test case: 1-1-1 */
 -- Test setup: DDL of the Tsurugi
 SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
@@ -10,14 +28,14 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_1 (id INT, name CHAR(64))', '
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
-                  List of relations
- Schema |       Name       |     Type      |  Owner   
---------+------------------+---------------+----------
- public | fdw_test_table_1 | foreign table | postgres
+\det fdw_test_*
+        List of foreign tables
+ Schema |      Table       |  Server   
+--------+------------------+-----------
+ public | fdw_test_table_1 | tsurugidb
 (1 row)
 
-\d fdw_test_table_*
+\d fdw_test_*
              Foreign table "public.fdw_test_table_1"
  Column |  Type   | Collation | Nullable | Default | FDW options 
 --------+---------+-----------+----------+---------+-------------
@@ -26,7 +44,12 @@ IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
 Server: tsurugidb
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_test_table_1;
+SELECT drop_foreign_tables();
+ drop_foreign_tables 
+---------------------
+ DROP FOREIGN TABLE
+(1 row)
+
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table_1', 'tsurugidb');
  tg_execute_ddl 
@@ -50,15 +73,15 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_2 (id BIGINT, since DATE)', '
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
-                  List of relations
- Schema |       Name       |     Type      |  Owner   
---------+------------------+---------------+----------
- public | fdw_test_table_1 | foreign table | postgres
- public | fdw_test_table_2 | foreign table | postgres
+\det fdw_test_*
+        List of foreign tables
+ Schema |      Table       |  Server   
+--------+------------------+-----------
+ public | fdw_test_table_1 | tsurugidb
+ public | fdw_test_table_2 | tsurugidb
 (2 rows)
 
-\d fdw_test_table_*
+\d fdw_test_*
              Foreign table "public.fdw_test_table_1"
  Column |  Type   | Collation | Nullable | Default | FDW options 
 --------+---------+-----------+----------+---------+-------------
@@ -74,8 +97,12 @@ Server: tsurugidb
 Server: tsurugidb
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_test_table_1;
-DROP FOREIGN TABLE fdw_test_table_2;
+SELECT drop_foreign_tables();
+ drop_foreign_tables 
+---------------------
+ DROP FOREIGN TABLE
+(1 row)
+
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table_1', 'tsurugidb');
  tg_execute_ddl 
@@ -92,11 +119,18 @@ SELECT tg_execute_ddl('DROP TABLE fdw_test_table_2', 'tsurugidb');
 /* Test case: 1-1-3 */
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
-      List of relations
- Schema | Name | Type | Owner 
---------+------+------+-------
+\det fdw_test_*
+ List of foreign tables
+ Schema | Table | Server 
+--------+-------+--------
 (0 rows)
+
+-- Test teardown: DDL of the PostgreSQL
+SELECT drop_foreign_tables();
+ drop_foreign_tables 
+---------------------
+ DROP FOREIGN TABLE
+(1 row)
 
 /* Test case: 1-1-4 */
 -- Test setup: DDL of the Tsurugi
@@ -108,14 +142,14 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_1 (id INT)', 'tsurugidb');
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
-                  List of relations
- Schema |       Name       |     Type      |  Owner   
---------+------------------+---------------+----------
- public | fdw_test_table_1 | foreign table | postgres
+\det fdw_test_*
+        List of foreign tables
+ Schema |      Table       |  Server   
+--------+------------------+-----------
+ public | fdw_test_table_1 | tsurugidb
 (1 row)
 
-\d fdw_test_table_*
+\d fdw_test_*
              Foreign table "public.fdw_test_table_1"
  Column |  Type   | Collation | Nullable | Default | FDW options 
 --------+---------+-----------+----------+---------+-------------
@@ -123,7 +157,12 @@ IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
 Server: tsurugidb
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_test_table_1;
+SELECT drop_foreign_tables();
+ drop_foreign_tables 
+---------------------
+ DROP FOREIGN TABLE
+(1 row)
+
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table_1', 'tsurugidb');
  tg_execute_ddl 
@@ -143,20 +182,20 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_1 (id INT, name CHAR(64))', '
 CREATE SCHEMA other_schema;
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO other_schema;
-\dE
-      List of relations
- Schema | Name | Type | Owner 
---------+------+------+-------
+\det fdw_test_*
+ List of foreign tables
+ Schema | Table | Server 
+--------+-------+--------
 (0 rows)
 
-\dE other_schema.*
-                     List of relations
-    Schema    |       Name       |     Type      |  Owner   
---------------+------------------+---------------+----------
- other_schema | fdw_test_table_1 | foreign table | postgres
+\det other_schema.fdw_test_*
+           List of foreign tables
+    Schema    |      Table       |  Server   
+--------------+------------------+-----------
+ other_schema | fdw_test_table_1 | tsurugidb
 (1 row)
 
-\d other_schema.fdw_test_table_1
+\d other_schema.fdw_test_*
           Foreign table "other_schema.fdw_test_table_1"
  Column |  Type   | Collation | Nullable | Default | FDW options 
 --------+---------+-----------+----------+---------+-------------
@@ -165,7 +204,12 @@ IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO other_schema;
 Server: tsurugidb
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE other_schema.fdw_test_table_1;
+SELECT drop_foreign_tables();
+ drop_foreign_tables 
+---------------------
+ DROP FOREIGN TABLE
+(1 row)
+
 DROP SCHEMA other_schema;
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table_1', 'tsurugidb');
@@ -196,14 +240,14 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_3 (id INT, timer TIME)', 'tsu
 
 -- Test
 IMPORT FOREIGN SCHEMA public LIMIT TO (fdw_test_table_2) FROM SERVER tsurugidb INTO public;
-\dE
-                  List of relations
- Schema |       Name       |     Type      |  Owner   
---------+------------------+---------------+----------
- public | fdw_test_table_2 | foreign table | postgres
+\det fdw_test_*
+        List of foreign tables
+ Schema |      Table       |  Server   
+--------+------------------+-----------
+ public | fdw_test_table_2 | tsurugidb
 (1 row)
 
-\d fdw_test_table_*
+\d fdw_test_*
              Foreign table "public.fdw_test_table_2"
  Column |  Type   | Collation | Nullable | Default | FDW options 
 --------+---------+-----------+----------+---------+-------------
@@ -212,7 +256,12 @@ IMPORT FOREIGN SCHEMA public LIMIT TO (fdw_test_table_2) FROM SERVER tsurugidb I
 Server: tsurugidb
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_test_table_2;
+SELECT drop_foreign_tables();
+ drop_foreign_tables 
+---------------------
+ DROP FOREIGN TABLE
+(1 row)
+
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table_1', 'tsurugidb');
  tg_execute_ddl 
@@ -254,15 +303,15 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_3 (id INT, timer TIME)', 'tsu
 
 -- Test
 IMPORT FOREIGN SCHEMA public LIMIT TO (fdw_test_table_1, fdw_test_table_3) FROM SERVER tsurugidb INTO public;
-\dE
-                  List of relations
- Schema |       Name       |     Type      |  Owner   
---------+------------------+---------------+----------
- public | fdw_test_table_1 | foreign table | postgres
- public | fdw_test_table_3 | foreign table | postgres
+\det fdw_test_*
+        List of foreign tables
+ Schema |      Table       |  Server   
+--------+------------------+-----------
+ public | fdw_test_table_1 | tsurugidb
+ public | fdw_test_table_3 | tsurugidb
 (2 rows)
 
-\d fdw_test_table_*
+\d fdw_test_*
              Foreign table "public.fdw_test_table_1"
  Column |  Type   | Collation | Nullable | Default | FDW options 
 --------+---------+-----------+----------+---------+-------------
@@ -277,8 +326,13 @@ Server: tsurugidb
  timer  | time without time zone |           |          |         | 
 Server: tsurugidb
 
-DROP FOREIGN TABLE fdw_test_table_1;
-DROP FOREIGN TABLE fdw_test_table_3;
+-- Test teardown: DDL of the PostgreSQL
+SELECT drop_foreign_tables();
+ drop_foreign_tables 
+---------------------
+ DROP FOREIGN TABLE
+(1 row)
+
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table_1', 'tsurugidb');
  tg_execute_ddl 
@@ -320,11 +374,18 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_3 (id INT, timer TIME)', 'tsu
 
 -- Test
 IMPORT FOREIGN SCHEMA public LIMIT TO (not_exist) FROM SERVER tsurugidb INTO public;
-\dE
-      List of relations
- Schema | Name | Type | Owner 
---------+------+------+-------
+\det fdw_test_*
+ List of foreign tables
+ Schema | Table | Server 
+--------+-------+--------
 (0 rows)
+
+-- Test teardown: DDL of the PostgreSQL
+SELECT drop_foreign_tables();
+ drop_foreign_tables 
+---------------------
+ DROP FOREIGN TABLE
+(1 row)
 
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table_1', 'tsurugidb');
@@ -367,14 +428,14 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_3 (id INT, timer TIME)', 'tsu
 
 -- Test
 IMPORT FOREIGN SCHEMA public LIMIT TO (not_exist, fdw_test_table_2) FROM SERVER tsurugidb INTO public;
-\dE
-                  List of relations
- Schema |       Name       |     Type      |  Owner   
---------+------------------+---------------+----------
- public | fdw_test_table_2 | foreign table | postgres
+\det fdw_test_*
+        List of foreign tables
+ Schema |      Table       |  Server   
+--------+------------------+-----------
+ public | fdw_test_table_2 | tsurugidb
 (1 row)
 
-\d fdw_test_table_*
+\d fdw_test_*
              Foreign table "public.fdw_test_table_2"
  Column |  Type   | Collation | Nullable | Default | FDW options 
 --------+---------+-----------+----------+---------+-------------
@@ -383,7 +444,12 @@ IMPORT FOREIGN SCHEMA public LIMIT TO (not_exist, fdw_test_table_2) FROM SERVER 
 Server: tsurugidb
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_test_table_2;
+SELECT drop_foreign_tables();
+ drop_foreign_tables 
+---------------------
+ DROP FOREIGN TABLE
+(1 row)
+
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table_1', 'tsurugidb');
  tg_execute_ddl 
@@ -406,11 +472,18 @@ SELECT tg_execute_ddl('DROP TABLE fdw_test_table_3', 'tsurugidb');
 /* Test case: 1-2-5 */
 -- Test
 IMPORT FOREIGN SCHEMA public LIMIT TO (fdw_test_table_1) FROM SERVER tsurugidb INTO public;
-\dE
-      List of relations
- Schema | Name | Type | Owner 
---------+------+------+-------
+\det fdw_test_*
+ List of foreign tables
+ Schema | Table | Server 
+--------+-------+--------
 (0 rows)
+
+-- Test teardown: DDL of the PostgreSQL
+SELECT drop_foreign_tables();
+ drop_foreign_tables 
+---------------------
+ DROP FOREIGN TABLE
+(1 row)
 
 /* Test case: 1-3-1 */
 -- Test setup: DDL of the Tsurugi
@@ -434,15 +507,15 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_3 (id INT, timer TIME)', 'tsu
 
 -- Test
 IMPORT FOREIGN SCHEMA public EXCEPT (fdw_test_table_2) FROM SERVER tsurugidb INTO public;
-\dE
-                  List of relations
- Schema |       Name       |     Type      |  Owner   
---------+------------------+---------------+----------
- public | fdw_test_table_1 | foreign table | postgres
- public | fdw_test_table_3 | foreign table | postgres
+\det fdw_test_*
+        List of foreign tables
+ Schema |      Table       |  Server   
+--------+------------------+-----------
+ public | fdw_test_table_1 | tsurugidb
+ public | fdw_test_table_3 | tsurugidb
 (2 rows)
 
-\d fdw_test_table_*
+\d fdw_test_*
              Foreign table "public.fdw_test_table_1"
  Column |  Type   | Collation | Nullable | Default | FDW options 
 --------+---------+-----------+----------+---------+-------------
@@ -458,8 +531,12 @@ Server: tsurugidb
 Server: tsurugidb
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_test_table_1;
-DROP FOREIGN TABLE fdw_test_table_3;
+SELECT drop_foreign_tables();
+ drop_foreign_tables 
+---------------------
+ DROP FOREIGN TABLE
+(1 row)
+
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table_1', 'tsurugidb');
  tg_execute_ddl 
@@ -501,14 +578,14 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_3 (id INT, timer TIME)', 'tsu
 
 -- Test
 IMPORT FOREIGN SCHEMA public EXCEPT (fdw_test_table_1, fdw_test_table_3) FROM SERVER tsurugidb INTO public;
-\dE
-                  List of relations
- Schema |       Name       |     Type      |  Owner   
---------+------------------+---------------+----------
- public | fdw_test_table_2 | foreign table | postgres
+\det fdw_test_*
+        List of foreign tables
+ Schema |      Table       |  Server   
+--------+------------------+-----------
+ public | fdw_test_table_2 | tsurugidb
 (1 row)
 
-\d fdw_test_table_*
+\d fdw_test_*
              Foreign table "public.fdw_test_table_2"
  Column |  Type   | Collation | Nullable | Default | FDW options 
 --------+---------+-----------+----------+---------+-------------
@@ -517,7 +594,12 @@ IMPORT FOREIGN SCHEMA public EXCEPT (fdw_test_table_1, fdw_test_table_3) FROM SE
 Server: tsurugidb
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_test_table_2;
+SELECT drop_foreign_tables();
+ drop_foreign_tables 
+---------------------
+ DROP FOREIGN TABLE
+(1 row)
+
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table_1', 'tsurugidb');
  tg_execute_ddl 
@@ -559,16 +641,16 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_3 (id INT, timer TIME)', 'tsu
 
 -- Test
 IMPORT FOREIGN SCHEMA public EXCEPT (not_exist) FROM SERVER tsurugidb INTO public;
-\dE
-                  List of relations
- Schema |       Name       |     Type      |  Owner   
---------+------------------+---------------+----------
- public | fdw_test_table_1 | foreign table | postgres
- public | fdw_test_table_2 | foreign table | postgres
- public | fdw_test_table_3 | foreign table | postgres
+\det fdw_test_*
+        List of foreign tables
+ Schema |      Table       |  Server   
+--------+------------------+-----------
+ public | fdw_test_table_1 | tsurugidb
+ public | fdw_test_table_2 | tsurugidb
+ public | fdw_test_table_3 | tsurugidb
 (3 rows)
 
-\d fdw_test_table_*
+\d fdw_test_*
              Foreign table "public.fdw_test_table_1"
  Column |  Type   | Collation | Nullable | Default | FDW options 
 --------+---------+-----------+----------+---------+-------------
@@ -591,9 +673,12 @@ Server: tsurugidb
 Server: tsurugidb
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_test_table_1;
-DROP FOREIGN TABLE fdw_test_table_2;
-DROP FOREIGN TABLE fdw_test_table_3;
+SELECT drop_foreign_tables();
+ drop_foreign_tables 
+---------------------
+ DROP FOREIGN TABLE
+(1 row)
+
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table_1', 'tsurugidb');
  tg_execute_ddl 
@@ -635,15 +720,15 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_3 (id INT, timer TIME)', 'tsu
 
 -- Test
 IMPORT FOREIGN SCHEMA public EXCEPT (not_exist, fdw_test_table_2) FROM SERVER tsurugidb INTO public;
-\dE
-                  List of relations
- Schema |       Name       |     Type      |  Owner   
---------+------------------+---------------+----------
- public | fdw_test_table_1 | foreign table | postgres
- public | fdw_test_table_3 | foreign table | postgres
+\det fdw_test_*
+        List of foreign tables
+ Schema |      Table       |  Server   
+--------+------------------+-----------
+ public | fdw_test_table_1 | tsurugidb
+ public | fdw_test_table_3 | tsurugidb
 (2 rows)
 
-\d fdw_test_table_*
+\d fdw_test_*
              Foreign table "public.fdw_test_table_1"
  Column |  Type   | Collation | Nullable | Default | FDW options 
 --------+---------+-----------+----------+---------+-------------
@@ -659,8 +744,12 @@ Server: tsurugidb
 Server: tsurugidb
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_test_table_1;
-DROP FOREIGN TABLE fdw_test_table_3;
+SELECT drop_foreign_tables();
+ drop_foreign_tables 
+---------------------
+ DROP FOREIGN TABLE
+(1 row)
+
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table_1', 'tsurugidb');
  tg_execute_ddl 
@@ -683,11 +772,18 @@ SELECT tg_execute_ddl('DROP TABLE fdw_test_table_3', 'tsurugidb');
 /* Test case: 1-3-5 */
 -- Test
 IMPORT FOREIGN SCHEMA public EXCEPT (fdw_test_table_1) FROM SERVER tsurugidb INTO public;
-\dE
-      List of relations
- Schema | Name | Type | Owner 
---------+------+------+-------
+\det fdw_test_*
+ List of foreign tables
+ Schema | Table | Server 
+--------+-------+--------
 (0 rows)
+
+-- Test teardown: DDL of the PostgreSQL
+SELECT drop_foreign_tables();
+ drop_foreign_tables 
+---------------------
+ DROP FOREIGN TABLE
+(1 row)
 
 /* Test case: 2-1-1 */
 -- Test setup: DDL of the Tsurugi
@@ -714,13 +810,13 @@ IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
 INSERT INTO "fdw_test_table_A" VALUES (1, 'information');
 INSERT INTO "fdw_test_Table_A" VALUES (1, DATE '2025-01-02');
 INSERT INTO "fdw_test_table_a" VALUES (1, TIME '11:22:33');
-\dE
-                  List of relations
- Schema |       Name       |     Type      |  Owner   
---------+------------------+---------------+----------
- public | fdw_test_Table_A | foreign table | postgres
- public | fdw_test_table_A | foreign table | postgres
- public | fdw_test_table_a | foreign table | postgres
+\det fdw_test_*
+        List of foreign tables
+ Schema |      Table       |  Server   
+--------+------------------+-----------
+ public | fdw_test_Table_A | tsurugidb
+ public | fdw_test_table_A | tsurugidb
+ public | fdw_test_table_a | tsurugidb
 (3 rows)
 
 \d "fdw_test_table_A"
@@ -766,9 +862,12 @@ SELECT * FROM "fdw_test_table_a";
 (1 row)
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE "fdw_test_table_A";
-DROP FOREIGN TABLE "fdw_test_Table_A";
-DROP FOREIGN TABLE "fdw_test_table_a";
+SELECT drop_foreign_tables();
+ drop_foreign_tables 
+---------------------
+ DROP FOREIGN TABLE
+(1 row)
+
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table_A', 'tsurugidb');
  tg_execute_ddl 
@@ -799,11 +898,11 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_a (col_a INT, Col_a CHAR(64),
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
 INSERT INTO fdw_test_table_a VALUES (111, 'abcdefg', DATE '2025-01-02');
-\dE
-                  List of relations
- Schema |       Name       |     Type      |  Owner   
---------+------------------+---------------+----------
- public | fdw_test_table_a | foreign table | postgres
+\det fdw_test_*
+        List of foreign tables
+ Schema |      Table       |  Server   
+--------+------------------+-----------
+ public | fdw_test_table_a | tsurugidb
 (1 row)
 
 \d fdw_test_table_a
@@ -822,7 +921,12 @@ SELECT * FROM fdw_test_table_a;
 (1 row)
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_test_table_a;
+SELECT drop_foreign_tables();
+ drop_foreign_tables 
+---------------------
+ DROP FOREIGN TABLE
+(1 row)
+
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table_a', 'tsurugidb');
  tg_execute_ddl 
@@ -850,20 +954,26 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_3 (id INT, timer TIME)', 'tsu
  CREATE TABLE
 (1 row)
 
+-- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE fdw_test_table_2 (id INT, since DATE) SERVER tsurugidb;
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
 ERROR:  relation "fdw_test_table_2" already exists
 CONTEXT:  importing foreign table "fdw_test_table_2"
-\dE
-                  List of relations
- Schema |       Name       |     Type      |  Owner   
---------+------------------+---------------+----------
- public | fdw_test_table_2 | foreign table | postgres
+\det fdw_test_*
+        List of foreign tables
+ Schema |      Table       |  Server   
+--------+------------------+-----------
+ public | fdw_test_table_2 | tsurugidb
 (1 row)
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_test_table_2;
+SELECT drop_foreign_tables();
+ drop_foreign_tables 
+---------------------
+ DROP FOREIGN TABLE
+(1 row)
+
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table_1', 'tsurugidb');
  tg_execute_ddl 
@@ -897,18 +1007,19 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_TABLE_B (id INT, since DATE)', 'tsu
  CREATE TABLE
 (1 row)
 
+-- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE "fdw_test_TABLE_A" (col1 INT, col2 VARCHAR) SERVER tsurugidb;
 CREATE FOREIGN TABLE "fdw_test_table_b" (col1 INT, col2 DATE) SERVER tsurugidb;
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
-                  List of relations
- Schema |       Name       |     Type      |  Owner   
---------+------------------+---------------+----------
- public | fdw_test_TABLE_A | foreign table | postgres
- public | fdw_test_TABLE_B | foreign table | postgres
- public | fdw_test_table_a | foreign table | postgres
- public | fdw_test_table_b | foreign table | postgres
+\det fdw_test_*
+        List of foreign tables
+ Schema |      Table       |  Server   
+--------+------------------+-----------
+ public | fdw_test_TABLE_A | tsurugidb
+ public | fdw_test_TABLE_B | tsurugidb
+ public | fdw_test_table_a | tsurugidb
+ public | fdw_test_table_b | tsurugidb
 (4 rows)
 
 \d "fdw_test_table_a"
@@ -928,10 +1039,12 @@ Server: tsurugidb
 Server: tsurugidb
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE "fdw_test_TABLE_A";
-DROP FOREIGN TABLE "fdw_test_table_b";
-DROP FOREIGN TABLE "fdw_test_table_a";
-DROP FOREIGN TABLE "fdw_test_TABLE_B";
+SELECT drop_foreign_tables();
+ drop_foreign_tables 
+---------------------
+ DROP FOREIGN TABLE
+(1 row)
+
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table_a', 'tsurugidb');
  tg_execute_ddl 
@@ -967,14 +1080,14 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_a (id DECIMAL, timer TIME)', 
 
 -- Test
 IMPORT FOREIGN SCHEMA public LIMIT TO (fdw_test_Table_A) FROM SERVER tsurugidb INTO public;
-\dE
-                  List of relations
- Schema |       Name       |     Type      |  Owner   
---------+------------------+---------------+----------
- public | fdw_test_table_a | foreign table | postgres
+\det fdw_test_*
+        List of foreign tables
+ Schema |      Table       |  Server   
+--------+------------------+-----------
+ public | fdw_test_table_a | tsurugidb
 (1 row)
 
-\d fdw_test_table_*
+\d fdw_test_*
                     Foreign table "public.fdw_test_table_a"
  Column |          Type          | Collation | Nullable | Default | FDW options 
 --------+------------------------+-----------+----------+---------+-------------
@@ -983,7 +1096,12 @@ IMPORT FOREIGN SCHEMA public LIMIT TO (fdw_test_Table_A) FROM SERVER tsurugidb I
 Server: tsurugidb
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_test_table_a;
+SELECT drop_foreign_tables();
+ drop_foreign_tables 
+---------------------
+ DROP FOREIGN TABLE
+(1 row)
+
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table_A', 'tsurugidb');
  tg_execute_ddl 
@@ -1025,11 +1143,11 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_a (id DECIMAL, timer TIME)', 
 
 -- Test
 IMPORT FOREIGN SCHEMA public LIMIT TO ("fdw_test_Table_A") FROM SERVER tsurugidb INTO public;
-\dE
-                  List of relations
- Schema |       Name       |     Type      |  Owner   
---------+------------------+---------------+----------
- public | fdw_test_Table_A | foreign table | postgres
+\det fdw_test_*
+        List of foreign tables
+ Schema |      Table       |  Server   
+--------+------------------+-----------
+ public | fdw_test_Table_A | tsurugidb
 (1 row)
 
 \d fdw_test_*
@@ -1041,7 +1159,12 @@ IMPORT FOREIGN SCHEMA public LIMIT TO ("fdw_test_Table_A") FROM SERVER tsurugidb
 Server: tsurugidb
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE "fdw_test_Table_A";
+SELECT drop_foreign_tables();
+ drop_foreign_tables 
+---------------------
+ DROP FOREIGN TABLE
+(1 row)
+
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table_A', 'tsurugidb');
  tg_execute_ddl 
@@ -1083,12 +1206,12 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_a (id DECIMAL, timer TIME)', 
 
 -- Test
 IMPORT FOREIGN SCHEMA public EXCEPT (fdw_test_Table_A) FROM SERVER tsurugidb INTO public;
-\dE
-                  List of relations
- Schema |       Name       |     Type      |  Owner   
---------+------------------+---------------+----------
- public | fdw_test_Table_A | foreign table | postgres
- public | fdw_test_table_A | foreign table | postgres
+\det fdw_test_*
+        List of foreign tables
+ Schema |      Table       |  Server   
+--------+------------------+-----------
+ public | fdw_test_Table_A | tsurugidb
+ public | fdw_test_table_A | tsurugidb
 (2 rows)
 
 \d "fdw_test_table_A"
@@ -1108,8 +1231,12 @@ Server: tsurugidb
 Server: tsurugidb
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE "fdw_test_table_A";
-DROP FOREIGN TABLE "fdw_test_Table_A";
+SELECT drop_foreign_tables();
+ drop_foreign_tables 
+---------------------
+ DROP FOREIGN TABLE
+(1 row)
+
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table_A', 'tsurugidb');
  tg_execute_ddl 
@@ -1151,12 +1278,12 @@ SELECT tg_execute_ddl('CREATE TABLE fdw_test_table_a (id DECIMAL, timer TIME)', 
 
 -- Test
 IMPORT FOREIGN SCHEMA public EXCEPT ("fdw_test_Table_A") FROM SERVER tsurugidb INTO public;
-\dE
-                  List of relations
- Schema |       Name       |     Type      |  Owner   
---------+------------------+---------------+----------
- public | fdw_test_table_A | foreign table | postgres
- public | fdw_test_table_a | foreign table | postgres
+\det fdw_test_*
+        List of foreign tables
+ Schema |      Table       |  Server   
+--------+------------------+-----------
+ public | fdw_test_table_A | tsurugidb
+ public | fdw_test_table_a | tsurugidb
 (2 rows)
 
 \d "fdw_test_table_A"
@@ -1176,8 +1303,12 @@ Server: tsurugidb
 Server: tsurugidb
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE "fdw_test_table_A";
-DROP FOREIGN TABLE "fdw_test_table_a";
+SELECT drop_foreign_tables();
+ drop_foreign_tables 
+---------------------
+ DROP FOREIGN TABLE
+(1 row)
+
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table_A', 'tsurugidb');
  tg_execute_ddl 
@@ -1220,11 +1351,11 @@ SELECT tg_execute_ddl('
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
-                   List of relations
- Schema |       Name        |     Type      |  Owner   
---------+-------------------+---------------+----------
- public | fdw_test_type_num | foreign table | postgres
+\det fdw_test_*
+         List of foreign tables
+ Schema |       Table       |  Server   
+--------+-------------------+-----------
+ public | fdw_test_type_num | tsurugidb
 (1 row)
 
 \d fdw_test_type_num;
@@ -1244,7 +1375,12 @@ IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
 Server: tsurugidb
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_test_type_num;
+SELECT drop_foreign_tables();
+ drop_foreign_tables 
+---------------------
+ DROP FOREIGN TABLE
+(1 row)
+
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_type_num', 'tsurugidb');
  tg_execute_ddl 
@@ -1275,11 +1411,11 @@ SELECT tg_execute_ddl('
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
-                   List of relations
- Schema |       Name        |     Type      |  Owner   
---------+-------------------+---------------+----------
- public | fdw_test_type_str | foreign table | postgres
+\det fdw_test_*
+         List of foreign tables
+ Schema |       Table       |  Server   
+--------+-------------------+-----------
+ public | fdw_test_type_str | tsurugidb
 (1 row)
 
 \d fdw_test_type_str;
@@ -1299,7 +1435,12 @@ IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
 Server: tsurugidb
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_test_type_str;
+SELECT drop_foreign_tables();
+ drop_foreign_tables 
+---------------------
+ DROP FOREIGN TABLE
+(1 row)
+
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_type_str', 'tsurugidb');
  tg_execute_ddl 
@@ -1325,11 +1466,11 @@ SELECT tg_execute_ddl('
 
 -- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\dE
-                     List of relations
- Schema |          Name          |     Type      |  Owner   
---------+------------------------+---------------+----------
- public | fdw_test_type_datetime | foreign table | postgres
+\det fdw_test_*
+           List of foreign tables
+ Schema |         Table          |  Server   
+--------+------------------------+-----------
+ public | fdw_test_type_datetime | tsurugidb
 (1 row)
 
 \d fdw_test_type_datetime;
@@ -1344,7 +1485,12 @@ IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
 Server: tsurugidb
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_test_type_datetime;
+SELECT drop_foreign_tables();
+ drop_foreign_tables 
+---------------------
+ DROP FOREIGN TABLE
+(1 row)
+
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_type_datetime', 'tsurugidb');
  tg_execute_ddl 
@@ -1366,6 +1512,13 @@ SELECT tg_execute_ddl('
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
 ERROR:  unsupported tsurugi data type "11"
 DETAIL:  table:"fdw_test_type_invalid" column:"col_binary" type:11
+-- Test teardown: DDL of the PostgreSQL
+SELECT drop_foreign_tables();
+ drop_foreign_tables 
+---------------------
+ DROP FOREIGN TABLE
+(1 row)
+
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_type_invalid', 'tsurugidb');
  tg_execute_ddl 
