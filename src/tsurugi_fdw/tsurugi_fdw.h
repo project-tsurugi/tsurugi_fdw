@@ -33,8 +33,7 @@ extern "C" {
 #include "nodes/plannodes.h"
 #include "utils/relcache.h"
 
-/* Planning Flag */
-#define __TSURUGI_PLANNER__
+#include "common.h"
 
 /*
  * Tsurugi-FDW Foreign Scan State
