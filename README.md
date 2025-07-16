@@ -5,7 +5,6 @@
 * C++ Compiler `>= C++17`
 * Source code of PostgreSQL 12/13/14 `>=12.4`, `>=13.18`, `>=14.18`
 * Access to installed dependent modules:
-  * managers ([metadata-manager](https://github.com/project-tsurugi/metadata-manager), [message-manager](https://github.com/project-tsurugi/message-manager))
   * [takatori](https://github.com/project-tsurugi/takatori)
   * [ogawayama](https://github.com/project-tsurugi/ogawayama)
 
@@ -56,8 +55,6 @@
     sudo apt -y install build-essential cmake ninja-build
     # Dependency libraries for takarori.
     sudo apt -y install libboost-container-dev libboost-stacktrace-dev libicu-dev flex bison
-    # Dependency libraries for metadata-manager.
-    sudo apt -y install libssl-dev
     # Dependency libraries for ogawayama(stub).
     sudo apt -y install libboost-thread-dev libgoogle-glog-dev libprotobuf-dev protobuf-compiler
     ```
