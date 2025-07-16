@@ -77,8 +77,8 @@ ifdef REGRESS_EXTRA
 	endif
 endif
 
-install_dependencies:
-	bash ./scripts/install_dependencies.sh $(libdir)
+install_deps:
+	bash ./scripts/install_deps.sh $(libdir)
 
 tests:
 	bash ./scripts/test.sh
