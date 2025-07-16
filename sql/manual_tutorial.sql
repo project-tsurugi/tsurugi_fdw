@@ -69,9 +69,6 @@ INSERT INTO weather (id, city, temp_lo, temp_hi, prcp)  --  Tsurugiテーブル�
 COMMIT;     --  トランザクション終了
 SELECT * FROM weather ORDER BY id;  -- レグレッションテスト確認用
 
-/* デフォルトのトランザクション特性を変更したい場合 */
-SELECT tg_set_transaction('short', 'interrupt');    /*  デフォルトのトランザクション特性を変更する
-                                                        （priority = 'interrupt'） */
 BEGIN;
 INSERT INTO weather (id, city, temp_lo, temp_hi, prcp)
     VALUES (5, 'Oakland', 48, 53, 0.5);
@@ -80,12 +77,9 @@ COMMIT;  -- トランザクション終了
 
 BEGIN;
 SELECT * FROM weather ORDER BY id;
-/* 特定のトランザクションブロックのみトランザクション特性を変更 */
-SELECT tg_set_transaction('read_only', 'wait', 'read_only_tx');
 SELECT * FROM weather ORDER BY id;
 COMMIT;     --  トランザクション終了
 
-SELECT tg_set_transaction('short', 'interrupt');
 BEGIN;
 INSERT INTO weather (id, city, temp_lo, temp_hi, prcp)
     VALUES (6, 'San Jose', 46, 55, 0.0);
@@ -103,9 +97,6 @@ SELECT * FROM weather ORDER BY id;  -- レグレッションテスト確認用
 ROLLBACK;   --  UPDATE文の更新内容は破棄されるが、上記のINSERT文の更新内容は破棄されない
 SELECT * FROM weather ORDER BY id;  -- レグレッションテスト確認用
 
-/* Longトランザクションを実行する */
-SELECT tg_set_transaction('long');      --  Longトランザクションをデフォルトに設定する
-SELECT tg_set_write_preserve('weather');    --  書き込みを予約するテーブルを設定する
 BEGIN;
 INSERT INTO weather (id, city, temp_lo, temp_hi)
     VALUES (3, 'Hayward', 37, 54);
