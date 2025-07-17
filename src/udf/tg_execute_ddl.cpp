@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-#include "tsurugi.h"
+#include "common/tsurugi.h"
 
 #ifdef __cplusplus
 extern "C" {

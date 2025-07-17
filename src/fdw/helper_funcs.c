@@ -20,7 +20,7 @@
  */
 #include "postgres.h"
 
-#include "tsurugi_fdw.h"
+#include "fdw/tsurugi_fdw.h"
 #include "miscadmin.h"
 #include "commands/defrem.h"
 #include "nodes/makefuncs.h"

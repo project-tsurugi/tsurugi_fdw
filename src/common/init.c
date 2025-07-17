@@ -21,7 +21,7 @@
 #include "postgres.h"
 #include "optimizer/planner.h"
 #include "tcop/utility.h"
-#include "common.h"
+#include "common/common.h"
 
 extern PGDLLIMPORT planner_hook_type planner_hook;
 extern PGDLLIMPORT ProcessUtility_hook_type ProcessUtility_hook;

@@ -28,7 +28,7 @@
 
 #include "ogawayama/stub/transaction_option.h"
 #include "manager/metadata/metadata_factory.h"
-#include "tsurugi.h"
+#include "common/tsurugi.h"
 
 #ifdef __cplusplus
 extern "C" {

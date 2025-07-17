@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-#include "tsurugi_utils.h"
+#include "fdw/tsurugi_utils.h"
 
 #include <string.h>
 #include <memory>
@@ -24,8 +24,8 @@
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/algorithm/string.hpp>
 
-#include "tsurugi_fdw.h"
-#include "tsurugi.h"
+#include "fdw/tsurugi_fdw.h"
+#include "common/tsurugi.h"
 
 #include "ogawayama/stub/error_code.h"
 

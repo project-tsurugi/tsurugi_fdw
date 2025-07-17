@@ -21,7 +21,7 @@
 
 #include <iostream>
 #include "ogawayama/stub/error_code.h"
-#include "tsurugi.h"
+#include "common/tsurugi.h"
 
 #ifdef __cplusplus
 extern "C" {

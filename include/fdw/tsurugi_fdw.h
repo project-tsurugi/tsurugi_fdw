@@ -33,7 +33,7 @@ extern "C" {
 #include "nodes/plannodes.h"
 #include "utils/relcache.h"
 
-#include "common.h"
+#include "common/common.h"
 
 /*
  * Tsurugi-FDW Foreign Scan State

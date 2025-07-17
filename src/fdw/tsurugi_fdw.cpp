@@ -21,14 +21,14 @@
  */
 #include <boost/format.hpp>
 
-#include "tsurugi.h"
-#include "tsurugi_utils.h"
+#include "common/tsurugi.h"
+#include "fdw/tsurugi_utils.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 #include "postgres.h"
-#include "tsurugi_fdw.h"
+#include "fdw/tsurugi_fdw.h"
 
 #include "access/xact.h"
 #include "access/htup_details.h"
