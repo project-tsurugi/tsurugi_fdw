@@ -23,6 +23,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.sql.Time;
 import java.time.LocalTime;
+import java.util.UUID;
 
 /**
  * Spring Boot アプリケーションのエントリーポイントとなるクラスです。
@@ -74,61 +75,79 @@ public class SampleApplication implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         System.out.print("The sample application is running...\nPlease wait 20 seconds");
-        try {
-            // ０から９のデータを挿入するが奇数だけ削除する
-            for (int i = 0; i < 10; i++) {
-                SampleEntity entity = new SampleEntity();
-                entity.setId(Long.valueOf(i));
-                entity.setCol(i);
-                entity.setTm(Time.valueOf(LocalTime.now()));
-                try {
-                    sampleService.SaveEntityButOddDelete(entity);
-                    System.out.print(".");
-                } catch (RuntimeException e) {
-                    System.out.print(i);
-                }
 
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                    Thread.currentThread().interrupt();
-                }
+        /*
+         * ０から９のデータを挿入するが奇数だけ削除する
+         */
+        for (int i = 0; i < 10; i++) {
+            SampleEntity entity = new SampleEntity();
+            entity.setCol(i);
+            entity.setTm(Time.valueOf(LocalTime.now()));
+            entity.setId(UUID.randomUUID().toString());
+            try {
+                sampleService.SaveEntityButOddDelete(entity);
+                System.out.print(".");
+            } catch (RuntimeException e) {
+                System.out.print(i);
             }
 
-            // １０から１９のデータを挿入するが奇数だけロールバックする
-            for (int i = 10; i < 20; i++) {
-                SampleEntity entity = new SampleEntity();
-                entity.setId(Long.valueOf(i));
-                entity.setCol(i);
-                entity.setTm(Time.valueOf(LocalTime.now()));
-                try {
-                    sampleService.SaveEntityButOddRollback(entity);
-                    System.out.print(".");
-                } catch (RuntimeException e) {
-                    System.out.print(i);
-                }
-
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                    Thread.currentThread().interrupt();
-                }
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                Thread.currentThread().interrupt();
             }
-        } catch (Exception e) {
-            // 予期せぬエラーをキャッチ
-            System.err.println("An unexpected error occurred: " + e.getMessage());
         }
+
+        /*
+         * １０から１９のデータを挿入するが奇数だけロールバックする
+         */
+        for (int i = 10; i < 20; i++) {
+            SampleEntity entity = new SampleEntity();
+            entity.setCol(i);
+            entity.setTm(Time.valueOf(LocalTime.now()));
+            entity.setId(UUID.randomUUID().toString());
+            try {
+                sampleService.SaveEntityButOddRollback(entity);
+                System.out.print(".");
+            } catch (RuntimeException e) {
+                System.out.print(i);
+            }
+
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                Thread.currentThread().interrupt();
+            }
+        }
+
         System.out.println(".");
 
-        // 実行結果を問い合わせる
-        // テーブルのすべてのレコードを取得して出力する
-        System.out.println("RESULT 0- 9: Even do nothing, Odd delete.");
-        System.out.println("      10-19: Even commit, Odd roll back.");
-        System.out.println("  col,\ttm");
-        sampleRepository.findAll().forEach(e -> {
-            System.out.println("  " + e.getCol() + ",\t" + e.getTm());
+        /*
+         * データ挿入直後の結果を出力する
+         */
+        System.out.println("\nInserted Column.");
+        System.out.println("   0- 9: Even do nothing, Odd delete.");
+        System.out.println("  10-19: Even commit, Odd rollback.");
+        System.out.println("    Col,\tTime,\t\tPrimary Key");
+        sampleRepository.findAllByOrderByColAsc().forEach(e -> {
+            System.out.printf ("    %02d,\t\t%s,\t%s\n", e.getCol(), e.getTm(), e.getId());
+        });
+
+        /*
+         * ３の倍数のデータを更新する
+         */
+        sampleService.SaveEntityMultiOfThreeUpdate();
+
+        /*
+         * データ更新直後の結果を出力する
+         */
+        System.out.println("\nUpdated Column.");
+        System.out.println("  Multiples of 3: Clear the tm (00:00:00).");
+        System.out.println("    Col,\tTime,\t\tPrimary Key");
+        sampleRepository.findAllByOrderByColAsc().forEach(e -> {
+            System.out.printf ("    %02d,\t\t%s,\t%s\n", e.getCol(), e.getTm(), e.getId());
         });
     }
 }

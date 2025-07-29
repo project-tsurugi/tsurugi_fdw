@@ -32,7 +32,7 @@ import org.springframework.stereotype.Repository;
  * @see JpaRepository
  */
 @Repository
-public interface SampleRepository extends JpaRepository<SampleEntity, Long> {
+public interface SampleRepository extends JpaRepository<SampleEntity, String> {
     /**
      * {@link JpaRepository} によって提供される基本的な CRUD 操作に加えて、
      * 必要に応じてカスタムのクエリメソッドを定義することができます。
@@ -47,4 +47,9 @@ public interface SampleRepository extends JpaRepository<SampleEntity, Long> {
      * List<SampleEntity> findByCol(Integer col);
      * }</pre>
      */
+
+    /**
+     * col 値でソート（昇順）された全てのデータを検索する
+     */
+    Iterable<SampleEntity> findAllByOrderByColAsc();
 }

@@ -19,6 +19,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Time;
+import java.time.LocalTime;
+
+
 /**
  * {@link SampleEntity} を操作するビジネスロジックを提供するサービスクラスです。
  * {@link SampleRepository} を使用してデータベースへのアクセスを行います。
@@ -81,5 +85,29 @@ public class SampleService {
             // ロールバックを発生させるためのスロー
             throw new RuntimeException("Rollback! for col = " + entity.getCol());
         }
+    }
+
+    /**
+     * {@link SampleRepository} の全てのデータを検索し、{@code col} が３の倍数の場合 {@code tm} を更新（00:00:00）します。
+     * このメソッドは {@link Transactional} アノテーションによってトランザクション管理されます。
+     *
+     * <p>
+     * 検索処理と更新処理は１つのトランザクションとして実行されます。
+     * </p>
+     *
+     * @see SampleRepository#save(Object)
+     * @see Transactional
+     */
+    @Transactional
+    public void SaveEntityMultiOfThreeUpdate() {
+        // 対象のデータ(全て)を検索
+        sampleRepository.findAll().forEach(entity -> {
+            if (entity.getCol() % 3 == 0) {
+                // ３の倍数の場合 tmをクリア（00:00:00）する
+                entity.setTm(Time.valueOf(LocalTime.MIDNIGHT));
+                sampleRepository.save(entity);
+            }
+        });
+
     }
 }

@@ -38,7 +38,7 @@ public class SampleEntity {
      * 主キーとなるID。
      */
     @Id
-    private Long id;
+    private String id;
 
     /**
      * {@code col} カラムに対応する整数値。
@@ -58,7 +58,7 @@ public class SampleEntity {
      *
      * @return ID
      */
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
@@ -67,7 +67,7 @@ public class SampleEntity {
      *
      * @param id 設定する ID
      */
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
