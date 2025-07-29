@@ -54,7 +54,14 @@ static const std::string PUBLIC_SCHEMA_NAME = "public\\.";
 static const std::string PUBLIC_DOUBLE_QUOTATION = "\"public\"\\.";
 
 std::string make_tsurugi_query(std::string_view query_string);
+static std::string  trim_query_string(const std::string& orig_query) ;
+static std::pair<std::string, std::string> make_prepare_statement(const char* query);
 static ogawayama::stub::parameters_type bind_parameters(ParamListInfo param_linfo);
+static ogawayama::stub::placeholders_type make_placeholders(ParamListInfo param_linfo);
+static std::pair<std::string, std::string> make_prepare_statement(const char* query);
+static std::pair<std::string, std::string> tsurugi_prepare_wrapper(
+                                                const char* query, 
+                                                ParamListInfo param_linfo);
 #if !defined (__TSURUGI_PLANNER__)
 static ogawayama::stub::parameters_type bind_parameters2(Relation rel,
                                                         List* target_attrs,
@@ -128,16 +135,25 @@ make_tuple_from_result_row(ResultSetPtr result_set,
 #ifdef __TSURUGI_PLANNER__
 
 /**
- *  @brief  
- *  @param  
- *  @return	
+ *  @brief  Trimming a string to remove comments and newline characters
+ *  @param  (orig_query) input query string.
+ *  @return	(query) trimmed query string.
  */
-std::string removeSqlComments(const std::string& query) {
-    std::regex commentPattern(R"((--[^\n]*)|(/\*[\s\S]*?\*/))");
-    
-    std::string result = std::regex_replace(query, commentPattern, "");
-    
-    return result;
+static std::string 
+trim_query_string(const std::string& orig_query) 
+{
+ 	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
+    // remove comments.
+    std::regex commentPattern(R"((--[^\n]*)|(/\*[\s\S]*?\*/))");   
+    std::string query = std::regex_replace(orig_query, commentPattern, "");
+
+    // replace a line break character to a space.
+    std::replace(query.begin(), query.end(), '\n', ' ');
+
+    elog(DEBUG3, "tsurugi_fdw :\ntrimmed query string:\n%s", query.c_str());
+
+    return query;
 }
 
 /**
@@ -148,8 +164,10 @@ std::string removeSqlComments(const std::string& query) {
 bool
 is_prepare_statement(const char* query)
 {
-    auto sql = removeSqlComments(query);
-    return (boost::algorithm::icontains(sql, "prepare ") 
+ 	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
+    auto sql = trim_query_string(query);
+    return (boost::algorithm::icontains(sql, "PREPARE ") 
                 || boost::algorithm::icontains(sql, "$") 
                 || boost::algorithm::icontains(sql, ":param"));
 }
@@ -163,10 +181,12 @@ is_prepare_statement(const char* query)
 static std::pair<std::string, std::string>
 make_prepare_statement(const char* query)
 {
-    auto orig_query = removeSqlComments(query);
+    elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
+    auto orig_query = trim_query_string(query);
     std::string prep_name{};
     std::string prep_stmt{};
-    if (boost::algorithm::icontains(orig_query, "prepare "))
+    if (boost::algorithm::icontains(orig_query, "PREPARE "))
     {
         // Remove 'PREPARE' clause.
         std::string prev_token{};
@@ -174,13 +194,14 @@ make_prepare_statement(const char* query)
         boost::split(tokens, orig_query, boost::is_any_of(" "));
         for (auto& token : tokens)
         {
-            if (!pg_strcasecmp(prev_token.c_str(), "prepare"))
+            if (!pg_strcasecmp(prev_token.c_str(), "PREPARE"))
                 prep_name = token;
-            else if (!pg_strcasecmp(prev_token.c_str(), "as") || !prep_stmt.empty())
+            else if (!pg_strcasecmp(prev_token.c_str(), "AS") || !prep_stmt.empty())
                 prep_stmt += token + " ";
             prev_token = token;
         }
-        prep_stmt.pop_back();  // remove a last space.       
+        if (!prep_stmt.empty()) 
+            prep_stmt.pop_back();   // remove a last space character.
     }
     else
     {
@@ -271,14 +292,6 @@ make_placeholders(List* fdw_exprs)
 }
 #endif
 
-/**
- *  @brief  Prepare a statement to tsurugidb.
- *  @param  (query) original query.
- *          (node)  Pointer to PlanState structure.
- *          (fdw_exprs) parameter node list.
- *  @return	(first)     prepare name.
- *          (second)    prepare statement.
- */
 #ifdef __TSURUGI_PLANNER__
 /**
  *  @brief  Prepare a statement to tsurugidb.
