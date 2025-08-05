@@ -276,8 +276,12 @@ SetWritePreserveTables(List* WritePreserveTables)
 	foreach(listptr, WritePreserveTables) {
 		Node* node = (Node *) lfirst(listptr);
 		if (IsA(node, String)) {
-			Value* table = (Value*) node;
+#if PG_VERSION_NUM >= 150000
+			write_preserve.emplace_back(strVal(node));
+#else  // PG_VERSION_NUM >= 150000
+			Value* table = (Value*)node;
 			write_preserve.emplace_back(strVal(table));
+#endif  // PG_VERSION_NUM >= 150000
 		}
 	}
 }
@@ -298,8 +302,12 @@ SetInclusiveReadAreasTables(List* InclusiveReadAreasTables)
 	foreach(listptr, InclusiveReadAreasTables) {
 		Node* node = (Node *) lfirst(listptr);
 		if (IsA(node, String)) {
+#if PG_VERSION_NUM >= 150000
+			inclusive_read_areas.emplace_back(strVal(node));
+#else  // PG_VERSION_NUM >= 150000
 			Value* table = (Value*) node;
 			inclusive_read_areas.emplace_back(strVal(table));
+#endif  // PG_VERSION_NUM >= 150000
 		}
 	}
 }
@@ -320,8 +328,12 @@ SetExclusiveReadAreasTables(List* ExclusiveReadAreasTables)
 	foreach(listptr, ExclusiveReadAreasTables) {
 		Node* node = (Node *) lfirst(listptr);
 		if (IsA(node, String)) {
+#if PG_VERSION_NUM >= 150000
+			exclusive_read_areas.emplace_back(strVal(node));
+#else  // PG_VERSION_NUM >= 150000
 			Value* table = (Value*) node;
 			exclusive_read_areas.emplace_back(strVal(table));
+#endif  // PG_VERSION_NUM >= 150000
 		}
 	}
 }
