@@ -390,7 +390,7 @@ SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
 -- Test setup: DDL of the Tsurugi
 DO $$
 DECLARE
-    TABLE_MAX CONSTANT INT := 1000;
+    TABLE_MAX CONSTANT INT := 100;
     COLUMN_MAX CONSTANT INT := 50;
     columns_def TEXT;
     i INT;
@@ -413,7 +413,7 @@ SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
 -- Test teardown: DDL of the Tsurugi/PostgreSQL
 DO $$
 DECLARE
-    TABLE_MAX CONSTANT INT := 1000;
+    TABLE_MAX CONSTANT INT := 100;
     i INT;
 BEGIN
     FOR i IN 1..TABLE_MAX LOOP

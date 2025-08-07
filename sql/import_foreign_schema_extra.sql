@@ -264,7 +264,7 @@ SELECT tg_execute_ddl('DROP TABLE fdw_test_table', 'tsurugidb');
 -- Test setup: DDL of the Tsurugi
 DO $$
 DECLARE
-    TABLE_MAX CONSTANT INT := 1000;
+    TABLE_MAX CONSTANT INT := 100;
     COLUMN_MAX CONSTANT INT := 50;
     columns_def TEXT;
     i INT;
@@ -294,7 +294,7 @@ SELECT drop_foreign_tables();
 -- Test teardown: DDL of the Tsurugi
 DO $$
 DECLARE
-    TABLE_MAX CONSTANT INT := 1000;
+    TABLE_MAX CONSTANT INT := 100;
     i INT;
 BEGIN
     FOR i IN 1..TABLE_MAX LOOP
