@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.tsurugidb.fdw.spring.boot.data.jdbc.sample;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,10 +22,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.sql.Time;
 import java.time.LocalTime;
-import java.util.UUID;
 
 /**
- * Spring Boot アプリケーションのエントリーポイントとなるクラスです。
+ * Spring Boot アプリケーションのエントリーポイントとなるクラス
  *
  * <p>
  * このクラスは、{@link CommandLineRunner} インターフェースを実装し、
@@ -41,19 +39,19 @@ import java.util.UUID;
 public class SampleApplication implements CommandLineRunner {
 
     /**
-     * データベースへのアクセスを提供するリポジトリインターフェースです。
+     * SampleRepository の依存性注入を定義
      */
     @Autowired
     private SampleRepository sampleRepository;
 
     /**
-     * ビジネスロジックを提供するサービスクラスです。
+     * SampleService の依存性注入を定義
      */
     @Autowired
     private SampleService sampleService;
 
     /**
-     * アプリケーションを起動します。
+     * アプリケーションのエントリポイント
      *
      * @param args コマンドライン引数
      */
@@ -62,11 +60,11 @@ public class SampleApplication implements CommandLineRunner {
     }
 
     /**
-     * アプリケーション起動時に実行される処理を定義します。
+     * アプリケーション起動時に実行される処理を定義
      *
      * <p>
-     * このメソッドでは、{@link SampleEntity} の保存と削除、
-     * トランザクションのコミットとロールバックのデモンストレーションを行います。
+     * このメソッドでは、{@link SampleEntity} の基本的な CRUD と、
+     * トランザクションのコミットおよびロールバックのデモンストレーションを行います。
      * </p>
      *
      * @param args コマンドライン引数
@@ -74,25 +72,20 @@ public class SampleApplication implements CommandLineRunner {
      */
     @Override
     public void run(String... args) throws Exception {
-        System.out.print("The sample application is running...\nPlease wait 20 seconds");
+        System.out.println("The sample application is running. Please wait 20 seconds...");
+        System.out.print("Inserted Number.");
 
         /*
-         * ０から９のデータを挿入するが奇数だけ削除する
+         * １から１０のデータを挿入するが奇数だけ削除する
          */
-        for (int i = 0; i < 10; i++) {
-            SampleEntity entity = new SampleEntity();
-            entity.setCol(i);
-            entity.setTm(Time.valueOf(LocalTime.now()));
-            entity.setId(UUID.randomUUID().toString());
+        for (int i = 1; i <= 10; i++) {
+            SampleEntity entity = new SampleEntity(i);
             try {
+                Thread.sleep(1000);
                 sampleService.SaveEntityButOddDelete(entity);
                 System.out.print(".");
             } catch (RuntimeException e) {
                 System.out.print(i);
-            }
-
-            try {
-                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 Thread.currentThread().interrupt();
@@ -100,54 +93,48 @@ public class SampleApplication implements CommandLineRunner {
         }
 
         /*
-         * １０から１９のデータを挿入するが奇数だけロールバックする
+         * １１から２０のデータを挿入するが奇数だけロールバックする
          */
-        for (int i = 10; i < 20; i++) {
-            SampleEntity entity = new SampleEntity();
-            entity.setCol(i);
-            entity.setTm(Time.valueOf(LocalTime.now()));
-            entity.setId(UUID.randomUUID().toString());
+        for (int i = 11; i <= 20; i++) {
+            SampleEntity entity = new SampleEntity(i);
             try {
+                Thread.sleep(1000);
                 sampleService.SaveEntityButOddRollback(entity);
                 System.out.print(".");
             } catch (RuntimeException e) {
                 System.out.print(i);
-            }
-
-            try {
-                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 Thread.currentThread().interrupt();
             }
         }
 
-        System.out.println(".");
+        System.out.print("\n");
 
         /*
          * データ挿入直後の結果を出力する
          */
-        System.out.println("\nInserted Column.");
-        System.out.println("   0- 9: Even do nothing, Odd delete.");
-        System.out.println("  10-19: Even commit, Odd rollback.");
-        System.out.println("    Col,\tTime,\t\tPrimary Key");
-        sampleRepository.findAllByOrderByColAsc().forEach(e -> {
-            System.out.printf ("    %02d,\t\t%s,\t%s\n", e.getCol(), e.getTm(), e.getId());
+        System.out.println("  01-10: Even do nothing, Odd delete.");
+        System.out.println("  11-20: Even commit, Odd rollback.");
+        System.out.println("    Number\tUpdateTime\tPrimaryKey");
+        sampleRepository.findAllByOrderByNumAsc().forEach(e -> {
+            System.out.printf ("     %02d\t\t %s\t %s\n", e.getNum(), e.getTim(), e.getId());
         });
 
         /*
-         * ３の倍数のデータを更新する
+         * ３の倍数のデータ（UpdateTime値）を更新する
          */
-        sampleService.SaveEntityMultiOfThreeUpdate();
+        System.out.println("\nUpdated UpdateTime.");
+		Time updateTime = Time.valueOf(LocalTime.now());
+        sampleService.SaveEntityMultiOfThreeUpdate(updateTime);
 
         /*
          * データ更新直後の結果を出力する
          */
-        System.out.println("\nUpdated Column.");
-        System.out.println("  Multiples of 3: Clear the tm (00:00:00).");
-        System.out.println("    Col,\tTime,\t\tPrimary Key");
-        sampleRepository.findAllByOrderByColAsc().forEach(e -> {
-            System.out.printf ("    %02d,\t\t%s,\t%s\n", e.getCol(), e.getTm(), e.getId());
+        System.out.println("  Multiples of 3: Update the Time(" + updateTime + ").");
+        System.out.println("    Number\tUpdateTime\tPrimaryKey");
+        sampleRepository.findAllByOrderByNumAsc().forEach(e -> {
+            System.out.printf ("     %02d\t\t %s\t %s\n", e.getNum(), e.getTim(), e.getId());
         });
     }
 }

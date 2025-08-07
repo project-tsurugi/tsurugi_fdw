@@ -17,8 +17,8 @@ package com.tsurugidb.fdw.spring.boot.data.jdbc.sample;
 
 /**
  * Spring Data JPA と比較して、
- * Spring Data JDBC は JPA の JpaRepository を使用しません。
- * 代わりに、Spring Data パッケージの CrudRepository または ListCrudRepository を使用します。
+ * Spring Data JDBC は JPA の JpaRepository を使用しない。
+ * 代わりに、Spring Data パッケージの CrudRepository または ListCrudRepository を使用する。
  */
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
@@ -26,11 +26,11 @@ import org.springframework.stereotype.Repository;
 /**
  * {@link SampleEntity} を操作するためのリポジトリインターフェースです。
  * Spring Data JDBC によって提供される {@link CrudRepository} を拡張することで
- * 基本的な CRUD (Create, Read, Update, Delete) 操作を容易に行うことができます。
+ * 基本的な CRUD (Create, Read, Update, Delete) 操作を容易に行うことができる。
  *
  * <p>
  * このインターフェースは、{@link SampleEntity} をデータベースに永続化するための
- * 抽象化を提供し、具体的な実装は Spring Data JDBC によって自動的に生成されます。
+ * インターフェースを定義する。具体的な実装は Spring Data JDBC によって自動的に生成される。
  * </p>
  *
  * @see SampleEntity
@@ -40,21 +40,21 @@ import org.springframework.stereotype.Repository;
 public interface SampleRepository extends CrudRepository<SampleEntity, String> {
     /**
      * {@link CrudRepository} によって提供される基本的な CRUD 操作に加えて、
-     * 必要に応じてカスタムのクエリメソッドを定義することができます。
+     * 必要に応じてカスタムのクエリメソッドを定義することができる。
      *
      * <p>
      * 例えば、特定の条件に合致する {@link SampleEntity} を検索するためのメソッドなどを
-     * 追加することができます。
+     * 追加することができる。
      * </p>
      *
      * <pre>{@code
-     * // 例：特定の col 値を持つ SampleEntity を検索する
-     * Iterable<SampleEntity> findByCol(Integer col);
+     * // 例：特定の num 値を持つ SampleEntity を検索する
+     * List<SampleEntity> findByNum(Integer num);
      * }</pre>
      */
 
     /**
-     * col 値でソート（昇順）された全てのデータを検索する
+     * num 値でソート（昇順）された全てのデータを検索する
      */
-    Iterable<SampleEntity> findAllByOrderByColAsc();
+    Iterable<SampleEntity> findAllByOrderByNumAsc();
 }

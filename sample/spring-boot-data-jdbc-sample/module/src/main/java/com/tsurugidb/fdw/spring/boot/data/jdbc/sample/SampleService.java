@@ -24,8 +24,8 @@ import java.time.LocalTime;
 
 
 /**
- * {@link SampleEntity} を操作するビジネスロジックを提供するサービスクラスです。
- * {@link SampleRepository} を使用してデータベースへのアクセスを行います。
+ * {@link SampleEntity} を操作するビジネスロジックを提供するサービスクラス
+ * {@link SampleRepository} を使用してデータベースへのアクセスを行う。
  *
  * @see SampleRepository
  * @see SampleEntity
@@ -34,45 +34,44 @@ import java.time.LocalTime;
 public class SampleService {
 
     /**
-     * データベースへのアクセスを提供するリポジトリインターフェースです。
+     * SampleRepository の依存性注入を定義
      */
     @Autowired
     private SampleRepository sampleRepository;
 
     /**
-     * {@link SampleEntity} を保存し、{@code col} が奇数の場合に削除します。
-     * このメソッドはトランザクション管理を行いません。
+     * {@link SampleEntity} を保存するが、{@code num} が奇数の場合は削除する。
      *
      * <p>
-     * 保存処理と削除処理はそれぞれ個別のトランザクションとして実行されます。
+     * このメソッドはトランザクション管理を行わない。
+     * 保存処理と削除処理はそれぞれ個別のトランザクションとして実行する。
      * </p>
      *
-     * @param entity 保存または削除する {@link SampleEntity}。
-     * @throws RuntimeException {@code col} が奇数の場合に削除処理後にスローされます。
+     * @param entity 保存（一部は保存後に削除）する {@link SampleEntity}
+     * @throws RuntimeException {@code num} が奇数の場合、削除処理後にスローする。
      * @see SampleRepository#save(Object)
      * @see SampleRepository#delete(Object)
      */
     public void SaveEntityButOddDelete(SampleEntity entity) {
         // SampleEntityを保存
         sampleRepository.save(entity);
-
-        if (entity.getCol() % 2 != 0) {
+        if (entity.getNum() % 2 != 0) {
             // SampleEntityを削除
             sampleRepository.delete(entity);
-            throw new RuntimeException("Delete! for col = " + entity.getCol());
+            throw new RuntimeException("Delete! for num = " + entity.getNum());
         }
     }
 
     /**
-     * {@link SampleEntity} を保存し、{@code col} が奇数の場合にトランザクションをロールバックします。
-     * このメソッドは {@link Transactional} アノテーションによってトランザクション管理されます。
+     * {@link SampleEntity} を保存するが、{@code num} が奇数の場合はトランザクションをロールバックする。
      *
      * <p>
-     * {@code col} が奇数の場合、保存処理はロールバックされます。
+     * このメソッドは {@link Transactional} アノテーションによってトランザクション管理する。
+     * {@code num} が奇数の場合、保存処理はロールバックする。
      * </p>
      *
-     * @param entity 保存する {@link SampleEntity}。
-     * @throws RuntimeException {@code col} が奇数の場合にロールバックを発生させるためにスローされます。
+     * @param entity 保存（一部はロールバック）する {@link SampleEntity}。
+     * @throws RuntimeException {@code num} が奇数の場合、ロールバックを発生させるためにスローする。
      * @see SampleRepository#save(Object)
      * @see Transactional
      */
@@ -80,35 +79,35 @@ public class SampleService {
     public void SaveEntityButOddRollback(SampleEntity entity) {
         // SampleEntityを保存
         sampleRepository.save(entity);
-
-        if (entity.getCol() % 2 != 0) {
+        if (entity.getNum() % 2 != 0) {
             // ロールバックを発生させるためのスロー
-            throw new RuntimeException("Rollback! for col = " + entity.getCol());
+            throw new RuntimeException("Rollback! for num = " + entity.getNum());
         }
     }
 
     /**
-     * {@link SampleRepository} の全てのデータを検索し、{@code col} が３の倍数の場合 {@code tm} を更新（00:00:00）します。
-     * このメソッドは {@link Transactional} アノテーションによってトランザクション管理されます。
+     * 全てのデータの中から {@code num} が３の倍数の場合 {@code tim} を更新する。
      *
      * <p>
-     * 検索処理と更新処理は１つのトランザクションとして実行されます。
+     * このメソッドは {@link Transactional} アノテーションによってトランザクション管理する。
+     * 検索処理と更新処理は１つのトランザクションとして実行する。
      * </p>
      *
      * @see SampleRepository#save(Object)
      * @see Transactional
      */
     @Transactional
-    public void SaveEntityMultiOfThreeUpdate() {
+    public void SaveEntityMultiOfThreeUpdate(Time updateTime) {
         // 対象のデータ(全て)を検索
         sampleRepository.findAll().forEach(entity -> {
-            if (entity.getCol() % 3 == 0) {
-                // ３の倍数の場合 tmをクリア（00:00:00）する
+            if (entity.getNum() % 3 == 0) {
+                // ３の倍数の場合 tim を更新
+                entity.setTim(updateTime);
+                // Spring Data JDBC では エンティティの状態を切り替える必要がある（要調査）。
+                // 切り替えないと save() の先で UPDATE ではなく INSERT コマンドが送信される。
                 entity.setAsNotNew();
-                entity.setTm(Time.valueOf(LocalTime.MIDNIGHT));
                 sampleRepository.save(entity);
             }
         });
-
     }
 }

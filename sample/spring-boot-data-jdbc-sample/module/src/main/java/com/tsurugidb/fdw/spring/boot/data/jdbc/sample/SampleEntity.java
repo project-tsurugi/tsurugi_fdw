@@ -17,8 +17,8 @@ package com.tsurugidb.fdw.spring.boot.data.jdbc.sample;
 
 /**
  * Spring Data JPA と比較して、
- * Spring Data JDBC は JPA のアノテーションを使用しません。
- * 代わりに、Spring Data パッケージのアノテーションを使用します。
+ * Spring Data JDBC は JPA のアノテーションを使用しない。
+ * 代わりに、Spring Data パッケージのアノテーションを使用する。
  */
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
@@ -27,50 +27,77 @@ import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.sql.Time;
+import java.time.LocalTime;
+import java.util.UUID;
 
 /**
- * データベーステーブル {@code fdw_sample} に対応する JPA エンティティです。
+ * データベーステーブル {@code fdw_sample} に対応する Spring Data エンティティ
  *
  * <p>
  * このクラスは、データベーステーブルのカラムをフィールドとして持ち、
- * JPA アノテーションを使用してテーブルとのマッピングを定義します。
+ * Spring Data アノテーションを使用してテーブルとのマッピングを定義する。
+ * 
+ * なお、Spring Data JDBC では、データ更新実行時にエンティティの状態を示す
+ * {@code isNew} 値を切り替えないと永続化の先で UPDATE ではなく INSERT の
+ * SQL コマンドが送信されてしまう事象を確認している。
+ * 本クラスでは、本事象を回避するため Persistable インターフェースの isNew()
+ * メソッドをオーバーライドしてエンティティの状態切り替えを可能にしている。
  * </p>
  *
  * @see Table
  * @see Column
+ * @see Persistable
  */
 @Table("fdw_sample")
 public class SampleEntity implements Persistable<String> {
-//public class SampleEntity {
 
     /**
-     * 主キーとなるID。
+     * 主キーとなるID
      */
     @Id
     private String id;
 
     /**
-     * {@code col} カラムに対応する整数値。
-     * NOT NULL 制約が設定されています。
+     * {@code num} カラムに対応する整数値
      */
-    @Column("col")
-    private Integer col;
+    @Column("num")
+    private Integer num;
 
     /**
-     * {@code tm} カラムに対応する時刻値。
+     * {@code tim} カラムに対応する時刻値
      */
-    @Column("tm")
-    private Time tm;
+    @Column("tim")
+    private Time tim;
 
     /**
      * {@code isNew} 新規エンティティかどうかを示すフラグ。
-     * @Transient を使ってデータベースに保存しないフィールドにしている。
+     * @Transient を使ってデータベースに保存しないフィールドにする。
      */
     @Transient
     private boolean isNew = true;
 
     /**
-     * ID を取得します。
+     * このクラスのコンストラクタ
+     */
+    public SampleEntity() {
+        this.id = UUID.randomUUID().toString();
+        this.tim = Time.valueOf(LocalTime.now());
+        this.isNew = true;
+    }
+
+    /**
+     * このクラスのコンストラクタ
+     * @param num
+     */
+    public SampleEntity(Integer num) {
+        this.id = UUID.randomUUID().toString();
+        this.num = num;
+        this.tim = Time.valueOf(LocalTime.now());
+        this.isNew = true;
+    }
+
+    /**
+     * ID を取得
      *
      * @return ID
      */
@@ -79,7 +106,7 @@ public class SampleEntity implements Persistable<String> {
     }
 
     /**
-     * isNew を取得します。
+     * isNew を取得
      * @return isNew
      */
     @Override
@@ -88,14 +115,14 @@ public class SampleEntity implements Persistable<String> {
     }
 
     /**
-     * エンティティの状態（新規か既存か）を切り替える。
+     * エンティティの状態（新規か既存か）を切り替える
      */
     public void setAsNotNew() {
         this.isNew = false;
     }
 
     /**
-     * ID を設定します。
+     * ID を設定
      *
      * @param id 設定する ID
      */
@@ -104,43 +131,43 @@ public class SampleEntity implements Persistable<String> {
     }
 
     /**
-     * {@code col} を取得します。
+     * {@code num} を取得
      *
-     * @return {@code col}
+     * @return {@code num}
      */
-    public Integer getCol() {
-        return col;
+    public Integer getNum() {
+        return num;
     }
 
     /**
-     * {@code col} を設定します。
+     * {@code num} を設定
      *
-     * @param col 設定する {@code col}
+     * @param num 設定する {@code num}
      */
-    public void setCol(Integer col) {
-        this.col = col;
+    public void setNum(Integer num) {
+        this.num = num;
     }
 
     /**
-     * {@code tm} を取得します。
+     * {@code tim} を取得
      *
-     * @return {@code tm}
+     * @return {@code tim}
      */
-    public Time getTm() {
-        return tm;
+    public Time getTim() {
+        return tim;
     }
 
     /**
-     * {@code tm} を設定します。
+     * {@code tim} を設定
      *
-     * @param tm 設定する {@code tm}
+     * @param tim 設定する {@code tim}
      */
-    public void setTm(Time tm) {
-        this.tm = tm;
+    public void setTim(Time tim) {
+        this.tim = tim;
     }
 
     /**
-     * このエンティティの文字列表現を返します。
+     * このエンティティの文字列表現を返す
      *
      * @return エンティティの文字列表現
      */
@@ -148,8 +175,8 @@ public class SampleEntity implements Persistable<String> {
     public String toString() {
         return "fdw_sample{" +
                 "id=" + id +
-                ", col='" + col + '\'' +
-                ", tm=" + tm +
+                ", num='" + num + '\'' +
+                ", tim=" + tim +
                 '}';
     }
 }

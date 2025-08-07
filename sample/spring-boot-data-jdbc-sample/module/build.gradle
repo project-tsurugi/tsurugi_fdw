@@ -1,13 +1,13 @@
 plugins {
     id 'application'
     id 'org.springframework.boot' version '3.2.5'           // Spring Bootのプラグイン
-                                                            //   Spring Bootは、Spring Data JPAを含むSpringプロジェクトを簡単に設定・実行できようにするフレームワークです。
+                                                            //   Spring Bootは、Springプロジェクトを簡単に設定・実行できようにするフレームワークです。
     id 'io.spring.dependency-management' version '1.1.4'    // Spring Bootが提供する Dependency Management 機能
                                                             //   Spring Bootが推奨する依存関係のバージョンを自動的に適用し、バージョン不整合による問題が回避できる。
 }
 
 repositories {
-    mavenCentral()      // Maven Central リポジトリを使用: 依存関係をダウンロードするための場所
+    mavenCentral()      // Maven Central リポジトリ（依存関係をダウンロードするためのリポジトリ）
 }
 
 dependencies {
@@ -28,7 +28,12 @@ application {
 
 task createTable(type: Exec) {
     // Tsurugi データベースに fdw_sample テーブルを作成するタスク
-    commandLine 'sh', '-c', 'tgsql --exec -c ipc:tsurugi_fuji "create table if not exists fdw_sample (id varchar(50) primary key, col int not null, tm time)"'
+    commandLine 'sh', '-c', 'tgsql --exec -c ipc:tsurugi_fuji "create table if not exists fdw_sample (id varchar(50) primary key, num int not null, tim time)"'
+}
+
+task showTable(type: Exec) {
+    // Tsurugi データベースに作成した fdw_sample テーブルを確認するタスク
+    commandLine 'sh', '-c', 'tgsql --exec -c ipc:tsurugi_fuji "\\show table fdw_sample"'
 }
 
 task dropTable(type: Exec) {
@@ -38,7 +43,12 @@ task dropTable(type: Exec) {
 
 task createForeignTable(type: Exec) {
     // PostgreSQL データベースに fdw_sample 外部テーブルを作成するタスク
-    commandLine 'sh', '-c', 'psql postgres -c "create foreign table if not exists fdw_sample (id varchar(50), col int not null, tm time) server tsurugi"'
+    commandLine 'sh', '-c', 'psql postgres -c "create foreign table if not exists fdw_sample (id varchar(50), num int not null, tim time) server tsurugi"'
+}
+
+task showForeignTable(type: Exec) {
+    // PostgreSQL データベースに作成した fdw_sample 外部テーブルを確認するタスク
+    commandLine 'sh', '-c', 'psql postgres -c "\\d fdw_sample"'
 }
 
 task dropForeignTable(type: Exec) {
@@ -58,5 +68,7 @@ tasks.named('bootRun') {
     finalizedBy dropForeignTable    // dropForeignTable タスクをファイナライズ: run タスクの完了後に dropForeignTable タスクを実行
 }
 
-createTable.finalizedBy createForeignTable  // createForeignTable タスクをファイナライズ: createTable タスクの完了後に createForeignTable タスクを実行
-dropForeignTable.finalizedBy dropTable      // dropTable タスクをファイナライズ: dropForeignTable タスクの完了後に dropTable タスクを実行
+createTable.finalizedBy showTable  // createTable タスクのファイナライズ: createTable タスクの完了後に showTable タスクを実行
+showTable.finalizedBy createForeignTable  // showTable タスクのファイナライズ: showTable タスクの完了後に createForeignTable タスクを実行
+createForeignTable.finalizedBy showForeignTable // createForeignTable タスクのファイナライズ: createForeignTable タスクの完了後に showForeignTable タスクを実行
+dropForeignTable.finalizedBy dropTable      // dropForeignTable タスクのファイナライズ: dropForeignTable タスクの完了後に dropTable タスクを実行
