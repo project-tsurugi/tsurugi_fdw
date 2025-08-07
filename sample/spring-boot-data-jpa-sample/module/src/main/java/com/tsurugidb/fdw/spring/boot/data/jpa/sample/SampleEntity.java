@@ -18,13 +18,15 @@ package com.tsurugidb.fdw.spring.boot.data.jpa.sample;
 import jakarta.persistence.*;  // javax.persistence -> jakarta.persistence
 
 import java.sql.Time;
+import java.time.LocalTime;
+import java.util.UUID;
 
 /**
- * データベーステーブル {@code fdw_sample} に対応する JPA エンティティです。
+ * データベーステーブル {@code fdw_sample} に対応する JPA エンティティ
  *
  * <p>
  * このクラスは、データベーステーブルのカラムをフィールドとして持ち、
- * JPA アノテーションを使用してテーブルとのマッピングを定義します。
+ * JPA アノテーションを使用してテーブルとのマッピングを定義する。
  * </p>
  *
  * @see Table
@@ -35,26 +37,45 @@ import java.sql.Time;
 public class SampleEntity {
 
     /**
-     * 主キーとなるID。
+     * 主キーとなるID
      */
     @Id
     private String id;
 
     /**
-     * {@code col} カラムに対応する整数値。
-     * NOT NULL 制約が設定されています。
+     * {@code num} カラムに対応する整数値
+     * NOT NULL 制約が設定されている。
      */
     @Column(nullable = false)
-    private Integer col;
+    private Integer num;
 
     /**
-     * {@code tm} カラムに対応する時刻値。
+     * {@code tim} カラムに対応する時刻値
      */
     @Column
-    private Time tm;
+    private Time tim;
 
     /**
-     * ID を取得します。
+     * このクラスのコンストラクタ
+     */
+    public SampleEntity() {
+        this.id = UUID.randomUUID().toString();
+        this.tim = Time.valueOf(LocalTime.now());
+    }
+
+    /**
+     * このクラスのコンストラクタ
+     * @param num
+     */
+    public SampleEntity(Integer num) {
+        this.id = UUID.randomUUID().toString();
+        this.num = num;
+        this.tim = Time.valueOf(LocalTime.now());
+    }
+
+
+    /**
+     * ID を取得
      *
      * @return ID
      */
@@ -63,7 +84,7 @@ public class SampleEntity {
     }
 
     /**
-     * ID を設定します。
+     * ID を設定
      *
      * @param id 設定する ID
      */
@@ -72,43 +93,43 @@ public class SampleEntity {
     }
 
     /**
-     * {@code col} を取得します。
+     * {@code num} を取得
      *
-     * @return {@code col}
+     * @return {@code num}
      */
-    public Integer getCol() {
-        return col;
+    public Integer getNum() {
+        return num;
     }
 
     /**
-     * {@code col} を設定します。
+     * {@code num} を設定
      *
-     * @param col 設定する {@code col}
+     * @param num 設定する {@code num}
      */
-    public void setCol(Integer col) {
-        this.col = col;
+    public void setNum(Integer num) {
+        this.num = num;
     }
 
     /**
-     * {@code tm} を取得します。
+     * {@code tim} を取得
      *
-     * @return {@code tm}
+     * @return {@code tim}
      */
-    public Time getTm() {
-        return tm;
+    public Time getTim() {
+        return tim;
     }
 
     /**
-     * {@code tm} を設定します。
+     * {@code tim} を設定
      *
-     * @param tm 設定する {@code tm}
+     * @param tim 設定する {@code tim}
      */
-    public void setTm(Time tm) {
-        this.tm = tm;
+    public void setTim(Time tim) {
+        this.tim = tim;
     }
 
     /**
-     * このエンティティの文字列表現を返します。
+     * このエンティティの文字列表現を返す
      *
      * @return エンティティの文字列表現
      */
@@ -116,8 +137,8 @@ public class SampleEntity {
     public String toString() {
         return "fdw_sample{" +
                 "id=" + id +
-                ", col='" + col + '\'' +
-                ", tm=" + tm +
+                ", num='" + num + '\'' +
+                ", tim=" + tim +
                 '}';
     }
 }
