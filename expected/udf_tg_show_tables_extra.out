@@ -1,12 +1,15 @@
-/* Test case: 3-4-1 */
--- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
+/* Test case: extra path - UDF tg_show_tables() */
+-- Test case: 3-4-1
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))
+', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  CREATE TABLE
 (1 row)
 
--- Test
+--- Test
 SELECT tg_show_tables('tg_schema', 'tsurugidb', 'summary', False);
                                                           tg_show_tables                                                          
 ----------------------------------------------------------------------------------------------------------------------------------
@@ -49,22 +52,24 @@ SELECT tg_show_tables('tg_schema', 'tsurugidb', 'summary', TRUE);
  }
 (1 row)
 
--- Test teardown: DDL of the Tsurugi
+--- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  DROP TABLE
 (1 row)
 
-/* Test case: 3-4-2 */
--- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
+-- Test case: 3-4-2
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))
+', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  CREATE TABLE
 (1 row)
 
--- Test
+--- Test
 SELECT tg_show_tables('tg_schema', 'tsurugidb', 'summary', 't');
             tg_show_tables             
 ---------------------------------------
@@ -170,33 +175,33 @@ SELECT tg_show_tables('tg_schema', 'tsurugidb', 'summary', '0');
  {"remote_schema":{"remote_schema":"tg_schema","server_name":"tsurugidb","mode":"summary","tables_on_remote_schema":{"count":1}}}
 (1 row)
 
--- Test teardown: DDL of the Tsurugi
+--- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  DROP TABLE
 (1 row)
 
-/* Test case: 7-1-1 */
--- Test setup: DDL of the Tsurugi
+-- Test case: 7-1-1
+--- Test setup: DDL of the Tsurugi
 DO $$
 DECLARE
-    TABLE_MAX CONSTANT INT := 100;
-    COLUMN_MAX CONSTANT INT := 50;
-    columns_def TEXT;
-    i INT;
+  TABLE_MAX CONSTANT INT := 100;
+  COLUMN_MAX CONSTANT INT := 50;
+  columns_def TEXT;
+  i INT;
 BEGIN
-    SELECT string_agg(format('col_%s INT', n), ', ')
-        INTO columns_def
-    FROM generate_series(1, COLUMN_MAX) n;
+  SELECT string_agg(format('col_%s INT', n), ', ')
+    INTO columns_def
+  FROM generate_series(1, COLUMN_MAX) n;
 
-    FOR i IN 1..TABLE_MAX LOOP
-        EXECUTE format(
-            'SELECT tg_execute_ddl(''CREATE TABLE IF NOT EXISTS udf_test_table_%s (%s)'', ''tsurugidb'')',
-            to_char(i, 'FM0000'), columns_def);
-    END LOOP;
+  FOR i IN 1..TABLE_MAX LOOP
+    EXECUTE format(
+      'SELECT tg_execute_ddl(''CREATE TABLE IF NOT EXISTS udf_test_table_%s (%s)'', ''tsurugidb'')',
+      to_char(i, 'FM0000'), columns_def);
+  END LOOP;
 END $$;
--- Test
+--- Test
 SELECT tg_show_tables('tg_schema', 'tsurugidb', 'detail', true);
              tg_show_tables             
 ----------------------------------------
@@ -314,15 +319,15 @@ SELECT tg_show_tables('tg_schema', 'tsurugidb', 'detail', true);
  }
 (1 row)
 
--- Test teardown: DDL of the Tsurugi/PostgreSQL
+--- Test teardown: DDL of the Tsurugi/PostgreSQL
 DO $$
 DECLARE
-    TABLE_MAX CONSTANT INT := 100;
-    i INT;
+  TABLE_MAX CONSTANT INT := 100;
+  i INT;
 BEGIN
-    FOR i IN 1..TABLE_MAX LOOP
-        EXECUTE format(
-            'SELECT tg_execute_ddl(''DROP TABLE IF EXISTS udf_test_table_%s'', ''tsurugidb'')',
-            to_char(i, 'FM0000'));
-    END LOOP;
+  FOR i IN 1..TABLE_MAX LOOP
+    EXECUTE format(
+      'SELECT tg_execute_ddl(''DROP TABLE IF EXISTS udf_test_table_%s'', ''tsurugidb'')',
+      to_char(i, 'FM0000'));
+  END LOOP;
 END $$;

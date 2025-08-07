@@ -1,8 +1,9 @@
-/* Test setup: DDL of the Tsurugi */
+/* Test case: happy path - UDF tg_set_xxxxx()/tg_show_transaction() */
+-- Test setup: DDL of the Tsurugi
 SELECT tg_execute_ddl('
-    CREATE TABLE udf_table1 (
-        column1 INTEGER NOT NULL PRIMARY KEY
-    )
+  CREATE TABLE udf_table1 (
+    column1 INTEGER NOT NULL PRIMARY KEY
+  )
 ', 'tsurugidb');
  tg_execute_ddl 
 ----------------
@@ -10,9 +11,9 @@ SELECT tg_execute_ddl('
 (1 row)
 
 SELECT tg_execute_ddl('
-    CREATE TABLE wp_table1 (
-        column1 INTEGER NOT NULL PRIMARY KEY
-    )
+  CREATE TABLE wp_table1 (
+    column1 INTEGER NOT NULL PRIMARY KEY
+  )
 ', 'tsurugidb');
  tg_execute_ddl 
 ----------------
@@ -20,9 +21,9 @@ SELECT tg_execute_ddl('
 (1 row)
 
 SELECT tg_execute_ddl('
-    CREATE TABLE wp_table2 (
-        column1 INTEGER NOT NULL PRIMARY KEY
-    )
+  CREATE TABLE wp_table2 (
+    column1 INTEGER NOT NULL PRIMARY KEY
+  )
 ', 'tsurugidb');
  tg_execute_ddl 
 ----------------
@@ -30,9 +31,9 @@ SELECT tg_execute_ddl('
 (1 row)
 
 SELECT tg_execute_ddl('
-    CREATE TABLE ri_table1 (
-        column1 INTEGER NOT NULL PRIMARY KEY
-    )
+  CREATE TABLE ri_table1 (
+    column1 INTEGER NOT NULL PRIMARY KEY
+  )
 ', 'tsurugidb');
  tg_execute_ddl 
 ----------------
@@ -40,9 +41,9 @@ SELECT tg_execute_ddl('
 (1 row)
 
 SELECT tg_execute_ddl('
-    CREATE TABLE ri_table2 (
-        column1 INTEGER NOT NULL PRIMARY KEY
-    )
+  CREATE TABLE ri_table2 (
+    column1 INTEGER NOT NULL PRIMARY KEY
+  )
 ', 'tsurugidb');
  tg_execute_ddl 
 ----------------
@@ -50,9 +51,9 @@ SELECT tg_execute_ddl('
 (1 row)
 
 SELECT tg_execute_ddl('
-    CREATE TABLE re_table1 (
-        column1 INTEGER NOT NULL PRIMARY KEY
-    )
+  CREATE TABLE re_table1 (
+    column1 INTEGER NOT NULL PRIMARY KEY
+  )
 ', 'tsurugidb');
  tg_execute_ddl 
 ----------------
@@ -60,9 +61,9 @@ SELECT tg_execute_ddl('
 (1 row)
 
 SELECT tg_execute_ddl('
-    CREATE TABLE re_table2 (
-        column1 INTEGER NOT NULL PRIMARY KEY
-    )
+  CREATE TABLE re_table2 (
+    column1 INTEGER NOT NULL PRIMARY KEY
+  )
 ', 'tsurugidb');
  tg_execute_ddl 
 ----------------
@@ -70,41 +71,41 @@ SELECT tg_execute_ddl('
 (1 row)
 
 SELECT tg_execute_ddl('
-    CREATE TABLE tg_table (
-        column1 INTEGER NOT NULL PRIMARY KEY
-    )
+  CREATE TABLE tg_table (
+    column1 INTEGER NOT NULL PRIMARY KEY
+  )
 ', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  CREATE TABLE
 (1 row)
 
-/* Test setup: DDL of the PostgreSQL */
+-- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_table1 (
-    column1 INTEGER NOT NULL
+  column1 INTEGER NOT NULL
 ) SERVER tsurugidb;
 CREATE FOREIGN TABLE wp_table1 (
-    column1 INTEGER NOT NULL
+  column1 INTEGER NOT NULL
 ) SERVER tsurugidb;
 CREATE FOREIGN TABLE wp_table2 (
-    column1 INTEGER NOT NULL
+  column1 INTEGER NOT NULL
 ) SERVER tsurugidb;
 CREATE FOREIGN TABLE ri_table1 (
-    column1 INTEGER NOT NULL
+  column1 INTEGER NOT NULL
 ) SERVER tsurugidb;
 CREATE FOREIGN TABLE ri_table2 (
-    column1 INTEGER NOT NULL
+  column1 INTEGER NOT NULL
 ) SERVER tsurugidb;
 CREATE FOREIGN TABLE re_table1 (
-    column1 INTEGER NOT NULL
+  column1 INTEGER NOT NULL
 ) SERVER tsurugidb;
 CREATE FOREIGN TABLE re_table2 (
-    column1 INTEGER NOT NULL
+  column1 INTEGER NOT NULL
 ) SERVER tsurugidb;
 CREATE FOREIGN TABLE tg_table (
-    column1 INTEGER NOT NULL
+  column1 INTEGER NOT NULL
 ) SERVER tsurugidb;
-/* show default option */
+-- show default option
 SELECT tg_show_transaction();
              tg_show_transaction              
 ----------------------------------------------
@@ -119,7 +120,7 @@ SELECT tg_show_transaction();
  
 (1 row)
 
-/* set option */
+-- set option
 SELECT tg_set_transaction('OCC'); -- for Tsurugi Books
               tg_set_transaction              
 ----------------------------------------------
@@ -288,7 +289,7 @@ SELECT tg_set_transaction('long', 'interrupt', 'regression-test');
  
 (1 row)
 
-/* set write preserve */
+-- set write preserve
 SELECT tg_set_write_preserve('wp_table1');
            tg_set_write_preserve            
 --------------------------------------------
@@ -666,7 +667,7 @@ SELECT tg_set_exclusive_read_areas('');
  
 (1 row)
 
-/* Implicit transaction */
+-- Implicit transaction
 INSERT INTO udf_table1 (column1) VALUES (100);
 SELECT * FROM udf_table1 ORDER BY column1;
  column1 
@@ -687,7 +688,7 @@ SELECT * from udf_table1 ORDER BY column1;
 ---------
 (0 rows)
 
-/* Explicit transaction (begin) */
+-- Explicit transaction (begin)
 BEGIN;
 INSERT INTO udf_table1 (column1) VALUES (100);
 UPDATE udf_table1 SET column1 = column1+2;
@@ -698,7 +699,7 @@ SELECT * from udf_table1 ORDER BY column1;
 ---------
 (0 rows)
 
-/* Explicit transaction (start transaction) */
+-- Explicit transaction (start transaction)
 START TRANSACTION;
 INSERT INTO udf_table1 (column1) VALUES (100);
 UPDATE udf_table1 SET column1 = column1+3;
@@ -709,7 +710,7 @@ SELECT * from udf_table1 ORDER BY column1;
 ---------
 (0 rows)
 
-/* Explicit transaction (commit) */
+-- Explicit transaction (commit)
 BEGIN;
 INSERT INTO udf_table1 (column1) VALUES (200);
 COMMIT;
@@ -736,7 +737,7 @@ SELECT * from udf_table1 ORDER BY column1;
 ---------
 (0 rows)
 
-/* Explicit transaction (end) */
+-- Explicit transaction (end)
 BEGIN;
 INSERT INTO udf_table1 (column1) VALUES (200);
 END;
@@ -763,7 +764,7 @@ SELECT * from udf_table1 ORDER BY column1;
 ---------
 (0 rows)
 
-/* Explicit transaction (rollback) */
+-- Explicit transaction (rollback)
 BEGIN;
 INSERT INTO udf_table1 (column1) VALUES (300);
 ROLLBACK;
@@ -791,7 +792,7 @@ SELECT * FROM udf_table1 ORDER BY column1;
      400
 (1 row)
 
-/* Explicit transaction (abort) */
+-- Explicit transaction (abort)
 BEGIN;
 INSERT INTO udf_table1 (column1) VALUES (300);
 ABORT;
@@ -820,7 +821,7 @@ SELECT * FROM udf_table1 ORDER BY column1;
 (1 row)
 
 DELETE FROM udf_table1 WHERE column1 = 400;
-/* Auto commit off */
+-- Auto commit off
 \echo :AUTOCOMMIT
 on
 \set AUTOCOMMIT off
@@ -877,7 +878,7 @@ off
 \echo :AUTOCOMMIT
 on
 INSERT INTO udf_table1 (column1) VALUES (400);
-/* Long transaction */
+-- Long transaction
 SELECT tg_set_transaction('long');
               tg_set_transaction              
 ----------------------------------------------
@@ -1261,7 +1262,7 @@ SELECT tg_set_exclusive_read_areas('');
  
 (1 row)
 
-/* Explicit long transaction (tg_set_write_preserve) */
+-- Explicit long transaction (tg_set_write_preserve)
 SELECT tg_set_transaction('long');
               tg_set_transaction              
 ----------------------------------------------
@@ -1396,7 +1397,7 @@ SELECT tg_set_write_preserve('');
  
 (1 row)
 
-/* Explicit long transaction (tg_set_inclusive_read_areas) */
+-- Explicit long transaction (tg_set_inclusive_read_areas)
 SELECT tg_set_transaction('long');
               tg_set_transaction              
 ----------------------------------------------
@@ -1523,7 +1524,7 @@ SELECT tg_set_inclusive_read_areas('');
  
 (1 row)
 
-/* Explicit long transaction (tg_set_exclusive_read_areas) */
+-- Explicit long transaction (tg_set_exclusive_read_areas)
 SELECT tg_set_transaction('long');
               tg_set_transaction              
 ----------------------------------------------
@@ -1647,7 +1648,7 @@ SELECT tg_set_exclusive_read_areas('');
  
 (1 row)
 
-/* Test teardown: DDL of the PostgreSQL */
+-- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE tg_table;
 DROP FOREIGN TABLE udf_table1;
 DROP FOREIGN TABLE wp_table1;
@@ -1656,7 +1657,7 @@ DROP FOREIGN TABLE ri_table1;
 DROP FOREIGN TABLE ri_table2;
 DROP FOREIGN TABLE re_table1;
 DROP FOREIGN TABLE re_table2;
-/* Test teardown: DDL of the Tsurugi */
+-- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE tg_table', 'tsurugidb');
  tg_execute_ddl 
 ----------------
