@@ -1,6 +1,18 @@
-# tsurugi_fdw (PostgreSQL add-on)
+# Foreign Data Wrapper for Tsurugi
 
-## Requirements
+tsurugi_fdw is a PostgreSQL extension that provides a Foreign Data Wrapper for access to Tsurugi.
+
+## Notice
+
+tsurugi_fdw specializes in accessing Tsurugi database, so in the PostgreSQL database using this extension, only foreign tables for accessing Tsurugi database can be used. Local tables in PostgreSQL cannot be used.  
+
+The current version of tsurugi_fdw pushes down queries directly to Tsurugi, which may result in execution failure for queries containing PostgreSQL-specific syntax.
+
+## Installation
+
+### Requirements
+
+Since tsurugi_fdw accesses the Tsurugi database via IPC, the PostgreSQL installing this extension must be located on the same host as Tsurugi.
 
 * C++ Compiler `>= C++17`
 * Source code of PostgreSQL 12/13/14 `>=12.4`, `>=13.18`, `>=14.18`
@@ -9,9 +21,10 @@
   * [takatori](https://github.com/project-tsurugi/takatori)
   * [ogawayama](https://github.com/project-tsurugi/ogawayama)
 
-## How to build for tsurugi_fdw
+### How to build for tsurugi_fdw
 
 1. Install required packages.
+
     Install required packages for building tsurugi_fdw.
     If you already know that the required packages are installed, skip this procedure.
 
@@ -20,6 +33,7 @@
     ```
 
 1. Build and Install PostgreSQL.
+
     tsurugi_fdw uses the PostgreSQL build environment.  
     If you already know that the environment is set up, skip this procedure.
     * Specify the PostgreSQL install directory to "--prefix". In the following example, $HOME/pgsql is specified.
@@ -39,7 +53,8 @@
     ```
 
 1. Clone tsurugi_fdw.
-    Clone tsurugi_fdw to "contrib" directory in PostgreSQL.
+
+    Clone tsurugi_fdw to `contrib` directory in PostgreSQL.
     * From now on, this directory is defined as **\<tsurugi_fdw clone directory>**.
 
     ```sh
@@ -100,14 +115,7 @@
     make install USE_PGXS=1
     ```
 
-## How to set up for tsurugi_fdw
-
-1. Create PostgreSQL server.
-
-    ```sh
-    mkdir <PostgreSQL install directory>/data
-    initdb -D <PostgreSQL install directory>/data
-    ```
+## Usage
 
 1. Update **shared_preload_libraries** parameter in postgresql.conf as below.
     * postgresql.conf exists in **\<PostgreSQL install directory>/data/**.
@@ -116,10 +124,10 @@
     shared_preload_libraries = 'tsurugi_fdw'
     ```
 
-1. Start PostgreSQL.
+1. Restart PostgreSQL.
 
     ```sh
-    pg_ctl -D <PostgreSQL install directory>/data/ start
+    pg_ctl -D <PostgreSQL install directory>/data/ restart
     ```
 
 1. Install tsurugi_fdw extension
@@ -129,7 +137,7 @@
         CREATE EXTENSION tsurugi_fdw;
         ```
 
-    * Check with the meta-command(\dew)
+    * Check with the meta-command(`\dew`)
 
         ```sql
         postgres=# \dew
@@ -139,7 +147,7 @@
             tsurugi_fdw   | postgres | tsurugi_fdw_handler   | -
         ```
 
-1. Define external-server
+1. Create foreign server for Tsurugi
 
    * Execute **CREATE SERVER** command
 
@@ -157,24 +165,28 @@
           tsurugi   | postgres | tsurugi_fdw
         ```
 
+1. Create foreign tables
+
+    ```sql
+    CREATE FOREIGN TABLE tg_table (... columns ... ) SERVER tsurugi;
+    ```
+
+    You can also import the tables of a specific schema in Tsurugi database.
+
+    ```sql
+    IMPORT FOREIGN SCHEMA public FROM SERVER tsurugi INTO public;
+    ```
+
+1. Execute DML using foreign tables.
+
+    ```sql
+    SELECT * FROM tg_table;
+    ```
+
 ## Regression tests
 
-### Structure
-
-* **expected/** test results expectations
-* **results/** test results
-* **sql/** all the tests
-
-### How to execute the tests
-
-1. Start Tsurugi Server
+1. Start up tsurugidb
     * Refer to the Tsurugi documentation on how to start the Tsurugi server.
-
-1. Build tsurugi_fdw
-   * [How to build for tsurugi_fdw](#how-to-build-for-tsurugi_fdw)
-
-1. Set up tsurugi_fdw
-   * [How to set up for tsurugi_fdw](#how-to-set-up-for-tsurugi_fdw)
 
 1. Execute the following command
 
@@ -184,37 +196,9 @@
     make tests
     ```
 
-    Or in case when run extra tests with basic tests,  
-    execute the following command:
-
-    ```sh
-    make tests REGRESS_EXTRA=1
-    ```
-
     If tsurugi_fdw was cloned into a directory other than the "contrib" directory in PostgreSQL,
     add a directory of pg_config to PATH and use "USE_PGXS=1".
 
     ```sh
     make tests USE_PGXS=1
     ```
-
-## How to access Tsurugi from PostgreSQL
-
-1. Define foreign table
-   * Execute **CREATE FOREIGN TABLE** command
-     * You must define same table name as table name in Tsurugi
-     * You must specify same server name as specified in CREATE SERVER
-
-        ```sql
-        CREATE FOREIGN TABLE table1 (column1 INTEGER NOT NULL) SERVER tsurugi;
-        ```
-
-1. Execute DML
-
-    ```sql
-    SELECT * FROM table1;
-    INSERT INTO table1 (column1) VALUES (100);
-    ```
-
-> [!NOTE]
-> see [docs/setup.md](./docs/setup.md) and [docs/tutorial.md](./docs/tutorial.md), it has more information.
