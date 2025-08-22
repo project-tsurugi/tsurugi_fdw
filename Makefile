@@ -15,7 +15,7 @@ PG_CXXFLAGS = -Iinclude/proto \
               -std=c++17 -Dregister= 
 
 SHLIB_LINK_INTERNAL = $(libpq)
-SHLIB_LINK = -logawayama-stub -lmetadata-manager -lmessage-manager -lboost_filesystem
+SHLIB_LINK = -logawayama-stub -lboost_filesystem
 
 EXTENSION = tsurugi_fdw
 DATA = tsurugi_fdw--1.2.0.sql \
@@ -77,8 +77,8 @@ ifdef REGRESS_EXTRA
 	endif
 endif
 
-install_dependencies:
-	bash ./scripts/install_dependencies.sh $(libdir)
+install_deps:
+	bash ./scripts/install_deps.sh $(libdir)
 
 tests:
 	bash ./scripts/test.sh
