@@ -30,7 +30,7 @@ CREATE FUNCTION tg_show_transaction() RETURNS cstring
   AS 'tsurugi_fdw' LANGUAGE C STRICT;
 
 CREATE FUNCTION tg_show_tables
-  (text DEFAULT null, text DEFAULT null, text DEFAULT 'summary', boolean DEFAULT true)
+  (text DEFAULT null, text DEFAULT null, text DEFAULT 'detail', boolean DEFAULT true)
   RETURNS JSON AS 'tsurugi_fdw' LANGUAGE C;
 
 CREATE FUNCTION tg_verify_tables
