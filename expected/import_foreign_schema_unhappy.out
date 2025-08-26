@@ -1,12 +1,10 @@
-/* Test case: 1-4 */
--- Test
+/* Test case: unhappy path - IMPORT FOREIGN SCHEMA functionality */
+-- Test case: 1-4
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public OPTIONS (name 'value');
 ERROR:  unsupported import foreign schema option "name"
-/* Test case: --- */
--- Test
+-- Test case: ---
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO unknown_schema;
 ERROR:  schema "unknown_schema" does not exist
-/* Test case: 5-1 */
--- Test
+-- Test case: 5-1
 IMPORT FOREIGN SCHEMA public FROM SERVER unknown_server INTO public;
 ERROR:  server "unknown_server" does not exist
