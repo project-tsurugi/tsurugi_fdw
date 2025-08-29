@@ -1,12 +1,17 @@
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION tsurugi_fdw" to load this file. \quit
 
-CREATE FUNCTION tsurugi_fdw_handler() 
+CREATE FUNCTION tsurugi_fdw_handler()
   RETURNS fdw_handler AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
 
+CREATE FUNCTION tsurugi_fdw_validator(options text[], catalog oid)
+  RETURNS void AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT;
+
 CREATE FOREIGN DATA WRAPPER tsurugi_fdw
-  HANDLER tsurugi_fdw_handler;
+  HANDLER tsurugi_fdw_handler
+  VALIDATOR tsurugi_fdw_validator;
 
 CREATE FUNCTION tg_set_transaction(text, text, text) RETURNS cstring
   AS 'tsurugi_fdw' LANGUAGE C STRICT;

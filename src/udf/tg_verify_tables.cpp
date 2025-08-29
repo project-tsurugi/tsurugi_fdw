@@ -135,14 +135,12 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 	/* Get the Tsurugi server OID. */
 	HeapTuple srv_tuple =
 		SearchSysCache1(FOREIGNSERVERNAME, CStringGetDatum(arg_server_name.c_str()));
-
-	if (HeapTupleIsValid(srv_tuple)) {
-		server_oid = ((Form_pg_foreign_server)GETSTRUCT(srv_tuple))->oid;
-		ReleaseSysCache(srv_tuple);
-	} else {
+	if (!HeapTupleIsValid(srv_tuple)) {
 		ereport(ERROR, (errcode(ERRCODE_FDW_UNABLE_TO_ESTABLISH_CONNECTION),
 						errmsg(R"(server "%s" does not exist)", arg_server_name.c_str())));
 	}
+	server_oid = ((Form_pg_foreign_server)GETSTRUCT(srv_tuple))->oid;
+	ReleaseSysCache(srv_tuple);
 
 	Oid local_schema_oid = InvalidOid;
 	/* Get the local schema OID. */
@@ -164,6 +162,13 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 
 	ERROR_CODE error;
 	TableListPtr tg_table_list;
+
+	/* Initializing connection to tsurugi server. */
+	error = Tsurugi::init(server_oid);
+	if (error != ERROR_CODE::OK) {
+		ereport(ERROR, (errcode(ERRCODE_FDW_ERROR),
+						errmsg("%s", Tsurugi::get_error_message(error).c_str())));
+	}
 
 	/* Get a list of table names from Tsurugi. */
 	error = Tsurugi::get_list_tables(tg_table_list);
