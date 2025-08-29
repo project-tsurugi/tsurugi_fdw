@@ -37,28 +37,30 @@ extern "C" {
 
 class Tsurugi {
 public:
-	static ERROR_CODE init();
+	static ERROR_CODE init(Oid server_oid);
     static ERROR_CODE start_transaction();
     static bool in_transaction_block() { return (transaction_ != nullptr); }
     static ERROR_CODE commit();
     static ERROR_CODE rollback();
 
-    static bool exsists_prepared_statement(std::string_view name);
+    static bool exists_prepared_statement(std::string_view name);
+#if 0  // Not used
     static ERROR_CODE prepare(std::string_view sql,
                               ogawayama::stub::placeholders_type& placeholders,
                               PreparedStatementPtr& prepared_statement);
     static ERROR_CODE prepare(std::string_view name, std::string_view statement,
                               ogawayama::stub::placeholders_type& placeholders);
+#endif  // Not used
     static ERROR_CODE prepare(std::string_view statement,
                               ogawayama::stub::placeholders_type& placeholders);
-	static ERROR_CODE deallocate(std::string_view prep_name);
+    static ERROR_CODE deallocate(std::string_view prep_name);
     static void deallocate();
     static ERROR_CODE execute_query(std::string_view query);
     static ERROR_CODE execute_query(ogawayama::stub::parameters_type& params);
-    static ERROR_CODE execute_statement(std::string_view statement, 
+    static ERROR_CODE execute_statement(std::string_view statement,
                                         std::size_t& num_rows);
-    static ERROR_CODE execute_statement(std::string_view prep_name, 
-                                        ogawayama::stub::parameters_type& params, 
+    static ERROR_CODE execute_statement(std::string_view prep_name,
+                                        ogawayama::stub::parameters_type& params,
                                         std::size_t& num_rows);
     static ERROR_CODE execute_statement(ogawayama::stub::parameters_type& params, 
                                         std::size_t& num_rows);
@@ -78,12 +80,12 @@ public:
     static void report_error(const char* message, ERROR_CODE error, std::string_view sql);
 
     static ERROR_CODE get_list_tables(TableListPtr& table_list);
-    static ERROR_CODE get_table_metadata(std::string_view table_name, 
-            TableMetadataPtr& table_metadata);
+    static ERROR_CODE get_table_metadata(std::string_view table_name,
+                                         TableMetadataPtr& table_metadata);
 
-	static std::optional<std::string_view> 
+    static std::optional<std::string_view> 
         convert_type_to_pg(jogasaki::proto::sql::common::AtomType tg_type);
-	static std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, 
+    static std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, 
                                                      const Oid pgtype);
     static ogawayama::stub::Metadata::ColumnType::Type 
         get_tg_column_type(const Oid pg_type);
@@ -93,12 +95,12 @@ public:
     static ogawayama::stub::value_type
             get_tg_value_type(const Oid pg_type, Datum value);
 */
-	Tsurugi() = delete;
+    Tsurugi() = delete;
 
 private:
-	static StubPtr stub_;
-	static ConnectionPtr connection_;
-	static TransactionPtr transaction_;
+    static StubPtr stub_;
+    static ConnectionPtr connection_;
+    static TransactionPtr transaction_;
     static std::unordered_map<std::string, PreparedStatementPtr> prepared_statements_;
     static PreparedStatementPtr prepared_statement_;
     static ResultSetPtr result_set_;

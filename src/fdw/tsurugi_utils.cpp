@@ -502,7 +502,7 @@ create_cursor(ForeignScanState* node)
     if (is_prepare_statement(fsstate->query_string))
     {
         // Prepare the statement.
-        auto prep = tsurugi_prepare_wrapper(fsstate->query_string, 
+        auto prep = tsurugi_prepare_wrapper(fsstate->query_string,
                                             fsstate->param_linfo);
         // Execute the prepared statement.
         auto params = bind_parameters(fsstate->param_linfo);
@@ -585,24 +585,33 @@ create_cursor(ForeignScanState* node)
  */
 void
 prepare_direct_modify(TgFdwDirectModifyState* dmstate)
-{  
+{
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	Assert(dmstate->param_linfo != nullptr);
-    ParamListInfo param_linfo = dmstate->param_linfo;
+	ParamListInfo param_linfo = dmstate->param_linfo;
 
-    elog(LOG, "tsurugi_fdw :\norig_query:\n%s", dmstate->orig_query);
+	elog(LOG, "tsurugi_fdw :\norig_query:\n%s", dmstate->orig_query);
 
-    auto prep = make_prepare_statement(dmstate->orig_query);
-    auto placeholders = make_placeholders(param_linfo);
-    auto prep_stmt = make_tsurugi_query(prep.second);
-	ERROR_CODE error = Tsurugi::prepare(prep_stmt, placeholders);
+	auto prep = make_prepare_statement(dmstate->orig_query);
+	auto placeholders = make_placeholders(param_linfo);
+	auto prep_stmt = make_tsurugi_query(prep.second);
+
+	/* Initializing connection to tsurugi server. */
+	auto error = Tsurugi::init(dmstate->server->serverid);
+	if (error != ERROR_CODE::OK)
+	{
+		ereport(ERROR, (errcode(ERRCODE_FDW_ERROR),
+						errmsg("%s", Tsurugi::get_error_message(error).c_str())));
+	}
+
+	error = Tsurugi::prepare(prep_stmt, placeholders);
 	if (error != ERROR_CODE::OK)
 	{
 		Tsurugi::report_error("Failed to prepare the statement to Tsurugi.", 
 								error, prep_stmt);
 	}
-    dmstate->prep_stmt = strdup(prep_stmt.c_str());
+	dmstate->prep_stmt = strdup(prep_stmt.c_str());
 }
 #else
 /*
