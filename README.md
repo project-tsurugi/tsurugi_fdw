@@ -5,7 +5,6 @@
 * C++ Compiler `>= C++17`
 * Source code of PostgreSQL 12/13/14 `>=12.4`, `>=13.18`, `>=14.18`
 * Access to installed dependent modules:
-  * managers ([metadata-manager](https://github.com/project-tsurugi/metadata-manager), [message-manager](https://github.com/project-tsurugi/message-manager))
   * [takatori](https://github.com/project-tsurugi/takatori)
   * [ogawayama](https://github.com/project-tsurugi/ogawayama)
 
@@ -56,8 +55,6 @@
     sudo apt -y install build-essential cmake ninja-build
     # Dependency libraries for takarori.
     sudo apt -y install libboost-container-dev libboost-stacktrace-dev libicu-dev flex bison
-    # Dependency libraries for metadata-manager.
-    sudo apt -y install libssl-dev
     # Dependency libraries for ogawayama(stub).
     sudo apt -y install libboost-thread-dev libgoogle-glog-dev libprotobuf-dev protobuf-compiler
     ```
@@ -67,14 +64,14 @@
 1. Build and Install dependent modules.
 
     ```sh
-    make install_dependencies
+    make install_deps
     ```
 
     If tsurugi_fdw was cloned into a directory other than the "contrib" directory in PostgreSQL,
     add a directory of pg_config to PATH and use "USE_PGXS=1".
 
     ```sh
-    make install_dependencies USE_PGXS=1
+    make install_deps USE_PGXS=1
     ```
 
     Dependent modules installed in **\<PostgreSQL install directory>**.  
