@@ -15,7 +15,7 @@ PG_CXXFLAGS = -Iinclude/proto \
               -std=c++17 -Dregister= 
 
 SHLIB_LINK_INTERNAL = $(libpq)
-SHLIB_LINK = -logawayama-stub -lmetadata-manager -lmessage-manager -lboost_filesystem
+SHLIB_LINK = -logawayama-stub -lboost_filesystem
 
 EXTENSION = tsurugi_fdw
 DATA = tsurugi_fdw--1.3.0.sql \

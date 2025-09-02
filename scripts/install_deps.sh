@@ -43,22 +43,6 @@ cd build
 cmake -G Ninja -DCMAKE_BUILD_TYPE=${TG_CMAKE_BUILD_TYPE} -DCMAKE_CXX_FLAGS_RELWITHDEBINFO="${TG_CMAKE_CXX_FLAGS_RELWITHDEBINFO}" -DBUILD_TESTS=OFF -DBUILD_DOCUMENTS=OFF -DCMAKE_PREFIX_PATH="${_FDW_DEPS_INSTALL_DIR}" -DCMAKE_INSTALL_PREFIX="${_FDW_DEPS_INSTALL_DIR}" ..
 cmake --build . --target install
 
-echo -e "\n[Install Metadata Manager]"
-cd "${_METADATA_MANAGER_DIR}"
-rm -fr build
-mkdir -p build
-cd build
-cmake -G Ninja -DCMAKE_BUILD_TYPE=${TG_CMAKE_BUILD_TYPE} -DCMAKE_CXX_FLAGS_RELWITHDEBINFO="${TG_CMAKE_CXX_FLAGS_RELWITHDEBINFO}" -DBUILD_TESTS=OFF -DCMAKE_PREFIX_PATH="${_FDW_DEPS_INSTALL_DIR}" -DCMAKE_INSTALL_PREFIX="${_FDW_DEPS_INSTALL_DIR}" -DDATA_STORAGE=postgresql ..
-cmake --build . --target install
-
-echo -e "\n[Install Message Manager]"
-cd "${_MESSAGE_MANAGER_DIR}"
-rm -fr build
-mkdir -p build
-cd build
-cmake -G Ninja -DCMAKE_BUILD_TYPE=${TG_CMAKE_BUILD_TYPE} -DCMAKE_CXX_FLAGS_RELWITHDEBINFO="${TG_CMAKE_CXX_FLAGS_RELWITHDEBINFO}" -DBUILD_TESTS=OFF -DCMAKE_PREFIX_PATH="${_FDW_DEPS_INSTALL_DIR}" -DCMAKE_INSTALL_PREFIX="${_FDW_DEPS_INSTALL_DIR}" ..
-cmake --build . --target install
-
 echo -e "\n[Install Ogawayama Stub]"
 cd ${_OGAWAYAMA_DIR}
 rm -fr build
@@ -85,8 +69,6 @@ BUILD_TIMESTAMP=`TZ=JST-9 date +"%Y%m%d%H%M"`
 BUILDINFO="BUILD_TIMESTAMP:${BUILD_TIMESTAMP}
 ###### tsurugi_fdw and dependent modules
 - tsurugi_fdw $(git -C ${_TSURUGI_FDW_DIR} log --pretty="format:[%h - %s](${PROJECT_URL}/tsurugi_fdw/commit/%H)" -1 HEAD)
-- metadata-manager $(git -C ${_METADATA_MANAGER_DIR} log --pretty="format:[%h - %s](${PROJECT_URL}/metadata-manager/commit/%H)" -1 HEAD)
-- message-manager $(git -C ${_MESSAGE_MANAGER_DIR} log --pretty="format:[%h - %s](${PROJECT_URL}/message-manager/commit/%H)" -1 HEAD)
 - ogawayama $(git -C ${_OGAWAYAMA_DIR} log --pretty="format:[%h - %s](${PROJECT_URL}/ogawayama/commit/%H)" -1 HEAD)
 - takatori $(git -C ${_TAKATORI_DIR} log --pretty="format:[%h - %s](${PROJECT_URL}/takatori/commit/%H)" -1 HEAD)
 "
