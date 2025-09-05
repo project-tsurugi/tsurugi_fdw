@@ -27,7 +27,6 @@
 #include <iostream>
 
 #include "ogawayama/stub/transaction_option.h"
-#include "manager/metadata/metadata_factory.h"
 #include "tg_common.h"
 #include "tsurugi.h"
 
