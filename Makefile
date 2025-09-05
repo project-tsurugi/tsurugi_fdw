@@ -10,8 +10,6 @@ PG_CPPFLAGS = -Iinclude -I$(libpq_srcdir) -I$(includedir) -fPIC -O0 -Werror
 PG_CXXFLAGS = -Iinclude/proto \
               -Ithird_party/ogawayama/include \
               -Ithird_party/takatori/include \
-              -Ithird_party/ogawayama/third_party/metadata-manager/include \
-              -Ithird_party/message-manager/include \
               -std=c++17 -Dregister= 
 
 SHLIB_LINK_INTERNAL = $(libpq)
