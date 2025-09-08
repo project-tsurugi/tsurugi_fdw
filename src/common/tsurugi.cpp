@@ -73,7 +73,32 @@ extern "C" {
 class ConnectionInfo {
 public:
 	ConnectionInfo() {}
-	ConnectionInfo(const List* sever_opts) { parse(sever_opts); }
+	ConnectionInfo(const List* server_opts) { parse(server_opts); }
+	ConnectionInfo(const ConnectionInfo& server_opts) {
+		endpoint_ = server_opts.endpoint_;
+		dbname_ = server_opts.dbname_;
+		address_ = server_opts.address_;
+		port_ = server_opts.port_;
+	};
+
+	bool operator==(const ConnectionInfo& server_opts) const {
+		if (server_opts.endpoint_ != endpoint_) {
+			return false;
+		} else if (is_ipc()) {
+			// For IPC, all options are compared.
+			return (server_opts.dbname_ == dbname_);
+		} else if (is_stream()) {
+			// For TCP, all options are compared.
+			return (server_opts.address_ == address_) &&
+			       (server_opts.port_ == port_);
+		}
+
+		return true;
+	}
+
+	bool operator!=(const ConnectionInfo& server_opts) const {
+		return !(*this == server_opts);
+	}
 
 	/**
 	 * @brief Returns the value of the endpoint option.
@@ -101,9 +126,9 @@ public:
 
 	/**
 	 * @brief Parse the server options.
-	 * @param sever_opts server options.
+	 * @param server_opts server options.
 	 */
-	void parse(const List* sever_opts) {
+	void parse(const List* server_opts) {
 		ListCell *cell;
 
 		/* Initialize. */
@@ -113,7 +138,7 @@ public:
 		port_ = kDefPort;
 
 		/* Get foreign server options. */
-		foreach (cell, sever_opts) {
+		foreach (cell, server_opts) {
 			auto [key, value] = parse_option(cell);
 
 			auto it = opt_value_.find(key);
@@ -136,29 +161,6 @@ public:
 	 * @retval false otherwise.
 	 */
 	bool is_stream() const { return endpoint_ == kValEndpointTcp; }
-
-	/**
-	 * @brief Returns whether the server options match the held values.
-	 * @param sever_opts server options.
-	 * @retval true match.
-	 * @retval false unmatch.
-	 */
-	bool is_match (List *sever_opts) const {
-		ConnectionInfo new_options(sever_opts);
-
-		if (new_options.endpoint_ != endpoint_) {
-			return false;
-		} else if (is_ipc()) {
-			// For IPC, all options are compared.
-			return (new_options.dbname_ == dbname_);
-		} else if (is_stream()) {
-			// For TCP, all options are compared.
-			return (new_options.address_ == address_) &&
-			       (new_options.port_ == port_);
-		}
-
-		return true;
-	}
 
 private:
 	/* Endpoint values */
@@ -224,36 +226,37 @@ ERROR_CODE Tsurugi::init(Oid server_oid)
 {
 	auto error{ERROR_CODE::UNKNOWN};
 
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw : %s(serverid: %u)", __func__, server_oid);
 
 	/* Get ForeignServer object from server OID. */
 	auto server = GetForeignServer(server_oid);
 	assert(server != nullptr);
 
+	ConnectionInfo now_sever_opts(server->options);
 	/* The connection will be disconnected if the information does not match. */
-	if (!connection_info_.is_match(server->options)) {
-		if ((stub_ != nullptr) && (connection_ != nullptr)) {
-			elog(DEBUG2,
-				 "tsurugi_fdw : Connection information does not match. Reconnecting to Tsurugi.");
+	if (connection_info_ != now_sever_opts) {
+		elog(DEBUG2,
+			 "Connection information has changed. "
+			 "Connecting to Tsurugi with the new information");
+
+		/* Set foreign server options. */
+		connection_info_ = now_sever_opts;
+
+		if (connection_info_.is_ipc()) {
+			elog(DEBUG2, R"(  endpoint="%s", dbname="%s")",
+				 connection_info_.endpoint().data(), connection_info_.dbname().data());
+		} else if (connection_info_.is_stream()) {
+			elog(DEBUG2, R"(  endpoint="%s", host="%s", port="%s")",
+				 connection_info_.endpoint().data(), connection_info_.address().data(),
+				 connection_info_.port().data());
 		}
 
+		/* Release connection-related resources. */
 		stub_ = nullptr;
 		connection_ = nullptr;
 	}
 
 	if (stub_ == nullptr) {
-		/* Set foreign server options. */
-		connection_info_.parse(server->options);
-
-		if (connection_info_.is_ipc()) {
-			elog(DEBUG2, "tsurugi_fdw : endpoint=%s, dbname=%s",
-				 connection_info_.endpoint().data(), connection_info_.dbname().data());
-		} else if (connection_info_.is_stream()) {
-			elog(DEBUG2, "tsurugi_fdw : endpoint=%s, host=%s, port=%s",
-				 connection_info_.endpoint().data(), connection_info_.address().data(),
-				 connection_info_.port().data());
-		}
-
 		/*
 		 * Currently, only "ipc" is supported.
 		 * "stream" is an option for future use, so even if you specify it,
