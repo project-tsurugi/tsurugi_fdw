@@ -2,13 +2,11 @@
 
 ## チュートリアル
 
-PostgreSQLのユーザインタフェースからTsurugiを利用する簡単な操作方法を説明します。  
-
 ### Spring Frameworkを活用
 
-JavaアプリケーションからSpring Frameworkを使用してTsurugiを利用する簡単な方法を説明します。  
-Spring Frameworkは、Javaアプリケーションを効率的に開発するさまざなな機能を提供しており、その機能を利用することで効率的にTsurugiを利用（データベース連携）することができます。  
-Tsurugi FDWがサポートするSpring Frameworkのリファレンスについては [リファレンス（Spring Framework）](./spring_reference.md) を参照してください。
+JavaアプリケーションからSpring Frameworkを使用してTsurugiを利用（データベース連携）する簡単な方法を説明します。  
+Spring Frameworkは、Javaアプリケーションを効率的に開発するさまざなな機能を提供しており、その機能を利用することで効率的にTsurugiを利用することができます。  
+Tsurugi FDWがサポートするSpring Frameworkのリファレンスについては [リファレンス（Spring Framework）](./spring_reference.md) を参照してください。  
 
 > [!TIP]
 > Spring Frameworkの機能（データベース連携に関連する一部を抜粋）
@@ -42,11 +40,11 @@ Tsurugi FDWがサポートするSpring Frameworkのリファレンスについ�
 #### Spring Frameworkの入手
 
 Spring Frameworkのライブラリは [https://spring.io/projects](https://spring.pleiades.io/projects) で公開されています。  
-Tsurugiと連携するJavaアプリケーションの要件に適したライブラリをダウンロードしてください。  
+Tsurugiを利用するJavaアプリケーションの要件に適したライブラリをダウンロードしてください。  
 
 > [!TIP]
-> [Spring Initializr](https://start.spring.io/)にアクセスするとSpring Bootアプリケーションの雛形を簡単に作成することができます。（Spring FrameworkのライブラリはMaven Central Repositoryから取得する）。  
-> アプリケーションに追加する依存ライブラリは、Tsurugi FDWがサポートする以下のコンポーネントを選択（複数可）してください。  
+> [Spring Initializr](https://start.spring.io/)にアクセスするとSpring Bootを使用したJavaアプリケーションの雛形を簡単に作成することができます。  
+> Javaアプリケーションに追加する依存ライブラリは、Tsurugi FDWがサポートする以下のコンポーネントを選択（複数可）してください。  
 > 
 > - JDBC API [SQL]  
 > Database Connectivity API that defines how a client may connect and query a database.
@@ -59,7 +57,11 @@ Tsurugiと連携するJavaアプリケーションの要件に適したライブ
 
 #### データベースへの接続（Spring Framework）
 
-データベースの接続情報は、DriverManagerDataSourceクラスに設定します。
+Spring Frameworkを使用してデータベースに接続する方法はいくつかありますが、一般的な方法を説明します。
+
+##### DriverManagerDataSourceクラスを利用
+
+データベースの接続情報は、DriverManagerDataSourceクラスに設定します。  
 
 ~~~java
     public DataSource dataSource() {
@@ -72,7 +74,7 @@ Tsurugiと連携するJavaアプリケーションの要件に適したライブ
     }
 ~~~
 
-`Spring JDBC`および`Spring Data JDBC`の場合、上記データベース接続情報をJdbcTemplateクラスに指定（インスタンス化）することでデータベースに接続します。
+`Spring JDBC`および`Spring Data JDBC`の場合、上記データベース接続情報をJdbcTemplateクラスに指定（インスタンス化）することでデータベースに接続することができます。  
 
 ~~~java
     // for Spring JDBC
@@ -88,7 +90,7 @@ Tsurugiと連携するJavaアプリケーションの要件に適したライブ
     }
 ~~~
 
-`Spring Data JPA`の場合、`@Configuration`アノテーションを付与したクラスの中で、上記データベース接続情報をEntityManagerFactoryクラスに設定、JpaTransactionManagerのインスタンスに設定することでデータベースに接続します。
+`Spring Data JPA`の場合、`@Configuration`アノテーションを付与したクラスの中で、上記データベース接続情報をEntityManagerFactoryクラスに設定、JpaTransactionManagerのインスタンスに設定することでデータベースに接続することができます。  
 
 ~~~java
 @Configuration
@@ -110,7 +112,9 @@ public class DatabaseConnection {
 }
 ~~~
 
-Spring Bootアプリケーションを作成してTsurugiと連携する場合、`application.properties`ファイルにデータベース接続情報を設定することができます。  
+##### Spring Bootを利用
+
+Spring Bootを利用する場合、`application.properties`ファイルにデータベース接続情報を設定することでができます。  
 
 ~~~properties
 spring.datasource.url=jdbc:postgresql://localhost:5432/your_database_name
@@ -118,44 +122,124 @@ spring.datasource.username=your_username
 spring.datasource.password=your_password
 ~~~
 
-`application.properties`ファイルに指定したデータベース接続情報は、アプリケーションの起動が完了する直前に読み込まれ、データベースへの接続を自動で確立します。
+`application.properties`ファイルに指定したデータベース接続情報は、Javaアプリケーションが起動する直前に読み込まれ、自動でデータベースと接続します。  
 
-#### 外部テーブルの作成（Spring Framework）
+#### SQL文の実行（Spring Framework）
 
-Tsuguriのテーブルを操作する外部テーブルを作成します。  
+Spring Frameworkを使用してSQL文を実行する方法はいくつかありますが、`Spring JDBC`の`JdbcTemplate`クラスを使用する一般的な方法を説明します。  
+`JdbcTemplate`クラスの利用方法はSpring Frameworkの仕様に準じます。詳細は [Spring JDBCのドキュメント](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/core/JdbcTemplate.html) を参照してください。  
 
-> [!NOTE]
-> 接続先データベースに対象の外部テーブルが存在する場合は本手順はスキップしてください。  
+##### データの更新
 
-`Spring JDBC`の`JdbcTemplate`を使用して、直接SQL文を実行します。
+`JdbcTemplate`クラスの`update`メソッドを使用してTsurugiのデータを更新（INSERT/UPDATE/DELETE）することができます。  
 
 ~~~java
     @Autowired  // 依存性注入（依存オブジェクトを疎結合）
     private JdbcTemplate jdbcTemplate;
+    // 実行するSQL文（ステートメントキャッシュを利用）
+    private static final String INSERT_SQL = "insert into sample (num) values (?)";
+    private static final String UPDATE_SQL = "update sample set num = ? where num % 3 = 0";
+    private static final String DELETE_SQL = "delete from sample where num = ?";
 
-    @PostConstruct // アプリケーション起動時に実行される
-    public void createForeignTable() {
-        jdbcTemplate.execute(
-            "CREATE FOREIGN TABLE IF NOT EXISTS fdw_sample ("
-                + "col INTEGER NOT NULL,"
-                + "tm TIME"
-                + ") SERVER tsurugi"
-        );
+    public void updateTsurugiData() {
+        jdbcTemplate.update(INSERT_SQL, 9);
+        jdbcTemplate.update(UPDATE_SQL, 0);
+        jdbcTemplate.update(DELETE_SQL, 0);
     }
 ~~~
 
-`Spring Data JDBC`および`Spring Data JDBC`は、直接的には外部テーブルの作成をサポートしていません。
-基本的なCRUD (Create, Read, Update, Delete) 操作と、データベーステーブルへのJavaオブジェクトのマッピングに重点を置いています。
+##### データの問い合わせ
 
-#### データの挿入（Spring Framework）
+`JdbcTemplate`クラスの`queryForList`メソッドを使用してTsurugiのデータを問い合わせる（SELECT）ことができます。  
 
-#### データの問い合わせ（Spring Framework）
+~~~java
+    @Autowired  // 依存性注入（依存オブジェクトを疎結合）
+    private JdbcTemplate jdbcTemplate;
+    // 実行するSQL文
+    private static final String QUERY_SQL = "select * from sample";
 
-#### データの更新と削除（Spring Framework）
+    public List<Map<String, Object>> queryTsurugiData() {
+        return jdbcTemplate.queryForList(QUERY_SQL);
+    }
+~~~
+
+#### CRUDの実行（Spring Framework）
+
+Spring Frameworkを使用してCRUDを実行（オブジェクト指向的にデータベース操作）する方法はいくつかありますが、`Spring Data JPA`および`Spring Data JDBC`を使用する一般的な方法を説明します。
+
+##### エンティティクラス作成
+
+データベースのテーブルに対応するエンティティクラスを作成します。  
+ここでは、`Spring Data JPA`のコード例を示します。
+
+~~~java
+package com.tsurugidb.fdw.spring.boot.data.jpa.sample;
+import jakarta.persistence.*;
+
+@Entity  // このクラスがJPAエンティティであることを示す
+@Table(name = "sample")  // データベースのテーブル名を指定 (省略するとクラス名がテーブル名になる)
+public class SampleEntity {
+    @Id  // 主キーであることを示す
+    private String id;
+    @Column(nullable = false)
+    private Integer num;
+
+    public SampleEntity() {
+        // 主キーは手動生成する
+        this.id = UUID.randomUUID().toString();
+    }
+    public SampleEntity(Integer num) { 
+        // 主キーは手動生成する
+        this.id = UUID.randomUUID().toString();
+        this.num = num;
+    }
+
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+
+    public Integer getNum() { return num; }
+    public void setNum(Integer num) { this.num = num; }
+}
+~~~
+
+> [!IMPORTANT]
+> 主キーの生成戦略として自動生成を利用することはできません。  
+> 主キーはエンティティクラスのコンストラクタなどで手動生成する必要があります。  
+>
+> 主キーを自動生成すると、Spring Framework(JDBC)はデータ作成(Create)時にRETURNING句を付与したINSERT SQLコマンドを実行します。  
+> TsurugiはSQLコマンドでのRETURNING句をサポートしていないため、主キーを自動生成するデータ作成は失敗してしまう制約事項があります（`Spring Data JPA`の`@GeneratedValue`も実装することはできません）。
+
+##### リポジトリインターフェース作成
+
+データベースを操作（Create, Read, Update, Delete）するためのリポジトリインターフェースを作成します。  
+ここでは、`Spring Data JPA`のコード例を示します。`Spring Data JDBC`の場合はCrudRepositoryを継承してください。
+
+~~~java
+package com.tsurugidb.fdw.spring.boot.data.jpa.sample;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository // このインターフェースがリポジトリであることを示す
+public interface SampleRepository extends JpaRepository<SampleEntity, String> {
+    // JpaRepositoryを継承することで、以下のメソッドが自動的に提供される:
+    // save(entity): エンティティの保存/更新
+    // findById(id): IDでエンティティを検索
+    // findAll(): 全てのエンティティを検索
+    // deleteById(id): IDでエンティティを削除
+    // count(): エンティティの数を数える
+
+    // さらに、命名規則に従ってカスタムクエリメソッドを定義できる
+    Iterable<SampleEntity> findAllByOrderByNumAsc(); // 例: ソートした全てのエンティティを検索
+}
+~~~
+
+
+##### サービスクラス作成
+
+サービスクラスの作成は任意だが、ビジネスロジックをカプセル化するために作成します。
 
 #### トランザクション操作（Spring Framework）
-
-#### ステートメントキャッシュの利用（Spring Framework）
 
 #### エラー情報の取得（Spring Framework）
 
