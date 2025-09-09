@@ -300,7 +300,10 @@ static ForeignScan *find_modifytable_subplan(PlannerInfo *root,
 						 					Index rtindex,
 						 					int subplan_index);
 #endif	/* PG_VERSION_NUM >= 140000 */
+#ifdef __TSURUGI_PLANNER__
 static void make_retrieved_attrs(List* telist, List** retrieved_attrs);
+#endif
+
 static void store_pg_data_type(TgFdwForeignScanState* fsstate, List* tlist, List** );
 #if !defined (__TSURUGI_PLANNER__)
 static int	get_batch_size_option(Relation rel);
@@ -1691,7 +1694,7 @@ tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
 	if (is_prepare_statement(dmstate->orig_query))
 		prepare_direct_modify(dmstate);
 #else
-	prepare_direct_modify(dmstate, fsplan->fdw_exprs);
+	prepare_direct_modify(dmstate);
 #endif
 
   	rte = exec_rt_fetch(rtindex, estate);
@@ -2413,6 +2416,7 @@ find_modifytable_subplan(PlannerInfo *root,
 }
 #endif  // PG_VERSION_NUM >= 140000
 
+#ifdef __TSURUGI_PLANNER__
 static void
 make_retrieved_attrs(List* telist, List** retrieved_attrs)
 {
@@ -2433,6 +2437,7 @@ make_retrieved_attrs(List* telist, List** retrieved_attrs)
 		i++;
 	}
 }
+#endif
 
 /*
  * 	@biref	Scanning data type of target list from PG tables.

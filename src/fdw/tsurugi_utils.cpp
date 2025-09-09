@@ -53,15 +53,17 @@ using namespace ogawayama;
 static const std::string PUBLIC_SCHEMA_NAME = "public\\.";
 static const std::string PUBLIC_DOUBLE_QUOTATION = "\"public\"\\.";
 
+#ifdef __TSURUGI_PLANNER__
 std::string make_tsurugi_query(std::string_view query_string);
 static std::string  trim_query_string(const std::string& orig_query) ;
 static std::pair<std::string, std::string> make_prepare_statement(const char* query);
-static ogawayama::stub::parameters_type bind_parameters(ParamListInfo param_linfo);
 static ogawayama::stub::placeholders_type make_placeholders(ParamListInfo param_linfo);
-static std::pair<std::string, std::string> make_prepare_statement(const char* query);
+static ogawayama::stub::parameters_type bind_parameters(ParamListInfo param_linfo);
 static std::pair<std::string, std::string> tsurugi_prepare_wrapper(
                                                 const char* query, 
                                                 ParamListInfo param_linfo);
+#endif
+
 #if !defined (__TSURUGI_PLANNER__)
 static ogawayama::stub::parameters_type bind_parameters2(Relation rel,
                                                         List* target_attrs,
@@ -133,7 +135,6 @@ make_tuple_from_result_row(ResultSetPtr result_set,
 }
 
 #ifdef __TSURUGI_PLANNER__
-
 /**
  *  @brief  Trimming a string to remove comments and newline characters
  *  @param  (orig_query) input query string.
@@ -233,7 +234,7 @@ make_prepare_statement(const char* query)
 
     return std::make_pair(prep_name, prep_stmt);
 }
-
+#endif
 #ifdef __TSURUGI_PLANNER__
 /**
  *  @brief  Set placeholders of prepare statement.
@@ -427,6 +428,7 @@ bind_parameters(ExprContext* econtext,
 }
 #endif
 
+#ifdef __TSURUGI_PLANNER__
 /**
  *  @brief  Execute the query.
  *  @param  (node) Pointer to ForeignScanState structure.
@@ -438,8 +440,6 @@ create_cursor(ForeignScanState* node)
  	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	TgFdwForeignScanState* fsstate = (TgFdwForeignScanState*) node->fdw_state;
-//	ExprContext *econtext = node->ss.ps.ps_ExprContext;
-//    ForeignScan* fsplan = (ForeignScan*) node->ss.ps.plan;
     if (is_prepare_statement(fsstate->query_string))
     {
         // Prepare the statement.
@@ -469,7 +469,50 @@ create_cursor(ForeignScanState* node)
         }
     }
 }
+#else
+/**
+ *  @brief  Execute the query.
+ *  @param  (node) Pointer to ForeignScanState structure.
+ *  @return	none.
+ */
+void
+create_cursor(ForeignScanState* node)
+{
+ 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
+	TgFdwForeignScanState* fsstate = (TgFdwForeignScanState*) node->fdw_state;
+    if (is_prepare_statement(fsstate->query_string))
+    {
+        // Prepare the statement.
+        auto prep = tsurugi_prepare_wrapper(fsstate->query_string, 
+                                            fsstate->param_linfo);
+        // Execute the prepared statement.
+        auto params = bind_parameters(fsstate->param_linfo);
+
+        elog(LOG, "tsurugi_fdw : Execute the prepared statement \nstmt:\n%s", 
+            prep.second.c_str());                                    
+        ERROR_CODE error =Tsurugi::execute_query(params);
+        if (error != ERROR_CODE::OK)
+        {
+            Tsurugi::report_error("Failed to execute the statement on Tsurugi.", 
+                                    error, prep.second);
+        }           
+    }
+    else
+    {
+        // Execute the query.
+        auto query = make_tsurugi_query(fsstate->query_string);
+        ERROR_CODE error = Tsurugi::execute_query(query);
+        if (error != ERROR_CODE::OK)
+        {
+            Tsurugi::report_error("Failed to execute the query on Tsurugi.", 
+                                    error, query.data());
+        }
+    }
+}
+#endif
+
+#ifdef __TSURUGI_PLANNER__
 /**
  *  @brief  Prepare a statement for direct modify.
  *  @param  (dmstate) Pointer to Direct Modify State structre.
@@ -592,7 +635,7 @@ execute_direct_modify(ForeignScanState* node)
 #else
 /*
  *  execute_direct_modify_with_deparse_sql
- *      Execute a direct UPDATE/DELETE statement using depared sql.
+ *      Execute a direct UPDATE/DELETE statement using deparesed sql.
  */
 void 
 execute_direct_modify(ForeignScanState* node)
@@ -609,17 +652,14 @@ execute_direct_modify(ForeignScanState* node)
         stub::parameters_type params;
         ExprContext *econtext = node->ss.ps.ps_ExprContext;
         if (dmstate->numParams > 0)
-            params = bind_parameters2(econtext,
-                                    dmstate->param_flinfo,
+            params = bind_parameters(econtext,
                                     dmstate->param_exprs,
-                                    dmstate->rel);
+                                    dmstate->param_flinfo);
         elog(LOG, "tsurugi_fdw : %s\nstmt:\n%s", __func__, dmstate->prep_stmt);                                    
         ERROR_CODE error =Tsurugi::execute_statement(params,
                                                     dmstate->num_tuples);
         if (error != ERROR_CODE::OK)
         {
-            /* Prepare processing when via JDBC and ODBC */
-            end_prepare_processing(estate);
             Tsurugi::report_error("Failed to execute the statement on Tsurugi.", 
                                     error, dmstate->prep_stmt);
         }        
@@ -631,8 +671,6 @@ execute_direct_modify(ForeignScanState* node)
         ERROR_CODE error = Tsurugi::execute_statement(stmt, dmstate->num_tuples);
         if (error != ERROR_CODE::OK)
         {
-            /* Prepare processing when via JDBC and ODBC */
-            end_prepare_processing(estate);
             Tsurugi::report_error("Failed to execute the statement on Tsurugi.", 
                                     error, stmt.data());
         }
