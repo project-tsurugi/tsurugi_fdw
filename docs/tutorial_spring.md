@@ -5,33 +5,33 @@
 ### Spring Frameworkを活用
 
 Spring Frameworkを活用してTsurugiを利用（Javaアプリケーションからのデータベース連携）する簡単な方法を説明します。  
-
 Tsurugi FDWがサポートするSpring Frameworkのリファレンスについては [リファレンス（Spring Framework）](./spring_reference.md) を参照してください。  
 
 #### Spring Frameworkとは
 
-Spring Frameworkは、Javaアプリケーションを効率的に開発するさまざなな機能を提供しており、その機能を活用することで、Tsurugiを効率的に利用することができます。  
+Spring Frameworkは、Javaアプリケーションを効率的に開発するための機能を有するオープンソースのフレームワークです。  
+Spring Frameworkを活用することで、Tsurugiを効率的に利用することができます。  
 
 ##### Spring Frameworkの機能（データベース連携に関連する機能の一部を抜粋）
 
-- **ORM（Object-Relational Mapping）フレームワーク:**  
+- ORM（Object-Relational Mapping）フレームワーク:  
 オブジェクトとリレーショナルデータベース間のマッピングが容易に実現でき、データベース連携が効率化できる。
-- **トランザクション管理:**  
+- トランザクション管理:  
 トランザクション処理が容易に実現でき、データの整合性が確保できる。
-- **DI（Dependency Injection: 依存性注入）:**  
+- DI（Dependency Injection: 依存性注入）:  
 オブジェクト間の依存関係が疎結合されることで、オブジェクトの柔軟性が向上できる。
-- **AOP（Aspect-Oriented Programming: アスペクト指向プログラミング）:**  
+- AOP（Aspect-Oriented Programming: アスペクト指向プログラミング）:  
 共通的な処理がモジュール化されることで、コードの再利用性や保守性が向上できる。
 
 ##### Spring Frameworkのコンポーネント（データベース連携に関連する機能の一部を抜粋）
 
-- **Spring JDBC: Spring Frameworkが提供するJDBCのラッパークラス**  
+- Spring JDBC: Spring Frameworkが提供するJDBCのラッパークラス  
 JDBC APIを使いやすくするためのユーティリティクラスとヘルパーメソッドを提供している。
-- **Spring Data JPA（ORM）: Spring Data（Spring Frameworkの一部）が提供するライブラリ**  
+- Spring Data JPA（ORM）: Spring Data（Spring Frameworkの一部）が提供するライブラリ  
 Java Persistence API (JPA) を利用してデータベースアクセスが簡素化（リポジトリインターフェースを定義しCRUD 操作を自動化）できる。
-- **Spring Data JDBC（ORM）: Spring Data（Spring Frameworkの一部）が提供するライブラリ**  
+- Spring Data JDBC（ORM）: Spring Data（Spring Frameworkの一部）が提供するライブラリ  
 JDBC APIを利用してデータベースアクセスが簡素化（リポジトリインターフェースを定義しCRUD 操作を自動化）できる。
-- **Spring Boot: Spring Framework を基盤としたライブラリ**  
+- Spring Boot: Spring Framework を基盤としたライブラリ  
 Spring Frameworkでの開発を迅速化し各機能が容易に行えるよう設計されたツールを提供している。
 
 #### Spring Frameworkの入手
@@ -41,11 +41,11 @@ Spring Frameworkのライブラリは [https://spring.io/projects](https://sprin
 [Spring Initializr](https://start.spring.io/)にアクセスするとSpring Bootを使用したJavaアプリケーションの雛形を簡単に作成することができます。  
 Javaアプリケーションに追加する依存ライブラリは、Tsurugi FDWがサポートする以下のコンポーネントを選択（複数可）してください。  
 
-- **JDBC API [SQL]**  
+- JDBC API [SQL]  
 Database Connectivity API that defines how a client may connect and query a database.
-- **Spring Data JPA [SQL]**  
+- Spring Data JPA [SQL]  
 Persist data in SQL stores with Java Persistence API using Spring Data and Hibernate.
-- **Spring Data JDBC [SQL]**  
+- Spring Data JDBC [SQL]  
 Persist data in SQL stores with plain JDBC using Spring Data.
 
 #### データベースへの接続（Spring Framework）
@@ -124,9 +124,9 @@ Spring Frameworkを使用してSQL文を実行する方法はいくつかあり�
 ##### `JdbcTemplate`クラスを使用
 
 `Spring JDBC`の`JdbcTemplate`クラスを使用してSQL文を実行することができます。  
-`JdbcTemplate`クラスの利用方法はSpring Frameworkの仕様に準じます。詳細は [Spring JDBCのドキュメント](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/core/JdbcTemplate.html) を参照してください。  
+`JdbcTemplate`クラスの利用方法はSpring Frameworkの仕様に準じます。詳細は [Spring Frameworkのドキュメント](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/core/JdbcTemplate.html) を参照してください。  
 
-##### データの更新
+###### データの更新
 
 `JdbcTemplate`クラスの`update`メソッドを使用してTsurugiのデータを更新（INSERT/UPDATE/DELETE）することができます。  
 
@@ -145,7 +145,7 @@ Spring Frameworkを使用してSQL文を実行する方法はいくつかあり�
     }
 ~~~
 
-##### データの問い合わせ
+###### データの問い合わせ
 
 `JdbcTemplate`クラスの`queryForList`メソッドを使用してTsurugiのデータを問い合わせる（SELECT）ことができます。  
 
@@ -200,11 +200,11 @@ public class SampleEntity {
 ~~~
 
 > [!IMPORTANT]
-> Tsurugiを利用する際、主キーの生成戦略として自動生成を利用することはできません。  
-> 主キーはエンティティクラスのコンストラクタなどで手動生成する必要があります。  
+> **主キーの生成戦略として自動生成を利用することはできません。**  
+> **Tsurugiを利用する際、主キーはエンティティクラスのコンストラクタなどで手動生成する必要があります。**  
 >
-> 主キーを自動生成すると、Spring Framework(JDBC)はデータ作成(Create)時にRETURNING句を付与したINSERT SQLコマンドを実行します。  
-> TsurugiはSQLコマンドでのRETURNING句をサポートしていないため、主キーを自動生成するデータ作成は失敗してしまう制約事項があります（`Spring Data JPA`の`@GeneratedValue`を実装することはできません）。
+> 主キーを自動生成すると、Spring Framework(JDBC)はデータ作成時にRETURNING句を付与したINSERT SQLコマンドを実行します。  
+> TsurugiはSQLコマンドでのRETURNING句をサポートしていないため、主キーを自動生成するデータ作成操作が失敗してしまう制約事項があります（`Spring Data JPA`の`@GeneratedValue`を実装することはできません）。
 
 ##### リポジトリインターフェース作成
 
@@ -262,6 +262,62 @@ public class SampleService {
 ~~~
 
 #### トランザクション操作（Spring Framework）
+
+Spring Frameworkを使用してトランザクションを操作する方法はいくつかありますが、一般的な方法を説明します。  
+
+##### プログラム的トランザクション管理
+
+Spring Frameworkの`TransactionTemplate`クラスを使用してトランザクションを操作することができます。  
+`TransactionTemplate`クラスの利用方法はSpring Frameworkの仕様に準じます。詳細は [Spring Frameworkのドキュメント](https://spring.pleiades.io/spring-framework/reference/data-access/transaction/programmatic.html) を参照してください。  
+
+~~~java
+    // トランザクションマネージャーの作成
+    PlatformTransactionManager transactionManager = new DataSourceTransactionManager(dataSource);
+    // TransactionTemplateの作成
+    TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+
+    transactionTemplate.execute(status -> {
+        String insertSql = "INSERT INTO sample (num) VALUES (?)";
+        jdbcTemplate.update(insertSql, number);
+        if (number % 2 != 0) {
+            // 奇数の場合ロールバックする
+            // ロールバックをトリガーする例外をスローする代わりに
+            // トランザクションマネージャーにロールバックを指示する
+            status.setRollbackOnly();
+        }
+        return null;
+    });
+~~~
+
+##### 宣言的トランザクション管理
+
+Spring Frameworkの`@Transactional`(アノテーション)を使用してトランザクションを操作することができます。  
+`@Transactional`クラスの利用方法はSpring Frameworkの仕様に準じます。詳細は [Spring Frameworkのドキュメント](https://spring.pleiades.io/spring-framework/reference/data-access/transaction/programmatic.html) を参照してください。  
+
+~~~java
+    @Autowired  // 依存性注入（依存オブジェクトを疎結合）
+    private JdbcTemplate jdbcTemplate;
+    // 実行するSQL文（ステートメントキャッシュを利用）
+    private static final String INSERT_SQL = "insert into sample (num) values (?)";
+
+    @Transactional // このメソッド全体が単一のトランザクションで実行される
+    public void updateTsurugiData(int number) {
+        jdbcTemplate.update(INSERT_SQL, number);
+        if (number % 2 != 0) {
+            // 奇数の場合ロールバックする
+            throw new RuntimeException("Rollback! for num = " + number);
+        }
+        // 例外が発生しなかった場合、トランザクションはコミットされる
+        // 例外が発生した場合、トランザクションはロールバックされる    
+    }
+
+    @Transactional  // クラス全体に適用することも可能
+    public class AnotherService {
+        public void someMethod() {
+            // このクラスのすべてのpublicメソッドにトランザクションが適用される
+        }
+    }
+~~~
 
 #### エラー情報の取得（Spring Framework）
 
