@@ -101,13 +101,6 @@ void handle_remote_xact(ForeignServer *server)
 									  tsurugifdw_inval_callback, (Datum) 0);
 	}
 
-	/* Initializing connection to tsurugi server. */
-	auto error = Tsurugi::init(server->serverid);
-	if (error != ERROR_CODE::OK) {
-		ereport(ERROR, (errcode(ERRCODE_FDW_ERROR),
-						errmsg("%s", Tsurugi::get_error_message(error).c_str())));
-	}
-
 	/* Set flag that we did GetConnection during the current transaction */
 	xact_got_connection = true;
 
