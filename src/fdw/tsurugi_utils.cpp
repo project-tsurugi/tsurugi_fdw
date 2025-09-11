@@ -597,15 +597,7 @@ prepare_direct_modify(TgFdwDirectModifyState* dmstate)
 	auto placeholders = make_placeholders(param_linfo);
 	auto prep_stmt = make_tsurugi_query(prep.second);
 
-	/* Initializing connection to tsurugi server. */
-	auto error = Tsurugi::init(dmstate->server->serverid);
-	if (error != ERROR_CODE::OK)
-	{
-		ereport(ERROR, (errcode(ERRCODE_FDW_ERROR),
-						errmsg("%s", Tsurugi::get_error_message(error).c_str())));
-	}
-
-	error = Tsurugi::prepare(prep_stmt, placeholders);
+	ERROR_CODE error = Tsurugi::prepare(prep_stmt, placeholders);
 	if (error != ERROR_CODE::OK)
 	{
 		Tsurugi::report_error("Failed to prepare the statement to Tsurugi.", 
