@@ -9,7 +9,7 @@ Spring Frameworkを使用してTsurugiを利用（Javaアプリケーション�
 #### Spring Frameworkとは
 
 Spring Frameworkは、Javaアプリケーションを効率的に開発するためのオープンソースのフレームワークです。  
-Spring Frameworkのコア機能を使用することでTsurugiを効率的に利用することができます。  
+Spring Frameworkのデータアクセス機能を使用することでTsurugiを効率的に利用することができます。  
 Tsurugi FDWがサポートするSpring Frameworkのリファレンスについては [リファレンス（Spring Framework）](./spring_reference.md) を参照してください。  
 
 ##### Spring Frameworkのコア機能（一部抜粋）
