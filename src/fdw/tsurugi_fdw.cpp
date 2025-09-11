@@ -266,7 +266,7 @@ static TupleTableSlot* tsurugiExecForeignDelete(EState *estate,
                                                 TupleTableSlot *planSlot);
 static void tsurugiEndForeignModify(EState *estate,
                                     ResultRelInfo *rinfo);
-#if !defined (__TSURUGI_PLANNER__)
+#ifndef __TSURUGI_PLANNER__
 static void tsurugiBeginForeignInsert(ModifyTableState *mtstate,
                                     ResultRelInfo *rinfo);
 static void tsurugiEndForeignInsert(EState *estate,
@@ -305,7 +305,7 @@ static void make_retrieved_attrs(List* telist, List** retrieved_attrs);
 #endif
 
 static void store_pg_data_type(TgFdwForeignScanState* fsstate, List* tlist, List** );
-#if !defined (__TSURUGI_PLANNER__)
+#ifndef __TSURUGI_PLANNER__
 static int	get_batch_size_option(Relation rel);
 #endif
 
@@ -363,7 +363,7 @@ tsurugi_fdw_handler(PG_FUNCTION_ARGS)
 	routine->ExecForeignUpdate = tsurugiExecForeignUpdate;
 	routine->ExecForeignDelete = tsurugiExecForeignDelete;
 	routine->EndForeignModify = tsurugiEndForeignModify;
-#if !defined (__TSURUGI_PLANNER__)
+#ifndef __TSURUGI_PLANNER__
 	routine->BeginForeignInsert = tsurugiBeginForeignInsert;
 	routine->EndForeignInsert = tsurugiEndForeignInsert;
 #endif
@@ -1408,11 +1408,11 @@ tsurugiPlanDirectModify(PlannerInfo *root,
 	List	   *params_list = NIL;
 	List	   *returningList = NIL;
 	List	   *retrieved_attrs = NIL;
-	static const char *operations[] = {"SELECT", "UPDATE", "INSERT", "DELETE", "UTILITY"};
+	static const char *operations[] = {"", "SELECT", "UPDATE", "INSERT", "DELETE", "UTILITY"};
 
 	/* operation - 1:SELECT, 2:UPDATE, 3:INSERT, 4:DELETE, 5:UTILITY */
 	elog(LOG, "tsurugi_fdw : %s (operation= %s(%d))", 
-		__func__, operations[operation-1], (int) operation);
+		__func__, operations[operation], (int) operation);
 
 	/*
 	 * Decide whether it is safe to modify a foreign table directly.
@@ -1422,7 +1422,7 @@ tsurugiPlanDirectModify(PlannerInfo *root,
 	 * The table modification must be an UPDATE or DELETE.
 	 */
  	if (operation != CMD_UPDATE && operation != CMD_DELETE)
-		return true;
+		return false;
 
 #if PG_VERSION_NUM >= 140000
 	/*
@@ -1668,7 +1668,7 @@ tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
 		(TgFdwDirectModifyState *) palloc0(sizeof(TgFdwDirectModifyState));
 	dmstate->num_tuples = -1;	/* -1 means not set yet */	
 	dmstate->orig_query = estate->es_sourceText;
-#if !defined (__TSURUGI_PLANNER__)
+#ifndef __TSURUGI_PLANNER__
 	dmstate->query = strVal(list_nth(fsplan->fdw_private,
 									 FdwDirectModifyPrivateUpdateSql));
 	dmstate->has_returning = intVal(list_nth(fsplan->fdw_private,
@@ -1694,7 +1694,7 @@ tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
 	if (is_prepare_statement(dmstate->orig_query))
 		prepare_direct_modify(dmstate);
 #else
-	prepare_direct_modify(dmstate);
+	prepare_direct_modify(dmstate, fsplan->fdw_exprs);
 #endif
 
   	rte = exec_rt_fetch(rtindex, estate);
@@ -1748,7 +1748,7 @@ static List
 						   Index resultRelation,
 						   int subplan_index)
 {
-#if !defined (__TSURUGI_PLANNER__)
+#ifndef __TSURUGI_PLANNER__
 	CmdType		operation = plan->operation;
 	RangeTblEntry *rte = planner_rt_fetch(resultRelation, root);
 	Relation	rel;
@@ -1897,7 +1897,7 @@ tsurugiBeginForeignModify(ModifyTableState *mtstate,
                         int subplan_index,
                         int eflags)
 {
-#if !defined (__TSURUGI_PLANNER__)
+#ifndef __TSURUGI_PLANNER__
 	TgFdwForeignModifyState *fmstate;
 	EState	   *estate = mtstate->ps.state;
 	Relation	rel = resultRelInfo->ri_RelationDesc;
@@ -2019,7 +2019,7 @@ tsurugiExecForeignInsert(
 	TupleTableSlot *slot, 
 	TupleTableSlot *planSlot)
 {
-#if !defined(__TSURUGI_PLANNER__)
+#ifndef __TSURUGI_PLANNER__
 	TgFdwForeignModifyState *fmstate = (TgFdwForeignModifyState *) rinfo->ri_FdwState;
 	TupleTableSlot **rslot;
 	int			numSlots = 1;
@@ -2096,7 +2096,7 @@ tsurugiEndForeignModify(EState *estate,
 	if (fmstate == NULL)
 		return;
 }
-#if !defined (__TSURUGI_PLANNER__)
+#ifndef __TSURUGI_PLANNER__
 /*
  * tsurugiBeginForeignInsert
  */
@@ -2496,7 +2496,7 @@ store_pg_data_type(TgFdwForeignScanState* fsstate, List* tlist, List** retrieved
 		fsstate->number_of_columns = count;
 	}
 }
-#if !defined (__TSURUGI_PLANNER__)
+#ifndef __TSURUGI_PLANNER__
 #if PG_VERSION_NUM >= 140000
 /*
  * Determine batch size for a given foreign table. The option specified for

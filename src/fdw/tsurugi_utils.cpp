@@ -65,11 +65,13 @@ static std::pair<std::string, std::string> tsurugi_prepare_wrapper(
 #endif
 
 #if !defined (__TSURUGI_PLANNER__)
+#if 0
 static ogawayama::stub::parameters_type bind_parameters2(Relation rel,
                                                         List* target_attrs,
                                                         FmgrInfo* flinfo,
                                                         TupleTableSlot **slots,
                                                         int numSlots);
+#endif
 #endif                                                        
 /*
  *  make_tsurugi_query
@@ -172,7 +174,8 @@ is_prepare_statement(const char* query)
                 || boost::algorithm::icontains(sql, "$") 
                 || boost::algorithm::icontains(sql, ":param"));
 }
-
+#endif
+#ifdef __TSURUGI_PLANNER__
 /**
  *  @brief  Make prepare statement for tsurugidb.
  *  @param  (query)     SQL query.
@@ -228,6 +231,62 @@ make_prepare_statement(const char* query)
         } catch (const std::exception& e) {
             elog(ERROR, "tsurugi_fdw : An exception occurred. what: %s", e.what());          
         }
+    }
+    elog(LOG, "tsurugi_fdw : prep_name: %s,\nprepare statement = \n%s", 
+        prep_name.c_str(), prep_stmt.c_str());
+
+    return std::make_pair(prep_name, prep_stmt);
+}
+#else
+/**
+ *  @brief  Make prepare statement for tsurugidb.
+ *  @param  (query)     SQL query.
+ *  @return	(first)     prepare name.
+ *          (second)    prepare statement.
+ */
+static std::pair<std::string, std::string>
+make_prepare_statement(const char* query)
+{
+    std::string orig_query{query};
+    std::string prep_name{};
+    std::string prep_stmt{};
+    if (boost::algorithm::icontains(orig_query, "prepare "))
+    {
+        // Remove 'PREPARE' clause.
+        std::string prev_token{};
+        std::vector<std::string> tokens;
+        boost::split(tokens, orig_query, boost::is_any_of(" "));
+        for (auto& token : tokens)
+        {
+            if (!pg_strcasecmp(prev_token.c_str(), "prepare"))
+                prep_name = token;
+            else if (!pg_strcasecmp(prev_token.c_str(), "as") || !prep_stmt.empty())
+                prep_stmt += token + " ";
+            prev_token = token;
+        }
+        prep_stmt.pop_back();  // remove a last space.       
+    }
+    else
+    {
+        prep_stmt = orig_query;
+    }
+    elog(LOG, "tsurugi_fdw : prep_name: %s,\nprepare statement = \n%s", 
+        prep_name.c_str(), prep_stmt.c_str());
+
+    try {
+        // Replace place holder characters.
+        size_t pos = 0;
+        size_t offset = 0;
+        std::string from{"$"};
+        std::string to{":param"};
+        while ((pos = prep_stmt.find(from, offset)) != std::string::npos) {
+            prep_stmt.replace(pos, from.length(), to);
+            offset = pos + to.length();
+        }
+    } catch (const std::logic_error& e) {
+        elog(ERROR, "tsurugi_fdw : A logic_error exception occurred. what: %s", e.what());
+    } catch (const std::exception& e) {
+        elog(ERROR, "tsurugi_fdw : An exception occurred. what: %s", e.what());          
     }
     elog(LOG, "tsurugi_fdw : prep_name: %s,\nprepare statement = \n%s", 
         prep_name.c_str(), prep_stmt.c_str());
@@ -481,13 +540,19 @@ create_cursor(ForeignScanState* node)
  	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	TgFdwForeignScanState* fsstate = (TgFdwForeignScanState*) node->fdw_state;
-    if (is_prepare_statement(fsstate->query_string))
+	ExprContext *econtext = node->ss.ps.ps_ExprContext;
+
+    ForeignScan* fsplan = (ForeignScan*) node->ss.ps.plan;
+    if (fsstate->numParams > 0)
     {
         // Prepare the statement.
         auto prep = tsurugi_prepare_wrapper(fsstate->query_string, 
-                                            fsstate->param_linfo);
+                                            (PlanState *) node,
+                                            fsplan->fdw_exprs);
         // Execute the prepared statement.
-        auto params = bind_parameters(fsstate->param_linfo);
+        auto params = bind_parameters(econtext, 
+                                        fsstate->param_exprs,
+                                        fsstate->param_flinfo);
 
         elog(LOG, "tsurugi_fdw : Execute the prepared statement \nstmt:\n%s", 
             prep.second.c_str());                                    
@@ -643,7 +708,7 @@ execute_direct_modify(ForeignScanState* node)
     elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	TgFdwDirectModifyState *dmstate = (TgFdwDirectModifyState *) node->fdw_state;
-    EState* estate = node->ss.ps.state;
+//    EState* estate = node->ss.ps.state;
     dmstate->set_processed = false;
 
     if (dmstate->prep_stmt != nullptr)

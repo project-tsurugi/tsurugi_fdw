@@ -53,7 +53,11 @@ void make_tuple_from_result_row(ResultSetPtr result_set,
                                         Datum* row,
                                         bool* is_null);
 void create_cursor(ForeignScanState* node);					
+#ifdef __TSURUGI_PLANNER__
 void prepare_direct_modify(TgFdwDirectModifyState* dmstate);
+#else
+void prepare_direct_modify(TgFdwDirectModifyState* dmstate, List* fdw_exprs);
+#endif
 void execute_direct_modify(ForeignScanState* node);
 #if !defined (__TSURUGI_PLANNER__)
 void prepare_foreign_modify(TgFdwForeignModifyState *fmstate);

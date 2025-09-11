@@ -22,7 +22,7 @@ extern "C" {
 #endif
 
 /* planner flag */
-#define __TSURUGI_PLANNER__
+// #define __TSURUGI_PLANNER__
 
 #ifdef __cplusplus
 }
