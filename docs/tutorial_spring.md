@@ -2,44 +2,44 @@
 
 ## チュートリアル
 
-### Spring Frameworkを活用
+### Spring Frameworkを使用
 
-Spring Frameworkを活用してTsurugiを利用（Javaアプリケーションからのデータベース連携）する簡単な方法を説明します。  
-Tsurugi FDWがサポートするSpring Frameworkのリファレンスについては [リファレンス（Spring Framework）](./spring_reference.md) を参照してください。  
+Spring Frameworkを使用してTsurugiを利用（Javaアプリケーションからのデータベース連携）する一般的な方法を説明します。  
 
 #### Spring Frameworkとは
 
-Spring Frameworkは、Javaアプリケーションを効率的に開発するための機能を有するオープンソースのフレームワークです。  
-Spring Frameworkを活用することで、Tsurugiを効率的に利用することができます。  
+Spring Frameworkは、Javaアプリケーションを効率的に開発するためのオープンソースのフレームワークです。  
+Spring Frameworkのコア機能を使用することでTsurugiを効率的に利用することができます。  
+Tsurugi FDWがサポートするSpring Frameworkのリファレンスについては [リファレンス（Spring Framework）](./spring_reference.md) を参照してください。  
 
-##### Spring Frameworkの機能（データベース連携に関連する機能の一部を抜粋）
+##### Spring Frameworkのコア機能（一部抜粋）
 
-- ORM（Object-Relational Mapping）フレームワーク:  
-オブジェクトとリレーショナルデータベース間のマッピングが容易に実現でき、データベース連携が効率化できる。
+- DI(Dependency Injection)コンテナ:  
+アプリケーションコンポーネントの配置とライフサイクルを管理し、依存関係を外部から注入する。  
+- AOP(アスペクト指向プログラミング):  
+ログ、トランザクション、セキュリティといった、クラス横断的な処理の実装を可能にする。  
 - トランザクション管理:  
-トランザクション処理が容易に実現でき、データの整合性が確保できる。
-- DI（Dependency Injection: 依存性注入）:  
-オブジェクト間の依存関係が疎結合されることで、オブジェクトの柔軟性が向上できる。
-- AOP（Aspect-Oriented Programming: アスペクト指向プログラミング）:  
-共通的な処理がモジュール化されることで、コードの再利用性や保守性が向上できる。
+データベースなどのトランザクション制御を一元的に管理し、Javaオブジェクトのトランザクション管理を提供する。  
+- データアクセス:  
+JDBC、ORM（Object-Relational Mapping）、R2DBC（Reactive Relational Database Connectivity）などを通じて、RDBへのアクセスを簡素化する。  
 
-##### Spring Frameworkのコンポーネント（データベース連携に関連する機能の一部を抜粋）
+##### Spring Frameworkのプロジェクト（一部抜粋）
 
-- Spring JDBC: Spring Frameworkが提供するJDBCのラッパークラス  
+- Spring JDBC:  
 JDBC APIを使いやすくするためのユーティリティクラスとヘルパーメソッドを提供している。
-- Spring Data JPA（ORM）: Spring Data（Spring Frameworkの一部）が提供するライブラリ  
+- Spring Data JPA（ORM）:  
 Java Persistence API (JPA) を利用してデータベースアクセスが簡素化（リポジトリインターフェースを定義しCRUD 操作を自動化）できる。
-- Spring Data JDBC（ORM）: Spring Data（Spring Frameworkの一部）が提供するライブラリ  
+- Spring Data JDBC（ORM）:  
 JDBC APIを利用してデータベースアクセスが簡素化（リポジトリインターフェースを定義しCRUD 操作を自動化）できる。
-- Spring Boot: Spring Framework を基盤としたライブラリ  
+- Spring Boot:  
 Spring Frameworkでの開発を迅速化し各機能が容易に行えるよう設計されたツールを提供している。
 
 #### Spring Frameworkの入手
 
-Spring Frameworkのライブラリは [https://spring.io/projects](https://spring.pleiades.io/projects) で公開されています。Tsurugiを利用するJavaアプリケーションの要件に適したライブラリをダウンロードしてください。  
+Spring Frameworkのライブラリは [https://spring.io/projects](https://spring.pleiades.io/projects) で公開されています。Javaアプリケーションの要件に適したライブラリをダウンロードしてください。  
 
 [Spring Initializr](https://start.spring.io/)にアクセスするとSpring Bootを使用したJavaアプリケーションの雛形を簡単に作成することができます。  
-Javaアプリケーションに追加する依存ライブラリは、Tsurugi FDWがサポートする以下のコンポーネントを選択（複数可）してください。  
+Javaアプリケーションに追加する依存ライブラリは、Tsurugi FDWがサポートする以下のSpring Frameworkプロジェクトを選択（複数可）してください。  
 
 - JDBC API [SQL]  
 Database Connectivity API that defines how a client may connect and query a database.
@@ -83,7 +83,7 @@ Spring Frameworkを使用してデータベースに接続する方法はいく�
     }
 ~~~
 
-`Spring Data JPA`の場合、`@Configuration`アノテーションを付与したクラスの中で、上記データベース接続情報をEntityManagerFactoryクラスに設定、JpaTransactionManagerのインスタンスに設定することでデータベースに接続することができます。  
+`Spring Data JPA`の場合、上記データベース接続情報をEntityManagerFactoryクラスに設定（JpaTransactionManagerのインスタンスに設定）することでデータベースに接続することができます。  
 
 ~~~java
 @Configuration
@@ -119,7 +119,7 @@ spring.datasource.password=your_password
 
 #### SQL文の実行（Spring Framework）
 
-Spring Frameworkを使用してSQL文を実行する方法はいくつかありますが、最も一般的な方法を説明します。  
+Spring Frameworkを使用してSQL文を実行する方法はいくつかありますが、一般的な方法を説明します。  
 
 ##### `JdbcTemplate`クラスを使用
 
@@ -162,7 +162,7 @@ Spring Frameworkを使用してSQL文を実行する方法はいくつかあり�
 
 #### CRUDの実行（Spring Framework）
 
-Spring Frameworkを使用してオブジェクト指向的にデータベース操作する方法はいくつかありますが、最も一般的な方法を説明します。  
+Spring Frameworkを使用してオブジェクト指向的にデータベース操作する方法はいくつかありますが、一般的な方法を説明します。  
 
 ##### エンティティクラス作成
 
@@ -200,11 +200,12 @@ public class SampleEntity {
 ~~~
 
 > [!IMPORTANT]
-> **主キーの生成戦略として自動生成を利用することはできません。**  
-> **Tsurugiを利用する際、主キーはエンティティクラスのコンストラクタなどで手動生成する必要があります。**  
+> **主キーの生成戦略で自動生成を利用することはできません。**  
+> **主キーはエンティティクラスのコンストラクタなどで手動生成する必要があります。**  
+> **`Spring Data JPA`においては`@GeneratedValue`を指定することもできません。**  
 >
-> 主キーを自動生成すると、Spring Framework(JDBC)はデータ作成時にRETURNING句を付与したINSERT SQLコマンドを実行します。  
-> TsurugiはSQLコマンドでのRETURNING句をサポートしていないため、主キーを自動生成するデータ作成操作が失敗してしまう制約事項があります（`Spring Data JPA`の`@GeneratedValue`を実装することはできません）。
+> Tsurugiをオブジェクト指向的に利用する場合、Javaアプリケーションから主キーを自動生成すると、Spring Framework(PostgreSQL JDBC Driver)はデータを作成する時にRETURNING句を付与したINSERT SQLコマンドを実行します。  
+> TsurugiはSQLコマンドのRETURNING句をサポートしていないため、主キーの生成戦略が自動生成のデータ作成操作が失敗してしまいます（Tsurugi FDWの制約事項）。  
 
 ##### リポジトリインターフェース作成
 
@@ -233,7 +234,7 @@ public interface SampleRepository extends JpaRepository<SampleEntity, String> {
 ##### サービスクラス作成
 
 ビジネスロジックをカプセル化するためのサービスクラスを作成します。  
-ここでは、データベース操作を集約する目的で利用しています。  
+ここでは、データベース操作（Tsurugiへのアクセス）を集約する目的で利用しています。  
 
 ~~~java
 @Service // このクラスがサービスクラスであることを示す
@@ -265,7 +266,7 @@ public class SampleService {
 
 Spring Frameworkを使用してトランザクションを操作する方法はいくつかありますが、一般的な方法を説明します。  
 
-##### プログラム的トランザクション管理
+##### プログラム的トランザクション
 
 Spring Frameworkの`TransactionTemplate`クラスを使用してトランザクションを操作することができます。  
 `TransactionTemplate`クラスの利用方法はSpring Frameworkの仕様に準じます。詳細は [Spring Frameworkのドキュメント](https://spring.pleiades.io/spring-framework/reference/data-access/transaction/programmatic.html) を参照してください。  
@@ -289,7 +290,7 @@ Spring Frameworkの`TransactionTemplate`クラスを使用してトランザク�
     });
 ~~~
 
-##### 宣言的トランザクション管理
+##### 宣言的トランザクション
 
 Spring Frameworkの`@Transactional`(アノテーション)を使用してトランザクションを操作することができます。  
 `@Transactional`クラスの利用方法はSpring Frameworkの仕様に準じます。詳細は [Spring Frameworkのドキュメント](https://spring.pleiades.io/spring-framework/reference/data-access/transaction/programmatic.html) を参照してください。  
@@ -321,9 +322,9 @@ Spring Frameworkの`@Transactional`(アノテーション)を使用してトラ�
 
 #### エラー情報の取得（Spring Framework）
 
-Spring Frameworkには、データアクセスに関する一貫した例外階層（org.springframework.daoパッケージ）があり、`Spring JDBC`、`Spring Data JPA`、`Spring Data JDBC`などデータアクセス技術が異なっていても、統一的にエラーが処理できます。
+Spring Frameworkには、データアクセスに関する一貫した例外階層（org.springframework.daoパッケージ）があり、`Spring JDBC`、`Spring Data JPA`、`Spring Data JDBC`など、プロジェクト毎にデータアクセス技術が異なっていても、統一的にエラーが処理できます。
 
-このため、Spring Frameworkを活用したデータベース操作中に何らかの異常が発生すると、[`DataAccessException`](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/dao/DataAccessException.html)が通知されます。  
+Spring Frameworkを使用したデータベース操作中に何らかの異常が発生すると、[`DataAccessException`](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/dao/DataAccessException.html)が通知されます。  
 DataAccessExceptionクラスのgetMessageメソッドを使用してエラー情報を取得することができます。  
 エラー情報の取得方法はSpring Frameworkの仕様に準じます。詳細は [Spring Frameworkのドキュメント](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/dao/package-summary.html) を参照してください。  
 Tsurugi FDWが出力するエラーメッセージについては [リファレンス（メッセージ）](./message_reference.md) を参照してください。
@@ -340,22 +341,33 @@ try {
 
 #### サンプルプログラム（Spring Framework）
 
-Spring Frameworkを活用してTsurugiを利用するサンプルプログラムを示します。
+Spring Frameworkを使用してTsurugiを利用するサンプルプログラムを示します。
 
-##### サンプルプログラム概要
+##### サンプルプログラムの概要
 
-Tsurugiにある `fdw_sample` テーブルに、以下の順番でTsurugiへの操作を行います。
+Tsurugiの `fdw_sample` テーブルに、以下の順番でデータの操作を行います。
 
-1. データ挿入
-    1. `1` から `10` までの数値と更新時刻を有するデータ行を繰り返し挿入(**Create**)
-    1. 挿入した数値が `奇数` の場合、当該データ行を削除(**Delete**)
-    1. `11` から `20` までの数値と更新時刻を有するデータ行を繰り返し挿入(**Create**)
-    1. 挿入した数値が `奇数` の場合、当該挿入操作をロールバック(**Transaction**)
-2. 全データ問い合わせ(**Read**)
-3. 数値が`3の倍数`の場合、当該データ行の更新時刻を更新(**Update**)
-4. 全データ問い合わせ(**Read**)
+1. データ(行)挿入
+    1. `1` から `10` までの数値と更新時刻を有するデータ(行)を1秒間隔で挿入 (**Create**)
+    1. 挿入した行の数値が `奇数` の場合、当該データ(行)を削除 (**Delete**)
+    1. `11` から `20` までの数値と更新時刻を有するデータ(行)を1秒間隔で挿入 (**Create**)
+    1. 挿入したデータ(行)の数値が `奇数` の場合、当該挿入操作をロールバック (**Transaction**)
+1. 全データ(行)問い合わせ (**Read**)
+1. データ(行)の数値が`3の倍数`の場合、当該データ(行)の更新時刻を更新 (**Update**)
+1. 全データ(行)問い合わせ (**Read**)
 
-##### 実行結果
+##### サンプルプログラムのソースコード
+
+ソースコードおよび実行環境（Gradleを使用）は以下を確認してください。
+
+- Spring JDBC: [sample/spring-boot-jdbc-sample/](../sample/spring-boot-jdbc-sample/)、[sample/spring-jdbc-sample/](../sample/spring-jdbc-sample/)
+- Spring Data JPA: [sample/spring-boot-data-jpa-sample/](../sample/spring-boot-data-jpa-sample/)
+- Spring JDBC: [sample/spring-boot-data-jdbc-sample/](../sample/spring-boot-data-jdbc-sample/)
+
+> [!TIP]
+> TsurugiのテーブルおよびTsurugi FDWの外部テーブルは、アプリケーション実行直前に作成し、アプリケーション終了後に削除しています。詳細は実行環境内のGradle設定ファイル(byuld.gradle)を確認してください。
+
+##### サンプルプログラムの実行イメージ
 
 ~~~log
 > Task :module:run
@@ -389,14 +401,3 @@ Updated UpdateTime.
      18          17:12:52        eddd6949-a004-4787-9245-a12f3f783b74
      20          17:12:50        98f25e5f-a121-463a-be7a-8da0b36a3f8a
 ~~~
-
-##### ソースコード
-
-Spring Frameworkコンポーネント毎の実行環境を確認してください。
-
-- Spring JDBC: [sample/spring-boot-jdbc-sample/](../sample/spring-boot-jdbc-sample/)、[sample/spring-jdbc-sample/](../sample/spring-jdbc-sample/)
-- Spring Data JPA: [sample/spring-boot-data-jpa-sample/](../sample/spring-boot-data-jpa-sample/)
-- Spring JDBC: [sample/spring-boot-data-jdbc-sample/](../sample/spring-boot-data-jdbc-sample/)
-
-> [!TIP]
-> `fdw_sample` テーブルは `tgsql` を使用して実行前に`CREATE TABLE` 実行後に`DROP TABLE`しています。  
