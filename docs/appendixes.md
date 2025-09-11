@@ -1,4 +1,4 @@
-# [Tsurugi FDW for Tsurugi](./tsurugi_fdw.md)
+# [Tsurugi FDW for Tsurugi](./README.md)
 
 ## 付録
 
