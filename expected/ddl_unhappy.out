@@ -1,8 +1,9 @@
 /* Test case: unhappy path - Data Definition Language */
--- Test setup: DDL of the PostgreSQL
-CREATE DATABASE contrib_regression2;
-\c contrib_regression2
--- Test
+-- EXTENSION
+--- Test setup: DDL of the PostgreSQL
+CREATE DATABASE contrib_regression_ddl;
+\c contrib_regression_ddl
+--- Test case: table exists before
 CREATE TABLE tsurugifdw_regressiontest(id INT);
 CREATE EXTENSION tsurugi_fdw;
 ERROR:  tsurugi_fdw extension cannot be installed in the non-empty database. Please make sure there are no tables by using the \d command.
@@ -13,6 +14,7 @@ ERROR:  tsurugi_fdw extension cannot be installed in the non-empty database. Ple
 (0 rows)
 
 DROP TABLE tsurugifdw_regressiontest;
+--- Test case: table does not exist
 CREATE EXTENSION tsurugi_fdw;
 \dx tsurugi_fdw
                    List of installed extensions
@@ -21,6 +23,8 @@ CREATE EXTENSION tsurugi_fdw;
  tsurugi_fdw | 1.3.0   | public | foreign-data wrapper for tsurugi
 (1 row)
 
+--- Test case: DDL restriction - tsurugi_fdw is enabled
+---- Test setup: DDL of the PostgreSQL
 CREATE SERVER IF NOT EXISTS tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
 CREATE FOREIGN TABLE tsurugifdw_regressiontest(id INT) SERVER tsurugidb;
 SELECT EXISTS (
@@ -32,7 +36,7 @@ SELECT EXISTS (
  t
 (1 row)
 
--- error (CREATE TABLE)
+---- CREATE TABLE
 CREATE TABLE t0_create_table(c1 INTEGER NOT NULL);
 ERROR:  This database is for Tsurugi, so CREATE TABLE is not supported
 SELECT * FROM t0_create_table;
@@ -105,7 +109,7 @@ SELECT * FROM temp_table1;
 ERROR:  relation "temp_table1" does not exist
 LINE 1: SELECT * FROM temp_table1;
                       ^
--- error (CREATE TABLE AS)
+---- CREATE TABLE AS
 CREATE TABLE t1_create_table_as AS SELECT * FROM tsurugifdw_regressiontest;
 ERROR:  This database is for Tsurugi, so CREATE TABLE AS is not supported
 SELECT * FROM t1_create_table_as;
@@ -118,11 +122,13 @@ SELECT * FROM t2_create_table_as;
 ERROR:  relation "t2_create_table_as" does not exist
 LINE 1: SELECT * FROM t2_create_table_as;
                       ^
+--- Test case: DDL restriction - tsurugi_fdw is disabled
+---- Test setup: DDL of the PostgreSQL
 DROP EXTENSION tsurugi_fdw CASCADE;
 NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to server tsurugidb
 drop cascades to foreign table tsurugifdw_regressiontest
--- Success (CREATE TABLE)
+---- CREATE TABLE
 CREATE TABLE t0_create_table(c1 INTEGER NOT NULL);
 SELECT * FROM t0_create_table;
  c1 
@@ -195,7 +201,7 @@ SELECT * FROM temp_table1;
 ----
 (0 rows)
 
--- Success (CREATE TABLE AS)
+---- CREATE TABLE AS
 CREATE TABLE t1_create_table_as AS SELECT * FROM t0_create_table;
 SELECT * FROM t1_create_table_as;
  c1 
@@ -208,6 +214,220 @@ SELECT * FROM t2_create_table_as;
 ----
 (0 rows)
 
--- Test teardown: DDL of the PostgreSQL
+--- Test teardown: DDL of the PostgreSQL
 \c contrib_regression
-DROP DATABASE contrib_regression2;
+DROP DATABASE contrib_regression_ddl;
+-- SERVER OPTIONS
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_ddl_table (c INTEGER)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE DATABASE contrib_regression_ddl;
+\c contrib_regression_ddl
+CREATE EXTENSION tsurugi_fdw;
+--- Test case: option name validation
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw
+  OPTIONS (invalid_option 'value');
+ERROR:  invalid option "invalid_option"
+--- Test case: required options validation
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw
+  OPTIONS (endpoint 'stream');
+ERROR:  missing required option "address"
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw
+  OPTIONS (endpoint 'stream', address '127.0.0.1');
+ERROR:  missing required option "port"
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw
+  OPTIONS (endpoint 'stream', port '12345');
+ERROR:  missing required option "address"
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
+ALTER SERVER tsurugidb OPTIONS (endpoint 'stream');
+ERROR:  missing required option "address"
+ALTER SERVER tsurugidb OPTIONS (endpoint 'stream', address '127.0.0.1');
+ERROR:  missing required option "port"
+ALTER SERVER tsurugidb OPTIONS (endpoint 'stream', port '12345');
+ERROR:  missing required option "address"
+DROP SERVER tsurugidb;
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw
+  OPTIONS (endpoint 'stream', address '127.0.0.1', port '12345');
+ALTER SERVER tsurugidb OPTIONS (DROP address);
+ERROR:  missing required option "address"
+ALTER SERVER tsurugidb OPTIONS (DROP port);
+ERROR:  missing required option "port"
+ALTER SERVER tsurugidb OPTIONS (DROP address, DROP port);
+ERROR:  missing required option "address"
+DROP SERVER tsurugidb;
+--- Test case: endpoint option validation
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw
+  OPTIONS (endpoint 'invalid_value');
+ERROR:  invalid value ("invalid_value") for option "endpoint"
+DETAIL:  expected 'ipc' or 'stream'
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw
+  OPTIONS (endpoint 'IPC');
+ERROR:  invalid value ("IPC") for option "endpoint"
+DETAIL:  expected 'ipc' or 'stream'
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw
+  OPTIONS (endpoint 'STREAM');
+ERROR:  invalid value ("STREAM") for option "endpoint"
+DETAIL:  expected 'ipc' or 'stream'
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw
+  OPTIONS (endpoint ' ipc');
+ERROR:  invalid value (" ipc") for option "endpoint"
+DETAIL:  expected 'ipc' or 'stream'
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw
+  OPTIONS (endpoint 'ipc ');
+ERROR:  invalid value ("ipc ") for option "endpoint"
+DETAIL:  expected 'ipc' or 'stream'
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw
+  OPTIONS (endpoint '');
+ERROR:  option "endpoint" requires a non-empty value
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw
+  OPTIONS (endpoint ' ');
+ERROR:  option "endpoint" requires a non-empty value
+--- Test case: dbname option validation
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw
+  OPTIONS (endpoint 'ipc', dbname '');
+ERROR:  option "dbname" requires a non-empty value
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw
+  OPTIONS (endpoint 'ipc', dbname ' ');
+ERROR:  option "dbname" requires a non-empty value
+--- Test case: address option validation
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw
+  OPTIONS (endpoint 'stream', address '', port '12345');
+ERROR:  option "address" requires a non-empty value
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw
+  OPTIONS (endpoint 'stream', address ' ', port '12345');
+ERROR:  option "address" requires a non-empty value
+--- Test case: port option validation
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw
+  OPTIONS (endpoint 'stream', address '127.0.0.1', port '');
+ERROR:  option "port" requires a non-empty value
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw
+  OPTIONS (endpoint 'stream', address '127.0.0.1', port ' ');
+ERROR:  option "port" requires a non-empty value
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw
+  OPTIONS (endpoint 'stream', address '127.0.0.1', port '0');
+ERROR:  "port" must be an integer value greater than zero: 0
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw
+  OPTIONS (endpoint 'stream', address '127.0.0.1', port 'abc');
+ERROR:  "port" must be an integer value greater than zero: abc
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw
+  OPTIONS (endpoint 'stream', address '127.0.0.1', port '-1');
+ERROR:  "port" must be an integer value greater than zero: -1
+--- Test case: dbname option value is incorrect
+---- Test setup: DDL of the PostgreSQL
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
+CREATE FOREIGN TABLE fdw_ddl_table (c integer) SERVER tsurugidb;
+---- correct -> incorrect
+ALTER SERVER tsurugidb OPTIONS (ADD dbname 'incorrect_dbname');
+INSERT INTO fdw_ddl_table VALUES (1);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to make shared memory for Tsurugi. error: SERVER_FAILURE(10)
+No detail message.
+CONTEXT:  SQL query: 
+UPDATE fdw_ddl_table SET c = c + 10;
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to make shared memory for Tsurugi. error: SERVER_FAILURE(10)
+No detail message.
+CONTEXT:  SQL query: 
+DELETE FROM fdw_ddl_table;
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to make shared memory for Tsurugi. error: SERVER_FAILURE(10)
+No detail message.
+CONTEXT:  SQL query: 
+SELECT * FROM fdw_ddl_table ORDER BY c;
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to make shared memory for Tsurugi. error: SERVER_FAILURE(10)
+No detail message.
+CONTEXT:  SQL query: 
+---- incorrect -> correct
+ALTER SERVER tsurugidb OPTIONS (DROP dbname);
+INSERT INTO fdw_ddl_table VALUES (2);
+SELECT * FROM fdw_ddl_table ORDER BY c;
+ c 
+---
+ 2
+(1 row)
+
+UPDATE fdw_ddl_table SET c = c + 20;
+SELECT * FROM fdw_ddl_table ORDER BY c;
+ c  
+----
+ 22
+(1 row)
+
+DELETE FROM fdw_ddl_table;
+SELECT * FROM fdw_ddl_table ORDER BY c;
+ c 
+---
+(0 rows)
+
+---- Test setup: PREPARE statements
+PREPARE fdw_prepare_ins(integer) AS INSERT INTO fdw_ddl_table VALUES ($1);
+PREPARE fdw_prepare_upd(integer) AS UPDATE fdw_ddl_table SET c = c + $1;
+PREPARE fdw_prepare_del AS DELETE FROM fdw_ddl_table;
+PREPARE fdw_prepare_sel AS SELECT * FROM fdw_ddl_table ORDER BY c;
+---- correct -> incorrect (preparation)
+ALTER SERVER tsurugidb OPTIONS (ADD dbname 'incorrect_dbname');
+EXECUTE fdw_prepare_ins(1);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to make shared memory for Tsurugi. error: SERVER_FAILURE(10)
+No detail message.
+CONTEXT:  SQL query: 
+EXECUTE fdw_prepare_upd(10);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to make shared memory for Tsurugi. error: SERVER_FAILURE(10)
+No detail message.
+CONTEXT:  SQL query: 
+EXECUTE fdw_prepare_del;
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to make shared memory for Tsurugi. error: SERVER_FAILURE(10)
+No detail message.
+CONTEXT:  SQL query: 
+EXECUTE fdw_prepare_sel;
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to make shared memory for Tsurugi. error: SERVER_FAILURE(10)
+No detail message.
+CONTEXT:  SQL query: 
+---- incorrect -> correct (preparation)
+ALTER SERVER tsurugidb OPTIONS (SET dbname 'tsurugi');
+EXECUTE fdw_prepare_ins(2);
+EXECUTE fdw_prepare_sel;
+ c 
+---
+ 2
+(1 row)
+
+EXECUTE fdw_prepare_upd(20);
+EXECUTE fdw_prepare_sel;
+ c  
+----
+ 22
+(1 row)
+
+EXECUTE fdw_prepare_del;
+EXECUTE fdw_prepare_sel;
+ c 
+---
+(0 rows)
+
+---- Test teardown: PREPARE statements
+DEALLOCATE fdw_prepare_ins;
+DEALLOCATE fdw_prepare_sel;
+DEALLOCATE fdw_prepare_upd;
+DEALLOCATE fdw_prepare_del;
+--- Test teardown: DDL of the PostgreSQL
+\c contrib_regression
+DROP DATABASE contrib_regression_ddl;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_ddl_table', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+

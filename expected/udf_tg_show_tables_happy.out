@@ -783,9 +783,12 @@ SELECT tg_show_tables('tg_schema', 'tsurugidb');
      "remote_schema": {               +
          "remote_schema": "tg_schema",+
          "server_name": "tsurugidb",  +
-         "mode": "summary",           +
+         "mode": "detail",            +
          "tables_on_remote_schema": { +
-             "count": 1               +
+             "count": 1,              +
+             "list": [                +
+                 "udf_test_table_1"   +
+             ]                        +
          }                            +
      }                                +
  }
