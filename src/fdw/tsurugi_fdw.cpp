@@ -306,7 +306,9 @@ static void make_retrieved_attrs(List* telist, List** retrieved_attrs);
 
 static void store_pg_data_type(TgFdwForeignScanState* fsstate, List* tlist, List** );
 #ifndef __TSURUGI_PLANNER__
+#if PG_VERSION_NUM >= 140000
 static int	get_batch_size_option(Relation rel);
+#endif
 #endif
 
 /* ===========================================================================
