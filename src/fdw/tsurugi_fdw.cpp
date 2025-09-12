@@ -1982,10 +1982,12 @@ tsurugiBeginForeignModify(ModifyTableState *mtstate,
 	}
 	Assert(fmstate->p_nums <= n_params);
 
+#ifndef __TSURUGI_PLANNER__
 #if PG_VERSION_NUM >= 140000
 	/* Set batch_size from foreign server/table options. */
 	if (mtstate->operation == CMD_INSERT)
 		fmstate->batch_size = get_batch_size_option(fmstate->rel);
+#endif
 #endif
 
 	n_params = list_length(fmstate->retrieved_attrs);
