@@ -20,16 +20,15 @@ Tsurugiの操作に必要な基本的なクラスおよびインターフェー�
 
 #### Spring Frameworkプロジェクト
 
-- [DriverManagerDataSourceクラス](#drivermanagerdatasourceクラス) - データベース接続情報を管理する  
-- [JdbcTemplateクラス](#jdbctemplateクラス) - JDBCの使用を簡素化する  
-- [TransactionTemplateクラス](#transactiontemplateクラス) - プログラムによるトランザクション管理を簡素化する  
+- [DriverManagerDataSourceクラス](#drivermanagerdatasourceクラス) - データベース接続情報を管理する
+- [JdbcTemplateクラス](#jdbctemplateクラス) - JDBCの使用を簡素化する
+- [TransactionTemplateクラス](#transactiontemplateクラス) - プログラムによるトランザクション管理を簡素化する
 - [Transactionalアノテーションインターフェース](#transactionalアノテーションインターフェース) - トランザクション属性を記述する
 
 #### Spring Dataプロジェクト
 
 - [CrudRepositoryインターフェース](#crudrepositoryインターフェース) - CRUD操作を行うための汎用リポジトリインターフェース
 - [JpaRepositoryインターフェース](#jparepositoryインターフェース) - JPA固有のリポジトリインターフェース（CrudRepositoryを継承）
-
 - [SpringDataアノテーションインターフェース](#jparepositoryインターフェース) - Spring Dataで使用されるアノテーションインターフェース
 - [RelationalMappingアノテーションインターフェース](#jparepositoryインターフェース) - Spring Dataの永続性およびオブジェクト / リレーショナルで使用されるアノテーションインターフェース
 

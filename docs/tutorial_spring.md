@@ -4,7 +4,7 @@
 
 ### Spring Frameworkを使用
 
-Spring Frameworkを使用してTsurugiを利用（Javaアプリケーションからのデータアクセス）する一般的な方法を説明します。  
+Spring Frameworkを使用してTsurugiを利用（Javaアプリケーションからデータベースにアクセス）する一般的な方法を説明します。  
 
 #### Spring Frameworkとは
 
@@ -362,7 +362,7 @@ Tsurugiの `fdw_sample` テーブルに、以下の順番でデータの操作�
 
 - Spring JDBC: [sample/spring-boot-jdbc-sample/](../sample/spring-boot-jdbc-sample/)、[sample/spring-jdbc-sample/](../sample/spring-jdbc-sample/)
 - Spring Data JPA: [sample/spring-boot-data-jpa-sample/](../sample/spring-boot-data-jpa-sample/)
-- Spring JDBC: [sample/spring-boot-data-jdbc-sample/](../sample/spring-boot-data-jdbc-sample/)
+- Spring Data JDBC: [sample/spring-boot-data-jdbc-sample/](../sample/spring-boot-data-jdbc-sample/)
 
 > [!TIP]
 > TsurugiのテーブルおよびTsurugi FDWの外部テーブルは、アプリケーション実行直前に作成し、アプリケーション終了後に削除しています。  
