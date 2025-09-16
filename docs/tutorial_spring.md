@@ -9,10 +9,10 @@ Spring Frameworkを使用してTsurugiを利用（Javaアプリケーション�
 #### Spring Frameworkとは
 
 Spring FrameworkはJavaアプリケーションを効率的に開発するためのオープンソースのフレームワークです。  
-Spring Frameworkの機能を使用することでTsurugiを効率的に利用することができます。  
+Spring Frameworkの機能を使用することでTsurugiを効率的に利用（データベース接続、SQL文実行、CRUD操作など）することができます。  
 Tsurugi FDWがサポートするSpring Frameworkの機能については [リファレンス（Spring Framework）](./spring_reference.md) を参照してください。  
 
-##### Spring Frameworkの機能（一部抜粋）
+##### Spring Frameworkの主な機能（一部抜粋）
 
 - DI(Dependency Injection)コンテナ:  
 アプリケーションコンポーネントの配置とライフサイクルを管理し、依存関係を外部から注入することができる。  
@@ -23,7 +23,7 @@ Tsurugi FDWがサポートするSpring Frameworkの機能については [リフ
 - データアクセス:  
 JDBC、ORM（Object-Relational Mapping）、R2DBC（Reactive Relational Database Connectivity）などを通じて、RDBへのアクセスを簡素化することができる。  
 
-##### Spring Frameworkのプロジェクト（一部抜粋）
+##### Spring Frameworkの主なプロジェクト（一部抜粋）
 
 - Spring JDBC:  
 JDBC APIを使いやすくするためのユーティリティクラスとヘルパーメソッドを提供している。
@@ -203,8 +203,8 @@ public class SampleEntity {
 > **主キーの生成戦略で自動生成を利用することはできません。**  
 > **主キーはエンティティクラスのコンストラクタなどで手動生成する必要があります。**  
 >
-> Javaアプリケーションから主キーを自動生成すると、Spring Framework(PostgreSQL JDBC Driver)はデータ作成する際にRETURNING句を付与したINSERT SQLコマンドを実行します。  
-> TsurugiはSQLコマンドのRETURNING句をサポートしていないため、主キーの生成戦略が自動生成のデータ作成操作が失敗してしまいます（Tsurugi FDWの注意事項）。  
+> Javaアプリケーションから主キーを自動生成すると、Spring Framework(PostgreSQL JDBC Driver)はデータを作成する際にRETURNING句を付与したINSERT SQLコマンドを実行します。  
+> TsurugiはSQLコマンドのRETURNING句をサポートしていないため、主キーが自動生成されたデータ作成は失敗します（Tsurugi FDWの注意事項）。  
 
 ##### リポジトリインターフェース作成
 
@@ -337,7 +337,7 @@ try {
 ~~~
 
 > [!TIP]
-> Spring Frameworkには、データアクセスに関する一貫した例外階層（org.springframework.daoパッケージ）があり、`Spring JDBC`、`Spring Data JPA`、`Spring Data JDBC`など、プロジェクト毎のデータアクセス技術が異なっていても、統一的にエラーを処理することができます。
+> Spring Frameworkは、データアクセスに関する一貫した例外階層（org.springframework.daoパッケージ）があり、`Spring JDBC`、`Spring Data JPA`、`Spring Data JDBC`など、プロジェクト毎のデータアクセス技術が異なっていても、統一的にエラーを処理することができます。
 
 #### サンプルプログラム（Spring Framework）
 
@@ -358,7 +358,7 @@ Tsurugiの `fdw_sample` テーブルに、以下の順番でデータの操作�
 
 ##### サンプルプログラムのソースコード
 
-ソースコードおよび実行環境（Gradleを使用）は以下を確認してください。
+ソースコードおよび実行環境（Gradleを使用）は以下にあるファイルを確認してください。
 
 - Spring JDBC: [sample/spring-boot-jdbc-sample/](../sample/spring-boot-jdbc-sample/)、[sample/spring-jdbc-sample/](../sample/spring-jdbc-sample/)
 - Spring Data JPA: [sample/spring-boot-data-jpa-sample/](../sample/spring-boot-data-jpa-sample/)
