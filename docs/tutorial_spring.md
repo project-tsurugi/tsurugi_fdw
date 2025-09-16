@@ -34,7 +34,7 @@ JDBC APIを利用してデータアクセスを簡素化（リポジトリイン
 - Spring Boot:  
 Spring Frameworkでの開発を迅速化し各機能を容易に行えるよう設計されたツールを提供している。
 
-#### Spring Frameworkの入手
+#### Spring Frameworkのライブラリ入手
 
 Spring Frameworkのライブラリは [https://spring.io/projects](https://spring.pleiades.io/projects) で公開されています。Javaアプリケーションの要件に適したライブラリをダウンロードしてください。  
 
