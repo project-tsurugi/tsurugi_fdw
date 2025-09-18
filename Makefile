@@ -12,6 +12,7 @@ PG_CXXFLAGS = -Iinclude/proto \
               -Ithird_party/takatori/include \
               -std=c++17 -Dregister= 
 
+override rpath = -Wl,-rpath,'$$ORIGIN'
 SHLIB_LINK_INTERNAL = $(libpq)
 SHLIB_LINK = -logawayama-stub -lboost_filesystem
 
