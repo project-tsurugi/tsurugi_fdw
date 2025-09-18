@@ -109,11 +109,13 @@ tg_execute_ddl(PG_FUNCTION_ARGS)
 
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
 
-	/* Initializing connection to tsurugi server. */
-	error = Tsurugi::init(server_oid);
-	if (error != ERROR_CODE::OK) {
-		ereport(ERROR, (errcode(ERRCODE_FDW_ERROR),
-						errmsg("%s", Tsurugi::get_error_message(error).c_str())));
+	if (!Tsurugi::is_initialized(server_oid)) {
+		/* Initializing connection to tsurugi server. */
+		error = Tsurugi::init(server_oid);
+		if (error != ERROR_CODE::OK) {
+			ereport(ERROR, (errcode(ERRCODE_FDW_ERROR),
+							errmsg("%s", Tsurugi::get_error_message(error).c_str())));
+		}
 	}
 
 	error = Tsurugi::start_transaction();

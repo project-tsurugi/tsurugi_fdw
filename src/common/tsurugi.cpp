@@ -218,7 +218,37 @@ ConnectionInfo connection_info_;
 bool GetTransactionOption(boost::property_tree::ptree&);
 
 /**
+ *  @brief Checks whether the ogawayama stub has been initialized.
+ *  @param server_oid oid of tsurugi server.
+ *  @retval true  if the stub is already initialized
+ *  @retval false if the stub has not been initialized yet
+ */
+bool Tsurugi::is_initialized(Oid server_oid)
+{
+	elog(DEBUG1, "tsurugi_fdw : %s(serverid: %u)", __func__, server_oid);
+
+	/* Check if it is not connected. */
+	if ((stub_ == nullptr) || (connection_ == nullptr))
+	{
+		return false;
+	}
+
+	/* Get ForeignServer object from server OID. */
+	auto server = GetForeignServer(server_oid);
+	assert(server != nullptr);
+
+	/* Get the latest connection information. */
+	ConnectionInfo now_sever_opts(server->options);
+
+	/* Check that the connection information matches. */
+	return (connection_info_ == now_sever_opts);
+}
+
+/**
  *  @brief 	Initialize ogawayama stub.
+ * 
+ *  If connected to the tsurugi database, it will disconnect and attempt to reconnect.
+ * 
  *  @param 	server_oid oid of tsurugi server.
  *  @return	error code of ogawayama.
  */
@@ -233,62 +263,51 @@ ERROR_CODE Tsurugi::init(Oid server_oid)
 	assert(server != nullptr);
 
 	ConnectionInfo now_sever_opts(server->options);
-	/* The connection will be disconnected if the information does not match. */
-	if (connection_info_ != now_sever_opts) {
-		elog(DEBUG2,
-			 "Connection information has changed. "
-			 "Connecting to Tsurugi with the new information");
 
-		/* Set foreign server options. */
-		connection_info_ = now_sever_opts;
+	/* Set foreign server options. */
+	connection_info_ = now_sever_opts;
 
-		if (connection_info_.is_ipc()) {
-			elog(DEBUG2, R"(  endpoint="%s", dbname="%s")",
-				 connection_info_.endpoint().data(), connection_info_.dbname().data());
-		} else if (connection_info_.is_stream()) {
-			elog(DEBUG2, R"(  endpoint="%s", host="%s", port="%s")",
-				 connection_info_.endpoint().data(), connection_info_.address().data(),
-				 connection_info_.port().data());
-		}
-
-		/* Release connection-related resources. */
-		stub_ = nullptr;
-		connection_ = nullptr;
+	if (connection_info_.is_ipc()) {
+		elog(DEBUG2, R"(  endpoint="%s", dbname="%s")",
+				connection_info_.endpoint().data(), connection_info_.dbname().data());
+	} else if (connection_info_.is_stream()) {
+		elog(DEBUG2, R"(  endpoint="%s", host="%s", port="%s")",
+				connection_info_.endpoint().data(), connection_info_.address().data(),
+				connection_info_.port().data());
 	}
 
-	if (stub_ == nullptr) {
-		/*
-		 * Currently, only "ipc" is supported.
-		 * "stream" is an option for future use, so even if you specify it,
-		 * it will be an "ipc" connection.
-		 */
+	/* Release connection-related resources. */
+	stub_ = nullptr;
+	connection_ = nullptr;
 
-		elog(LOG, "tsurugi_fdw : Attempt to call make_stub(). (name: %s)",
-			 connection_info_.dbname().data());
+	/*
+	 * Currently, only "ipc" is supported.
+	 * "stream" is an option for future use, so even if you specify it,
+	 * it will be an "ipc" connection.
+	 */
 
-		error = make_stub(stub_, connection_info_.dbname());
-		Tsurugi::error_log2(LOG, "make_stub() is done.", error);
-		if (error != ERROR_CODE::OK)
-		{
-			stub_ = nullptr;
-			Tsurugi::report_error("Failed to make shared memory for Tsurugi.", error, nullptr);
-		}
-		connection_ = nullptr;
-	}
+	elog(LOG, "tsurugi_fdw : Attempt to call make_stub(). (name: %s)",
+			connection_info_.dbname().data());
 
-	if (connection_ == nullptr)
+	error = make_stub(stub_, connection_info_.dbname());
+	Tsurugi::error_log2(LOG, "make_stub() is done.", error);
+	if (error != ERROR_CODE::OK)
 	{
-		elog(LOG, "tsurugi_fdw : Attempt to call Stub::get_connection(). (pid: %d)", getpid());
-
-		error = stub_->get_connection(getpid(), connection_);
-		Tsurugi::error_log2(LOG, "Stub::get_connection() is done.", error);
-		if (error != ERROR_CODE::OK)
-		{
-			connection_ = nullptr;
-			Tsurugi::report_error("Failed to connect to Tsurugi.", error, nullptr);
-		}
-		transaction_ = nullptr;
+		stub_ = nullptr;
+		Tsurugi::report_error("Failed to make shared memory for Tsurugi.", error, nullptr);
 	}
+
+	elog(LOG, "tsurugi_fdw : Attempt to call Stub::get_connection(). (pid: %d)", getpid());
+
+	error = stub_->get_connection(getpid(), connection_);
+	Tsurugi::error_log2(LOG, "Stub::get_connection() is done.", error);
+
+	if (error != ERROR_CODE::OK)
+	{
+		connection_ = nullptr;
+		Tsurugi::report_error("Failed to connect to Tsurugi.", error, nullptr);
+	}
+	transaction_ = nullptr;
 
 	return ERROR_CODE::OK;
 }

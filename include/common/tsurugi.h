@@ -37,6 +37,7 @@ extern "C" {
 
 class Tsurugi {
 public:
+	static bool is_initialized(Oid server_oid);
 	static ERROR_CODE init(Oid server_oid);
     static ERROR_CODE start_transaction();
     static bool in_transaction_block() { return (transaction_ != nullptr); }

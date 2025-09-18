@@ -1264,11 +1264,14 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 	table = GetForeignTable(rte->relid);
 	server = GetForeignServer(table->serverid);
 
-	/* Initializing connection to tsurugi server. */
-	auto error = Tsurugi::init(server->serverid);
-	if (error != ERROR_CODE::OK) {
-		ereport(ERROR, (errcode(ERRCODE_FDW_ERROR),
-						errmsg("%s", Tsurugi::get_error_message(error).c_str())));
+	if (!Tsurugi::is_initialized(server->serverid))
+	{
+		/* Initializing connection to tsurugi server. */
+		auto error = Tsurugi::init(server->serverid);
+		if (error != ERROR_CODE::OK) {
+			ereport(ERROR, (errcode(ERRCODE_FDW_ERROR),
+							errmsg("%s", Tsurugi::get_error_message(error).c_str())));
+		}
 	}
 
 	handle_remote_xact(server);
@@ -1702,11 +1705,14 @@ tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
 	table = GetForeignTable(rte->relid);
 	server = GetForeignServer(table->serverid);
 
-	/* Initializing connection to tsurugi server. */
-	auto error = Tsurugi::init(server->serverid);
-	if (error != ERROR_CODE::OK) {
-		ereport(ERROR, (errcode(ERRCODE_FDW_ERROR),
-						errmsg("%s", Tsurugi::get_error_message(error).c_str())));
+	if (!Tsurugi::is_initialized(server->serverid))
+	{
+		/* Initializing connection to tsurugi server. */
+		auto error = Tsurugi::init(server->serverid);
+		if (error != ERROR_CODE::OK) {
+			ereport(ERROR, (errcode(ERRCODE_FDW_ERROR),
+							errmsg("%s", Tsurugi::get_error_message(error).c_str())));
+		}
 	}
 
 #ifdef __TSURUGI_PLANNER__
@@ -2242,11 +2248,14 @@ static List* tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt, Oid serve
 	elog(DEBUG2, "ForeignServer::serverid: %u", server->serverid);
 	elog(DEBUG2, R"(ForeignServer::servername: "%s")", server->servername);
 
-	/* Initializing connection to tsurugi server. */
-	error = Tsurugi::init(server->serverid);
-	if (error != ERROR_CODE::OK) {
-		ereport(ERROR, (errcode(ERRCODE_FDW_ERROR),
-						errmsg("%s", Tsurugi::get_error_message(error).c_str())));
+	if (!Tsurugi::is_initialized(server->serverid))
+	{
+		/* Initializing connection to tsurugi server. */
+		error = Tsurugi::init(server->serverid);
+		if (error != ERROR_CODE::OK) {
+			ereport(ERROR, (errcode(ERRCODE_FDW_ERROR),
+							errmsg("%s", Tsurugi::get_error_message(error).c_str())));
+		}
 	}
 
 	TableListPtr tg_table_list;
