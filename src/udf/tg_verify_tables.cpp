@@ -163,17 +163,8 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 	ERROR_CODE error;
 	TableListPtr tg_table_list;
 
-	if (!Tsurugi::is_initialized(server_oid)) {
-		/* Initializing connection to tsurugi server. */
-		error = Tsurugi::init(server_oid);
-		if (error != ERROR_CODE::OK) {
-			ereport(ERROR, (errcode(ERRCODE_FDW_ERROR),
-							errmsg("%s", Tsurugi::get_error_message(error).c_str())));
-		}
-	}
-
 	/* Get a list of table names from Tsurugi. */
-	error = Tsurugi::get_list_tables(tg_table_list);
+	error = Tsurugi::get_list_tables(server_oid, tg_table_list);
 	if (error != ERROR_CODE::OK) {
 		ereport(ERROR, (errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
 						errmsg("Failed to retrieve table list from Tsurugi. (error: %d)",
@@ -303,7 +294,7 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 
 		TableMetadataPtr tsurugi_table_metadata;
 		/* Get table metadata from Tsurugi. */
-		error = Tsurugi::get_table_metadata(table_name, tsurugi_table_metadata);
+		error = Tsurugi::get_table_metadata(server_oid, table_name, tsurugi_table_metadata);
 		if (error != ERROR_CODE::OK) {
 			ereport(ERROR, (errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
 							errmsg("Failed to retrieve table metadata from Tsurugi. (error: %d)",

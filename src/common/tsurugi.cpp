@@ -314,16 +314,24 @@ ERROR_CODE Tsurugi::init(Oid server_oid)
 
 /**
  *  @brief 	Begin a transaction of tsurugidb.
- *  @param 	none.
+ *  @param 	server_oid oid of tsurugi server.
  *  @return	error code of ogawayama.
  */
-ERROR_CODE Tsurugi::start_transaction()
+ERROR_CODE Tsurugi::start_transaction(Oid server_oid)
 {
-	assert(connection_ != nullptr && "Tsurugi::init() function must be called beforehand");
-
 	auto error{ERROR_CODE::UNKNOWN};
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
+	if (!Tsurugi::is_initialized(server_oid))
+	{
+		/* Initializing connection to tsurugi server. */
+		auto error = Tsurugi::init(server_oid);
+		if (error != ERROR_CODE::OK) {
+			ereport(ERROR, (errcode(ERRCODE_FDW_ERROR),
+							errmsg("%s", Tsurugi::get_error_message(error).c_str())));
+		}
+	}
 
 	if (transaction_ != nullptr) {
 		elog(NOTICE, "tsurugi_fdw : There is already transaction block in progress.");
@@ -466,25 +474,34 @@ ERROR_CODE Tsurugi::prepare(std::string_view prep_name, std::string_view stateme
 
 /**
  *  @brief 	Prepare astatement to tsurugidb without name.
- *  @param 	(statement)	SQL statement
- * 			(placeholders) information of placeholders in statement.
+ *  @param 	(server_oid) oid of tsurugi server.
+ *  @param 	(statement) SQL statement
+ *  @param 	(placeholders) information of placeholders in statement.
  *  @return	error code of ogawayama.
- * 	@note	Prepared statement has a one-time lifespan.
+ *  @note	Prepared statement has a one-time lifespan.
  */
-ERROR_CODE Tsurugi::prepare(std::string_view statement,
+ERROR_CODE Tsurugi::prepare(Oid server_oid, std::string_view statement,
 	            	ogawayama::stub::placeholders_type& placeholders)
 {
-	assert(connection_ != nullptr && "Tsurugi::init() function must be called beforehand");
-
 	auto error{ERROR_CODE::UNKNOWN};
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
+	if (!Tsurugi::is_initialized(server_oid))
+	{
+		/* Initializing connection to tsurugi server. */
+		auto error = Tsurugi::init(server_oid);
+		if (error != ERROR_CODE::OK) {
+			ereport(ERROR, (errcode(ERRCODE_FDW_ERROR),
+							errmsg("%s", Tsurugi::get_error_message(error).c_str())));
+		}
+	}
 
 	Tsurugi::deallocate();
 	elog(LOG, "tsurugi_fdw : Attempt to call Connection::prepare().\nstatement: \n%s", 
 		statement.data());
 
-	//	Preapre the statement.
+	//	Prepare the statement.
 	error = connection_->prepare(statement, placeholders, prepared_statement_);
 	Tsurugi::error_log2(LOG, "Connection::prepare() is done.", error);
 
@@ -695,15 +712,26 @@ Tsurugi::execute_statement(ogawayama::stub::parameters_type& params,
 
 /**
  * @brief request list tables and get table_list class.
+ * @param server_oid oid of tsurugi server.
  * @param table_list returns a table_list class
  * @return error code defined in error_code.h
  */
 ERROR_CODE
-Tsurugi::get_list_tables(TableListPtr& table_list)
+Tsurugi::get_list_tables(Oid server_oid, TableListPtr& table_list)
 {
-	assert(connection_ != nullptr && "Tsurugi::init() function must be called beforehand");
-
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
+	if (!Tsurugi::is_initialized(server_oid))
+	{
+		/* Initializing connection to tsurugi server. */
+		auto error = Tsurugi::init(server_oid);
+		if (error != ERROR_CODE::OK) {
+			ereport(ERROR, (errcode(ERRCODE_FDW_ERROR),
+							errmsg("%s", Tsurugi::get_error_message(error).c_str())));
+		}
+	}
 
 	elog(DEBUG1, "tsurugi_fdw : Attempt to call Connection::get_list_tables(). (pid: %d)",
 		 getpid());
@@ -718,17 +746,28 @@ Tsurugi::get_list_tables(TableListPtr& table_list)
 
 /**
  * @brief request table metadata and get TableMetadata class.
+ * @param server_oid oid of tsurugi server.
  * @param table_name the table name
  * @param table_metadata returns a table_metadata class
  * @return error code defined in error_code.h
  */
 ERROR_CODE
-Tsurugi::get_table_metadata(std::string_view table_name,
+Tsurugi::get_table_metadata(Oid server_oid, std::string_view table_name,
 							TableMetadataPtr& table_metadata)
 {
-	assert(connection_ != nullptr && "Tsurugi::init() function must be called beforehand");
-
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
+
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+
+	if (!Tsurugi::is_initialized(server_oid))
+	{
+		/* Initializing connection to tsurugi server. */
+		auto error = Tsurugi::init(server_oid);
+		if (error != ERROR_CODE::OK) {
+			ereport(ERROR, (errcode(ERRCODE_FDW_ERROR),
+							errmsg("%s", Tsurugi::get_error_message(error).c_str())));
+		}
+	}
 
 	elog(DEBUG1, "Attempt to call Connection::get_table_metadata(). (pid: %d)", getpid());
 

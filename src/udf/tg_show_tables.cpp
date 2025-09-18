@@ -136,17 +136,8 @@ tg_show_tables(PG_FUNCTION_ARGS)
 	ERROR_CODE error;
 	TableListPtr tg_table_list;
 
-	if (!Tsurugi::is_initialized(server_oid)) {
-		/* Initializing connection to tsurugi server. */
-		error = Tsurugi::init(server_oid);
-		if (error != ERROR_CODE::OK) {
-			ereport(ERROR, (errcode(ERRCODE_FDW_ERROR),
-							errmsg("%s", Tsurugi::get_error_message(error).c_str())));
-		}
-	}
-
 	/* Get a list of table names from Tsurugi. */
-	error = Tsurugi::get_list_tables(tg_table_list);
+	error = Tsurugi::get_list_tables(server_oid, tg_table_list);
 	if (error != ERROR_CODE::OK) {
 		ereport(ERROR,
 			(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),

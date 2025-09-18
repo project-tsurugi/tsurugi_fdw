@@ -1238,6 +1238,11 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
   	fsstate->cursor_exists = false;
 	fsstate->param_linfo = estate->es_param_list_info;
 
+	if (fsplan->scan.scanrelid > 0)
+		rtindex = fsplan->scan.scanrelid;
+	else
+		rtindex = bms_next_member(fsplan->fs_relids, -1);
+
 	/*
 	 * Get info we'll need for converting data fetched from the foreign server
 	 * into local representation and error reporting during that process.
@@ -1249,30 +1254,15 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 	}
 	else
 	{
-		fsstate->rel = NULL;
+		fsstate->rel = ExecOpenScanRelation(estate, rtindex, eflags);
 		fsstate->tupdesc = node->ss.ss_ScanTupleSlot->tts_tupleDescriptor;
-	} 
+	}
 	fsstate->attinmeta = TupleDescGetAttInMetadata(fsstate->tupdesc);
-
-	if (fsplan->scan.scanrelid > 0)
-		rtindex = fsplan->scan.scanrelid;
-	else
-		rtindex = bms_next_member(fsplan->fs_relids, -1);
 
 	/* Get the server object from the ForeignTable associated with the relation. */
 	rte = exec_rt_fetch(rtindex, estate);
 	table = GetForeignTable(rte->relid);
 	server = GetForeignServer(table->serverid);
-
-	if (!Tsurugi::is_initialized(server->serverid))
-	{
-		/* Initializing connection to tsurugi server. */
-		auto error = Tsurugi::init(server->serverid);
-		if (error != ERROR_CODE::OK) {
-			ereport(ERROR, (errcode(ERRCODE_FDW_ERROR),
-							errmsg("%s", Tsurugi::get_error_message(error).c_str())));
-		}
-	}
 
 	handle_remote_xact(server);
 }
@@ -1691,6 +1681,12 @@ tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
     	rtindex = fsplan->scan.scanrelid;
   	else
     	rtindex = bms_next_member(fsplan->fs_relids, -1);
+
+	/* Get the server object from the ForeignTable associated with the relation. */
+	rte = exec_rt_fetch(rtindex, estate);
+	table = GetForeignTable(rte->relid);
+	server = GetForeignServer(table->serverid);
+
 	if (fsplan->scan.scanrelid == 0)
 		dmstate->rel = ExecOpenScanRelation(estate, rtindex, eflags);
 	else
@@ -1698,22 +1694,8 @@ tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
 	dmstate->param_types = NULL;
 	dmstate->prep_name = NULL;
 	dmstate->param_linfo = estate->es_param_list_info;
+	dmstate->server = server;
 	node->fdw_state = dmstate;
-
-	/* Get the server object from the ForeignTable associated with the relation. */
-	rte = exec_rt_fetch(rtindex, estate);
-	table = GetForeignTable(rte->relid);
-	server = GetForeignServer(table->serverid);
-
-	if (!Tsurugi::is_initialized(server->serverid))
-	{
-		/* Initializing connection to tsurugi server. */
-		auto error = Tsurugi::init(server->serverid);
-		if (error != ERROR_CODE::OK) {
-			ereport(ERROR, (errcode(ERRCODE_FDW_ERROR),
-							errmsg("%s", Tsurugi::get_error_message(error).c_str())));
-		}
-	}
 
 #ifdef __TSURUGI_PLANNER__
 	if (is_prepare_statement(dmstate->orig_query))
@@ -2248,19 +2230,9 @@ static List* tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt, Oid serve
 	elog(DEBUG2, "ForeignServer::serverid: %u", server->serverid);
 	elog(DEBUG2, R"(ForeignServer::servername: "%s")", server->servername);
 
-	if (!Tsurugi::is_initialized(server->serverid))
-	{
-		/* Initializing connection to tsurugi server. */
-		error = Tsurugi::init(server->serverid);
-		if (error != ERROR_CODE::OK) {
-			ereport(ERROR, (errcode(ERRCODE_FDW_ERROR),
-							errmsg("%s", Tsurugi::get_error_message(error).c_str())));
-		}
-	}
-
 	TableListPtr tg_table_list;
 	/* Get a list of table names from Tsurugi. */
-	error = Tsurugi::get_list_tables(tg_table_list);
+	error = Tsurugi::get_list_tables(server->serverid, tg_table_list);
 	if (error != ERROR_CODE::OK)
 	{
 		ereport(ERROR,
@@ -2321,7 +2293,7 @@ static List* tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt, Oid serve
 		TableMetadataPtr tg_table_metadata;
 
 		/* Get table metadata from Tsurugi. */
-		error = Tsurugi::get_table_metadata(table_name, tg_table_metadata);
+		error = Tsurugi::get_table_metadata(server->serverid, table_name, tg_table_metadata);
 		if (error != ERROR_CODE::OK)
 		{
 			ereport(ERROR,

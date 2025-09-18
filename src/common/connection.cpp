@@ -130,7 +130,8 @@ void begin_remote_xact(ConnCacheEntry *entry)
 	/* Start main transaction if we haven't yet */
 	if (entry->xact_depth <= 0)
 	{
-		ERROR_CODE error = Tsurugi::start_transaction();
+		auto server_oid = entry->key;
+		ERROR_CODE error = Tsurugi::start_transaction(server_oid);
 		if (error != ERROR_CODE::OK)
 		{
 			elog(ERROR, "Failed to begin the Tsurugi transaction. (%d)\n%s", 
