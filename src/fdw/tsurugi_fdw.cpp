@@ -1318,6 +1318,8 @@ tsurugiIterateForeignScan(ForeignScanState* node)
 								error, fsstate->query_string);
 	}
 
+	elog(DEBUG5, "tsurugi_fdw : %s is done.", __func__);
+
 	return tupleSlot;
 }
 

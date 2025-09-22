@@ -129,9 +129,9 @@ make_tuple_from_result_row(ResultSetPtr result_set,
 		elog(DEBUG5, "tsurugi_fdw : %s : attnum: %d", __func__, attnum + 1);
 
         auto value = Tsurugi::convert_type_to_pg(result_set, pgtype);
-        is_null[attnum] = value.first;
+        is_null[attnum] = value.first;  // null flag
         if (!is_null[attnum])
-            row[attnum] = value.second;
+            row[attnum] = value.second; // value
     }
     result_set = nullptr;
 }
