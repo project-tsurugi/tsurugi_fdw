@@ -76,12 +76,12 @@ DROP SERVER tsurugidb;
 \c contrib_regression
 DROP DATABASE contrib_regression_ddl;
 
---- Basic operations
----- Test setup: DDL of the Tsurugi
+--- Test setup: DDL of the Tsurugi
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_ddl_table (c INTEGER)
 ', 'tsurugidb');
 
+--- Basic operations
 ---- Test case: INSERT is the first operation
 CREATE DATABASE contrib_regression_ddl;
 \c contrib_regression_ddl
@@ -254,5 +254,117 @@ EXECUTE fdw_prepare_sel;
 \c contrib_regression
 DROP DATABASE contrib_regression_ddl;
 
----- Test teardown: DDL of the Tsurugi
+--- Operations during a transaction
+---- Test setup: DDL of the PostgreSQL
+CREATE DATABASE contrib_regression_ddl;
+\c contrib_regression_ddl
+CREATE EXTENSION tsurugi_fdw;
+
+---- Test case: Create server - COMMIT
+BEGIN;
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
+\des+
+COMMIT;
+\des+
+
+---- Test case: Re-create server - COMMIT
+BEGIN;
+DROP SERVER tsurugidb;
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw OPTIONS (endpoint 'ipc');
+\des+
+COMMIT;
+\des+
+
+---- Test case: Re-create server - ROLLBACK
+BEGIN;
+DROP SERVER tsurugidb;
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw
+  OPTIONS (endpoint 'stream', address '127.0.0.1', port '12345');
+\des+
+ROLLBACK;
+\des+
+
+---- Test re-setup: DDL of the PostgreSQL
+\c contrib_regression
+DROP DATABASE contrib_regression_ddl;
+
+CREATE DATABASE contrib_regression_ddl;
+\c contrib_regression_ddl
+
+CREATE EXTENSION tsurugi_fdw;
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
+CREATE FOREIGN TABLE fdw_ddl_table (c integer) SERVER tsurugidb;
+
+---- Test case: Alter server (incorrect server) - Connected in a transaction
+BEGIN;
+INSERT INTO fdw_ddl_table VALUES (1), (2);
+ALTER SERVER tsurugidb OPTIONS (dbname 'incorrect_dbname');
+\des+
+SELECT * FROM fdw_ddl_table ORDER BY c;
+ROLLBACK;
+\des+
+SELECT * FROM fdw_ddl_table ORDER BY c;
+
+---- Test re-setup: DDL of the PostgreSQL
+\c contrib_regression
+DROP DATABASE contrib_regression_ddl;
+
+CREATE DATABASE contrib_regression_ddl;
+\c contrib_regression_ddl
+
+CREATE EXTENSION tsurugi_fdw;
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
+CREATE FOREIGN TABLE fdw_ddl_table (c integer) SERVER tsurugidb;
+
+---- Test case: Alter server (correct server) - Connected in a transaction
+SELECT * FROM fdw_ddl_table ORDER BY c;
+ALTER SERVER tsurugidb OPTIONS (dbname 'incorrect_dbname');
+\des+
+BEGIN;
+ALTER SERVER tsurugidb OPTIONS (SET dbname 'tsurugi');
+\des+
+INSERT INTO fdw_ddl_table VALUES (1), (2);
+SELECT * FROM fdw_ddl_table ORDER BY c;
+ROLLBACK;
+\des+
+
+---- Test re-setup: DDL of the PostgreSQL
+\c contrib_regression
+DROP DATABASE contrib_regression_ddl;
+
+CREATE DATABASE contrib_regression_ddl;
+\c contrib_regression_ddl
+
+CREATE EXTENSION tsurugi_fdw;
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
+CREATE FOREIGN TABLE fdw_ddl_table (c integer) SERVER tsurugidb;
+
+---- Test case: ALTER SERVER during operations
+BEGIN;
+INSERT INTO fdw_ddl_table VALUES (3), (4);
+ALTER SERVER tsurugidb OPTIONS (dbname 'incorrect-1');
+\des+
+UPDATE fdw_ddl_table SET c=c+10;
+ALTER SERVER tsurugidb OPTIONS (SET dbname 'incorrect-2');
+\des+
+DELETE FROM fdw_ddl_table WHERE c=14;
+ALTER SERVER tsurugidb OPTIONS (SET dbname 'incorrect-3');
+\des+
+SELECT * FROM fdw_ddl_table ORDER BY c;
+ALTER SERVER tsurugidb OPTIONS (SET dbname 'incorrect-4');
+\des+
+END;
+
+BEGIN;
+ALTER SERVER tsurugidb OPTIONS (DROP dbname);
+\des+
+SELECT * FROM fdw_ddl_table ORDER BY c;
+DELETE FROM fdw_ddl_table;
+END;
+
+---- Test teardown: DDL of the PostgreSQL
+\c contrib_regression
+DROP DATABASE contrib_regression_ddl;
+
+--- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_ddl_table', 'tsurugidb');

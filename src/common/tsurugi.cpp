@@ -230,7 +230,15 @@ bool Tsurugi::is_initialized(Oid server_oid)
 	/* Check if it is not connected. */
 	if ((stub_ == nullptr) || (connection_ == nullptr))
 	{
+		elog(DEBUG4, "Not connected to Tsurugi.");
 		return false;
+	}
+
+	/* Checks if it is a transaction block in progress. */
+	if (transaction_ != nullptr)
+	{
+		elog(DEBUG4, "There is a transaction block in progress.");
+		return true;
 	}
 
 	/* Get ForeignServer object from server OID. */
@@ -241,7 +249,14 @@ bool Tsurugi::is_initialized(Oid server_oid)
 	ConnectionInfo now_sever_opts(server->options);
 
 	/* Check that the connection information matches. */
-	return (connection_info_ == now_sever_opts);
+	if (connection_info_ != now_sever_opts)
+	{
+		elog(DEBUG4, "Connection information has been changed.");
+		return false;
+	}
+
+	elog(DEBUG4, "Already connected to the database.");
+	return true;
 }
 
 /**
@@ -268,10 +283,10 @@ ERROR_CODE Tsurugi::init(Oid server_oid)
 	connection_info_ = now_sever_opts;
 
 	if (connection_info_.is_ipc()) {
-		elog(DEBUG2, R"(  endpoint="%s", dbname="%s")",
+		elog(DEBUG2, R"(endpoint="%s", dbname="%s")",
 				connection_info_.endpoint().data(), connection_info_.dbname().data());
 	} else if (connection_info_.is_stream()) {
-		elog(DEBUG2, R"(  endpoint="%s", host="%s", port="%s")",
+		elog(DEBUG2, R"(endpoint="%s", host="%s", port="%s")",
 				connection_info_.endpoint().data(), connection_info_.address().data(),
 				connection_info_.port().data());
 	}

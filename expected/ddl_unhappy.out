@@ -421,6 +421,202 @@ DEALLOCATE fdw_prepare_ins;
 DEALLOCATE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_upd;
 DEALLOCATE fdw_prepare_del;
+---- Test setup: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_ddl_table;
+DROP SERVER tsurugidb;
+--- Operations during a transaction
+---- Test re-setup: DDL of the PostgreSQL
+\c contrib_regression
+DROP DATABASE contrib_regression_ddl;
+CREATE DATABASE contrib_regression_ddl;
+\c contrib_regression_ddl
+CREATE EXTENSION tsurugi_fdw;
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
+CREATE FOREIGN TABLE fdw_ddl_table (c integer) SERVER tsurugidb;
+---- Test case: Alter server (incorrect server) - Connected outside a transaction
+SELECT * FROM fdw_ddl_table ORDER BY c;
+ c 
+---
+(0 rows)
+
+BEGIN;
+ALTER SERVER tsurugidb OPTIONS (dbname 'incorrect');
+\des+
+                                                List of foreign servers
+   Name    |  Owner   | Foreign-data wrapper | Access privileges | Type | Version |     FDW options      | Description 
+-----------+----------+----------------------+-------------------+------+---------+----------------------+-------------
+ tsurugidb | postgres | tsurugi_fdw          |                   |      |         | (dbname 'incorrect') | 
+(1 row)
+
+SELECT * FROM fdw_ddl_table ORDER BY c;
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to make shared memory for Tsurugi. error: SERVER_FAILURE(10)
+No detail message.
+CONTEXT:  SQL query: 
+END;
+\des+
+                                           List of foreign servers
+   Name    |  Owner   | Foreign-data wrapper | Access privileges | Type | Version | FDW options | Description 
+-----------+----------+----------------------+-------------------+------+---------+-------------+-------------
+ tsurugidb | postgres | tsurugi_fdw          |                   |      |         |             | 
+(1 row)
+
+SELECT * FROM fdw_ddl_table ORDER BY c;
+ c 
+---
+(0 rows)
+
+---- Test case: Alter server (correct server) - Connected in a transaction
+SELECT * FROM fdw_ddl_table ORDER BY c;
+ c 
+---
+(0 rows)
+
+ALTER SERVER tsurugidb OPTIONS (dbname 'incorrect');
+\des+
+                                                List of foreign servers
+   Name    |  Owner   | Foreign-data wrapper | Access privileges | Type | Version |     FDW options      | Description 
+-----------+----------+----------------------+-------------------+------+---------+----------------------+-------------
+ tsurugidb | postgres | tsurugi_fdw          |                   |      |         | (dbname 'incorrect') | 
+(1 row)
+
+BEGIN;
+INSERT INTO fdw_ddl_table VALUES (1), (2);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to make shared memory for Tsurugi. error: SERVER_FAILURE(10)
+No detail message.
+CONTEXT:  SQL query: 
+END;
+BEGIN;
+ALTER SERVER tsurugidb OPTIONS (SET dbname 'tsurugi');
+INSERT INTO fdw_ddl_table VALUES (1), (2);
+SELECT * FROM fdw_ddl_table ORDER BY c;
+ c 
+---
+ 1
+ 2
+(2 rows)
+
+END;
+---- Test re-setup: DDL of the PostgreSQL
+\c contrib_regression
+DROP DATABASE contrib_regression_ddl;
+CREATE DATABASE contrib_regression_ddl;
+\c contrib_regression_ddl
+CREATE EXTENSION tsurugi_fdw;
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
+CREATE FOREIGN TABLE fdw_ddl_table (c integer) SERVER tsurugidb;
+---- Test case: ALTER SERVER during operations
+BEGIN;
+INSERT INTO fdw_ddl_table VALUES (3), (4);
+ALTER SERVER tsurugidb OPTIONS (dbname 'incorrect-1');
+\des+
+                                                 List of foreign servers
+   Name    |  Owner   | Foreign-data wrapper | Access privileges | Type | Version |      FDW options       | Description 
+-----------+----------+----------------------+-------------------+------+---------+------------------------+-------------
+ tsurugidb | postgres | tsurugi_fdw          |                   |      |         | (dbname 'incorrect-1') | 
+(1 row)
+
+UPDATE fdw_ddl_table SET c=c+10;
+ALTER SERVER tsurugidb OPTIONS (SET dbname 'incorrect-2');
+\des+
+                                                 List of foreign servers
+   Name    |  Owner   | Foreign-data wrapper | Access privileges | Type | Version |      FDW options       | Description 
+-----------+----------+----------------------+-------------------+------+---------+------------------------+-------------
+ tsurugidb | postgres | tsurugi_fdw          |                   |      |         | (dbname 'incorrect-2') | 
+(1 row)
+
+DELETE FROM fdw_ddl_table WHERE c=14;
+ALTER SERVER tsurugidb OPTIONS (SET dbname 'incorrect-3');
+\des+
+                                                 List of foreign servers
+   Name    |  Owner   | Foreign-data wrapper | Access privileges | Type | Version |      FDW options       | Description 
+-----------+----------+----------------------+-------------------+------+---------+------------------------+-------------
+ tsurugidb | postgres | tsurugi_fdw          |                   |      |         | (dbname 'incorrect-3') | 
+(1 row)
+
+SELECT * FROM fdw_ddl_table ORDER BY c;
+ c  
+----
+ 11
+ 12
+ 13
+(3 rows)
+
+ALTER SERVER tsurugidb OPTIONS (SET dbname 'incorrect-4');
+\des+
+                                                 List of foreign servers
+   Name    |  Owner   | Foreign-data wrapper | Access privileges | Type | Version |      FDW options       | Description 
+-----------+----------+----------------------+-------------------+------+---------+------------------------+-------------
+ tsurugidb | postgres | tsurugi_fdw          |                   |      |         | (dbname 'incorrect-4') | 
+(1 row)
+
+END;
+BEGIN;
+SELECT * FROM fdw_ddl_table ORDER BY c;
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to make shared memory for Tsurugi. error: SERVER_FAILURE(10)
+No detail message.
+CONTEXT:  SQL query: 
+END;
+ALTER SERVER tsurugidb OPTIONS (DROP dbname);
+\des+
+                                           List of foreign servers
+   Name    |  Owner   | Foreign-data wrapper | Access privileges | Type | Version | FDW options | Description 
+-----------+----------+----------------------+-------------------+------+---------+-------------+-------------
+ tsurugidb | postgres | tsurugi_fdw          |                   |      |         |             | 
+(1 row)
+
+BEGIN;
+SELECT * FROM fdw_ddl_table ORDER BY c;
+ c  
+----
+ 11
+ 12
+ 13
+(3 rows)
+
+DELETE FROM fdw_ddl_table;
+END;
+--- Test re-setup: DDL of the PostgreSQL
+\c contrib_regression
+DROP DATABASE contrib_regression_ddl;
+CREATE DATABASE contrib_regression_ddl;
+\c contrib_regression_ddl
+CREATE EXTENSION tsurugi_fdw;
+CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
+CREATE FOREIGN TABLE fdw_ddl_table (c integer) SERVER tsurugidb;
+--- Test case: ALTER SERVER during operations
+INSERT INTO fdw_ddl_table VALUES (1), (2);
+ALTER SERVER tsurugidb OPTIONS (dbname 'incorrect');
+SELECT * FROM fdw_ddl_table ORDER BY c;
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to make shared memory for Tsurugi. error: SERVER_FAILURE(10)
+No detail message.
+CONTEXT:  SQL query: 
+ALTER SERVER tsurugidb OPTIONS (SET dbname 'tsurugi');
+UPDATE fdw_ddl_table SET c=c+10;
+ALTER SERVER tsurugidb OPTIONS (DROP dbname);
+SELECT * FROM fdw_ddl_table ORDER BY c;
+ c  
+----
+ 11
+ 12
+(2 rows)
+
+ALTER SERVER tsurugidb OPTIONS (dbname 'incorrect');
+DELETE FROM fdw_ddl_table;
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to make shared memory for Tsurugi. error: SERVER_FAILURE(10)
+No detail message.
+CONTEXT:  SQL query: 
+ALTER SERVER tsurugidb OPTIONS (SET dbname 'tsurugi');
+DELETE FROM fdw_ddl_table;
+SELECT * FROM fdw_ddl_table ORDER BY c;
+ c 
+---
+(0 rows)
+
 --- Test teardown: DDL of the PostgreSQL
 \c contrib_regression
 DROP DATABASE contrib_regression_ddl;
