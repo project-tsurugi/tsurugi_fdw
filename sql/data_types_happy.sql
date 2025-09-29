@@ -218,7 +218,7 @@ SELECT * FROM fdw_type_bigint ORDER BY c;
 INSERT INTO fdw_type_decimal VALUES (12345);
 INSERT INTO fdw_type_decimal VALUES (-12345);
 INSERT INTO fdw_type_decimal VALUES (NULL);
-SELECT * FROM fdw_type_decimal;
+SELECT * FROM fdw_type_decimal ORDER BY c DESC;
 
 UPDATE fdw_type_decimal SET c = 987654 WHERE c IS NULL;
 SELECT * FROM fdw_type_decimal ORDER BY c;
@@ -233,7 +233,7 @@ SELECT * FROM fdw_type_decimal ORDER BY c;
 INSERT INTO fdw_type_decimal_p VALUES (12345);
 INSERT INTO fdw_type_decimal_p VALUES (-12345);
 INSERT INTO fdw_type_decimal_p VALUES (NULL);
-SELECT * FROM fdw_type_decimal_p;
+SELECT * FROM fdw_type_decimal_p ORDER BY c DESC;
 
 UPDATE fdw_type_decimal_p SET c = 98765 WHERE c IS NULL;
 SELECT * FROM fdw_type_decimal_p ORDER BY c;
@@ -248,7 +248,7 @@ SELECT * FROM fdw_type_decimal_p ORDER BY c;
 INSERT INTO fdw_type_decimal_ps VALUES (123.45);
 INSERT INTO fdw_type_decimal_ps VALUES (-123.45);
 INSERT INTO fdw_type_decimal_ps VALUES (NULL);
-SELECT * FROM fdw_type_decimal_ps;
+SELECT * FROM fdw_type_decimal_ps ORDER BY c DESC;
 
 UPDATE fdw_type_decimal_ps SET c = 987.65 WHERE c IS NULL;
 SELECT * FROM fdw_type_decimal_ps ORDER BY c;
@@ -265,7 +265,7 @@ INSERT INTO fdw_type_decimal_ps VALUES(floor(-42.8));
 INSERT INTO fdw_type_decimal_ps VALUES(mod(9, 4));
 INSERT INTO fdw_type_decimal_ps VALUES(round(42.4));
 INSERT INTO fdw_type_decimal_ps VALUES(round(42.4382, 2));
-SELECT * FROM fdw_type_decimal_ps;
+SELECT * FROM fdw_type_decimal_ps ORDER BY c;
 
 --- decimal(38, 0)
 INSERT INTO fdw_type_decimal_ps0 VALUES (0);
@@ -277,7 +277,7 @@ INSERT INTO fdw_type_decimal_ps0 VALUES (-1);
 INSERT INTO fdw_type_decimal_ps0 VALUES (-18446744073709551615);
 INSERT INTO fdw_type_decimal_ps0 VALUES (-18446744073709551616);
 INSERT INTO fdw_type_decimal_ps0 VALUES (-99999999999999999999999999999999999999);
-SELECT * FROM fdw_type_decimal_ps0;
+SELECT * FROM fdw_type_decimal_ps0 ORDER BY c;
 
 --- decimal(38, 38)
 INSERT INTO fdw_type_decimal_ps38 VALUES (0);
@@ -289,13 +289,13 @@ INSERT INTO fdw_type_decimal_ps38 VALUES (-0.00000000000000000000000000000000000
 INSERT INTO fdw_type_decimal_ps38 VALUES (-0.00000000000000000018446744073709551615);
 INSERT INTO fdw_type_decimal_ps38 VALUES (-0.00000000000000000018446744073709551616);
 INSERT INTO fdw_type_decimal_ps38 VALUES (-0.99999999999999999999999999999999999999);
-SELECT * FROM fdw_type_decimal_ps38;
+SELECT * FROM fdw_type_decimal_ps38 ORDER BY c;
 
 --- numeric
 INSERT INTO fdw_type_numeric VALUES (12345);
 INSERT INTO fdw_type_numeric VALUES (-12345);
 INSERT INTO fdw_type_numeric VALUES (NULL);
-SELECT * FROM fdw_type_numeric;
+SELECT * FROM fdw_type_numeric ORDER BY c DESC;
 
 UPDATE fdw_type_numeric SET c = 987654 WHERE c IS NULL;
 SELECT * FROM fdw_type_numeric ORDER BY c;
@@ -310,7 +310,7 @@ SELECT * FROM fdw_type_numeric ORDER BY c;
 INSERT INTO fdw_type_numeric_p VALUES (12345);
 INSERT INTO fdw_type_numeric_p VALUES (-12345);
 INSERT INTO fdw_type_numeric_p VALUES (NULL);
-SELECT * FROM fdw_type_numeric_p;
+SELECT * FROM fdw_type_numeric_p ORDER BY c DESC;
 
 UPDATE fdw_type_numeric_p SET c = 98765 WHERE c IS NULL;
 SELECT * FROM fdw_type_numeric_p ORDER BY c;
@@ -325,7 +325,7 @@ SELECT * FROM fdw_type_numeric_p ORDER BY c;
 INSERT INTO fdw_type_numeric_ps VALUES (123.45);
 INSERT INTO fdw_type_numeric_ps VALUES (-123.45);
 INSERT INTO fdw_type_numeric_ps VALUES (NULL);
-SELECT * FROM fdw_type_numeric_ps;
+SELECT * FROM fdw_type_numeric_ps ORDER BY c DESC;
 
 UPDATE fdw_type_numeric_ps SET c = 987.65 WHERE c IS NULL;
 SELECT * FROM fdw_type_numeric_ps ORDER BY c;
@@ -342,7 +342,7 @@ INSERT INTO fdw_type_numeric_ps VALUES(floor(-42.8));
 INSERT INTO fdw_type_numeric_ps VALUES(mod(9, 4));
 INSERT INTO fdw_type_numeric_ps VALUES(round(42.4));
 INSERT INTO fdw_type_numeric_ps VALUES(round(42.4382, 2));
-SELECT * FROM fdw_type_numeric_ps;
+SELECT * FROM fdw_type_numeric_ps ORDER BY c DESC;
 
 --- numeric(38, 0)
 INSERT INTO fdw_type_numeric_ps0 VALUES (0);
@@ -354,7 +354,7 @@ INSERT INTO fdw_type_numeric_ps0 VALUES (-1);
 INSERT INTO fdw_type_numeric_ps0 VALUES (-18446744073709551615);
 INSERT INTO fdw_type_numeric_ps0 VALUES (-18446744073709551616);
 INSERT INTO fdw_type_numeric_ps0 VALUES (-99999999999999999999999999999999999999);
-SELECT * FROM fdw_type_numeric_ps0;
+SELECT * FROM fdw_type_numeric_ps0 ORDER BY c DESC;
 
 --- numeric(38, 38)
 INSERT INTO fdw_type_numeric_ps38 VALUES (0);  -- see tsurugi-issues#736
@@ -366,7 +366,7 @@ INSERT INTO fdw_type_numeric_ps38 VALUES (-0.00000000000000000000000000000000000
 INSERT INTO fdw_type_numeric_ps38 VALUES (-0.00000000000000000018446744073709551615);
 INSERT INTO fdw_type_numeric_ps38 VALUES (-0.00000000000000000018446744073709551616);
 INSERT INTO fdw_type_numeric_ps38 VALUES (-0.99999999999999999999999999999999999999);
-SELECT * FROM fdw_type_numeric_ps38;
+SELECT * FROM fdw_type_numeric_ps38 ORDER BY c DESC;
 
 --- real
 INSERT INTO fdw_type_real VALUES (0.1);
