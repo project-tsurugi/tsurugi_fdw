@@ -41,16 +41,17 @@ PREPARE fdw_prepare_ins (integer) AS
   INSERT INTO PUBLIC.fdw_case_table ("Col") VALUES ($1);
 EXECUTE fdw_prepare_ins (6);
 DEALLOCATE fdw_prepare_ins;
-PREPARE fdw_prepare_sel AS SELECT * FROM public.fdw_case_table;
+PREPARE fdw_prepare_sel AS
+  SELECT * FROM public.fdw_case_table ORDER BY col, Col DESC;
 EXECUTE fdw_prepare_sel;
  col  | Col 
 ------+-----
+      |   6
+      |   4
  1000 |   1
  2000 |   2
  3000 |    
-      |   4
  5000 |    
-      |   6
 (6 rows)
 
 DEALLOCATE fdw_prepare_sel;

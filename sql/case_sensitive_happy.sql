@@ -21,7 +21,7 @@ INSERT INTO "public".fdw_case_table (col) VALUES (3000);
 INSERT INTO "public"."fdw_case_table" (Col) VALUES (4);
 INSERT INTO Public.fdw_case_table ("col") VALUES (5000);
 INSERT INTO PUBLIC.fdw_case_table ("Col") VALUES (6);
-SELECT * FROM public.fdw_case_table;
+SELECT * FROM public.fdw_case_table ORDER BY col, Col DESC;
 
 UPDATE fdw_case_table SET col = col + 100;
 UPDATE public.fdw_case_table SET Col = Col + 10;

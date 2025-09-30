@@ -4,6 +4,12 @@ SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_case_table', 'tsurugidb');
  DROP TABLE
 (1 row)
 
+SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_ddl_table', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
 SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_del_variation_table', 'tsurugidb');
  tg_execute_ddl 
 ----------------

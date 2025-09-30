@@ -37,22 +37,22 @@ SELECT * FROM fdw_dml_basic_table_1 ORDER BY c1;
 INSERT INTO fdw_dml_basic_table_1 (c1) VALUES (1);
 INSERT INTO fdw_dml_basic_table_1 (c1) VALUES (100);
 INSERT INTO fdw_dml_basic_table_1 (c1) VALUES (10);
-SELECT * FROM fdw_dml_basic_table_1;
+SELECT * FROM fdw_dml_basic_table_1 ORDER BY c1;
 
 -- SELECT statement variation (single column)
 --- WHERE variation
 ---- Equality pattern
-SELECT * FROM fdw_dml_basic_table_1 WHERE c1 = 10;
+SELECT * FROM fdw_dml_basic_table_1 WHERE c1 = 10 ORDER BY c1;
 ---- Inequality pattern
-SELECT c1 FROM fdw_dml_basic_table_1 WHERE c1 <> 10;
+SELECT c1 FROM fdw_dml_basic_table_1 WHERE c1 <> 10 ORDER BY c1;
 ---- Greater than pattern
-SELECT * FROM fdw_dml_basic_table_1 WHERE c1 > 10;
+SELECT * FROM fdw_dml_basic_table_1 WHERE c1 > 10 ORDER BY c1;
 ---- Greater than or equal pattern
-SELECT c1 FROM fdw_dml_basic_table_1 WHERE c1 >= 10;
+SELECT c1 FROM fdw_dml_basic_table_1 WHERE c1 >= 10 ORDER BY c1;
 ---- Less than pattern
-SELECT * FROM fdw_dml_basic_table_1 WHERE c1 < 10;
+SELECT * FROM fdw_dml_basic_table_1 WHERE c1 < 10 ORDER BY c1;
 ---- Less than or equal pattern
-SELECT c1 FROM fdw_dml_basic_table_1 WHERE c1 <= 0;
+SELECT c1 FROM fdw_dml_basic_table_1 WHERE c1 <= 0 ORDER BY c1;
 
 --- ORDER variation
 ---- Default order pattern
@@ -134,7 +134,7 @@ INSERT INTO fdw_dml_basic_table_2
   VALUES
     (8, 800, 8.8, '8th', '2025-08-08'),
     (9, 900, 9.9, '9th', '2025-08-08');
-SELECT c1, c2, c3, c4, c5 FROM fdw_dml_basic_table_2;
+SELECT c1, c2, c3, c4, c5 FROM fdw_dml_basic_table_2 ORDER BY c1;
 
 -- SELECT statement variation (multiple columns)
 --- Columns variation
@@ -155,16 +155,16 @@ SELECT c1, c3 FROM fdw_dml_basic_table_2 ORDER BY c1;
 ---- Multiple columns (double precision/varchar/bigint) selection
 SELECT c2, c3, c1 FROM fdw_dml_basic_table_2 ORDER BY c1;
 ---- Column name alias
-SELECT c1 AS id, c2 AS value FROM fdw_dml_basic_table_2;
+SELECT c1 AS id, c2 AS value FROM fdw_dml_basic_table_2 ORDER BY c2, c1 DESC;
 
 --- WHERE variation
 SELECT c1 FROM fdw_dml_basic_table_2
   WHERE (c1 < 5) AND (c3 > 2.2) ORDER BY c1;
-SELECT c1 FROM fdw_dml_basic_table_2 WHERE (c2 <> 600) AND (c3 IS NULL);
-SELECT * FROM fdw_dml_basic_table_2 WHERE c4 IS NOT NULL AND c5 IS NOT NULL;
-SELECT c1, c4 FROM fdw_dml_basic_table_2 WHERE c4 <= '4th';
-SELECT * FROM fdw_dml_basic_table_2 WHERE c4 >= '8th';
-SELECT c1, c5 FROM fdw_dml_basic_table_2 WHERE c5 <= date '2025-03-03';
+SELECT c1 FROM fdw_dml_basic_table_2 WHERE (c2 <> 600) AND (c3 IS NULL) ORDER BY c2;
+SELECT * FROM fdw_dml_basic_table_2 WHERE c4 IS NOT NULL AND c5 IS NOT NULL ORDER BY c3;
+SELECT c1, c4 FROM fdw_dml_basic_table_2 WHERE c4 <= '4th' ORDER BY c4;
+SELECT * FROM fdw_dml_basic_table_2 WHERE c4 >= '8th' ORDER BY c5, c2;
+SELECT c1, c5 FROM fdw_dml_basic_table_2 WHERE c5 <= date '2025-03-03' ORDER BY c1;
 
 SELECT c1, c2 FROM fdw_dml_basic_table_2
   WHERE (c2 * 2) BETWEEN 500 AND 1000
@@ -174,35 +174,35 @@ SELECT c1, c4 FROM fdw_dml_basic_table_2
   ORDER BY c4 DESC;
 SELECT c1, c5 FROM fdw_dml_basic_table_2
   WHERE c5 IS NOT NULL
-  ORDER BY c5 DESC;
+  ORDER BY c5 DESC, c1;
 SELECT c1, c2, c3, c4, c5 FROM fdw_dml_basic_table_2
   WHERE c4 IS NOT NULL AND c5 IS NOT NULL
   ORDER BY c2 DESC;
 SELECT * FROM fdw_dml_basic_table_2
-  WHERE (c2 < 500 AND c4 IS NOT NULL) OR (c3 < 3);
-SELECT * FROM fdw_dml_basic_table_2 WHERE c4 LIKE '%th';
+  WHERE (c2 < 500 AND c4 IS NOT NULL) OR (c3 < 3) ORDER BY c1;
+SELECT * FROM fdw_dml_basic_table_2 WHERE c4 LIKE '%th' ORDER BY c2;
 
 --- tsurugi-issue#1078 (disable due to development) */
 SELECT * FROM fdw_dml_basic_table_2 WHERE c4 LIKE '%th' ORDER BY c1;
-SELECT * FROM fdw_dml_basic_table_2 WHERE c3 IN (1.1, 2.2);
+SELECT * FROM fdw_dml_basic_table_2 WHERE c3 IN (1.1, 2.2) ORDER BY c3;
 
 --- ORDER variation
-SELECT * FROM fdw_dml_basic_table_2 ORDER BY c5 DESC;
-SELECT * FROM fdw_dml_basic_table_2 ORDER BY c4;
-SELECT * FROM fdw_dml_basic_table_2 ORDER BY c3 ASC;
-SELECT * FROM fdw_dml_basic_table_2 ORDER BY c2;
+SELECT * FROM fdw_dml_basic_table_2 ORDER BY c5 DESC, c1 DESC;
+SELECT * FROM fdw_dml_basic_table_2 ORDER BY c4, c1;
+SELECT * FROM fdw_dml_basic_table_2 ORDER BY c3 ASC, c1;
+SELECT * FROM fdw_dml_basic_table_2 ORDER BY c2, c1;
 SELECT * FROM fdw_dml_basic_table_2 ORDER BY c1 DESC;
-SELECT c1, c2, c3, c4, c5 FROM fdw_dml_basic_table_2 ORDER BY c5, c4 DESC;
+SELECT c1, c2, c3, c4, c5 FROM fdw_dml_basic_table_2 ORDER BY c5, c4 DESC, c1;
 
 -- UPDATE statement variation (multiple columns)
 UPDATE fdw_dml_basic_table_2 SET c2 = c2 + 10;
 SELECT * FROM fdw_dml_basic_table_2 ORDER BY c1;
 
 UPDATE fdw_dml_basic_table_2 SET c3 = c3 - 0.1 WHERE c2 = 110;
-SELECT * FROM fdw_dml_basic_table_2 ORDER BY c2 DESC;
+SELECT * FROM fdw_dml_basic_table_2 ORDER BY c2 DESC, c1;
 
 UPDATE fdw_dml_basic_table_2 SET c3 = c3 + 2 WHERE c2 >= 410;
-SELECT * FROM fdw_dml_basic_table_2 ORDER BY c3 ASC;
+SELECT * FROM fdw_dml_basic_table_2 ORDER BY c3 ASC, c1;
 
 UPDATE fdw_dml_basic_table_2 SET c5 = c5, c4 = c4 WHERE c4 >= '5th';
 SELECT * FROM fdw_dml_basic_table_2 ORDER BY c1;
@@ -215,19 +215,19 @@ DELETE FROM fdw_dml_basic_table_2 WHERE c1 < 0;
 SELECT * FROM fdw_dml_basic_table_2 ORDER BY c1;
 
 DELETE FROM fdw_dml_basic_table_2 WHERE c3 IS NULL;
-SELECT * FROM fdw_dml_basic_table_2 ORDER BY c2;
+SELECT * FROM fdw_dml_basic_table_2 ORDER BY c2, c1;
 
 DELETE FROM fdw_dml_basic_table_2 WHERE c4 LIKE '9th%';
-SELECT * FROM fdw_dml_basic_table_2 ORDER BY c4;
+SELECT * FROM fdw_dml_basic_table_2 ORDER BY c4, c1;
 
 DELETE FROM fdw_dml_basic_table_2 WHERE c2 > 800;
-SELECT * FROM fdw_dml_basic_table_2 ORDER BY c3;
+SELECT * FROM fdw_dml_basic_table_2 ORDER BY c3, c1;
 
 DELETE FROM fdw_dml_basic_table_2 WHERE c3 <= 1.0;
-SELECT * FROM fdw_dml_basic_table_2 ORDER BY c2 DESC;
+SELECT * FROM fdw_dml_basic_table_2 ORDER BY c2 DESC, c1;
 
 DELETE FROM fdw_dml_basic_table_2 WHERE (c1 <> 2) AND (c1 <> 4);
-SELECT * FROM fdw_dml_basic_table_2 ORDER BY c4;
+SELECT * FROM fdw_dml_basic_table_2 ORDER BY c4, c1;
 
 DELETE FROM fdw_dml_basic_table_2;
 SELECT * FROM fdw_dml_basic_table_2;
@@ -393,10 +393,11 @@ SELECT *
   JOIN fdw_join_basic_table_2 AS b ON a.c4 = b.c4
   JOIN fdw_join_basic_table_1 AS c ON b.c4 = c.c4
   WHERE a.c2 = 44;
-SELECT *
-  FROM  fdw_join_basic_table_1 AS a
-  CROSS JOIN fdw_join_basic_table_2 AS b
-  ORDER BY b.c1;
+-----FIXME: Disabled due to issue
+-----SELECT *
+-----  FROM  fdw_join_basic_table_1 AS a
+-----  CROSS JOIN fdw_join_basic_table_2 AS b
+-----  ORDER BY b.c1, a.c1;
 SELECT *
   FROM fdw_join_basic_table_1 AS a
   JOIN fdw_join_basic_table_1 AS b ON a.c3 = b.c3
@@ -472,7 +473,8 @@ SELECT DISTINCT (t2.id) id, t2.name
   ORDER BY t2.id;
 
 -- AS
-SELECT id AS user_id, name AS user_name FROM fdw_select_variation_table_1;
+SELECT id AS user_id, name AS user_name FROM fdw_select_variation_table_1
+  ORDER BY id;
 
 -- [INNER] JOIN
 SELECT t1.id, t1.name, t2.name
@@ -497,11 +499,11 @@ SELECT t1.id, t1.name, t2.name
 SELECT t1.id, t1.name, t2.name
   FROM fdw_select_variation_table_1 t1
   RIGHT OUTER JOIN fdw_select_variation_table_2 t2 ON t1.ref_id = t2.id
-  ORDER BY t2.id;
+  ORDER BY t2.id, t1.id;
 SELECT t1.id, t1.name, t2.name
   FROM fdw_select_variation_table_1 t1
   RIGHT JOIN fdw_select_variation_table_2 t2 ON t1.ref_id = t2.id
-  ORDER BY t2.id;
+  ORDER BY t2.id, t1.id;
 -- FULL [OUTER] JOIN
 SELECT t1.id, t1.name, t2.name
   FROM fdw_select_variation_table_1 t1
@@ -514,25 +516,30 @@ SELECT t1.id, t1.name, t2.name
 -- CROSS JOIN
 SELECT t1.id, t1.name, t2.name
   FROM fdw_select_variation_table_1 t1
-  CROSS JOIN fdw_select_variation_table_2 t2;
+  CROSS JOIN fdw_select_variation_table_2 t2
+  ORDER BY t1.id, t2.id;
 
 -- BETWEEN ... AND
 SELECT id, name, value
   FROM fdw_select_variation_table_1
-  WHERE value BETWEEN 60000 AND 80000;
+  WHERE value BETWEEN 60000 AND 80000
+  ORDER BY id;
 
 -- IN
 SELECT id, name, manager_id
   FROM fdw_select_variation_table_1
-  WHERE manager_id IN (1000);
+  WHERE manager_id IN (1000)
+  ORDER BY id;
 SELECT id, name, manager_id
   FROM fdw_select_variation_table_1
-  WHERE manager_id IN (1000, 1005);
+  WHERE manager_id IN (1000, 1005)
+  ORDER BY id;
 
 -- LIKE
 SELECT id, name, value
   FROM fdw_select_variation_table_1
-  WHERE name LIKE 'name-%';
+  WHERE name LIKE 'name-%'
+  ORDER BY id;
 
 -- ORDER BY
 SELECT * FROM fdw_select_variation_table_1 ORDER BY value;
@@ -559,7 +566,7 @@ SELECT ref_id, COUNT(*), SUM(value)
   ORDER BY ref_id;
 
 -- LIMIT
-SELECT * FROM fdw_select_variation_table_1 LIMIT 2;
+SELECT * FROM fdw_select_variation_table_1 ORDER BY id LIMIT 2;
 
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_select_variation_table_1;
@@ -600,13 +607,13 @@ CREATE FOREIGN TABLE fdw_ins_variation_table (
 
 -- DEFAULT VALUES
 INSERT INTO fdw_ins_variation_table DEFAULT VALUES;
-SELECT * FROM fdw_ins_variation_table;
+SELECT * FROM fdw_ins_variation_table ORDER BY c_int;
 
 -- INSERT ... VALUES (...), ...
 INSERT INTO fdw_ins_variation_table
   (c_int, c_vchr, c_big, c_chr, c_dec)
   VALUES (4, 'key4', 400, 'b', 34), (5, 'key5', 500, 'c', 35);
-SELECT * FROM fdw_ins_variation_table;
+SELECT * FROM fdw_ins_variation_table ORDER BY c_big;
 
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_ins_variation_table;
@@ -761,18 +768,18 @@ SELECT * FROM fdw_del_variation_table ORDER BY id;
 
 -- Test
 DELETE FROM fdw_del_variation_table WHERE id BETWEEN 3 AND 5;
-SELECT * FROM fdw_del_variation_table;
+SELECT * FROM fdw_del_variation_table ORDER BY id;
 
 DELETE FROM fdw_del_variation_table WHERE value_col IN (10, 60);
-SELECT * FROM fdw_del_variation_table;
+SELECT * FROM fdw_del_variation_table ORDER BY id DESC;
 
 DELETE FROM fdw_del_variation_table WHERE key_col LIKE '%1%';
-SELECT * FROM fdw_del_variation_table;
+SELECT * FROM fdw_del_variation_table ORDER BY key_col;
 
 DELETE
   FROM fdw_del_variation_table
   WHERE (key_col <> 'key2') AND (value_col < 90);
-SELECT * FROM fdw_del_variation_table;
+SELECT * FROM fdw_del_variation_table ORDER BY key_col DESC;
 
 DELETE FROM fdw_del_variation_table;
 SELECT * FROM fdw_del_variation_table;

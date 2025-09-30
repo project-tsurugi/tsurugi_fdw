@@ -142,7 +142,7 @@ PREPARE fdw_prepare_sel AS
     SELECT id, name, value FROM fdw_sel_unsupported_test WHERE value >= 75000
   )
   SELECT * FROM value_data;
------FIXME: Disabled due to BUG-#1
+-----FIXME: Disabled due to issues
 -----EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel;
 -- WITH RECURSIVE
@@ -157,7 +157,7 @@ PREPARE fdw_prepare_sel AS
       JOIN chart oc ON e.id = oc.id
   )
   SELECT * FROM chart ORDER BY level, id;
------FIXME: Disabled due to BUG-#1
+-----FIXME: Disabled due to issues
 -----EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel;
 -- Sub queries
@@ -409,7 +409,7 @@ PREPARE fdw_prepare_with AS
   )
   UPDATE fdw_upd_unsupported_test SET value_col = upd_data.new_val
     FROM upd_data WHERE fdw_upd_unsupported_test.key_col = upd_data.key_col;
------FIXME: Disabled due to BUG-#1
+-----FIXME: Disabled due to issues
 -----EXECUTE fdw_prepare_with;
 DEALLOCATE fdw_prepare_with;
 -- ONLY
@@ -555,7 +555,7 @@ PREPARE fdw_prepare_with AS
   DELETE FROM fdw_del_variation_table_1
     USING keys_to_delete
       WHERE fdw_del_variation_table_1.key_col = keys_to_delete.key_col;
------FIXME: Disabled due to BUG-#1
+-----FIXME: Disabled due to issues
 -----EXECUTE fdw_prepare_with;
 DEALLOCATE fdw_prepare_with;
 -- ONLY

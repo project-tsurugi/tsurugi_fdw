@@ -18,7 +18,9 @@ SHLIB_LINK = -logawayama-stub -lboost_filesystem
 
 EXTENSION = tsurugi_fdw
 DATA = tsurugi_fdw--1.3.0.sql \
-		tsurugi_fdw--1.0.0--1.1.0.sql
+		tsurugi_fdw--1.0.0--1.1.0.sql \
+		tsurugi_fdw--1.1.0--1.2.0.sql \
+		tsurugi_fdw--1.2.0--1.3.0.sql
 
 # REGRESS_BASIC: Run basic tests.
 # REGRESS_EXTRA: Run extra tests.
@@ -32,7 +34,8 @@ endif
 # Test settings according to regression test type
 REGRESS := test_preparation
 ifdef REGRESS_BASIC
-	REGRESS += dml_happy data_types_happy case_sensitive_happy \
+	REGRESS += ddl_happy \
+	           dml_happy data_types_happy case_sensitive_happy \
 	           prep_dml_happy prep_data_types_happy prep_case_sensitive_happy \
 	           manual_tutorial \
 	           udf_transaction_happy udf_tg_show_tables_happy udf_tg_verify_tables_happy \

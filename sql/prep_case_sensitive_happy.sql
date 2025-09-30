@@ -44,7 +44,8 @@ PREPARE fdw_prepare_ins (integer) AS
 EXECUTE fdw_prepare_ins (6);
 DEALLOCATE fdw_prepare_ins;
 
-PREPARE fdw_prepare_sel AS SELECT * FROM public.fdw_case_table;
+PREPARE fdw_prepare_sel AS
+  SELECT * FROM public.fdw_case_table ORDER BY col, Col DESC;
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel;
 
