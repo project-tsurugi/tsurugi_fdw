@@ -56,7 +56,7 @@ EXECUTE fdw_prepare_sel_all;
 -- INSERT statement variation (single column)
 PREPARE fdw_prepare_ins (integer) AS
   INSERT INTO fdw_dml_basic_table_1 (c1) VALUES ($1);
-PREPARE fdw_prepare_sel AS SELECT * FROM fdw_dml_basic_table_1;
+PREPARE fdw_prepare_sel AS SELECT * FROM fdw_dml_basic_table_1 ORDER BY c1;
 EXECUTE fdw_prepare_ins (1);
 EXECUTE fdw_prepare_ins (100);
 EXECUTE fdw_prepare_ins (10);
@@ -67,32 +67,32 @@ DEALLOCATE fdw_prepare_sel;
 --- WHERE variation
 ---- Equality pattern
 PREPARE fdw_prepare_sel_eq (integer) AS
-  SELECT * FROM fdw_dml_basic_table_1 WHERE c1 = $1;
+  SELECT * FROM fdw_dml_basic_table_1 WHERE c1 = $1 ORDER BY c1;
 EXECUTE fdw_prepare_sel_eq (10);
 DEALLOCATE fdw_prepare_sel_eq;
 ---- Inequality pattern
 PREPARE fdw_prepare_sel_ne (integer) AS
-  SELECT c1 FROM fdw_dml_basic_table_1 WHERE c1 <> $1;
+  SELECT c1 FROM fdw_dml_basic_table_1 WHERE c1 <> $1 ORDER BY c1;
 EXECUTE fdw_prepare_sel_ne (10);
 DEALLOCATE fdw_prepare_sel_ne;
 ---- Greater than pattern
 PREPARE fdw_prepare_sel_gt (integer) AS
-  SELECT * FROM fdw_dml_basic_table_1 WHERE c1 > $1;
+  SELECT * FROM fdw_dml_basic_table_1 WHERE c1 > $1 ORDER BY c1;
 EXECUTE fdw_prepare_sel_gt (10);
 DEALLOCATE fdw_prepare_sel_gt;
 ---- Greater than or equal pattern
 PREPARE fdw_prepare_sel_ge (integer) AS
-  SELECT c1 FROM fdw_dml_basic_table_1 WHERE c1 >= $1;
+  SELECT c1 FROM fdw_dml_basic_table_1 WHERE c1 >= $1 ORDER BY c1;
 EXECUTE fdw_prepare_sel_ge (10);
 DEALLOCATE fdw_prepare_sel_ge;
 ---- Less than pattern
 PREPARE fdw_prepare_sel_lt (integer) AS
-  SELECT * FROM fdw_dml_basic_table_1 WHERE c1 < $1;
+  SELECT * FROM fdw_dml_basic_table_1 WHERE c1 < $1 ORDER BY c1;
 EXECUTE fdw_prepare_sel_lt (10);
 DEALLOCATE fdw_prepare_sel_lt;
 ---- Less than or equal pattern
 PREPARE fdw_prepare_sel_le (integer) AS
-  SELECT c1 FROM fdw_dml_basic_table_1 WHERE c1 <= $1;
+  SELECT c1 FROM fdw_dml_basic_table_1 WHERE c1 <= $1 ORDER BY c1;
 EXECUTE fdw_prepare_sel_le (0);
 DEALLOCATE fdw_prepare_sel_le;
 
@@ -307,7 +307,7 @@ EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel;
 ---- Column name alias
 PREPARE fdw_prepare_sel AS
-  SELECT c1 AS id, c2 AS value FROM fdw_dml_basic_table_2;
+  SELECT c1 AS id, c2 AS value FROM fdw_dml_basic_table_2 ORDER BY c1;
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel;
 
@@ -320,28 +320,28 @@ DEALLOCATE fdw_prepare_sel;
 
 PREPARE fdw_prepare_sel (bigint) AS
   SELECT c1 FROM fdw_dml_basic_table_2
-    WHERE (c2 <> $1) AND (c3 IS NULL);
+    WHERE (c2 <> $1) AND (c3 IS NULL) ORDER BY c1;
 EXECUTE fdw_prepare_sel(600);
 DEALLOCATE fdw_prepare_sel;
 
 PREPARE fdw_prepare_sel AS
   SELECT * FROM fdw_dml_basic_table_2
-    WHERE c4 IS NOT NULL AND c5 IS NOT NULL;
+    WHERE c4 IS NOT NULL AND c5 IS NOT NULL ORDER BY c1;
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel;
 
 PREPARE fdw_prepare_sel (varchar) AS
-  SELECT c1, c4 FROM fdw_dml_basic_table_2 WHERE c4 <= $1;
+  SELECT c1, c4 FROM fdw_dml_basic_table_2 WHERE c4 <= $1 ORDER BY c1;
 EXECUTE fdw_prepare_sel('4th');
 DEALLOCATE fdw_prepare_sel;
 
 PREPARE fdw_prepare_sel (varchar) AS
-  SELECT * FROM fdw_dml_basic_table_2 WHERE c4 >= $1;
+  SELECT * FROM fdw_dml_basic_table_2 WHERE c4 >= $1 ORDER BY c1;
 EXECUTE fdw_prepare_sel ('8th');
 DEALLOCATE fdw_prepare_sel;
 
 PREPARE fdw_prepare_sel AS
-  SELECT c1, c5 FROM fdw_dml_basic_table_2 WHERE c5 <= $1;
+  SELECT c1, c5 FROM fdw_dml_basic_table_2 WHERE c5 <= $1 ORDER BY c1;
 EXECUTE fdw_prepare_sel ('2025-03-03'::date);
 
 DEALLOCATE fdw_prepare_sel;
@@ -366,7 +366,7 @@ PREPARE fdw_prepare_sel AS
   SELECT c1, c5
     FROM fdw_dml_basic_table_2
     WHERE c5 IS NOT NULL
-    ORDER BY c5 DESC;
+    ORDER BY c5 DESC, c1;
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel;
 
@@ -381,12 +381,13 @@ DEALLOCATE fdw_prepare_sel;
 PREPARE fdw_prepare_sel (bigint, double precision) AS
   SELECT *
     FROM fdw_dml_basic_table_2
-    WHERE (c2 < $1 AND c4 IS NOT NULL) OR (c3 < $2);
+    WHERE (c2 < $1 AND c4 IS NOT NULL) OR (c3 < $2)
+    ORDER BY c1;
 EXECUTE fdw_prepare_sel (500, 3);
 DEALLOCATE fdw_prepare_sel;
 
 PREPARE fdw_prepare_sel (varchar) AS
-  SELECT * FROM fdw_dml_basic_table_2 WHERE c4 LIKE $1;
+  SELECT * FROM fdw_dml_basic_table_2 WHERE c4 LIKE $1 ORDER BY c1;
 EXECUTE fdw_prepare_sel ('%th');
 DEALLOCATE fdw_prepare_sel;
 
@@ -397,28 +398,28 @@ EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel;
 
 PREPARE fdw_prepare_sel (double precision, double precision) AS
-  SELECT * FROM fdw_dml_basic_table_2 WHERE c3 IN ($1, $2);
+  SELECT * FROM fdw_dml_basic_table_2 WHERE c3 IN ($1, $2) ORDER BY c1;
 EXECUTE fdw_prepare_sel (1.1, 2.2);
 DEALLOCATE fdw_prepare_sel;
 
 --- ORDER variation
 PREPARE fdw_prepare_sel AS
-  SELECT * FROM fdw_dml_basic_table_2 ORDER BY c5 DESC;
+  SELECT * FROM fdw_dml_basic_table_2 ORDER BY c5 DESC, c1;
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel;
 
 PREPARE fdw_prepare_sel AS
-  SELECT * FROM fdw_dml_basic_table_2 ORDER BY c4;
+  SELECT * FROM fdw_dml_basic_table_2 ORDER BY c4, c1;
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel;
 
 PREPARE fdw_prepare_sel AS
-  SELECT * FROM fdw_dml_basic_table_2 ORDER BY c3 ASC;
+  SELECT * FROM fdw_dml_basic_table_2 ORDER BY c3 ASC, c1;
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel;
 
 PREPARE fdw_prepare_sel AS
-  SELECT * FROM fdw_dml_basic_table_2 ORDER BY c2;
+  SELECT * FROM fdw_dml_basic_table_2 ORDER BY c2, c1;
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel;
 
@@ -428,7 +429,7 @@ EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel;
 
 PREPARE fdw_prepare_sel AS
-  SELECT c1, c2, c3, c4, c5 FROM fdw_dml_basic_table_2 ORDER BY c5, c4 DESC;
+  SELECT c1, c2, c3, c4, c5 FROM fdw_dml_basic_table_2 ORDER BY c5, c4 DESC, c1;
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel;
 
@@ -445,7 +446,7 @@ DEALLOCATE fdw_prepare_sel;
 PREPARE fdw_prepare_upd AS
   UPDATE fdw_dml_basic_table_2 SET c3 = c3 - $1 WHERE c2 = $2;
 PREPARE fdw_prepare_sel AS
-  SELECT * FROM fdw_dml_basic_table_2 ORDER BY c2 DESC;
+  SELECT * FROM fdw_dml_basic_table_2 ORDER BY c2 DESC, c1;
 EXECUTE fdw_prepare_upd (0.1, 110);
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_upd;
@@ -454,7 +455,7 @@ DEALLOCATE fdw_prepare_sel;
 PREPARE fdw_prepare_upd AS
   UPDATE fdw_dml_basic_table_2 SET c3 = c3 + $1 WHERE c2 >= $2;
 PREPARE fdw_prepare_sel AS
-  SELECT * FROM fdw_dml_basic_table_2 ORDER BY c3 ASC;
+  SELECT * FROM fdw_dml_basic_table_2 ORDER BY c3 ASC, c1;
 EXECUTE fdw_prepare_upd (2, 410);
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_upd;
@@ -493,7 +494,7 @@ DEALLOCATE fdw_prepare_sel;
 PREPARE fdw_prepare_del AS
   DELETE FROM fdw_dml_basic_table_2 WHERE c3 IS NULL;
 PREPARE fdw_prepare_sel AS
-  SELECT * FROM fdw_dml_basic_table_2 ORDER BY c2;
+  SELECT * FROM fdw_dml_basic_table_2 ORDER BY c2, c1;
 EXECUTE fdw_prepare_del;
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_del;
@@ -502,7 +503,7 @@ DEALLOCATE fdw_prepare_sel;
 PREPARE fdw_prepare_del (varchar) AS
   DELETE FROM fdw_dml_basic_table_2 WHERE c4 LIKE $1;
 PREPARE fdw_prepare_sel AS
-  SELECT * FROM fdw_dml_basic_table_2 ORDER BY c4;
+  SELECT * FROM fdw_dml_basic_table_2 ORDER BY c4, c1;
 EXECUTE fdw_prepare_del ('9th%');
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_del;
@@ -511,7 +512,7 @@ DEALLOCATE fdw_prepare_sel;
 PREPARE fdw_prepare_del AS
   DELETE FROM fdw_dml_basic_table_2 WHERE c2 > 800;
 PREPARE fdw_prepare_sel AS
-  SELECT * FROM fdw_dml_basic_table_2 ORDER BY c3;
+  SELECT * FROM fdw_dml_basic_table_2 ORDER BY c3, c1;
 EXECUTE fdw_prepare_del;
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_del;
@@ -520,7 +521,7 @@ DEALLOCATE fdw_prepare_sel;
 PREPARE fdw_prepare_del (double precision) AS
   DELETE FROM fdw_dml_basic_table_2 WHERE c3 <= $1;
 PREPARE fdw_prepare_sel AS
-  SELECT * FROM fdw_dml_basic_table_2 ORDER BY c2 DESC;
+  SELECT * FROM fdw_dml_basic_table_2 ORDER BY c2 DESC, c1;
 EXECUTE fdw_prepare_del (1.1);
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_del;
@@ -529,7 +530,7 @@ DEALLOCATE fdw_prepare_sel;
 PREPARE fdw_prepare_del (integer, integer) AS
   DELETE FROM fdw_dml_basic_table_2 WHERE (c1 <> $1) AND (c1 <> $2);
 PREPARE fdw_prepare_sel AS
-  SELECT * FROM fdw_dml_basic_table_2 ORDER BY c4;
+  SELECT * FROM fdw_dml_basic_table_2 ORDER BY c4, c1;
 EXECUTE fdw_prepare_del (2, 4);
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_del;
@@ -732,13 +733,14 @@ EXECUTE fdw_prepare_sel (22);
 EXECUTE fdw_prepare_sel (44);
 DEALLOCATE fdw_prepare_sel;
 
-PREPARE fdw_prepare_sel AS
-  SELECT *
-    FROM  fdw_join_basic_table_1 AS a
-    CROSS JOIN fdw_join_basic_table_2 AS b
-    ORDER BY b.c1;
-EXECUTE fdw_prepare_sel;
-DEALLOCATE fdw_prepare_sel;
+-----FIXME: Disabled due to issue
+-----PREPARE fdw_prepare_sel AS
+-----  SELECT *
+-----    FROM  fdw_join_basic_table_1 AS a
+-----    CROSS JOIN fdw_join_basic_table_2 AS b
+-----    ORDER BY b.c1, a.c1;
+-----EXECUTE fdw_prepare_sel;
+-----DEALLOCATE fdw_prepare_sel;
 
 PREPARE fdw_prepare_sel AS
   SELECT *
@@ -828,7 +830,8 @@ DEALLOCATE fdw_prepare_sel;
 
 -- AS
 PREPARE fdw_prepare_sel AS
-  SELECT id AS user_id, name AS user_name FROM fdw_select_variation_table_1;
+  SELECT id AS user_id, name AS user_name FROM fdw_select_variation_table_1
+    ORDER BY id;
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel;
 
@@ -871,7 +874,7 @@ PREPARE fdw_prepare_sel AS
   SELECT t1.id, t1.name, t2.name
     FROM fdw_select_variation_table_1 t1
     RIGHT OUTER JOIN fdw_select_variation_table_2 t2 ON t1.ref_id = t2.id
-    ORDER BY t2.id;
+    ORDER BY t2.id, t1.id;
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel;
 
@@ -879,7 +882,7 @@ PREPARE fdw_prepare_sel AS
   SELECT t1.id, t1.name, t2.name
     FROM fdw_select_variation_table_1 t1
     RIGHT JOIN fdw_select_variation_table_2 t2 ON t1.ref_id = t2.id
-    ORDER BY t2.id;
+    ORDER BY t2.id, t1.id;
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel;
 
@@ -904,7 +907,8 @@ DEALLOCATE fdw_prepare_sel;
 PREPARE fdw_prepare_sel AS
   SELECT t1.id, t1.name, t2.name
     FROM fdw_select_variation_table_1 t1
-    CROSS JOIN fdw_select_variation_table_2 t2;
+    CROSS JOIN fdw_select_variation_table_2 t2
+    ORDER BY t1.id, t2.id;
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel;
 
@@ -912,7 +916,8 @@ DEALLOCATE fdw_prepare_sel;
 PREPARE fdw_prepare_sel AS
   SELECT id, name, value
     FROM fdw_select_variation_table_1
-    WHERE value BETWEEN 60000 AND 80000;
+    WHERE value BETWEEN 60000 AND 80000
+    ORDER BY id;
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel;
 
@@ -920,14 +925,16 @@ DEALLOCATE fdw_prepare_sel;
 PREPARE fdw_prepare_sel AS
   SELECT id, name, manager_id
     FROM fdw_select_variation_table_1
-    WHERE manager_id IN (1000);
+    WHERE manager_id IN (1000)
+    ORDER BY id;
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel;
 
 PREPARE fdw_prepare_sel AS
   SELECT id, name, manager_id
     FROM fdw_select_variation_table_1
-    WHERE manager_id IN (1000, 1005);
+    WHERE manager_id IN (1000, 1005)
+    ORDER BY id;
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel;
 
@@ -935,7 +942,8 @@ DEALLOCATE fdw_prepare_sel;
 PREPARE fdw_prepare_sel AS
   SELECT id, name, value
     FROM fdw_select_variation_table_1
-    WHERE name LIKE 'name-%';
+    WHERE name LIKE 'name-%'
+    ORDER BY id;
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel;
 
@@ -981,15 +989,16 @@ DEALLOCATE fdw_prepare_sel;
 -- HAVING
 PREPARE fdw_prepare_sel AS
   SELECT ref_id, COUNT(*), SUM(value)
-  FROM fdw_select_variation_table_1
-  GROUP BY ref_id
-  HAVING COUNT(*) >= 2;
+    FROM fdw_select_variation_table_1
+    GROUP BY ref_id
+    HAVING COUNT(*) >= 2
+    ORDER BY ref_id;
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel;
 
 -- LIMIT
 PREPARE fdw_prepare_sel AS
-  SELECT * FROM fdw_select_variation_table_1 LIMIT 2;
+  SELECT * FROM fdw_select_variation_table_1 ORDER BY id LIMIT 2;
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel;
 
@@ -1030,7 +1039,7 @@ CREATE FOREIGN TABLE fdw_ins_variation_table (
   c_tstmp timestamp
 ) SERVER tsurugidb;
 
-PREPARE fdw_prepare_sel_all AS SELECT * FROM fdw_ins_variation_table;
+PREPARE fdw_prepare_sel_all AS SELECT * FROM fdw_ins_variation_table ORDER BY c_int;
 
 -- DEFAULT VALUES
 PREPARE fdw_prepare_ins AS

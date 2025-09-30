@@ -67,14 +67,14 @@ EXCEPT DISTINCT
 SELECT id FROM fdw_sel_unsupported_test ORDER BY ref_id;
 
 -- WITH
------FIXME: Disabled due to BUG-#1
+-----FIXME: Disabled due to issues
 -----WITH value_data AS (
 -----  SELECT id, name, value FROM fdw_sel_unsupported_test WHERE value >= 75000
 -----)
 -----SELECT * FROM value_data;
 
 -- WITH RECURSIVE
------FIXME: Disabled due to BUG-#1
+-----FIXME: Disabled due to issues
 -----WITH RECURSIVE chart AS (
 -----  SELECT id, name, manager_id, 1 AS level
 -----    FROM fdw_sel_unsupported_test
@@ -203,7 +203,7 @@ CREATE FOREIGN TABLE fdw_upd_unsupported_test (
 ) SERVER tsurugidb;
 
 -- WITH
------FIXME: Disabled due to BUG-#1
+-----FIXME: Disabled due to issues
 -----WITH upd_data AS (
 -----  SELECT 'key1'::TEXT AS key_col, 100 AS new_val
 -----)
@@ -278,7 +278,7 @@ CREATE FOREIGN TABLE fdw_del_variation_table_2 (
 ) SERVER tsurugidb;
 
 -- WITH
------FIXME: Disabled due to BUG-#1
+-----FIXME: Disabled due to issues
 -----WITH keys_to_delete AS (
 -----  SELECT 'key1'::TEXT AS key_col
 -----)

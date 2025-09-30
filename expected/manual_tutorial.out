@@ -33,7 +33,7 @@ INSERT INTO weather (temp_lo, temp_hi, prcp, id, city)
 INSERT INTO weather (id, city, temp_lo, temp_hi)
     VALUES (3, 'Hayward', 54, 37);
 /* データの問い合わせ */
-SELECT * from weather;
+SELECT * FROM weather ORDER BY id;
  id |     city      | temp_lo | temp_hi | prcp |  the_date  
 ----+---------------+---------+---------+------+------------
   1 | San Francisco |      46 |      50 | 0.25 | 2023-04-01
@@ -45,7 +45,7 @@ SELECT * from weather;
 UPDATE weather
     SET temp_hi = temp_hi - 2,  temp_lo = temp_lo - 2
     WHERE city = 'Hayward';
-select * from weather;
+SELECT * FROM weather ORDER BY id;
  id |     city      | temp_lo | temp_hi | prcp |  the_date  
 ----+---------------+---------+---------+------+------------
   1 | San Francisco |      46 |      50 | 0.25 | 2023-04-01
@@ -55,7 +55,7 @@ select * from weather;
 
 /* データの削除 */
 DELETE FROM weather WHERE city = 'Hayward';
-select * from weather;
+SELECT * FROM weather ORDER BY id;
  id |     city      | temp_lo | temp_hi | prcp |  the_date  
 ----+---------------+---------+---------+------+------------
   1 | San Francisco |      46 |      50 | 0.25 | 2023-04-01
@@ -67,8 +67,8 @@ CREATE ROLE jonathan;
 /* アクセス権の付与 */
 GRANT SELECT ON weather TO jonathan;    -- Tsurugiテーブルにアクセス権を付与します
 /* Tsurugiテーブルのアクセス制御 */
-SET ROLE jonathan;          -- 確認のためカレントのデータベースロールを変更します
-SELECT * from weather;      -- 問い合わせの操作は成功します
+SET ROLE jonathan;                  -- 確認のためカレントのデータベースロールを変更します
+SELECT * FROM weather ORDER BY id;  -- 問い合わせの操作は成功します
  id |     city      | temp_lo | temp_hi | prcp |  the_date  
 ----+---------------+---------+---------+------+------------
   1 | San Francisco |      46 |      50 | 0.25 | 2023-04-01
@@ -77,7 +77,7 @@ SELECT * from weather;      -- 問い合わせの操作は成功します
 
 DELETE FROM weather WHERE city = 'San Francisco'; -- 問い合わせ以外の操作は失敗します
 ERROR:  permission denied for foreign table weather
-RESET ROLE;                 -- 現在のデータベースロールを元に戻します
+RESET ROLE;                         -- 現在のデータベースロールを元に戻します
 /* アクセス権の剥奪 */
 REVOKE SELECT ON weather FROM jonathan;
 /* データベースロールの削除 */
