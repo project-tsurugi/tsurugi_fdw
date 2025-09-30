@@ -60,6 +60,7 @@ static std::pair<std::string, std::string> make_prepare_statement(const char* qu
 static ogawayama::stub::placeholders_type make_placeholders(ParamListInfo param_linfo);
 static ogawayama::stub::parameters_type bind_parameters(ParamListInfo param_linfo);
 static std::pair<std::string, std::string> tsurugi_prepare_wrapper(
+                                                Oid server_oid,
                                                 const char* query, 
                                                 ParamListInfo param_linfo);
 #endif
@@ -355,12 +356,14 @@ make_placeholders(List* fdw_exprs)
 #ifdef __TSURUGI_PLANNER__
 /**
  *  @brief  Prepare a statement to tsurugidb.
+ *  @param  (server_oid) oid of tsurugi server.
  *  @param  (query) original query.
  *  @return	(first)     prepare name.
  *          (second)    prepare statement.
  */
 static std::pair<std::string, std::string>
-tsurugi_prepare_wrapper(const char* query, 
+tsurugi_prepare_wrapper(Oid server_oid,
+                        const char* query,
                         ParamListInfo param_linfo)
 {
  	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
@@ -368,7 +371,7 @@ tsurugi_prepare_wrapper(const char* query,
     auto prep = make_prepare_statement(query);
     auto placeholders = make_placeholders(param_linfo);
     auto prep_stmt = make_tsurugi_query(prep.second);
-	ERROR_CODE error = Tsurugi::prepare(prep_stmt, placeholders);
+	ERROR_CODE error = Tsurugi::prepare(server_oid, prep_stmt, placeholders);
 	if (error != ERROR_CODE::OK)
 	{
 		Tsurugi::report_error("Failed to prepare the statement to Tsurugi.", 
@@ -379,8 +382,9 @@ tsurugi_prepare_wrapper(const char* query,
 }
 #else
 static std::pair<std::string, std::string>
-tsurugi_prepare_wrapper(const char* query, 
-                        PlanState* node, 
+tsurugi_prepare_wrapper(Oid server_oid,
+                        const char* query,
+                        PlanState* node,
                         List* fdw_exprs)
 {
  	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
@@ -388,7 +392,7 @@ tsurugi_prepare_wrapper(const char* query,
     auto prep = make_prepare_statement(query);
     auto placeholders = make_placeholders(fdw_exprs);
     auto prep_stmt = make_tsurugi_query(prep.second);
-	ERROR_CODE error = Tsurugi::prepare(prep_stmt, placeholders);
+	ERROR_CODE error = Tsurugi::prepare(server_oid, prep_stmt, placeholders);
 	if (error != ERROR_CODE::OK)
 	{
 		Tsurugi::report_error("Failed to prepare the statement to Tsurugi.", 
@@ -501,8 +505,10 @@ create_cursor(ForeignScanState* node)
 	TgFdwForeignScanState* fsstate = (TgFdwForeignScanState*) node->fdw_state;
     if (is_prepare_statement(fsstate->query_string))
     {
+        ForeignTable *ft = GetForeignTable(fsstate->rel->rd_id);
         // Prepare the statement.
-        auto prep = tsurugi_prepare_wrapper(fsstate->query_string, 
+        auto prep = tsurugi_prepare_wrapper(ft->serverid,
+                                            fsstate->query_string,
                                             fsstate->param_linfo);
         // Execute the prepared statement.
         auto params = bind_parameters(fsstate->param_linfo);
@@ -514,7 +520,7 @@ create_cursor(ForeignScanState* node)
         {
             Tsurugi::report_error("Failed to execute the statement on Tsurugi.", 
                                     error, prep.second);
-        }           
+        }
     }
     else
     {
@@ -545,8 +551,10 @@ create_cursor(ForeignScanState* node)
     ForeignScan* fsplan = (ForeignScan*) node->ss.ps.plan;
     if (fsstate->numParams > 0)
     {
+        ForeignTable *ft = GetForeignTable(fsstate->rel->rd_id);
         // Prepare the statement.
-        auto prep = tsurugi_prepare_wrapper(fsstate->query_string, 
+        auto prep = tsurugi_prepare_wrapper(ft->serverid,
+                                            fsstate->query_string, 
                                             (PlanState *) node,
                                             fsplan->fdw_exprs);
         // Execute the prepared statement.
@@ -585,24 +593,25 @@ create_cursor(ForeignScanState* node)
  */
 void
 prepare_direct_modify(TgFdwDirectModifyState* dmstate)
-{  
+{
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	Assert(dmstate->param_linfo != nullptr);
-    ParamListInfo param_linfo = dmstate->param_linfo;
+	ParamListInfo param_linfo = dmstate->param_linfo;
 
-    elog(LOG, "tsurugi_fdw :\norig_query:\n%s", dmstate->orig_query);
+	elog(LOG, "tsurugi_fdw :\norig_query:\n%s", dmstate->orig_query);
 
-    auto prep = make_prepare_statement(dmstate->orig_query);
-    auto placeholders = make_placeholders(param_linfo);
-    auto prep_stmt = make_tsurugi_query(prep.second);
-	ERROR_CODE error = Tsurugi::prepare(prep_stmt, placeholders);
+	auto prep = make_prepare_statement(dmstate->orig_query);
+	auto placeholders = make_placeholders(param_linfo);
+	auto prep_stmt = make_tsurugi_query(prep.second);
+
+	ERROR_CODE error = Tsurugi::prepare(dmstate->server->serverid, prep_stmt, placeholders);
 	if (error != ERROR_CODE::OK)
 	{
 		Tsurugi::report_error("Failed to prepare the statement to Tsurugi.", 
 								error, prep_stmt);
 	}
-    dmstate->prep_stmt = strdup(prep_stmt.c_str());
+	dmstate->prep_stmt = strdup(prep_stmt.c_str());
 }
 #else
 /*
@@ -644,7 +653,7 @@ prepare_direct_modify(TgFdwDirectModifyState* dmstate, List* fdw_exprs)
 	}
 
     std::string prep_stmt = make_tsurugi_query(dmstate->query);
-	ERROR_CODE error = Tsurugi::prepare(prep_stmt, placeholders);
+	ERROR_CODE error = Tsurugi::prepare(dmstate->server->serverid, prep_stmt, placeholders);
 	if (error != ERROR_CODE::OK)
 	{
 		Tsurugi::report_error("Failed to prepare the statement on Tsurugi.", 
@@ -766,7 +775,8 @@ prepare_foreign_modify(TgFdwForeignModifyState *fmstate)
                                 Tsurugi::get_tg_column_type(tupdesc->attrs[i].atttypid));
 	}
 
-	ERROR_CODE error = Tsurugi::prepare(fmstate->query, placeholders);
+	ForeignTable *ft = GetForeignTable(fmstate->rel->rd_id);
+	ERROR_CODE error = Tsurugi::prepare(ft->serverid, fmstate->query, placeholders);
 	if (error != ERROR_CODE::OK)
 	{
 		Tsurugi::report_error("Failed to prepare the statement on Tsurugi.", 

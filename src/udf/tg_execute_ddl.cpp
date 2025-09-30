@@ -33,6 +33,8 @@ extern "C" {
 /* Primary include file for PostgreSQL (first file to be included). */
 #include "postgres.h"
 /* Related include files for PostgreSQL. */
+#include "access/htup_details.h"
+#include "catalog/pg_foreign_server.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 
@@ -87,6 +89,7 @@ tg_execute_ddl(PG_FUNCTION_ARGS)
 						errmsg(R"("%s" is not supported)", arg_ddl_statement.c_str())));
 	}
 
+	Oid server_oid = InvalidOid;
 	/* Get the Tsurugi server OID. */
 	HeapTuple srv_tuple =
 		SearchSysCache1(FOREIGNSERVERNAME, CStringGetDatum(arg_server_name.c_str()));
@@ -94,6 +97,7 @@ tg_execute_ddl(PG_FUNCTION_ARGS)
 		ereport(ERROR, (errcode(ERRCODE_FDW_UNABLE_TO_ESTABLISH_CONNECTION),
 						errmsg(R"(server "%s" does not exist)", arg_server_name.c_str())));
 	}
+	server_oid = ((Form_pg_foreign_server)GETSTRUCT(srv_tuple))->oid;
 	ReleaseSysCache(srv_tuple);
 
 	std::stringstream debug_log;
@@ -105,13 +109,7 @@ tg_execute_ddl(PG_FUNCTION_ARGS)
 
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
 
-	error = Tsurugi::init();
-	if (error != ERROR_CODE::OK) {
-		ereport(ERROR, (errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
-						errmsg("%s", Tsurugi::get_error_message(error).c_str())));
-	}
-
-	error = Tsurugi::start_transaction();
+	error = Tsurugi::start_transaction(server_oid);
 	if (error != ERROR_CODE::OK) {
 		ereport(ERROR, (errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
 						errmsg("%s", Tsurugi::get_error_message(error).c_str())));
