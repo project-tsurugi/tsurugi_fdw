@@ -514,7 +514,9 @@ set_target_entry(ForeignScan *scan, TsurugiPlannerInfo *root)
 		{
 			case T_Var:
 			{
-				elog(DEBUG3, "tsurugi_fdw : target entry: attno: %d type: T_Var", attno);
+				elog(DEBUG3, "tsurugi_fdw : target entry: attno: %d type: T_Var resname: %s resjunk: %d", 
+					attno, parent_entry->resname, parent_entry->resjunk);
+				if (parent_entry->resjunk) continue;
 				/* for fdw_scan_tlist */
 				parent_var = (Var *) node;
 				fs_entry = makeTargetEntry((Expr *) node,
