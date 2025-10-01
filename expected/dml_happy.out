@@ -1060,7 +1060,7 @@ SELECT *
 ----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----
 (0 rows)
 
------FIXME: Disabled due to issues
+-----FIXME: Disabled due to issue
 -----SELECT *
 -----  FROM  fdw_join_basic_table_1 AS a
 -----  CROSS JOIN fdw_join_basic_table_2 AS b

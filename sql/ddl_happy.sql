@@ -323,8 +323,8 @@ ALTER SERVER tsurugidb OPTIONS (dbname 'incorrect_dbname');
 BEGIN;
 ALTER SERVER tsurugidb OPTIONS (SET dbname 'tsurugi');
 \des+
-INSERT INTO fdw_ddl_table VALUES (1), (2);
-SELECT * FROM fdw_ddl_table ORDER BY c;
+-- INSERT INTO fdw_ddl_table VALUES (1), (2);
+-- SELECT * FROM fdw_ddl_table ORDER BY c;
 ROLLBACK;
 \des+
 

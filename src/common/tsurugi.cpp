@@ -124,6 +124,26 @@ public:
 	 */
 	std::string_view port() const { return port_; }
 
+	std::string get_shared_memory_name()
+	{
+		std::string name{ogawayama::common::param::SHARED_MEMORY_NAME};
+		boost::property_tree::ptree pt;
+		const boost::filesystem::path conf_file("tsurugi_fdw.conf");
+		boost::system::error_code error;
+		if (boost::filesystem::exists(conf_file, error)) 
+		{
+			boost::property_tree::read_ini("tsurugi_fdw.conf", pt);
+			boost::optional<std::string> str = 
+				pt.get_optional<std::string>("Configurations.SHARED_MEMORY_NAME");
+			if (str) 
+			{
+				name = str.get();
+			}
+		}
+
+		return name;
+	}
+
 	/**
 	 * @brief Parse the server options.
 	 * @param server_opts server options.
@@ -133,7 +153,7 @@ public:
 
 		/* Initialize. */
 		endpoint_ = kDefEndpoint;
-		dbname_ = kDefDbname;
+		dbname_ = get_shared_memory_name();
 		address_ = kDefAddress;
 		port_ = kDefPort;
 
@@ -309,7 +329,8 @@ ERROR_CODE Tsurugi::init(Oid server_oid)
 	if (error != ERROR_CODE::OK)
 	{
 		stub_ = nullptr;
-		Tsurugi::report_error("Failed to make shared memory for Tsurugi.", error, nullptr);
+		Tsurugi::report_error("Failed to make shared memory for Tsurugi.", 
+			error, connection_info_.dbname());
 	}
 
 	elog(LOG, "tsurugi_fdw : Attempt to call Stub::get_connection(). (pid: %d)", getpid());
