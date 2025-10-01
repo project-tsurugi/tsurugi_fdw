@@ -161,8 +161,8 @@ public:
 		foreach (cell, server_opts) {
 			auto [key, value] = parse_option(cell);
 
-			auto it = opt_value_.find(key);
-			if (it != opt_value_.end()) {
+			auto it = opt_values_.find(key);
+			if (it != opt_values_.end()) {
 				*(it->second) = value;
 			}
 		}
@@ -202,7 +202,7 @@ private:
 	std::string dbname_;
 	std::string address_;
 	std::string port_;
-	std::unordered_map<std::string, std::string*> opt_value_ = {
+	std::unordered_map<std::string, std::string*> opt_values_ = {
 		{kOptEndpoint, &endpoint_},
 		{kOptDbname, &dbname_},
 		{kOptAddress, &address_},
