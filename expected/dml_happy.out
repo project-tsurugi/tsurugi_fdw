@@ -1060,11 +1060,29 @@ SELECT *
 ----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----
 (0 rows)
 
------FIXME: Disabled due to issue
------SELECT *
------  FROM  fdw_join_basic_table_1 AS a
------  CROSS JOIN fdw_join_basic_table_2 AS b
------  ORDER BY b.c1, a.c1;
+SELECT *
+  FROM  fdw_join_basic_table_1 AS a
+  CROSS JOIN fdw_join_basic_table_2 AS b
+  ORDER BY b.c1, a.c1;
+ c1 | c2 | c3  | c4  |  c5  |     c6     |   c7   | c1 | c2 | c3  | c4  |  c5  |     c6     |   c7   
+----+----+-----+-----+------+------------+--------+----+----+-----+-----+------+------------+--------
+  1 | 11 | 111 | 1.1 | 1.11 | one        | first  |  1 | 11 | 111 | 1.1 | 1.11 | one        | first
+  2 | 22 | 222 | 2.2 | 2.22 | two        | second |  1 | 11 | 111 | 1.1 | 1.11 | one        | first
+  3 | 33 | 333 | 3.3 | 3.33 | three      | third  |  1 | 11 | 111 | 1.1 | 1.11 | one        | first
+  1 | 11 | 111 | 1.1 | 1.11 | one        | first  |  2 | 22 | 222 | 2.2 | 2.22 | two        | second
+  2 | 22 | 222 | 2.2 | 2.22 | two        | second |  2 | 22 | 222 | 2.2 | 2.22 | two        | second
+  3 | 33 | 333 | 3.3 | 3.33 | three      | third  |  2 | 22 | 222 | 2.2 | 2.22 | two        | second
+  1 | 11 | 111 | 1.1 | 1.11 | one        | first  |  3 | 33 | 333 | 3.3 | 3.33 | three      | third
+  2 | 22 | 222 | 2.2 | 2.22 | two        | second |  3 | 33 | 333 | 3.3 | 3.33 | three      | third
+  3 | 33 | 333 | 3.3 | 3.33 | three      | third  |  3 | 33 | 333 | 3.3 | 3.33 | three      | third
+  1 | 11 | 111 | 1.1 | 1.11 | one        | first  |  4 |    |     |     |      | NULL       | 
+  2 | 22 | 222 | 2.2 | 2.22 | two        | second |  4 |    |     |     |      | NULL       | 
+  3 | 33 | 333 | 3.3 | 3.33 | three      | third  |  4 |    |     |     |      | NULL       | 
+  1 | 11 | 111 | 1.1 | 1.11 | one        | first  |  5 | 55 | 555 | 5.5 | 5.55 | five       | fifth
+  2 | 22 | 222 | 2.2 | 2.22 | two        | second |  5 | 55 | 555 | 5.5 | 5.55 | five       | fifth
+  3 | 33 | 333 | 3.3 | 3.33 | three      | third  |  5 | 55 | 555 | 5.5 | 5.55 | five       | fifth
+(15 rows)
+
 SELECT *
   FROM fdw_join_basic_table_1 AS a
   JOIN fdw_join_basic_table_1 AS b ON a.c3 = b.c3
