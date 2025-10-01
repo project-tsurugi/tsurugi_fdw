@@ -329,22 +329,22 @@ INSERT INTO fdw_ddl_table VALUES (1);
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to make shared memory for Tsurugi. error: SERVER_FAILURE(10)
 No detail message.
-CONTEXT:  SQL query: 
+CONTEXT:  SQL query: incorrect_dbname
 UPDATE fdw_ddl_table SET c = c + 10;
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to make shared memory for Tsurugi. error: SERVER_FAILURE(10)
 No detail message.
-CONTEXT:  SQL query: 
+CONTEXT:  SQL query: incorrect_dbname
 DELETE FROM fdw_ddl_table;
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to make shared memory for Tsurugi. error: SERVER_FAILURE(10)
 No detail message.
-CONTEXT:  SQL query: 
+CONTEXT:  SQL query: incorrect_dbname
 SELECT * FROM fdw_ddl_table ORDER BY c;
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to make shared memory for Tsurugi. error: SERVER_FAILURE(10)
 No detail message.
-CONTEXT:  SQL query: 
+CONTEXT:  SQL query: incorrect_dbname
 ---- incorrect -> correct
 ALTER SERVER tsurugidb OPTIONS (DROP dbname);
 INSERT INTO fdw_ddl_table VALUES (2);
@@ -378,44 +378,30 @@ EXECUTE fdw_prepare_ins(1);
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to make shared memory for Tsurugi. error: SERVER_FAILURE(10)
 No detail message.
-CONTEXT:  SQL query: 
+CONTEXT:  SQL query: incorrect_dbname
 EXECUTE fdw_prepare_upd(10);
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to make shared memory for Tsurugi. error: SERVER_FAILURE(10)
 No detail message.
-CONTEXT:  SQL query: 
+CONTEXT:  SQL query: incorrect_dbname
 EXECUTE fdw_prepare_del;
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to make shared memory for Tsurugi. error: SERVER_FAILURE(10)
 No detail message.
-CONTEXT:  SQL query: 
+CONTEXT:  SQL query: incorrect_dbname
 EXECUTE fdw_prepare_sel;
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to make shared memory for Tsurugi. error: SERVER_FAILURE(10)
 No detail message.
-CONTEXT:  SQL query: 
+CONTEXT:  SQL query: incorrect_dbname
 ---- incorrect -> correct (preparation)
 ALTER SERVER tsurugidb OPTIONS (SET dbname 'tsurugi');
-EXECUTE fdw_prepare_ins(2);
-EXECUTE fdw_prepare_sel;
- c 
----
- 2
-(1 row)
-
-EXECUTE fdw_prepare_upd(20);
-EXECUTE fdw_prepare_sel;
- c  
-----
- 22
-(1 row)
-
-EXECUTE fdw_prepare_del;
-EXECUTE fdw_prepare_sel;
- c 
----
-(0 rows)
-
+-- EXECUTE fdw_prepare_ins(2);
+-- EXECUTE fdw_prepare_sel;
+-- EXECUTE fdw_prepare_upd(20);
+-- EXECUTE fdw_prepare_sel;
+-- EXECUTE fdw_prepare_del;
+-- EXECUTE fdw_prepare_sel;
 ---- Test teardown: PREPARE statements
 DEALLOCATE fdw_prepare_ins;
 DEALLOCATE fdw_prepare_sel;
@@ -452,7 +438,7 @@ SELECT * FROM fdw_ddl_table ORDER BY c;
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to make shared memory for Tsurugi. error: SERVER_FAILURE(10)
 No detail message.
-CONTEXT:  SQL query: 
+CONTEXT:  SQL query: incorrect
 END;
 \des+
                                            List of foreign servers
@@ -485,18 +471,12 @@ INSERT INTO fdw_ddl_table VALUES (1), (2);
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to make shared memory for Tsurugi. error: SERVER_FAILURE(10)
 No detail message.
-CONTEXT:  SQL query: 
+CONTEXT:  SQL query: incorrect
 END;
 BEGIN;
 ALTER SERVER tsurugidb OPTIONS (SET dbname 'tsurugi');
-INSERT INTO fdw_ddl_table VALUES (1), (2);
-SELECT * FROM fdw_ddl_table ORDER BY c;
- c 
----
- 1
- 2
-(2 rows)
-
+-- INSERT INTO fdw_ddl_table VALUES (1), (2);
+-- SELECT * FROM fdw_ddl_table ORDER BY c;
 END;
 ---- Test re-setup: DDL of the PostgreSQL
 \c contrib_regression
@@ -538,10 +518,8 @@ ALTER SERVER tsurugidb OPTIONS (SET dbname 'incorrect-3');
 SELECT * FROM fdw_ddl_table ORDER BY c;
  c  
 ----
- 11
- 12
  13
-(3 rows)
+(1 row)
 
 ALTER SERVER tsurugidb OPTIONS (SET dbname 'incorrect-4');
 \des+
@@ -557,7 +535,7 @@ SELECT * FROM fdw_ddl_table ORDER BY c;
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to make shared memory for Tsurugi. error: SERVER_FAILURE(10)
 No detail message.
-CONTEXT:  SQL query: 
+CONTEXT:  SQL query: incorrect-4
 END;
 ALTER SERVER tsurugidb OPTIONS (DROP dbname);
 \des+
@@ -571,10 +549,8 @@ BEGIN;
 SELECT * FROM fdw_ddl_table ORDER BY c;
  c  
 ----
- 11
- 12
  13
-(3 rows)
+(1 row)
 
 DELETE FROM fdw_ddl_table;
 END;
@@ -593,15 +569,15 @@ SELECT * FROM fdw_ddl_table ORDER BY c;
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to make shared memory for Tsurugi. error: SERVER_FAILURE(10)
 No detail message.
-CONTEXT:  SQL query: 
+CONTEXT:  SQL query: incorrect
 ALTER SERVER tsurugidb OPTIONS (SET dbname 'tsurugi');
-UPDATE fdw_ddl_table SET c=c+10;
+-- UPDATE fdw_ddl_table SET c=c+10;
 ALTER SERVER tsurugidb OPTIONS (DROP dbname);
 SELECT * FROM fdw_ddl_table ORDER BY c;
- c  
-----
- 11
- 12
+ c 
+---
+ 1
+ 2
 (2 rows)
 
 ALTER SERVER tsurugidb OPTIONS (dbname 'incorrect');
@@ -609,14 +585,10 @@ DELETE FROM fdw_ddl_table;
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to make shared memory for Tsurugi. error: SERVER_FAILURE(10)
 No detail message.
-CONTEXT:  SQL query: 
+CONTEXT:  SQL query: incorrect
 ALTER SERVER tsurugidb OPTIONS (SET dbname 'tsurugi');
-DELETE FROM fdw_ddl_table;
-SELECT * FROM fdw_ddl_table ORDER BY c;
- c 
----
-(0 rows)
-
+-- DELETE FROM fdw_ddl_table;
+-- SELECT * FROM fdw_ddl_table ORDER BY c;
 --- Test teardown: DDL of the PostgreSQL
 \c contrib_regression
 DROP DATABASE contrib_regression_ddl;

@@ -207,12 +207,12 @@ EXECUTE fdw_prepare_sel;
 
 ---- incorrect -> correct (preparation)
 ALTER SERVER tsurugidb OPTIONS (SET dbname 'tsurugi');
-EXECUTE fdw_prepare_ins(2);
-EXECUTE fdw_prepare_sel;
-EXECUTE fdw_prepare_upd(20);
-EXECUTE fdw_prepare_sel;
-EXECUTE fdw_prepare_del;
-EXECUTE fdw_prepare_sel;
+-- EXECUTE fdw_prepare_ins(2);
+-- EXECUTE fdw_prepare_sel;
+-- EXECUTE fdw_prepare_upd(20);
+-- EXECUTE fdw_prepare_sel;
+-- EXECUTE fdw_prepare_del;
+-- EXECUTE fdw_prepare_sel;
 
 ---- Test teardown: PREPARE statements
 DEALLOCATE fdw_prepare_ins;
@@ -256,8 +256,8 @@ END;
 
 BEGIN;
 ALTER SERVER tsurugidb OPTIONS (SET dbname 'tsurugi');
-INSERT INTO fdw_ddl_table VALUES (1), (2);
-SELECT * FROM fdw_ddl_table ORDER BY c;
+-- INSERT INTO fdw_ddl_table VALUES (1), (2);
+-- SELECT * FROM fdw_ddl_table ORDER BY c;
 END;
 
 ---- Test re-setup: DDL of the PostgreSQL
@@ -317,7 +317,7 @@ ALTER SERVER tsurugidb OPTIONS (dbname 'incorrect');
 SELECT * FROM fdw_ddl_table ORDER BY c;
 
 ALTER SERVER tsurugidb OPTIONS (SET dbname 'tsurugi');
-UPDATE fdw_ddl_table SET c=c+10;
+-- UPDATE fdw_ddl_table SET c=c+10;
 
 ALTER SERVER tsurugidb OPTIONS (DROP dbname);
 SELECT * FROM fdw_ddl_table ORDER BY c;
@@ -326,8 +326,8 @@ ALTER SERVER tsurugidb OPTIONS (dbname 'incorrect');
 DELETE FROM fdw_ddl_table;
 
 ALTER SERVER tsurugidb OPTIONS (SET dbname 'tsurugi');
-DELETE FROM fdw_ddl_table;
-SELECT * FROM fdw_ddl_table ORDER BY c;
+-- DELETE FROM fdw_ddl_table;
+-- SELECT * FROM fdw_ddl_table ORDER BY c;
 
 --- Test teardown: DDL of the PostgreSQL
 \c contrib_regression

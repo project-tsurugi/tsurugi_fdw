@@ -294,7 +294,8 @@ SELECT COUNT(c3) AS "count(c3)", SUM(c4) AS "sum(c4)", c7
   ORDER BY c7;
 SELECT c6, COUNT(c1), SUM(c2), AVG(c3), MIN(c4), MAX(c5)
   FROM fdw_group_basic_table
-  GROUP BY c6;
+  GROUP BY c6
+  ORDER BY c6;
 SELECT c7, COUNT(c1), SUM(c2), AVG(c3), MIN(c4), MAX(c5)
   FROM fdw_group_basic_table
   WHERE c1 <= 3
@@ -560,7 +561,8 @@ SELECT ref_id, COUNT(*), SUM(value)
 SELECT ref_id, COUNT(*), SUM(value)
   FROM fdw_select_variation_table_1
   GROUP BY ref_id
-  HAVING COUNT(*) >= 2;
+  HAVING COUNT(*) >= 2
+  ORDER BY ref_id;
 
 -- LIMIT
 SELECT * FROM fdw_select_variation_table_1 ORDER BY id LIMIT 2;
