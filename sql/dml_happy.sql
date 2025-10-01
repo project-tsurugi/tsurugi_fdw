@@ -392,11 +392,10 @@ SELECT *
   JOIN fdw_join_basic_table_2 AS b ON a.c4 = b.c4
   JOIN fdw_join_basic_table_1 AS c ON b.c4 = c.c4
   WHERE a.c2 = 44;
------FIXME: Disabled due to issue
------SELECT *
------  FROM  fdw_join_basic_table_1 AS a
------  CROSS JOIN fdw_join_basic_table_2 AS b
------  ORDER BY b.c1, a.c1;
+SELECT *
+  FROM  fdw_join_basic_table_1 AS a
+  CROSS JOIN fdw_join_basic_table_2 AS b
+  ORDER BY b.c1, a.c1;
 SELECT *
   FROM fdw_join_basic_table_1 AS a
   JOIN fdw_join_basic_table_1 AS b ON a.c3 = b.c3
