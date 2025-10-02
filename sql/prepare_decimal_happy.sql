@@ -42,18 +42,18 @@ PREPARE tg_updnum1 (integer, numeric) AS UPDATE tg_numeric SET num = $2 WHERE id
 PREPARE tg_updnum2 (integer, numeric) AS UPDATE tg_numeric SET id = $1 WHERE num = $2;
 PREPARE tg_delnum1 (integer)          AS DELETE FROM tg_numeric WHERE id = $1;
 PREPARE tg_delnum2 (numeric)          AS DELETE FROM tg_numeric WHERE num = $1;
-PREPARE tg_selnum1 (integer)          AS SELECT * FROM tg_numeric WHERE id = $1;
-PREPARE tg_selnum2 (numeric)          AS SELECT * FROM tg_numeric WHERE num = $1;
+PREPARE tg_selnum1 (integer)          AS SELECT * FROM tg_numeric WHERE id = $1 ORDER BY id;
+PREPARE tg_selnum2 (numeric)          AS SELECT * FROM tg_numeric WHERE num = $1 ORDER BY id;
 
 EXECUTE tg_insnum (1, 3.14);
 EXECUTE tg_insnum (2, -3.14);
 
-SELECT * FROM tg_numeric;
+SELECT * FROM tg_numeric ORDER BY id;
 
 EXECUTE tg_updnum1 (1, 3.141592);
 EXECUTE tg_updnum2 (2222, -3.14);
 
-SELECT * FROM tg_numeric;
+SELECT * FROM tg_numeric ORDER BY id;
 
 EXECUTE tg_selnum1 (2222);
 EXECUTE tg_selnum2 (3.141592);
@@ -92,7 +92,7 @@ EXECUTE tg_insnum (23, CAST(radians(45.0) AS DECIMAL(10,6)));
 EXECUTE tg_insnum (24, CAST(scale(8.41) AS DECIMAL(10,6)));
 EXECUTE tg_insnum (25, CAST(width_bucket(5.35, 0.024, 10.06, 5) AS DECIMAL(10,6)));
 
-SELECT * FROM tg_numeric;
+SELECT * FROM tg_numeric ORDER BY id;
 
 /* value check */
 PREPARE tg_insval_s0 (integer, numeric) AS INSERT INTO tg_numeric_s0 (id, num) VALUES ($1, $2);
@@ -109,7 +109,7 @@ EXECUTE tg_insval_s0 ( 7, -18446744073709551615);
 EXECUTE tg_insval_s0 ( 8, -18446744073709551616);
 EXECUTE tg_insval_s0 ( 9, -99999999999999999999999999999999999999);
 
-SELECT * FROM tg_numeric_s0;
+SELECT * FROM tg_numeric_s0 ORDER BY id;
 
 -- correct value
 EXECUTE tg_insval_s38 ( 1, 0);  -- see tsurugi-issues#736
@@ -122,7 +122,7 @@ EXECUTE tg_insval_s38 ( 7, -0.00000000000000000018446744073709551615);
 EXECUTE tg_insval_s38 ( 8, -0.00000000000000000018446744073709551616);
 EXECUTE tg_insval_s38 ( 9, -0.99999999999999999999999999999999999999);
 
-SELECT * FROM tg_numeric_s38;
+SELECT * FROM tg_numeric_s38 ORDER BY id;
 
 /* Test teardown: DDL of the PostgreSQL */
 DROP FOREIGN TABLE tg_numeric;

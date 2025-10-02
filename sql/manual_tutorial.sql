@@ -32,17 +32,17 @@ INSERT INTO weather (id, city, temp_lo, temp_hi)
     VALUES (3, 'Hayward', 54, 37);
 
 /* データの問い合わせ */
-SELECT * from weather;
+SELECT * from weather ORDER BY id;
 
 /* データの更新 */
 UPDATE weather
     SET temp_hi = temp_hi - 2,  temp_lo = temp_lo - 2
     WHERE city = 'Hayward';
-select * from weather;
+select * from weather ORDER BY id;
 
 /* データの削除 */
 DELETE FROM weather WHERE city = 'Hayward';
-select * from weather;
+select * from weather ORDER BY id;
 
 /* データベースロールの作成 */
 CREATE ROLE jonathan;
@@ -51,10 +51,10 @@ CREATE ROLE jonathan;
 GRANT SELECT ON weather TO jonathan;    -- Tsurugiテーブルにアクセス権を付与します
 
 /* Tsurugiテーブルのアクセス制御 */
-SET ROLE jonathan;          -- 確認のためカレントのデータベースロールを変更します
-SELECT * from weather;      -- 問い合わせの操作は成功します
+SET ROLE jonathan;                  -- 確認のためカレントのデータベースロールを変更します
+SELECT * from weather ORDER BY id;  -- 問い合わせの操作は成功します
 DELETE FROM weather WHERE city = 'San Francisco'; -- 問い合わせ以外の操作は失敗します
-RESET ROLE;                 -- 現在のデータベースロールを元に戻します
+RESET ROLE;                         -- 現在のデータベースロールを元に戻します
 
 /* アクセス権の剥奪 */
 REVOKE SELECT ON weather FROM jonathan;

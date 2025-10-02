@@ -134,7 +134,7 @@ PREPARE select_t2_where9
 PREPARE select_t2_group1
     AS SELECT count(c1), sum(c2), c7 FROM t2_prepare_select_statement GROUP BY c7 ORDER BY c7;
 PREPARE select_t2_group1_ng
-    AS SELECT count(c1) AS "count(c1)", sum(c2) AS "sum(c2)", c7 FROM t2_prepare_select_statement GROUP BY c7;
+    AS SELECT count(c1) AS "count(c1)", sum(c2) AS "sum(c2)", c7 FROM t2_prepare_select_statement GROUP BY c7 ORDER BY c7;
 -- GROUP BY #2
 /* having support. (tsurugi-issue#739) */
 PREPARE select_t2_group2
@@ -169,7 +169,7 @@ PREPARE select_join3
 PREPARE select_pg_join_tg6
     AS SELECT * FROM t1_prepare_select_statement AS a JOIN t2_prepare_select_statement AS b ON a.c4=b.c4 JOIN t1_prepare_select_statement AS c ON b.c4=c.c4 WHERE a.c2=22 ORDER BY a.c1;
 PREPARE select_pg_join_tg7
-    AS SELECT * FROM t1_prepare_select_statement AS a CROSS JOIN t2_prepare_select_statement AS b ORDER BY b.c1;
+    AS SELECT a.*, b.* FROM t1_prepare_select_statement AS a CROSS JOIN t2_prepare_select_statement AS b ORDER BY b.c1, a.c1;
 PREPARE select_pg_join_tg8
     AS SELECT * FROM t1_prepare_select_statement AS a JOIN t1_prepare_select_statement AS b ON a.c3=b.c3 ORDER BY a.c1;
 /***************/

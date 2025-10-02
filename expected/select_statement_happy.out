@@ -411,6 +411,8 @@ SELECT
 FROM
     t2_select_statement
 GROUP BY
+    c7
+ORDER BY
     c7;
  c7  | count | sum | avg | min | max  
 -----+-------+-----+-----+-----+------
@@ -475,11 +477,11 @@ WHERE
 
 -- TG /* tsurugi-issue#863 */
 SELECT
-    *
+    a.*, b.*
 FROM
     t1_select_statement AS a CROSS JOIN t2_select_statement AS b
 ORDER BY
-    b.c1;
+    b.c1, a.c1;
  c1 | c2 | c3  | c4  |  c5  |     c6     |        c7        | c1 | c2 | c3  | c4  |  c5  |     c6     | c7  
 ----+----+-----+-----+------+------------+------------------+----+----+-----+-----+------+------------+-----
   1 | 11 | 111 | 1.1 | 1.11 | first      | ABCDEFGH_LMN_XYZ |  1 | 11 | 111 | 1.1 | 1.11 | one        | ABC

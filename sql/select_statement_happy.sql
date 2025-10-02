@@ -275,6 +275,8 @@ SELECT
 FROM
     t2_select_statement
 GROUP BY
+    c7
+ORDER BY
     c7;
 -- FOREIGN TABLE JOIN
 -- TG JOIN #1 /* tsurugi-issue#863 */
@@ -317,11 +319,11 @@ WHERE
 
 -- TG /* tsurugi-issue#863 */
 SELECT
-    *
+    a.*, b.*
 FROM
     t1_select_statement AS a CROSS JOIN t2_select_statement AS b
 ORDER BY
-    b.c1;
+    b.c1, a.c1;
 
 -- TG /* tsurugi-issue#863 */
 SELECT
