@@ -128,6 +128,9 @@ Since tsurugi_fdw accesses the Tsurugi database via IPC endpoint, the PostgreSQL
     ```
 
 1. Install tsurugi_fdw extension
+
+    From here, enter commands in psql.
+
     * Execute **CREATE EXTENSION** command
 
         ```sql
