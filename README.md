@@ -3,7 +3,7 @@
 ## Requirements
 
 * C++ Compiler `>= C++17`
-* Source code of PostgreSQL 12/13/14 `>=12.4`, `>=13.18`, `>=14.18`
+* Source code of PostgreSQL 12/13/14/15 `>=12.22`, `>=13.18`, `>=14.18`, `>=15.13`
 * Access to installed dependent modules:
   * [takatori](https://github.com/project-tsurugi/takatori)
   * [ogawayama](https://github.com/project-tsurugi/ogawayama)
@@ -30,8 +30,8 @@
         ```
 
     ```sh
-    curl -sL https://ftp.postgresql.org/pub/source/v12.4/postgresql-12.4.tar.bz2 | tar -xj
-    cd postgresql-12.4
+    curl -sL https://ftp.postgresql.org/pub/source/v15.13/postgresql-15.13.tar.bz2 | tar -xj
+    cd postgresql-15.13
     ./configure --prefix=$HOME/pgsql
     make
     make install
@@ -43,7 +43,7 @@
 
     ```sh
     cd contrib
-    git clone git@github.com:project-tsurugi/tsurugi_fdw.git
+    git clone https://github.com/project-tsurugi/tsurugi_fdw.git
     cd tsurugi_fdw
     git submodule update --init --recursive
     ```
@@ -141,17 +141,34 @@
    * Execute **CREATE SERVER** command
 
         ```sql
-        CREATE SERVER tsurugi FOREIGN DATA WRAPPER tsurugi_fdw;
+        CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
         ```
 
-   * Check with the meta-command(\des)
+        Notice:   
+        If you have changed the name of the Tsurugi database (default is '`tsurugi`'), you can set the new database name.
+
+        ```sql
+        CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw OPTIONS (dbname 'new-database-name');
+        ```
+
+        Check with the meta-command(`\des+`).
+
+        ```sql
+        postgres=# \des+
+                                                          List of foreign servers
+           Name    |  Owner   | Foreign-data wrapper | Access privileges | Type | Version |       FDW options            | Description
+        -----------+----------+----------------------+-------------------+------+---------+------------------------------+-------------
+         tsurugidb | postgres | tsurugi_fdw          |                   |      |         | (dbname 'new-database-name') |
+        ```
+
+   * Check with the meta-command(`\des`)
 
         ```sql
         postgres=# \des
                     List of foreign servers
             Name    |  Owner   | Foreign-data wrapper
          -----------+----------+----------------------
-          tsurugi   | postgres | tsurugi_fdw
+          tsurugidb | postgres | tsurugi_fdw
         ```
 
 ## Regression tests
