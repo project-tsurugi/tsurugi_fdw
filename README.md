@@ -12,7 +12,7 @@ The current version of tsurugi_fdw pushes down queries directly to Tsurugi, whic
 
 ### Requirements
 
-Since tsurugi_fdw accesses the Tsurugi database via IPC, the PostgreSQL installing this extension must be located on the same host as Tsurugi.
+Since tsurugi_fdw accesses the Tsurugi database via IPC endpoint, the PostgreSQL installing this extension must be located on the same host as Tsurugi.
 
 * C++ Compiler `>= C++17`
 * Source code of PostgreSQL 12/13/14/15 `>=12.22`, `>=13.18`, `>=14.18`, `>=15.13`
