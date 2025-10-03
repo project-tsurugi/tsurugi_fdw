@@ -33,7 +33,7 @@ INSERT INTO weather (temp_lo, temp_hi, prcp, id, city)
 INSERT INTO weather (id, city, temp_lo, temp_hi)
     VALUES (3, 'Hayward', 54, 37);
 /* データの問い合わせ */
-SELECT * from weather;
+SELECT * FROM weather ORDER BY id;
  id |     city      | temp_lo | temp_hi | prcp |  the_date  
 ----+---------------+---------+---------+------+------------
   1 | San Francisco |      46 |      50 | 0.25 | 2023-04-01
@@ -45,7 +45,7 @@ SELECT * from weather;
 UPDATE weather
     SET temp_hi = temp_hi - 2,  temp_lo = temp_lo - 2
     WHERE city = 'Hayward';
-select * from weather;
+SELECT * FROM weather ORDER BY id;
  id |     city      | temp_lo | temp_hi | prcp |  the_date  
 ----+---------------+---------+---------+------+------------
   1 | San Francisco |      46 |      50 | 0.25 | 2023-04-01
@@ -55,7 +55,7 @@ select * from weather;
 
 /* データの削除 */
 DELETE FROM weather WHERE city = 'Hayward';
-select * from weather;
+SELECT * FROM weather ORDER BY id;
  id |     city      | temp_lo | temp_hi | prcp |  the_date  
 ----+---------------+---------+---------+------+------------
   1 | San Francisco |      46 |      50 | 0.25 | 2023-04-01
@@ -67,8 +67,8 @@ CREATE ROLE jonathan;
 /* アクセス権の付与 */
 GRANT SELECT ON weather TO jonathan;    -- Tsurugiテーブルにアクセス権を付与します
 /* Tsurugiテーブルのアクセス制御 */
-SET ROLE jonathan;          -- 確認のためカレントのデータベースロールを変更します
-SELECT * from weather;      -- 問い合わせの操作は成功します
+SET ROLE jonathan;                  -- 確認のためカレントのデータベースロールを変更します
+SELECT * FROM weather ORDER BY id;  -- 問い合わせの操作は成功します
  id |     city      | temp_lo | temp_hi | prcp |  the_date  
 ----+---------------+---------+---------+------+------------
   1 | San Francisco |      46 |      50 | 0.25 | 2023-04-01
@@ -77,7 +77,7 @@ SELECT * from weather;      -- 問い合わせの操作は成功します
 
 DELETE FROM weather WHERE city = 'San Francisco'; -- 問い合わせ以外の操作は失敗します
 ERROR:  permission denied for foreign table weather
-RESET ROLE;                 -- 現在のデータベースロールを元に戻します
+RESET ROLE;                         -- 現在のデータベースロールを元に戻します
 /* アクセス権の剥奪 */
 REVOKE SELECT ON weather FROM jonathan;
 /* データベースロールの削除 */
@@ -95,22 +95,6 @@ SELECT * FROM weather ORDER BY id;  -- レグレッションテスト確認用
   4 | Los Angeles   |      64 |      82 |    0 | 2023-04-01
 (3 rows)
 
-/* デフォルトのトランザクション特性を変更したい場合 */
-SELECT tg_set_transaction('short', 'interrupt');    /*  デフォルトのトランザクション特性を変更する
-              tg_set_transaction              
-----------------------------------------------
- {                                           +
-     "transactionType": "1",                 +
-     "transactionPriority": "1",             +
-     "transactionLabel": "pgsql-transaction",+
-     "writePreserve": "",                    +
-     "inclusiveReadArea": "",                +
-     "exclusiveReadArea": ""                 +
- }                                           +
- 
-(1 row)
-
-                                                        （priority = 'interrupt'） */
 BEGIN;
 INSERT INTO weather (id, city, temp_lo, temp_hi, prcp)
     VALUES (5, 'Oakland', 48, 53, 0.5);
@@ -134,21 +118,6 @@ SELECT * FROM weather ORDER BY id;
   5 | Oakland       |      48 |      53 |  0.5 | 2023-04-01
 (4 rows)
 
-/* 特定のトランザクションブロックのみトランザクション特性を変更 */
-SELECT tg_set_transaction('read_only', 'wait', 'read_only_tx');
-           tg_set_transaction            
------------------------------------------
- {                                      +
-     "transactionType": "3",            +
-     "transactionPriority": "2",        +
-     "transactionLabel": "read_only_tx",+
-     "writePreserve": "",               +
-     "inclusiveReadArea": "",           +
-     "exclusiveReadArea": ""            +
- }                                      +
- 
-(1 row)
-
 SELECT * FROM weather ORDER BY id;
  id |     city      | temp_lo | temp_hi | prcp |  the_date  
 ----+---------------+---------+---------+------+------------
@@ -159,20 +128,6 @@ SELECT * FROM weather ORDER BY id;
 (4 rows)
 
 COMMIT;     --  トランザクション終了
-SELECT tg_set_transaction('short', 'interrupt');
-              tg_set_transaction              
-----------------------------------------------
- {                                           +
-     "transactionType": "1",                 +
-     "transactionPriority": "1",             +
-     "transactionLabel": "pgsql-transaction",+
-     "writePreserve": "",                    +
-     "inclusiveReadArea": "",                +
-     "exclusiveReadArea": ""                 +
- }                                           +
- 
-(1 row)
-
 BEGIN;
 INSERT INTO weather (id, city, temp_lo, temp_hi, prcp)
     VALUES (6, 'San Jose', 46, 55, 0.0);
@@ -226,39 +181,6 @@ SELECT * FROM weather ORDER BY id;  -- レグレッションテスト確認用
   6 | San Jose      |      46 |      55 |    0 | 2023-04-01
   7 | Sacramento    |      48 |      60 | 0.25 | 2023-04-01
 (6 rows)
-
-/* Longトランザクションを実行する */
-SELECT tg_set_transaction('long');      --  Longトランザクションをデフォルトに設定する
-              tg_set_transaction              
-----------------------------------------------
- {                                           +
-     "transactionType": "2",                 +
-     "transactionPriority": "1",             +
-     "transactionLabel": "pgsql-transaction",+
-     "writePreserve": "",                    +
-     "inclusiveReadArea": "",                +
-     "exclusiveReadArea": ""                 +
- }                                           +
- 
-(1 row)
-
-SELECT tg_set_write_preserve('weather');    --  書き込みを予約するテーブルを設定する
-            tg_set_write_preserve             
-----------------------------------------------
- {                                           +
-     "transactionType": "2",                 +
-     "transactionPriority": "1",             +
-     "transactionLabel": "pgsql-transaction",+
-     "writePreserve": [                      +
-         {                                   +
-             "tableName": "weather"          +
-         }                                   +
-     ],                                      +
-     "inclusiveReadArea": "",                +
-     "exclusiveReadArea": ""                 +
- }                                           +
- 
-(1 row)
 
 BEGIN;
 INSERT INTO weather (id, city, temp_lo, temp_hi)

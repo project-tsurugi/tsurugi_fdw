@@ -25,10 +25,10 @@
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
 
-#include "tsurugi.h"
+#include "common/tsurugi.h"
 #include "ogawayama/stub/error_code.h"
 #include "ogawayama/stub/api.h"
-#include "tg_numeric.h"
+#include "common/tg_numeric.h"
 
 using namespace ogawayama;
 
@@ -39,6 +39,7 @@ extern "C" {
 #endif
 #include "access/htup_details.h"
 #include "catalog/pg_type.h"
+#include "foreign/foreign.h"
 #include "storage/proc.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
@@ -52,6 +53,179 @@ extern "C" {
 }
 #endif
 
+/**
+ * @class ConnectionInfo
+ * @brief A class that stores Tsurugi connection information.
+ * 
+ * This class is used to manage and validate connection options for the Tsurugi.
+ * It provides methods to parse options, check for matches, and retrieve individual server option values.
+ * 
+ * The supported options include:
+ * 
+ * - endpoint: Specifies the connection endpoint type.
+ * 
+ * - dbname: The name of the database to connect to.
+ * 
+ * - address: The address of the database server.
+ * 
+ * - port: The port number for the database connection.
+ */
+class ConnectionInfo {
+public:
+	ConnectionInfo() {}
+	ConnectionInfo(const List* server_opts) { parse(server_opts); }
+	ConnectionInfo(const ConnectionInfo& server_opts) {
+		endpoint_ = server_opts.endpoint_;
+		dbname_ = server_opts.dbname_;
+		address_ = server_opts.address_;
+		port_ = server_opts.port_;
+	};
+
+	bool operator==(const ConnectionInfo& server_opts) const {
+		if (server_opts.endpoint_ != endpoint_) {
+			return false;
+		} else if (is_ipc()) {
+			// For IPC, all options are compared.
+			return (server_opts.dbname_ == dbname_);
+		} else if (is_stream()) {
+			// For TCP, all options are compared.
+			return (server_opts.address_ == address_) &&
+			       (server_opts.port_ == port_);
+		}
+
+		return true;
+	}
+
+	bool operator!=(const ConnectionInfo& server_opts) const {
+		return !(*this == server_opts);
+	}
+
+	/**
+	 * @brief Returns the value of the endpoint option.
+	 * @return value of the endpoint.
+	 */
+	std::string_view endpoint() const { return endpoint_; }
+
+	/**
+	 * @brief Returns the value of the dbname option.
+	 * @return value of the dbname.
+	 */
+	std::string_view dbname() const { return dbname_; }
+
+	/**
+	 * @brief Returns the value of the address option.
+	 * @return value of the address.
+	 */
+	std::string_view address() const { return address_; }
+
+	/**
+	 * @brief Returns the value of the port option.
+	 * @return value of the port.
+	 */
+	std::string_view port() const { return port_; }
+
+	std::string get_shared_memory_name()
+	{
+		std::string name{ogawayama::common::param::SHARED_MEMORY_NAME};
+		boost::property_tree::ptree pt;
+		const boost::filesystem::path conf_file("tsurugi_fdw.conf");
+		boost::system::error_code error;
+		if (boost::filesystem::exists(conf_file, error)) 
+		{
+			boost::property_tree::read_ini("tsurugi_fdw.conf", pt);
+			boost::optional<std::string> str = 
+				pt.get_optional<std::string>("Configurations.SHARED_MEMORY_NAME");
+			if (str) 
+			{
+				name = str.get();
+			}
+		}
+
+		return name;
+	}
+
+	/**
+	 * @brief Parse the server options.
+	 * @param server_opts server options.
+	 */
+	void parse(const List* server_opts) {
+		ListCell *cell;
+
+		/* Initialize. */
+		endpoint_ = kDefEndpoint;
+		dbname_ = get_shared_memory_name();
+		address_ = kDefAddress;
+		port_ = kDefPort;
+
+		/* Get foreign server options. */
+		foreach (cell, server_opts) {
+			auto [key, value] = parse_option(cell);
+
+			auto it = opt_values_.find(key);
+			if (it != opt_values_.end()) {
+				*(it->second) = value;
+			}
+		}
+	}
+
+	/**
+	 * @brief Returns whether the endpoint is IPC.
+	 * @retval true if the endpoint is "ipc".
+	 * @retval false otherwise.
+	 */
+	bool is_ipc() const { return endpoint_ == kValEndpointIpc; }
+
+	/**
+	 * @brief Returns whether the endpoint is stream.
+	 * @retval true if the endpoint is "stream".
+	 * @retval false otherwise.
+	 */
+	bool is_stream() const { return endpoint_ == kValEndpointTcp; }
+
+private:
+	/* Endpoint values */
+	static constexpr const char* const kValEndpointIpc = "ipc";
+	static constexpr const char* const kValEndpointTcp = "stream";
+	/* Option names */
+	static constexpr const char* const kOptEndpoint = "endpoint";
+	static constexpr const char* const kOptDbname = "dbname";
+	static constexpr const char* const kOptAddress = "address";
+	static constexpr const char* const kOptPort = "port";
+	/* Default values */
+	static constexpr const char* const kDefEndpoint = kValEndpointIpc;
+	static constexpr const char* const kDefDbname =
+		ogawayama::common::param::SHARED_MEMORY_NAME.data();
+	static constexpr const char* const kDefAddress = "";
+	static constexpr const char* const kDefPort = "";
+
+	std::string endpoint_;
+	std::string dbname_;
+	std::string address_;
+	std::string port_;
+	std::unordered_map<std::string, std::string*> opt_values_ = {
+		{kOptEndpoint, &endpoint_},
+		{kOptDbname, &dbname_},
+		{kOptAddress, &address_},
+		{kOptPort, &port_},
+	};
+
+	/**
+	 * @brief Returns key-value pairs from the ListCell format options.
+	 * @param list option element.
+	 * @return pair of key and value.
+	 */
+	std::pair<std::string, std::string> parse_option(const ListCell* list_cell) const {
+		auto elem = (DefElem*)lfirst(list_cell);
+		auto opt_key = std::string(elem->defname);
+		auto opt_val = std::string(strVal(elem->arg));
+
+		std::transform(opt_key.begin(), opt_key.end(), opt_key.begin(),
+					   [](unsigned char c) { return std::tolower(c); });
+
+		return {opt_key, opt_val};
+	}
+};
+
 StubPtr Tsurugi::stub_ = nullptr;
 ConnectionPtr Tsurugi::connection_ = nullptr;
 TransactionPtr Tsurugi::transaction_ = nullptr;
@@ -59,99 +233,146 @@ ResultSetPtr Tsurugi::result_set_ = nullptr;
 MetadataPtr Tsurugi::metadata_ = nullptr;
 std::unordered_map<std::string, PreparedStatementPtr> Tsurugi::prepared_statements_;
 PreparedStatementPtr Tsurugi::prepared_statement_ = nullptr;
+ConnectionInfo connection_info_;
 
 bool GetTransactionOption(boost::property_tree::ptree&);
 
 /**
- *  @brief 	
- *  @param 	
- *  @return	
+ *  @brief Checks whether the ogawayama stub has been initialized.
+ *  @param server_oid oid of tsurugi server.
+ *  @retval true  if the stub is already initialized
+ *  @retval false if the stub has not been initialized yet
  */
-std::string get_shared_memory_name()
+bool Tsurugi::is_initialized(Oid server_oid)
 {
-    std::string name{ogawayama::common::param::SHARED_MEMORY_NAME};
-    boost::property_tree::ptree pt;
-    const boost::filesystem::path conf_file("tsurugi_fdw.conf");
-    boost::system::error_code error;
-    if (boost::filesystem::exists(conf_file, error)) 
-    {
-        boost::property_tree::read_ini("tsurugi_fdw.conf", pt);
-        boost::optional<std::string> str = 
-            pt.get_optional<std::string>("Configurations.SHARED_MEMORY_NAME");
-        if (str) 
-        {
-            name = str.get();
-        }
-    }
+	elog(DEBUG1, "tsurugi_fdw : %s(serverid: %u)", __func__, server_oid);
 
-    return name;
+	/* Check if it is not connected. */
+	if ((stub_ == nullptr) || (connection_ == nullptr))
+	{
+		elog(DEBUG4, "Not connected to Tsurugi.");
+		return false;
+	}
+
+	/* Checks if it is a transaction block in progress. */
+	if (transaction_ != nullptr)
+	{
+		elog(DEBUG4, "There is a transaction block in progress.");
+		return true;
+	}
+
+	/* Get ForeignServer object from server OID. */
+	auto server = GetForeignServer(server_oid);
+	assert(server != nullptr);
+
+	/* Get the latest connection information. */
+	ConnectionInfo now_sever_opts(server->options);
+
+	/* Check that the connection information matches. */
+	if (connection_info_ != now_sever_opts)
+	{
+		elog(DEBUG4, "Connection information has been changed.");
+		return false;
+	}
+
+	elog(DEBUG4, "Already connected to the database.");
+	return true;
 }
 
 /**
  *  @brief 	Initialize ogawayama stub.
- *  @param 	none.
+ * 
+ *  If connected to the tsurugi database, it will disconnect and attempt to reconnect.
+ * 
+ *  @param 	server_oid oid of tsurugi server.
  *  @return	error code of ogawayama.
  */
-ERROR_CODE Tsurugi::init()
+ERROR_CODE Tsurugi::init(Oid server_oid)
 {
 	auto error{ERROR_CODE::UNKNOWN};
 
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw : %s(serverid: %u)", __func__, server_oid);
 
-    if (stub_ == nullptr)
+	/* Get ForeignServer object from server OID. */
+	auto server = GetForeignServer(server_oid);
+	assert(server != nullptr);
+
+	ConnectionInfo now_sever_opts(server->options);
+
+	/* Set foreign server options. */
+	connection_info_ = now_sever_opts;
+
+	if (connection_info_.is_ipc()) {
+		elog(DEBUG2, R"(endpoint="%s", dbname="%s")",
+				connection_info_.endpoint().data(), connection_info_.dbname().data());
+	} else if (connection_info_.is_stream()) {
+		elog(DEBUG2, R"(endpoint="%s", host="%s", port="%s")",
+				connection_info_.endpoint().data(), connection_info_.address().data(),
+				connection_info_.port().data());
+	}
+
+	/* Release connection-related resources. */
+	stub_ = nullptr;
+	connection_ = nullptr;
+
+	/*
+	 * Currently, only "ipc" is supported.
+	 * "stream" is an option for future use, so even if you specify it,
+	 * it will be an "ipc" connection.
+	 */
+
+	elog(LOG, "tsurugi_fdw : Attempt to call make_stub(). (name: %s)",
+			connection_info_.dbname().data());
+
+	error = make_stub(stub_, connection_info_.dbname());
+	Tsurugi::error_log2(LOG, "make_stub() is done.", error);
+	if (error != ERROR_CODE::OK)
 	{
-        std::string shared_memory_name(get_shared_memory_name());
+		stub_ = nullptr;
+		Tsurugi::report_error("Failed to make shared memory for Tsurugi.", 
+			error, connection_info_.dbname());
+	}
 
-		elog(LOG, "tsurugi_fdw : Attempt to call make_stub(). (name: %s)", 
-            shared_memory_name.data());
+	elog(LOG, "tsurugi_fdw : Attempt to call Stub::get_connection(). (pid: %d)", getpid());
 
-		error = make_stub(stub_, shared_memory_name);
-		Tsurugi::error_log2(LOG, "make_stub() is done.", error);		
-		if (error != ERROR_CODE::OK) 
-        {
-            stub_ = nullptr;
-			Tsurugi::report_error("Failed to make shared memory for Tsurugi.", 
-									error, nullptr);
-		}
+	error = stub_->get_connection(getpid(), connection_);
+	Tsurugi::error_log2(LOG, "Stub::get_connection() is done.", error);
+
+	if (error != ERROR_CODE::OK)
+	{
 		connection_ = nullptr;
+		Tsurugi::report_error("Failed to connect to Tsurugi.", error, nullptr);
 	}
-
-	if (connection_ == nullptr) 
-    {
-		elog(LOG, "tsurugi_fdw : Attempt to call Stub::get_connection(). (pid: %d)", 
-			getpid());
-
-		error = stub_->get_connection(getpid(), connection_);
-		Tsurugi::error_log2(LOG, "Stub::get_connection() is done.", error);		
-		if (error != ERROR_CODE::OK)
-		{
-            connection_ = nullptr;
-			Tsurugi::report_error("Failed to connecto to Tsurugi.", error, nullptr);
-		}
-		transaction_ = nullptr;
-	}
+	transaction_ = nullptr;
 
 	return ERROR_CODE::OK;
 }
 
 /**
  *  @brief 	Begin a transaction of tsurugidb.
- *  @param 	none.
+ *  @param 	server_oid oid of tsurugi server.
  *  @return	error code of ogawayama.
  */
-ERROR_CODE Tsurugi::start_transaction()
+ERROR_CODE Tsurugi::start_transaction(Oid server_oid)
 {
 	auto error{ERROR_CODE::UNKNOWN};
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
-	if (transaction_ != nullptr) {
-	    elog(NOTICE, "tsurugi_fdw : There is already transaction block in progress.");
-	    return ERROR_CODE::OK;
+	if (!Tsurugi::is_initialized(server_oid))
+	{
+		/* Initializing connection to tsurugi server. */
+		auto error = Tsurugi::init(server_oid);
+		if (error != ERROR_CODE::OK) {
+			ereport(ERROR, (errcode(ERRCODE_FDW_ERROR),
+							errmsg("%s", Tsurugi::get_error_message(error).c_str())));
+		}
 	}
 
-	if (connection_ == nullptr)
-		Tsurugi::init();
+	if (transaction_ != nullptr) {
+		elog(NOTICE, "tsurugi_fdw : There is already transaction block in progress.");
+		return ERROR_CODE::OK;
+	}
 
 	boost::property_tree::ptree option;
 	GetTransactionOption(option);
@@ -191,16 +412,13 @@ ERROR_CODE Tsurugi::commit()
         error = ERROR_CODE::NO_TRANSACTION;
     }
 
-    return error;
+	return error;
 }
 
 /**
  *  @brief 	Rollback a transaction on tsurugidb.
  *  @param 	none.
  *  @return	error code of ogawayama.
- */
-/*
- * rollback
  */
 ERROR_CODE Tsurugi::rollback()
 {
@@ -226,11 +444,11 @@ ERROR_CODE Tsurugi::rollback()
 }
 
 /**
- *  @brief 	Confirm the prepared statement exsists.
+ *  @brief 	Confirm the prepared statement exists.
  *  @param 	(prep_name) prepare name.
- *  @return	Return true if exsists.
+ *  @return	Return true if exists.
  */
-bool Tsurugi::exsists_prepared_statement(std::string_view prep_name)
+bool Tsurugi::exists_prepared_statement(std::string_view prep_name)
 {
 	elog(DEBUG1, "tsurugi_fdw : %s : name: %s", __func__, prep_name.data());
 
@@ -246,6 +464,7 @@ bool Tsurugi::exsists_prepared_statement(std::string_view prep_name)
 	return exists;
 }
 
+#if 0  // Not used
 /**
  *  @brief 	Prepare a statement to tsurugidb.
  *  @param 	(prep_name)	prepare name.
@@ -287,29 +506,38 @@ ERROR_CODE Tsurugi::prepare(std::string_view prep_name, std::string_view stateme
 
     return error;	
 }
+#endif  // Not used
 
 /**
  *  @brief 	Prepare astatement to tsurugidb without name.
- *  @param 	(statement)	SQL statement
- * 			(placeholders) information of placeholders in statement.
+ *  @param 	(server_oid) oid of tsurugi server.
+ *  @param 	(statement) SQL statement
+ *  @param 	(placeholders) information of placeholders in statement.
  *  @return	error code of ogawayama.
- * 	@note	Prepared statement has a one-time lifespan.
+ *  @note	Prepared statement has a one-time lifespan.
  */
-ERROR_CODE Tsurugi::prepare(std::string_view statement,
+ERROR_CODE Tsurugi::prepare(Oid server_oid, std::string_view statement,
 	            	ogawayama::stub::placeholders_type& placeholders)
 {
 	auto error{ERROR_CODE::UNKNOWN};
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
-    if (connection_ == nullptr)
-		Tsurugi::init();
+	if (!Tsurugi::is_initialized(server_oid))
+	{
+		/* Initializing connection to tsurugi server. */
+		auto error = Tsurugi::init(server_oid);
+		if (error != ERROR_CODE::OK) {
+			ereport(ERROR, (errcode(ERRCODE_FDW_ERROR),
+							errmsg("%s", Tsurugi::get_error_message(error).c_str())));
+		}
+	}
 
 	Tsurugi::deallocate();
 	elog(LOG, "tsurugi_fdw : Attempt to call Connection::prepare().\nstatement: \n%s", 
 		statement.data());
 
-	//	Preapre the statement.
+	//	Prepare the statement.
 	error = connection_->prepare(statement, placeholders, prepared_statement_);
 	Tsurugi::error_log2(LOG, "Connection::prepare() is done.", error);
 
@@ -317,7 +545,7 @@ ERROR_CODE Tsurugi::prepare(std::string_view statement,
 }
 
 /**
- *  @brief 	Deallocate a preapared statement.
+ *  @brief 	Deallocate a prepared statement.
  *  @param 	(prep_name)	prepare name.
  *  @return	error code of ogawayama.
  */
@@ -345,7 +573,7 @@ ERROR_CODE Tsurugi::deallocate(std::string_view prep_name)
 }
 
 /**
- *  @brief 	Deallocate a unnamed preapared statement.
+ *  @brief 	Deallocate a unnamed prepared statement.
  *  @param	none.
  *  @return	none.
  */
@@ -389,7 +617,7 @@ Tsurugi::execute_query(std::string_view query)
 /**
  *  @brief 	Execute a prepared statement on tsurugidb.
  *  @param 	(query)	SQL query.
- * 			(params) parameters for prepated statement.
+ * 			(params) parameters for prepared statement.
  *  @return	error code of ogawayama.
  */
 ERROR_CODE 
@@ -518,30 +746,31 @@ Tsurugi::execute_statement(ogawayama::stub::parameters_type& params,
     return error;
 }
 
-/*
+/**
  * @brief request list tables and get table_list class.
+ * @param server_oid oid of tsurugi server.
  * @param table_list returns a table_list class
  * @return error code defined in error_code.h
  */
-ERROR_CODE Tsurugi::get_list_tables(TableListPtr& table_list)
+ERROR_CODE
+Tsurugi::get_list_tables(Oid server_oid, TableListPtr& table_list)
 {
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
 
-	if (connection_ == nullptr)
-	{
-		elog(DEBUG1, "tsurugi_fdw : Attempt to call Tsurugi::init. (pid: %d)", getpid());
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
-		error = init();
-		if (error != ERROR_CODE::OK)
-		{
-			ereport(ERROR,
-				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
-				 errmsg(R"(error connecting to server)"),
-				 errdetail("%s", get_error_message(error).c_str())));
+	if (!Tsurugi::is_initialized(server_oid))
+	{
+		/* Initializing connection to tsurugi server. */
+		auto error = Tsurugi::init(server_oid);
+		if (error != ERROR_CODE::OK) {
+			ereport(ERROR, (errcode(ERRCODE_FDW_ERROR),
+							errmsg("%s", Tsurugi::get_error_message(error).c_str())));
 		}
 	}
 
-	elog(DEBUG1, "tsurugi_fdw : Attempt to call Connection::get_list_tables(). (pid: %d)", getpid());
+	elog(DEBUG1, "tsurugi_fdw : Attempt to call Connection::get_list_tables(). (pid: %d)",
+		 getpid());
 
 	/* Get a list of table names from Tsurugi. */
 	error = connection_->get_list_tables(table_list);
@@ -551,28 +780,28 @@ ERROR_CODE Tsurugi::get_list_tables(TableListPtr& table_list)
 	return error;
 }
 
-/*
+/**
  * @brief request table metadata and get TableMetadata class.
+ * @param server_oid oid of tsurugi server.
  * @param table_name the table name
  * @param table_metadata returns a table_metadata class
  * @return error code defined in error_code.h
  */
 ERROR_CODE
-Tsurugi::get_table_metadata(std::string_view table_name, TableMetadataPtr& table_metadata)
+Tsurugi::get_table_metadata(Oid server_oid, std::string_view table_name,
+							TableMetadataPtr& table_metadata)
 {
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
 
-	if (connection_ == nullptr)
-	{
-		elog(DEBUG1, "Attempt to call Tsurugi::init(). (pid: %d)", getpid());
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
-		error = init();
-		if (error != ERROR_CODE::OK)
-		{
-			ereport(ERROR,
-				(errcode(ERRCODE_CONNECTION_FAILURE),
-				 errmsg("error connecting to server"),
-				 errdetail("%s", get_error_message(error).c_str())));
+	if (!Tsurugi::is_initialized(server_oid))
+	{
+		/* Initializing connection to tsurugi server. */
+		auto error = Tsurugi::init(server_oid);
+		if (error != ERROR_CODE::OK) {
+			ereport(ERROR, (errcode(ERRCODE_FDW_ERROR),
+							errmsg("%s", Tsurugi::get_error_message(error).c_str())));
 		}
 	}
 
@@ -586,7 +815,7 @@ Tsurugi::get_table_metadata(std::string_view table_name, TableMetadataPtr& table
 	return error;
 }
 
-/*
+/**
  * @brief convert Tsurugi data types to PostgreSQL data types.
  * @param tg_type tsurugi data type (AtomType)
  * @return std::optional of PostgreSQL data type
@@ -687,7 +916,7 @@ std::string Tsurugi::get_error_detail(ERROR_CODE error)
 }
 
 /**
- *  @brief 	Get detail message of tsurug server.
+ *  @brief 	Get detail message of tsurugi server.
  *  @param 	(error_code) error code of ogawayama.
  *  @return	detail error message.
  */
@@ -1445,7 +1674,7 @@ Tsurugi::convert_decimal_to_tg(Datum value)
 {
 	// Convert PostgreSQL NUMERIC type to string.
 	std::string pg_numeric = DatumGetCString(DirectFunctionCall1(numeric_out, value));
-	elog(DEBUG5, "orignal: pg_numeric = %s", pg_numeric.c_str());
+	elog(DEBUG5, "original: pg_numeric = %s", pg_numeric.c_str());
 	auto pos_period = pg_numeric.find(".");
 	if (pos_period != std::string::npos) {
 		pg_numeric.erase(pos_period, 1);

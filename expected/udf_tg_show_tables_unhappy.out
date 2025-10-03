@@ -1,21 +1,26 @@
-/* Test case: 3-2-2 */
--- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))', 'tsurugidb');
+/* Test case: unhappy path - UDF tg_show_tables() */
+-- Test case: 3-2-2
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE udf_test_table_1 (id INT, name CHAR(64))
+', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  CREATE TABLE
 (1 row)
 
-SELECT tg_execute_ddl('CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)', 'tsurugidb');
+SELECT tg_execute_ddl('
+  CREATE TABLE udf_test_table_2 (id BIGINT, since DATE)
+', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  CREATE TABLE
 (1 row)
 
--- Test
+--- Test
 SELECT tg_show_tables('tg_schema', 'unknown_server', 'detail', true);
 ERROR:  server "unknown_server" does not exist
--- Test teardown: DDL of the Tsurugi
+--- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
  tg_execute_ddl 
 ----------------
@@ -28,59 +33,59 @@ SELECT tg_execute_ddl('DROP TABLE udf_test_table_2', 'tsurugidb');
  DROP TABLE
 (1 row)
 
-/* Test case: 5-1-1 */
--- Test
+-- Test case: 5-1-1
+--- Test
 SELECT tg_show_tables();
 ERROR:  missing required argument "remote_schema"
-/* Test case: 5-1-2 */
--- Test
+-- Test case: 5-1-2
+--- Test
 SELECT tg_show_tables('', 'tsurugidb', 'summary', true);
 ERROR:  missing required argument "remote_schema"
-/* Test case: 5-1-3 */
--- Test
+-- Test case: 5-1-3
+--- Test
 SELECT tg_show_tables(NULL, 'tsurugidb', 'summary', true);
 ERROR:  missing required argument "remote_schema"
-/* Test case: 5-2-1 */
--- Test
+-- Test case: 5-2-1
+--- Test
 SELECT tg_show_tables('tg_schema');
 ERROR:  missing required argument "server_name"
-/* Test case: 5-2-2 */
--- Test
+-- Test case: 5-2-2
+--- Test
 SELECT tg_show_tables('tg_schema', '', 'summary', true);
 ERROR:  missing required argument "server_name"
-/* Test case: 5-2-3 */
--- Test
+-- Test case: 5-2-3
+--- Test
 SELECT tg_show_tables('tg_schema', NULL, 'summary', true);
 ERROR:  missing required argument "server_name"
-/* Test case: 5-3-2 */
--- Test
+-- Test case: 5-3-2
+--- Test
 SELECT tg_show_tables('tg_schema', 'tsurugidb', 'invalid_mode', true);
 ERROR:  invalid value ("invalid_mode") for parameter "mode"
 DETAIL:  expected 'summary' or 'detail'
-/* Test case: 5-3-3 */
--- Test
+-- Test case: 5-3-3
+--- Test
 SELECT tg_show_tables('tg_schema', 'tsurugidb', '', true);
 ERROR:  invalid value ("") for parameter "mode"
 DETAIL:  expected 'summary' or 'detail'
-/* Test case: 5-3-4 */
--- Test
+-- Test case: 5-3-4
+--- Test
 SELECT tg_show_tables('tg_schema', 'tsurugidb', NULL, true);
 ERROR:  invalid value ("") for parameter "mode"
 DETAIL:  expected 'summary' or 'detail'
-/* Test case: 5-4-2 */
--- Test
+-- Test case: 5-4-2
+--- Test
 SELECT tg_show_tables('tg_schema', 'tsurugidb', 'summary', 'invalid');
 ERROR:  invalid input syntax for type boolean: "invalid"
-LINE 3: ..._show_tables('tg_schema', 'tsurugidb', 'summary', 'invalid')...
+LINE 1: ..._show_tables('tg_schema', 'tsurugidb', 'summary', 'invalid')...
                                                              ^
-/* Test case: 5-4-3 */
--- Test
+-- Test case: 5-4-3
+--- Test
 SELECT tg_show_tables('tg_schema', 'tsurugidb', 'summary', '');
 ERROR:  invalid input syntax for type boolean: ""
-LINE 3: ...ECT tg_show_tables('tg_schema', 'tsurugidb', 'summary', '');
+LINE 1: ...ECT tg_show_tables('tg_schema', 'tsurugidb', 'summary', '');
                                                                    ^
-/* Test case: 5-4-4 */
--- Test
+-- Test case: 5-4-4
+--- Test
 SELECT tg_show_tables('tg_schema', 'tsurugidb', 'summary', NULL);
 ERROR:  invalid value (NULL) for parameter "pretty"
 DETAIL:  expected true or false
