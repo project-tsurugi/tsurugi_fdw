@@ -152,8 +152,8 @@ Since tsurugi_fdw accesses the Tsurugi database via IPC, the PostgreSQL installi
         CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
         ```
 
-        Notice:   
-        If you have changed the name of the Tsurugi database (default is '`tsurugi`'), you can set the new database name.
+        Notice:  
+        If you have changed the name of the Tsurugi database from its default (default is '`tsurugi`'), you need to set the new database name to PostgreSQL as well.
 
         ```sql
         CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw OPTIONS (dbname 'new-database-name');
