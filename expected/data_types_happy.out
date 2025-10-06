@@ -319,7 +319,7 @@ SELECT * FROM fdw_type_int WHERE c = 2147483647 ORDER BY c;
 (2 rows)
 
 UPDATE fdw_type_int SET c = -2147483648 WHERE c = 2147483647;
-SELECT * FROM fdw_type_int WHERE c = -2147483648;
+SELECT * FROM fdw_type_int WHERE c = -2147483648 ORDER BY c;
       c      
 -------------
  -2147483648

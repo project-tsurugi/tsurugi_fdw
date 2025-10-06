@@ -623,7 +623,8 @@ DEALLOCATE fdw_prepare_sel;
 PREPARE fdw_prepare_sel AS
   SELECT c6, COUNT(c1), SUM(c2), AVG(c3), MIN(c4), MAX(c5)
     FROM fdw_group_basic_table
-    GROUP BY c6;
+    GROUP BY c6
+    ORDER BY c6;
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel;
 
