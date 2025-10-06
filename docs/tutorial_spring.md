@@ -4,13 +4,13 @@
 
 ### Spring Frameworkを使用
 
-Spring Frameworkを使用してTsurugiを利用（Javaアプリケーションからデータベースにアクセス）する一般的な方法を説明します。  
+Spring Frameworkを使用してTsurugiを利用する一般的な方法を説明します。  
 
 #### Spring Frameworkとは
 
 Spring FrameworkはJavaアプリケーションを効率的に開発するためのオープンソースのフレームワークです。  
 Spring Frameworkの機能を使用することでTsurugiを効率的に利用（データベース接続、SQL文実行、CRUD操作など）することができます。  
-Tsurugi FDWがサポートするSpring Frameworkの機能については [リファレンス（Spring Framework）](./spring_reference.md) を参照してください。  
+Tsurugi FDWがサポートするSpring Frameworkの内容については [リファレンス（Spring Framework）](./spring_reference.md) を参照してください。  
 
 ##### Spring Frameworkの主な機能（一部抜粋）
 
@@ -25,14 +25,12 @@ JDBC、ORM（Object-Relational Mapping）、R2DBC（Reactive Relational Database
 
 ##### Spring Frameworkの主なプロジェクト（一部抜粋）
 
-- Spring JDBC:  
-JDBC APIを使いやすくするためのユーティリティクラスとヘルパーメソッドを提供している。
-- Spring Data JPA（ORM）:  
-Java Persistence API (JPA) を利用してデータアクセスを簡素化（リポジトリインターフェースを定義しCRUD 操作を自動化）することができる。
-- Spring Data JDBC（ORM）:  
-JDBC APIを利用してデータアクセスを簡素化（リポジトリインターフェースを定義しCRUD 操作を自動化）することができる。
-- Spring Boot:  
-Spring Frameworkでの開発を迅速化し各機能を容易に行えるよう設計されたツールを提供している。
+- Spring Framework  
+  Javaアプリケーション開発の基盤となる包括的なプログラミングおよび構成モデルを提供している。  
+- Spring Data
+  さまざまな「データストアへのアクセス」を簡素化し一貫したプログラミングモデルを提供している。  
+- Spring Boot  
+  Spring Frameworkでの開発を迅速化し各機能を容易に行えるよう設計されたツールを提供している。
 
 #### Spring Frameworkのライブラリ入手
 
@@ -107,7 +105,7 @@ public class DatabaseConnection {
 
 ##### 2. Spring Bootを利用
 
-Spring Bootを利用する場合、`application.properties`ファイルにデータベース接続情報を設定します。  
+`application.properties`ファイルにデータベース接続情報を設定します。  
 
 ~~~properties
 spring.datasource.url=jdbc:postgresql://localhost:5432/your_database_name
@@ -160,11 +158,21 @@ Spring Frameworkを使用してSQL文を実行する方法はいくつかあり�
     }
 ~~~
 
-**セルフレビュー指摘：  
-SQL文が実行できるので、UDFを使ってTsurugi固有のトランザクション属性（LTXやRTX）が変更できるチュートリアルを書いた方がよい！と思う。**
+###### トランザクション特性の変更
 
+`JdbcTemplate`クラスの`execute`メソッドを使用してTsurugi固有のトランザクション特性を変更することができます（Tsurugi FDWのUDFを呼び出す）。トランザクション特性を変更するUDFの詳細は [リファレンス（UDF）](./udf_reference.md) を参照してください。  
 
-#### CRUDの実行（Spring Framework）
+~~~java
+    @Autowired  // 依存性注入（依存オブジェクトを疎結合）
+    private JdbcTemplate jdbcTemplate;
+    public void changeDefaultTransactionLtx() {
+        // 実行するSQL文（UDFを呼び出す）
+        jdbcTemplate.execute("select tg_set_transaction('long')");
+        jdbcTemplate.execute("select tg_set_write_preserve('weather')");
+    }
+~~~
+
+#### CRUD操作の実行（Spring Framework）
 
 Spring Frameworkを使用してオブジェクト指向的にデータベース操作する方法はいくつかありますが、一般的な方法を説明します。  
 
@@ -204,11 +212,10 @@ public class SampleEntity {
 ~~~
 
 > [!IMPORTANT]
-> **主キーの生成戦略で自動生成を利用することはできません。**  
+> **Tsurugiを利用する際は主キーの生成戦略に自動生成を指定することができません。**  
 > **主キーはエンティティクラスのコンストラクタなどで手動生成する必要があります。**  
 >
-> Javaアプリケーションから主キーを自動生成すると、Spring Framework(PostgreSQL JDBC Driver)はデータを作成する際にRETURNING句を付与したINSERT SQLコマンドを実行します。  
-> TsurugiはSQLコマンドのRETURNING句をサポートしていないため、主キーが自動生成されたデータ作成は失敗します（Tsurugi FDWの注意事項）。  
+> 主キーを自動生成するとTsurugiでサポートしていないRETURNNING句がINSERT SQL文に付与されるため、INSERT SQL文の実行（CRUD操作のデータ作成）が失敗します。  
 
 ##### リポジトリインターフェース作成
 
@@ -369,8 +376,7 @@ Tsurugiの `fdw_sample` テーブルに、以下の順番でデータの操作�
 - Spring Data JDBC: [sample/spring-boot-data-jdbc-sample/](../sample/spring-boot-data-jdbc-sample/)
 
 > [!TIP]
-> TsurugiのテーブルおよびTsurugi FDWの外部テーブルは、アプリケーション実行直前に作成し、アプリケーション終了後に削除しています。  
-> 詳細は実行環境内のGradle設定ファイル(build.gradle)を確認してください。
+> TsurugiのテーブルおよびTsurugi FDWの外部テーブルは、アプリケーション実行直前に作成し、アプリケーション終了後に削除しています。詳細はGradle設定ファイル(build.gradle)を確認してください。
 
 ##### サンプルプログラムの実行イメージ
 

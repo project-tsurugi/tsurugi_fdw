@@ -8,15 +8,15 @@ Tsurugi FDWがサポートするSpring Frameworkについて説明します。
 
 Tsurugi FDWは以下のSpring Frameworkプロジェクトをサポートします。  
 
-- [Spring JDBC](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/)
-- [Spring Data JPA](https://spring.pleiades.io/spring-data/jpa/docs/current/api/)
-- [Spring Data JDBC](https://spring.pleiades.io/spring-data/relational/docs/current/api/)
+- [Spring Framework (JDBC)](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/) `v6.2`（`v6.2.11`）以降
+- [Spring Data](https://spring.pleiades.io/spring-data/commons/docs/current/api/) ([JDBC](https://spring.pleiades.io/spring-data/relational/docs/current/api/) | [JPA](https://spring.pleiades.io/spring-data/jpa/docs/current/api/)) `v3.5`（`v3.5.4`）以降
+- [Jakarta EE](https://spring.pleiades.io/specifications/platform/10/apidocs/) 10
 
-Spring Framework（Javaアプリケーション）からデータベース(Tsurugi)へのアクセス方法については、各プロジェクトの仕様に準じます。詳細は各プロジェクトのドキュメントを参照してください。
+データアクセス方法については Spring Framework の仕様に準じます。詳細は各プロジェクトのドキュメントを参照してください。
 
-### 動作確認済みメソッド一覧
+### 動作確認済クラス一覧
 
-Tsurugiの操作に必要な基本的なクラスおよびインターフェースの動作確認済みメソッド一覧を示します。
+Tsurugiへのデータアクセスで使用する基本的なクラスおよびインターフェースを示します。
 
 #### Spring Frameworkプロジェクト
 
@@ -36,9 +36,13 @@ Tsurugiの操作に必要な基本的なクラスおよびインターフェー�
 
 - [Persistenceパッケージ](#persistenceパッケージ) - 永続性およびオブジェクト / リレーショナルマッピングを管理する
 
+### 動作確認済メソッド詳細
+
+メソッド一覧表中の「動作確認」列はサンプルプログラムまたはテストプログラムを使用して動作確認できているメソッドを「〇」できていないメソッドを「×」としている。  
+
 #### DriverManagerDataSourceクラス
 
-[org.springframework.jdbc.datasource](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/datasource/package-summary.html)パッケージにおいてデータベース接続情報を管理する。
+データベース接続情報を管理する。本クラスは [org.springframework.jdbc.datasource](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/datasource/package-summary.html) パッケージに存在する。
 
 | メソッド名 | 説明 | 動作確認 |
 | :--- | :--- | :---: |
@@ -63,7 +67,7 @@ Tsurugiの操作に必要な基本的なクラスおよびインターフェー�
 
 #### JdbcTemplateクラス
 
-[org.springframework.jdbc.core](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/core/package-summary.html)パッケージにおいてJDBCの使用を簡素化する。
+JDBCの使用を簡素化する。本クラスは [org.springframework.jdbc.core](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/core/package-summary.html) パッケージに存在する。
 
 | メソッド名 | 説明 | 動作確認 |
 | :--- | :--- | :---: |
@@ -157,7 +161,7 @@ Tsurugiの操作に必要な基本的なクラスおよびインターフェー�
 
 #### TransactionTemplateクラス
 
-[org.springframework.transaction.support](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/support/package-summary.html)パッケージにおいてプログラムによるトランザクション管理を簡素化する。
+プログラムによるトランザクション管理を簡素化する。本クラスは [org.springframework.transaction.support](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/support/package-summary.html) パッケージに存在する。
 
 | メソッド名 | 説明 | 動作確認 |
 | :--- | :--- | :---: |
@@ -169,7 +173,12 @@ Tsurugiの操作に必要な基本的なクラスおよびインターフェー�
 
 #### Transactionalアノテーションインターフェース
 
-[org.springframework.transaction.annotation](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/annotation/package-summary.html)パッケージ（宣言的トランザクション）においてトランザクション属性（オプション要素）を記述する。
+宣言的トランザクションにおいてトランザクション属性（オプション要素）を記述する。本アノテーションインターフェースは [org.springframework.transaction.annotation](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/annotation/package-summary.html) パッケージに存在する。
+
+> [!NOTE]
+> **本アノテーションインターフェースでTsurugi固有のトランザクション特性を変更することはできません。**
+>
+> Tsurugi固有のトランザクション特性（トランザクション種別や書き込み予約テーブルなど）は Tsurugi FDWのUDFで変更する必要があります。詳細は [チュートリアル(トランザクション特性の変更)](tutorial_spring.md#トランザクション特性の変更) を参照してください。
 
 | オプション要素 | 説明 | 動作確認 |
 | :--- | :--- | :---: |
@@ -185,6 +194,81 @@ Tsurugiの操作に必要な基本的なクラスおよびインターフェー�
 | timeoutString | このトランザクションのタイムアウト（秒単位）を記述する | × |
 | transactionManager | 指定されたトランザクションの修飾子値を記述する | × |
 | value | transactionManager() のエイリアスを記述する | × |
+
+#### CrudRepositoryインターフェース
+
+CRUD操作を行うための汎用リポジトリインターフェース。本インターフェースは [org.springframework.data.repository](https://spring.pleiades.io/spring-data/commons/docs/current/api/org/springframework/data/repository/package-summary.html) パッケージに存在する。
+
+| メソッド名 | 説明 | 動作確認 |
+| :--- | :--- | :---: |
+| count() | 利用可能なエンティティの数を返す | × |
+| delete(T entity) | 指定されたエンティティを削除する | 〇 |
+| deleteAll() | リポジトリによって管理されているすべてのエンティティを削除する | × |
+| deleteAll(Iterable\<? extends T> entities) | 指定されたエンティティを削除する | × |
+| deleteAllById(Iterable\<? extends ID> ids) | 指定された ID を持つ型 T のすべてのインスタンスを削除する | × |
+| deleteById(ID id) | 指定された ID のエンティティを削除する | 〇 |
+| existsById(ID id) | 指定された ID を持つエンティティが存在するかどうかを返す | 〇 |
+| findAll() | 型のすべてのインスタンスを返す | 〇 |
+| findAllById(Iterable\<ID> ids) | 指定された ID を持つ型 T のすべてのインスタンスを返す | × |
+| findById(ID id) | ID でエンティティを取得する | 〇 |
+| save(S entity) | 指定されたエンティティを保存する | 〇 |
+| saveAll(Iterable\<S> entities) | 指定されたすべてのエンティティを保存する | × |
+
+#### JpaRepositoryインターフェース
+
+JPA固有のリポジトリインターフェース（CrudRepositoryを継承）。本インターフェースは [org.springframework.data.jpa.repository](https://spring.pleiades.io/spring-data/jpa/docs/current/api/org/springframework/data/jpa/repository/package-summary.html) パッケージに存在する。
+
+| メソッド名 | 説明 | 動作確認 |
+| :--- | :--- | :---: |
+| deleteAllByIdInBatch(Iterable\<ID> ids) | 単一のクエリを使用して、指定された ID で識別されるエンティティを削除する | × |
+| deleteAllInBatch() | バッチ呼び出しですべてのエンティティを削除する | × |
+| deleteAllInBatch(Iterable\<T> entities) | 指定されたエンティティをバッチで削除する。これは、単一のクエリを作成することを意味する | × |
+| deleteInBatch(Iterable\<T> entities) | 代わりに deleteAllInBatch(Iterable) を使用。使用すべきではない | × |
+| findAll(Example\<S> example) | 型のすべてのインスタンスを返す | × |
+| findAll(Example\<S> example, Sort sort) | 型のすべてのインスタンスを返す | × |
+| flush() | データベースに対するすべての保留中の変更をフラッシュする | × |
+| getById(ID id) | 代わりに getReferenceById(ID) を使用。使用すべきではない | × |
+| getOne(ID id) | 代わりに getReferenceById(ID) を使用。使用すべきではない | × |
+| getReferenceById(ID id) | 指定された識別子を持つエンティティへの参照を返す | × |
+| saveAllAndFlush(Iterable\<S> entities) | すべてのエンティティを保存し、変更を即座にフラッシュする | × |
+| saveAndFlush(S entity)  | エンティティを保存し、変更を即座にフラッシュする | × |
+
+#### SpringDataアノテーションインターフェース
+
+Spring Dataで使用されるアノテーションインターフェース。本アノテーションインターフェースは [org.springframework.data.annotation](https://spring.pleiades.io/spring-data/commons/docs/current/api/org/springframework/data/annotation/package-summary.html)に存在する。
+
+| インターフェース名 | 説明 | 動作確認 |
+| :--- | :--- | :---: |
+| AccessType | Spring Data が永続プロパティの値にアクセスする方法を定義するアノテーション | × |
+| CreatedBy | フィールドを含むエンティティを作成したプリンシパルを表すフィールドとしてフィールドを宣言する | × |
+| CreatedDate | フィールドを含むエンティティが作成された日付を表すフィールドとしてフィールドを宣言する | × |
+| Id | 識別子を表す | 〇 |
+| Immutable | クラスが不変の方法で設計されていることを示す永続エンティティのアノテーション | × |
+| LastModifiedBy | フィールドを含むエンティティを最近変更したプリンシパルを表すフィールドとしてフィールドを宣言する | × |
+| LastModifiedDate | フィールドを含むエンティティが最近変更された日付を表すフィールドとしてフィールドを宣言する | × |
+| PersistenceCreator | コンストラクターまたはファクトリメソッドアノテーションをファクトリ / 優先コンストラクターアノテーションとして宣言するためのマーカーアノテーション | × |
+| Persistent | 通常、永続的な型、フィールド、パラメーターを識別するためのアノテーション | × |
+| QueryAnnotation | ストア固有のアノテーションをクエリアノテーションとしてマークするためのメタアノテーション | × |
+| ReadOnlyProperty | マッピングフレームワークのフィールドを読み取り専用としてマークする。そのため、永続化されない | × |
+| Reference | 他のオブジェクトへの参照をマークするアノテーションにアノテーションを付けるために使用されるメタアノテーション | × |
+| Transient | フィールドをマッピングフレームワークの一時的なものとしてマークする | 〇 |
+| TypeAlias | PersistentEntity の型情報を書き込むときに StringSE ベースの型エイリアスを使用できるようにするためのアノテーション | × |
+| Version | エンティティに楽観的ロックを実装するために、バージョンフィールドとして使用されるプロパティの境界を定る | × |
+
+#### RelationalMappingアノテーションインターフェース
+
+Spring Dataの永続性およびオブジェクト / リレーショナルで使用されるアノテーションインターフェース。本アノテーションインターフェースは [org.springframework.data.relational.core.mapping](https://spring.pleiades.io/spring-data/relational/docs/current/api/org/springframework/data/relational/core/mapping/package-summary.html) に存在する。
+
+| インターフェース名 | 説明 | 動作確認 |
+| :--- | :--- | :---: |
+| Column | 属性からデータベース列へのマッピングを構成するためのアノテーション | 〇 |
+| Embedded | 現在のテーブルに埋め込まれた値オブジェクトを構成するためのアノテーション | × |
+| Embedded.Empty | 空の埋め込みプロパティへのショートカット | × |
+| Embedded.Nullable | null 入力可能な埋め込みプロパティのショートカット | × |
+| InsertOnlyProperty | このアノテーションを持つプロパティは、更新時ではなく、挿入操作時にのみデータベースに書き込まれる | × |
+| MappedCollection | データベース内の List、Set または Map プロパティのマッピングを構成するためのアノテーション | × |
+| Sequence | Id の値を取得するシーケンスを指定する | × |
+| Table | クラスからデータベーステーブルへのマッピングを構成するためのアノテーション | 〇 |
 
 #### Persistenceパッケージ
 
@@ -220,7 +304,7 @@ Tsurugiの操作に必要な基本的なクラスおよびインターフェー�
 | ExcludeSuperclassListeners | エンティティクラス（またはマップされたスーパークラス）とそのサブクラスのスーパークラスリスナーの呼び出しを除外することを指定する | × |
 | FieldResult | SQL クエリの SELECT リストで指定された列をエンティティクラスのプロパティまたはフィールドにマッピングするために、EntityResult アノテーションと組み合わせて使用する | × |
 | ForeignKey | スキーマ生成が有効な場合の外部キー制約の処理を指定するために使用する | × |
-| GeneratedValue | 主キーの値の生成戦略の仕様を提供する | 使用不可 |
+| GeneratedValue | 主キーの値の生成戦略の仕様を提供する | × |
 | Id | エンティティの主キーを指定する | 〇 |
 | IdClass | エンティティの複数のフィールドまたはプロパティにマップされる複合主キークラスを指定する | × |
 | Index | スキーマ生成で使用され、インデックスの作成を指定する | × |
@@ -231,13 +315,13 @@ Tsurugiの操作に必要な基本的なクラスおよびインターフェー�
 | Lob | 永続プロパティまたはフィールドを、データベースでサポートされるラージオブジェクト型のラージオブジェクトとして永続化することを指定する | × |
 | ManyToMany | 多対多の多重度を持つ多値の関連付けを指定する | × |
 | ManyToOne | 多対 1 の多重度を持つ別のエンティティクラスへの単一値の関連付けを指定する | × |
-| MapKey | マップキー自体がプライマリキーであるか、マップの値であるエンティティの永続フィールドまたはプロパティである場合、型 java.util.MapSE の関連付けのマップキーを指定する | × |
+| MapKey | マップキー自体がプライマリキーであるか、マップの値であるエンティティの永続フィールドまたはプロパティである場合、型 java.util.Map の関連付けのマップキーを指定する | × |
 | MapKeyClass | 型 java.util.Map の関連付けのマップキーの型を指定する | × |
 | MapKeyColumn | マップキーが基本型であるマップのキー列のマッピングを指定する | × |
 | MapKeyEnumerated | 基本型が列挙型であるマップキーの列挙型を指定する | × |
 | MapKeyJoinColumn | マップキーであるエンティティへのマッピングを指定する | × |
 | MapKeyJoinColumns | エンティティを参照する複合マップキーをサポートする | × |
-| MapKeyTemporal | このアノテーションは、型 DateSE および CalendarSE の永続マップキーに指定する必要がある | × |
+| MapKeyTemporal | このアノテーションは、型 Date および Calendar の永続マップキーに指定する必要がある | × |
 | MappedSuperclass | マッピング情報が継承するエンティティに適用されるクラスを指定する | × |
 | MapsId | EmbeddedId 主キー、EmbeddedId 主キー内の属性、親エンティティの単純主キーのマッピングを提供する ManyToOne または OneToOne 関連属性を指定する | × |
 | NamedAttributeNode | NamedAttributeNode は NamedEntityGraph のメンバー要素 | × |

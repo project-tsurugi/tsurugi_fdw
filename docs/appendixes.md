@@ -38,6 +38,8 @@ PostgreSQLとTsurugiはアーキテクチャおよびその性質が異なるた
 
 6. JDBC APIのPreparedStatementではPostgreSQLに対してはステートメントキャッシュが効きますが、PostgreSQLからTsurugiへの実行においてはステートメントキャッシュは効きません。
 
+7. Spring Frameworkを使用する場合、主キーの生成戦略に自動生成を指定できません。主キーはエンティティクラスのコンストラクタなどで手動生成する必要があります。主キーを自動生成するとTsurugiでサポートしていないRETURNNING句がINSERT SQL文に付与されるため、INSERT SQL文の実行（CRUD操作のデータ作成）が失敗します。
+
 ### 制限事項
 
 制限事項は以下の通りです。
