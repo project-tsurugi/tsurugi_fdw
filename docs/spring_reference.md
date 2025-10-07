@@ -23,28 +23,28 @@ Tsurugiへのデータアクセスで使用する基本的なクラスおよび�
 - [DriverManagerDataSourceクラス](#drivermanagerdatasourceクラス) - データベース接続情報を管理する
 - [JdbcTemplateクラス](#jdbctemplateクラス) - JDBCの使用を簡素化する
 - [TransactionTemplateクラス](#transactiontemplateクラス) - プログラムによるトランザクション管理を簡素化する
-- [Transactionalアノテーションインターフェース](#transactionalアノテーションインターフェース) - 宣言的トランザクションで使用される
+- [Transactionalアノテーションインターフェース](#transactionalアノテーションインターフェース) - 宣言的トランザクションで使用する
 
 #### Spring Dataプロジェクト
 
 - [CrudRepositoryインターフェース](#crudrepositoryインターフェース) - CRUD操作を行うための汎用リポジトリインターフェース
 - [JpaRepositoryインターフェース](#jparepositoryインターフェース) - JPA固有のリポジトリインターフェース（CrudRepositoryを継承）
-- [SpringDataアノテーションインターフェース](#jparepositoryインターフェース) - 永続性およびオブジェクト / リレーショナルで使用される
-- [RelationalMappingアノテーションインターフェース](#jparepositoryインターフェース) - 永続性およびオブジェクト / リレーショナルで使用される
+- [SpringDataアノテーションインターフェース](#jparepositoryインターフェース) - 永続性およびオブジェクト / リレーショナルで使用する
+- [RelationalMappingアノテーションインターフェース](#jparepositoryインターフェース) - 永続性およびオブジェクト / リレーショナルで使用する
 
 #### Jakarta EE
 
-- [Persistenceアノテーションインターフェース](#persistenceアノテーションインターフェース) - 永続性およびオブジェクト / リレーショナルマッピングを管理する
+- [Persistenceアノテーションインターフェース](#persistenceアノテーションインターフェース) - 永続性およびオブジェクト / リレーショナルで使用する
 
 ### 動作確認済メソッド一覧
 
 Tsurugiへのデータアクセスで使用する基本的なメソッドを示します。  
 
-表中の動作確認列はTsurugiへのアクセス確認で使用したかどうかを表しており問題なく使用できたメソッドを「〇」未使用メソッドを「×」としている。  
+表の動作確認列はTsurugiへのアクセス確認で使用したかどうかを表しており問題なく使用できたメソッドを「〇」未使用メソッドを「×」としている。  
 
 #### DriverManagerDataSourceクラス
 
-データベース接続情報を管理する。本クラスは Spring Frameworkプロジェクトの [org.springframework.jdbc.datasource](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/datasource/package-summary.html) パッケージに存在する。
+データベース接続情報を管理する。本クラスは Spring Frameworkプロジェクトの [org.springframework.jdbc.datasource](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/datasource/package-summary.html) パッケージに属する。
 
 | メソッド名 | 説明 | 動作確認 |
 | :--- | :--- | :---: |
@@ -69,7 +69,7 @@ Tsurugiへのデータアクセスで使用する基本的なメソッドを示�
 
 #### JdbcTemplateクラス
 
-JDBCの使用を簡素化する。本クラスは Spring Frameworkプロジェクトの [org.springframework.jdbc.core](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/core/package-summary.html) パッケージに存在する。
+JDBCの使用を簡素化する。本クラスは Spring Frameworkプロジェクトの [org.springframework.jdbc.core](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/core/package-summary.html) パッケージに属する。
 
 | メソッド名 | 説明 | 動作確認 |
 | :--- | :--- | :---: |
@@ -163,7 +163,7 @@ JDBCの使用を簡素化する。本クラスは Spring Frameworkプロジェ�
 
 #### TransactionTemplateクラス
 
-プログラムによるトランザクション管理を簡素化する。本クラスは Spring Frameworkプロジェクトの [org.springframework.transaction.support](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/support/package-summary.html) パッケージに存在する。
+プログラムによるトランザクション管理を簡素化する。本クラスは Spring Frameworkプロジェクトの [org.springframework.transaction.support](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/support/package-summary.html) パッケージに属する。
 
 | メソッド名 | 説明 | 動作確認 |
 | :--- | :--- | :---: |
@@ -175,7 +175,7 @@ JDBCの使用を簡素化する。本クラスは Spring Frameworkプロジェ�
 
 #### Transactionalアノテーションインターフェース
 
-宣言的トランザクションで使用されるアノテーションインターフェース。本アノテーションインターフェースは Spring Dataプロジェクトの [org.springframework.transaction.annotation](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/annotation/Transactional.html) パッケージに存在する。
+宣言的トランザクションで使用されるアノテーションインターフェース。本アノテーションインターフェースは Spring Dataプロジェクトの [org.springframework.transaction.annotation](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/annotation/Transactional.html) パッケージに属する。
 
 > [!NOTE]
 > **本アノテーションインターフェースでTsurugi固有のトランザクション属性は変更できません。**
@@ -184,7 +184,7 @@ JDBCの使用を簡素化する。本クラスは Spring Frameworkプロジェ�
 
 #### CrudRepositoryインターフェース
 
-CRUD操作を行うための汎用リポジトリインターフェース。本インターフェースは Spring Dataプロジェクトの [org.springframework.data.repository](https://spring.pleiades.io/spring-data/commons/docs/current/api/org/springframework/data/repository/package-summary.html) パッケージに存在する。
+CRUD操作を行うための汎用リポジトリインターフェース。本インターフェースは Spring Dataプロジェクトの [org.springframework.data.repository](https://spring.pleiades.io/spring-data/commons/docs/current/api/org/springframework/data/repository/package-summary.html) パッケージに属する。
 
 | メソッド名 | 説明 | 動作確認 |
 | :--- | :--- | :---: |
@@ -203,7 +203,7 @@ CRUD操作を行うための汎用リポジトリインターフェース。本�
 
 #### JpaRepositoryインターフェース
 
-JPA固有のリポジトリインターフェース（CrudRepositoryを継承）。本インターフェースは Spring Dataプロジェクトの [org.springframework.data.jpa.repository](https://spring.pleiades.io/spring-data/jpa/docs/current/api/org/springframework/data/jpa/repository/package-summary.html) パッケージに存在する。
+JPA固有のリポジトリインターフェース（CrudRepositoryを継承）。本インターフェースは Spring Dataプロジェクトの [org.springframework.data.jpa.repository](https://spring.pleiades.io/spring-data/jpa/docs/current/api/org/springframework/data/jpa/repository/package-summary.html) パッケージに属する。
 
 | メソッド名 | 説明 | 動作確認 |
 | :--- | :--- | :---: |
@@ -222,7 +222,7 @@ JPA固有のリポジトリインターフェース（CrudRepositoryを継承）
 
 #### SpringDataアノテーションインターフェース
 
-永続性およびオブジェクト / リレーショナルで使用されるアノテーションインターフェース。本アノテーションインターフェースは Spring Dataプロジェクトの [org.springframework.data.annotation](https://spring.pleiades.io/spring-data/commons/docs/current/api/org/springframework/data/annotation/package-summary.html) パッケージに存在する。
+永続性およびオブジェクト / リレーショナルで使用されるアノテーションインターフェース。本アノテーションインターフェースは Spring Dataプロジェクトの [org.springframework.data.annotation](https://spring.pleiades.io/spring-data/commons/docs/current/api/org/springframework/data/annotation/package-summary.html) パッケージに属する。
 
 | アノテーション型 | 説明 | 動作確認 |
 | :--- | :--- | :---: |
@@ -244,7 +244,7 @@ JPA固有のリポジトリインターフェース（CrudRepositoryを継承）
 
 #### RelationalMappingアノテーションインターフェース
 
-永続性およびオブジェクト / リレーショナルで使用されるアノテーションインターフェース。本アノテーションインターフェースは Spring Dataプロジェクトの [org.springframework.data.relational.core.mapping](https://spring.pleiades.io/spring-data/relational/docs/current/api/org/springframework/data/relational/core/mapping/package-summary.html) パッケージに存在する。
+永続性およびオブジェクト / リレーショナルで使用されるアノテーションインターフェース。本アノテーションインターフェースは Spring Dataプロジェクトの [org.springframework.data.relational.core.mapping](https://spring.pleiades.io/spring-data/relational/docs/current/api/org/springframework/data/relational/core/mapping/package-summary.html) パッケージに属する。
 
 | アノテーション型 | 説明 | 動作確認 |
 | :--- | :--- | :---: |
@@ -259,7 +259,7 @@ JPA固有のリポジトリインターフェース（CrudRepositoryを継承）
 
 #### Persistenceアノテーションインターフェース
 
-永続性およびオブジェクト / リレーショナルで使用されるアノテーションインターフェース。本アノテーションインターフェースは Jakarta EEの [jakarta.persistence](https://spring.pleiades.io/specifications/platform/10/apidocs/jakarta/persistence/package-summary) パッケージに存在する。
+永続性およびオブジェクト / リレーショナルで使用されるアノテーションインターフェース。本アノテーションインターフェースは Jakarta EEの [jakarta.persistence](https://spring.pleiades.io/specifications/platform/10/apidocs/jakarta/persistence/package-summary) パッケージに属する。
 
 | アノテーション型 | 説明 | 動作確認 |
 | :--- | :--- | :---: |
