@@ -14,30 +14,30 @@ Tsurugi FDWがサポートするSpring Frameworkの内容については [リフ
 
 ##### Spring Frameworkの主な機能（一部抜粋）
 
-- DI(Dependency Injection)コンテナ:  
+- DI(Dependency Injection)コンテナ  
 アプリケーションコンポーネントの配置とライフサイクルを管理し、依存関係を外部から注入することができる。  
-- AOP(アスペクト指向プログラミング):  
+- AOP(アスペクト指向プログラミング)  
 ログ、トランザクション、セキュリティといった、クラスの横断的な処理の実装を可能にすることができる。  
-- トランザクション管理:  
+- トランザクション管理  
 データベースなどのトランザクション制御を一元的に管理し、Javaオブジェクトのトランザクションを管理することができる。  
-- データアクセス:  
+- データアクセス  
 JDBC、ORM（Object-Relational Mapping）、R2DBC（Reactive Relational Database Connectivity）などを通じて、RDBへのアクセスを簡素化することができる。  
 
 ##### Spring Frameworkの主なプロジェクト（一部抜粋）
 
 - Spring Framework  
-  Javaアプリケーション開発の基盤となる包括的なプログラミングおよび構成モデルを提供している。  
-- Spring Data
-  さまざまな「データストアへのアクセス」を簡素化し一貫したプログラミングモデルを提供している。  
+  アプリケーション開発の基盤となる包括的なプログラミングおよび構成モデルを提供している。  
+- Spring Data  
+  さまざまなデータストアへのアクセスを簡素化し一貫したプログラミングモデルを提供している。  
 - Spring Boot  
   Spring Frameworkでの開発を迅速化し各機能を容易に行えるよう設計されたツールを提供している。
 
 #### Spring Frameworkのライブラリ入手
 
-Spring Frameworkのライブラリは [https://spring.io/projects](https://spring.pleiades.io/projects) で公開されています。Javaアプリケーションの要件に適したライブラリをダウンロードしてください。  
+Spring Frameworkのライブラリは [https://spring.io/projects](https://spring.pleiades.io/projects) で公開されています。アプリケーションの要件に適したライブラリをダウンロードしてください。  
 
-[Spring Initializr](https://start.spring.io/)にアクセスするとJavaアプリケーションの雛形を簡単に作成することができます。  
-Javaアプリケーションに追加する依存ライブラリは、Tsurugi FDWがサポートする以下のSpring Frameworkプロジェクトを選択（複数可）してください。  
+[Spring Initializr](https://start.spring.io/)にアクセスするとアプリケーションの雛形を簡単に作成することができます。  
+アプリケーションに追加する依存ライブラリは、Tsurugi FDWがサポートする以下のSpring Frameworkプロジェクトを選択（複数可）してください。  
 
 - JDBC API [SQL]  
 Database Connectivity API that defines how a client may connect and query a database.
@@ -113,7 +113,7 @@ spring.datasource.username=your_username
 spring.datasource.password=your_password
 ~~~
 
-`application.properties`ファイルに指定したデータベース接続情報は、Javaアプリケーションが起動する直前に読み込まれ、自動でデータベースに接続します。  
+`application.properties`ファイルに指定したデータベース接続情報は、アプリケーションが起動する直前に読み込まれ、自動でデータベースに接続します。  
 
 #### SQL文の実行（Spring Framework）
 
@@ -212,7 +212,7 @@ public class SampleEntity {
 ~~~
 
 > [!IMPORTANT]
-> **Tsurugiを利用する際は主キーの生成戦略に自動生成を指定することができません。**  
+> **Tsurugiを利用する場合、主キーの生成戦略に自動生成を指定することができません。**  
 > **主キーはエンティティクラスのコンストラクタなどで手動生成する必要があります。**  
 >
 > 主キーを自動生成するとTsurugiでサポートしていないRETURNNING句がINSERT SQL文に付与されるため、INSERT SQL文の実行（CRUD操作のデータ作成）が失敗します。  

@@ -23,26 +23,28 @@ Tsurugiへのデータアクセスで使用する基本的なクラスおよび�
 - [DriverManagerDataSourceクラス](#drivermanagerdatasourceクラス) - データベース接続情報を管理する
 - [JdbcTemplateクラス](#jdbctemplateクラス) - JDBCの使用を簡素化する
 - [TransactionTemplateクラス](#transactiontemplateクラス) - プログラムによるトランザクション管理を簡素化する
-- [Transactionalアノテーションインターフェース](#transactionalアノテーションインターフェース) - トランザクション属性を記述する
+- [Transactionalアノテーションインターフェース](#transactionalアノテーションインターフェース) - 宣言的トランザクションで使用される
 
 #### Spring Dataプロジェクト
 
 - [CrudRepositoryインターフェース](#crudrepositoryインターフェース) - CRUD操作を行うための汎用リポジトリインターフェース
 - [JpaRepositoryインターフェース](#jparepositoryインターフェース) - JPA固有のリポジトリインターフェース（CrudRepositoryを継承）
-- [SpringDataアノテーションインターフェース](#jparepositoryインターフェース) - Spring Dataで使用されるアノテーションインターフェース
-- [RelationalMappingアノテーションインターフェース](#jparepositoryインターフェース) - Spring Dataの永続性およびオブジェクト / リレーショナルで使用されるアノテーションインターフェース
+- [SpringDataアノテーションインターフェース](#jparepositoryインターフェース) - 永続性およびオブジェクト / リレーショナルで使用される
+- [RelationalMappingアノテーションインターフェース](#jparepositoryインターフェース) - 永続性およびオブジェクト / リレーショナルで使用される
 
 #### Jakarta EE
 
-- [Persistenceパッケージ](#persistenceパッケージ) - 永続性およびオブジェクト / リレーショナルマッピングを管理する
+- [Persistenceアノテーションインターフェース](#persistenceアノテーションインターフェース) - 永続性およびオブジェクト / リレーショナルマッピングを管理する
 
-### 動作確認済メソッド詳細
+### 動作確認済メソッド一覧
 
-メソッド一覧表中の「動作確認」列はサンプルプログラムまたはテストプログラムを使用して動作確認できているメソッドを「〇」できていないメソッドを「×」としている。  
+Tsurugiへのデータアクセスで使用する基本的なメソッドを示します。  
+
+表中の動作確認列はTsurugiへのアクセス確認で使用したかどうかを表しており問題なく使用できたメソッドを「〇」未使用メソッドを「×」としている。  
 
 #### DriverManagerDataSourceクラス
 
-データベース接続情報を管理する。本クラスは [org.springframework.jdbc.datasource](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/datasource/package-summary.html) パッケージに存在する。
+データベース接続情報を管理する。本クラスは Spring Frameworkプロジェクトの [org.springframework.jdbc.datasource](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/datasource/package-summary.html) パッケージに存在する。
 
 | メソッド名 | 説明 | 動作確認 |
 | :--- | :--- | :---: |
@@ -67,7 +69,7 @@ Tsurugiへのデータアクセスで使用する基本的なクラスおよび�
 
 #### JdbcTemplateクラス
 
-JDBCの使用を簡素化する。本クラスは [org.springframework.jdbc.core](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/core/package-summary.html) パッケージに存在する。
+JDBCの使用を簡素化する。本クラスは Spring Frameworkプロジェクトの [org.springframework.jdbc.core](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/core/package-summary.html) パッケージに存在する。
 
 | メソッド名 | 説明 | 動作確認 |
 | :--- | :--- | :---: |
@@ -161,7 +163,7 @@ JDBCの使用を簡素化する。本クラスは [org.springframework.jdbc.core
 
 #### TransactionTemplateクラス
 
-プログラムによるトランザクション管理を簡素化する。本クラスは [org.springframework.transaction.support](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/support/package-summary.html) パッケージに存在する。
+プログラムによるトランザクション管理を簡素化する。本クラスは Spring Frameworkプロジェクトの [org.springframework.transaction.support](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/support/package-summary.html) パッケージに存在する。
 
 | メソッド名 | 説明 | 動作確認 |
 | :--- | :--- | :---: |
@@ -173,31 +175,16 @@ JDBCの使用を簡素化する。本クラスは [org.springframework.jdbc.core
 
 #### Transactionalアノテーションインターフェース
 
-宣言的トランザクションにおいてトランザクション属性（オプション要素）を記述する。本アノテーションインターフェースは [org.springframework.transaction.annotation](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/annotation/package-summary.html) パッケージに存在する。
+宣言的トランザクションで使用されるアノテーションインターフェース。本アノテーションインターフェースは Spring Dataプロジェクトの [org.springframework.transaction.annotation](https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/annotation/Transactional.html) パッケージに存在する。
 
 > [!NOTE]
-> **本アノテーションインターフェースでTsurugi固有のトランザクション特性を変更することはできません。**
+> **本アノテーションインターフェースでTsurugi固有のトランザクション属性は変更できません。**
 >
-> Tsurugi固有のトランザクション特性（トランザクション種別や書き込み予約テーブルなど）は Tsurugi FDWのUDFで変更する必要があります。詳細は [チュートリアル(トランザクション特性の変更)](tutorial_spring.md#トランザクション特性の変更) を参照してください。
-
-| オプション要素 | 説明 | 動作確認 |
-| :--- | :--- | :---: |
-| isolation | トランザクション分離レベルを記述する | × |
-| label | ゼロ (0) 以上のトランザクションラベルを記述する | × |
-| noRollbackFor | ゼロ (0) 以上の例外 types を記述する | × |
-| noRollbackForClassName | ゼロ (0) 以上の例外名パターンを記述する | × |
-| propagation | トランザクション伝播型を記述する | × |
-| readOnly | トランザクションが事実上読み取り専用である場合に true に設定できるブールフラグを記述する | × |
-| rollbackFor | ゼロ (0) 以上の例外型を記述する | × |
-| rollbackForClassName | ゼロ (0) 以上の例外名パターンを記述する | × |
-| timeout | このトランザクションのタイムアウト（秒単位）を記述する | × |
-| timeoutString | このトランザクションのタイムアウト（秒単位）を記述する | × |
-| transactionManager | 指定されたトランザクションの修飾子値を記述する | × |
-| value | transactionManager() のエイリアスを記述する | × |
+> Tsurugi固有のトランザクション属性（トランザクション種別や書き込み予約テーブルなど）の変更は Tsurugi FDWのUDFで行う必要があります。詳細は [チュートリアル(トランザクション特性の変更)](tutorial_spring.md#トランザクション特性の変更) を参照してください。
 
 #### CrudRepositoryインターフェース
 
-CRUD操作を行うための汎用リポジトリインターフェース。本インターフェースは [org.springframework.data.repository](https://spring.pleiades.io/spring-data/commons/docs/current/api/org/springframework/data/repository/package-summary.html) パッケージに存在する。
+CRUD操作を行うための汎用リポジトリインターフェース。本インターフェースは Spring Dataプロジェクトの [org.springframework.data.repository](https://spring.pleiades.io/spring-data/commons/docs/current/api/org/springframework/data/repository/package-summary.html) パッケージに存在する。
 
 | メソッド名 | 説明 | 動作確認 |
 | :--- | :--- | :---: |
@@ -216,7 +203,7 @@ CRUD操作を行うための汎用リポジトリインターフェース。本�
 
 #### JpaRepositoryインターフェース
 
-JPA固有のリポジトリインターフェース（CrudRepositoryを継承）。本インターフェースは [org.springframework.data.jpa.repository](https://spring.pleiades.io/spring-data/jpa/docs/current/api/org/springframework/data/jpa/repository/package-summary.html) パッケージに存在する。
+JPA固有のリポジトリインターフェース（CrudRepositoryを継承）。本インターフェースは Spring Dataプロジェクトの [org.springframework.data.jpa.repository](https://spring.pleiades.io/spring-data/jpa/docs/current/api/org/springframework/data/jpa/repository/package-summary.html) パッケージに存在する。
 
 | メソッド名 | 説明 | 動作確認 |
 | :--- | :--- | :---: |
@@ -235,9 +222,9 @@ JPA固有のリポジトリインターフェース（CrudRepositoryを継承）
 
 #### SpringDataアノテーションインターフェース
 
-Spring Dataで使用されるアノテーションインターフェース。本アノテーションインターフェースは [org.springframework.data.annotation](https://spring.pleiades.io/spring-data/commons/docs/current/api/org/springframework/data/annotation/package-summary.html)に存在する。
+永続性およびオブジェクト / リレーショナルで使用されるアノテーションインターフェース。本アノテーションインターフェースは Spring Dataプロジェクトの [org.springframework.data.annotation](https://spring.pleiades.io/spring-data/commons/docs/current/api/org/springframework/data/annotation/package-summary.html) パッケージに存在する。
 
-| インターフェース名 | 説明 | 動作確認 |
+| アノテーション型 | 説明 | 動作確認 |
 | :--- | :--- | :---: |
 | AccessType | Spring Data が永続プロパティの値にアクセスする方法を定義するアノテーション | × |
 | CreatedBy | フィールドを含むエンティティを作成したプリンシパルを表すフィールドとしてフィールドを宣言する | × |
@@ -257,9 +244,9 @@ Spring Dataで使用されるアノテーションインターフェース。本
 
 #### RelationalMappingアノテーションインターフェース
 
-Spring Dataの永続性およびオブジェクト / リレーショナルで使用されるアノテーションインターフェース。本アノテーションインターフェースは [org.springframework.data.relational.core.mapping](https://spring.pleiades.io/spring-data/relational/docs/current/api/org/springframework/data/relational/core/mapping/package-summary.html) に存在する。
+永続性およびオブジェクト / リレーショナルで使用されるアノテーションインターフェース。本アノテーションインターフェースは Spring Dataプロジェクトの [org.springframework.data.relational.core.mapping](https://spring.pleiades.io/spring-data/relational/docs/current/api/org/springframework/data/relational/core/mapping/package-summary.html) パッケージに存在する。
 
-| インターフェース名 | 説明 | 動作確認 |
+| アノテーション型 | 説明 | 動作確認 |
 | :--- | :--- | :---: |
 | Column | 属性からデータベース列へのマッピングを構成するためのアノテーション | 〇 |
 | Embedded | 現在のテーブルに埋め込まれた値オブジェクトを構成するためのアノテーション | × |
@@ -270,9 +257,9 @@ Spring Dataの永続性およびオブジェクト / リレーショナルで使
 | Sequence | Id の値を取得するシーケンスを指定する | × |
 | Table | クラスからデータベーステーブルへのマッピングを構成するためのアノテーション | 〇 |
 
-#### Persistenceパッケージ
+#### Persistenceアノテーションインターフェース
 
-永続性およびオブジェクト / リレーショナルマッピングを管理するために[Jakarta EE Persistence](https://spring.pleiades.io/specifications/platform/10/apidocs/jakarta/persistence/package-summary)パッケージのアノテーション型を利用する。
+永続性およびオブジェクト / リレーショナルで使用されるアノテーションインターフェース。本アノテーションインターフェースは Jakarta EEの [jakarta.persistence](https://spring.pleiades.io/specifications/platform/10/apidocs/jakarta/persistence/package-summary) パッケージに存在する。
 
 | アノテーション型 | 説明 | 動作確認 |
 | :--- | :--- | :---: |
