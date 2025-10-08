@@ -215,7 +215,7 @@ public class SampleEntity {
 > **Tsurugiを利用する場合、主キーの生成戦略に自動生成を指定することができません。**  
 > **主キーはエンティティクラスのコンストラクタなどで手動生成する必要があります。**  
 >
-> 主キーを自動生成するとTsurugiでサポートしていないRETURNNING句がINSERT SQL文に付与されるため、INSERT SQL文の実行（CRUD操作のデータ作成）が失敗します。  
+> 主キーを自動生成するとTsurugiでサポートしていないRETURNING句がINSERT SQL文に付与されるため、INSERT SQL文の実行（CRUD操作のデータ作成）が失敗します。  
 
 ##### リポジトリインターフェース作成
 
