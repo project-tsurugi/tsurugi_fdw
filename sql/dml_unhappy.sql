@@ -1,4 +1,4 @@
-/* Test case: unhappy path - Unsupported DML statement patterns - PostgreSQL 12-15 */
+/* Test case: unhappy path - Unsupported DML statement patterns - PostgreSQL 12-16 */
 
 /* Test case: unhappy path - Unsupported SELECT statement patterns */
 -- Test setup: DDL of the Tsurugi

@@ -2,7 +2,7 @@
 SET datestyle TO ISO, YMD;
 SET timezone TO 'Asia/Tokyo';
 
-/* Test case: unhappy path - invalid PREPARE statement */
+/* Test case: happy path - PREPARE statement */
 -- Test setup: DDL of the Tsurugi
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_valid_test (id INTEGER)
