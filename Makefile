@@ -76,6 +76,9 @@ ifdef REGRESS_EXTRA
 	else ifeq ($(filter $(MAJORVERSION), 14 15), $(MAJORVERSION))
 		# PostgreSQL 14.x to PostgreSQL 15.x
 		REGRESS += dml_unhappy_pg14-15 prep_dml_unhappy_pg14-15
+	else ifeq ($(filter $(MAJORVERSION), 16), $(MAJORVERSION))
+		# PostgreSQL 16.x
+		REGRESS += dml_unhappy_pg16 prep_dml_unhappy_pg16
 	endif
 endif
 
