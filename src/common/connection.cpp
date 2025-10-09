@@ -21,7 +21,7 @@
 
 #include <iostream>
 #include "ogawayama/stub/error_code.h"
-#include "tsurugi.h"
+#include "common/tsurugi.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -77,14 +77,13 @@ static void tsurugifdw_inval_callback(Datum arg, int cacheid, uint32 hashvalue);
 
 void handle_remote_xact(ForeignServer *server)
 {
-	bool		found;
+	bool found;
 	ConnCacheEntry *entry;
 	ConnCacheKey key;
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	if (ConnectionHash == NULL){
-
 		HASHCTL         ctl;
 
 		/* Create the hash table. */
@@ -115,10 +114,9 @@ void handle_remote_xact(ForeignServer *server)
 		entry->xact_depth = 0;
 		entry->changing_xact_state = false;
 		entry->invalidated = false;
-        entry->server_hashvalue =
-                GetSysCacheHashValue1(FOREIGNSERVEROID,
-                                    ObjectIdGetDatum(server->serverid));
-	}	
+		entry->server_hashvalue =
+			GetSysCacheHashValue1(FOREIGNSERVEROID, ObjectIdGetDatum(server->serverid));
+	}
 
 	/* Start a new remote transaction if needed. */
 	begin_remote_xact(entry);
@@ -132,12 +130,13 @@ void begin_remote_xact(ConnCacheEntry *entry)
 	/* Start main transaction if we haven't yet */
 	if (entry->xact_depth <= 0)
 	{
-		ERROR_CODE error = Tsurugi::start_transaction();
+		auto server_oid = entry->key;
+		ERROR_CODE error = Tsurugi::start_transaction(server_oid);
 		if (error != ERROR_CODE::OK)
 		{
 			elog(ERROR, "Failed to begin the Tsurugi transaction. (%d)\n%s", 
-                (int) error, Tsurugi::get_error_message(error).c_str());
-    	}
+				(int) error, Tsurugi::get_error_message(error).c_str());
+		}
 		entry->xact_depth = 1;
 		entry->changing_xact_state = false;
 	}
@@ -154,15 +153,15 @@ static void tsurugifdw_xact_callback(XactEvent event, void *arg)
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
-  	/* Quick exit if no connections were touched in this transaction. */
+	/* Quick exit if no connections were touched in this transaction. */
 	if (!xact_got_connection)
 		return;
 
-    /* Scan all connection cache entries to find open remote transactions, and close them. */
-    hash_seq_init(&scan, ConnectionHash);
-    while ((entry = (ConnCacheEntry *) hash_seq_search(&scan))){
+	/* Scan all connection cache entries to find open remote transactions, and close them. */
+	hash_seq_init(&scan, ConnectionHash);
+	while ((entry = (ConnCacheEntry *) hash_seq_search(&scan))){
 
-    	/* Ignore cache entry if no open connection right now */
+		/* Ignore cache entry if no open connection right now */
 		if (entry->keep_conn == false)
 			continue;
 
@@ -176,8 +175,8 @@ static void tsurugifdw_xact_callback(XactEvent event, void *arg)
 					error = Tsurugi::commit();
 					if (error != ERROR_CODE::OK)
 					{
-						elog(ERROR, "Failed to commit the Tsurugi transaction. (%d)\n%s", 
-                			(int) error, Tsurugi::get_error_message(error).c_str());
+						elog(ERROR, "Failed to commit the Tsurugi transaction. (%d)\n%s",
+							 (int)error, Tsurugi::get_error_message(error).c_str());
 					}
 					entry->changing_xact_state = false;
 					break;

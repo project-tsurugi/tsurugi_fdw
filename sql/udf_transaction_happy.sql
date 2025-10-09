@@ -1,75 +1,76 @@
-/* Test setup: DDL of the Tsurugi */
+/* Test case: happy path - UDF tg_set_xxxxx()/tg_show_transaction() */
+-- Test setup: DDL of the Tsurugi
 SELECT tg_execute_ddl('
-    CREATE TABLE udf_table1 (
-        column1 INTEGER NOT NULL PRIMARY KEY
-    )
+  CREATE TABLE udf_table1 (
+    column1 INTEGER NOT NULL PRIMARY KEY
+  )
 ', 'tsurugidb');
 SELECT tg_execute_ddl('
-    CREATE TABLE wp_table1 (
-        column1 INTEGER NOT NULL PRIMARY KEY
-    )
+  CREATE TABLE wp_table1 (
+    column1 INTEGER NOT NULL PRIMARY KEY
+  )
 ', 'tsurugidb');
 SELECT tg_execute_ddl('
-    CREATE TABLE wp_table2 (
-        column1 INTEGER NOT NULL PRIMARY KEY
-    )
+  CREATE TABLE wp_table2 (
+    column1 INTEGER NOT NULL PRIMARY KEY
+  )
 ', 'tsurugidb');
 SELECT tg_execute_ddl('
-    CREATE TABLE ri_table1 (
-        column1 INTEGER NOT NULL PRIMARY KEY
-    )
+  CREATE TABLE ri_table1 (
+    column1 INTEGER NOT NULL PRIMARY KEY
+  )
 ', 'tsurugidb');
 SELECT tg_execute_ddl('
-    CREATE TABLE ri_table2 (
-        column1 INTEGER NOT NULL PRIMARY KEY
-    )
+  CREATE TABLE ri_table2 (
+    column1 INTEGER NOT NULL PRIMARY KEY
+  )
 ', 'tsurugidb');
 SELECT tg_execute_ddl('
-    CREATE TABLE re_table1 (
-        column1 INTEGER NOT NULL PRIMARY KEY
-    )
+  CREATE TABLE re_table1 (
+    column1 INTEGER NOT NULL PRIMARY KEY
+  )
 ', 'tsurugidb');
 SELECT tg_execute_ddl('
-    CREATE TABLE re_table2 (
-        column1 INTEGER NOT NULL PRIMARY KEY
-    )
+  CREATE TABLE re_table2 (
+    column1 INTEGER NOT NULL PRIMARY KEY
+  )
 ', 'tsurugidb');
 SELECT tg_execute_ddl('
-    CREATE TABLE tg_table (
-        column1 INTEGER NOT NULL PRIMARY KEY
-    )
+  CREATE TABLE tg_table (
+    column1 INTEGER NOT NULL PRIMARY KEY
+  )
 ', 'tsurugidb');
 
-/* Test setup: DDL of the PostgreSQL */
+-- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_table1 (
-    column1 INTEGER NOT NULL
+  column1 INTEGER NOT NULL
 ) SERVER tsurugidb;
 CREATE FOREIGN TABLE wp_table1 (
-    column1 INTEGER NOT NULL
+  column1 INTEGER NOT NULL
 ) SERVER tsurugidb;
 CREATE FOREIGN TABLE wp_table2 (
-    column1 INTEGER NOT NULL
+  column1 INTEGER NOT NULL
 ) SERVER tsurugidb;
 CREATE FOREIGN TABLE ri_table1 (
-    column1 INTEGER NOT NULL
+  column1 INTEGER NOT NULL
 ) SERVER tsurugidb;
 CREATE FOREIGN TABLE ri_table2 (
-    column1 INTEGER NOT NULL
+  column1 INTEGER NOT NULL
 ) SERVER tsurugidb;
 CREATE FOREIGN TABLE re_table1 (
-    column1 INTEGER NOT NULL
+  column1 INTEGER NOT NULL
 ) SERVER tsurugidb;
 CREATE FOREIGN TABLE re_table2 (
-    column1 INTEGER NOT NULL
+  column1 INTEGER NOT NULL
 ) SERVER tsurugidb;
 CREATE FOREIGN TABLE tg_table (
-    column1 INTEGER NOT NULL
+  column1 INTEGER NOT NULL
 ) SERVER tsurugidb;
 
-/* show default option */
+-- show default option
 SELECT tg_show_transaction();
 
-/* set option */
+-- set option
 SELECT tg_set_transaction('OCC'); -- for Tsurugi Books
 SELECT tg_set_transaction('LTX'); -- for Tsurugi Books
 SELECT tg_set_transaction('RTX'); -- for Tsurugi Books
@@ -83,7 +84,7 @@ SELECT tg_set_transaction('DEFAULT', 'wait_exclude');
 SELECT tg_set_transaction('short', 'default');
 SELECT tg_set_transaction('long', 'interrupt', 'regression-test');
 
-/* set write preserve */
+-- set write preserve
 SELECT tg_set_write_preserve('wp_table1');
 SELECT tg_set_write_preserve('wp_table2');
 SELECT tg_set_write_preserve('wp_table1', 'wp_table2');
@@ -108,7 +109,7 @@ SELECT tg_set_write_preserve('');
 SELECT tg_set_inclusive_read_areas('');
 SELECT tg_set_exclusive_read_areas('');
 
-/* Implicit transaction */
+-- Implicit transaction
 INSERT INTO udf_table1 (column1) VALUES (100);
 SELECT * FROM udf_table1 ORDER BY column1;
 UPDATE udf_table1 SET column1 = column1+1;
@@ -116,7 +117,7 @@ SELECT * FROM udf_table1 ORDER BY column1;
 DELETE FROM udf_table1 WHERE column1 = 101;
 SELECT * from udf_table1 ORDER BY column1;
 
-/* Explicit transaction (begin) */
+-- Explicit transaction (begin)
 BEGIN;
 INSERT INTO udf_table1 (column1) VALUES (100);
 UPDATE udf_table1 SET column1 = column1+2;
@@ -124,7 +125,7 @@ DELETE FROM udf_table1 WHERE column1 = 102;
 COMMIT;
 SELECT * from udf_table1 ORDER BY column1;
 
-/* Explicit transaction (start transaction) */
+-- Explicit transaction (start transaction)
 START TRANSACTION;
 INSERT INTO udf_table1 (column1) VALUES (100);
 UPDATE udf_table1 SET column1 = column1+3;
@@ -132,7 +133,7 @@ DELETE FROM udf_table1 WHERE column1 = 103;
 COMMIT;
 SELECT * from udf_table1 ORDER BY column1;
 
-/* Explicit transaction (commit) */
+-- Explicit transaction (commit)
 BEGIN;
 INSERT INTO udf_table1 (column1) VALUES (200);
 COMMIT;
@@ -148,7 +149,7 @@ DELETE FROM udf_table1 WHERE column1 = 201;
 COMMIT;
 SELECT * from udf_table1 ORDER BY column1;
 
-/* Explicit transaction (end) */
+-- Explicit transaction (end)
 BEGIN;
 INSERT INTO udf_table1 (column1) VALUES (200);
 END;
@@ -164,7 +165,7 @@ DELETE FROM udf_table1 WHERE column1 = 202;
 END;
 SELECT * from udf_table1 ORDER BY column1;
 
-/* Explicit transaction (rollback) */
+-- Explicit transaction (rollback)
 BEGIN;
 INSERT INTO udf_table1 (column1) VALUES (300);
 ROLLBACK;
@@ -180,7 +181,7 @@ DELETE FROM udf_table1 WHERE column1 = 400;
 ROLLBACK;
 SELECT * FROM udf_table1 ORDER BY column1;
 
-/* Explicit transaction (abort) */
+-- Explicit transaction (abort)
 BEGIN;
 INSERT INTO udf_table1 (column1) VALUES (300);
 ABORT;
@@ -198,7 +199,7 @@ SELECT * FROM udf_table1 ORDER BY column1;
 
 DELETE FROM udf_table1 WHERE column1 = 400;
 
-/* Auto commit off */
+-- Auto commit off
 \echo :AUTOCOMMIT
 \set AUTOCOMMIT off
 \echo :AUTOCOMMIT
@@ -237,7 +238,7 @@ COMMIT;
 
 INSERT INTO udf_table1 (column1) VALUES (400);
 
-/* Long transaction */
+-- Long transaction
 SELECT tg_set_transaction('long');
 
 SELECT tg_set_write_preserve('wp_table1', 'wp_table2');
@@ -314,7 +315,7 @@ SELECT tg_set_write_preserve('');
 SELECT tg_set_inclusive_read_areas('');
 SELECT tg_set_exclusive_read_areas('');
 
-/* Explicit long transaction (tg_set_write_preserve) */
+-- Explicit long transaction (tg_set_write_preserve)
 SELECT tg_set_transaction('long');
 
 SELECT tg_set_write_preserve('wp_table1');
@@ -334,7 +335,7 @@ SELECT * FROM wp_table2 ORDER BY column1;
 
 SELECT tg_set_write_preserve('');
 
-/* Explicit long transaction (tg_set_inclusive_read_areas) */
+-- Explicit long transaction (tg_set_inclusive_read_areas)
 SELECT tg_set_transaction('long');
 
 SELECT tg_set_inclusive_read_areas('ri_table1');
@@ -350,7 +351,7 @@ COMMIT;
 
 SELECT tg_set_inclusive_read_areas('');
 
-/* Explicit long transaction (tg_set_exclusive_read_areas) */
+-- Explicit long transaction (tg_set_exclusive_read_areas)
 SELECT tg_set_transaction('long');
 
 SELECT tg_set_exclusive_read_areas('re_table1'); 
@@ -365,7 +366,7 @@ COMMIT;
 
 SELECT tg_set_exclusive_read_areas('');
 
-/* Test teardown: DDL of the PostgreSQL */
+-- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE tg_table;
 DROP FOREIGN TABLE udf_table1;
 DROP FOREIGN TABLE wp_table1;
@@ -375,7 +376,7 @@ DROP FOREIGN TABLE ri_table2;
 DROP FOREIGN TABLE re_table1;
 DROP FOREIGN TABLE re_table2;
 
-/* Test teardown: DDL of the Tsurugi */
+-- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE tg_table', 'tsurugidb');
 SELECT tg_execute_ddl('DROP TABLE udf_table1', 'tsurugidb');
 SELECT tg_execute_ddl('DROP TABLE wp_table1', 'tsurugidb');

@@ -8,7 +8,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-22.04]
-        postgresql: [12.4, 13.18]
+        postgresql: [12.4, 13.18, 14.18]
     name: Build with PosgreSQL ${{ matrix.postgresql }} ( ${{ matrix.os }} )
     runs-on: [self-hosted, docker]
     timeout-minutes: 30
@@ -50,7 +50,7 @@ jobs:
           cd postgresql-${{ matrix.postgresql }}/contrib/tsurugi_fdw
           export LIBRARY_PATH=$LIBRARY_PATH:${GITHUB_WORKSPACE}/pgsql/lib
           echo ${LIBRARY_PATH}
-          make install_dependencies
+          make install_deps
           make -j8
           make install
 
