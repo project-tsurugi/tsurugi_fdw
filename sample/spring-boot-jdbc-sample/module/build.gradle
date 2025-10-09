@@ -1,0 +1,74 @@
+plugins {
+    id 'application'
+    id 'org.springframework.boot' version '3.2.5'           // Spring Bootのプラグイン
+                                                            //   Spring Bootは、Springプロジェクトを簡単に設定・実行できようにするフレームワークです。
+    id 'io.spring.dependency-management' version '1.1.4'    // Spring Bootが提供する Dependency Management 機能
+                                                            //   Spring Bootが推奨する依存関係のバージョンを自動的に適用し、バージョン不整合による問題が回避できる。
+}
+
+repositories {
+    mavenCentral()      // Maven Central リポジトリ（依存関係をダウンロードするためのリポジトリ）
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'      // Spring JDBC を使用してデータベースにアクセスするためのスターター
+    implementation 'org.postgresql:postgresql'                              // PostgreSQL データベースに接続するためのドライバ
+    implementation 'org.springframework.boot:spring-boot-starter'           // Spring Boot アプリケーションの基本機能を提供
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)        // Java ツールチェーン: Java 17 を使用
+    }
+}
+
+application {
+    mainClass = 'com.tsurugidb.fdw.spring.boot.jdbc.sample.SampleApplication'    // メインクラス: アプリケーションのエントリーポイント
+}
+
+task createTable(type: Exec) {
+    // Tsurugi データベースに fdw_sample テーブルを作成するタスク
+    commandLine 'sh', '-c', 'tgsql --exec -c ipc:tsurugi_fuji "create table if not exists fdw_sample (num int not null, tim time)"'
+}
+
+task showTable(type: Exec) {
+    // Tsurugi データベースに作成した fdw_sample テーブルを確認するタスク
+    commandLine 'sh', '-c', 'tgsql --exec -c ipc:tsurugi_fuji "\\show table fdw_sample"'
+}
+
+task dropTable(type: Exec) {
+    // Tsurugi データベースから fdw_sample テーブルを削除するタスク
+    commandLine 'sh', '-c', 'tgsql --exec -c ipc:tsurugi_fuji "drop table if exists fdw_sample"'
+}
+
+task createForeignTable(type: Exec) {
+    // PostgreSQL データベースに fdw_sample 外部テーブルを作成するタスク
+    commandLine 'sh', '-c', 'psql postgres -c "create foreign table if not exists fdw_sample (num int not null, tim time) server tsurugi"'
+}
+
+task showForeignTable(type: Exec) {
+    // PostgreSQL データベースに作成した fdw_sample 外部テーブルを確認するタスク
+    commandLine 'sh', '-c', 'psql postgres -c "\\d fdw_sample"'
+}
+
+task dropForeignTable(type: Exec) {
+    // PostgreSQL データベースから fdw_sample 外部テーブルを削除するタスク
+    commandLine 'sh', '-c', 'psql postgres -c "drop foreign table if exists fdw_sample"'
+}
+
+tasks.named('run') {
+    // run タスクの設定: Spring Boot アプリケーションを実行するタスク
+    dependsOn createTable           // createTable タスクに依存: run タスクの実行前に createTable タスクを実行
+    finalizedBy dropForeignTable    // dropForeignTable タスクをファイナライズ: run タスクの完了後に dropForeignTable タスクを実行
+}
+
+tasks.named('bootRun') {
+    // bootRun タスクの設定: Spring Boot アプリケーションを実行するタスク
+    dependsOn createTable           // createTable タスクに依存: run タスクの実行前に createTable タスクを実行
+    finalizedBy dropForeignTable    // dropForeignTable タスクをファイナライズ: run タスクの完了後に dropForeignTable タスクを実行
+}
+
+createTable.finalizedBy showTable  // createTable タスクのファイナライズ: createTable タスクの完了後に showTable タスクを実行
+showTable.finalizedBy createForeignTable  // showTable タスクのファイナライズ: showTable タスクの完了後に createForeignTable タスクを実行
+createForeignTable.finalizedBy showForeignTable // createForeignTable タスクのファイナライズ: createForeignTable タスクの完了後に showForeignTable タスクを実行
+dropForeignTable.finalizedBy dropTable      // dropForeignTable タスクのファイナライズ: dropForeignTable タスクの完了後に dropTable タスクを実行
