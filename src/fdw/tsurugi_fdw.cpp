@@ -76,6 +76,10 @@ extern "C" {
 #include "utils/syscache.h"
 #include "nodes/pg_list.h"
 
+#if PG_VERSION_NUM >= 160000
+#include "utils/acl.h"
+#endif  // PG_VERSION_NUM >= 160000
+
 PG_MODULE_MAGIC;
 
 #ifdef __cplusplus
@@ -310,6 +314,10 @@ static void store_pg_data_type(TgFdwForeignScanState* fsstate, List* tlist, List
 static int	get_batch_size_option(Relation rel);
 #endif
 #endif
+
+#if PG_VERSION_NUM >= 160000
+static bool has_table_privilege(Oid relid, ForeignScan *fsplan);
+#endif  // PG_VERSION_NUM >= 160000
 
 /* ===========================================================================
  * 
@@ -1219,6 +1227,26 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 	if (eflags & EXEC_FLAG_EXPLAIN_ONLY)
 		return;
 
+	if (fsplan->scan.scanrelid > 0)
+		rtindex = fsplan->scan.scanrelid;
+	else
+		rtindex = bms_next_member(fsplan->fs_relids, -1);
+
+	/* Get the server object from the ForeignTable associated with the relation. */
+	rte = exec_rt_fetch(rtindex, estate);
+	table = GetForeignTable(rte->relid);
+	server = GetForeignServer(table->serverid);
+
+#if PG_VERSION_NUM >= 160000
+	/* Permission check */
+	if (!has_table_privilege(rte->relid, fsplan))
+	{
+		ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						errmsg("permission denied for foreign table %s",
+							   get_rel_name(table->relid))));
+	}
+#endif  // PG_VERSION_NUM >= 160000
+
 	/*
 	 * We'll save private state in node->fdw_state.
 	 */
@@ -1238,11 +1266,6 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
   	fsstate->cursor_exists = false;
 	fsstate->param_linfo = estate->es_param_list_info;
 
-	if (fsplan->scan.scanrelid > 0)
-		rtindex = fsplan->scan.scanrelid;
-	else
-		rtindex = bms_next_member(fsplan->fs_relids, -1);
-
 	/*
 	 * Get info we'll need for converting data fetched from the foreign server
 	 * into local representation and error reporting during that process.
@@ -1258,11 +1281,6 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 		fsstate->tupdesc = node->ss.ss_ScanTupleSlot->tts_tupleDescriptor;
 	}
 	fsstate->attinmeta = TupleDescGetAttInMetadata(fsstate->tupdesc);
-
-	/* Get the server object from the ForeignTable associated with the relation. */
-	rte = exec_rt_fetch(rtindex, estate);
-	table = GetForeignTable(rte->relid);
-	server = GetForeignServer(table->serverid);
 
 	handle_remote_xact(server);
 }
@@ -1688,6 +1706,16 @@ tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
 	rte = exec_rt_fetch(rtindex, estate);
 	table = GetForeignTable(rte->relid);
 	server = GetForeignServer(table->serverid);
+
+#if PG_VERSION_NUM >= 160000
+	/* Permission check */
+	if (!has_table_privilege(rte->relid, fsplan))
+	{
+		ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						errmsg("permission denied for foreign table %s",
+							   get_rel_name(table->relid))));
+	}
+#endif  // PG_VERSION_NUM >= 160000
 
 	if (fsplan->scan.scanrelid == 0)
 		dmstate->rel = ExecOpenScanRelation(estate, rtindex, eflags);
@@ -2504,6 +2532,7 @@ store_pg_data_type(TgFdwForeignScanState* fsstate, List* tlist, List** retrieved
 		fsstate->number_of_columns = count;
 	}
 }
+
 #ifndef __TSURUGI_PLANNER__
 #if PG_VERSION_NUM >= 140000
 /*
@@ -2551,3 +2580,67 @@ get_batch_size_option(Relation rel)
 }
 #endif
 #endif
+
+#if PG_VERSION_NUM >= 160000
+/**
+ * @brief Check table privileges for a specific operation.
+ * @param relid OID of the relation (table) to check.
+ * @param fsplan ForeignScan node for the foreign table access plan.
+ * @retval true if the user has the required privileges.
+ * @retval false otherwise.
+ */
+static bool has_table_privilege(Oid relid, ForeignScan *fsplan)
+{
+	AclMode check_modes[3];
+	int mode_count = 0;
+
+	/* Privilege check for main operation. */
+	switch (fsplan->operation)
+	{
+		case CMD_SELECT:
+			check_modes[mode_count++] = ACL_SELECT;
+			break;
+		case CMD_INSERT:
+			check_modes[mode_count++] = ACL_INSERT;
+			break;
+		case CMD_UPDATE:
+		{
+			check_modes[mode_count++] = ACL_UPDATE;
+
+			/* Additional SELECT privilege check for condition evaluation. */
+			auto has_where_clause = fsplan->fdw_private;
+			if (has_where_clause != NULL)
+			{
+				check_modes[mode_count++] = ACL_SELECT;
+			}
+			break;
+		}
+		case CMD_DELETE:
+		{
+			check_modes[mode_count++] = ACL_DELETE;
+
+			/* Additional SELECT privilege check for condition evaluation. */
+			auto has_where_clause = fsplan->fdw_private;
+			if (has_where_clause != NULL)
+			{
+				check_modes[mode_count++] = ACL_SELECT;
+			}
+			break;
+		}
+		default:
+			check_modes[mode_count++] = N_ACL_RIGHTS;
+			break;
+	}
+
+	bool res = false;
+	for (int i = 0; i < mode_count; i++)
+	{
+		res = pg_class_aclcheck(relid, GetUserId(), check_modes[i]) == ACLCHECK_OK;
+		if (res == false) {
+			break;
+		}
+	}
+
+	return res;
+}
+#endif  // PG_VERSION_NUM >= 160000
