@@ -432,11 +432,11 @@ static void tsurugiGetForeignRelSize(PlannerInfo* root,
 		Oid			userid;
 
 		userid = OidIsValid(baserel->userid) ? baserel->userid : GetUserId();
-		fpinfo->user = GetUserMapping(userid, fpinfo->server->serverid);
 #else
 		RangeTblEntry *rte = planner_rt_fetch(baserel->relid, root);
 		Oid			userid = rte->checkAsUser ? rte->checkAsUser : GetUserId();
 #endif
+		fpinfo->user = GetUserMapping(userid, fpinfo->server->serverid);		
 	}
 	else
 		fpinfo->user = NULL;
