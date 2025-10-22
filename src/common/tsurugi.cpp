@@ -1129,6 +1129,7 @@ Tsurugi::convert_type_to_pg(ResultSetPtr result_set, const Oid pgtype)
 				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is INT2OID.", __func__);
 				if (result_set->next_column(value) == ERROR_CODE::OK)
 				{
+					elog(DEBUG5, "tsurugi_fdw : %s : value = %d", __func__, value);
 					is_null = false;
 					row_value = Int16GetDatum(value);
 				}
@@ -1137,10 +1138,11 @@ Tsurugi::convert_type_to_pg(ResultSetPtr result_set, const Oid pgtype)
 
 		case INT4OID:
 			{
-				std::int32_t value;
+				std::int32_t value = 0;
 				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is INT4OID.", __func__);
 				if (result_set->next_column(value) == ERROR_CODE::OK)
 				{
+					elog(DEBUG5, "tsurugi_fdw : %s : value = %d", __func__, value);
 					is_null = false;
 					row_value =  Int32GetDatum(value);
 				}
@@ -1153,6 +1155,7 @@ Tsurugi::convert_type_to_pg(ResultSetPtr result_set, const Oid pgtype)
 				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is INT8OID.", __func__);
 				if (result_set->next_column(value) == ERROR_CODE::OK)
 				{
+					elog(DEBUG5, "tsurugi_fdw : %s : value = %ld", __func__, value);
 					is_null = false;
 					row_value = Int64GetDatum(value);
 				}
