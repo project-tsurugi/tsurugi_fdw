@@ -54,6 +54,9 @@ extern "C" {
 	#include "optimizer/clauses.h"
 #endif
 #include "optimizer/cost.h"
+#if PG_VERSION_NUM >= 160000
+#include "optimizer/inherit.h"
+#endif
 #include "optimizer/optimizer.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
@@ -388,7 +391,6 @@ static void tsurugiGetForeignRelSize(PlannerInfo* root,
 {
 	TgFdwRelationInfo *fpinfo;
 	ListCell   *lc;
-	RangeTblEntry *rte = planner_rt_fetch(baserel->relid, root);
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
@@ -421,19 +423,25 @@ static void tsurugiGetForeignRelSize(PlannerInfo* root,
 	/*
 	 * If the table or the server is configured to use remote estimates,
 	 * identify which user to do remote access as during planning.  This
-	 * should match what ExecCheckRTEPerms() does.  If we fail due to lack of
-	 * permissions, the query would have failed at runtime anyway.
+	 * should match what ExecCheckPermissions() does.  If we fail due to lack
+	 * of permissions, the query would have failed at runtime anyway.
 	 */
 	if (fpinfo->use_remote_estimate)
 	{
-		Oid			userid = rte->checkAsUser ? rte->checkAsUser : GetUserId();
+#if PG_VERSION_NUM >= 160000
+		Oid			userid;
 
+		userid = OidIsValid(baserel->userid) ? baserel->userid : GetUserId();
 		fpinfo->user = GetUserMapping(userid, fpinfo->server->serverid);
+#else
+		RangeTblEntry *rte = planner_rt_fetch(baserel->relid, root);
+		Oid			userid = rte->checkAsUser ? rte->checkAsUser : GetUserId();
+#endif
 	}
 	else
 		fpinfo->user = NULL;
 
-	/*
+/*
 	 * Identify which baserestrictinfo clauses can be sent to the remote
 	 * server and which can't.
 	 */
@@ -522,7 +530,7 @@ static void tsurugiGetForeignRelSize(PlannerInfo* root,
 			baserel->pages = 10;
 			baserel->tuples =
 				(10 * BLCKSZ) / (baserel->reltarget->width +
-									MAXALIGN(SizeofHeapTupleHeader));
+								 MAXALIGN(SizeofHeapTupleHeader));
 		}
 
 		/* Estimate baserel size as best we can with local statistics. */
@@ -533,6 +541,12 @@ static void tsurugiGetForeignRelSize(PlannerInfo* root,
 								&fpinfo->rows, &fpinfo->width,
 								&fpinfo->startup_cost, &fpinfo->total_cost);
 	}
+
+	/*
+	 * fpinfo->relation_name gets the numeric rangetable index of the foreign
+	 * table RTE.  (If this query gets EXPLAIN'd, we'll convert that to a
+	 * human-readable string at that time.)
+	 */
 	fpinfo->relation_name = psprintf("%u", baserel->relid);
 
 	/* No outer and inner relations. */
@@ -553,10 +567,10 @@ tsurugiGetForeignUpperPaths(PlannerInfo *root, UpperRelationKind stage,
 							 RelOptInfo *input_rel, RelOptInfo *output_rel,
 							 void *extra)
 {
-//	TgFdwRelationInfo *fpinfo;
+	TgFdwRelationInfo *fpinfo;
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
-#if 0
+
 	/*
 	 * If input rel is not safe to pushdown, then simply return as we cannot
 	 * perform any post-join operations on the foreign server.
@@ -594,7 +608,6 @@ tsurugiGetForeignUpperPaths(PlannerInfo *root, UpperRelationKind stage,
 			elog(ERROR, "unexpected upper relation: %d", (int) stage);
 			break;
 	}
-#endif
 }
 
 /*
@@ -940,8 +953,6 @@ tsurugiGetForeignPlan(PlannerInfo *root,
 		 */
 		if (outer_plan)
 		{
-			ListCell   *lc;
-
 			/*
 			 * Right now, we only consider grouping and aggregation beyond
 			 * joins. Queries involving aggregates or grouping do not require
@@ -1305,7 +1316,7 @@ tsurugiIterateForeignScan(ForeignScanState* node)
 	{
 		/* No more rows/data exists */
 		Tsurugi::init_result_set();
-		elog(LOG, "tsurugi_fdw : End of rows. (rows: %d)", 
+		elog(DEBUG1, "tsurugi_fdw : End of rows. (rows: %d)", 
 			(int) fsstate->num_tuples);
 	}
 	else
@@ -1806,6 +1817,21 @@ static List
 	else if (operation == CMD_UPDATE)
 	{
 		int			col;
+#if PG_VERSION_NUM >= 160000
+		RelOptInfo *rel = find_base_rel(root, resultRelation);
+		Bitmapset  *allUpdatedCols = get_rel_all_updated_cols(root, rel);
+
+		col = -1;
+		while ((col = bms_next_member(allUpdatedCols, col)) >= 0)
+		{
+			/* bit numbers are offset by FirstLowInvalidHeapAttributeNumber */
+			AttrNumber	attno = col + FirstLowInvalidHeapAttributeNumber;
+
+			if (attno <= InvalidAttrNumber) /* shouldn't happen */
+				elog(ERROR, "system-column update is not supported");
+			targetAttrs = lappend_int(targetAttrs, attno);
+		}
+#else
 		Bitmapset  *allUpdatedCols = bms_union(rte->updatedCols, rte->extraUpdatedCols);
 
 		col = -1;
@@ -1818,6 +1844,7 @@ static List
 				elog(ERROR, "system-column update is not supported");
 			targetAttrs = lappend_int(targetAttrs, attno);
 		}
+#endif
 	}
 
 	/*
