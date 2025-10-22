@@ -121,18 +121,21 @@ make_tuple_from_result_row(ResultSetPtr result_set,
 {
 	elog(DEBUG5, "tsurugi_fdw : %s", __func__);
 
+	memset(row, 0, sizeof(Datum) * tupleDescriptor->natts);
+	memset(is_null, true, sizeof(bool) * tupleDescriptor->natts);
+
 	ListCell   *lc = NULL;
 	foreach(lc, retrieved_attrs)
 	{
 		int     attnum = lfirst_int(lc) - 1;
-		Oid     pgtype = TupleDescAttr(tupleDescriptor, attnum)->atttypid;
+        Form_pg_attribute pg_attr =TupleDescAttr(tupleDescriptor, attnum);
 
 		elog(DEBUG5, "tsurugi_fdw : %s : attnum: %d", __func__, attnum + 1);
 
-        auto value = Tsurugi::convert_type_to_pg(result_set, pgtype);
-        is_null[attnum] = value.first;  // null flag
+        auto tsurugi_value = Tsurugi::convert_type_to_pg(result_set, pg_attr->atttypid);
+        is_null[attnum] = tsurugi_value.first;  // null flag
         if (!is_null[attnum])
-            row[attnum] = value.second; // value
+            row[attnum] = tsurugi_value.second; // value       
     }
     result_set = nullptr;
 }
@@ -644,7 +647,7 @@ prepare_direct_modify(TgFdwDirectModifyState* dmstate, List* fdw_exprs)
 		i++;
 	}
     stub::placeholders_type placeholders{};
-	for (int i = 0; i < tupdesc->natts; i++)
+	for (i = 0; i < tupdesc->natts; i++)
 	{
 		/* parameter name is 1 origin. */
 		std::string param_name = "param" + std::to_string(i+1);
