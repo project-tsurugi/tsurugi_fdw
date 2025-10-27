@@ -144,9 +144,9 @@ SELECT tg_execute_ddl('
 ', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE fdw_ins_unsupported_test (
-  id integer,
-  key_col varchar(100),
-  value_col integer
+  id integer DEFAULT 9999,
+  key_col varchar(100) DEFAULT 'default',
+  value_col integer DEFAULT 0
 ) SERVER tsurugidb;
 
 -- WITH
@@ -190,7 +190,7 @@ SELECT tg_execute_ddl('
   CREATE TABLE fdw_upd_unsupported_test (
     id INT PRIMARY KEY,
     key_col VARCHAR(100),
-    value_col INT,
+    value_col INT DEFAULT 0,
     date_col DATE
   )
 ', 'tsurugidb');
@@ -198,7 +198,7 @@ SELECT tg_execute_ddl('
 CREATE FOREIGN TABLE fdw_upd_unsupported_test (
   id integer,
   key_col varchar(100),
-  value_col integer,
+  value_col integer DEFAULT 0,
   date_col date
 ) SERVER tsurugidb;
 
