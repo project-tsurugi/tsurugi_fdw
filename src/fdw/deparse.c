@@ -2415,8 +2415,7 @@ deparseExpr(Expr *node, deparse_expr_cxt *context)
 			deparseVar((Var *) node, context);
 			break;
 		case T_Const:
-			/* disable cast (-1)*/
-			deparseConst((Const *) node, context, -1);
+			deparseConst((Const *) node, context, 0);
 			break;
 		case T_Param:
 			deparseParam((Param *) node, context);
@@ -2634,6 +2633,7 @@ deparseConst(Const *node, deparse_expr_cxt *context, int showtype)
 	{
 		case BOOLOID:
 		case INT4OID:
+		case INT8OID:
 		case UNKNOWNOID:
 			needlabel = false;
 			break;
