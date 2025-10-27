@@ -1980,16 +1980,16 @@ SELECT tg_execute_ddl('
 
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE fdw_ins_variation_table (
-  c_int integer,
-  c_big bigint,
-  c_dec decimal,
-  c_rel real,
-  c_dbl double precision,
-  c_chr char,
-  c_vchr varchar,
-  c_date date,
-  c_time time,
-  c_tstmp timestamp
+  c_int integer DEFAULT 11,
+  c_big bigint DEFAULT 22,
+  c_dec decimal DEFAULT 33,
+  c_rel real DEFAULT 44.4,
+  c_dbl double precision DEFAULT 55.5,
+  c_chr char DEFAULT 'a',
+  c_vchr varchar DEFAULT 'default',
+  c_date date DEFAULT date '2025-01-01',
+  c_time time DEFAULT time '01:00:00',
+  c_tstmp timestamp DEFAULT timestamp '2025-03-03 03:03:03'
 ) SERVER tsurugidb;
 PREPARE fdw_prepare_sel_all AS SELECT * FROM fdw_ins_variation_table ORDER BY c_int;
 -- DEFAULT VALUES
