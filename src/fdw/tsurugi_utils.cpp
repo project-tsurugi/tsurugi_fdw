@@ -779,7 +779,8 @@ prepare_foreign_modify(TgFdwForeignModifyState *fmstate)
 	}
 
 	ForeignTable *ft = GetForeignTable(fmstate->rel->rd_id);
-	ERROR_CODE error = Tsurugi::prepare(ft->serverid, fmstate->query, placeholders);
+    std::string stmt = make_tsurugi_query(fmstate->query);
+	ERROR_CODE error = Tsurugi::prepare(ft->serverid, stmt, placeholders);
 	if (error != ERROR_CODE::OK)
 	{
 		Tsurugi::report_error("Failed to prepare the statement on Tsurugi.", 
