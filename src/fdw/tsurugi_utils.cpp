@@ -63,17 +63,14 @@ static std::pair<std::string, std::string> tsurugi_prepare_wrapper(
                                                 Oid server_oid,
                                                 const char* query, 
                                                 ParamListInfo param_linfo);
-#endif
-
-#if !defined (__TSURUGI_PLANNER__)
-#if 0
-static ogawayama::stub::parameters_type bind_parameters2(Relation rel,
+#else
+static ogawayama::stub::parameters_type bind_parameters(Relation rel,
                                                         List* target_attrs,
                                                         FmgrInfo* flinfo,
                                                         TupleTableSlot **slots,
                                                         int numSlots);
 #endif
-#endif                                                        
+
 /*
  *  make_tsurugi_query
  *      
@@ -794,7 +791,7 @@ prepare_foreign_modify(TgFdwForeignModifyState *fmstate)
  *		Bind parameters of prepared statement.
  */
 static ogawayama::stub::parameters_type
-bind_parameters2(Relation rel,
+bind_parameters(Relation rel,
                 List* target_attrs,
                 FmgrInfo* flinfo,
 			 	TupleTableSlot **slots,
@@ -866,7 +863,7 @@ execute_foreign_modify(EState *estate,
 
 	/* Convert parameters needed by prepared statement to text form */
 	//
-	stub::parameters_type params = bind_parameters2(fmstate->rel,
+	stub::parameters_type params = bind_parameters(fmstate->rel,
                                                     fmstate->target_attrs,
                                                     fmstate->p_flinfo, 
                                                     slots, *numSlots);
