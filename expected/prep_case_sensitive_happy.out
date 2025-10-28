@@ -31,7 +31,7 @@ EXECUTE fdw_prepare_ins (3000);
 DEALLOCATE fdw_prepare_ins;
 PREPARE fdw_prepare_ins (integer) AS
   INSERT INTO "public"."fdw_case_table" (Col) VALUES ($1);
-EXECUTE fdw_prepare_ins (4);
+EXECUTE fdw_prepare_ins (4000);
 DEALLOCATE fdw_prepare_ins;
 PREPARE fdw_prepare_ins (integer) AS
   INSERT INTO Public.fdw_case_table ("col") VALUES ($1);
@@ -47,10 +47,10 @@ EXECUTE fdw_prepare_sel;
  col  | Col 
 ------+-----
       |   6
-      |   4
  1000 |   1
  2000 |   2
  3000 |    
+ 4000 |    
  5000 |    
 (6 rows)
 
@@ -68,31 +68,35 @@ PREPARE fdw_prepare_upd (integer) AS
 EXECUTE fdw_prepare_upd (5000);
 DEALLOCATE fdw_prepare_upd;
 PREPARE fdw_prepare_upd (integer) AS
-  UPDATE public."fdw_case_table" SET "Col" = "Col" + $1 WHERE Col > 12;
-EXECUTE fdw_prepare_upd (100);
+  UPDATE public."fdw_case_table" SET "Col" = "Col" + $1 WHERE "Col" < 10;
+EXECUTE fdw_prepare_upd (10);
 DEALLOCATE fdw_prepare_upd;
 PREPARE fdw_prepare_upd (integer, integer) AS
   UPDATE "public"."fdw_case_table" SET "col" = col + $1 WHERE "col" > $2;
 EXECUTE fdw_prepare_upd (100, 3000);
 DEALLOCATE fdw_prepare_upd;
 PREPARE fdw_prepare_upd AS
-  UPDATE Public.fdw_case_table SET "col" = Col * 10 WHERE col IS NULL;
+  UPDATE public.Fdw_Case_Table SET "col" = NULL WHERE "Col" = $1;
+EXECUTE fdw_prepare_upd (16);
+DEALLOCATE fdw_prepare_upd;
+PREPARE fdw_prepare_upd AS
+  UPDATE Public.fdw_case_table SET "col" = "Col" * 10 WHERE col IS NULL;
 EXECUTE fdw_prepare_upd;
 DEALLOCATE fdw_prepare_upd;
 PREPARE fdw_prepare_upd (integer) AS
-  UPDATE PUBLIC.fdw_case_table SET "Col" = col / $1 WHERE "Col" IS NULL;
+  UPDATE PUBLIC.fdw_case_table SET "Col" = Col / $1 WHERE "Col" IS NULL;
 EXECUTE fdw_prepare_upd (100);
 DEALLOCATE fdw_prepare_upd;
 PREPARE fdw_prepare_sel AS SELECT * FROM fdw_case_table ORDER BY col;
 EXECUTE fdw_prepare_sel;
  col  | Col 
 ------+-----
- 1100 |  11
- 1140 | 114
- 1160 | 116
- 2100 |  12
- 3200 |  32
- 5300 |  53
+  160 |  16
+ 1110 |  11
+ 2110 |  12
+ 3210 |  32
+ 4210 |  42
+ 5310 |  53
 (6 rows)
 
 DEALLOCATE fdw_prepare_sel;
@@ -100,48 +104,48 @@ PREPARE fdw_prepare_sel AS SELECT * FROM Public.fdw_case_table ORDER BY Col;
 EXECUTE fdw_prepare_sel;
  col  | Col 
 ------+-----
- 1100 |  11
- 2100 |  12
- 3200 |  32
- 5300 |  53
- 1140 | 114
- 1160 | 116
+  160 |  16
+ 1110 |  11
+ 2110 |  12
+ 3210 |  32
+ 4210 |  42
+ 5310 |  53
 (6 rows)
 
 DEALLOCATE fdw_prepare_sel;
 PREPARE fdw_prepare_del (integer) AS
   DELETE FROM fdw_case_table WHERE col = $1;
-EXECUTE fdw_prepare_del (1100);
+EXECUTE fdw_prepare_del (1110);
 DEALLOCATE fdw_prepare_del;
 PREPARE fdw_prepare_del (integer) AS
   DELETE FROM public.fdw_case_table WHERE "col" > $1;
 EXECUTE fdw_prepare_del (5000);
 DEALLOCATE fdw_prepare_del;
 PREPARE fdw_prepare_del (integer) AS
-  DELETE FROM "public".fdw_case_table WHERE Col > $1;
-EXECUTE fdw_prepare_del (114);
+  DELETE FROM "public".fdw_case_table WHERE Col <= $1;
+EXECUTE fdw_prepare_del (160);
 DEALLOCATE fdw_prepare_del;
 PREPARE fdw_prepare_del (integer) AS
   DELETE FROM public."fdw_case_table" WHERE "col" >= $1;
-EXECUTE fdw_prepare_del (3200);
+EXECUTE fdw_prepare_del (4200);
 DEALLOCATE fdw_prepare_del;
 PREPARE fdw_prepare_del AS
-  DELETE FROM "public"."fdw_case_table" WHERE "Col" > 100;
+  DELETE FROM "public"."fdw_case_table" WHERE "Col" > 30;
 EXECUTE fdw_prepare_del;
 DEALLOCATE fdw_prepare_del;
 PREPARE fdw_prepare_del (integer) AS
   DELETE FROM Public.fdw_case_table WHERE col <> $1;
-EXECUTE fdw_prepare_del (2100);
+EXECUTE fdw_prepare_del (2110);
 DEALLOCATE fdw_prepare_del;
 PREPARE fdw_prepare_del (integer) AS
-  DELETE FROM PUBLIC.fdw_case_table WHERE Col <> $1;
+  DELETE FROM PUBLIC.fdw_case_table WHERE Col = $1;
 EXECUTE fdw_prepare_del (12);
 DEALLOCATE fdw_prepare_del;
 PREPARE fdw_prepare_sel AS SELECT * FROM Public.fdw_case_table;
 EXECUTE fdw_prepare_sel;
  col  | Col 
 ------+-----
- 2100 |  12
+ 2110 |  12
 (1 row)
 
 DEALLOCATE fdw_prepare_sel;
