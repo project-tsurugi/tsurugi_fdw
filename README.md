@@ -16,11 +16,44 @@ Since tsurugi_fdw accesses the Tsurugi database via IPC endpoint, the PostgreSQL
 
 * C++ Compiler `>= C++17`
 * Source code of PostgreSQL 12/13/14/15 `>=12.22`, `>=13.18`, `>=14.18`, `>=15.13`
-* Access to installed dependent modules:
+* Access to installed dependent modules: (Only when building from the source code)
   * [takatori](https://github.com/project-tsurugi/takatori)
   * [ogawayama](https://github.com/project-tsurugi/ogawayama)
 
+There are two ways to install tsurugi_fdw: from the package or by building from source code.
+
+### How to install tsurugi_fdw from the package
+
+First, we will explain how to install tsurugi_fdw using the package.
+
+To get the latest release, we provide binary packages (`.deb`) for amd64 architecture on [the release page](./releases). Download the appropriate package for your system.
+
+To install the deb:
+
+```bash
+curl -OL https://github.com/project-tsurugi/tsurugi_fdw/releases/download/<tag>/<package_name>.deb
+sudo apt install $DEB (or sudo dpkg -i $DEB)
+```
+
+where `$DEB` is the path to the downloaded deb. This will install  tsurugi_fdw modules.
+
+> [!NOTE]
+>
+> Replace `<tag>` and `<package_name>` with the appropriate values for your environment.
+>
+> The package name follows the format:  
+> `tsurugi_fdw_<version>_<pg_version>_<distro>_<arch>.deb`  
+>
+> * `<version>` is the tsurugi_fdw version (e.g., `1.3.0`)
+> * `<pg_version>` is the target PostgreSQL version (e.g., `pg14`)
+> * `<distro>` is the Ubuntu codename (e.g., `jammy`)
+> * `<arch>` is the architecture (e.g., `amd64`)
+
+The installation of tsurugi_fdw is now complete. Please proceed with the setup to use tsurugi_fdw. (see [Usage](#usage))
+
 ### How to build for tsurugi_fdw
+
+From here, we will explain how to build tsurugi_fdw from source code.
 
 1. Install required packages.
 
