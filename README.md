@@ -26,7 +26,7 @@ There are two ways to install tsurugi_fdw: from the package or by building from 
 
 First, we will explain how to install tsurugi_fdw using the package.
 
-To get the latest release, we provide binary packages (`.deb`) for amd64 architecture on [the release page](./releases). Download the appropriate package for your system.
+To get the latest release, we provide binary packages (`.deb`) for amd64 architecture on [the release page](https://github.com/project-tsurugi/tsurugi_fdw/release/latest). Download the appropriate package for your system.
 
 To install the deb:
 
@@ -48,6 +48,13 @@ where `$DEB` is the path to the downloaded deb. This will install  tsurugi_fdw m
 > * `<pg_version>` is the target PostgreSQL version (e.g., `pg14`)
 > * `<distro>` is the Ubuntu codename (e.g., `jammy`)
 > * `<arch>` is the architecture (e.g., `amd64`)
+
+* e.g.) To install tsurugi_fdw version `1.3.0` for PostgreSQL 14 on Ubuntu 22.04 (`jammy`, `amd64`):  
+
+    ```bash
+    curl -sL https://github.com/project-tsurugi/tsurugi_fdw/releases/download/1.3.0/tsurugi_fdw_1.3.0_pg14_jammy_amd64.deb
+    sudo apt install ./tsurugi_fdw_1.3.0_pg14_jammy_amd64.deb
+    ```
 
 The installation of tsurugi_fdw is now complete. Please proceed with the setup to use tsurugi_fdw. (see [Usage](#usage))
 
