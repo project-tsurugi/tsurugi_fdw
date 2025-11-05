@@ -26,7 +26,7 @@ There are two ways to install tsurugi_fdw: from the package or by building from 
 
 First, we will explain how to install tsurugi_fdw using the package.
 
-To get the latest release, we provide binary packages (`.deb`) for amd64 architecture on [the release page](https://github.com/project-tsurugi/tsurugi_fdw/release/latest). Download the appropriate package for your system.
+To get the latest release, we provide binary packages (`.deb`) for amd64 architecture on [the release page](https://github.com/project-tsurugi/tsurugi_fdw/releases/latest). Download the appropriate package for your system.
 
 To install the deb:
 
