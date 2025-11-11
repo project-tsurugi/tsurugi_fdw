@@ -20,7 +20,7 @@ import subprocess
 import os
 
 # データベース接続情報
-DB_URL = "postgresql://localhost:35432/pg_test"
+DB_URL = "dbname=pg_test host=localhost port=35432"
 
 # シェルスクリプトを実行するヘルパー関数
 def run_shell_command(script_name, *args):

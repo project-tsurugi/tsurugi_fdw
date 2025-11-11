@@ -70,13 +70,14 @@ def main():
                     print(i, end="", flush=True)
                 else:
                     print(".", end="", flush=True)
-                time.sleep(1)
             except psycopg2.Error as e:
                 print(f"\nPsycopg2 Error: {e}")
                 conn.rollback() # エラー時はロールバック
             except Exception as e:
                 print(f"\nAn unexpected error occurred: {e}")
                 conn.rollback() # エラー時はロールバック
+            finally:
+                time.sleep(1)
 
         # １１から２０のデータを挿入するが奇数だけロールバックする
         for i in range(11, 21):
@@ -93,13 +94,15 @@ def main():
                     # 偶数の場合、挿入操作をコミット
                     conn.commit()
                     print(".", end="", flush=True)
-                time.sleep(1)
             except psycopg2.Error as e:
                 print(f"\nPsycopg2 Error: {e}")
                 conn.rollback() # エラー時はロールバック
             except Exception as e:
                 print(f"\nAn unexpected error occurred: {e}")
                 conn.rollback() # エラー時はロールバック
+            finally:
+                time.sleep(1)
+
         print("") # 改行
 
         # データ挿入直後の結果を出力する
@@ -115,12 +118,13 @@ def main():
 
         # ３の倍数のデータを更新する
         print("\nUpdated UpdateTime.", flush=True)
-        update_sql = sql.SQL("UPDATE fdw_sample SET tim = '00:00:00'::time WHERE num % 3 = 0")
-        cursor.execute(update_sql)
+        update_time = datetime.fromtimestamp(time.time()).time()
+        update_sql = sql.SQL("UPDATE fdw_sample SET tim = %s WHERE num %% 3 = 0")
+        cursor.execute(update_sql, (update_time,))
         conn.commit() # 更新操作をコミット
 
         # データ更新直後の結果を出力する
-        print(f"  Multiples of 3: Update the Time(00:00:00).", flush=True)
+        print(f"  Multiples of 3: Update the Time({update_time.strftime('%H:%M:%S')}).", flush=True)
         print("    Number\tUpdateTime", flush=True)
         cursor.execute(select_sql)
         rows = cursor.fetchall()
