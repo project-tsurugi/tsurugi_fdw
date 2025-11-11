@@ -12,15 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import psycopg2
-from psycopg2 import sql
+import psycopg
+from psycopg import sql
 import time
 from datetime import datetime, time as datetime_time
 import subprocess
 import os
 
 # データベース接続情報
-DB_URL = "dbname=postgres host=localhost port=35432"
+DB_URL = "postgresql://localhost:35432/postgres"
 
 # シェルスクリプトを実行するヘルパー関数
 def run_shell_command(script_name, *args):
@@ -49,7 +49,7 @@ def main():
         print("The sample application is running. Please wait...\n")
 
         # PostgreSQL への接続
-        conn = psycopg2.connect(DB_URL)
+        conn = psycopg.connect(DB_URL)
         conn.autocommit = False # トランザクションを手動で制御する
         cursor = conn.cursor()
 
@@ -71,8 +71,8 @@ def main():
                 else:
                     print(".", end="", flush=True)
                 time.sleep(1)
-            except psycopg2.Error as e:
-                print(f"\nPsycopg2 Error: {e}")
+            except psycopg.Error as e:
+                print(f"\nPsycopg Error: {e}")
                 conn.rollback() # エラー時はロールバック
             except Exception as e:
                 print(f"\nAn unexpected error occurred: {e}")
@@ -94,8 +94,8 @@ def main():
                     conn.commit()
                     print(".", end="", flush=True)
                 time.sleep(1)
-            except psycopg2.Error as e:
-                print(f"\nPsycopg2 Error: {e}")
+            except psycopg.Error as e:
+                print(f"\nPsycopg Error: {e}")
                 conn.rollback() # エラー時はロールバック
             except Exception as e:
                 print(f"\nAn unexpected error occurred: {e}")
@@ -128,7 +128,7 @@ def main():
             # Pythonのtimeオブジェクトは秒までしか持たない
             print(f"     {row[0]:02d}\t\t {row[1].strftime('%H:%M:%S')}")
 
-    except psycopg2.Error as e:
+    except psycopg.Error as e:
         print(f"Database error: {e}")
         if conn:
             conn.rollback() # エラー発生時はロールバック
