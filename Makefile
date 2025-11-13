@@ -9,7 +9,7 @@ OBJS       = $(C_SRCS:.c=.o) $(CPP_SRCS:.cpp=.o)
 PG_CPPFLAGS = -Iinclude -I$(libpq_srcdir) -I$(includedir) -fPIC -O0 -Werror
 PG_CXXFLAGS = -Iinclude/proto \
               -Ithird_party/ogawayama/include \
-              -Ithird_party/takatori/include \
+              -Ithird_party/ogawayama/src \
               -std=c++17 -Dregister= 
 
 override rpath = -Wl,-rpath,'$$ORIGIN'

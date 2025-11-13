@@ -17,7 +17,6 @@ Since tsurugi_fdw accesses the Tsurugi database via IPC endpoint, the PostgreSQL
 * C++ Compiler `>= C++17`
 * Source code of PostgreSQL 12/13/14/15 `>=12.22`, `>=13.18`, `>=14.18`, `>=15.13`
 * Access to installed dependent modules:
-  * [takatori](https://github.com/project-tsurugi/takatori)
   * [ogawayama](https://github.com/project-tsurugi/ogawayama)
 
 ### How to build for tsurugi_fdw

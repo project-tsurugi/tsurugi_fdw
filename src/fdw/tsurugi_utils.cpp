@@ -105,6 +105,11 @@ std::string make_tsurugi_query(std::string_view query_string)
         tsurugi_query.pop_back();
     }
 
+	std::regex pattern(R"_(('\\x([0-9a-f]*)'))_", std::regex_constants::icase);
+	std::string replaced = std::regex_replace(tsurugi_query, pattern, "X'$2'");
+	elog(DEBUG5, "Convert the literal : [%s] -> [%s]", query_string.data(), replaced.c_str());
+	tsurugi_query = replaced;
+
     return tsurugi_query;
 }
 

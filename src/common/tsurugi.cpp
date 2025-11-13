@@ -16,6 +16,7 @@
  *	@file	tsurugi.cpp
  */
 #include <iostream>
+#include <regex>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -831,6 +832,7 @@ std::optional<std::string_view> Tsurugi::convert_type_to_pg(
 		{tg_metadata::AtomType::DECIMAL, "numeric"},
 		{tg_metadata::AtomType::CHARACTER, "text"},
 		{tg_metadata::AtomType::DATE, "date"},
+		{tg_metadata::AtomType::OCTET, "bytea"},
 		{tg_metadata::AtomType::TIME_OF_DAY, "time"},
 		{tg_metadata::AtomType::TIME_POINT, "timestamp"},
 		{tg_metadata::AtomType::TIME_OF_DAY_WITH_TIME_ZONE, "time with time zone"},
@@ -1099,6 +1101,9 @@ Tsurugi::get_tg_column_type(const Oid pg_type)
 		case NUMERICOID:
 			tg_type = stub::Metadata::ColumnType::Type::DECIMAL;
 			break;
+		case BYTEAOID:
+			tg_type = stub::Metadata::ColumnType::Type::OCTET;
+			break;
 		default:
 			elog(ERROR, "tsurugi_fdw : unrecognized type oid: %d", (int) pg_type);
 			break;
@@ -1106,7 +1111,6 @@ Tsurugi::get_tg_column_type(const Oid pg_type)
 
 	return tg_type;
 }
-
 
 /**
  *  @brief 	Convert value from tsurugidb to PostgreSQL.
@@ -1389,6 +1393,35 @@ Tsurugi::convert_type_to_pg(ResultSetPtr result_set, const Oid pgtype)
 			}
 			break;
 
+		case BYTEAOID:
+			{
+				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is BYTEAOID.", __func__);
+				auto heap_tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(pgtype));
+				if (!HeapTupleIsValid(heap_tuple)) {
+					elog(ERROR, "tsurugi_fdw : cache lookup failed for type %u", pgtype);
+				}
+				// auto typinput = ((Form_pg_type) GETSTRUCT(heap_tuple))->typinput;
+				ReleaseSysCache(heap_tuple);
+
+				std::string_view value;
+				ERROR_CODE result = result_set->next_column(value);
+				if (result == ERROR_CODE::OK)
+				{
+					if (value.size() == 0)
+					{
+						break;
+					}
+
+					bytea* pg_bytea = (bytea*)palloc(value.size() + VARHDRSZ);
+					SET_VARSIZE(pg_bytea, value.size() + VARHDRSZ);
+					memcpy(VARDATA(pg_bytea), value.data(), value.size());
+
+					is_null = false;
+					row_value = PointerGetDatum(pg_bytea);
+				}
+			}
+			break;
+
 		default:
 			elog(ERROR, "Invalid data type of PG. (%u)", pgtype);
 			break;
@@ -1617,6 +1650,19 @@ Tsurugi::convert_type_to_tg(const Oid pg_type, Datum value)
 									sign, coefficient_high, coefficient_low, exponent};
 				param = tg_decimal;
 //				param = convert_decimal_to_tg(value);
+				break;
+			}
+
+		case BYTEAOID:
+			{
+				Oid typoutput;
+				bool typisvarlena;
+				getTypeOutputInfo(pg_type, &typoutput, &typisvarlena);
+				auto value_src = std::string(OidOutputFunctionCall(typoutput, value));
+
+				std::regex pattern(R"_(('*\\x([0-9a-f]*)'*))_", std::regex_constants::icase);
+				auto tg_value = std::regex_replace(value_src, pattern, "X'$2'");
+				param = tg_value;
 				break;
 			}
 		default:
