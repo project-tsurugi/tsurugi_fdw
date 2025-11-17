@@ -20,7 +20,7 @@ import subprocess
 import os
 
 # データベース接続情報
-DB_URL = "postgresql://localhost:35432/postgres"
+DB_URL = "postgresql://localhost:35432/tsurugi_db"
 
 # シェルスクリプトを実行するヘルパー関数
 def run_shell_command(script_name, *args):
@@ -42,6 +42,7 @@ def main():
     cursor = None
     try:
         print("--- Running setup tasks ---")
+        run_shell_command("create_database")
         run_shell_command("create_table")
         run_shell_command("create_foreign_table")
         print("--- Setup tasks completed ---\n")

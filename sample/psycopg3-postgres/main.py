@@ -12,15 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import psycopg2
-from psycopg2 import sql
+import psycopg
+from psycopg import sql
 import time
 from datetime import datetime, time as datetime_time
 import subprocess
 import os
 
 # データベース接続情報
-DB_URL = "dbname=pg_test host=localhost port=35432"
+DB_URL = "postgresql://localhost:35432/postgres_db"
 
 # シェルスクリプトを実行するヘルパー関数
 def run_shell_command(script_name, *args):
@@ -42,13 +42,14 @@ def main():
     cursor = None
     try:
         print("--- Running setup tasks ---")
-        run_shell_command("create_table_pg_test")
+        run_shell_command("create_database_postgres")
+        run_shell_command("create_table_postgres")
         print("--- Setup tasks completed ---\n")
 
         print("The sample application is running. Please wait...\n")
 
         # PostgreSQL への接続
-        conn = psycopg2.connect(DB_URL)
+        conn = psycopg.connect(DB_URL)
         conn.autocommit = False # トランザクションを手動で制御する
         cursor = conn.cursor()
 
@@ -69,8 +70,8 @@ def main():
                     print(i, end="", flush=True)
                 else:
                     print(".", end="", flush=True)
-            except psycopg2.Error as e:
-                print(f"\nPsycopg2 Error: {e}")
+            except psycopg.Error as e:
+                print(f"\nPsycopg Error: {e}")
                 conn.rollback() # エラー時はロールバック
             except Exception as e:
                 print(f"\nAn unexpected error occurred: {e}")
@@ -93,8 +94,8 @@ def main():
                     # 偶数の場合、挿入操作をコミット
                     conn.commit()
                     print(".", end="", flush=True)
-            except psycopg2.Error as e:
-                print(f"\nPsycopg2 Error: {e}")
+            except psycopg.Error as e:
+                print(f"\nPsycopg Error: {e}")
                 conn.rollback() # エラー時はロールバック
             except Exception as e:
                 print(f"\nAn unexpected error occurred: {e}")
@@ -131,7 +132,7 @@ def main():
             # Pythonのtimeオブジェクトは秒までしか持たない
             print(f"     {row[0]:02d}\t\t {row[1].strftime('%H:%M:%S')}")
 
-    except psycopg2.Error as e:
+    except psycopg.Error as e:
         print(f"Database error: {e}")
         if conn:
             conn.rollback() # エラー発生時はロールバック
@@ -149,7 +150,7 @@ def main():
         print("\nThe sample application has finished.\n")
 
         print("--- Running cleanup tasks ---")
-        run_shell_command("drop_table_pg_test")
+        run_shell_command("drop_table_postgres")
         print("--- Cleanup tasks completed ---\n")
 
 if __name__ == "__main__":

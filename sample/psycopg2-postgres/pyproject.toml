@@ -1,5 +1,5 @@
 [project]
-name = "psycopg2-pg_test"
+name = "psycopg2-postgres"
 version = "0.1.0"
 dependencies = [
     "psycopg2-binary",
