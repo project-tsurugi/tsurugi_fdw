@@ -1,0 +1,10 @@
+# Ignore Python output files
+__pycache__/
+*.egg-info/
+*.pyc
+*.pyo
+*.pyd
+.eggs/
+.venv/
+venv/
+env/
