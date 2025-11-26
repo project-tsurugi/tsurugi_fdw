@@ -1,157 +1,16 @@
 /* Test case: happy path - Supported data types (preparation) */
--- Test setup: PostgreSQL environment
-SET timezone TO 'UTC';
 
--- Test setup: DDL of the Tsurugi
+-- Numeric Types - integer
+--- Test setup: DDL of the Tsurugi
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_int (c INT)
 ', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_bigint (c BIGINT)
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_decimal (c DECIMAL)
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_decimal_p (c DECIMAL(5))
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_decimal_ps (c DECIMAL(5, 2))
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_decimal_ps0 (c DECIMAL(38, 0))
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_decimal_ps38 (c DECIMAL(38, 38))
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_numeric (c NUMERIC)
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_numeric_p (c NUMERIC(5))
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_numeric_ps (c NUMERIC(5, 2))
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_numeric_ps0 (c NUMERIC(38, 0))
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_numeric_ps38 (c NUMERIC(38, 38))
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_real (c REAL)
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_double (c DOUBLE)
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_char (c CHAR)
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_char_l (c CHAR(10))
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_varchar (c VARCHAR)
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_varchar_l (c VARCHAR(10))
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_text (c VARCHAR)
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_date (c DATE)
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_time (c TIME)
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_timestamp (c TIMESTAMP)
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_timestamp_wo_tz (c TIMESTAMP WITHOUT TIME ZONE)
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_timestamp_tz (c TIMESTAMP WITH TIME ZONE)
-', 'tsurugidb');
-
--- Test setup: DDL of the PostgreSQL
+--- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE fdw_type_int (
   c integer
 ) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_bigint (
-  c bigint
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_decimal (
-  c decimal
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_decimal_p (
-  c decimal(5)
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_decimal_ps (
-  c decimal(5, 2)
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_decimal_ps0 (
-  c decimal(38, 0)
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_decimal_ps38 (
-  c decimal(38, 38)
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_numeric (
-  c numeric
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_numeric_p (
-  c numeric(5)
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_numeric_ps (
-  c numeric(5, 2)
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_numeric_ps0 (
-  c numeric(38, 0)
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_numeric_ps38 (
-  c numeric(38, 38)
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_real (
-  c real
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_double (
-  c double precision
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_char (
-  c char
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_char_l (
-  c char(10)
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_varchar (
-  c varchar
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_varchar_l (
-  c varchar(10)
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_text (
-  c text
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_date (
-  c date
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_time (
-  c time
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_timestamp (
-  c timestamp
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_timestamp_wo_tz (
-  c timestamp without time zone
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_timestamp_tz (
-  c timestamp with time zone
-) SERVER tsurugidb;
 
--- Numeric Types
---- integer
+--- Test
 PREPARE fdw_prepare_ins (integer) AS
   INSERT INTO fdw_type_int VALUES ($1);
 PREPARE fdw_prepare_upd (integer, integer) AS
@@ -168,15 +27,28 @@ PREPARE fdw_prepare_sel_all AS
 EXECUTE fdw_prepare_ins (12345);
 EXECUTE fdw_prepare_ins (-12345);
 EXECUTE fdw_prepare_ins (NULL);
-EXECUTE fdw_prepare_ins (2147483644); --max-3
-EXECUTE fdw_prepare_ins (2147483645); --max-2
-EXECUTE fdw_prepare_ins (2147483646); --max-1
-EXECUTE fdw_prepare_ins (2147483647); --max
-EXECUTE fdw_prepare_ins (-2147483645); --min+3
-EXECUTE fdw_prepare_ins (-2147483646); --min+2
-EXECUTE fdw_prepare_ins (-2147483647); --min+1
-EXECUTE fdw_prepare_ins (-2147483648); --min
+EXECUTE fdw_prepare_ins (2147483644);  --max-3
+EXECUTE fdw_prepare_ins (2147483645);  --max-2
+EXECUTE fdw_prepare_ins (2147483646);  --max-1
+EXECUTE fdw_prepare_ins (2147483647);  --max
+EXECUTE fdw_prepare_ins (-2147483645);  --min+3
+EXECUTE fdw_prepare_ins (-2147483646);  --min+2
+EXECUTE fdw_prepare_ins (-2147483647);  --min+1
+EXECUTE fdw_prepare_ins (-2147483648);  --min
 EXECUTE fdw_prepare_ins (1.1);  -- auto-cast
+
+PREPARE fdw_prepare_ins_ex AS INSERT INTO fdw_type_int VALUES (2.1);
+EXECUTE fdw_prepare_ins_ex;
+DEALLOCATE fdw_prepare_ins_ex;
+
+PREPARE fdw_prepare_ins_ex AS INSERT INTO fdw_type_int VALUES (3.1);
+EXECUTE fdw_prepare_ins_ex;
+DEALLOCATE fdw_prepare_ins_ex;
+
+PREPARE fdw_prepare_ins_ex AS
+  INSERT INTO fdw_type_int VALUES (CAST(0.1 AS int));
+EXECUTE fdw_prepare_ins_ex;
+DEALLOCATE fdw_prepare_ins_ex;
 
 EXECUTE fdw_prepare_sel_all;
 EXECUTE fdw_prepare_sel (2147483647);
@@ -201,7 +73,22 @@ DEALLOCATE fdw_prepare_del;
 DEALLOCATE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel_all;
 
---- bigint
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_int;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_int', 'tsurugidb');
+
+-- Numeric Types - bigint
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_bigint (c BIGINT)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_bigint (
+  c bigint
+) SERVER tsurugidb;
+
+--- Test
 PREPARE fdw_prepare_ins (bigint) AS
   INSERT INTO fdw_type_bigint VALUES ($1);
 PREPARE fdw_prepare_upd (bigint, bigint) AS
@@ -225,8 +112,21 @@ EXECUTE fdw_prepare_ins (9223372036854775807);  --max
 EXECUTE fdw_prepare_ins (-9223372036854775805);  --min+3
 EXECUTE fdw_prepare_ins (-9223372036854775806);  --min+2
 EXECUTE fdw_prepare_ins (-9223372036854775807);  --min+1
-EXECUTE fdw_prepare_ins (-9223372036854775808); --min
+EXECUTE fdw_prepare_ins (-9223372036854775808);  --min
 EXECUTE fdw_prepare_ins (1.1);  -- auto-cast
+
+PREPARE fdw_prepare_ins_ex AS INSERT INTO fdw_type_bigint VALUES (2.1);
+EXECUTE fdw_prepare_ins_ex;
+DEALLOCATE fdw_prepare_ins_ex;
+
+PREPARE fdw_prepare_ins_ex AS INSERT INTO fdw_type_bigint VALUES (3.1);
+EXECUTE fdw_prepare_ins_ex;
+DEALLOCATE fdw_prepare_ins_ex;
+
+PREPARE fdw_prepare_ins_ex AS
+  INSERT INTO fdw_type_bigint VALUES (CAST(0.1 AS int));
+EXECUTE fdw_prepare_ins_ex;
+DEALLOCATE fdw_prepare_ins_ex;
 
 EXECUTE fdw_prepare_sel_all;
 EXECUTE fdw_prepare_sel (9223372036854775807);
@@ -250,7 +150,22 @@ DEALLOCATE fdw_prepare_del;
 DEALLOCATE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel_all;
 
---- decimal
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_bigint;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_bigint', 'tsurugidb');
+
+-- Numeric Types - decimal
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_decimal (c DECIMAL)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_decimal (
+  c decimal
+) SERVER tsurugidb;
+
+--- Test
 PREPARE fdw_prepare_ins (decimal) AS
   INSERT INTO fdw_type_decimal VALUES ($1);
 PREPARE fdw_prepare_upd (decimal) AS
@@ -283,7 +198,22 @@ DEALLOCATE fdw_prepare_del;
 DEALLOCATE fdw_prepare_sel_all;
 DEALLOCATE fdw_prepare_sel_all_d;
 
---- decimal(5)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_decimal;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal', 'tsurugidb');
+
+-- Numeric Types - decimal(5)
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_decimal_p (c DECIMAL(5))
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_decimal_p (
+  c decimal(5)
+) SERVER tsurugidb;
+
+--- Test
 PREPARE fdw_prepare_ins (decimal(5)) AS
   INSERT INTO fdw_type_decimal_p VALUES ($1);
 PREPARE fdw_prepare_upd (decimal(5)) AS
@@ -316,7 +246,22 @@ DEALLOCATE fdw_prepare_del;
 DEALLOCATE fdw_prepare_sel_all;
 DEALLOCATE fdw_prepare_sel_all_d;
 
---- decimal(5, 2)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_decimal_p;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_p', 'tsurugidb');
+
+-- Numeric Types - decimal(5, 2)
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_decimal_ps (c DECIMAL(5, 2))
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_decimal_ps (
+  c decimal(5, 2)
+) SERVER tsurugidb;
+
+--- Test
 PREPARE fdw_prepare_ins (decimal(5, 2)) AS
   INSERT INTO fdw_type_decimal_ps VALUES ($1);
 PREPARE fdw_prepare_upd (decimal(5, 2)) AS
@@ -332,6 +277,7 @@ PREPARE fdw_prepare_sel_all_d AS
 
 EXECUTE fdw_prepare_ins (123.45);
 EXECUTE fdw_prepare_ins (-123.45);
+EXECUTE fdw_prepare_ins (123.567);
 EXECUTE fdw_prepare_ins (NULL);
 EXECUTE fdw_prepare_sel_all;
 
@@ -357,7 +303,22 @@ DEALLOCATE fdw_prepare_del;
 DEALLOCATE fdw_prepare_sel_all;
 DEALLOCATE fdw_prepare_sel_all_d;
 
---- decimal(38, 0)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_decimal_ps;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_ps', 'tsurugidb');
+
+-- Numeric Types - decimal(38, 0)
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_decimal_ps0 (c DECIMAL(38, 0))
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_decimal_ps0 (
+  c decimal(38, 0)
+) SERVER tsurugidb;
+
+--- Test
 PREPARE fdw_prepare_ins (numeric(38, 0)) AS
   INSERT INTO fdw_type_decimal_ps0 VALUES ($1);
 PREPARE fdw_prepare_sel_all AS
@@ -377,7 +338,22 @@ EXECUTE fdw_prepare_sel_all;
 DEALLOCATE fdw_prepare_ins;
 DEALLOCATE fdw_prepare_sel_all;
 
---- decimal(38, 38)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_decimal_ps0;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_ps0', 'tsurugidb');
+
+-- Numeric Types - decimal(38, 38)
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_decimal_ps38 (c DECIMAL(38, 38))
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_decimal_ps38 (
+  c decimal(38, 38)
+) SERVER tsurugidb;
+
+--- Test
 PREPARE fdw_prepare_ins (numeric(38, 38)) AS
   INSERT INTO fdw_type_decimal_ps38 VALUES ($1);
 PREPARE fdw_prepare_sel_all AS
@@ -392,12 +368,30 @@ EXECUTE fdw_prepare_ins (-0.00000000000000000000000000000000000001);
 EXECUTE fdw_prepare_ins (-0.00000000000000000018446744073709551615);
 EXECUTE fdw_prepare_ins (-0.00000000000000000018446744073709551616);
 EXECUTE fdw_prepare_ins (-0.99999999999999999999999999999999999999);
+EXECUTE fdw_prepare_ins (0.000000000000000000000000000000000000001);
+EXECUTE fdw_prepare_ins (0.340282366920938463463374607431768211455);
+EXECUTE fdw_prepare_ins (0.340282366920938463463374607431768211456);
 EXECUTE fdw_prepare_sel_all;
 
 DEALLOCATE fdw_prepare_ins;
 DEALLOCATE fdw_prepare_sel_all;
 
---- numeric
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_decimal_ps38;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_ps38', 'tsurugidb');
+
+-- Numeric Types - numeric
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_numeric (c NUMERIC)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_numeric (
+  c numeric
+) SERVER tsurugidb;
+
+--- Test
 PREPARE fdw_prepare_ins (numeric) AS
   INSERT INTO fdw_type_numeric VALUES ($1);
 PREPARE fdw_prepare_upd (numeric) AS
@@ -430,7 +424,22 @@ DEALLOCATE fdw_prepare_del;
 DEALLOCATE fdw_prepare_sel_all;
 DEALLOCATE fdw_prepare_sel_all_d;
 
---- numeric(5)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_numeric;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric', 'tsurugidb');
+
+-- Numeric Types - numeric(5)
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_numeric_p (c NUMERIC(5))
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_numeric_p (
+  c numeric(5)
+) SERVER tsurugidb;
+
+--- Test
 PREPARE fdw_prepare_ins (numeric(5)) AS
   INSERT INTO fdw_type_numeric_p VALUES ($1);
 PREPARE fdw_prepare_upd (numeric(5)) AS
@@ -463,7 +472,22 @@ DEALLOCATE fdw_prepare_del;
 DEALLOCATE fdw_prepare_sel_all;
 DEALLOCATE fdw_prepare_sel_all_d;
 
---- numeric(5, 2)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_numeric_p;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_p', 'tsurugidb');
+
+-- Numeric Types - numeric(5, 2)
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_numeric_ps (c NUMERIC(5, 2))
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_numeric_ps (
+  c numeric(5, 2)
+) SERVER tsurugidb;
+
+--- Test
 PREPARE fdw_prepare_ins (numeric(5, 2)) AS
   INSERT INTO fdw_type_numeric_ps VALUES ($1);
 PREPARE fdw_prepare_upd (numeric(5, 2)) AS
@@ -479,6 +503,7 @@ PREPARE fdw_prepare_sel_all_d AS
 
 EXECUTE fdw_prepare_ins (123.45);
 EXECUTE fdw_prepare_ins (-123.45);
+EXECUTE fdw_prepare_ins (123.567);
 EXECUTE fdw_prepare_ins (NULL);
 EXECUTE fdw_prepare_sel_all;
 
@@ -490,11 +515,29 @@ EXECUTE fdw_prepare_del (-987.65);
 EXECUTE fdw_prepare_sel_all;
 
 EXECUTE fdw_prepare_ins (abs(-17.4));
+EXECUTE fdw_prepare_ins (CAST(cbrt(27.0) AS DECIMAL(5, 2)));
 EXECUTE fdw_prepare_ins (ceil(-42.8));
+EXECUTE fdw_prepare_ins (ceiling(-95.3));
+EXECUTE fdw_prepare_ins (CAST(degrees(0.5) AS DECIMAL(5, 2)));
+EXECUTE fdw_prepare_ins (div(9,4));
+EXECUTE fdw_prepare_ins (CAST(exp(1.0) AS DECIMAL(5, 2)));
+EXECUTE fdw_prepare_ins (factorial(5));
 EXECUTE fdw_prepare_ins (floor(-42.8));
+EXECUTE fdw_prepare_ins (CAST(ln(2.0) AS DECIMAL(5, 2)));
+EXECUTE fdw_prepare_ins (log(100.0));
+EXECUTE fdw_prepare_ins (log10(100.0));
+EXECUTE fdw_prepare_ins (log(2.0, 64.0));
 EXECUTE fdw_prepare_ins (mod(9, 4));
+EXECUTE fdw_prepare_ins (CAST(pi() AS DECIMAL(5, 2)));
+EXECUTE fdw_prepare_ins (power(9.0, 3.0));
+EXECUTE fdw_prepare_ins (CAST(radians(45.0) AS DECIMAL(5, 2)));
 EXECUTE fdw_prepare_ins (round(42.4));
 EXECUTE fdw_prepare_ins (round(42.4382, 2));
+EXECUTE fdw_prepare_ins (sign(-8.4));
+EXECUTE fdw_prepare_ins (CAST(scale(8.41) AS DECIMAL(5, 2)));
+EXECUTE fdw_prepare_ins (CAST(sqrt(2.0) AS DECIMAL(5, 2)));
+EXECUTE fdw_prepare_ins (trunc(42.8));
+EXECUTE fdw_prepare_ins (trunc(42.4382, 2));
 EXECUTE fdw_prepare_sel_all;
 
 DEALLOCATE fdw_prepare_ins;
@@ -504,7 +547,22 @@ DEALLOCATE fdw_prepare_del;
 DEALLOCATE fdw_prepare_sel_all;
 DEALLOCATE fdw_prepare_sel_all_d;
 
---- numeric(38, 0)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_numeric_ps;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_ps', 'tsurugidb');
+
+-- Numeric Types - numeric(38, 0)
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_numeric_ps0 (c NUMERIC(38, 0))
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_numeric_ps0 (
+  c numeric(38, 0)
+) SERVER tsurugidb;
+
+--- Test
 PREPARE fdw_prepare_ins (numeric(38, 0)) AS
   INSERT INTO fdw_type_numeric_ps0 VALUES ($1);
 PREPARE fdw_prepare_sel_all AS
@@ -524,7 +582,22 @@ EXECUTE fdw_prepare_sel_all;
 DEALLOCATE fdw_prepare_ins;
 DEALLOCATE fdw_prepare_sel_all;
 
---- numeric(38, 38)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_numeric_ps0;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_ps0', 'tsurugidb');
+
+-- Numeric Types - numeric(38, 38)
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_numeric_ps38 (c NUMERIC(38, 38))
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_numeric_ps38 (
+  c numeric(38, 38)
+) SERVER tsurugidb;
+
+--- Test
 PREPARE fdw_prepare_ins (numeric(38, 38)) AS
   INSERT INTO fdw_type_numeric_ps38 VALUES ($1);
 PREPARE fdw_prepare_sel_all AS
@@ -539,12 +612,30 @@ EXECUTE fdw_prepare_ins (-0.00000000000000000000000000000000000001);
 EXECUTE fdw_prepare_ins (-0.00000000000000000018446744073709551615);
 EXECUTE fdw_prepare_ins (-0.00000000000000000018446744073709551616);
 EXECUTE fdw_prepare_ins (-0.99999999999999999999999999999999999999);
+EXECUTE fdw_prepare_ins (0.000000000000000000000000000000000000001);
+EXECUTE fdw_prepare_ins (0.340282366920938463463374607431768211455);
+EXECUTE fdw_prepare_ins (0.340282366920938463463374607431768211456);
 EXECUTE fdw_prepare_sel_all;
 
 DEALLOCATE fdw_prepare_ins;
 DEALLOCATE fdw_prepare_sel_all;
 
---- real
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_numeric_ps38;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_ps38', 'tsurugidb');
+
+-- Numeric Types - real
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_real (c REAL)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_real (
+  c real
+) SERVER tsurugidb;
+
+--- Test
 PREPARE fdw_prepare_ins (real) AS
   INSERT INTO fdw_type_real VALUES ($1);
 PREPARE fdw_prepare_upd (real) AS
@@ -580,7 +671,22 @@ DEALLOCATE fdw_prepare_del;
 DEALLOCATE fdw_prepare_sel_all;
 DEALLOCATE fdw_prepare_sel_all_d;
 
---- double precision
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_real;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_real', 'tsurugidb');
+
+-- Numeric Types - double precision
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_double (c DOUBLE)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_double (
+  c double precision
+) SERVER tsurugidb;
+
+--- Test
 PREPARE fdw_prepare_ins (double precision) AS
   INSERT INTO fdw_type_double VALUES ($1);
 PREPARE fdw_prepare_upd (double precision) AS
@@ -616,8 +722,96 @@ DEALLOCATE fdw_prepare_del;
 DEALLOCATE fdw_prepare_sel_all;
 DEALLOCATE fdw_prepare_sel_all_d;
 
--- Character Types
---- char
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_double;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_double', 'tsurugidb');
+
+-- Numeric Types - serial
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_serial (
+    id INTEGER PRIMARY KEY,
+    name VARCHAR)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_serial (
+    id serial,
+    name text
+) SERVER tsurugidb;
+
+--- Test
+PREPARE fdw_prepare_ins (text) AS
+  INSERT INTO fdw_type_serial (name) VALUES ($1), ($2), ($3);
+EXECUTE fdw_prepare_ins ('name-1', 'name-2', 'name-3');
+DEALLOCATE fdw_prepare_ins;
+
+PREPARE fdw_prepare_ins (int, text) AS
+  INSERT INTO fdw_type_serial (id, name) VALUES ($1, $2);
+EXECUTE fdw_prepare_ins (100, 'name-100');
+DEALLOCATE fdw_prepare_ins;
+
+PREPARE fdw_prepare_ins (text) AS
+  INSERT INTO fdw_type_serial (name) VALUES ($1);
+EXECUTE fdw_prepare_ins ('name-4');
+DEALLOCATE fdw_prepare_ins;
+
+SELECT * FROM fdw_type_serial ORDER BY id;
+SELECT last_value FROM fdw_type_serial_id_seq;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_serial;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_serial', 'tsurugidb');
+
+-- Numeric Types - bigserial
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_bigserial (
+    id BIGINT PRIMARY KEY,
+    name VARCHAR)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_bigserial (
+    id bigserial,
+    name text
+) SERVER tsurugidb;
+
+-- Test
+PREPARE fdw_prepare_ins (text) AS
+  INSERT INTO fdw_type_bigserial (name) VALUES ($1), ($2), ($3);
+EXECUTE fdw_prepare_ins ('name-1', 'name-2', 'name-3');
+DEALLOCATE fdw_prepare_ins;
+
+PREPARE fdw_prepare_ins (bigint, text) AS
+  INSERT INTO fdw_type_bigserial (id, name) VALUES ($1, $2);
+EXECUTE fdw_prepare_ins (100, 'name-100');
+DEALLOCATE fdw_prepare_ins;
+
+PREPARE fdw_prepare_ins (text) AS
+  INSERT INTO fdw_type_bigserial (name) VALUES ($1);
+EXECUTE fdw_prepare_ins ('name-4');
+DEALLOCATE fdw_prepare_ins;
+
+SELECT * FROM fdw_type_bigserial ORDER BY id;
+SELECT last_value FROM fdw_type_bigserial_id_seq;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_bigserial;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_bigserial', 'tsurugidb');
+
+-- Character Types - char
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_char (c CHAR)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_char (
+  c char
+) SERVER tsurugidb;
+
+--- Test
 PREPARE fdw_prepare_ins (char) AS
   INSERT INTO fdw_type_char VALUES ($1);
 PREPARE fdw_prepare_upd (char, char) AS
@@ -651,7 +845,22 @@ DEALLOCATE fdw_prepare_del;
 DEALLOCATE fdw_prepare_sel_all;
 DEALLOCATE fdw_prepare_sel_all_d;
 
---- char(length)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_char;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_char', 'tsurugidb');
+
+-- Character Types - char(length)
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_char_l (c CHAR(10))
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_char_l (
+  c char(10)
+) SERVER tsurugidb;
+
+--- Test
 PREPARE fdw_prepare_ins (char(10)) AS
   INSERT INTO fdw_type_char_l VALUES ($1);
 PREPARE fdw_prepare_upd (char(10), char(10)) AS
@@ -686,7 +895,22 @@ DEALLOCATE fdw_prepare_del;
 DEALLOCATE fdw_prepare_sel_all;
 DEALLOCATE fdw_prepare_sel_all_d;
 
---- varchar
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_char_l;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_char_l', 'tsurugidb');
+
+-- Character Types - varchar
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_varchar (c VARCHAR)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_varchar (
+  c varchar
+) SERVER tsurugidb;
+
+--- Test
 PREPARE fdw_prepare_ins (varchar) AS
   INSERT INTO fdw_type_varchar VALUES ($1);
 PREPARE fdw_prepare_upd (varchar, varchar) AS
@@ -720,7 +944,22 @@ DEALLOCATE fdw_prepare_del;
 DEALLOCATE fdw_prepare_sel_all;
 DEALLOCATE fdw_prepare_sel_all_d;
 
---- varchar(length)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_varchar;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_varchar', 'tsurugidb');
+
+-- Character Types - varchar(length)
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_varchar_l (c VARCHAR(10))
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_varchar_l (
+  c varchar(10)
+) SERVER tsurugidb;
+
+--- Test
 PREPARE fdw_prepare_ins (varchar(10)) AS
   INSERT INTO fdw_type_varchar_l VALUES ($1);
 PREPARE fdw_prepare_upd (varchar(10), varchar(10)) AS
@@ -755,7 +994,22 @@ DEALLOCATE fdw_prepare_del;
 DEALLOCATE fdw_prepare_sel_all;
 DEALLOCATE fdw_prepare_sel_all_d;
 
---- text
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_varchar_l;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_varchar_l', 'tsurugidb');
+
+-- Character Types - text
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_text (c VARCHAR)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_text (
+  c text
+) SERVER tsurugidb;
+
+--- Test
 PREPARE fdw_prepare_ins (text) AS
   INSERT INTO fdw_type_text VALUES ($1);
 PREPARE fdw_prepare_upd (text, text) AS
@@ -789,10 +1043,26 @@ DEALLOCATE fdw_prepare_del;
 DEALLOCATE fdw_prepare_sel_all;
 DEALLOCATE fdw_prepare_sel_all_d;
 
--- Date/Time Types
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_text;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_text', 'tsurugidb');
+
+-- Date/Time Types - Test setup: PostgreSQL environment
+SET TIMEZONE TO 'UTC';
 SET DATESTYLE TO ISO, YMD;
 
---- date
+-- Date/Time Types - date
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_date (c DATE)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_date (
+  c date
+) SERVER tsurugidb;
+
+--- Test
 PREPARE fdw_prepare_ins (date) AS
   INSERT INTO fdw_type_date VALUES ($1);
 PREPARE fdw_prepare_upd_nul (date) AS
@@ -829,7 +1099,22 @@ DEALLOCATE fdw_prepare_del;
 DEALLOCATE fdw_prepare_sel_all;
 DEALLOCATE fdw_prepare_sel_all_d;
 
---- time
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_date;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_date', 'tsurugidb');
+
+-- Date/Time Types - time
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_time (c TIME)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_time (
+  c time
+) SERVER tsurugidb;
+
+--- Test
 PREPARE fdw_prepare_ins (time) AS
   INSERT INTO fdw_type_time VALUES ($1);
 PREPARE fdw_prepare_upd_nul (time) AS
@@ -849,15 +1134,16 @@ EXECUTE fdw_prepare_ins (CAST('02:01:03.456' AS time));
 EXECUTE fdw_prepare_ins (time '01:02:03.456789012');
 EXECUTE fdw_prepare_ins (time '00:00:00');
 EXECUTE fdw_prepare_ins (time '23:59:59.999999');
+EXECUTE fdw_prepare_ins (time '050607.890123456');
 EXECUTE fdw_prepare_ins (NULL);
 EXECUTE fdw_prepare_ins ('04:05:06.789');  -- auto cast
 EXECUTE fdw_prepare_sel_all;
 
 EXECUTE fdw_prepare_upd_nul ('00:00:00.001');
 EXECUTE fdw_prepare_sel_all;
-EXECUTE fdw_prepare_upd ('05:06:12.345'::time, '00:00:00.001'::time);
+EXECUTE fdw_prepare_upd ('07:08:12.345'::time, '00:00:00.001'::time);
 EXECUTE fdw_prepare_sel_all_d;
-EXECUTE fdw_prepare_del (CAST('05:06:12.345' AS time));
+EXECUTE fdw_prepare_del (CAST('07:08:12.345' AS time));
 EXECUTE fdw_prepare_sel_all;
 
 DEALLOCATE fdw_prepare_ins;
@@ -867,7 +1153,22 @@ DEALLOCATE fdw_prepare_del;
 DEALLOCATE fdw_prepare_sel_all;
 DEALLOCATE fdw_prepare_sel_all_d;
 
---- timestamp
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_time;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_time', 'tsurugidb');
+
+-- Date/Time Types - timestamp
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_timestamp (c TIMESTAMP)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_timestamp (
+  c timestamp
+) SERVER tsurugidb;
+
+--- Test
 PREPARE fdw_prepare_ins (timestamp) AS
   INSERT INTO fdw_type_timestamp VALUES ($1);
 PREPARE fdw_prepare_upd_nul (timestamp) AS
@@ -886,6 +1187,8 @@ EXECUTE fdw_prepare_ins ('2025-01-02 00:00:00'::timestamp);
 EXECUTE fdw_prepare_ins (CAST('2025-01-03 00:00:00' AS timestamp));
 EXECUTE fdw_prepare_ins (timestamp '1887-12-31 15:00:00');
 EXECUTE fdw_prepare_ins (timestamp '9999-12-31 23:59:59.999999');
+EXECUTE fdw_prepare_ins (timestamp '2025/01/01');
+EXECUTE fdw_prepare_ins (timestamp '2025/01/01 12:00');
 EXECUTE fdw_prepare_ins (NULL);
 EXECUTE fdw_prepare_ins ('2024-08-30 04:05:06.789');  -- auto cast
 EXECUTE fdw_prepare_sel_all;
@@ -905,7 +1208,22 @@ DEALLOCATE fdw_prepare_del;
 DEALLOCATE fdw_prepare_sel_all;
 DEALLOCATE fdw_prepare_sel_all_d;
 
---- timestamp without time zone
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_timestamp;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp', 'tsurugidb');
+
+-- Date/Time Types - timestamp without time zone
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_timestamp_wo_tz (c TIMESTAMP WITHOUT TIME ZONE)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_timestamp_wo_tz (
+  c timestamp without time zone
+) SERVER tsurugidb;
+
+--- Test
 PREPARE fdw_prepare_ins (timestamp without time zone) AS
   INSERT INTO fdw_type_timestamp_wo_tz VALUES ($1);
 PREPARE fdw_prepare_upd_nul (timestamp without time zone) AS
@@ -927,6 +1245,8 @@ EXECUTE fdw_prepare_ins
 EXECUTE fdw_prepare_ins (timestamp without time zone '1887-12-31 15:00:00');
 EXECUTE fdw_prepare_ins
   (timestamp without time zone '9999-12-31 23:59:59.999999');
+EXECUTE fdw_prepare_ins (timestamp without time zone '2025/01/01');
+EXECUTE fdw_prepare_ins (timestamp without time zone '2025/01/01 12:00');
 EXECUTE fdw_prepare_ins (NULL);
 EXECUTE fdw_prepare_ins ('2024-08-30 04:05:06.789');  -- auto cast
 EXECUTE fdw_prepare_sel_all;
@@ -948,7 +1268,22 @@ DEALLOCATE fdw_prepare_del;
 DEALLOCATE fdw_prepare_sel_all;
 DEALLOCATE fdw_prepare_sel_all_d;
 
---- timestamp with time zone
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_timestamp_wo_tz;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp_wo_tz', 'tsurugidb');
+
+-- Date/Time Types - timestamp with time zone
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_timestamp_tz (c TIMESTAMP WITH TIME ZONE)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_timestamp_tz (
+  c timestamp with time zone
+) SERVER tsurugidb;
+
+--- Test
 PREPARE fdw_prepare_ins (timestamp with time zone) AS
   INSERT INTO fdw_type_timestamp_tz VALUES ($1);
 PREPARE fdw_prepare_upd_nul (timestamp with time zone) AS
@@ -988,6 +1323,12 @@ EXECUTE fdw_prepare_ins
   (timestamp with time zone '1887-12-31 15:00:00+00');
 EXECUTE fdw_prepare_ins
   (timestamp with time zone '9999-12-31 23:59:59.999999+14');
+EXECUTE fdw_prepare_ins
+  (timestamp with time zone '2025-01-01 12:01:02.34567 UTC');
+EXECUTE fdw_prepare_ins
+  (timestamp with time zone '2025-01-01 12:01:02.34567 Universal');
+EXECUTE fdw_prepare_ins
+  (timestamp with time zone '2025-01-01 12:00');
 EXECUTE fdw_prepare_ins (NULL);
 EXECUTE fdw_prepare_ins ('2024-08-30 04:05:06.789+9:00');   -- auto cast
 
@@ -1014,56 +1355,11 @@ DEALLOCATE fdw_prepare_del;
 DEALLOCATE fdw_prepare_sel_all;
 DEALLOCATE fdw_prepare_sel_all_d;
 
-SET DATESTYLE TO 'default';
-
-/* Test teardown: DDL of the PostgreSQL */
-DROP FOREIGN TABLE fdw_type_int;
-DROP FOREIGN TABLE fdw_type_bigint;
-DROP FOREIGN TABLE fdw_type_decimal;
-DROP FOREIGN TABLE fdw_type_decimal_p;
-DROP FOREIGN TABLE fdw_type_decimal_ps;
-DROP FOREIGN TABLE fdw_type_decimal_ps0;
-DROP FOREIGN TABLE fdw_type_decimal_ps38;
-DROP FOREIGN TABLE fdw_type_numeric;
-DROP FOREIGN TABLE fdw_type_numeric_p;
-DROP FOREIGN TABLE fdw_type_numeric_ps;
-DROP FOREIGN TABLE fdw_type_numeric_ps0;
-DROP FOREIGN TABLE fdw_type_numeric_ps38;
-DROP FOREIGN TABLE fdw_type_real;
-DROP FOREIGN TABLE fdw_type_double;
-DROP FOREIGN TABLE fdw_type_char;
-DROP FOREIGN TABLE fdw_type_char_l;
-DROP FOREIGN TABLE fdw_type_varchar;
-DROP FOREIGN TABLE fdw_type_varchar_l;
-DROP FOREIGN TABLE fdw_type_text;
-DROP FOREIGN TABLE fdw_type_date;
-DROP FOREIGN TABLE fdw_type_time;
-DROP FOREIGN TABLE fdw_type_timestamp;
-DROP FOREIGN TABLE fdw_type_timestamp_wo_tz;
+--- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_timestamp_tz;
-
-/* Test teardown: DDL of the Tsurugi */
-SELECT tg_execute_ddl('DROP TABLE fdw_type_int', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_bigint', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_p', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_ps', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_ps0', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_ps38', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_p', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_ps', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_ps0', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_ps38', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_real', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_double', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_char', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_char_l', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_varchar', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_varchar_l', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_text', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_date', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_time', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp_wo_tz', 'tsurugidb');
+--- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp_tz', 'tsurugidb');
+
+-- Date/Time Types - Test teardown: PostgreSQL environment
+SET TIMEZONE TO 'UTC';
+SET DATESTYLE TO 'default';
