@@ -90,9 +90,10 @@ tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 	PlannedStmt *stmt = NULL;
 	ModifyTable *modify = NULL;
 
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 #if PG_VERSION_NUM >= 130000
-	elog(LOG, "tsurugi_fdw : \nquery: \n%s", query_string);
+	elog(DEBUG1, "tsurugi_fdw : %s\nquery:\n%s", __func__, query_string);
+#else
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 #endif
 	if ((root->parse != NULL && root->parse->rtable == NULL) || 
 		!contain_foreign_tables(root, root->parse->rtable))
@@ -163,7 +164,7 @@ tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 		}
 	}
 
-	elog(LOG, "tsurugi_fdw : tsurugi_planner() is done.");
+	elog(DEBUG1, "tsurugi_fdw : tsurugi_planner() is done.");
 
 	return stmt;
 }

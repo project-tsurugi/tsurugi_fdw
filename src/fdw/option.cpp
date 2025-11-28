@@ -16,8 +16,8 @@
  * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, The Regents of the University of California
  *
- *	@file tsurugi_fdw_option.cpp
- *	@brief Tsurugi server options.
+ *	@file option.cpp
+ *	@brief tsurugi_fdw options.
  */
 
 #include <algorithm>
@@ -46,10 +46,12 @@ static constexpr const char* const kOptNameEndpoint = "endpoint";
 static constexpr const char* const kOptNameDbname = "dbname";
 static constexpr const char* const kOptNameAddress = "address";
 static constexpr const char* const kOptNamePort = "port";
+static constexpr const char* const kOptNameKey = "key";
 
 /* Defines for endpoint values. */
 static constexpr const char* const kValEndpointIpc = "ipc";
 static constexpr const char* const kValEndpointTcp = "stream";
+static constexpr const char* const kValTrue = "true";
 
 /**
  * Describes the valid options for objects that use this wrapper.
@@ -63,13 +65,15 @@ struct TsurugiFdwOption
 /**
  * Valid options for tsurugi_fdw.
  */
-static const std::unordered_multimap<std::string_view, Oid> valid_options =
+static const std::unordered_multimap<std::string_view, Oid> VALID_OPTIONS =
 {
 	/* Foreign server options */
 	{kOptNameEndpoint, ForeignServerRelationId},
 	{kOptNameDbname, ForeignServerRelationId},
 	{kOptNameAddress, ForeignServerRelationId},
 	{kOptNamePort, ForeignServerRelationId},
+	/* CREATE FOREIGN TABLE options */
+	{kOptNameKey, AttributeRelationId},
 };
 
 static bool is_valid_option(std::string_view option, Oid context);
@@ -92,6 +96,7 @@ tsurugi_fdw_validator(PG_FUNCTION_ARGS)
 	std::string opt_val_dbname;
 	std::string opt_val_address;
 	std::string opt_val_port;
+	std::string opt_val_key;
 
 	ListCell* cell;
 	foreach (cell, options_list) {
@@ -162,6 +167,8 @@ tsurugi_fdw_validator(PG_FUNCTION_ARGS)
 									   def->defname, opt_val.c_str())));
 			}
 			opt_val_port = opt_val;
+		} else if (opt_key == kOptNameKey) {
+			opt_val_key = opt_val;
 		}
 	}
 
@@ -202,7 +209,7 @@ tsurugi_fdw_validator(PG_FUNCTION_ARGS)
  */
 static bool is_valid_option(std::string_view option, Oid context)
 {
-	auto range = valid_options.equal_range(option);
+	auto range = VALID_OPTIONS.equal_range(option);
 	for (auto it = range.first; it != range.second; ++it) {
 		if (it->second == context) {
 			return true;
