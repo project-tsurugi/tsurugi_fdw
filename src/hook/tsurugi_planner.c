@@ -407,7 +407,11 @@ create_foreign_scan(TsurugiPlannerInfo *root)
 	fnode->operation = root->parse->commandType;
 	fnode->fs_server = root->serverid;
 	fnode->fdw_exprs = NIL;
+#if PG_VERSION_NUM >= 160000
+	fnode->fdw_private = linitial(list_make1(root->parse->jointree->quals));
+#else
 	fnode->fdw_private = NIL;
+#endif  // PG_VERSION_NUM >= 160000
 	fnode->fdw_scan_tlist = NIL;
 	fnode->fdw_recheck_quals = NIL;
 	fnode->fs_relids = NULL;
