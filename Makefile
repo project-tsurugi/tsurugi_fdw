@@ -31,17 +31,7 @@ ifndef REGRESS_BASIC
 		REGRESS_EXTRA := 1
 	endif
 endif
-
-# Test settings according to regression test type
 REGRESS := test_preparation
-ifdef REGRESS_BASIC
-	REGRESS += ddl_happy \
-	           dml_happy data_types_happy case_sensitive_happy \
-	           prep_dml_happy prep_data_types_happy prep_case_sensitive_happy \
-	           manual_tutorial \
-	           udf_transaction_happy udf_tg_show_tables_happy udf_tg_verify_tables_happy \
-	           import_foreign_schema_happy
-endif
 
 PGFILEDESC = "tsurugi_fdw - foreign data wrapper for Tsurugi"
 
@@ -60,6 +50,24 @@ ifndef MAJORVERSION
 	MAJORVERSION := $(basename $(VERSION))
 endif
 
+# Test settings according to regression test type
+ifdef REGRESS_BASIC
+	REGRESS += ddl_happy \
+	           dml_happy data_types_happy case_sensitive_happy \
+	           prep_dml_happy prep_data_types_happy prep_case_sensitive_happy \
+	           manual_tutorial \
+	           udf_transaction_happy udf_tg_show_tables_happy udf_tg_verify_tables_happy \
+	           import_foreign_schema_happy
+
+	ifeq ($(MAJORVERSION), 13)
+		# PostgreSQL 13.x
+		REGRESS += dml_happy_pg13 prep_dml_happy_pg13
+	else ifeq ($(filter $(MAJORVERSION), 14 15 16), $(MAJORVERSION))
+		# PostgreSQL 14.x to PostgreSQL 16.x
+		REGRESS += dml_happy_pg14-16 prep_dml_happy_pg14-16
+	endif
+endif
+
 ifdef REGRESS_EXTRA
 	REGRESS += ddl_unhappy \
 	           dml_unhappy data_types_unhappy case_sensitive_unhappy \
@@ -68,18 +76,9 @@ ifdef REGRESS_EXTRA
 	           udf_transaction_unhappy \
 	           import_foreign_schema_unhappy import_foreign_schema_extra
 
-	ifeq ($(MAJORVERSION), 12)
-		# PostgreSQL 12.x
-		REGRESS += dml_unhappy_pg12 prep_dml_unhappy_pg12
-	else ifeq ($(MAJORVERSION), 13)
-		# PostgreSQL 13.x
-		REGRESS += dml_unhappy_pg13 prep_dml_unhappy_pg13
-	else ifeq ($(filter $(MAJORVERSION), 14 15), $(MAJORVERSION))
-		# PostgreSQL 14.x to PostgreSQL 15.x
-		REGRESS += dml_unhappy_pg14-15 prep_dml_unhappy_pg14-15
-	else ifeq ($(filter $(MAJORVERSION), 16), $(MAJORVERSION))
-		# PostgreSQL 16.x
-		REGRESS += dml_unhappy_pg16 prep_dml_unhappy_pg16
+	ifeq ($(filter $(MAJORVERSION), 13 14 15 16), $(MAJORVERSION))
+		# PostgreSQL 13.x to PostgreSQL 16.x
+		REGRESS += dml_unhappy_pg13-16 prep_dml_unhappy_pg13-16
 	endif
 endif
 

@@ -358,7 +358,7 @@ INSERT INTO udf_table1 (column1) VALUES (500); -- error
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
-CONTEXT:  SQL query: INSERT INTO udf_table1 (column1) VALUES (500)
+CONTEXT:  SQL query: INSERT INTO public.udf_table1(column1) VALUES (:param1)
 SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
@@ -369,7 +369,7 @@ UPDATE udf_table1 SET column1 = column1+1; -- error
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
-CONTEXT:  SQL query: UPDATE udf_table1 SET column1 = column1+1
+CONTEXT:  SQL query: UPDATE udf_table1 SET column1 = (column1 + 1)
 SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
@@ -380,7 +380,7 @@ DELETE FROM udf_table1 WHERE column1 = 400; -- error
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
-CONTEXT:  SQL query: DELETE FROM udf_table1 WHERE column1 = 400
+CONTEXT:  SQL query: DELETE FROM udf_table1 WHERE ((column1 = 400))
 SELECT * FROM udf_table1 ORDER BY column1;
  column1 
 ---------
@@ -410,12 +410,12 @@ INSERT INTO wp_table2 (column1) VALUES (200); -- error
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
-CONTEXT:  SQL query: INSERT INTO wp_table2 (column1) VALUES (200)
+CONTEXT:  SQL query: INSERT INTO public.wp_table2(column1) VALUES (:param1)
 INSERT INTO udf_table1 (column1) VALUES (500); -- error
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
-CONTEXT:  SQL query: INSERT INTO udf_table1 (column1) VALUES (500)
+CONTEXT:  SQL query: INSERT INTO public.udf_table1(column1) VALUES (:param1)
 SELECT * FROM wp_table1 ORDER BY column1;
  column1 
 ---------
@@ -438,7 +438,7 @@ UPDATE udf_table1 SET column1 = column1+1; -- error
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
-CONTEXT:  SQL query: UPDATE udf_table1 SET column1 = column1+1
+CONTEXT:  SQL query: UPDATE udf_table1 SET column1 = (column1 + 1)
 SELECT * FROM wp_table1 ORDER BY column1;
  column1 
 ---------
@@ -461,7 +461,7 @@ DELETE FROM udf_table1 WHERE column1 = 400; -- error
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: LTX_WRITE_OPERATION_WITHOUT_WRITE_PRESERVE_EXCEPTION (SQL-02023: Ltx write operation outside write preserve.)
-CONTEXT:  SQL query: DELETE FROM udf_table1 WHERE column1 = 400
+CONTEXT:  SQL query: DELETE FROM udf_table1 WHERE ((column1 = 400))
 SELECT * FROM wp_table1 ORDER BY column1;
  column1 
 ---------

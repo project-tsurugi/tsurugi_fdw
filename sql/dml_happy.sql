@@ -457,6 +457,12 @@ INSERT INTO fdw_select_variation_table_2
     (3, 'dep-3'),
     (4, 'dep-4');
 
+-- Arithmetic operation
+SELECT id, name, ((value / 10000) + ref_id)::int AS grade
+  FROM fdw_select_variation_table_1
+  WHERE ref_id IS NOT NULL
+  ORDER BY grade, value, id;
+
 -- SELECT ALL
 SELECT ALL id, name, value
   FROM fdw_select_variation_table_1
@@ -471,9 +477,23 @@ SELECT DISTINCT (t2.id) id, t2.name
   JOIN fdw_select_variation_table_2 t2 ON (t1.ref_id = t2.id)
   ORDER BY t2.id;
 
+-- SELECT DISTINCT ON
+SELECT DISTINCT ON (ref_id) *
+  FROM fdw_select_variation_table_1
+  ORDER BY ref_id NULLS FIRST, id;
+
 -- AS
 SELECT id AS user_id, name AS user_name FROM fdw_select_variation_table_1
   ORDER BY id;
+
+-- CASE WHEN
+SELECT
+  id, name,
+  CASE
+    WHEN value >= 100000 THEN 'High'
+    WHEN value >= 75000 THEN 'Medium'
+    ELSE 'Low' END AS lank
+  FROM fdw_select_variation_table_1;
 
 -- [INNER] JOIN
 SELECT t1.id, t1.name, t2.name
@@ -540,12 +560,28 @@ SELECT id, name, value
   WHERE name LIKE 'name-%'
   ORDER BY id;
 
+-- FETCH FIRST ... ONLY
+SELECT * FROM fdw_select_variation_table_1
+  ORDER BY value DESC FETCH FIRST 2 ROWS ONLY;
+-- FETCH NEXT ... ONLY
+SELECT * FROM fdw_select_variation_table_1
+  ORDER BY value FETCH NEXT 2 ROWS ONLY;
+
+-- LIMIT
+SELECT * FROM fdw_select_variation_table_1 ORDER BY value DESC LIMIT 2;
+-- LIMIT ALL
+SELECT * FROM fdw_select_variation_table_1 WHERE ref_id IS NOT NULL
+  ORDER BY id DESC LIMIT ALL;
+
 -- ORDER BY
 SELECT * FROM fdw_select_variation_table_1 ORDER BY value;
 -- ORDER BY ASC
 SELECT * FROM fdw_select_variation_table_1 ORDER BY value ASC;
 -- ORDER BY DESC
 SELECT * FROM fdw_select_variation_table_1 ORDER BY value DESC;
+-- ORDER BY USING operator
+SELECT * FROM fdw_select_variation_table_1 ORDER BY value USING <;
+SELECT * FROM fdw_select_variation_table_1 ORDER BY value USING >;
 -- ORDER BY + NULLS FIRST
 SELECT * FROM fdw_select_variation_table_1 ORDER BY ref_id NULLS FIRST;
 -- ORDER BY + NULLS LAST --- Tsurugi specifications
@@ -564,8 +600,109 @@ SELECT ref_id, COUNT(*), SUM(value)
   HAVING COUNT(*) >= 2
   ORDER BY ref_id;
 
--- LIMIT
-SELECT * FROM fdw_select_variation_table_1 ORDER BY id LIMIT 2;
+-- UNION
+SELECT ref_id, name FROM fdw_select_variation_table_1
+  UNION
+  SELECT id, name FROM fdw_select_variation_table_1
+  ORDER BY ref_id, name;
+SELECT * FROM fdw_select_variation_table_1
+  UNION
+  SELECT 9999 AS id, 'name-x' AS name, 999999.99 AS value, 99 AS ref_id,
+    9999 AS manager_id
+  ORDER BY id;
+SELECT * FROM fdw_select_variation_table_1 WHERE id < 1003
+  UNION
+  SELECT 9999 AS id, 'name-x' AS name, 999999.99 AS value, 99 AS ref_id,
+    9999 AS manager_id
+  ORDER BY id DESC;
+
+-- UNION DISTINCT
+SELECT ref_id, name FROM fdw_select_variation_table_1
+  UNION DISTINCT
+  SELECT id, name FROM fdw_select_variation_table_1
+  ORDER BY ref_id, name;
+SELECT * FROM fdw_select_variation_table_1
+  UNION DISTINCT
+  SELECT 9999 AS id, 'name-x' AS name, 999999.99 AS value, 99 AS ref_id,
+    9999 AS manager_id
+  ORDER BY id;
+SELECT * FROM fdw_select_variation_table_1 WHERE id < 1003
+  UNION DISTINCT
+  SELECT 9999 AS id, 'name-x' AS name, 999999.99 AS value, 99 AS ref_id,
+    9999 AS manager_id
+  ORDER BY id DESC;
+
+-- UNION ALL
+-----FIXME: Disabled due to issues
+-----SELECT * FROM fdw_select_variation_table_1
+-----  UNION ALL
+-----  SELECT * FROM fdw_select_variation_table_1
+-----  ORDER BY id;
+SELECT * FROM fdw_select_variation_table_1 WHERE id < 1003
+  UNION ALL
+  SELECT * FROM fdw_select_variation_table_1
+  ORDER BY id DESC;
+
+-- INTERSECT
+SELECT id, name FROM fdw_select_variation_table_1 WHERE value > 6000
+  INTERSECT
+  SELECT id, name FROM fdw_select_variation_table_1
+    WHERE manager_id IS NULL OR manager_id = 1000
+  ORDER BY id;
+
+-- INTERSECT DISTINCT
+SELECT ref_id FROM fdw_select_variation_table_1
+  INTERSECT DISTINCT
+  SELECT ref_id FROM fdw_select_variation_table_1 WHERE ref_id IS NOT NULL
+  ORDER BY ref_id DESC;
+
+-- INTERSECT ALL
+SELECT ref_id FROM fdw_select_variation_table_1
+  INTERSECT ALL
+  SELECT ref_id FROM fdw_select_variation_table_1 WHERE ref_id IS NOT NULL
+  ORDER BY ref_id;
+
+-- EXCEPT
+SELECT id, name FROM fdw_select_variation_table_1 WHERE value > 6000
+  EXCEPT
+  SELECT id, name FROM fdw_select_variation_table_1
+    WHERE manager_id IS NULL OR manager_id = 1000
+  ORDER BY id;
+
+-- EXCEPT DISTINCT
+SELECT ref_id FROM fdw_select_variation_table_1
+  EXCEPT DISTINCT
+  SELECT NULL AS ref_id
+  ORDER BY ref_id;
+
+-- EXCEPT ALL
+SELECT ref_id FROM fdw_select_variation_table_1
+  EXCEPT ALL
+  SELECT NULL AS ref_id
+  ORDER BY ref_id;
+
+-- WITH
+WITH value_data AS (
+  SELECT id, name, value FROM fdw_select_variation_table_1 WHERE value >= 75000
+)
+SELECT * FROM value_data;
+
+-- WITH RECURSIVE
+WITH RECURSIVE chart AS (
+  SELECT id, name, manager_id, 1 AS level
+    FROM fdw_select_variation_table_1
+    WHERE manager_id IS NULL
+  UNION ALL
+  SELECT e.id, e.name, e.manager_id, oc.level + 1
+    FROM fdw_select_variation_table_1 e
+    JOIN chart oc ON e.manager_id = oc.id
+)
+SELECT * FROM chart ORDER BY level, id;
+
+-- WINDOW
+SELECT id, name, value, RANK() OVER w AS rk
+  FROM fdw_select_variation_table_1
+  WINDOW w AS (ORDER BY value DESC);
 
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_select_variation_table_1;
@@ -577,7 +714,14 @@ SELECT tg_execute_ddl('DROP TABLE fdw_select_variation_table_2', 'tsurugidb');
 /* Test case: happy path - Supported INSERT statement patterns */
 -- Test setup: DDL of the Tsurugi
 SELECT tg_execute_ddl('
-  CREATE TABLE fdw_ins_variation_table (
+  CREATE TABLE fdw_ins_variation_table_1 (
+    id INT PRIMARY KEY,
+    key_col VARCHAR(100),
+    value_col INT DEFAULT 99999
+  )
+', 'tsurugidb');
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_ins_variation_table_2 (
     c_int INTEGER DEFAULT 11,
     c_big BIGINT DEFAULT 22,
     c_dec DECIMAL DEFAULT 33,
@@ -591,7 +735,12 @@ SELECT tg_execute_ddl('
   )
 ', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_ins_variation_table (
+CREATE FOREIGN TABLE fdw_ins_variation_table_1 (
+  id integer,
+  key_col varchar(100),
+  value_col integer DEFAULT 99999
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE fdw_ins_variation_table_2 (
   c_int integer DEFAULT 11,
   c_big bigint DEFAULT 22,
   c_dec decimal DEFAULT 33,
@@ -604,25 +753,58 @@ CREATE FOREIGN TABLE fdw_ins_variation_table (
   c_tstmp timestamp DEFAULT timestamp '2025-03-03 03:03:03'
 ) SERVER tsurugidb;
 
+-- WITH
+WITH data AS (
+  SELECT 'key1'::TEXT AS key_col, 12345 AS value_col
+)
+INSERT INTO fdw_ins_variation_table_1
+  (id, key_col, value_col)
+  SELECT 1, key_col, value_col FROM data;
+SELECT * FROM fdw_ins_variation_table_1 ORDER BY id;
+
 -- DEFAULT VALUES
-INSERT INTO fdw_ins_variation_table DEFAULT VALUES;
-SELECT * FROM fdw_ins_variation_table ORDER BY c_int;
+INSERT INTO fdw_ins_variation_table_2 (c_int, c_chr) VALUES (0, 'X');
+INSERT INTO fdw_ins_variation_table_2 DEFAULT VALUES;
+SELECT * FROM fdw_ins_variation_table_2 ORDER BY c_int;
+
+-- Columns DEFAULT
+INSERT INTO fdw_ins_variation_table_1 VALUES (2, DEFAULT, DEFAULT);
+SELECT * FROM fdw_ins_variation_table_1 ORDER BY id;
 
 -- INSERT ... VALUES (...), ...
-INSERT INTO fdw_ins_variation_table
+INSERT INTO fdw_ins_variation_table_2
   (c_int, c_vchr, c_big, c_chr, c_dec)
   VALUES (4, 'key4', 400, 'b', 34), (5, 'key5', 500, 'c', 35);
-SELECT * FROM fdw_ins_variation_table ORDER BY c_big;
+SELECT * FROM fdw_ins_variation_table_2 ORDER BY c_big, c_int;
+
+-- INSERT ... AS alias
+INSERT INTO fdw_ins_variation_table_1 AS it
+  (id, key_col, value_col)
+  VALUES (3, 'key3', 300);
+SELECT * FROM fdw_ins_variation_table_1 ORDER BY id;
+
+-- INSERT ... SELECT
+INSERT INTO fdw_ins_variation_table_1 SELECT 4, 'key4', 400;
+SELECT * FROM fdw_ins_variation_table_1 ORDER BY id;
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_ins_variation_table;
+DROP FOREIGN TABLE fdw_ins_variation_table_1;
+DROP FOREIGN TABLE fdw_ins_variation_table_2;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_ins_variation_table', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE fdw_ins_variation_table_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE fdw_ins_variation_table_2', 'tsurugidb');
 
 /* Test case: happy path - Supported UPDATE statement patterns */
 -- Test setup: DDL of the Tsurugi
 SELECT tg_execute_ddl('
-  CREATE TABLE fdw_upd_variation_table (
+  CREATE TABLE fdw_upd_variation_table_1 (
+    id INT PRIMARY KEY,
+    key_col VARCHAR(100),
+    value_col INT
+  )
+', 'tsurugidb');
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_upd_variation_table_2 (
     c_int INTEGER,
     c_big BIGINT,
     c_dec DECIMAL,
@@ -638,7 +820,12 @@ SELECT tg_execute_ddl('
 ', 'tsurugidb');
 
 -- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_upd_variation_table (
+CREATE FOREIGN TABLE fdw_upd_variation_table_1 (
+  id integer,
+  key_col varchar(100),
+  value_col integer DEFAULT 99999
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE fdw_upd_variation_table_2 (
   c_int integer,
   c_big bigint,
   c_dec decimal,
@@ -653,7 +840,12 @@ CREATE FOREIGN TABLE fdw_upd_variation_table (
 ) SERVER tsurugidb;
 
 -- Initialization of test data
-INSERT INTO fdw_upd_variation_table
+INSERT INTO fdw_upd_variation_table_1
+  VALUES
+    (1, 'key1', 10),
+    (2, 'key2', 20),
+    (3, 'key3', 30);
+INSERT INTO fdw_upd_variation_table_2
   VALUES
   (1, 11, 12, 13.1, 14.2, 'a', 'val_1', '2025-01-01', '01:00:00',
    '2025-01-01 01:00:00', '2025-01-01 01:00:00+09'),
@@ -663,75 +855,107 @@ INSERT INTO fdw_upd_variation_table
    '2025-10-10 10:00:00', '2025-10-10 10:00:00+09'),
   (20, 201, 202, 203.1, 204.2, 't', 'val_20', '2025-08-20', '20:00:00',
    '2025-08-20 20:00:00', '2025-08-20 20:00:00+09');
-SELECT * FROM fdw_upd_variation_table ORDER BY c_int;
+
+-- WITH
+WITH upd_data AS (
+  SELECT 'key1'::TEXT AS key_col, 100 AS new_val
+)
+UPDATE fdw_upd_variation_table_1 SET value_col = upd_data.new_val
+  FROM upd_data WHERE fdw_upd_variation_table_1.key_col = upd_data.key_col;
+SELECT * FROM fdw_upd_variation_table_1 ORDER BY id;
 
 -- SET column_name (int) = value
-UPDATE fdw_upd_variation_table SET c_int = 6 WHERE c_int = 1;
-SELECT * FROM fdw_upd_variation_table ORDER BY c_int;
+UPDATE fdw_upd_variation_table_2 SET c_int = 6 WHERE c_int = 1;
+SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_int;
 
 -- SET column_name (bigint) = expression
-UPDATE fdw_upd_variation_table
+UPDATE fdw_upd_variation_table_2
   SET c_int = 1, c_big = c_big + 101
   WHERE c_big = 11;
-SELECT * FROM fdw_upd_variation_table ORDER BY c_big;
+SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_big;
 
 -- SET column_name (decimal) = expression
-UPDATE fdw_upd_variation_table
+UPDATE fdw_upd_variation_table_2
   SET c_big = c_big - 101, c_dec = c_dec - 1
   WHERE c_dec = 12;
-SELECT * FROM fdw_upd_variation_table ORDER BY c_dec DESC;
+SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_dec DESC;
 
 -- SET column_name (real) = expression
-UPDATE fdw_upd_variation_table
+UPDATE fdw_upd_variation_table_2
   SET c_dec = c_dec + 1, c_rel = c_rel * 10
   WHERE c_rel = 13.1::real;
-SELECT * FROM fdw_upd_variation_table ORDER BY c_rel DESC;
+SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_rel DESC;
 
 -- SET column_name (double precision) = expression
-UPDATE fdw_upd_variation_table
+UPDATE fdw_upd_variation_table_2
   SET c_rel = c_rel / 10, c_dbl = c_dbl * 10 / 2
   WHERE c_dbl = CAST(14.2 AS double precision);
-SELECT * FROM fdw_upd_variation_table ORDER BY c_dbl DESC;
+SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_dbl DESC;
 
 -- SET column_name (char) = value
-UPDATE fdw_upd_variation_table
+UPDATE fdw_upd_variation_table_2
   SET c_dbl = c_dbl * 2 / 10, c_chr = 'k' WHERE c_chr = 'a';
-SELECT * FROM fdw_upd_variation_table ORDER BY c_chr;
+SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_chr;
 
 -- SET column_name (varchar) = expression
-UPDATE fdw_upd_variation_table
+UPDATE fdw_upd_variation_table_2
   SET c_chr = 'a', c_vchr = c_vchr || '_updated'
   WHERE c_vchr = 'val_1';
-SELECT * FROM fdw_upd_variation_table ORDER BY c_vchr;
+SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_vchr;
 
 -- SET column_name (date) = value
-UPDATE fdw_upd_variation_table
+UPDATE fdw_upd_variation_table_2
   SET c_vchr = 'val_1', c_date = '2025-08-08'
   WHERE c_date = '2025-01-01'::date;
-SELECT * FROM fdw_upd_variation_table ORDER BY c_date;
+SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_date;
 
 -- SET column_name (time) = value
-UPDATE fdw_upd_variation_table
+UPDATE fdw_upd_variation_table_2
   SET c_date = '2025-01-01', c_time = '12:00:00'
   WHERE c_time = '01:00:00'::time;
-SELECT * FROM fdw_upd_variation_table ORDER BY c_time DESC;
+SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_time DESC;
 
 -- SET column_name (timestamp) = value
-UPDATE fdw_upd_variation_table
+UPDATE fdw_upd_variation_table_2
   SET c_time = '01:00:00', c_tstmp = '2025-08-08 12:00:00'
   WHERE c_tstmp = '2025-01-01 01:00:00'::timestamp;
-SELECT * FROM fdw_upd_variation_table ORDER BY c_tstmp;
+SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_tstmp;
 
 -- SET column_name (timestamp with time zone) = value
-UPDATE fdw_upd_variation_table
+UPDATE fdw_upd_variation_table_2
   SET c_tstmp = '2025-01-01 01:00:00', c_tstmptz = '2025-08-08 12:00:00+09'
   WHERE c_tstmptz = '2025-01-01 01:00:00+09'::timestamp with time zone;
-SELECT * FROM fdw_upd_variation_table ORDER BY c_tstmptz DESC;
+SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_tstmptz DESC;
+
+-- SET column_name = DEFAULT
+UPDATE fdw_upd_variation_table_1 SET value_col = DEFAULT WHERE key_col = 'key3';
+SELECT * FROM fdw_upd_variation_table_1 ORDER BY key_col;
+
+-- SET (col1, col2) = ROW (...)
+UPDATE fdw_upd_variation_table_1
+  SET (key_col, value_col) = ROW('key1_modified', 123)
+  WHERE key_col = 'key1';
+SELECT * FROM fdw_upd_variation_table_1 ORDER BY key_col;
+
+-- ONLY
+UPDATE ONLY fdw_upd_variation_table_1
+  SET key_col = 'key1', value_col = 10
+  WHERE key_col = 'key1_modified';
+SELECT * FROM fdw_upd_variation_table_1 ORDER BY key_col;
+
+-- AS alias
+UPDATE fdw_upd_variation_table_1 ut
+  SET value_col = 22222 WHERE ut.key_col = 'key2';
+UPDATE fdw_upd_variation_table_1 AS ut
+  SET value_col = 11111 WHERE ut.key_col = 'key1';
+SELECT * FROM fdw_upd_variation_table_1 ORDER BY key_col;
 
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_upd_variation_table;
+DROP FOREIGN TABLE fdw_upd_variation_table_1;
+DROP FOREIGN TABLE fdw_upd_variation_table_2;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_upd_variation_table', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE fdw_upd_variation_table_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE fdw_upd_variation_table_2', 'tsurugidb');
 
 /* Test case: happy path - Supported DELETE statement patterns */
 -- Test setup: DDL of the Tsurugi
@@ -753,6 +977,7 @@ CREATE FOREIGN TABLE fdw_del_variation_table (
 INSERT INTO fdw_del_variation_table
   (id, key_col, value_col)
   VALUES
+    (0, 'key0', 0),
     (1, 'key1', 10),
     (2, 'key2', 20),
     (3, 'key3', 30),
@@ -762,24 +987,48 @@ INSERT INTO fdw_del_variation_table
     (7, 'key7', 70),
     (8, 'key8', 80),
     (9, 'key9', 90),
-    (10, 'key10', 100);
+    (10, 'key10', 100),
+    (20, 'key20', 200),
+    (21, 'key21', 210),
+    (22, 'key22', 220),
+    (23, 'key23', 230);
+
+-- WITH
+WITH keys_to_delete AS (
+  SELECT 'key0'::TEXT AS key_col
+)
+DELETE FROM fdw_del_variation_table
+  USING keys_to_delete WHERE fdw_del_variation_table.key_col = keys_to_delete.key_col;
 SELECT * FROM fdw_del_variation_table ORDER BY id;
 
--- Test
+-- BETWEEN ... AND
 DELETE FROM fdw_del_variation_table WHERE id BETWEEN 3 AND 5;
 SELECT * FROM fdw_del_variation_table ORDER BY id;
 
+-- IN
 DELETE FROM fdw_del_variation_table WHERE value_col IN (10, 60);
 SELECT * FROM fdw_del_variation_table ORDER BY id DESC;
 
+-- LIKE
 DELETE FROM fdw_del_variation_table WHERE key_col LIKE '%1%';
 SELECT * FROM fdw_del_variation_table ORDER BY key_col;
 
+-- Multiple conditions
 DELETE
   FROM fdw_del_variation_table
   WHERE (key_col <> 'key2') AND (value_col < 90);
 SELECT * FROM fdw_del_variation_table ORDER BY key_col DESC;
 
+-- ONLY
+DELETE FROM ONLY fdw_del_variation_table WHERE key_col = 'key20';
+SELECT * FROM fdw_del_variation_table ORDER BY key_col;
+
+-- AS alias
+DELETE FROM fdw_del_variation_table dt WHERE dt.key_col = 'key22';
+DELETE FROM fdw_del_variation_table AS dt WHERE dt.key_col = 'key23';
+SELECT * FROM fdw_del_variation_table ORDER BY key_col DESC;
+
+-- No conditions
 DELETE FROM fdw_del_variation_table;
 SELECT * FROM fdw_del_variation_table;
 

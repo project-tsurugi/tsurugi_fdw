@@ -2,7 +2,7 @@
 SET datestyle TO ISO, YMD;
 SET timezone TO 'Asia/Tokyo';
 
-/* Test case: happy path - PREPARE statement */
+/* Test case: happy path - Standard PREPARE statement */
 -- Test setup: DDL of the Tsurugi
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_valid_test (id INTEGER)
@@ -10,8 +10,16 @@ SELECT tg_execute_ddl('
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE fdw_valid_test (id integer) SERVER tsurugidb;
 
--- Test
+-- valid PREPARE statement
+PREPARE valid (int) AS SELECT $1 FROM fdw_valid_test;
+EXECUTE valid(12345);
+DEALLOCATE valid;
+
 PREPARE valid AS SELECT * FROM fdw_valid_test WHERE id = $1;
+EXECUTE valid (12345);
+DEALLOCATE valid;
+
+PREPARE valid (int) AS SELECT * FROM fdw_valid_test ORDER BY id limit $1;
 EXECUTE valid (12345);
 DEALLOCATE valid;
 
@@ -315,13 +323,13 @@ DEALLOCATE fdw_prepare_sel;
 PREPARE fdw_prepare_sel (integer, double precision) AS
   SELECT c1 FROM fdw_dml_basic_table_2
     WHERE (c1 < $1) AND (c3 > $2) ORDER BY c1;
-EXECUTE fdw_prepare_sel(5, 2.2);
+EXECUTE fdw_prepare_sel (5, 2.2);
 DEALLOCATE fdw_prepare_sel;
 
 PREPARE fdw_prepare_sel (bigint) AS
   SELECT c1 FROM fdw_dml_basic_table_2
     WHERE (c2 <> $1) AND (c3 IS NULL) ORDER BY c1;
-EXECUTE fdw_prepare_sel(600);
+EXECUTE fdw_prepare_sel (600);
 DEALLOCATE fdw_prepare_sel;
 
 PREPARE fdw_prepare_sel AS
@@ -332,7 +340,7 @@ DEALLOCATE fdw_prepare_sel;
 
 PREPARE fdw_prepare_sel (varchar) AS
   SELECT c1, c4 FROM fdw_dml_basic_table_2 WHERE c4 <= $1 ORDER BY c1;
-EXECUTE fdw_prepare_sel('4th');
+EXECUTE fdw_prepare_sel ('4th');
 DEALLOCATE fdw_prepare_sel;
 
 PREPARE fdw_prepare_sel (varchar) AS
@@ -734,14 +742,13 @@ EXECUTE fdw_prepare_sel (22);
 EXECUTE fdw_prepare_sel (44);
 DEALLOCATE fdw_prepare_sel;
 
------FIXME: Disabled due to issue
------PREPARE fdw_prepare_sel AS
------  SELECT *
------    FROM  fdw_join_basic_table_1 AS a
------    CROSS JOIN fdw_join_basic_table_2 AS b
------    ORDER BY b.c1, a.c1;
------EXECUTE fdw_prepare_sel;
------DEALLOCATE fdw_prepare_sel;
+PREPARE fdw_prepare_sel AS
+  SELECT *
+    FROM  fdw_join_basic_table_1 AS a
+    CROSS JOIN fdw_join_basic_table_2 AS b
+    ORDER BY b.c1, a.c1;
+EXECUTE fdw_prepare_sel;
+DEALLOCATE fdw_prepare_sel;
 
 PREPARE fdw_prepare_sel AS
   SELECT *
@@ -914,37 +921,64 @@ EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel;
 
 -- BETWEEN ... AND
-PREPARE fdw_prepare_sel AS
+PREPARE fdw_prepare_sel (integer, integer) AS
   SELECT id, name, value
     FROM fdw_select_variation_table_1
-    WHERE value BETWEEN 60000 AND 80000
+    WHERE value BETWEEN $1 AND $2
     ORDER BY id;
-EXECUTE fdw_prepare_sel;
+EXECUTE fdw_prepare_sel (60000, 80000);
 DEALLOCATE fdw_prepare_sel;
 
 -- IN
-PREPARE fdw_prepare_sel AS
+PREPARE fdw_prepare_sel (integer) AS
   SELECT id, name, manager_id
     FROM fdw_select_variation_table_1
-    WHERE manager_id IN (1000)
+    WHERE manager_id IN ($1)
     ORDER BY id;
-EXECUTE fdw_prepare_sel;
+EXECUTE fdw_prepare_sel (1000);
 DEALLOCATE fdw_prepare_sel;
 
-PREPARE fdw_prepare_sel AS
+PREPARE fdw_prepare_sel (integer[]) AS
   SELECT id, name, manager_id
     FROM fdw_select_variation_table_1
-    WHERE manager_id IN (1000, 1005)
+    WHERE manager_id = ANY($1)
     ORDER BY id;
-EXECUTE fdw_prepare_sel;
+EXECUTE fdw_prepare_sel (ARRAY[1000, 1005]);
 DEALLOCATE fdw_prepare_sel;
 
 -- LIKE
-PREPARE fdw_prepare_sel AS
+PREPARE fdw_prepare_sel (text) AS
   SELECT id, name, value
     FROM fdw_select_variation_table_1
-    WHERE name LIKE 'name-%'
+    WHERE name LIKE $1
     ORDER BY id;
+EXECUTE fdw_prepare_sel ('name-%');
+DEALLOCATE fdw_prepare_sel;
+
+-- FETCH FIRST ... ONLY
+PREPARE fdw_prepare_sel (integer) AS
+  SELECT * FROM fdw_select_variation_table_1
+    ORDER BY value DESC FETCH FIRST $1 ROWS ONLY;
+EXECUTE fdw_prepare_sel (2);
+DEALLOCATE fdw_prepare_sel;
+
+-- FETCH NEXT ... ONLY
+PREPARE fdw_prepare_sel (integer) AS
+  SELECT * FROM fdw_select_variation_table_1
+    ORDER BY value FETCH NEXT $1 ROWS ONLY;
+EXECUTE fdw_prepare_sel (2);
+DEALLOCATE fdw_prepare_sel;
+
+-- LIMIT
+PREPARE fdw_prepare_sel (integer) AS
+  SELECT * FROM fdw_select_variation_table_1 ORDER BY value DESC LIMIT $1;
+EXECUTE fdw_prepare_sel (2);
+DEALLOCATE fdw_prepare_sel;
+
+-- LIMIT ALL
+PREPARE fdw_prepare_sel AS
+  SELECT * FROM fdw_select_variation_table_1 WHERE ref_id IS NOT NULL
+  ORDER BY id DESC LIMIT ALL;
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel;
 
@@ -963,6 +997,17 @@ DEALLOCATE fdw_prepare_sel;
 -- ORDER BY DESC
 PREPARE fdw_prepare_sel AS
   SELECT * FROM fdw_select_variation_table_1 ORDER BY value DESC;
+EXECUTE fdw_prepare_sel;
+DEALLOCATE fdw_prepare_sel;
+
+-- ORDER BY USING operator
+PREPARE fdw_prepare_sel AS
+  SELECT * FROM fdw_select_variation_table_1 ORDER BY value USING <;
+EXECUTE fdw_prepare_sel;
+DEALLOCATE fdw_prepare_sel;
+
+PREPARE fdw_prepare_sel AS
+  SELECT * FROM fdw_select_variation_table_1 ORDER BY value USING >;
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel;
 
@@ -988,18 +1033,172 @@ EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel;
 
 -- HAVING
-PREPARE fdw_prepare_sel AS
+PREPARE fdw_prepare_sel (integer) AS
   SELECT ref_id, COUNT(*), SUM(value)
     FROM fdw_select_variation_table_1
     GROUP BY ref_id
-    HAVING COUNT(*) >= 2
+    HAVING COUNT(*) >= $1
+    ORDER BY ref_id;
+EXECUTE fdw_prepare_sel (2);
+DEALLOCATE fdw_prepare_sel;
+
+-- UNION
+PREPARE fdw_prepare_sel AS
+  SELECT ref_id, name FROM fdw_select_variation_table_1
+    UNION
+    SELECT id, name FROM fdw_select_variation_table_1
+  ORDER BY ref_id, name;
+EXECUTE fdw_prepare_sel;
+DEALLOCATE fdw_prepare_sel;
+
+PREPARE fdw_prepare_sel AS
+  SELECT * FROM fdw_select_variation_table_1
+    UNION
+    SELECT 9999 AS id, 'name-x' AS name, 999999.99 AS value, 99 AS ref_id,
+      9999 AS manager_id
+    ORDER BY id;
+EXECUTE fdw_prepare_sel;
+DEALLOCATE fdw_prepare_sel;
+
+PREPARE fdw_prepare_sel AS
+  SELECT * FROM fdw_select_variation_table_1 WHERE id < 1003
+    UNION
+    SELECT 9999 AS id, 'name-x' AS name, 999999.99 AS value, 99 AS ref_id,
+      9999 AS manager_id
+    ORDER BY id DESC;
+EXECUTE fdw_prepare_sel;
+DEALLOCATE fdw_prepare_sel;
+
+-- UNION DISTINCT
+PREPARE fdw_prepare_sel AS
+  SELECT ref_id, name FROM fdw_select_variation_table_1
+    UNION DISTINCT
+    SELECT id, name FROM fdw_select_variation_table_1
+    ORDER BY ref_id, name;
+EXECUTE fdw_prepare_sel;
+DEALLOCATE fdw_prepare_sel;
+
+PREPARE fdw_prepare_sel AS
+  SELECT * FROM fdw_select_variation_table_1
+    UNION DISTINCT
+    SELECT 9999 AS id, 'name-x' AS name, 999999.99 AS value, 99 AS ref_id,
+      9999 AS manager_id
+    ORDER BY id;
+EXECUTE fdw_prepare_sel;
+DEALLOCATE fdw_prepare_sel;
+
+PREPARE fdw_prepare_sel AS
+  SELECT * FROM fdw_select_variation_table_1 WHERE id < 1003
+    UNION DISTINCT
+    SELECT 9999 AS id, 'name-x' AS name, 999999.99 AS value, 99 AS ref_id,
+      9999 AS manager_id
+    ORDER BY id DESC;
+EXECUTE fdw_prepare_sel;
+DEALLOCATE fdw_prepare_sel;
+
+-- UNION ALL
+-----FIXME: Disabled due to issues
+-----PREPARE fdw_prepare_sel AS
+-----  SELECT * FROM fdw_select_variation_table_1
+-----    UNION ALL
+-----    SELECT * FROM fdw_select_variation_table_1
+-----    ORDER BY id;
+-----EXECUTE fdw_prepare_sel;
+-----DEALLOCATE fdw_prepare_sel;
+
+PREPARE fdw_prepare_sel AS
+  SELECT * FROM fdw_select_variation_table_1 WHERE id < 1003
+    UNION ALL
+    SELECT * FROM fdw_select_variation_table_1
+    ORDER BY id DESC;
+EXECUTE fdw_prepare_sel;
+DEALLOCATE fdw_prepare_sel;
+
+-- INTERSECT
+PREPARE fdw_prepare_sel AS
+  SELECT id, name FROM fdw_select_variation_table_1 WHERE value > 6000
+    INTERSECT
+    SELECT id, name FROM fdw_select_variation_table_1
+      WHERE manager_id IS NULL OR manager_id = 1000
+    ORDER BY id;
+EXECUTE fdw_prepare_sel;
+DEALLOCATE fdw_prepare_sel;
+
+-- INTERSECT DISTINCT
+PREPARE fdw_prepare_sel AS
+  SELECT ref_id FROM fdw_select_variation_table_1
+    INTERSECT DISTINCT
+    SELECT ref_id FROM fdw_select_variation_table_1 WHERE ref_id IS NOT NULL
+    ORDER BY ref_id DESC;
+EXECUTE fdw_prepare_sel;
+DEALLOCATE fdw_prepare_sel;
+
+-- INTERSECT ALL
+PREPARE fdw_prepare_sel AS
+  SELECT ref_id FROM fdw_select_variation_table_1
+    INTERSECT ALL
+    SELECT ref_id FROM fdw_select_variation_table_1 WHERE ref_id IS NOT NULL
     ORDER BY ref_id;
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel;
 
--- LIMIT
+-- EXCEPT
 PREPARE fdw_prepare_sel AS
-  SELECT * FROM fdw_select_variation_table_1 ORDER BY id LIMIT 2;
+  SELECT id, name FROM fdw_select_variation_table_1 WHERE value > 6000
+    EXCEPT
+    SELECT id, name FROM fdw_select_variation_table_1
+      WHERE manager_id IS NULL OR manager_id = 1000
+    ORDER BY id;
+EXECUTE fdw_prepare_sel;
+DEALLOCATE fdw_prepare_sel;
+
+-- EXCEPT DISTINCT
+PREPARE fdw_prepare_sel AS
+  SELECT ref_id FROM fdw_select_variation_table_1
+    EXCEPT DISTINCT
+    SELECT NULL AS ref_id
+    ORDER BY ref_id;
+EXECUTE fdw_prepare_sel;
+DEALLOCATE fdw_prepare_sel;
+
+-- EXCEPT ALL
+PREPARE fdw_prepare_sel AS
+  SELECT ref_id FROM fdw_select_variation_table_1
+    EXCEPT ALL
+    SELECT NULL AS ref_id
+    ORDER BY ref_id;
+EXECUTE fdw_prepare_sel;
+DEALLOCATE fdw_prepare_sel;
+
+-- WITH
+PREPARE fdw_prepare_sel (integer) AS
+  WITH value_data AS (
+    SELECT id, name, value FROM fdw_select_variation_table_1 WHERE value >= $1
+  )
+  SELECT * FROM value_data;
+EXECUTE fdw_prepare_sel (75000);
+DEALLOCATE fdw_prepare_sel;
+
+-- WITH RECURSIVE
+PREPARE fdw_prepare_sel (integer) AS
+  WITH RECURSIVE chart AS (
+    SELECT id, name, manager_id, $1 AS level
+      FROM fdw_select_variation_table_1
+      WHERE manager_id IS NULL
+    UNION ALL
+    SELECT e.id, e.name, e.manager_id, oc.level + $1
+      FROM fdw_select_variation_table_1 e
+      JOIN chart oc ON e.manager_id = oc.id
+  )
+  SELECT * FROM chart ORDER BY level, id;
+EXECUTE fdw_prepare_sel (1);
+DEALLOCATE fdw_prepare_sel;
+
+-- SELECT DISTINCT ON
+PREPARE fdw_prepare_sel AS
+  SELECT DISTINCT ON (ref_id) *
+    FROM fdw_select_variation_table_1
+    ORDER BY ref_id NULLS FIRST, id;
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_sel;
 
@@ -1013,7 +1212,14 @@ SELECT tg_execute_ddl('DROP TABLE fdw_select_variation_table_2', 'tsurugidb');
 /* Test case: happy path - Supported INSERT statement patterns */
 -- Test setup: DDL of the Tsurugi
 SELECT tg_execute_ddl('
-  CREATE TABLE fdw_ins_variation_table (
+  CREATE TABLE fdw_ins_variation_table_1 (
+    id INT PRIMARY KEY,
+    key_col VARCHAR(100),
+    value_col INT DEFAULT 99999
+  )
+', 'tsurugidb');
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_ins_variation_table_2 (
     c_int INTEGER DEFAULT 11,
     c_big BIGINT DEFAULT 22,
     c_dec DECIMAL DEFAULT 33,
@@ -1027,7 +1233,12 @@ SELECT tg_execute_ddl('
   )
 ', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_ins_variation_table (
+CREATE FOREIGN TABLE fdw_ins_variation_table_1 (
+  id integer,
+  key_col varchar(100),
+  value_col integer DEFAULT 99999
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE fdw_ins_variation_table_2 (
   c_int integer DEFAULT 11,
   c_big bigint DEFAULT 22,
   c_dec decimal DEFAULT 33,
@@ -1040,34 +1251,89 @@ CREATE FOREIGN TABLE fdw_ins_variation_table (
   c_tstmp timestamp DEFAULT timestamp '2025-03-03 03:03:03'
 ) SERVER tsurugidb;
 
-PREPARE fdw_prepare_sel_all AS SELECT * FROM fdw_ins_variation_table ORDER BY c_int;
+PREPARE fdw_prepare_sel_tbl1 AS
+  SELECT * FROM fdw_ins_variation_table_1 ORDER BY id;
+PREPARE fdw_prepare_sel_tbl2 AS
+  SELECT * FROM fdw_ins_variation_table_2 ORDER BY c_int;
+
+-- WITH
+PREPARE fdw_prepare_ins (text, integer) AS
+  WITH data AS (
+    SELECT $1 AS key_col, $2 AS value_col
+  )
+  INSERT INTO fdw_ins_variation_table_1
+    (id, key_col, value_col)
+    SELECT 1, key_col, value_col FROM data;
+EXECUTE fdw_prepare_ins ('key1', 12345);
+EXECUTE fdw_prepare_sel_tbl1;
+DEALLOCATE fdw_prepare_ins;
 
 -- DEFAULT VALUES
+PREPARE fdw_prepare_ins (integer, char) AS
+  INSERT INTO fdw_ins_variation_table_2 (c_int, c_chr) VALUES ($1, $2);
+EXECUTE fdw_prepare_ins (0, 'X');
+EXECUTE fdw_prepare_sel_tbl2;
+DEALLOCATE fdw_prepare_ins;
+
 PREPARE fdw_prepare_ins AS
-  INSERT INTO fdw_ins_variation_table DEFAULT VALUES;
+  INSERT INTO fdw_ins_variation_table_2 DEFAULT VALUES;
 EXECUTE fdw_prepare_ins;
-EXECUTE fdw_prepare_sel_all;
+EXECUTE fdw_prepare_sel_tbl2;
+DEALLOCATE fdw_prepare_ins;
+
+-- Columns DEFAULT
+PREPARE fdw_prepare_ins (integer) AS
+  INSERT INTO fdw_ins_variation_table_1 VALUES ($1, DEFAULT, DEFAULT);
+EXECUTE fdw_prepare_ins (2);
+EXECUTE fdw_prepare_sel_tbl1;
 DEALLOCATE fdw_prepare_ins;
 
 -- INSERT ... VALUES (...), ...
 PREPARE fdw_prepare_ins (integer, text, integer, integer, text, integer) AS
-  INSERT INTO fdw_ins_variation_table 
+  INSERT INTO fdw_ins_variation_table_2
     (c_int, c_vchr, c_big, c_chr, c_dec)
     VALUES ($1, $2, $3, 'b', 34), ($4, $5, $6, 'c', 35);
 EXECUTE fdw_prepare_ins (4, 'key4', 400, 5, 'key5', 500);
-EXECUTE fdw_prepare_sel_all;
+EXECUTE fdw_prepare_sel_tbl2;
 DEALLOCATE fdw_prepare_ins;
 
-DEALLOCATE fdw_prepare_sel_all;
+-- INSERT ... AS alias
+PREPARE fdw_prepare_ins (integer, varchar(100), integer) AS
+  INSERT INTO fdw_ins_variation_table_1 AS it
+    (id, key_col, value_col)
+    VALUES ($1, $2, $3);
+EXECUTE fdw_prepare_ins (3, 'key3', 300);
+EXECUTE fdw_prepare_sel_tbl1;
+DEALLOCATE fdw_prepare_ins;
+
+-- INSERT ... SELECT
+PREPARE fdw_prepare_ins (integer, varchar(100), integer) AS
+  INSERT INTO fdw_ins_variation_table_1 SELECT $1, $2, $3;
+EXECUTE fdw_prepare_ins (4, 'key4', 400);
+EXECUTE fdw_prepare_sel_tbl1;
+DEALLOCATE fdw_prepare_ins;
+
+DEALLOCATE fdw_prepare_sel_tbl1;
+DEALLOCATE fdw_prepare_sel_tbl2;
+
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_ins_variation_table;
+DROP FOREIGN TABLE fdw_ins_variation_table_1;
+DROP FOREIGN TABLE fdw_ins_variation_table_2;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_ins_variation_table', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE fdw_ins_variation_table_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE fdw_ins_variation_table_2', 'tsurugidb');
 
 /* Test case: happy path - Supported UPDATE statement patterns */
 -- Test setup: DDL of the Tsurugi
 SELECT tg_execute_ddl('
-  CREATE TABLE fdw_upd_variation_table (
+  CREATE TABLE fdw_upd_variation_table_1 (
+    id INT PRIMARY KEY,
+    key_col VARCHAR(100),
+    value_col INT
+  )
+', 'tsurugidb');
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_upd_variation_table_2 (
     c_int INTEGER,
     c_big BIGINT,
     c_dec DECIMAL,
@@ -1083,7 +1349,12 @@ SELECT tg_execute_ddl('
 ', 'tsurugidb');
 
 -- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_upd_variation_table (
+CREATE FOREIGN TABLE fdw_upd_variation_table_1 (
+  id integer,
+  key_col varchar(100),
+  value_col integer DEFAULT 99999
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE fdw_upd_variation_table_2 (
   c_int integer,
   c_big bigint,
   c_dec decimal,
@@ -1098,10 +1369,17 @@ CREATE FOREIGN TABLE fdw_upd_variation_table (
 ) SERVER tsurugidb;
 
 -- Initialization of test data
+PREPARE fdw_prepare_ins (integer, varchar, integer) AS
+  INSERT INTO fdw_upd_variation_table_1 VALUES ($1, $2, $3);
+EXECUTE fdw_prepare_ins (1, 'key1', 10);
+EXECUTE fdw_prepare_ins (2, 'key2', 20);
+EXECUTE fdw_prepare_ins (3, 'key3', 30);
+DEALLOCATE fdw_prepare_ins;
+
 PREPARE fdw_prepare_ins
   (integer, bigint, decimal, real, double precision, char,
   varchar, date, time, timestamp, timestamp with time zone) AS
-  INSERT INTO fdw_upd_variation_table
+  INSERT INTO fdw_upd_variation_table_2
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);
 EXECUTE fdw_prepare_ins
   (1, 11, 12, 13.1, 14.2, 'a', 'val_1', '2025-01-01', '01:00:00',
@@ -1117,16 +1395,23 @@ EXECUTE fdw_prepare_ins
    '2025-08-20 20:00:00', '2025-08-20 20:00:00+09');
 DEALLOCATE fdw_prepare_ins;
 
-PREPARE fdw_prepare_sel AS
-  SELECT * FROM fdw_upd_variation_table ORDER BY c_int;
-EXECUTE fdw_prepare_sel;
-DEALLOCATE fdw_prepare_sel;
+PREPARE fdw_prepare_sel_tbl1 AS
+  SELECT * FROM fdw_upd_variation_table_1 ORDER BY id;
+
+-- WITH
+PREPARE fdw_prepare_upd (varchar, integer) AS
+  WITH upd_data AS (SELECT $1 AS key_col, $2 AS new_val)
+  UPDATE fdw_upd_variation_table_1 SET value_col = upd_data.new_val
+    FROM upd_data WHERE fdw_upd_variation_table_1.key_col = upd_data.key_col;
+EXECUTE fdw_prepare_upd ('key1', 100);
+EXECUTE fdw_prepare_sel_tbl1;
+DEALLOCATE fdw_prepare_upd;
 
 -- SET column_name (int) = value
 PREPARE fdw_prepare_sel AS
-  SELECT * FROM fdw_upd_variation_table ORDER BY c_int;
+  SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_int;
 PREPARE fdw_prepare_upd (integer, integer) AS
-  UPDATE fdw_upd_variation_table SET c_int = $1 WHERE c_int = $2;
+  UPDATE fdw_upd_variation_table_2 SET c_int = $1 WHERE c_int = $2;
 EXECUTE fdw_prepare_upd (6, 1);
 EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_upd;
@@ -1134,9 +1419,9 @@ DEALLOCATE fdw_prepare_sel;
 
 -- SET column_name (bigint) = expression
 PREPARE fdw_prepare_sel AS
-  SELECT * FROM fdw_upd_variation_table ORDER BY c_big;
+  SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_big;
 PREPARE fdw_prepare_upd (integer, bigint) AS
-  UPDATE fdw_upd_variation_table
+  UPDATE fdw_upd_variation_table_2
     SET c_int = $1, c_big = c_big + 101
     WHERE c_big = $2;
 EXECUTE fdw_prepare_upd (1, 11);
@@ -1146,9 +1431,9 @@ DEALLOCATE fdw_prepare_sel;
 
 -- SET column_name (decimal) = expression
 PREPARE fdw_prepare_sel AS
-  SELECT * FROM fdw_upd_variation_table ORDER BY c_dec DESC;
+  SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_dec DESC;
 PREPARE fdw_prepare_upd (decimal) AS
-  UPDATE fdw_upd_variation_table
+  UPDATE fdw_upd_variation_table_2
     SET c_big = c_big - 101, c_dec = c_dec - 1
     WHERE c_dec = $1;
 EXECUTE fdw_prepare_upd (12);
@@ -1158,9 +1443,9 @@ DEALLOCATE fdw_prepare_sel;
 
 -- SET column_name (real) = expression
 PREPARE fdw_prepare_sel AS
-  SELECT * FROM fdw_upd_variation_table ORDER BY c_rel DESC;
+  SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_rel DESC;
 PREPARE fdw_prepare_upd (real) AS
-  UPDATE fdw_upd_variation_table
+  UPDATE fdw_upd_variation_table_2
     SET c_dec = c_dec + 1, c_rel = c_rel * 10
     WHERE c_rel = $1;
 EXECUTE fdw_prepare_upd (13.1);
@@ -1170,9 +1455,9 @@ DEALLOCATE fdw_prepare_sel;
 
 -- SET column_name (double precision) = expression
 PREPARE fdw_prepare_sel AS
-  SELECT * FROM fdw_upd_variation_table ORDER BY c_dbl DESC;
+  SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_dbl DESC;
 PREPARE fdw_prepare_upd (double precision) AS
-  UPDATE fdw_upd_variation_table
+  UPDATE fdw_upd_variation_table_2
     SET c_rel = c_rel / 10, c_dbl = c_dbl * 10 / 2
     WHERE c_dbl = $1;
 EXECUTE fdw_prepare_upd (14.2);
@@ -1182,9 +1467,9 @@ DEALLOCATE fdw_prepare_sel;
 
 -- SET column_name (char) = value
 PREPARE fdw_prepare_sel AS
-  SELECT * FROM fdw_upd_variation_table ORDER BY c_chr;
+  SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_chr;
 PREPARE fdw_prepare_upd (char) AS
-  UPDATE fdw_upd_variation_table
+  UPDATE fdw_upd_variation_table_2
     SET c_dbl = c_dbl * 2 / 10, c_chr = 'k' WHERE c_chr = $1;
 EXECUTE fdw_prepare_upd ('a');
 EXECUTE fdw_prepare_sel;
@@ -1193,9 +1478,9 @@ DEALLOCATE fdw_prepare_sel;
 
 -- SET column_name (varchar) = expression
 PREPARE fdw_prepare_sel AS
-  SELECT * FROM fdw_upd_variation_table ORDER BY c_vchr;
+  SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_vchr;
 PREPARE fdw_prepare_upd (varchar) AS
-  UPDATE fdw_upd_variation_table
+  UPDATE fdw_upd_variation_table_2
     SET c_chr = 'a', c_vchr = c_vchr || '_updated'
     WHERE c_vchr = $1;
 EXECUTE fdw_prepare_upd ('val_1');
@@ -1205,9 +1490,9 @@ DEALLOCATE fdw_prepare_sel;
 
 -- SET column_name (date) = value
 PREPARE fdw_prepare_sel AS
-  SELECT * FROM fdw_upd_variation_table ORDER BY c_date;
+  SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_date;
 PREPARE fdw_prepare_upd (date) AS
-  UPDATE fdw_upd_variation_table
+  UPDATE fdw_upd_variation_table_2
     SET c_vchr = 'val_1', c_date = '2025-08-08'
     WHERE c_date = $1;
 EXECUTE fdw_prepare_upd ('2025-01-01');
@@ -1217,9 +1502,9 @@ DEALLOCATE fdw_prepare_sel;
 
 -- SET column_name (time) = value
 PREPARE fdw_prepare_sel AS
-  SELECT * FROM fdw_upd_variation_table ORDER BY c_time DESC;
+  SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_time DESC;
 PREPARE fdw_prepare_upd (time) AS
-  UPDATE fdw_upd_variation_table
+  UPDATE fdw_upd_variation_table_2
     SET c_date = '2025-01-01', c_time = '12:00:00'
     WHERE c_time = $1;
 EXECUTE fdw_prepare_upd ('01:00:00');
@@ -1229,9 +1514,9 @@ DEALLOCATE fdw_prepare_sel;
 
 -- SET column_name (timestamp) = value
 PREPARE fdw_prepare_sel AS
-  SELECT * FROM fdw_upd_variation_table ORDER BY c_tstmp;
+  SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_tstmp;
 PREPARE fdw_prepare_upd (timestamp) AS
-  UPDATE fdw_upd_variation_table
+  UPDATE fdw_upd_variation_table_2
     SET c_time = '01:00:00', c_tstmp = '2025-08-08 12:00:00'
     WHERE c_tstmp = $1;
 EXECUTE fdw_prepare_upd ('2025-01-01 01:00:00');
@@ -1241,9 +1526,9 @@ DEALLOCATE fdw_prepare_sel;
 
 -- SET column_name (timestamp with time zone) = value
 PREPARE fdw_prepare_sel AS
-  SELECT * FROM fdw_upd_variation_table ORDER BY c_tstmptz DESC;
+  SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_tstmptz DESC;
 PREPARE fdw_prepare_upd (timestamp with time zone) AS
-  UPDATE fdw_upd_variation_table
+  UPDATE fdw_upd_variation_table_2
     SET c_tstmp = '2025-01-01 01:00:00', c_tstmptz = '2025-08-08 12:00:00+09'
     WHERE c_tstmptz = $1;
 EXECUTE fdw_prepare_upd ('2025-01-01 01:00:00+09');
@@ -1251,10 +1536,55 @@ EXECUTE fdw_prepare_sel;
 DEALLOCATE fdw_prepare_upd;
 DEALLOCATE fdw_prepare_sel;
 
+-- SET column_name = DEFAULT
+PREPARE fdw_prepare_upd (varchar) AS
+  UPDATE fdw_upd_variation_table_1 SET value_col = DEFAULT WHERE key_col = $1;
+EXECUTE fdw_prepare_upd ('key3');
+EXECUTE fdw_prepare_sel_tbl1;
+DEALLOCATE fdw_prepare_upd;
+
+-- SET (col1, col2) = ROW (...)
+PREPARE fdw_prepare_upd (varchar, varchar, integer) AS
+  UPDATE fdw_upd_variation_table_1
+    SET (key_col, value_col) = ROW($2, $3)
+    WHERE key_col = $1;
+EXECUTE fdw_prepare_upd ('key1', 'key1_modified', 123);
+EXECUTE fdw_prepare_sel_tbl1;
+DEALLOCATE fdw_prepare_upd;
+
+-- ONLY
+PREPARE fdw_prepare_upd AS
+  UPDATE ONLY fdw_upd_variation_table_1
+    SET key_col = 'key1', value_col = 10
+    WHERE key_col = 'key1_modified';
+EXECUTE fdw_prepare_upd;
+EXECUTE fdw_prepare_sel_tbl1;
+DEALLOCATE fdw_prepare_upd;
+
+-- AS alias
+PREPARE fdw_prepare_upd AS
+  UPDATE fdw_upd_variation_table_1 ut
+    SET value_col = 22222 WHERE ut.key_col = 'key2';
+EXECUTE fdw_prepare_upd;
+EXECUTE fdw_prepare_sel_tbl1;
+DEALLOCATE fdw_prepare_upd;
+
+-- AS alias (AS)
+PREPARE fdw_prepare_upd AS
+  UPDATE fdw_upd_variation_table_1 AS ut
+    SET value_col = 11111 WHERE ut.key_col = 'key1';
+EXECUTE fdw_prepare_upd;
+EXECUTE fdw_prepare_sel_tbl1;
+DEALLOCATE fdw_prepare_upd;
+
+DEALLOCATE fdw_prepare_sel_tbl1;
+
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_upd_variation_table;
+DROP FOREIGN TABLE fdw_upd_variation_table_1;
+DROP FOREIGN TABLE fdw_upd_variation_table_2;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_upd_variation_table', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE fdw_upd_variation_table_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE fdw_upd_variation_table_2', 'tsurugidb');
 
 /* Test case: happy path - Supported DELETE statement patterns */
 -- Test setup: DDL of the Tsurugi
@@ -1276,6 +1606,7 @@ CREATE FOREIGN TABLE fdw_del_variation_table (
 PREPARE fdw_prepare_ins
   (integer, text, integer) AS
   INSERT INTO fdw_del_variation_table VALUES ($1, $2, $3);
+EXECUTE fdw_prepare_ins (0, 'key0', 0);
 EXECUTE fdw_prepare_ins (1, 'key1', 10);
 EXECUTE fdw_prepare_ins (2, 'key2', 20);
 EXECUTE fdw_prepare_ins (3, 'key3', 30);
@@ -1286,46 +1617,90 @@ EXECUTE fdw_prepare_ins (7, 'key7', 70);
 EXECUTE fdw_prepare_ins (8, 'key8', 80);
 EXECUTE fdw_prepare_ins (9, 'key9', 90);
 EXECUTE fdw_prepare_ins (10, 'key10', 100);
+EXECUTE fdw_prepare_ins (20, 'key20', 200);
+EXECUTE fdw_prepare_ins (21, 'key21', 210);
+EXECUTE fdw_prepare_ins (22, 'key22', 220);
+EXECUTE fdw_prepare_ins (23, 'key23', 230);
 DEALLOCATE fdw_prepare_ins;
 
-PREPARE fdw_prepare_sel AS SELECT * FROM fdw_del_variation_table ORDER BY id;
-EXECUTE fdw_prepare_sel;
+PREPARE fdw_prepare_sel_asc AS
+  SELECT * FROM fdw_del_variation_table ORDER BY id;
+PREPARE fdw_prepare_sel_desc AS
+  SELECT * FROM fdw_del_variation_table ORDER BY id DESC;
 
--- Test
+-- WITH
+PREPARE fdw_prepare_del AS
+  WITH keys_to_delete AS (
+    SELECT 'key0'::TEXT AS key_col
+  )
+  DELETE FROM fdw_del_variation_table
+    USING keys_to_delete WHERE fdw_del_variation_table.key_col = keys_to_delete.key_col;
+EXECUTE fdw_prepare_del;
+EXECUTE fdw_prepare_sel_asc;
+DEALLOCATE fdw_prepare_del;
+
+-- BETWEEN ... AND
 PREPARE fdw_prepare_del (integer, integer) AS
   DELETE FROM fdw_del_variation_table WHERE id BETWEEN $1 AND $2;
 EXECUTE fdw_prepare_del (3, 5);
-EXECUTE fdw_prepare_sel;
+EXECUTE fdw_prepare_sel_desc;
 DEALLOCATE fdw_prepare_del;
 
+-- IN
 PREPARE fdw_prepare_del (integer, integer) AS
   DELETE FROM fdw_del_variation_table
     WHERE value_col = $1 OR value_col = $2;
 EXECUTE fdw_prepare_del (10, 60);
-EXECUTE fdw_prepare_sel;
+EXECUTE fdw_prepare_sel_asc;
 DEALLOCATE fdw_prepare_del;
 
+-- LIKE
 PREPARE fdw_prepare_del (text) AS
   DELETE FROM fdw_del_variation_table WHERE key_col LIKE $1;
 EXECUTE fdw_prepare_del ('%1%');
-EXECUTE fdw_prepare_sel;
+EXECUTE fdw_prepare_sel_desc;
 DEALLOCATE fdw_prepare_del;
 
+-- Multiple conditions
 PREPARE fdw_prepare_del (text, integer) AS
   DELETE
     FROM fdw_del_variation_table
     WHERE (key_col <> $1) AND (value_col < $2);
 EXECUTE fdw_prepare_del ('key2', 90);
-EXECUTE fdw_prepare_sel;
+EXECUTE fdw_prepare_sel_asc;
 DEALLOCATE fdw_prepare_del;
 
+-- ONLY
+PREPARE fdw_prepare_del AS
+  DELETE FROM ONLY fdw_del_variation_table WHERE key_col = 'key20';
+EXECUTE fdw_prepare_del;
+EXECUTE fdw_prepare_sel_desc;
+DEALLOCATE fdw_prepare_del;
+
+-- AS alias
+PREPARE fdw_prepare_del AS
+  DELETE FROM fdw_del_variation_table dt WHERE dt.key_col = 'key22';
+EXECUTE fdw_prepare_del;
+EXECUTE fdw_prepare_sel_asc;
+DEALLOCATE fdw_prepare_del;
+
+-- AS alias (AS)
+PREPARE fdw_prepare_del AS
+  DELETE FROM fdw_del_variation_table AS dt WHERE dt.key_col = 'key23';
+EXECUTE fdw_prepare_del;
+EXECUTE fdw_prepare_sel_desc;
+DEALLOCATE fdw_prepare_del;
+
+-- No conditions
 PREPARE fdw_prepare_del AS
   DELETE FROM fdw_del_variation_table;
 EXECUTE fdw_prepare_del;
-EXECUTE fdw_prepare_sel;
+EXECUTE fdw_prepare_sel_asc;
 DEALLOCATE fdw_prepare_del;
 
-DEALLOCATE fdw_prepare_sel;
+DEALLOCATE fdw_prepare_sel_asc;
+DEALLOCATE fdw_prepare_sel_desc;
+
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_del_variation_table;
 -- Test teardown: DDL of the Tsurugi

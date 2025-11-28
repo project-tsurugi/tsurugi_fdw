@@ -7,7 +7,8 @@ SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_dml_basic_table_1', 'tsurugidb')
 SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_dml_basic_table_2', 'tsurugidb');
 SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_group_basic_table', 'tsurugidb');
 SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_ins_unsupported_test', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_ins_variation_table', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_ins_variation_table_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_ins_variation_table_2', 'tsurugidb');
 SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_join_basic_table_1', 'tsurugidb');
 SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_join_basic_table_2', 'tsurugidb');
 SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_sel_unsupported_test', 'tsurugidb');
@@ -54,7 +55,8 @@ SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_type_timestamp_wo_tz', 'tsurugid
 SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_type_varchar', 'tsurugidb');
 SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_type_varchar_l', 'tsurugidb');
 SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_upd_unsupported_test', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_upd_variation_table', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_upd_variation_table_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_upd_variation_table_2', 'tsurugidb');
 SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_valid_test', 'tsurugidb');
 SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_invalid_test', 'tsurugidb');
 SELECT tg_execute_ddl('DROP TABLE IF EXISTS re_table1', 'tsurugidb');

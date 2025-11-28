@@ -23,150 +23,49 @@ CREATE FOREIGN TABLE fdw_sel_unsupported_test (
   ref_id INT,
   manager_id INT
 ) SERVER tsurugidb;
--- UNION
-SELECT * FROM fdw_sel_unsupported_test
-UNION
-SELECT * FROM fdw_sel_unsupported_test;
-ERROR:  tsurugi_fdw : tsurugi_fdw doesn't yet support implicit JOIN.
--- UNION ALL
-SELECT * FROM fdw_sel_unsupported_test
-UNION ALL
-SELECT * FROM fdw_sel_unsupported_test;
-ERROR:  tsurugi_fdw : tsurugi_fdw doesn't yet support implicit JOIN.
--- UNION DISTINCT
-SELECT ref_id, name FROM fdw_sel_unsupported_test
-UNION DISTINCT
-SELECT id, name FROM fdw_sel_unsupported_test ORDER BY ref_id, name;
-ERROR:  tsurugi_fdw : tsurugi_fdw doesn't yet support implicit JOIN.
--- INTERSECT
-SELECT ref_id FROM fdw_sel_unsupported_test
-INTERSECT
-SELECT id FROM fdw_sel_unsupported_test ORDER BY ref_id;
-ERROR:  tsurugi_fdw : tsurugi_fdw doesn't yet support implicit JOIN.
--- INTERSECT ALL
-SELECT ref_id FROM fdw_sel_unsupported_test
-INTERSECT ALL
-SELECT id FROM fdw_sel_unsupported_test ORDER BY ref_id;
-ERROR:  tsurugi_fdw : tsurugi_fdw doesn't yet support implicit JOIN.
--- INTERSECT DISTINCT
-SELECT ref_id FROM fdw_sel_unsupported_test
-INTERSECT DISTINCT
-SELECT id FROM fdw_sel_unsupported_test ORDER BY ref_id;
-ERROR:  tsurugi_fdw : tsurugi_fdw doesn't yet support implicit JOIN.
--- EXCEPT
-SELECT ref_id FROM fdw_sel_unsupported_test
-EXCEPT
-SELECT id FROM fdw_sel_unsupported_test ORDER BY ref_id;
-ERROR:  tsurugi_fdw : tsurugi_fdw doesn't yet support implicit JOIN.
--- EXCEPT ALL
-SELECT ref_id FROM fdw_sel_unsupported_test
-EXCEPT ALL
-SELECT id FROM fdw_sel_unsupported_test ORDER BY ref_id;
-ERROR:  tsurugi_fdw : tsurugi_fdw doesn't yet support implicit JOIN.
--- EXCEPT DISTINCT
-SELECT ref_id FROM fdw_sel_unsupported_test
-EXCEPT DISTINCT
-SELECT id FROM fdw_sel_unsupported_test ORDER BY ref_id;
-ERROR:  tsurugi_fdw : tsurugi_fdw doesn't yet support implicit JOIN.
--- WITH
------FIXME: Disabled due to issues
------WITH value_data AS (
------  SELECT id, name, value FROM fdw_sel_unsupported_test WHERE value >= 75000
------)
------SELECT * FROM value_data;
--- WITH RECURSIVE
------FIXME: Disabled due to issues
------WITH RECURSIVE chart AS (
------  SELECT id, name, manager_id, 1 AS level
------    FROM fdw_sel_unsupported_test
------    WHERE manager_id IS NULL
------  UNION ALL
------  SELECT e.id, e.name, e.manager_id, oc.level + 1
------    FROM fdw_sel_unsupported_test e
------    JOIN chart oc ON e.manager_id = oc.id
------)
------SELECT * FROM chart ORDER BY level, id;
 -- Sub queries
 SELECT *
   FROM fdw_sel_unsupported_test
   WHERE value = (SELECT MAX(value) FROM fdw_sel_unsupported_test);
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"unsupported scalar expression: {"node_kind":"subquery","expression":{"node_kind":"query","elements":[{"node_kind":"column","value":{"node_kind":"builtin_set_function_invocation","function":"max","arguments":[{"node_kind":"variable_reference","name":{"node_kind":"simple","identifier":"value","identifier_kind":"regular"}}]}}],"from":[{"node_kind":"table_reference","is_only":false,"name":{"node_kind":"simple","identifier":"fdw_sel_unsupported_test","identifier_kind":"regular"}}],"order_by":[]}}" location:<input>:3:17+49)
-CONTEXT:  SQL query: SELECT *
-  FROM fdw_sel_unsupported_test
-  WHERE value = (SELECT MAX(value) FROM fdw_sel_unsupported_test)
--- SELECT DISTINCT ON
-SELECT DISTINCT ON (id) id, name FROM fdw_sel_unsupported_test ORDER BY id;
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "ON", expected one of {(, *, +, -, ?, ...}" region:"region(begin=16, end=18)")
-CONTEXT:  SQL query: SELECT DISTINCT ON (id) id, name FROM fdw_sel_unsupported_test ORDER BY id
--- ORDER BY USING operator
-SELECT * FROM fdw_sel_unsupported_test ORDER BY value USING >;
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "USING", expected one of {<END_OF_FILE>, %, (, *, +, ...}" region:"region(begin=54, end=59)")
-CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test ORDER BY value USING >
--- LIMIT ALL
-SELECT * FROM fdw_sel_unsupported_test LIMIT ALL;
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "ALL", expected one of {(, +, -, ?, ABS, ...}" region:"region(begin=45, end=48)")
-CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test LIMIT ALL
+Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:variable_not_found message:"placeholder is not found: :param1" location:<input>:1:90+7)
+CONTEXT:  SQL query: SELECT id, name, value, ref_id, manager_id FROM fdw_sel_unsupported_test WHERE ((value = :param1))
 -- LIMIT OFFSET
 SELECT * FROM fdw_sel_unsupported_test LIMIT 2 OFFSET 1;
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "OFFSET", expected one of {<END_OF_FILE>, %, *, +, -, ...}" region:"region(begin=47, end=53)")
-CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test LIMIT 2 OFFSET 1
--- FETCH FIRST ... ONLY
-SELECT * FROM fdw_sel_unsupported_test
-  ORDER BY value FETCH FIRST 2 ROWS ONLY;
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "FETCH", expected one of {<END_OF_FILE>, %, (, *, +, ...}" region:"region(begin=56, end=61)")
-CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test
-  ORDER BY value FETCH FIRST 2 ROWS ONLY
--- FETCH NEXT ... ONLY
-SELECT * FROM fdw_sel_unsupported_test
-  ORDER BY value FETCH NEXT 2 ROWS ONLY;
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "FETCH", expected one of {<END_OF_FILE>, %, (, *, +, ...}" region:"region(begin=56, end=61)")
-CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test
-  ORDER BY value FETCH NEXT 2 ROWS ONLY
+Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "OFFSET", expected one of {<END_OF_FILE>, %, *, +, -, ...}" region:"region(begin=81, end=87)")
+CONTEXT:  SQL query: SELECT id, name, value, ref_id, manager_id FROM fdw_sel_unsupported_test LIMIT 2 OFFSET 1
 -- OFFSET FETCH FIRST ... ONLY
 SELECT * FROM fdw_sel_unsupported_test ORDER BY value
   OFFSET 1 FETCH FIRST 2 ROWS ONLY;
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "OFFSET", expected one of {<END_OF_FILE>, %, (, *, +, ...}" region:"region(begin=56, end=62)")
-CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test ORDER BY value
-  OFFSET 1 FETCH FIRST 2 ROWS ONLY
+Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "OFFSET", expected one of {<END_OF_FILE>, %, *, +, -, ...}" region:"region(begin=100, end=106)")
+CONTEXT:  SQL query: SELECT id, name, value, ref_id, manager_id FROM fdw_sel_unsupported_test ORDER BY value ASC LIMIT 2 OFFSET 1
 -- OFFSET FETCH NEXT ... ONLY
 SELECT * FROM fdw_sel_unsupported_test ORDER BY value
   OFFSET 1 FETCH NEXT 2 ROWS ONLY;
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "OFFSET", expected one of {<END_OF_FILE>, %, (, *, +, ...}" region:"region(begin=56, end=62)")
-CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test ORDER BY value
-  OFFSET 1 FETCH NEXT 2 ROWS ONLY
+Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "OFFSET", expected one of {<END_OF_FILE>, %, *, +, -, ...}" region:"region(begin=100, end=106)")
+CONTEXT:  SQL query: SELECT id, name, value, ref_id, manager_id FROM fdw_sel_unsupported_test ORDER BY value ASC LIMIT 2 OFFSET 1
 -- SELECT FOR UPDATE / NOWAIT
 BEGIN;
 SELECT * FROM fdw_sel_unsupported_test FOR UPDATE NOWAIT;
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "FOR", expected one of {<END_OF_FILE>, ,, ., ;, AS, ...}" region:"region(begin=39, end=42)")
-CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test FOR UPDATE NOWAIT
+Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "FOR", expected one of {<END_OF_FILE>, ,, ., ;, AS, ...}" region:"region(begin=73, end=76)")
+CONTEXT:  SQL query: SELECT id, name, value, ref_id, manager_id FROM fdw_sel_unsupported_test FOR UPDATE
 END;
 -- SELECT FOR UPDATE / SKIP LOCKED
 BEGIN;
 SELECT * FROM fdw_sel_unsupported_test FOR UPDATE SKIP LOCKED;
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "FOR", expected one of {<END_OF_FILE>, ,, ., ;, AS, ...}" region:"region(begin=39, end=42)")
-CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test FOR UPDATE SKIP LOCKED
+Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "FOR", expected one of {<END_OF_FILE>, ,, ., ;, AS, ...}" region:"region(begin=73, end=76)")
+CONTEXT:  SQL query: SELECT id, name, value, ref_id, manager_id FROM fdw_sel_unsupported_test FOR UPDATE
 END;
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_sel_unsupported_test;
@@ -197,52 +96,10 @@ CREATE FOREIGN TABLE fdw_ins_unsupported_test (
   key_col varchar(100) DEFAULT 'default',
   value_col integer DEFAULT 0
 ) SERVER tsurugidb;
--- WITH
-WITH data AS (
-  SELECT 'key1'::TEXT AS key_col, 100 AS value_col
-)
-INSERT INTO fdw_ins_unsupported_test
-  (id, key_col, value_col)
-  SELECT 1, key_col, value_col FROM data;
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "INSERT", expected one of {(, ,, SELECT, TABLE}" region:"region(begin=68, end=74)")
-CONTEXT:  SQL query: WITH data AS (
-  SELECT 'key1'::TEXT AS key_col, 100 AS value_col
-)
-INSERT INTO fdw_ins_unsupported_test
-  (id, key_col, value_col)
-  SELECT 1, key_col, value_col FROM data
--- INSERT ... AS alias
-INSERT INTO fdw_ins_unsupported_test AS it
-  (id, key_col, value_col)
-  VALUES (2, 'key2', 200);
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "AS", expected one of {(, ., DEFAULT, SELECT, TABLE, ...}" region:"region(begin=37, end=39)")
-CONTEXT:  SQL query: INSERT INTO fdw_ins_unsupported_test AS it
-  (id, key_col, value_col)
-  VALUES (2, 'key2', 200)
--- DEFAULT VALUES
-INSERT INTO fdw_ins_unsupported_test VALUES (3, 'key3', DEFAULT);
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:missing_context_of_default_value message:"cannot use 'DEFAULT' here" location:<input>:1:57+7)
-CONTEXT:  SQL query: INSERT INTO fdw_ins_unsupported_test VALUES (3, 'key3', DEFAULT)
--- INSERT ... SELECT
-INSERT INTO fdw_ins_unsupported_test SELECT 6, 'key6', 600;
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"values operator is unsupported" location:(unknown))
-CONTEXT:  SQL query: INSERT INTO fdw_ins_unsupported_test SELECT 6, 'key6', 600
 -- ON CONFLICT DO NOTHING
 INSERT INTO fdw_ins_unsupported_test
   VALUES (4, 'key4', 777) ON CONFLICT (id) DO NOTHING;
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "ON", expected one of {<END_OF_FILE>, ,, ;, EXCEPT, INTERSECT, ...}" region:"region(begin=63, end=65)")
-CONTEXT:  SQL query: INSERT INTO fdw_ins_unsupported_test
-  VALUES (4, 'key4', 777) ON CONFLICT (id) DO NOTHING
+ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
 -- ON CONFLICT DO UPDATE SET ...
 INSERT INTO fdw_ins_unsupported_test (key_col, value_col) VALUES ('key4', 444)
   ON CONFLICT (key_col) DO UPDATE SET value_col = EXCLUDED.value_col;
@@ -250,11 +107,7 @@ ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT spec
 -- RETURNING
 INSERT INTO fdw_ins_unsupported_test (key_col, value_col) VALUES ('key6', 600)
   RETURNING id, key_col AS inserted_key;
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "RETURNING", expected one of {<END_OF_FILE>, ,, ;, EXCEPT, INTERSECT, ...}" region:"region(begin=81, end=90)")
-CONTEXT:  SQL query: INSERT INTO fdw_ins_unsupported_test (key_col, value_col) VALUES ('key6', 600)
-  RETURNING id, key_col AS inserted_key
+ERROR:  RETURNING clause is not supported
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_ins_unsupported_test;
 -- Test teardown: DDL of the Tsurugi
@@ -286,88 +139,38 @@ CREATE FOREIGN TABLE fdw_upd_unsupported_test (
   value_col integer DEFAULT 0,
   date_col date
 ) SERVER tsurugidb;
--- WITH
------FIXME: Disabled due to issues
------WITH upd_data AS (
------  SELECT 'key1'::TEXT AS key_col, 100 AS new_val
------)
------UPDATE fdw_upd_unsupported_test SET value_col = upd_data.new_val
------  FROM upd_data WHERE fdw_upd_unsupported_test.key_col = upd_data.key_col;
--- ONLY
-UPDATE ONLY fdw_upd_unsupported_test
-  SET value_col = 111 WHERE key_col = 'key1';
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "ONLY", expected one of {ASC, DESC, FIRST, IGNORE, KEY, ...}" region:"region(begin=7, end=11)")
-CONTEXT:  SQL query: UPDATE ONLY fdw_upd_unsupported_test
-  SET value_col = 111 WHERE key_col = 'key1'
--- AS alias
-UPDATE fdw_upd_unsupported_test ut
-  SET value_col = 222 WHERE ut.key_col = 'key2';
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "ut", expected one of {.}" region:"region(begin=32, end=34)")
-CONTEXT:  SQL query: UPDATE fdw_upd_unsupported_test ut
-  SET value_col = 222 WHERE ut.key_col = 'key2'
-UPDATE fdw_upd_unsupported_test AS ut
-  SET value_col = 222 WHERE ut.key_col = 'key2';
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "AS", expected one of {.}" region:"region(begin=32, end=34)")
-CONTEXT:  SQL query: UPDATE fdw_upd_unsupported_test AS ut
-  SET value_col = 222 WHERE ut.key_col = 'key2'
--- SET column_name = DEFAULT
-UPDATE fdw_upd_unsupported_test SET value_col = DEFAULT WHERE key_col = 'key3';
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:missing_context_of_default_value message:"cannot use 'DEFAULT' here" location:<input>:1:49+7)
-CONTEXT:  SQL query: UPDATE fdw_upd_unsupported_test SET value_col = DEFAULT WHERE key_col = 'key3'
 -- SET column_name = date + INTERVAL
 UPDATE fdw_upd_unsupported_test SET date_col = date_col + INTERVAL '1 days';
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"unsupported literal kind: interval" location:<input>:1:59+17)
-CONTEXT:  SQL query: UPDATE fdw_upd_unsupported_test SET date_col = date_col + INTERVAL '1 days'
--- SET (col1, col2) = ROW (...)
-UPDATE fdw_upd_unsupported_test
-  SET (key_col, value_col) = ROW('key1_modified', 123)
-  WHERE key_col = 'key1';
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "(", expected one of {ASC, DESC, FIRST, IGNORE, KEY, ...}" region:"region(begin=38, end=39)")
-CONTEXT:  SQL query: UPDATE fdw_upd_unsupported_test
-  SET (key_col, value_col) = ROW('key1_modified', 123)
-  WHERE key_col = 'key1'
+HINT:  Failed to prepare the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"unsupported type: interval" location:<input>:1:69+8)
+CONTEXT:  SQL query: UPDATE fdw_upd_unsupported_test SET date_col = (date_col + '1 day'::interval)
 -- SET (col1, col2) = (sub-query)
 UPDATE fdw_upd_unsupported_test
   SET (key_col, value_col) = (SELECT 'key2_modified', 222)
   WHERE key_col = 'key2';
-ERROR:  unrecognized paramkind: 3
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to prepare the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "::", expected one of {(, +, -, ?, ABS, ...}" region:"region(begin=46, end=48)")
+CONTEXT:  SQL query: UPDATE public.fdw_upd_unsupported_test SET key_col = ::param1, value_col = ::param2
 -- UPDATE ... FROM
 UPDATE fdw_upd_unsupported_test
   SET value_col = fdw_upd_unsupported_test.value_col + add_data.value_col
     FROM fdw_upd_unsupported_test add_data
     WHERE fdw_upd_unsupported_test.key_col = add_data.key_col;
-NOTICE:  PostgreSQL unique grammar.(there is a FROM clause in UPDATE or DELETE)
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "FROM", expected one of {<END_OF_FILE>, %, (, *, +, ...}" region:"region(begin=110, end=114)")
-CONTEXT:  SQL query: UPDATE fdw_upd_unsupported_test
-  SET value_col = fdw_upd_unsupported_test.value_col + add_data.value_col
-    FROM fdw_upd_unsupported_test add_data
-    WHERE fdw_upd_unsupported_test.key_col = add_data.key_col
+HINT:  Failed to prepare the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "::", expected one of {(, +, -, ?, ABS, ...}" region:"region(begin=48, end=50)")
+CONTEXT:  SQL query: UPDATE public.fdw_upd_unsupported_test SET value_col = ::param1
 -- RETURNING
 UPDATE fdw_upd_unsupported_test
   SET value_col = value_col + 1
   WHERE key_col = 'key3'
   RETURNING id, key_col AS updated_key, value_col;
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "RETURNING", expected one of {<END_OF_FILE>, %, *, +, -, ...}" region:"region(begin=91, end=100)")
-CONTEXT:  SQL query: UPDATE fdw_upd_unsupported_test
-  SET value_col = value_col + 1
-  WHERE key_col = 'key3'
-  RETURNING id, key_col AS updated_key, value_col
+HINT:  Failed to prepare the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "RETURNING", expected one of {<END_OF_FILE>, %, *, +, -, ...}" region:"region(begin=110, end=119)")
+CONTEXT:  SQL query: UPDATE fdw_upd_unsupported_test SET value_col = (value_col + 1) WHERE ((key_col = 'key3'::character varying)) RETURNING id, key_col, value_col
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_upd_unsupported_test;
 -- Test teardown: DDL of the Tsurugi
@@ -410,49 +213,18 @@ CREATE FOREIGN TABLE fdw_del_variation_table_1 (
 CREATE FOREIGN TABLE fdw_del_variation_table_2 (
   key_col varchar(100)
 ) SERVER tsurugidb;
--- WITH
------FIXME: Disabled due to issues
------WITH keys_to_delete AS (
------  SELECT 'key1'::TEXT AS key_col
------)
------DELETE FROM fdw_del_variation_table_1
------  USING keys_to_delete WHERE fdw_del_variation_table_1.key_col = keys_to_delete.key_col;
--- ONLY
-DELETE FROM ONLY fdw_del_variation_table_1 WHERE key_col = 'key1';
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "ONLY", expected one of {ASC, DESC, FIRST, IGNORE, KEY, ...}" region:"region(begin=12, end=16)")
-CONTEXT:  SQL query: DELETE FROM ONLY fdw_del_variation_table_1 WHERE key_col = 'key1'
--- AS alias
-DELETE FROM fdw_del_variation_table_1 dt WHERE dt.key_col = 'key2';
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "dt", expected one of {<END_OF_FILE>, ., ;}" region:"region(begin=38, end=40)")
-CONTEXT:  SQL query: DELETE FROM fdw_del_variation_table_1 dt WHERE dt.key_col = 'key2'
-DELETE FROM fdw_del_variation_table_1 AS dt WHERE dt.key_col = 'key3';
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "AS", expected one of {<END_OF_FILE>, ., ;}" region:"region(begin=38, end=40)")
-CONTEXT:  SQL query: DELETE FROM fdw_del_variation_table_1 AS dt WHERE dt.key_col = 'key3'
 -- USING
 DELETE FROM fdw_del_variation_table_1
   USING fdw_del_variation_table_2
     WHERE fdw_del_variation_table_1.key_col = fdw_del_variation_table_2.key_col;
-NOTICE:  PostgreSQL unique grammar.(there is a FROM clause in UPDATE or DELETE)
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "USING", expected one of {<END_OF_FILE>, ., ;}" region:"region(begin=40, end=45)")
-CONTEXT:  SQL query: DELETE FROM fdw_del_variation_table_1
-  USING fdw_del_variation_table_2
-    WHERE fdw_del_variation_table_1.key_col = fdw_del_variation_table_2.key_col
+ERROR:  unexpected operation: 4
 -- RETURNING
 DELETE FROM fdw_del_variation_table_1 WHERE key_col = 'key6'
   RETURNING id, key_col AS deleted_key;
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "RETURNING", expected one of {<END_OF_FILE>, %, *, +, -, ...}" region:"region(begin=63, end=72)")
-CONTEXT:  SQL query: DELETE FROM fdw_del_variation_table_1 WHERE key_col = 'key6'
-  RETURNING id, key_col AS deleted_key
+HINT:  Failed to prepare the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "RETURNING", expected one of {<END_OF_FILE>, %, *, +, -, ...}" region:"region(begin=84, end=93)")
+CONTEXT:  SQL query: DELETE FROM fdw_del_variation_table_1 WHERE ((key_col = 'key6'::character varying)) RETURNING id, key_col
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_del_variation_table_1;
 DROP FOREIGN TABLE fdw_del_variation_table_2;
