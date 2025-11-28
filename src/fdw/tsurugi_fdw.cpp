@@ -252,14 +252,8 @@ static List* tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt,
  */
 extern PGDLLIMPORT PGPROC *MyProc;
 extern void handle_remote_xact(ForeignServer *server);
-
 static void make_retrieved_attrs(List* telist, List** retrieved_attrs);
 static void store_pg_data_type(TgFdwForeignScanState* fsstate, List* tlist, List** );
-#ifndef __TSURUGI_PLANNER__
-#if PG_VERSION_NUM >= 140000
-static int	get_batch_size_option(Relation rel);
-#endif
-#endif
 
 #if PG_VERSION_NUM >= 160000
 static bool has_table_privilege(Oid relid, ForeignScan *fsplan);
@@ -968,54 +962,6 @@ store_pg_data_type(TgFdwForeignScanState* fsstate, List* tlist, List** retrieved
 		fsstate->number_of_columns = count;
 	}
 }
-
-#ifndef __TSURUGI_PLANNER__
-#if PG_VERSION_NUM >= 140000
-/*
- * Determine batch size for a given foreign table. The option specified for
- * a table has precedence.
- */
-static int
-get_batch_size_option(Relation rel)
-{
-	Oid			foreigntableid = RelationGetRelid(rel);
-	ForeignTable *table;
-	ForeignServer *server;
-	List	   *options;
-	ListCell   *lc;
-
-	/* we use 1 by default, which means "no batching" */
-	int			batch_size = 1;
-
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
-
-	/*
-	 * Load options for table and server. We append server options after table
-	 * options, because table options take precedence.
-	 */
-	table = GetForeignTable(foreigntableid);
-	server = GetForeignServer(table->serverid);
-
-	options = NIL;
-	options = list_concat(options, table->options);
-	options = list_concat(options, server->options);
-
-	/* See if either table or server specifies batch_size. */
-	foreach(lc, options)
-	{
-		DefElem    *def = (DefElem *) lfirst(lc);
-
-		if (strcmp(def->defname, "batch_size") == 0)
-		{
-			(void) parse_int(defGetString(def), &batch_size, 0, NULL);
-			break;
-		}
-	}
-
-	return batch_size;
-}
-#endif
-#endif
 
 #if PG_VERSION_NUM >= 160000
 /**
