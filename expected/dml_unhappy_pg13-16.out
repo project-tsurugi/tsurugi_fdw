@@ -1,0 +1,48 @@
+/* Test case: unhappy path - Unsupported DML statement patterns - PostgreSQL 13-16 */
+/* Test case: unhappy path - Unsupported SELECT statement patterns */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_sel_unsupported_test (
+    id INTEGER PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    value NUMERIC(10,2) NOT NULL,
+    ref_id INT,
+    manager_id INT
+  )
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_sel_unsupported_test (
+  id integer,
+  name varchar(100),
+  value numeric,
+  ref_id integer,
+  manager_id integer
+) SERVER tsurugidb;
+-- OFFSET FETCH FIRST ... WITH TIES
+SELECT * FROM fdw_sel_unsupported_test ORDER BY value
+  OFFSET 1 FETCH FIRST 2 ROWS WITH TIES;
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "OFFSET", expected one of {<END_OF_FILE>, %, *, +, -, ...}" region:"region(begin=100, end=106)")
+CONTEXT:  SQL query: SELECT id, name, value, ref_id, manager_id FROM fdw_sel_unsupported_test ORDER BY value ASC LIMIT 2 OFFSET 1
+-- OFFSET FETCH NEXT ... WITH TIES
+SELECT * FROM fdw_sel_unsupported_test ORDER BY value
+  OFFSET 1 FETCH NEXT 2 ROWS WITH TIES;
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "OFFSET", expected one of {<END_OF_FILE>, %, *, +, -, ...}" region:"region(begin=100, end=106)")
+CONTEXT:  SQL query: SELECT id, name, value, ref_id, manager_id FROM fdw_sel_unsupported_test ORDER BY value ASC LIMIT 2 OFFSET 1
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_sel_unsupported_test;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_sel_unsupported_test', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+

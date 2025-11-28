@@ -18,64 +18,183 @@ CREATE FOREIGN TABLE fdw_case_table (
 ) SERVER tsurugidb;
 -- Test
 /* Fix tsurugi-issues#568 */
-INSERT INTO fdw_case_table VALUES (1000, 1);
-INSERT INTO public.fdw_case_table (col, "Col") VALUES (2000, 2);
-INSERT INTO "public".fdw_case_table (col) VALUES (3000);
-INSERT INTO "public"."fdw_case_table" (Col) VALUES (4);
-INSERT INTO Public.fdw_case_table ("col") VALUES (5000);
-INSERT INTO PUBLIC.fdw_case_table ("Col") VALUES (6);
-SELECT * FROM public.fdw_case_table ORDER BY col, Col DESC;
+INSERT INTO fdw_case_table VALUES (1001, 1);
+INSERT INTO fdw_case_table (col, "Col") VALUES (1002, 2);
+INSERT INTO fdw_Case_Table (COL) VALUES (1003);
+INSERT INTO fdw_Case_table ("Col") VALUES (4);
+INSERT INTO fdw_case_table ("col") VALUES (1005);
+INSERT INTO fdw_CASE_table ("Col", col) VALUES (6, 1006);
+INSERT INTO fdw_CASE_TABLE (cOL) VALUES (1007);
+SELECT * FROM fdw_case_table ORDER BY Col, col;
  col  | Col 
 ------+-----
-      |   6
       |   4
- 1000 |   1
- 2000 |   2
- 3000 |    
- 5000 |    
-(6 rows)
+ 1001 |   1
+ 1002 |   2
+ 1003 |    
+ 1005 |    
+ 1006 |   6
+ 1007 |    
+(7 rows)
+
+SELECT * FROM FDW_CASE_TABLE ORDER BY "Col", col;
+ col  | Col 
+------+-----
+ 1003 |    
+ 1005 |    
+ 1007 |    
+ 1001 |   1
+ 1002 |   2
+      |   4
+ 1006 |   6
+(7 rows)
+
+INSERT INTO public.fdw_case_table (col, "Col") VALUES (2001, 1);
+INSERT INTO public.fdw_Case_Table (col) VALUES (2002);
+INSERT INTO PUBLIC.fdw_case_table ("col") VALUES (2003);
+INSERT INTO Public.fdw_case_table ("Col") VALUES (4);
+INSERT INTO "public".fdw_case_table (col) VALUES (2005);
+INSERT INTO public."fdw_case_table" ("Col", col) VALUES (6, 2006);
+INSERT INTO "public"."fdw_case_table" (Col) VALUES (2007);
+SELECT * FROM public.fdw_case_table ORDER BY Col DESC, col DESC;
+ col  | Col 
+------+-----
+ 2007 |    
+ 2006 |   6
+ 2005 |    
+ 2003 |    
+ 2002 |    
+ 2001 |   1
+ 1007 |    
+ 1006 |   6
+ 1005 |    
+ 1003 |    
+ 1002 |   2
+ 1001 |   1
+      |   4
+      |   4
+(14 rows)
+
+SELECT * FROM PUBLIC.fdw_case_table ORDER BY "Col" DESC, col DESC;
+ col  | Col 
+------+-----
+ 2006 |   6
+ 1006 |   6
+      |   4
+      |   4
+ 1002 |   2
+ 2001 |   1
+ 1001 |   1
+ 2007 |    
+ 2005 |    
+ 2003 |    
+ 2002 |    
+ 1007 |    
+ 1005 |    
+ 1003 |    
+(14 rows)
 
 UPDATE fdw_case_table SET col = col + 100;
+UPDATE fdw_Case_Table SET COL = "col" + 100;
+UPDATE FDW_CASE_TABLE SET "col" = COL + 100 WHERE COL > 2000;
+UPDATE fdw_case_table SET "Col" = "Col" + 10 WHERE Col IS NOT NULL;
+UPDATE fdw_case_table SET "Col" = 99 WHERE "Col" IS NULL;
+SELECT * FROM "fdw_case_table" ORDER BY Col;
+ col  | Col 
+------+-----
+      |   4
+      |   4
+ 1201 |  11
+ 1202 |  12
+ 1203 |  99
+ 1205 |  99
+ 1206 |  16
+ 1207 |  99
+ 2301 |  11
+ 2302 |  99
+ 2303 |  99
+ 2305 |  99
+ 2306 |  16
+ 2307 |  99
+(14 rows)
+
+SELECT * FROM "public".fdw_case_table ORDER BY "Col", col DESC;
+ col  | Col 
+------+-----
+      |   4
+      |   4
+ 2301 |  11
+ 1201 |  11
+ 1202 |  12
+ 2306 |  16
+ 1206 |  16
+ 2307 |  99
+ 2305 |  99
+ 2303 |  99
+ 2302 |  99
+ 1207 |  99
+ 1205 |  99
+ 1203 |  99
+(14 rows)
+
 UPDATE public.fdw_case_table SET Col = Col + 10;
-UPDATE "public".fdw_case_table SET "col" = "col" + 100 WHERE col > 5000;
-UPDATE public."fdw_case_table" SET "Col" = "Col" + 100 WHERE Col > 12;
-UPDATE "public"."fdw_case_table" SET "col" = col + 100 WHERE "col" > 3000;
-UPDATE Public.fdw_case_table SET "col" = Col * 10 WHERE col IS NULL;
-UPDATE PUBLIC.fdw_case_table SET "Col" = col / 100 WHERE "Col" IS NULL;
-SELECT * FROM fdw_case_table ORDER BY col;
+UPDATE "public".FDW_CASE_TABLE SET "col" = "col" + 100 WHERE col > 2000;
+UPDATE public."fdw_case_table" SET "Col" = "Col" + 10 WHERE "Col" < 15;
+UPDATE "public"."fdw_case_table" SET "col" = col + 400 WHERE "col" < 2000;
+UPDATE public.Fdw_Case_Table SET "col" = NULL WHERE "Col" = 16;
+UPDATE Public.fdw_case_table SET "col" = "Col" * 10 WHERE Col IS NULL;
+UPDATE PUBLIC.FDW_CASE_TABLE SET "Col" = Col / 100 WHERE "Col" = 99;
+SELECT * FROM "public"."fdw_case_table" ORDER BY Col, col DESC;
  col  | Col 
 ------+-----
- 1100 |  11
- 1140 | 114
- 1160 | 116
- 2100 |  12
- 3200 |  32
- 5300 |  53
-(6 rows)
+  140 |  14
+  140 |  14
+  160 |  16
+  160 |  16
+ 1611 |  21
+ 1612 |  22
+ 1613 |  16
+ 1615 |  16
+ 1617 |  16
+ 2411 |  21
+ 2412 |  24
+ 2413 |  24
+ 2415 |  24
+ 2417 |  24
+(14 rows)
 
-SELECT * FROM Public.fdw_case_table ORDER BY Col;
+SELECT * FROM PUBLIC."fdw_case_table" ORDER BY "Col", col DESC;
  col  | Col 
 ------+-----
- 1100 |  11
- 2100 |  12
- 3200 |  32
- 5300 |  53
- 1140 | 114
- 1160 | 116
-(6 rows)
+  140 |  14
+  140 |  14
+ 1617 |  16
+ 1615 |  16
+ 1613 |  16
+  160 |  16
+  160 |  16
+ 2411 |  21
+ 1611 |  21
+ 1612 |  22
+ 2417 |  24
+ 2415 |  24
+ 2413 |  24
+ 2412 |  24
+(14 rows)
 
-DELETE FROM fdw_case_table WHERE col = 1100;
-DELETE FROM public.fdw_case_table WHERE "col" > 5000;
-DELETE FROM "public".fdw_case_table WHERE Col > 114;
-DELETE FROM public."fdw_case_table" WHERE "col" >= 3200;
-DELETE FROM "public"."fdw_case_table" WHERE "Col" > 100;
-DELETE FROM Public.fdw_case_table WHERE col <> 2100;
-DELETE FROM PUBLIC.fdw_case_table WHERE Col <> 12;
-SELECT * FROM Public.fdw_case_table;
+DELETE FROM fdw_case_table WHERE col = 160;
+DELETE FROM public.FDW_CASE_TABLE WHERE "col" >= 2415;
+DELETE FROM "public".fdw_case_table WHERE Col <= 140;
+DELETE FROM PUBLIC."fdw_case_table" WHERE "col" > 2411;
+DELETE FROM "public"."fdw_case_table" WHERE "Col" > 21;
+DELETE FROM Public.fdw_Case_table WHERE "Col" <> 16;
+DELETE FROM PUBLIC.fdw_CASE_TABLE WHERE COL = 1615;
+SELECT * FROM "public".fdw_case_table ORDER BY col;
  col  | Col 
 ------+-----
- 2100 |  12
-(1 row)
+ 1613 |  16
+ 1617 |  16
+(2 rows)
 
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_case_table;

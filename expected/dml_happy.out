@@ -1166,6 +1166,20 @@ INSERT INTO fdw_select_variation_table_2
     (2, 'dep-2'),
     (3, 'dep-3'),
     (4, 'dep-4');
+-- Arithmetic operation
+SELECT id, name, ((value / 10000) + ref_id)::int AS grade
+  FROM fdw_select_variation_table_1
+  WHERE ref_id IS NOT NULL
+  ORDER BY grade, value, id;
+  id  |   name    | grade 
+------+-----------+-------
+ 1003 | name-1003 |     7
+ 1001 | name-1001 |     7
+ 1004 | name-1004 |     9
+ 1002 | name-1002 |     9
+ 1005 | name-1005 |    11
+(5 rows)
+
 -- SELECT ALL
 SELECT ALL id, name, value
   FROM fdw_select_variation_table_1
@@ -1203,6 +1217,18 @@ SELECT DISTINCT (t2.id) id, t2.name
   3 | dep-3
 (3 rows)
 
+-- SELECT DISTINCT ON
+SELECT DISTINCT ON (ref_id) *
+  FROM fdw_select_variation_table_1
+  ORDER BY ref_id NULLS FIRST, id;
+  id  |   name    |   value   | ref_id | manager_id 
+------+-----------+-----------+--------+------------
+ 1000 | name-1000 | 100000.00 |        |           
+ 1001 | name-1001 |  60000.00 |      1 |       1002
+ 1003 | name-1003 |  50000.00 |      2 |       1005
+ 1004 | name-1004 |  55000.00 |      3 |       1005
+(4 rows)
+
 -- AS
 SELECT id AS user_id, name AS user_name FROM fdw_select_variation_table_1
   ORDER BY id;
@@ -1214,6 +1240,24 @@ SELECT id AS user_id, name AS user_name FROM fdw_select_variation_table_1
     1003 | name-1003
     1004 | name-1004
     1005 | name-1005
+(6 rows)
+
+-- CASE WHEN
+SELECT
+  id, name,
+  CASE
+    WHEN value >= 100000 THEN 'High'
+    WHEN value >= 75000 THEN 'Medium'
+    ELSE 'Low' END AS lank
+  FROM fdw_select_variation_table_1;
+  id  |   name    |  lank  
+------+-----------+--------
+ 1000 | name-1000 | High
+ 1001 | name-1001 | Low
+ 1002 | name-1002 | Medium
+ 1003 | name-1003 | Low
+ 1004 | name-1004 | Low
+ 1005 | name-1005 | Medium
 (6 rows)
 
 -- [INNER] JOIN
@@ -1415,6 +1459,44 @@ SELECT id, name, value
  1005 | name-1005 |  80000.00
 (6 rows)
 
+-- FETCH FIRST ... ONLY
+SELECT * FROM fdw_select_variation_table_1
+  ORDER BY value DESC FETCH FIRST 2 ROWS ONLY;
+  id  |   name    |   value   | ref_id | manager_id 
+------+-----------+-----------+--------+------------
+ 1000 | name-1000 | 100000.00 |        |           
+ 1005 | name-1005 |  80000.00 |      3 |       1000
+(2 rows)
+
+-- FETCH NEXT ... ONLY
+SELECT * FROM fdw_select_variation_table_1
+  ORDER BY value FETCH NEXT 2 ROWS ONLY;
+  id  |   name    |  value   | ref_id | manager_id 
+------+-----------+----------+--------+------------
+ 1003 | name-1003 | 50000.00 |      2 |       1005
+ 1004 | name-1004 | 55000.00 |      3 |       1005
+(2 rows)
+
+-- LIMIT
+SELECT * FROM fdw_select_variation_table_1 ORDER BY value DESC LIMIT 2;
+  id  |   name    |   value   | ref_id | manager_id 
+------+-----------+-----------+--------+------------
+ 1000 | name-1000 | 100000.00 |        |           
+ 1005 | name-1005 |  80000.00 |      3 |       1000
+(2 rows)
+
+-- LIMIT ALL
+SELECT * FROM fdw_select_variation_table_1 WHERE ref_id IS NOT NULL
+  ORDER BY id DESC LIMIT ALL;
+  id  |   name    |  value   | ref_id | manager_id 
+------+-----------+----------+--------+------------
+ 1005 | name-1005 | 80000.00 |      3 |       1000
+ 1004 | name-1004 | 55000.00 |      3 |       1005
+ 1003 | name-1003 | 50000.00 |      2 |       1005
+ 1002 | name-1002 | 75000.00 |      1 |       1000
+ 1001 | name-1001 | 60000.00 |      1 |       1002
+(5 rows)
+
 -- ORDER BY
 SELECT * FROM fdw_select_variation_table_1 ORDER BY value;
   id  |   name    |   value   | ref_id | manager_id 
@@ -1441,6 +1523,29 @@ SELECT * FROM fdw_select_variation_table_1 ORDER BY value ASC;
 
 -- ORDER BY DESC
 SELECT * FROM fdw_select_variation_table_1 ORDER BY value DESC;
+  id  |   name    |   value   | ref_id | manager_id 
+------+-----------+-----------+--------+------------
+ 1000 | name-1000 | 100000.00 |        |           
+ 1005 | name-1005 |  80000.00 |      3 |       1000
+ 1002 | name-1002 |  75000.00 |      1 |       1000
+ 1001 | name-1001 |  60000.00 |      1 |       1002
+ 1004 | name-1004 |  55000.00 |      3 |       1005
+ 1003 | name-1003 |  50000.00 |      2 |       1005
+(6 rows)
+
+-- ORDER BY USING operator
+SELECT * FROM fdw_select_variation_table_1 ORDER BY value USING <;
+  id  |   name    |   value   | ref_id | manager_id 
+------+-----------+-----------+--------+------------
+ 1003 | name-1003 |  50000.00 |      2 |       1005
+ 1004 | name-1004 |  55000.00 |      3 |       1005
+ 1001 | name-1001 |  60000.00 |      1 |       1002
+ 1002 | name-1002 |  75000.00 |      1 |       1000
+ 1005 | name-1005 |  80000.00 |      3 |       1000
+ 1000 | name-1000 | 100000.00 |        |           
+(6 rows)
+
+SELECT * FROM fdw_select_variation_table_1 ORDER BY value USING >;
   id  |   name    |   value   | ref_id | manager_id 
 ------+-----------+-----------+--------+------------
  1000 | name-1000 | 100000.00 |        |           
@@ -1500,13 +1605,253 @@ SELECT ref_id, COUNT(*), SUM(value)
       3 |     2 | 135000.00
 (2 rows)
 
--- LIMIT
-SELECT * FROM fdw_select_variation_table_1 ORDER BY id LIMIT 2;
+-- UNION
+SELECT ref_id, name FROM fdw_select_variation_table_1
+  UNION
+  SELECT id, name FROM fdw_select_variation_table_1
+  ORDER BY ref_id, name;
+ ref_id |   name    
+--------+-----------
+      1 | name-1001
+      1 | name-1002
+      2 | name-1003
+      3 | name-1004
+      3 | name-1005
+   1000 | name-1000
+   1001 | name-1001
+   1002 | name-1002
+   1003 | name-1003
+   1004 | name-1004
+   1005 | name-1005
+        | name-1000
+(12 rows)
+
+SELECT * FROM fdw_select_variation_table_1
+  UNION
+  SELECT 9999 AS id, 'name-x' AS name, 999999.99 AS value, 99 AS ref_id,
+    9999 AS manager_id
+  ORDER BY id;
   id  |   name    |   value   | ref_id | manager_id 
 ------+-----------+-----------+--------+------------
  1000 | name-1000 | 100000.00 |        |           
  1001 | name-1001 |  60000.00 |      1 |       1002
-(2 rows)
+ 1002 | name-1002 |  75000.00 |      1 |       1000
+ 1003 | name-1003 |  50000.00 |      2 |       1005
+ 1004 | name-1004 |  55000.00 |      3 |       1005
+ 1005 | name-1005 |  80000.00 |      3 |       1000
+ 9999 | name-x    | 999999.99 |     99 |       9999
+(7 rows)
+
+SELECT * FROM fdw_select_variation_table_1 WHERE id < 1003
+  UNION
+  SELECT 9999 AS id, 'name-x' AS name, 999999.99 AS value, 99 AS ref_id,
+    9999 AS manager_id
+  ORDER BY id DESC;
+  id  |   name    |   value   | ref_id | manager_id 
+------+-----------+-----------+--------+------------
+ 9999 | name-x    | 999999.99 |     99 |       9999
+ 1002 | name-1002 |  75000.00 |      1 |       1000
+ 1001 | name-1001 |  60000.00 |      1 |       1002
+ 1000 | name-1000 | 100000.00 |        |           
+(4 rows)
+
+-- UNION DISTINCT
+SELECT ref_id, name FROM fdw_select_variation_table_1
+  UNION DISTINCT
+  SELECT id, name FROM fdw_select_variation_table_1
+  ORDER BY ref_id, name;
+ ref_id |   name    
+--------+-----------
+      1 | name-1001
+      1 | name-1002
+      2 | name-1003
+      3 | name-1004
+      3 | name-1005
+   1000 | name-1000
+   1001 | name-1001
+   1002 | name-1002
+   1003 | name-1003
+   1004 | name-1004
+   1005 | name-1005
+        | name-1000
+(12 rows)
+
+SELECT * FROM fdw_select_variation_table_1
+  UNION DISTINCT
+  SELECT 9999 AS id, 'name-x' AS name, 999999.99 AS value, 99 AS ref_id,
+    9999 AS manager_id
+  ORDER BY id;
+  id  |   name    |   value   | ref_id | manager_id 
+------+-----------+-----------+--------+------------
+ 1000 | name-1000 | 100000.00 |        |           
+ 1001 | name-1001 |  60000.00 |      1 |       1002
+ 1002 | name-1002 |  75000.00 |      1 |       1000
+ 1003 | name-1003 |  50000.00 |      2 |       1005
+ 1004 | name-1004 |  55000.00 |      3 |       1005
+ 1005 | name-1005 |  80000.00 |      3 |       1000
+ 9999 | name-x    | 999999.99 |     99 |       9999
+(7 rows)
+
+SELECT * FROM fdw_select_variation_table_1 WHERE id < 1003
+  UNION DISTINCT
+  SELECT 9999 AS id, 'name-x' AS name, 999999.99 AS value, 99 AS ref_id,
+    9999 AS manager_id
+  ORDER BY id DESC;
+  id  |   name    |   value   | ref_id | manager_id 
+------+-----------+-----------+--------+------------
+ 9999 | name-x    | 999999.99 |     99 |       9999
+ 1002 | name-1002 |  75000.00 |      1 |       1000
+ 1001 | name-1001 |  60000.00 |      1 |       1002
+ 1000 | name-1000 | 100000.00 |        |           
+(4 rows)
+
+-- UNION ALL
+-----FIXME: Disabled due to issues
+-----SELECT * FROM fdw_select_variation_table_1
+-----  UNION ALL
+-----  SELECT * FROM fdw_select_variation_table_1
+-----  ORDER BY id;
+SELECT * FROM fdw_select_variation_table_1 WHERE id < 1003
+  UNION ALL
+  SELECT * FROM fdw_select_variation_table_1
+  ORDER BY id DESC;
+  id  |   name    |   value   | ref_id | manager_id 
+------+-----------+-----------+--------+------------
+ 1005 | name-1005 |  80000.00 |      3 |       1000
+ 1004 | name-1004 |  55000.00 |      3 |       1005
+ 1003 | name-1003 |  50000.00 |      2 |       1005
+ 1002 | name-1002 |  75000.00 |      1 |       1000
+ 1002 | name-1002 |  75000.00 |      1 |       1000
+ 1001 | name-1001 |  60000.00 |      1 |       1002
+ 1001 | name-1001 |  60000.00 |      1 |       1002
+ 1000 | name-1000 | 100000.00 |        |           
+ 1000 | name-1000 | 100000.00 |        |           
+(9 rows)
+
+-- INTERSECT
+SELECT id, name FROM fdw_select_variation_table_1 WHERE value > 6000
+  INTERSECT
+  SELECT id, name FROM fdw_select_variation_table_1
+    WHERE manager_id IS NULL OR manager_id = 1000
+  ORDER BY id;
+  id  |   name    
+------+-----------
+ 1000 | name-1000
+ 1002 | name-1002
+ 1005 | name-1005
+(3 rows)
+
+-- INTERSECT DISTINCT
+SELECT ref_id FROM fdw_select_variation_table_1
+  INTERSECT DISTINCT
+  SELECT ref_id FROM fdw_select_variation_table_1 WHERE ref_id IS NOT NULL
+  ORDER BY ref_id DESC;
+ ref_id 
+--------
+      3
+      2
+      1
+(3 rows)
+
+-- INTERSECT ALL
+SELECT ref_id FROM fdw_select_variation_table_1
+  INTERSECT ALL
+  SELECT ref_id FROM fdw_select_variation_table_1 WHERE ref_id IS NOT NULL
+  ORDER BY ref_id;
+ ref_id 
+--------
+      1
+      1
+      2
+      3
+      3
+(5 rows)
+
+-- EXCEPT
+SELECT id, name FROM fdw_select_variation_table_1 WHERE value > 6000
+  EXCEPT
+  SELECT id, name FROM fdw_select_variation_table_1
+    WHERE manager_id IS NULL OR manager_id = 1000
+  ORDER BY id;
+  id  |   name    
+------+-----------
+ 1001 | name-1001
+ 1003 | name-1003
+ 1004 | name-1004
+(3 rows)
+
+-- EXCEPT DISTINCT
+SELECT ref_id FROM fdw_select_variation_table_1
+  EXCEPT DISTINCT
+  SELECT NULL AS ref_id
+  ORDER BY ref_id;
+ ref_id 
+--------
+      1
+      2
+      3
+(3 rows)
+
+-- EXCEPT ALL
+SELECT ref_id FROM fdw_select_variation_table_1
+  EXCEPT ALL
+  SELECT NULL AS ref_id
+  ORDER BY ref_id;
+ ref_id 
+--------
+      1
+      1
+      2
+      3
+      3
+(5 rows)
+
+-- WITH
+WITH value_data AS (
+  SELECT id, name, value FROM fdw_select_variation_table_1 WHERE value >= 75000
+)
+SELECT * FROM value_data;
+  id  |   name    |   value   
+------+-----------+-----------
+ 1000 | name-1000 | 100000.00
+ 1002 | name-1002 |  75000.00
+ 1005 | name-1005 |  80000.00
+(3 rows)
+
+-- WITH RECURSIVE
+WITH RECURSIVE chart AS (
+  SELECT id, name, manager_id, 1 AS level
+    FROM fdw_select_variation_table_1
+    WHERE manager_id IS NULL
+  UNION ALL
+  SELECT e.id, e.name, e.manager_id, oc.level + 1
+    FROM fdw_select_variation_table_1 e
+    JOIN chart oc ON e.manager_id = oc.id
+)
+SELECT * FROM chart ORDER BY level, id;
+  id  |   name    | manager_id | level 
+------+-----------+------------+-------
+ 1000 | name-1000 |            |     1
+ 1002 | name-1002 |       1000 |     2
+ 1005 | name-1005 |       1000 |     2
+ 1001 | name-1001 |       1002 |     3
+ 1003 | name-1003 |       1005 |     3
+ 1004 | name-1004 |       1005 |     3
+(6 rows)
+
+-- WINDOW
+SELECT id, name, value, RANK() OVER w AS rk
+  FROM fdw_select_variation_table_1
+  WINDOW w AS (ORDER BY value DESC);
+  id  |   name    |   value   | rk 
+------+-----------+-----------+----
+ 1000 | name-1000 | 100000.00 |  1
+ 1005 | name-1005 |  80000.00 |  2
+ 1002 | name-1002 |  75000.00 |  3
+ 1001 | name-1001 |  60000.00 |  4
+ 1004 | name-1004 |  55000.00 |  5
+ 1003 | name-1003 |  50000.00 |  6
+(6 rows)
 
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_select_variation_table_1;
@@ -1527,7 +1872,19 @@ SELECT tg_execute_ddl('DROP TABLE fdw_select_variation_table_2', 'tsurugidb');
 /* Test case: happy path - Supported INSERT statement patterns */
 -- Test setup: DDL of the Tsurugi
 SELECT tg_execute_ddl('
-  CREATE TABLE fdw_ins_variation_table (
+  CREATE TABLE fdw_ins_variation_table_1 (
+    id INT PRIMARY KEY,
+    key_col VARCHAR(100),
+    value_col INT DEFAULT 99999
+  )
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_ins_variation_table_2 (
     c_int INTEGER DEFAULT 11,
     c_big BIGINT DEFAULT 22,
     c_dec DECIMAL DEFAULT 33,
@@ -1546,7 +1903,12 @@ SELECT tg_execute_ddl('
 (1 row)
 
 -- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_ins_variation_table (
+CREATE FOREIGN TABLE fdw_ins_variation_table_1 (
+  id integer,
+  key_col varchar(100),
+  value_col integer DEFAULT 99999
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE fdw_ins_variation_table_2 (
   c_int integer DEFAULT 11,
   c_big bigint DEFAULT 22,
   c_dec decimal DEFAULT 33,
@@ -1558,30 +1920,85 @@ CREATE FOREIGN TABLE fdw_ins_variation_table (
   c_time time DEFAULT time '01:00:00',
   c_tstmp timestamp DEFAULT timestamp '2025-03-03 03:03:03'
 ) SERVER tsurugidb;
--- DEFAULT VALUES
-INSERT INTO fdw_ins_variation_table DEFAULT VALUES;
-SELECT * FROM fdw_ins_variation_table ORDER BY c_int;
- c_int | c_big | c_dec | c_rel | c_dbl | c_chr | c_vchr  |   c_date   |  c_time  |       c_tstmp       
--------+-------+-------+-------+-------+-------+---------+------------+----------+---------------------
-    11 |    22 |    33 |  44.4 |  55.5 | a     | default | 2025-01-01 | 01:00:00 | 2025-03-03 03:03:03
+-- WITH
+WITH data AS (
+  SELECT 'key1'::TEXT AS key_col, 12345 AS value_col
+)
+INSERT INTO fdw_ins_variation_table_1
+  (id, key_col, value_col)
+  SELECT 1, key_col, value_col FROM data;
+SELECT * FROM fdw_ins_variation_table_1 ORDER BY id;
+ id | key_col | value_col 
+----+---------+-----------
+  1 | key1    |     12345
 (1 row)
 
--- INSERT ... VALUES (...), ...
-INSERT INTO fdw_ins_variation_table
-  (c_int, c_vchr, c_big, c_chr, c_dec)
-  VALUES (4, 'key4', 400, 'b', 34), (5, 'key5', 500, 'c', 35);
-SELECT * FROM fdw_ins_variation_table ORDER BY c_big;
+-- DEFAULT VALUES
+INSERT INTO fdw_ins_variation_table_2 (c_int, c_chr) VALUES (0, 'X');
+INSERT INTO fdw_ins_variation_table_2 DEFAULT VALUES;
+SELECT * FROM fdw_ins_variation_table_2 ORDER BY c_int;
  c_int | c_big | c_dec | c_rel | c_dbl | c_chr | c_vchr  |   c_date   |  c_time  |       c_tstmp       
 -------+-------+-------+-------+-------+-------+---------+------------+----------+---------------------
+     0 |    22 |    33 |  44.4 |  55.5 | X     | default | 2025-01-01 | 01:00:00 | 2025-03-03 03:03:03
+    11 |    22 |    33 |  44.4 |  55.5 | a     | default | 2025-01-01 | 01:00:00 | 2025-03-03 03:03:03
+(2 rows)
+
+-- Columns DEFAULT
+INSERT INTO fdw_ins_variation_table_1 VALUES (2, DEFAULT, DEFAULT);
+SELECT * FROM fdw_ins_variation_table_1 ORDER BY id;
+ id | key_col | value_col 
+----+---------+-----------
+  1 | key1    |     12345
+  2 |         |     99999
+(2 rows)
+
+-- INSERT ... VALUES (...), ...
+INSERT INTO fdw_ins_variation_table_2
+  (c_int, c_vchr, c_big, c_chr, c_dec)
+  VALUES (4, 'key4', 400, 'b', 34), (5, 'key5', 500, 'c', 35);
+SELECT * FROM fdw_ins_variation_table_2 ORDER BY c_big, c_int;
+ c_int | c_big | c_dec | c_rel | c_dbl | c_chr | c_vchr  |   c_date   |  c_time  |       c_tstmp       
+-------+-------+-------+-------+-------+-------+---------+------------+----------+---------------------
+     0 |    22 |    33 |  44.4 |  55.5 | X     | default | 2025-01-01 | 01:00:00 | 2025-03-03 03:03:03
     11 |    22 |    33 |  44.4 |  55.5 | a     | default | 2025-01-01 | 01:00:00 | 2025-03-03 03:03:03
      4 |   400 |    34 |  44.4 |  55.5 | b     | key4    | 2025-01-01 | 01:00:00 | 2025-03-03 03:03:03
      5 |   500 |    35 |  44.4 |  55.5 | c     | key5    | 2025-01-01 | 01:00:00 | 2025-03-03 03:03:03
+(4 rows)
+
+-- INSERT ... AS alias
+INSERT INTO fdw_ins_variation_table_1 AS it
+  (id, key_col, value_col)
+  VALUES (3, 'key3', 300);
+SELECT * FROM fdw_ins_variation_table_1 ORDER BY id;
+ id | key_col | value_col 
+----+---------+-----------
+  1 | key1    |     12345
+  2 |         |     99999
+  3 | key3    |       300
 (3 rows)
 
+-- INSERT ... SELECT
+INSERT INTO fdw_ins_variation_table_1 SELECT 4, 'key4', 400;
+SELECT * FROM fdw_ins_variation_table_1 ORDER BY id;
+ id | key_col | value_col 
+----+---------+-----------
+  1 | key1    |     12345
+  2 |         |     99999
+  3 | key3    |       300
+  4 | key4    |       400
+(4 rows)
+
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_ins_variation_table;
+DROP FOREIGN TABLE fdw_ins_variation_table_1;
+DROP FOREIGN TABLE fdw_ins_variation_table_2;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_ins_variation_table', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE fdw_ins_variation_table_1', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('DROP TABLE fdw_ins_variation_table_2', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  DROP TABLE
@@ -1590,7 +2007,19 @@ SELECT tg_execute_ddl('DROP TABLE fdw_ins_variation_table', 'tsurugidb');
 /* Test case: happy path - Supported UPDATE statement patterns */
 -- Test setup: DDL of the Tsurugi
 SELECT tg_execute_ddl('
-  CREATE TABLE fdw_upd_variation_table (
+  CREATE TABLE fdw_upd_variation_table_1 (
+    id INT PRIMARY KEY,
+    key_col VARCHAR(100),
+    value_col INT
+  )
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_upd_variation_table_2 (
     c_int INTEGER,
     c_big BIGINT,
     c_dec DECIMAL,
@@ -1610,7 +2039,12 @@ SELECT tg_execute_ddl('
 (1 row)
 
 -- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_upd_variation_table (
+CREATE FOREIGN TABLE fdw_upd_variation_table_1 (
+  id integer,
+  key_col varchar(100),
+  value_col integer DEFAULT 99999
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE fdw_upd_variation_table_2 (
   c_int integer,
   c_big bigint,
   c_dec decimal,
@@ -1624,7 +2058,12 @@ CREATE FOREIGN TABLE fdw_upd_variation_table (
   c_tstmptz timestamp with time zone
 ) SERVER tsurugidb;
 -- Initialization of test data
-INSERT INTO fdw_upd_variation_table
+INSERT INTO fdw_upd_variation_table_1
+  VALUES
+    (1, 'key1', 10),
+    (2, 'key2', 20),
+    (3, 'key3', 30);
+INSERT INTO fdw_upd_variation_table_2
   VALUES
   (1, 11, 12, 13.1, 14.2, 'a', 'val_1', '2025-01-01', '01:00:00',
    '2025-01-01 01:00:00', '2025-01-01 01:00:00+09'),
@@ -1634,18 +2073,23 @@ INSERT INTO fdw_upd_variation_table
    '2025-10-10 10:00:00', '2025-10-10 10:00:00+09'),
   (20, 201, 202, 203.1, 204.2, 't', 'val_20', '2025-08-20', '20:00:00',
    '2025-08-20 20:00:00', '2025-08-20 20:00:00+09');
-SELECT * FROM fdw_upd_variation_table ORDER BY c_int;
- c_int | c_big | c_dec | c_rel | c_dbl | c_chr | c_vchr |   c_date   |  c_time  |       c_tstmp       |       c_tstmptz        
--------+-------+-------+-------+-------+-------+--------+------------+----------+---------------------+------------------------
-     1 |    11 |    12 |  13.1 |  14.2 | a     | val_1  | 2025-01-01 | 01:00:00 | 2025-01-01 01:00:00 | 2025-01-01 01:00:00+09
-     5 |    51 |    52 |  53.1 |  54.2 | e     | val_5  | 2025-05-05 | 05:00:00 | 2025-05-05 05:00:00 | 2025-05-05 05:00:00+09
-    10 |   101 |   102 | 103.1 | 104.2 | j     | val_10 | 2025-10-10 | 09:00:00 | 2025-10-10 10:00:00 | 2025-10-10 10:00:00+09
-    20 |   201 |   202 | 203.1 | 204.2 | t     | val_20 | 2025-08-20 | 20:00:00 | 2025-08-20 20:00:00 | 2025-08-20 20:00:00+09
-(4 rows)
+-- WITH
+WITH upd_data AS (
+  SELECT 'key1'::TEXT AS key_col, 100 AS new_val
+)
+UPDATE fdw_upd_variation_table_1 SET value_col = upd_data.new_val
+  FROM upd_data WHERE fdw_upd_variation_table_1.key_col = upd_data.key_col;
+SELECT * FROM fdw_upd_variation_table_1 ORDER BY id;
+ id | key_col | value_col 
+----+---------+-----------
+  1 | key1    |       100
+  2 | key2    |        20
+  3 | key3    |        30
+(3 rows)
 
 -- SET column_name (int) = value
-UPDATE fdw_upd_variation_table SET c_int = 6 WHERE c_int = 1;
-SELECT * FROM fdw_upd_variation_table ORDER BY c_int;
+UPDATE fdw_upd_variation_table_2 SET c_int = 6 WHERE c_int = 1;
+SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_int;
  c_int | c_big | c_dec | c_rel | c_dbl | c_chr | c_vchr |   c_date   |  c_time  |       c_tstmp       |       c_tstmptz        
 -------+-------+-------+-------+-------+-------+--------+------------+----------+---------------------+------------------------
      5 |    51 |    52 |  53.1 |  54.2 | e     | val_5  | 2025-05-05 | 05:00:00 | 2025-05-05 05:00:00 | 2025-05-05 05:00:00+09
@@ -1655,10 +2099,10 @@ SELECT * FROM fdw_upd_variation_table ORDER BY c_int;
 (4 rows)
 
 -- SET column_name (bigint) = expression
-UPDATE fdw_upd_variation_table
+UPDATE fdw_upd_variation_table_2
   SET c_int = 1, c_big = c_big + 101
   WHERE c_big = 11;
-SELECT * FROM fdw_upd_variation_table ORDER BY c_big;
+SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_big;
  c_int | c_big | c_dec | c_rel | c_dbl | c_chr | c_vchr |   c_date   |  c_time  |       c_tstmp       |       c_tstmptz        
 -------+-------+-------+-------+-------+-------+--------+------------+----------+---------------------+------------------------
      5 |    51 |    52 |  53.1 |  54.2 | e     | val_5  | 2025-05-05 | 05:00:00 | 2025-05-05 05:00:00 | 2025-05-05 05:00:00+09
@@ -1668,10 +2112,10 @@ SELECT * FROM fdw_upd_variation_table ORDER BY c_big;
 (4 rows)
 
 -- SET column_name (decimal) = expression
-UPDATE fdw_upd_variation_table
+UPDATE fdw_upd_variation_table_2
   SET c_big = c_big - 101, c_dec = c_dec - 1
   WHERE c_dec = 12;
-SELECT * FROM fdw_upd_variation_table ORDER BY c_dec DESC;
+SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_dec DESC;
  c_int | c_big | c_dec | c_rel | c_dbl | c_chr | c_vchr |   c_date   |  c_time  |       c_tstmp       |       c_tstmptz        
 -------+-------+-------+-------+-------+-------+--------+------------+----------+---------------------+------------------------
     20 |   201 |   202 | 203.1 | 204.2 | t     | val_20 | 2025-08-20 | 20:00:00 | 2025-08-20 20:00:00 | 2025-08-20 20:00:00+09
@@ -1681,10 +2125,10 @@ SELECT * FROM fdw_upd_variation_table ORDER BY c_dec DESC;
 (4 rows)
 
 -- SET column_name (real) = expression
-UPDATE fdw_upd_variation_table
+UPDATE fdw_upd_variation_table_2
   SET c_dec = c_dec + 1, c_rel = c_rel * 10
   WHERE c_rel = 13.1::real;
-SELECT * FROM fdw_upd_variation_table ORDER BY c_rel DESC;
+SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_rel DESC;
  c_int | c_big | c_dec | c_rel | c_dbl | c_chr | c_vchr |   c_date   |  c_time  |       c_tstmp       |       c_tstmptz        
 -------+-------+-------+-------+-------+-------+--------+------------+----------+---------------------+------------------------
     20 |   201 |   202 | 203.1 | 204.2 | t     | val_20 | 2025-08-20 | 20:00:00 | 2025-08-20 20:00:00 | 2025-08-20 20:00:00+09
@@ -1694,10 +2138,10 @@ SELECT * FROM fdw_upd_variation_table ORDER BY c_rel DESC;
 (4 rows)
 
 -- SET column_name (double precision) = expression
-UPDATE fdw_upd_variation_table
+UPDATE fdw_upd_variation_table_2
   SET c_rel = c_rel / 10, c_dbl = c_dbl * 10 / 2
   WHERE c_dbl = CAST(14.2 AS double precision);
-SELECT * FROM fdw_upd_variation_table ORDER BY c_dbl DESC;
+SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_dbl DESC;
  c_int | c_big | c_dec | c_rel | c_dbl | c_chr | c_vchr |   c_date   |  c_time  |       c_tstmp       |       c_tstmptz        
 -------+-------+-------+-------+-------+-------+--------+------------+----------+---------------------+------------------------
     20 |   201 |   202 | 203.1 | 204.2 | t     | val_20 | 2025-08-20 | 20:00:00 | 2025-08-20 20:00:00 | 2025-08-20 20:00:00+09
@@ -1707,9 +2151,9 @@ SELECT * FROM fdw_upd_variation_table ORDER BY c_dbl DESC;
 (4 rows)
 
 -- SET column_name (char) = value
-UPDATE fdw_upd_variation_table
+UPDATE fdw_upd_variation_table_2
   SET c_dbl = c_dbl * 2 / 10, c_chr = 'k' WHERE c_chr = 'a';
-SELECT * FROM fdw_upd_variation_table ORDER BY c_chr;
+SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_chr;
  c_int | c_big | c_dec | c_rel | c_dbl | c_chr | c_vchr |   c_date   |  c_time  |       c_tstmp       |       c_tstmptz        
 -------+-------+-------+-------+-------+-------+--------+------------+----------+---------------------+------------------------
      5 |    51 |    52 |  53.1 |  54.2 | e     | val_5  | 2025-05-05 | 05:00:00 | 2025-05-05 05:00:00 | 2025-05-05 05:00:00+09
@@ -1719,10 +2163,10 @@ SELECT * FROM fdw_upd_variation_table ORDER BY c_chr;
 (4 rows)
 
 -- SET column_name (varchar) = expression
-UPDATE fdw_upd_variation_table
+UPDATE fdw_upd_variation_table_2
   SET c_chr = 'a', c_vchr = c_vchr || '_updated'
   WHERE c_vchr = 'val_1';
-SELECT * FROM fdw_upd_variation_table ORDER BY c_vchr;
+SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_vchr;
  c_int | c_big | c_dec | c_rel | c_dbl | c_chr |    c_vchr     |   c_date   |  c_time  |       c_tstmp       |       c_tstmptz        
 -------+-------+-------+-------+-------+-------+---------------+------------+----------+---------------------+------------------------
     10 |   101 |   102 | 103.1 | 104.2 | j     | val_10        | 2025-10-10 | 09:00:00 | 2025-10-10 10:00:00 | 2025-10-10 10:00:00+09
@@ -1732,10 +2176,10 @@ SELECT * FROM fdw_upd_variation_table ORDER BY c_vchr;
 (4 rows)
 
 -- SET column_name (date) = value
-UPDATE fdw_upd_variation_table
+UPDATE fdw_upd_variation_table_2
   SET c_vchr = 'val_1', c_date = '2025-08-08'
   WHERE c_date = '2025-01-01'::date;
-SELECT * FROM fdw_upd_variation_table ORDER BY c_date;
+SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_date;
  c_int | c_big | c_dec | c_rel | c_dbl | c_chr | c_vchr |   c_date   |  c_time  |       c_tstmp       |       c_tstmptz        
 -------+-------+-------+-------+-------+-------+--------+------------+----------+---------------------+------------------------
      5 |    51 |    52 |  53.1 |  54.2 | e     | val_5  | 2025-05-05 | 05:00:00 | 2025-05-05 05:00:00 | 2025-05-05 05:00:00+09
@@ -1745,10 +2189,10 @@ SELECT * FROM fdw_upd_variation_table ORDER BY c_date;
 (4 rows)
 
 -- SET column_name (time) = value
-UPDATE fdw_upd_variation_table
+UPDATE fdw_upd_variation_table_2
   SET c_date = '2025-01-01', c_time = '12:00:00'
   WHERE c_time = '01:00:00'::time;
-SELECT * FROM fdw_upd_variation_table ORDER BY c_time DESC;
+SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_time DESC;
  c_int | c_big | c_dec | c_rel | c_dbl | c_chr | c_vchr |   c_date   |  c_time  |       c_tstmp       |       c_tstmptz        
 -------+-------+-------+-------+-------+-------+--------+------------+----------+---------------------+------------------------
     20 |   201 |   202 | 203.1 | 204.2 | t     | val_20 | 2025-08-20 | 20:00:00 | 2025-08-20 20:00:00 | 2025-08-20 20:00:00+09
@@ -1758,10 +2202,10 @@ SELECT * FROM fdw_upd_variation_table ORDER BY c_time DESC;
 (4 rows)
 
 -- SET column_name (timestamp) = value
-UPDATE fdw_upd_variation_table
+UPDATE fdw_upd_variation_table_2
   SET c_time = '01:00:00', c_tstmp = '2025-08-08 12:00:00'
   WHERE c_tstmp = '2025-01-01 01:00:00'::timestamp;
-SELECT * FROM fdw_upd_variation_table ORDER BY c_tstmp;
+SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_tstmp;
  c_int | c_big | c_dec | c_rel | c_dbl | c_chr | c_vchr |   c_date   |  c_time  |       c_tstmp       |       c_tstmptz        
 -------+-------+-------+-------+-------+-------+--------+------------+----------+---------------------+------------------------
      5 |    51 |    52 |  53.1 |  54.2 | e     | val_5  | 2025-05-05 | 05:00:00 | 2025-05-05 05:00:00 | 2025-05-05 05:00:00+09
@@ -1771,10 +2215,10 @@ SELECT * FROM fdw_upd_variation_table ORDER BY c_tstmp;
 (4 rows)
 
 -- SET column_name (timestamp with time zone) = value
-UPDATE fdw_upd_variation_table
+UPDATE fdw_upd_variation_table_2
   SET c_tstmp = '2025-01-01 01:00:00', c_tstmptz = '2025-08-08 12:00:00+09'
   WHERE c_tstmptz = '2025-01-01 01:00:00+09'::timestamp with time zone;
-SELECT * FROM fdw_upd_variation_table ORDER BY c_tstmptz DESC;
+SELECT * FROM fdw_upd_variation_table_2 ORDER BY c_tstmptz DESC;
  c_int | c_big | c_dec | c_rel | c_dbl | c_chr | c_vchr |   c_date   |  c_time  |       c_tstmp       |       c_tstmptz        
 -------+-------+-------+-------+-------+-------+--------+------------+----------+---------------------+------------------------
     10 |   101 |   102 | 103.1 | 104.2 | j     | val_10 | 2025-10-10 | 09:00:00 | 2025-10-10 10:00:00 | 2025-10-10 10:00:00+09
@@ -1783,10 +2227,64 @@ SELECT * FROM fdw_upd_variation_table ORDER BY c_tstmptz DESC;
      5 |    51 |    52 |  53.1 |  54.2 | e     | val_5  | 2025-05-05 | 05:00:00 | 2025-05-05 05:00:00 | 2025-05-05 05:00:00+09
 (4 rows)
 
+-- SET column_name = DEFAULT
+UPDATE fdw_upd_variation_table_1 SET value_col = DEFAULT WHERE key_col = 'key3';
+SELECT * FROM fdw_upd_variation_table_1 ORDER BY key_col;
+ id | key_col | value_col 
+----+---------+-----------
+  1 | key1    |       100
+  2 | key2    |        20
+  3 | key3    |     99999
+(3 rows)
+
+-- SET (col1, col2) = ROW (...)
+UPDATE fdw_upd_variation_table_1
+  SET (key_col, value_col) = ROW('key1_modified', 123)
+  WHERE key_col = 'key1';
+SELECT * FROM fdw_upd_variation_table_1 ORDER BY key_col;
+ id |    key_col    | value_col 
+----+---------------+-----------
+  1 | key1_modified |       123
+  2 | key2          |        20
+  3 | key3          |     99999
+(3 rows)
+
+-- ONLY
+UPDATE ONLY fdw_upd_variation_table_1
+  SET key_col = 'key1', value_col = 10
+  WHERE key_col = 'key1_modified';
+SELECT * FROM fdw_upd_variation_table_1 ORDER BY key_col;
+ id | key_col | value_col 
+----+---------+-----------
+  1 | key1    |        10
+  2 | key2    |        20
+  3 | key3    |     99999
+(3 rows)
+
+-- AS alias
+UPDATE fdw_upd_variation_table_1 ut
+  SET value_col = 22222 WHERE ut.key_col = 'key2';
+UPDATE fdw_upd_variation_table_1 AS ut
+  SET value_col = 11111 WHERE ut.key_col = 'key1';
+SELECT * FROM fdw_upd_variation_table_1 ORDER BY key_col;
+ id | key_col | value_col 
+----+---------+-----------
+  1 | key1    |     11111
+  2 | key2    |     22222
+  3 | key3    |     99999
+(3 rows)
+
 -- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_upd_variation_table;
+DROP FOREIGN TABLE fdw_upd_variation_table_1;
+DROP FOREIGN TABLE fdw_upd_variation_table_2;
 -- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_upd_variation_table', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE fdw_upd_variation_table_1', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('DROP TABLE fdw_upd_variation_table_2', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  DROP TABLE
@@ -1816,6 +2314,7 @@ CREATE FOREIGN TABLE fdw_del_variation_table (
 INSERT INTO fdw_del_variation_table
   (id, key_col, value_col)
   VALUES
+    (0, 'key0', 0),
     (1, 'key1', 10),
     (2, 'key2', 20),
     (3, 'key3', 30),
@@ -1825,7 +2324,17 @@ INSERT INTO fdw_del_variation_table
     (7, 'key7', 70),
     (8, 'key8', 80),
     (9, 'key9', 90),
-    (10, 'key10', 100);
+    (10, 'key10', 100),
+    (20, 'key20', 200),
+    (21, 'key21', 210),
+    (22, 'key22', 220),
+    (23, 'key23', 230);
+-- WITH
+WITH keys_to_delete AS (
+  SELECT 'key0'::TEXT AS key_col
+)
+DELETE FROM fdw_del_variation_table
+  USING keys_to_delete WHERE fdw_del_variation_table.key_col = keys_to_delete.key_col;
 SELECT * FROM fdw_del_variation_table ORDER BY id;
  id | key_col | value_col 
 ----+---------+-----------
@@ -1839,9 +2348,13 @@ SELECT * FROM fdw_del_variation_table ORDER BY id;
   8 | key8    |        80
   9 | key9    |        90
  10 | key10   |       100
-(10 rows)
+ 20 | key20   |       200
+ 21 | key21   |       210
+ 22 | key22   |       220
+ 23 | key23   |       230
+(14 rows)
 
--- Test
+-- BETWEEN ... AND
 DELETE FROM fdw_del_variation_table WHERE id BETWEEN 3 AND 5;
 SELECT * FROM fdw_del_variation_table ORDER BY id;
  id | key_col | value_col 
@@ -1853,29 +2366,43 @@ SELECT * FROM fdw_del_variation_table ORDER BY id;
   8 | key8    |        80
   9 | key9    |        90
  10 | key10   |       100
-(7 rows)
+ 20 | key20   |       200
+ 21 | key21   |       210
+ 22 | key22   |       220
+ 23 | key23   |       230
+(11 rows)
 
+-- IN
 DELETE FROM fdw_del_variation_table WHERE value_col IN (10, 60);
 SELECT * FROM fdw_del_variation_table ORDER BY id DESC;
  id | key_col | value_col 
 ----+---------+-----------
+ 23 | key23   |       230
+ 22 | key22   |       220
+ 21 | key21   |       210
+ 20 | key20   |       200
  10 | key10   |       100
   9 | key9    |        90
   8 | key8    |        80
   7 | key7    |        70
   2 | key2    |        20
-(5 rows)
+(9 rows)
 
+-- LIKE
 DELETE FROM fdw_del_variation_table WHERE key_col LIKE '%1%';
 SELECT * FROM fdw_del_variation_table ORDER BY key_col;
  id | key_col | value_col 
 ----+---------+-----------
   2 | key2    |        20
+ 20 | key20   |       200
+ 22 | key22   |       220
+ 23 | key23   |       230
   7 | key7    |        70
   8 | key8    |        80
   9 | key9    |        90
-(4 rows)
+(7 rows)
 
+-- Multiple conditions
 DELETE
   FROM fdw_del_variation_table
   WHERE (key_col <> 'key2') AND (value_col < 90);
@@ -1883,9 +2410,34 @@ SELECT * FROM fdw_del_variation_table ORDER BY key_col DESC;
  id | key_col | value_col 
 ----+---------+-----------
   9 | key9    |        90
+ 23 | key23   |       230
+ 22 | key22   |       220
+ 20 | key20   |       200
+  2 | key2    |        20
+(5 rows)
+
+-- ONLY
+DELETE FROM ONLY fdw_del_variation_table WHERE key_col = 'key20';
+SELECT * FROM fdw_del_variation_table ORDER BY key_col;
+ id | key_col | value_col 
+----+---------+-----------
+  2 | key2    |        20
+ 22 | key22   |       220
+ 23 | key23   |       230
+  9 | key9    |        90
+(4 rows)
+
+-- AS alias
+DELETE FROM fdw_del_variation_table dt WHERE dt.key_col = 'key22';
+DELETE FROM fdw_del_variation_table AS dt WHERE dt.key_col = 'key23';
+SELECT * FROM fdw_del_variation_table ORDER BY key_col DESC;
+ id | key_col | value_col 
+----+---------+-----------
+  9 | key9    |        90
   2 | key2    |        20
 (2 rows)
 
+-- No conditions
 DELETE FROM fdw_del_variation_table;
 SELECT * FROM fdw_del_variation_table;
  id | key_col | value_col 
