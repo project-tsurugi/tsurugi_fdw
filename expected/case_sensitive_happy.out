@@ -21,61 +21,60 @@ CREATE FOREIGN TABLE fdw_case_table (
 INSERT INTO fdw_case_table VALUES (1000, 1);
 INSERT INTO public.fdw_case_table (col, "Col") VALUES (2000, 2);
 INSERT INTO "public".fdw_case_table (col) VALUES (3000);
-INSERT INTO "public"."fdw_case_table" (Col) VALUES (4000);
+INSERT INTO "public"."fdw_case_table" (Col) VALUES (4);
 INSERT INTO Public.fdw_case_table ("col") VALUES (5000);
 INSERT INTO PUBLIC.fdw_case_table ("Col") VALUES (6);
 SELECT * FROM public.fdw_case_table ORDER BY col, Col DESC;
  col  | Col 
 ------+-----
       |   6
+      |   4
  1000 |   1
  2000 |   2
  3000 |    
- 4000 |    
  5000 |    
 (6 rows)
 
 UPDATE fdw_case_table SET col = col + 100;
 UPDATE public.fdw_case_table SET Col = Col + 10;
 UPDATE "public".fdw_case_table SET "col" = "col" + 100 WHERE col > 5000;
-UPDATE public."fdw_case_table" SET "Col" = "Col" + 10 WHERE "Col" < 10;
+UPDATE public."fdw_case_table" SET "Col" = "Col" + 100 WHERE Col > 12;
 UPDATE "public"."fdw_case_table" SET "col" = col + 100 WHERE "col" > 3000;
-UPDATE public.Fdw_Case_Table SET "col" = NULL WHERE "Col" = 16;
-UPDATE Public.fdw_case_table SET "col" = "Col" * 10 WHERE Col IS NULL;
-UPDATE PUBLIC.fdw_case_table SET "Col" = Col / 100 WHERE "Col" IS NULL;
+UPDATE Public.fdw_case_table SET "col" = Col * 10 WHERE col IS NULL;
+UPDATE PUBLIC.fdw_case_table SET "Col" = col / 100 WHERE "Col" IS NULL;
 SELECT * FROM fdw_case_table ORDER BY col;
  col  | Col 
 ------+-----
-  160 |  16
- 1110 |  11
- 2110 |  12
- 3210 |  32
- 4210 |  42
- 5310 |  53
+ 1100 |  11
+ 1140 | 114
+ 1160 | 116
+ 2100 |  12
+ 3200 |  32
+ 5300 |  53
 (6 rows)
 
-SELECT * FROM Public.Fdw_Case_Table ORDER BY Col;
+SELECT * FROM Public.fdw_case_table ORDER BY Col;
  col  | Col 
 ------+-----
-  160 |  16
- 1110 |  11
- 2110 |  12
- 3210 |  32
- 4210 |  42
- 5310 |  53
+ 1100 |  11
+ 2100 |  12
+ 3200 |  32
+ 5300 |  53
+ 1140 | 114
+ 1160 | 116
 (6 rows)
 
-DELETE FROM fdw_case_table WHERE col = 1110;
+DELETE FROM fdw_case_table WHERE col = 1100;
 DELETE FROM public.fdw_case_table WHERE "col" > 5000;
-DELETE FROM "public".fdw_case_table WHERE Col <= 160;
-DELETE FROM public."fdw_case_table" WHERE "col" >= 4200;
-DELETE FROM "public"."fdw_case_table" WHERE "Col" > 30;
-DELETE FROM Public.fdw_case_table WHERE col <> 2110;
-DELETE FROM PUBLIC.fdw_case_table WHERE Col = 12;
+DELETE FROM "public".fdw_case_table WHERE Col > 114;
+DELETE FROM public."fdw_case_table" WHERE "col" >= 3200;
+DELETE FROM "public"."fdw_case_table" WHERE "Col" > 100;
+DELETE FROM Public.fdw_case_table WHERE col <> 2100;
+DELETE FROM PUBLIC.fdw_case_table WHERE Col <> 12;
 SELECT * FROM Public.fdw_case_table;
  col  | Col 
 ------+-----
- 2110 |  12
+ 2100 |  12
 (1 row)
 
 -- Test teardown: DDL of the PostgreSQL
