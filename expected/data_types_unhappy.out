@@ -15,21 +15,45 @@ CREATE FOREIGN TABLE fdw_type_int (
 ) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_int VALUES (2147483648);
-ERROR:  integer out of range
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
+CONTEXT:  SQL query: INSERT INTO fdw_type_int VALUES (2147483648)
 INSERT INTO fdw_type_int VALUES (-2147483649);
-ERROR:  integer out of range
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
+CONTEXT:  SQL query: INSERT INTO fdw_type_int VALUES (-2147483649)
+INSERT INTO fdw_type_int VALUES (2.1);  -- see tsurugi-issues#736
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
+CONTEXT:  SQL query: INSERT INTO fdw_type_int VALUES (2.1)
 INSERT INTO fdw_type_int VALUES ('invalid');
 ERROR:  invalid input syntax for type integer: "invalid"
 LINE 1: INSERT INTO fdw_type_int VALUES ('invalid');
                                          ^
+INSERT INTO fdw_type_int VALUES (0);
 UPDATE fdw_type_int SET c = 2147483648;
-ERROR:  integer out of range
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: an error (lost_precision) occurred:[diagnostic(code=lost_precision, message='value loses precision by conversion', args=['2147483648', '2147483647'])])
+CONTEXT:  SQL query: UPDATE fdw_type_int SET c = 2147483648
 UPDATE fdw_type_int SET c = 1 + 2147483648;
-ERROR:  integer out of range
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: error in evaluating expression: lost_precision: value loses precision by conversion)
+CONTEXT:  SQL query: UPDATE fdw_type_int SET c = 1 + 2147483648
 UPDATE fdw_type_int SET c = -2147483649;
-ERROR:  integer out of range
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: an error (lost_precision) occurred:[diagnostic(code=lost_precision, message='value loses precision by conversion', args=['-2147483649', '-2147483648'])])
+CONTEXT:  SQL query: UPDATE fdw_type_int SET c = -2147483649
 UPDATE fdw_type_int SET c = -1 - -2147483649;
-ERROR:  integer out of range
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: error in evaluating expression: lost_precision: value loses precision by conversion)
+CONTEXT:  SQL query: UPDATE fdw_type_int SET c = -1 - -2147483649
 UPDATE fdw_type_int SET invalid = 2 WHERE c >= 1;
 ERROR:  column "invalid" of relation "fdw_type_int" does not exist
 LINE 1: UPDATE fdw_type_int SET invalid = 2 WHERE c >= 1;
@@ -67,21 +91,45 @@ CREATE FOREIGN TABLE fdw_type_bigint (
 ) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_bigint VALUES (9223372036854775808);
-ERROR:  bigint out of range
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
+CONTEXT:  SQL query: INSERT INTO fdw_type_bigint VALUES (9223372036854775808)
 INSERT INTO fdw_type_bigint VALUES (-9223372036854775809);
-ERROR:  bigint out of range
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
+CONTEXT:  SQL query: INSERT INTO fdw_type_bigint VALUES (-9223372036854775809)
+INSERT INTO fdw_type_bigint VALUES (2.1);  -- see tsurugi-issues#736
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
+CONTEXT:  SQL query: INSERT INTO fdw_type_bigint VALUES (2.1)
 INSERT INTO fdw_type_bigint VALUES ('invalid');
 ERROR:  invalid input syntax for type bigint: "invalid"
 LINE 1: INSERT INTO fdw_type_bigint VALUES ('invalid');
                                             ^
+INSERT INTO fdw_type_bigint VALUES (0);
 UPDATE fdw_type_bigint SET c = 9223372036854775808;
-ERROR:  bigint out of range
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: an error (lost_precision) occurred:[diagnostic(code=lost_precision, message='value loses precision by conversion', args=['9223372036854775808', '9223372036854775807'])])
+CONTEXT:  SQL query: UPDATE fdw_type_bigint SET c = 9223372036854775808
 UPDATE fdw_type_bigint SET c = 1 + 9223372036854775808;
-ERROR:  bigint out of range
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: error in evaluating expression: lost_precision: value loses precision by conversion)
+CONTEXT:  SQL query: UPDATE fdw_type_bigint SET c = 1 + 9223372036854775808
 UPDATE fdw_type_bigint SET c = -9223372036854775809;
-ERROR:  bigint out of range
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: an error (lost_precision) occurred:[diagnostic(code=lost_precision, message='value loses precision by conversion', args=['-9223372036854775809', '-9223372036854775808'])])
+CONTEXT:  SQL query: UPDATE fdw_type_bigint SET c = -9223372036854775809
 UPDATE fdw_type_bigint SET c = -1 - -9223372036854775809;
-ERROR:  bigint out of range
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: error in evaluating expression: lost_precision: value loses precision by conversion)
+CONTEXT:  SQL query: UPDATE fdw_type_bigint SET c = -1 - -9223372036854775809
 UPDATE fdw_type_bigint SET invalid = 2 WHERE c >= 1;
 ERROR:  column "invalid" of relation "fdw_type_bigint" does not exist
 LINE 1: UPDATE fdw_type_bigint SET invalid = 2 WHERE c >= 1;
@@ -159,8 +207,10 @@ CREATE FOREIGN TABLE fdw_type_decimal_p (
 ) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_decimal_p VALUES (123456);
-ERROR:  numeric field overflow
-DETAIL:  A field with precision 5, scale 0 must round to an absolute value less than 10^5.
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
+CONTEXT:  SQL query: INSERT INTO fdw_type_decimal_p VALUES (123456)
 INSERT INTO fdw_type_decimal_p VALUES ('invalid');
 ERROR:  invalid input syntax for type numeric: "invalid"
 LINE 1: INSERT INTO fdw_type_decimal_p VALUES ('invalid');
@@ -202,11 +252,20 @@ CREATE FOREIGN TABLE fdw_type_decimal_ps (
 ) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_decimal_ps VALUES (1234);
-ERROR:  numeric field overflow
-DETAIL:  A field with precision 5, scale 2 must round to an absolute value less than 10^3.
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
+CONTEXT:  SQL query: INSERT INTO fdw_type_decimal_ps VALUES (1234)
 INSERT INTO fdw_type_decimal_ps VALUES (1234.56);
-ERROR:  numeric field overflow
-DETAIL:  A field with precision 5, scale 2 must round to an absolute value less than 10^3.
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
+CONTEXT:  SQL query: INSERT INTO fdw_type_decimal_ps VALUES (1234.56)
+INSERT INTO fdw_type_decimal_ps VALUES (123.567);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
+CONTEXT:  SQL query: INSERT INTO fdw_type_decimal_ps VALUES (123.567)
 INSERT INTO fdw_type_decimal_ps VALUES ('invalid');
 ERROR:  invalid input syntax for type numeric: "invalid"
 LINE 1: INSERT INTO fdw_type_decimal_ps VALUES ('invalid');
@@ -249,16 +308,25 @@ CREATE FOREIGN TABLE fdw_type_decimal_ps0 (
 --- Test
 INSERT INTO fdw_type_decimal_ps0
   VALUES (100000000000000000000000000000000000000);
-ERROR:  numeric field overflow
-DETAIL:  A field with precision 38, scale 0 must round to an absolute value less than 10^38.
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_decimal_value message:"invalid decimal value '100000000000000000000000000000000000000' (inexact value by rounding)" location:<input>:2:11+39)
+CONTEXT:  SQL query: INSERT INTO fdw_type_decimal_ps0
+  VALUES (100000000000000000000000000000000000000)
 INSERT INTO fdw_type_decimal_ps0
   VALUES (340282366920938463463374607431768211455);
-ERROR:  numeric field overflow
-DETAIL:  A field with precision 38, scale 0 must round to an absolute value less than 10^38.
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_decimal_value message:"invalid decimal value '340282366920938463463374607431768211455' (inexact value by rounding)" location:<input>:2:11+39)
+CONTEXT:  SQL query: INSERT INTO fdw_type_decimal_ps0
+  VALUES (340282366920938463463374607431768211455)
 INSERT INTO fdw_type_decimal_ps0
   VALUES (340282366920938463463374607431768211456);
-ERROR:  numeric field overflow
-DETAIL:  A field with precision 38, scale 0 must round to an absolute value less than 10^38.
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_decimal_value message:"invalid decimal value '340282366920938463463374607431768211456' (inexact value by rounding)" location:<input>:2:11+39)
+CONTEXT:  SQL query: INSERT INTO fdw_type_decimal_ps0
+  VALUES (340282366920938463463374607431768211456)
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_decimal_ps0;
 --- Test teardown: DDL of the Tsurugi
@@ -284,8 +352,31 @@ CREATE FOREIGN TABLE fdw_type_decimal_ps38 (
 ) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_decimal_ps38 VALUES (1);
-ERROR:  numeric field overflow
-DETAIL:  A field with precision 38, scale 38 must round to an absolute value less than 1.
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
+CONTEXT:  SQL query: INSERT INTO fdw_type_decimal_ps38 VALUES (1)
+INSERT INTO fdw_type_decimal_ps38
+  VALUES (0.000000000000000000000000000000000000001);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_decimal_value message:"invalid decimal value '0.000000000000000000000000000000000000001' (inexact value by rounding)" location:<input>:2:11+41)
+CONTEXT:  SQL query: INSERT INTO fdw_type_decimal_ps38
+  VALUES (0.000000000000000000000000000000000000001)
+INSERT INTO fdw_type_decimal_ps38
+  VALUES (0.340282366920938463463374607431768211455);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_decimal_value message:"invalid decimal value '0.340282366920938463463374607431768211455' (inexact value by rounding)" location:<input>:2:11+41)
+CONTEXT:  SQL query: INSERT INTO fdw_type_decimal_ps38
+  VALUES (0.340282366920938463463374607431768211455)
+INSERT INTO fdw_type_decimal_ps38
+  VALUES (0.340282366920938463463374607431768211456);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_decimal_value message:"invalid decimal value '0.340282366920938463463374607431768211456' (inexact value by rounding)" location:<input>:2:11+41)
+CONTEXT:  SQL query: INSERT INTO fdw_type_decimal_ps38
+  VALUES (0.340282366920938463463374607431768211456)
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_decimal_ps38;
 --- Test teardown: DDL of the Tsurugi
@@ -351,8 +442,10 @@ CREATE FOREIGN TABLE fdw_type_numeric_p (
 ) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_numeric_p VALUES (123456);
-ERROR:  numeric field overflow
-DETAIL:  A field with precision 5, scale 0 must round to an absolute value less than 10^5.
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_p VALUES (123456)
 INSERT INTO fdw_type_numeric_p VALUES ('invalid');
 ERROR:  invalid input syntax for type numeric: "invalid"
 LINE 1: INSERT INTO fdw_type_numeric_p VALUES ('invalid');
@@ -394,11 +487,20 @@ CREATE FOREIGN TABLE fdw_type_numeric_ps (
 ) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_numeric_ps VALUES (1234);
-ERROR:  numeric field overflow
-DETAIL:  A field with precision 5, scale 2 must round to an absolute value less than 10^3.
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (1234)
 INSERT INTO fdw_type_numeric_ps VALUES (1234.56);
-ERROR:  numeric field overflow
-DETAIL:  A field with precision 5, scale 2 must round to an absolute value less than 10^3.
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (1234.56)
+INSERT INTO fdw_type_numeric_ps VALUES (123.567);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (123.567)
 INSERT INTO fdw_type_numeric_ps VALUES ('invalid');
 ERROR:  invalid input syntax for type numeric: "invalid"
 LINE 1: INSERT INTO fdw_type_numeric_ps VALUES ('invalid');
@@ -415,6 +517,96 @@ DELETE FROM fdw_type_numeric_ps WHERE invalid >= 1;
 ERROR:  column "invalid" does not exist
 LINE 1: DELETE FROM fdw_type_numeric_ps WHERE invalid >= 1;
                                               ^
+INSERT INTO fdw_type_numeric_ps VALUES (ceiling(-95.3));
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: ceiling(decimal(*, 1))" location:<input>:1:41+14)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (ceiling(-95.3))
+INSERT INTO fdw_type_numeric_ps VALUES (CAST(cbrt(27.0) AS DECIMAL(5, 2)));
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: cbrt(decimal(*, 1))" location:<input>:1:46+10)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (CAST(cbrt(27.0) AS DECIMAL(5, 2)))
+INSERT INTO fdw_type_numeric_ps VALUES (CAST(degrees(0.5) AS DECIMAL(5, 2)));
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: degrees(decimal(*, 1))" location:<input>:1:46+12)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (CAST(degrees(0.5) AS DECIMAL(5, 2)))
+INSERT INTO fdw_type_numeric_ps VALUES (div(9,4));
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: div(int8(), int8())" location:<input>:1:41+8)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (div(9,4))
+INSERT INTO fdw_type_numeric_ps VALUES (CAST(exp(1.0) AS DECIMAL(5, 2)));
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: exp(decimal(*, 1))" location:<input>:1:46+8)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (CAST(exp(1.0) AS DECIMAL(5, 2)))
+INSERT INTO fdw_type_numeric_ps VALUES (factorial(5));
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: factorial(int8())" location:<input>:1:41+12)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (factorial(5))
+INSERT INTO fdw_type_numeric_ps VALUES (CAST(ln(2.0) AS DECIMAL(5, 2)));
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: ln(decimal(*, 1))" location:<input>:1:46+7)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (CAST(ln(2.0) AS DECIMAL(5, 2)))
+INSERT INTO fdw_type_numeric_ps VALUES (log(100.0));
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: log(decimal(*, 1))" location:<input>:1:41+10)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (log(100.0))
+INSERT INTO fdw_type_numeric_ps VALUES (log10(100.0));
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: log10(decimal(*, 1))" location:<input>:1:41+12)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (log10(100.0))
+INSERT INTO fdw_type_numeric_ps VALUES (log(2.0, 64.0));
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: log(decimal(*, 1), decimal(*, 1))" location:<input>:1:41+14)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (log(2.0, 64.0))
+INSERT INTO fdw_type_numeric_ps VALUES (CAST(pi() AS DECIMAL(5, 2)));
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: pi()" location:<input>:1:46+4)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (CAST(pi() AS DECIMAL(5, 2)))
+INSERT INTO fdw_type_numeric_ps VALUES (power(9.0, 3.0));
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: power(decimal(*, 1), decimal(*, 1))" location:<input>:1:41+15)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (power(9.0, 3.0))
+INSERT INTO fdw_type_numeric_ps VALUES (CAST(radians(45.0) AS DECIMAL(5, 2)));
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: radians(decimal(*, 1))" location:<input>:1:46+13)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (CAST(radians(45.0) AS DECIMAL(5, 2)))
+INSERT INTO fdw_type_numeric_ps VALUES (sign(-8.4));
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: sign(decimal(*, 1))" location:<input>:1:41+10)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (sign(-8.4))
+INSERT INTO fdw_type_numeric_ps VALUES (CAST(scale(8.41) AS DECIMAL(5, 2)));
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: scale(decimal(*, 2))" location:<input>:1:46+11)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (CAST(scale(8.41) AS DECIMAL(5, 2)))
+INSERT INTO fdw_type_numeric_ps VALUES (CAST(sqrt(2.0) AS DECIMAL(5, 2)));
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: sqrt(decimal(*, 1))" location:<input>:1:46+9)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (CAST(sqrt(2.0) AS DECIMAL(5, 2)))
+INSERT INTO fdw_type_numeric_ps VALUES (trunc(42.8));
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: trunc(decimal(*, 1))" location:<input>:1:41+11)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (trunc(42.8))
+INSERT INTO fdw_type_numeric_ps VALUES (trunc(42.4382, 2));
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: trunc(decimal(*, 4), int8())" location:<input>:1:41+17)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (trunc(42.4382, 2))
 INSERT INTO fdw_type_numeric_ps
   VALUES (CAST(width_bucket(5.35, 0.024, 5, 2, 5) AS DECIMAL(5, 2)));
 ERROR:  function width_bucket(numeric, numeric, integer, integer, integer) does not exist
@@ -447,16 +639,25 @@ CREATE FOREIGN TABLE fdw_type_numeric_ps0 (
 --- Test
 INSERT INTO fdw_type_numeric_ps0
   VALUES (100000000000000000000000000000000000000);
-ERROR:  numeric field overflow
-DETAIL:  A field with precision 38, scale 0 must round to an absolute value less than 10^38.
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_decimal_value message:"invalid decimal value '100000000000000000000000000000000000000' (inexact value by rounding)" location:<input>:2:11+39)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps0
+  VALUES (100000000000000000000000000000000000000)
 INSERT INTO fdw_type_numeric_ps0
   VALUES (340282366920938463463374607431768211455);
-ERROR:  numeric field overflow
-DETAIL:  A field with precision 38, scale 0 must round to an absolute value less than 10^38.
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_decimal_value message:"invalid decimal value '340282366920938463463374607431768211455' (inexact value by rounding)" location:<input>:2:11+39)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps0
+  VALUES (340282366920938463463374607431768211455)
 INSERT INTO fdw_type_numeric_ps0
   VALUES (340282366920938463463374607431768211456);
-ERROR:  numeric field overflow
-DETAIL:  A field with precision 38, scale 0 must round to an absolute value less than 10^38.
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_decimal_value message:"invalid decimal value '340282366920938463463374607431768211456' (inexact value by rounding)" location:<input>:2:11+39)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps0
+  VALUES (340282366920938463463374607431768211456)
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_numeric_ps0;
 --- Test teardown: DDL of the Tsurugi
@@ -482,8 +683,31 @@ CREATE FOREIGN TABLE fdw_type_numeric_ps38 (
 ) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_numeric_ps38 VALUES (1);
-ERROR:  numeric field overflow
-DETAIL:  A field with precision 38, scale 38 must round to an absolute value less than 1.
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps38 VALUES (1)
+INSERT INTO fdw_type_numeric_ps38
+  VALUES (0.000000000000000000000000000000000000001);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_decimal_value message:"invalid decimal value '0.000000000000000000000000000000000000001' (inexact value by rounding)" location:<input>:2:11+41)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps38
+  VALUES (0.000000000000000000000000000000000000001)
+INSERT INTO fdw_type_numeric_ps38
+  VALUES (0.340282366920938463463374607431768211455);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_decimal_value message:"invalid decimal value '0.340282366920938463463374607431768211455' (inexact value by rounding)" location:<input>:2:11+41)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps38
+  VALUES (0.340282366920938463463374607431768211455)
+INSERT INTO fdw_type_numeric_ps38
+  VALUES (0.340282366920938463463374607431768211456);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_decimal_value message:"invalid decimal value '0.340282366920938463463374607431768211456' (inexact value by rounding)" location:<input>:2:11+41)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps38
+  VALUES (0.340282366920938463463374607431768211456)
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_numeric_ps38;
 --- Test teardown: DDL of the Tsurugi
@@ -589,10 +813,16 @@ CREATE FOREIGN TABLE fdw_type_char (
 ) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_char VALUES ('iX');
-ERROR:  value too long for type character(1)
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_TOO_LONG_EXCEPTION (SQL-02058: evaluated value was too long to write)
+CONTEXT:  SQL query: INSERT INTO fdw_type_char VALUES ('iX')
 INSERT INTO fdw_type_char VALUES ('i');
 UPDATE fdw_type_char SET c = 'uX';
-ERROR:  value too long for type character(1)
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_TOO_LONG_EXCEPTION (SQL-02058: evaluated value was too long)
+CONTEXT:  SQL query: UPDATE fdw_type_char SET c = 'uX'
 UPDATE fdw_type_char SET invalid = 'u' WHERE c = 'i';
 ERROR:  column "invalid" of relation "fdw_type_char" does not exist
 LINE 1: UPDATE fdw_type_char SET invalid = 'u' WHERE c = 'i';
@@ -630,10 +860,16 @@ CREATE FOREIGN TABLE fdw_type_char_l (
 ) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_char_l VALUES ('insert_valX');
-ERROR:  value too long for type character(10)
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_TOO_LONG_EXCEPTION (SQL-02058: evaluated value was too long to write)
+CONTEXT:  SQL query: INSERT INTO fdw_type_char_l VALUES ('insert_valX')
 INSERT INTO fdw_type_char_l VALUES ('insert_val');
 UPDATE fdw_type_char_l SET c = 'update_valX';
-ERROR:  value too long for type character(10)
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_TOO_LONG_EXCEPTION (SQL-02058: evaluated value was too long)
+CONTEXT:  SQL query: UPDATE fdw_type_char_l SET c = 'update_valX'
 UPDATE fdw_type_char_l SET invalid = 'update_val' WHERE c = 'insert_val';
 ERROR:  column "invalid" of relation "fdw_type_char_l" does not exist
 LINE 1: UPDATE fdw_type_char_l SET invalid = 'update_val' WHERE c = ...
@@ -672,10 +908,16 @@ CREATE FOREIGN TABLE fdw_type_varchar_l (
 ) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_varchar_l VALUES ('insert_valX');
-ERROR:  value too long for type character varying(10)
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_TOO_LONG_EXCEPTION (SQL-02058: evaluated value was too long to write)
+CONTEXT:  SQL query: INSERT INTO fdw_type_varchar_l VALUES ('insert_valX')
 INSERT INTO fdw_type_varchar_l VALUES ('insert_val');
 UPDATE fdw_type_varchar_l SET c = 'update_valX';
-ERROR:  value too long for type character varying(10)
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_TOO_LONG_EXCEPTION (SQL-02058: evaluated value was too long)
+CONTEXT:  SQL query: UPDATE fdw_type_varchar_l SET c = 'update_valX'
 UPDATE fdw_type_varchar_l SET invalid = 'update_val' WHERE c = 'insert_val';
 ERROR:  column "invalid" of relation "fdw_type_varchar_l" does not exist
 LINE 1: UPDATE fdw_type_varchar_l SET invalid = 'update_val' WHERE c...
@@ -795,6 +1037,11 @@ INSERT INTO fdw_type_time VALUES (time '25:00:00');
 ERROR:  date/time field value out of range: "25:00:00"
 LINE 1: INSERT INTO fdw_type_time VALUES (time '25:00:00');
                                                ^
+INSERT INTO fdw_type_time VALUES (time '050607.890123456');
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_string_value message:"invalid time literal: 050607.890123456 (syntax error, unexpected <DECIMAL>, expecting <INTEGER> or + or - or Z)" location:<input>:1:40+18)
+CONTEXT:  SQL query: INSERT INTO fdw_type_time VALUES (time '050607.890123456')
 INSERT INTO fdw_type_time VALUES (time 'invalid');
 ERROR:  invalid input syntax for type time: "invalid"
 LINE 1: INSERT INTO fdw_type_time VALUES (time 'invalid');
@@ -839,6 +1086,16 @@ INSERT INTO fdw_type_timestamp VALUES (timestamp '2025-01-01 25:00:00');
 ERROR:  date/time field value out of range: "2025-01-01 25:00:00"
 LINE 1: INSERT INTO fdw_type_timestamp VALUES (timestamp '2025-01-01...
                                                          ^
+INSERT INTO fdw_type_timestamp VALUES (timestamp '2025/01/01');
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_string_value message:"invalid datetime literal: 2025/01/01 (syntax error, unexpected <ERROR>, expecting : or -)" location:<input>:1:50+12)
+CONTEXT:  SQL query: INSERT INTO fdw_type_timestamp VALUES (timestamp '2025/01/01')
+INSERT INTO fdw_type_timestamp VALUES (timestamp '2025/01/01 12:00');
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_string_value message:"invalid datetime literal: 2025/01/01 12:00 (syntax error, unexpected <ERROR>, expecting : or -)" location:<input>:1:50+18)
+CONTEXT:  SQL query: INSERT INTO fdw_type_timestamp VALUES (timestamp '2025/01/01 12:00')
 INSERT INTO fdw_type_timestamp VALUES (timestamp 'invalid');
 ERROR:  invalid input syntax for type timestamp: "invalid"
 LINE 1: INSERT INTO fdw_type_timestamp VALUES (timestamp 'invalid');
@@ -914,6 +1171,20 @@ INSERT INTO fdw_type_timestamp_wo_tz
 ERROR:  date/time field value out of range: "2025-01-01 25:00:00"
 LINE 2:   VALUES (timestamp without time zone '2025-01-01 25:00:00')...
                                               ^
+INSERT INTO fdw_type_timestamp_wo_tz
+  VALUES (timestamp without time zone '2025/01/01');
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_string_value message:"invalid datetime literal: 2025/01/01 (syntax error, unexpected <ERROR>, expecting : or -)" location:<input>:2:39+12)
+CONTEXT:  SQL query: INSERT INTO fdw_type_timestamp_wo_tz
+  VALUES (timestamp without time zone '2025/01/01')
+INSERT INTO fdw_type_timestamp_wo_tz
+  VALUES (timestamp without time zone '2025/01/01 12:00');
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_string_value message:"invalid datetime literal: 2025/01/01 12:00 (syntax error, unexpected <ERROR>, expecting : or -)" location:<input>:2:39+18)
+CONTEXT:  SQL query: INSERT INTO fdw_type_timestamp_wo_tz
+  VALUES (timestamp without time zone '2025/01/01 12:00')
 INSERT INTO fdw_type_timestamp_wo_tz
   VALUES (timestamp without time zone 'invalid');
 ERROR:  invalid input syntax for type timestamp: "invalid"
@@ -1032,6 +1303,27 @@ ERROR:  date/time field value out of range: "January 8, 99 BC 01:02:03+0900"
 LINE 2:   VALUES (timestamp with time zone 'January 8, 99 BC 01:02:0...
                                            ^
 HINT:  Perhaps you need a different "datestyle" setting.
+INSERT INTO fdw_type_timestamp_tz
+  VALUES (timestamp with time zone '2025-01-01 12:01:02.34567 UTC');
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_string_value message:"invalid datetime literal: 2025-01-01 12:01:02.34567 UTC (syntax error, unexpected <WHITESPACE>, expecting <END_OF_FILE> or + or - or Z)" location:<input>:2:36+31)
+CONTEXT:  SQL query: INSERT INTO fdw_type_timestamp_tz
+  VALUES (timestamp with time zone '2025-01-01 12:01:02.34567 UTC')
+INSERT INTO fdw_type_timestamp_tz
+  VALUES (timestamp with time zone '2025-01-01 12:01:02.34567 Universal');
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_string_value message:"invalid datetime literal: 2025-01-01 12:01:02.34567 Universal (syntax error, unexpected <WHITESPACE>, expecting <END_OF_FILE> or + or - or Z)" location:<input>:2:36+37)
+CONTEXT:  SQL query: INSERT INTO fdw_type_timestamp_tz
+  VALUES (timestamp with time zone '2025-01-01 12:01:02.34567 Universal')
+INSERT INTO fdw_type_timestamp_tz
+  VALUES (timestamp with time zone '2025-01-01 12:00');
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_string_value message:"invalid datetime literal: 2025-01-01 12:00 (syntax error, unexpected <END_OF_FILE>, expecting :)" location:<input>:2:36+18)
+CONTEXT:  SQL query: INSERT INTO fdw_type_timestamp_tz
+  VALUES (timestamp with time zone '2025-01-01 12:00')
 SET DATESTYLE TO 'default';
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_timestamp_tz;
@@ -1042,10 +1334,10 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp_tz', 'tsurugidb');
  DROP TABLE
 (1 row)
 
--- Unsupported Types - bit
+-- Unsupported Types - serial
 --- Test setup: DDL of the Tsurugi
 SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c BINARY(1))
+  CREATE TABLE fdw_type_unsupported (c1 INTEGER, c2 CHAR(14))
 ', 'tsurugidb');
  tg_execute_ddl 
 ----------------
@@ -1053,10 +1345,15 @@ SELECT tg_execute_ddl('
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c bit(4)) SERVER tsurugidb;
+CREATE FOREIGN TABLE fdw_type_unsupported (c1 serial, c2 char(14)) SERVER tsurugidb;
 --- Test
-INSERT INTO fdw_type_unsupported VALUES (B'1010');
-ERROR:  tsurugi_fdw : unrecognized type oid: 1560
+INSERT INTO fdw_type_unsupported (c2) VALUES ('serial is null');
+SELECT * FROM fdw_type_unsupported;
+ c1 |       c2       
+----+----------------
+    | serial is null
+(1 row)
+
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
@@ -1066,10 +1363,10 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
  DROP TABLE
 (1 row)
 
--- Unsupported Types - bit varying
+-- Unsupported Types - bigserial
 --- Test setup: DDL of the Tsurugi
 SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARBINARY(1))
+  CREATE TABLE fdw_type_unsupported (c1 BIGINT, c2 CHAR(14))
 ', 'tsurugidb');
  tg_execute_ddl 
 ----------------
@@ -1077,568 +1374,16 @@ SELECT tg_execute_ddl('
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c bit varying(4)) SERVER tsurugidb;
---- Test
-INSERT INTO fdw_type_unsupported VALUES (B'1010');
-ERROR:  tsurugi_fdw : unrecognized type oid: 1562
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+CREATE FOREIGN TABLE fdw_type_unsupported (c1 bigserial, c2 char(14))
+  SERVER tsurugidb;
+-- Test
+INSERT INTO fdw_type_unsupported (c2) VALUES ('serial is null');
+SELECT * FROM fdw_type_unsupported;
+ c1 |       c2       
+----+----------------
+    | serial is null
 (1 row)
 
--- Unsupported Types - boolean
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c DECIMAL(1))
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c boolean) SERVER tsurugidb;
---- Test
-INSERT INTO fdw_type_unsupported VALUES (true);
-ERROR:  tsurugi_fdw : unrecognized type oid: 16
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
--- Unsupported Types - box
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c box) SERVER tsurugidb;
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('(1,2),(3,4)'::box);
-ERROR:  tsurugi_fdw : unrecognized type oid: 603
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
--- Unsupported Types - cidr
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c cidr) SERVER tsurugidb;
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('192.168.0.0/24');
-ERROR:  tsurugi_fdw : unrecognized type oid: 650
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
--- Unsupported Types - circle
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c circle) SERVER tsurugidb;
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('<(3,4),5>');
-ERROR:  tsurugi_fdw : unrecognized type oid: 718
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
--- Unsupported Types - inet
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c inet) SERVER tsurugidb;
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('192.168.0.1');
-ERROR:  tsurugi_fdw : unrecognized type oid: 869
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
--- Unsupported Types - interval
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c interval) SERVER tsurugidb;
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('1 day');
-ERROR:  tsurugi_fdw : unrecognized type oid: 1186
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
--- Unsupported Types - json
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c json) SERVER tsurugidb;
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('{"key":"value"}');
-ERROR:  tsurugi_fdw : unrecognized type oid: 114
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
--- Unsupported Types - jsonb
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c jsonb) SERVER tsurugidb;
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('{"key":"value"}');
-ERROR:  tsurugi_fdw : unrecognized type oid: 3802
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
--- Unsupported Types - line
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c line) SERVER tsurugidb;
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('{1,2,3}');
-ERROR:  tsurugi_fdw : unrecognized type oid: 628
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
--- Unsupported Types - lseg
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c lseg) SERVER tsurugidb;
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('[(1,2),(3,4)]');
-ERROR:  tsurugi_fdw : unrecognized type oid: 601
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
--- Unsupported Types - macaddr
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c macaddr) SERVER tsurugidb;
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('08:00:2b:01:02:03');
-ERROR:  tsurugi_fdw : unrecognized type oid: 829
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
--- Unsupported Types - macaddr8
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c macaddr8) SERVER tsurugidb;
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('08:00:2b:01:02:03:04:05');
-ERROR:  tsurugi_fdw : unrecognized type oid: 774
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
--- Unsupported Types - money
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c money) SERVER tsurugidb;
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('$123.45');
-ERROR:  tsurugi_fdw : unrecognized type oid: 790
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
--- Unsupported Types - path
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c path) SERVER tsurugidb;
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('[(1,2),(3,4)]');
-ERROR:  tsurugi_fdw : unrecognized type oid: 602
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
--- Unsupported Types - pg_lsn
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c pg_lsn) SERVER tsurugidb;
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('16/B374D848');
-ERROR:  tsurugi_fdw : unrecognized type oid: 3220
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
--- Unsupported Types - point
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c point) SERVER tsurugidb;
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('(1,2)');
-ERROR:  tsurugi_fdw : unrecognized type oid: 600
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
--- Unsupported Types - polygon
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c polygon) SERVER tsurugidb;
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('((1,2),(3,4),(5,6))');
-ERROR:  tsurugi_fdw : unrecognized type oid: 604
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
--- Unsupported Types - smallint
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c DECIMAL(5))
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c smallint) SERVER tsurugidb;
---- Test
-INSERT INTO fdw_type_unsupported VALUES (1);
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement on Tsurugi. error: UNSUPPORTED(5)
-No detail message.
-CONTEXT:  SQL query: INSERT INTO public.fdw_type_unsupported(c) VALUES (:param1)
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
--- Unsupported Types - smallserial
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c DECIMAL(5))
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c smallserial) SERVER tsurugidb;
---- Test
-INSERT INTO fdw_type_unsupported VALUES (1);
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement on Tsurugi. error: UNSUPPORTED(5)
-No detail message.
-CONTEXT:  SQL query: INSERT INTO public.fdw_type_unsupported(c) VALUES (:param1)
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
--- Unsupported Types - tsquery
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c tsquery) SERVER tsurugidb;
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('value');
-ERROR:  tsurugi_fdw : unrecognized type oid: 3615
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
--- Unsupported Types - tsvector
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c tsvector) SERVER tsurugidb;
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('value:1');
-ERROR:  tsurugi_fdw : unrecognized type oid: 3614
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
--- Unsupported Types - txid_snapshot
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c txid_snapshot) SERVER tsurugidb;
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('10:20:10,14,15');
-ERROR:  tsurugi_fdw : unrecognized type oid: 2970
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
--- Unsupported Types - uuid
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c uuid) SERVER tsurugidb;
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('f3d4b1ce-f2e0-49ce-8cd4-da5c8f29bff2');
-ERROR:  tsurugi_fdw : unrecognized type oid: 2950
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi

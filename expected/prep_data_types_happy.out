@@ -38,12 +38,6 @@ EXECUTE fdw_prepare_ins (-2147483646);  --min+2
 EXECUTE fdw_prepare_ins (-2147483647);  --min+1
 EXECUTE fdw_prepare_ins (-2147483648);  --min
 EXECUTE fdw_prepare_ins (1.1);  -- auto-cast
-PREPARE fdw_prepare_ins_ex AS INSERT INTO fdw_type_int VALUES (2.1);
-EXECUTE fdw_prepare_ins_ex;
-DEALLOCATE fdw_prepare_ins_ex;
-PREPARE fdw_prepare_ins_ex AS INSERT INTO fdw_type_int VALUES (3.1);
-EXECUTE fdw_prepare_ins_ex;
-DEALLOCATE fdw_prepare_ins_ex;
 PREPARE fdw_prepare_ins_ex AS
   INSERT INTO fdw_type_int VALUES (CAST(0.1 AS int));
 EXECUTE fdw_prepare_ins_ex;
@@ -59,14 +53,12 @@ EXECUTE fdw_prepare_sel_all;
       -12345
            0
            1
-           2
-           3
        12345
   2147483644
   2147483645
   2147483646
   2147483647
-(15 rows)
+(13 rows)
 
 EXECUTE fdw_prepare_sel (2147483647);
      c      
@@ -107,13 +99,11 @@ EXECUTE fdw_prepare_sel_all;
       -12345
            0
            1
-           2
-           3
        12345
   2147483644
   2147483645
   2147483646
-(13 rows)
+(11 rows)
 
 EXECUTE fdw_prepare_upd_nul (2147483647);
 EXECUTE fdw_prepare_del (2147483647);
@@ -126,13 +116,11 @@ EXECUTE fdw_prepare_sel_all;
       -12345
            0
            1
-           2
-           3
        12345
   2147483644
   2147483645
   2147483646
-(12 rows)
+(10 rows)
 
 DEALLOCATE fdw_prepare_ins;
 DEALLOCATE fdw_prepare_upd;
@@ -188,12 +176,6 @@ EXECUTE fdw_prepare_ins (-9223372036854775806);  --min+2
 EXECUTE fdw_prepare_ins (-9223372036854775807);  --min+1
 EXECUTE fdw_prepare_ins (-9223372036854775808);  --min
 EXECUTE fdw_prepare_ins (1.1);  -- auto-cast
-PREPARE fdw_prepare_ins_ex AS INSERT INTO fdw_type_bigint VALUES (2.1);
-EXECUTE fdw_prepare_ins_ex;
-DEALLOCATE fdw_prepare_ins_ex;
-PREPARE fdw_prepare_ins_ex AS INSERT INTO fdw_type_bigint VALUES (3.1);
-EXECUTE fdw_prepare_ins_ex;
-DEALLOCATE fdw_prepare_ins_ex;
 PREPARE fdw_prepare_ins_ex AS
   INSERT INTO fdw_type_bigint VALUES (CAST(0.1 AS int));
 EXECUTE fdw_prepare_ins_ex;
@@ -209,14 +191,12 @@ EXECUTE fdw_prepare_sel_all;
                -12345
                     0
                     1
-                    2
-                    3
                 12345
   9223372036854775804
   9223372036854775805
   9223372036854775806
   9223372036854775807
-(15 rows)
+(13 rows)
 
 EXECUTE fdw_prepare_sel (9223372036854775807);
           c          
@@ -250,13 +230,11 @@ EXECUTE fdw_prepare_sel_all;
                -12345
                     0
                     1
-                    2
-                    3
                 12345
   9223372036854775804
   9223372036854775805
   9223372036854775806
-(13 rows)
+(11 rows)
 
 EXECUTE fdw_prepare_upd_nul (9223372036854775807);
 EXECUTE fdw_prepare_del (9223372036854775807);
@@ -269,13 +247,11 @@ EXECUTE fdw_prepare_sel_all;
                -12345
                     0
                     1
-                    2
-                    3
                 12345
   9223372036854775804
   9223372036854775805
   9223372036854775806
-(12 rows)
+(10 rows)
 
 DEALLOCATE fdw_prepare_ins;
 DEALLOCATE fdw_prepare_upd;
@@ -479,7 +455,6 @@ PREPARE fdw_prepare_sel_all_d AS
   SELECT * FROM fdw_type_decimal_ps ORDER BY c DESC;
 EXECUTE fdw_prepare_ins (123.45);
 EXECUTE fdw_prepare_ins (-123.45);
-EXECUTE fdw_prepare_ins (123.567);
 EXECUTE fdw_prepare_ins (NULL);
 EXECUTE fdw_prepare_sel_all;
     c    
@@ -487,8 +462,7 @@ EXECUTE fdw_prepare_sel_all;
         
  -123.45
   123.45
-  123.57
-(4 rows)
+(3 rows)
 
 EXECUTE fdw_prepare_upd_nul (987.65);
 EXECUTE fdw_prepare_sel_all;
@@ -496,19 +470,17 @@ EXECUTE fdw_prepare_sel_all;
 ---------
  -123.45
   123.45
-  123.57
   987.65
-(4 rows)
+(3 rows)
 
 EXECUTE fdw_prepare_upd (987.65);
 EXECUTE fdw_prepare_sel_all_d;
     c    
 ---------
-  123.57
   123.45
  -123.45
  -987.65
-(4 rows)
+(3 rows)
 
 EXECUTE fdw_prepare_del (-987.65);
 EXECUTE fdw_prepare_sel_all;
@@ -516,8 +488,7 @@ EXECUTE fdw_prepare_sel_all;
 ---------
  -123.45
   123.45
-  123.57
-(3 rows)
+(2 rows)
 
 EXECUTE fdw_prepare_ins (abs(-17.4));
 EXECUTE fdw_prepare_ins (ceil(-42.8));
@@ -536,8 +507,7 @@ EXECUTE fdw_prepare_sel_all;
    42.00
    42.44
   123.45
-  123.57
-(9 rows)
+(8 rows)
 
 DEALLOCATE fdw_prepare_ins;
 DEALLOCATE fdw_prepare_upd;
@@ -635,9 +605,6 @@ EXECUTE fdw_prepare_ins (-0.00000000000000000000000000000000000001);
 EXECUTE fdw_prepare_ins (-0.00000000000000000018446744073709551615);
 EXECUTE fdw_prepare_ins (-0.00000000000000000018446744073709551616);
 EXECUTE fdw_prepare_ins (-0.99999999999999999999999999999999999999);
-EXECUTE fdw_prepare_ins (0.000000000000000000000000000000000000001);
-EXECUTE fdw_prepare_ins (0.340282366920938463463374607431768211455);
-EXECUTE fdw_prepare_ins (0.340282366920938463463374607431768211456);
 EXECUTE fdw_prepare_sel_all;
                      c                     
 -------------------------------------------
@@ -646,14 +613,11 @@ EXECUTE fdw_prepare_sel_all;
  -0.00000000000000000018446744073709551615
  -0.00000000000000000000000000000000000001
   0.00000000000000000000000000000000000000
-  0.00000000000000000000000000000000000000
   0.00000000000000000000000000000000000001
   0.00000000000000000018446744073709551615
   0.00000000000000000018446744073709551616
-  0.34028236692093846346337460743176821146
-  0.34028236692093846346337460743176821146
   0.99999999999999999999999999999999999999
-(12 rows)
+(9 rows)
 
 DEALLOCATE fdw_prepare_ins;
 DEALLOCATE fdw_prepare_sel_all;
@@ -853,7 +817,6 @@ PREPARE fdw_prepare_sel_all_d AS
   SELECT * FROM fdw_type_numeric_ps ORDER BY c DESC;
 EXECUTE fdw_prepare_ins (123.45);
 EXECUTE fdw_prepare_ins (-123.45);
-EXECUTE fdw_prepare_ins (123.567);
 EXECUTE fdw_prepare_ins (NULL);
 EXECUTE fdw_prepare_sel_all;
     c    
@@ -861,8 +824,7 @@ EXECUTE fdw_prepare_sel_all;
         
  -123.45
   123.45
-  123.57
-(4 rows)
+(3 rows)
 
 EXECUTE fdw_prepare_upd_nul (987.65);
 EXECUTE fdw_prepare_sel_all;
@@ -870,19 +832,17 @@ EXECUTE fdw_prepare_sel_all;
 ---------
  -123.45
   123.45
-  123.57
   987.65
-(4 rows)
+(3 rows)
 
 EXECUTE fdw_prepare_upd (987.65);
 EXECUTE fdw_prepare_sel_all_d;
     c    
 ---------
-  123.57
   123.45
  -123.45
  -987.65
-(4 rows)
+(3 rows)
 
 EXECUTE fdw_prepare_del (-987.65);
 EXECUTE fdw_prepare_sel_all;
@@ -890,8 +850,7 @@ EXECUTE fdw_prepare_sel_all;
 ---------
  -123.45
   123.45
-  123.57
-(3 rows)
+(2 rows)
 
 EXECUTE fdw_prepare_ins (abs(-17.4));
 EXECUTE fdw_prepare_ins (CAST(cbrt(27.0) AS DECIMAL(5, 2)));
@@ -945,9 +904,8 @@ EXECUTE fdw_prepare_sel_all;
    42.44
   120.00
   123.45
-  123.57
   729.00
-(27 rows)
+(26 rows)
 
 DEALLOCATE fdw_prepare_ins;
 DEALLOCATE fdw_prepare_upd;
@@ -1045,9 +1003,6 @@ EXECUTE fdw_prepare_ins (-0.00000000000000000000000000000000000001);
 EXECUTE fdw_prepare_ins (-0.00000000000000000018446744073709551615);
 EXECUTE fdw_prepare_ins (-0.00000000000000000018446744073709551616);
 EXECUTE fdw_prepare_ins (-0.99999999999999999999999999999999999999);
-EXECUTE fdw_prepare_ins (0.000000000000000000000000000000000000001);
-EXECUTE fdw_prepare_ins (0.340282366920938463463374607431768211455);
-EXECUTE fdw_prepare_ins (0.340282366920938463463374607431768211456);
 EXECUTE fdw_prepare_sel_all;
                      c                     
 -------------------------------------------
@@ -1056,14 +1011,11 @@ EXECUTE fdw_prepare_sel_all;
  -0.00000000000000000018446744073709551615
  -0.00000000000000000000000000000000000001
   0.00000000000000000000000000000000000000
-  0.00000000000000000000000000000000000000
   0.00000000000000000000000000000000000001
   0.00000000000000000018446744073709551615
   0.00000000000000000018446744073709551616
-  0.34028236692093846346337460743176821146
-  0.34028236692093846346337460743176821146
   0.99999999999999999999999999999999999999
-(12 rows)
+(9 rows)
 
 DEALLOCATE fdw_prepare_ins;
 DEALLOCATE fdw_prepare_sel_all;
@@ -1259,116 +1211,6 @@ DEALLOCATE fdw_prepare_sel_all_d;
 DROP FOREIGN TABLE fdw_type_double;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_double', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
--- Numeric Types - serial
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_serial (
-    id INTEGER PRIMARY KEY,
-    name VARCHAR)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_serial (
-    id serial,
-    name text
-) SERVER tsurugidb;
---- Test
-PREPARE fdw_prepare_ins (text) AS
-  INSERT INTO fdw_type_serial (name) VALUES ($1), ($2), ($3);
-EXECUTE fdw_prepare_ins ('name-1', 'name-2', 'name-3');
-DEALLOCATE fdw_prepare_ins;
-PREPARE fdw_prepare_ins (int, text) AS
-  INSERT INTO fdw_type_serial (id, name) VALUES ($1, $2);
-EXECUTE fdw_prepare_ins (100, 'name-100');
-DEALLOCATE fdw_prepare_ins;
-PREPARE fdw_prepare_ins (text) AS
-  INSERT INTO fdw_type_serial (name) VALUES ($1);
-EXECUTE fdw_prepare_ins ('name-4');
-DEALLOCATE fdw_prepare_ins;
-SELECT * FROM fdw_type_serial ORDER BY id;
- id  |   name   
------+----------
-   1 | name-1
-   2 | name-2
-   3 | name-3
-   4 | name-4
- 100 | name-100
-(5 rows)
-
-SELECT last_value FROM fdw_type_serial_id_seq;
- last_value 
-------------
-          4
-(1 row)
-
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_serial;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_serial', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
--- Numeric Types - bigserial
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_bigserial (
-    id BIGINT PRIMARY KEY,
-    name VARCHAR)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_bigserial (
-    id bigserial,
-    name text
-) SERVER tsurugidb;
--- Test
-PREPARE fdw_prepare_ins (text) AS
-  INSERT INTO fdw_type_bigserial (name) VALUES ($1), ($2), ($3);
-EXECUTE fdw_prepare_ins ('name-1', 'name-2', 'name-3');
-DEALLOCATE fdw_prepare_ins;
-PREPARE fdw_prepare_ins (bigint, text) AS
-  INSERT INTO fdw_type_bigserial (id, name) VALUES ($1, $2);
-EXECUTE fdw_prepare_ins (100, 'name-100');
-DEALLOCATE fdw_prepare_ins;
-PREPARE fdw_prepare_ins (text) AS
-  INSERT INTO fdw_type_bigserial (name) VALUES ($1);
-EXECUTE fdw_prepare_ins ('name-4');
-DEALLOCATE fdw_prepare_ins;
-SELECT * FROM fdw_type_bigserial ORDER BY id;
- id  |   name   
------+----------
-   1 | name-1
-   2 | name-2
-   3 | name-3
-   4 | name-4
- 100 | name-100
-(5 rows)
-
-SELECT last_value FROM fdw_type_bigserial_id_seq;
- last_value 
-------------
-          4
-(1 row)
-
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_bigserial;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_bigserial', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  DROP TABLE

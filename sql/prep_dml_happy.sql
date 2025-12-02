@@ -734,14 +734,13 @@ EXECUTE fdw_prepare_sel (22);
 EXECUTE fdw_prepare_sel (44);
 DEALLOCATE fdw_prepare_sel;
 
------FIXME: Disabled due to issue
------PREPARE fdw_prepare_sel AS
------  SELECT *
------    FROM  fdw_join_basic_table_1 AS a
------    CROSS JOIN fdw_join_basic_table_2 AS b
------    ORDER BY b.c1, a.c1;
------EXECUTE fdw_prepare_sel;
------DEALLOCATE fdw_prepare_sel;
+PREPARE fdw_prepare_sel AS
+  SELECT *
+    FROM  fdw_join_basic_table_1 AS a
+    CROSS JOIN fdw_join_basic_table_2 AS b
+    ORDER BY b.c1, a.c1;
+EXECUTE fdw_prepare_sel;
+DEALLOCATE fdw_prepare_sel;
 
 PREPARE fdw_prepare_sel AS
   SELECT *

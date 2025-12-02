@@ -13,7 +13,10 @@ CREATE FOREIGN TABLE fdw_type_int (
 --- Test
 INSERT INTO fdw_type_int VALUES (2147483648);
 INSERT INTO fdw_type_int VALUES (-2147483649);
+INSERT INTO fdw_type_int VALUES (2.1);  -- see tsurugi-issues#736
 INSERT INTO fdw_type_int VALUES ('invalid');
+
+INSERT INTO fdw_type_int VALUES (0);
 UPDATE fdw_type_int SET c = 2147483648;
 UPDATE fdw_type_int SET c = 1 + 2147483648;
 UPDATE fdw_type_int SET c = -2147483649;
@@ -40,7 +43,10 @@ CREATE FOREIGN TABLE fdw_type_bigint (
 --- Test
 INSERT INTO fdw_type_bigint VALUES (9223372036854775808);
 INSERT INTO fdw_type_bigint VALUES (-9223372036854775809);
+INSERT INTO fdw_type_bigint VALUES (2.1);  -- see tsurugi-issues#736
 INSERT INTO fdw_type_bigint VALUES ('invalid');
+
+INSERT INTO fdw_type_bigint VALUES (0);
 UPDATE fdw_type_bigint SET c = 9223372036854775808;
 UPDATE fdw_type_bigint SET c = 1 + 9223372036854775808;
 UPDATE fdw_type_bigint SET c = -9223372036854775809;
@@ -110,6 +116,7 @@ CREATE FOREIGN TABLE fdw_type_decimal_ps (
 --- Test
 INSERT INTO fdw_type_decimal_ps VALUES (1234);
 INSERT INTO fdw_type_decimal_ps VALUES (1234.56);
+INSERT INTO fdw_type_decimal_ps VALUES (123.567);
 INSERT INTO fdw_type_decimal_ps VALUES ('invalid');
 UPDATE fdw_type_decimal_ps SET invalid = 2 WHERE c >= 1;
 UPDATE fdw_type_decimal_ps SET c = 2 WHERE invalid = 1;
@@ -155,6 +162,12 @@ CREATE FOREIGN TABLE fdw_type_decimal_ps38 (
 
 --- Test
 INSERT INTO fdw_type_decimal_ps38 VALUES (1);
+INSERT INTO fdw_type_decimal_ps38
+  VALUES (0.000000000000000000000000000000000000001);
+INSERT INTO fdw_type_decimal_ps38
+  VALUES (0.340282366920938463463374607431768211455);
+INSERT INTO fdw_type_decimal_ps38
+  VALUES (0.340282366920938463463374607431768211456);
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_decimal_ps38;
@@ -217,10 +230,30 @@ CREATE FOREIGN TABLE fdw_type_numeric_ps (
 --- Test
 INSERT INTO fdw_type_numeric_ps VALUES (1234);
 INSERT INTO fdw_type_numeric_ps VALUES (1234.56);
+INSERT INTO fdw_type_numeric_ps VALUES (123.567);
 INSERT INTO fdw_type_numeric_ps VALUES ('invalid');
 UPDATE fdw_type_numeric_ps SET invalid = 2 WHERE c >= 1;
 UPDATE fdw_type_numeric_ps SET c = 2 WHERE invalid = 1;
 DELETE FROM fdw_type_numeric_ps WHERE invalid >= 1;
+
+INSERT INTO fdw_type_numeric_ps VALUES (ceiling(-95.3));
+INSERT INTO fdw_type_numeric_ps VALUES (CAST(cbrt(27.0) AS DECIMAL(5, 2)));
+INSERT INTO fdw_type_numeric_ps VALUES (CAST(degrees(0.5) AS DECIMAL(5, 2)));
+INSERT INTO fdw_type_numeric_ps VALUES (div(9,4));
+INSERT INTO fdw_type_numeric_ps VALUES (CAST(exp(1.0) AS DECIMAL(5, 2)));
+INSERT INTO fdw_type_numeric_ps VALUES (factorial(5));
+INSERT INTO fdw_type_numeric_ps VALUES (CAST(ln(2.0) AS DECIMAL(5, 2)));
+INSERT INTO fdw_type_numeric_ps VALUES (log(100.0));
+INSERT INTO fdw_type_numeric_ps VALUES (log10(100.0));
+INSERT INTO fdw_type_numeric_ps VALUES (log(2.0, 64.0));
+INSERT INTO fdw_type_numeric_ps VALUES (CAST(pi() AS DECIMAL(5, 2)));
+INSERT INTO fdw_type_numeric_ps VALUES (power(9.0, 3.0));
+INSERT INTO fdw_type_numeric_ps VALUES (CAST(radians(45.0) AS DECIMAL(5, 2)));
+INSERT INTO fdw_type_numeric_ps VALUES (sign(-8.4));
+INSERT INTO fdw_type_numeric_ps VALUES (CAST(scale(8.41) AS DECIMAL(5, 2)));
+INSERT INTO fdw_type_numeric_ps VALUES (CAST(sqrt(2.0) AS DECIMAL(5, 2)));
+INSERT INTO fdw_type_numeric_ps VALUES (trunc(42.8));
+INSERT INTO fdw_type_numeric_ps VALUES (trunc(42.4382, 2));
 
 INSERT INTO fdw_type_numeric_ps
   VALUES (CAST(width_bucket(5.35, 0.024, 5, 2, 5) AS DECIMAL(5, 2)));
@@ -265,6 +298,12 @@ CREATE FOREIGN TABLE fdw_type_numeric_ps38 (
 
 --- Test
 INSERT INTO fdw_type_numeric_ps38 VALUES (1);
+INSERT INTO fdw_type_numeric_ps38
+  VALUES (0.000000000000000000000000000000000000001);
+INSERT INTO fdw_type_numeric_ps38
+  VALUES (0.340282366920938463463374607431768211455);
+INSERT INTO fdw_type_numeric_ps38
+  VALUES (0.340282366920938463463374607431768211456);
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_numeric_ps38;
@@ -429,6 +468,7 @@ CREATE FOREIGN TABLE fdw_type_time (
 INSERT INTO fdw_type_time VALUES (date '2025/01/01');
 INSERT INTO fdw_type_time VALUES (time '2025/01/01');
 INSERT INTO fdw_type_time VALUES (time '25:00:00');
+INSERT INTO fdw_type_time VALUES (time '050607.890123456');
 INSERT INTO fdw_type_time VALUES (time 'invalid');
 
 --- Test teardown: DDL of the PostgreSQL
@@ -451,6 +491,8 @@ INSERT INTO fdw_type_timestamp VALUES (timestamp '01:02:03.456');
 INSERT INTO fdw_type_timestamp VALUES (date '2021-02-30');
 INSERT INTO fdw_type_timestamp VALUES (timestamp '2021-02-30 04:05:06.789');
 INSERT INTO fdw_type_timestamp VALUES (timestamp '2025-01-01 25:00:00');
+INSERT INTO fdw_type_timestamp VALUES (timestamp '2025/01/01');
+INSERT INTO fdw_type_timestamp VALUES (timestamp '2025/01/01 12:00');
 INSERT INTO fdw_type_timestamp VALUES (timestamp 'invalid');
 
 SET DATESTYLE TO ISO, YMD;
@@ -485,6 +527,10 @@ INSERT INTO fdw_type_timestamp_wo_tz
   VALUES (timestamp without time zone '2021-02-30 04:05:06.789');
 INSERT INTO fdw_type_timestamp_wo_tz
   VALUES (timestamp without time zone '2025-01-01 25:00:00');
+INSERT INTO fdw_type_timestamp_wo_tz
+  VALUES (timestamp without time zone '2025/01/01');
+INSERT INTO fdw_type_timestamp_wo_tz
+  VALUES (timestamp without time zone '2025/01/01 12:00');
 INSERT INTO fdw_type_timestamp_wo_tz
   VALUES (timestamp without time zone 'invalid');
 
@@ -539,6 +585,12 @@ INSERT INTO fdw_type_timestamp_tz
   VALUES (timestamp with time zone 'Jan-08-99 01:02:03+0900');
 INSERT INTO fdw_type_timestamp_tz
   VALUES (timestamp with time zone 'January 8, 99 BC 01:02:03+0900');
+INSERT INTO fdw_type_timestamp_tz
+  VALUES (timestamp with time zone '2025-01-01 12:01:02.34567 UTC');
+INSERT INTO fdw_type_timestamp_tz
+  VALUES (timestamp with time zone '2025-01-01 12:01:02.34567 Universal');
+INSERT INTO fdw_type_timestamp_tz
+  VALUES (timestamp with time zone '2025-01-01 12:00');
 SET DATESTYLE TO 'default';
 
 --- Test teardown: DDL of the PostgreSQL
@@ -546,400 +598,35 @@ DROP FOREIGN TABLE fdw_type_timestamp_tz;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp_tz', 'tsurugidb');
 
--- Unsupported Types - bit
+-- Unsupported Types - serial
 --- Test setup: DDL of the Tsurugi
 SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c BINARY(1))
+  CREATE TABLE fdw_type_unsupported (c1 INTEGER, c2 CHAR(14))
 ', 'tsurugidb');
 --- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c bit(4)) SERVER tsurugidb;
+CREATE FOREIGN TABLE fdw_type_unsupported (c1 serial, c2 char(14)) SERVER tsurugidb;
 
 --- Test
-INSERT INTO fdw_type_unsupported VALUES (B'1010');
+INSERT INTO fdw_type_unsupported (c2) VALUES ('serial is null');
+SELECT * FROM fdw_type_unsupported;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
 
--- Unsupported Types - bit varying
+-- Unsupported Types - bigserial
 --- Test setup: DDL of the Tsurugi
 SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARBINARY(1))
+  CREATE TABLE fdw_type_unsupported (c1 BIGINT, c2 CHAR(14))
 ', 'tsurugidb');
 --- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c bit varying(4)) SERVER tsurugidb;
-
---- Test
-INSERT INTO fdw_type_unsupported VALUES (B'1010');
-
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
-
--- Unsupported Types - boolean
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c DECIMAL(1))
-', 'tsurugidb');
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c boolean) SERVER tsurugidb;
-
---- Test
-INSERT INTO fdw_type_unsupported VALUES (true);
-
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
-
--- Unsupported Types - box
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c box) SERVER tsurugidb;
-
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('(1,2),(3,4)'::box);
-
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
-
--- Unsupported Types - cidr
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c cidr) SERVER tsurugidb;
-
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('192.168.0.0/24');
-
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
-
--- Unsupported Types - circle
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c circle) SERVER tsurugidb;
-
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('<(3,4),5>');
-
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
-
--- Unsupported Types - inet
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c inet) SERVER tsurugidb;
-
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('192.168.0.1');
-
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
-
--- Unsupported Types - interval
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c interval) SERVER tsurugidb;
-
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('1 day');
-
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
-
--- Unsupported Types - json
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c json) SERVER tsurugidb;
-
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('{"key":"value"}');
-
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
-
--- Unsupported Types - jsonb
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c jsonb) SERVER tsurugidb;
-
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('{"key":"value"}');
-
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
-
--- Unsupported Types - line
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c line) SERVER tsurugidb;
-
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('{1,2,3}');
-
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
-
--- Unsupported Types - lseg
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c lseg) SERVER tsurugidb;
-
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('[(1,2),(3,4)]');
-
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
-
--- Unsupported Types - macaddr
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c macaddr) SERVER tsurugidb;
-
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('08:00:2b:01:02:03');
-
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
-
--- Unsupported Types - macaddr8
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c macaddr8) SERVER tsurugidb;
-
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('08:00:2b:01:02:03:04:05');
-
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
-
--- Unsupported Types - money
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c money) SERVER tsurugidb;
-
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('$123.45');
-
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
-
--- Unsupported Types - path
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c path) SERVER tsurugidb;
-
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('[(1,2),(3,4)]');
-
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
-
--- Unsupported Types - pg_lsn
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c pg_lsn) SERVER tsurugidb;
-
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('16/B374D848');
-
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
-
--- Unsupported Types - point
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c point) SERVER tsurugidb;
-
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('(1,2)');
-
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
-
--- Unsupported Types - polygon
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c polygon) SERVER tsurugidb;
-
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('((1,2),(3,4),(5,6))');
-
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
-
--- Unsupported Types - smallint
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c DECIMAL(5))
-', 'tsurugidb');
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c smallint) SERVER tsurugidb;
-
---- Test
-INSERT INTO fdw_type_unsupported VALUES (1);
-
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
-
--- Unsupported Types - smallserial
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c DECIMAL(5))
-', 'tsurugidb');
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c smallserial) SERVER tsurugidb;
-
---- Test
-INSERT INTO fdw_type_unsupported VALUES (1);
-
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
-
--- Unsupported Types - tsquery
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c tsquery) SERVER tsurugidb;
-
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('value');
-
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
-
--- Unsupported Types - tsvector
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c tsvector) SERVER tsurugidb;
-
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('value:1');
-
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
-
--- Unsupported Types - txid_snapshot
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c txid_snapshot) SERVER tsurugidb;
-
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('10:20:10,14,15');
-
---- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
-
--- Unsupported Types - uuid
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c VARCHAR)
-', 'tsurugidb');
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c uuid) SERVER tsurugidb;
-
---- Test
-INSERT INTO fdw_type_unsupported VALUES ('f3d4b1ce-f2e0-49ce-8cd4-da5c8f29bff2');
+CREATE FOREIGN TABLE fdw_type_unsupported (c1 bigserial, c2 char(14))
+  SERVER tsurugidb;
+
+-- Test
+INSERT INTO fdw_type_unsupported (c2) VALUES ('serial is null');
+SELECT * FROM fdw_type_unsupported;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
