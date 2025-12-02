@@ -40,14 +40,14 @@ CREATE FOREIGN TABLE fdw_sel_unsupported_test (
 ) SERVER tsurugidb;
 
 -- Arithmetic operation
-PREPARE fdw_prepare_sel AS
+PREPARE prep_select AS
   SELECT id, name, ((value / 10000) * ref_id)::int AS lank
     FROM fdw_sel_unsupported_test;
-EXECUTE fdw_prepare_sel;
-DEALLOCATE fdw_prepare_sel;
+EXECUTE prep_select;
+DEALLOCATE prep_select;
 
 -- CASE WHEN
-PREPARE fdw_prepare_sel (integer, integer) AS
+PREPARE prep_select (integer, integer) AS
   SELECT
     id, name,
     CASE
@@ -55,62 +55,62 @@ PREPARE fdw_prepare_sel (integer, integer) AS
       WHEN value >= $2 THEN 'Medium'
       ELSE 'Low' END AS lank
     FROM fdw_sel_unsupported_test;
-EXECUTE fdw_prepare_sel (100000, 75000);
-DEALLOCATE fdw_prepare_sel;
+EXECUTE prep_select (100000, 75000);
+DEALLOCATE prep_select;
 
 -- WINDOW
-PREPARE fdw_prepare_sel AS
+PREPARE prep_select AS
   SELECT id, name, value, RANK() OVER w AS rk
     FROM fdw_sel_unsupported_test
     WINDOW w AS (ORDER BY value DESC);
-EXECUTE fdw_prepare_sel;
-DEALLOCATE fdw_prepare_sel;
+EXECUTE prep_select;
+DEALLOCATE prep_select;
 
 -- GROUP BY ALL
-PREPARE fdw_prepare_sel AS
+PREPARE prep_select AS
   SELECT ref_id, COUNT(*), SUM(value)
     FROM fdw_sel_unsupported_test
     GROUP BY ALL ref_id
     ORDER BY ref_id;
-EXECUTE fdw_prepare_sel;
-DEALLOCATE fdw_prepare_sel;
+EXECUTE prep_select;
+DEALLOCATE prep_select;
 
 -- GROUP BY DISTINCT
-PREPARE fdw_prepare_sel AS
+PREPARE prep_select AS
   SELECT ref_id, COUNT(*), SUM(value)
     FROM fdw_sel_unsupported_test
     GROUP BY DISTINCT ref_id
     ORDER BY ref_id;
-EXECUTE fdw_prepare_sel;
-DEALLOCATE fdw_prepare_sel;
+EXECUTE prep_select;
+DEALLOCATE prep_select;
 
 -- FETCH FIRST ... WITH TIES
-PREPARE fdw_prepare_sel AS
+PREPARE prep_select AS
   SELECT * FROM fdw_sel_unsupported_test ORDER BY value
     FETCH FIRST 2 ROWS WITH TIES;
-EXECUTE fdw_prepare_sel;
-DEALLOCATE fdw_prepare_sel;
+EXECUTE prep_select;
+DEALLOCATE prep_select;
 
 -- FETCH NEXT ... WITH TIES
-PREPARE fdw_prepare_sel AS
+PREPARE prep_select AS
   SELECT * FROM fdw_sel_unsupported_test ORDER BY value
     FETCH NEXT 2 ROWS WITH TIES;
-EXECUTE fdw_prepare_sel;
-DEALLOCATE fdw_prepare_sel;
+EXECUTE prep_select;
+DEALLOCATE prep_select;
 
 -- OFFSET FETCH FIRST ... WITH TIES
-PREPARE fdw_prepare_sel AS
+PREPARE prep_select AS
   SELECT * FROM fdw_sel_unsupported_test ORDER BY value
     OFFSET 1 FETCH FIRST 2 ROWS WITH TIES;
-EXECUTE fdw_prepare_sel;
-DEALLOCATE fdw_prepare_sel;
+EXECUTE prep_select;
+DEALLOCATE prep_select;
 
 -- OFFSET FETCH NEXT ... WITH TIES
-PREPARE fdw_prepare_sel AS
+PREPARE prep_select AS
   SELECT * FROM fdw_sel_unsupported_test ORDER BY value
     OFFSET 1 FETCH NEXT 2 ROWS WITH TIES;
-EXECUTE fdw_prepare_sel;
-DEALLOCATE fdw_prepare_sel;
+EXECUTE prep_select;
+DEALLOCATE prep_select;
 
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_sel_unsupported_test;
