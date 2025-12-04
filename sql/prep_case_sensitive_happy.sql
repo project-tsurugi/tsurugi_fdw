@@ -14,127 +14,122 @@ CREATE FOREIGN TABLE fdw_case_table (
 ) SERVER tsurugidb;
 
 -- Test
-PREPARE fdw_prepare_ins (integer, integer) AS
+PREPARE prep_insert (integer, integer) AS
   INSERT INTO fdw_case_table VALUES ($1, $2);
-EXECUTE fdw_prepare_ins (1000, 1);
-DEALLOCATE fdw_prepare_ins;
+EXECUTE prep_insert (1000, 1);
+DEALLOCATE prep_insert;
 
-PREPARE fdw_prepare_ins (integer, integer) AS
+PREPARE prep_insert (integer, integer) AS
   INSERT INTO public.fdw_case_table (col, "Col") VALUES ($1, $2);
-EXECUTE fdw_prepare_ins (2000, 2);
-DEALLOCATE fdw_prepare_ins;
+EXECUTE prep_insert (2000, 2);
+DEALLOCATE prep_insert;
 
-PREPARE fdw_prepare_ins (integer) AS
+PREPARE prep_insert (integer) AS
   INSERT INTO "public".fdw_case_table (col) VALUES ($1);
-EXECUTE fdw_prepare_ins (3000);
-DEALLOCATE fdw_prepare_ins;
+EXECUTE prep_insert (3000);
+DEALLOCATE prep_insert;
 
-PREPARE fdw_prepare_ins (integer) AS
+PREPARE prep_insert (integer) AS
   INSERT INTO "public"."fdw_case_table" (Col) VALUES ($1);
-EXECUTE fdw_prepare_ins (4000);
-DEALLOCATE fdw_prepare_ins;
+EXECUTE prep_insert (4);
+DEALLOCATE prep_insert;
 
-PREPARE fdw_prepare_ins (integer) AS
+PREPARE prep_insert (integer) AS
   INSERT INTO Public.fdw_case_table ("col") VALUES ($1);
-EXECUTE fdw_prepare_ins (5000);
-DEALLOCATE fdw_prepare_ins;
+EXECUTE prep_insert (5000);
+DEALLOCATE prep_insert;
 
-PREPARE fdw_prepare_ins (integer) AS
+PREPARE prep_insert (integer) AS
   INSERT INTO PUBLIC.fdw_case_table ("Col") VALUES ($1);
-EXECUTE fdw_prepare_ins (6);
-DEALLOCATE fdw_prepare_ins;
+EXECUTE prep_insert (6);
+DEALLOCATE prep_insert;
 
-PREPARE fdw_prepare_sel AS
+PREPARE prep_select AS
   SELECT * FROM public.fdw_case_table ORDER BY col, Col DESC;
-EXECUTE fdw_prepare_sel;
-DEALLOCATE fdw_prepare_sel;
+EXECUTE prep_select;
+DEALLOCATE prep_select;
 
-PREPARE fdw_prepare_upd (integer) AS
+PREPARE prep_update (integer) AS
   UPDATE fdw_case_table SET col = col + $1;
-EXECUTE fdw_prepare_upd (100);
-DEALLOCATE fdw_prepare_upd;
+EXECUTE prep_update (100);
+DEALLOCATE prep_update;
 
-PREPARE fdw_prepare_upd (integer) AS
+PREPARE prep_update (integer) AS
   UPDATE public.fdw_case_table SET Col = Col + $1;
-EXECUTE fdw_prepare_upd (10);
-DEALLOCATE fdw_prepare_upd;
+EXECUTE prep_update (10);
+DEALLOCATE prep_update;
 
-PREPARE fdw_prepare_upd (integer) AS
+PREPARE prep_update (integer) AS
   UPDATE "public".fdw_case_table SET "col" = "col" + 100 WHERE col > $1;
-EXECUTE fdw_prepare_upd (5000);
-DEALLOCATE fdw_prepare_upd;
+EXECUTE prep_update (5000);
+DEALLOCATE prep_update;
 
-PREPARE fdw_prepare_upd (integer) AS
-  UPDATE public."fdw_case_table" SET "Col" = "Col" + $1 WHERE "Col" < 10;
-EXECUTE fdw_prepare_upd (10);
-DEALLOCATE fdw_prepare_upd;
+PREPARE prep_update (integer) AS
+  UPDATE public."fdw_case_table" SET "Col" = "Col" + $1 WHERE Col > 12;
+EXECUTE prep_update (100);
+DEALLOCATE prep_update;
 
-PREPARE fdw_prepare_upd (integer, integer) AS
+PREPARE prep_update (integer, integer) AS
   UPDATE "public"."fdw_case_table" SET "col" = col + $1 WHERE "col" > $2;
-EXECUTE fdw_prepare_upd (100, 3000);
-DEALLOCATE fdw_prepare_upd;
+EXECUTE prep_update (100, 3000);
+DEALLOCATE prep_update;
 
-PREPARE fdw_prepare_upd AS
-  UPDATE public.Fdw_Case_Table SET "col" = NULL WHERE "Col" = $1;
-EXECUTE fdw_prepare_upd (16);
-DEALLOCATE fdw_prepare_upd;
+PREPARE prep_update AS
+  UPDATE Public.fdw_case_table SET "col" = Col * 10 WHERE col IS NULL;
+EXECUTE prep_update;
+DEALLOCATE prep_update;
 
-PREPARE fdw_prepare_upd AS
-  UPDATE Public.fdw_case_table SET "col" = "Col" * 10 WHERE col IS NULL;
-EXECUTE fdw_prepare_upd;
-DEALLOCATE fdw_prepare_upd;
+PREPARE prep_update (integer) AS
+  UPDATE PUBLIC.fdw_case_table SET "Col" = col / $1 WHERE "Col" IS NULL;
+EXECUTE prep_update (100);
+DEALLOCATE prep_update;
 
-PREPARE fdw_prepare_upd (integer) AS
-  UPDATE PUBLIC.fdw_case_table SET "Col" = Col / $1 WHERE "Col" IS NULL;
-EXECUTE fdw_prepare_upd (100);
-DEALLOCATE fdw_prepare_upd;
+PREPARE prep_select AS SELECT * FROM fdw_case_table ORDER BY col;
+EXECUTE prep_select;
+DEALLOCATE prep_select;
 
-PREPARE fdw_prepare_sel AS SELECT * FROM fdw_case_table ORDER BY col;
-EXECUTE fdw_prepare_sel;
-DEALLOCATE fdw_prepare_sel;
+PREPARE prep_select AS SELECT * FROM Public.fdw_case_table ORDER BY Col;
+EXECUTE prep_select;
+DEALLOCATE prep_select;
 
-PREPARE fdw_prepare_sel AS SELECT * FROM Public.fdw_case_table ORDER BY Col;
-EXECUTE fdw_prepare_sel;
-DEALLOCATE fdw_prepare_sel;
-
-PREPARE fdw_prepare_del (integer) AS
+PREPARE prep_delete (integer) AS
   DELETE FROM fdw_case_table WHERE col = $1;
-EXECUTE fdw_prepare_del (1110);
-DEALLOCATE fdw_prepare_del;
+EXECUTE prep_delete (1100);
+DEALLOCATE prep_delete;
 
-PREPARE fdw_prepare_del (integer) AS
+PREPARE prep_delete (integer) AS
   DELETE FROM public.fdw_case_table WHERE "col" > $1;
-EXECUTE fdw_prepare_del (5000);
-DEALLOCATE fdw_prepare_del;
+EXECUTE prep_delete (5000);
+DEALLOCATE prep_delete;
 
-PREPARE fdw_prepare_del (integer) AS
-  DELETE FROM "public".fdw_case_table WHERE Col <= $1;
-EXECUTE fdw_prepare_del (160);
-DEALLOCATE fdw_prepare_del;
+PREPARE prep_delete (integer) AS
+  DELETE FROM "public".fdw_case_table WHERE Col > $1;
+EXECUTE prep_delete (114);
+DEALLOCATE prep_delete;
 
-PREPARE fdw_prepare_del (integer) AS
+PREPARE prep_delete (integer) AS
   DELETE FROM public."fdw_case_table" WHERE "col" >= $1;
-EXECUTE fdw_prepare_del (4200);
-DEALLOCATE fdw_prepare_del;
+EXECUTE prep_delete (3200);
+DEALLOCATE prep_delete;
 
-PREPARE fdw_prepare_del AS
-  DELETE FROM "public"."fdw_case_table" WHERE "Col" > 30;
-EXECUTE fdw_prepare_del;
-DEALLOCATE fdw_prepare_del;
+PREPARE prep_delete AS
+  DELETE FROM "public"."fdw_case_table" WHERE "Col" > 100;
+EXECUTE prep_delete;
+DEALLOCATE prep_delete;
 
-PREPARE fdw_prepare_del (integer) AS
+PREPARE prep_delete (integer) AS
   DELETE FROM Public.fdw_case_table WHERE col <> $1;
-EXECUTE fdw_prepare_del (2110);
-DEALLOCATE fdw_prepare_del;
+EXECUTE prep_delete (2100);
+DEALLOCATE prep_delete;
 
-PREPARE fdw_prepare_del (integer) AS
-  DELETE FROM PUBLIC.fdw_case_table WHERE Col = $1;
-EXECUTE fdw_prepare_del (12);
-DEALLOCATE fdw_prepare_del;
+PREPARE prep_delete (integer) AS
+  DELETE FROM PUBLIC.fdw_case_table WHERE Col <> $1;
+EXECUTE prep_delete (12);
+DEALLOCATE prep_delete;
 
-PREPARE fdw_prepare_sel AS SELECT * FROM Public.fdw_case_table;
-EXECUTE fdw_prepare_sel;
-DEALLOCATE fdw_prepare_sel;
+PREPARE prep_select AS SELECT * FROM Public.fdw_case_table;
+EXECUTE prep_select;
+DEALLOCATE prep_select;
 
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_case_table;

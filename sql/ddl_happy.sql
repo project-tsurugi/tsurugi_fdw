@@ -165,18 +165,18 @@ CREATE EXTENSION tsurugi_fdw;
 CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
 CREATE FOREIGN TABLE fdw_ddl_table (c integer) SERVER tsurugidb;
 
-PREPARE fdw_prepare_ins(integer, integer) AS
+PREPARE prep_insert(integer, integer) AS
   INSERT INTO fdw_ddl_table VALUES ($1), ($2);
-PREPARE fdw_prepare_sel AS SELECT * FROM fdw_ddl_table ORDER BY c;
-PREPARE fdw_prepare_upd(integer) AS UPDATE fdw_ddl_table SET c = c + $1;
-PREPARE fdw_prepare_del(integer) AS DELETE FROM fdw_ddl_table WHERE c = $1;
+PREPARE prep_select AS SELECT * FROM fdw_ddl_table ORDER BY c;
+PREPARE prep_update(integer) AS UPDATE fdw_ddl_table SET c = c + $1;
+PREPARE prep_delete(integer) AS DELETE FROM fdw_ddl_table WHERE c = $1;
 
-EXECUTE fdw_prepare_ins(1, 2);
-EXECUTE fdw_prepare_sel;
-EXECUTE fdw_prepare_upd(10);
-EXECUTE fdw_prepare_sel;
-EXECUTE fdw_prepare_del(11);
-EXECUTE fdw_prepare_sel;
+EXECUTE prep_insert(1, 2);
+EXECUTE prep_select;
+EXECUTE prep_update(10);
+EXECUTE prep_select;
+EXECUTE prep_delete(11);
+EXECUTE prep_select;
 
 \c contrib_regression
 DROP DATABASE contrib_regression_ddl;
@@ -189,18 +189,18 @@ CREATE EXTENSION tsurugi_fdw;
 CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
 CREATE FOREIGN TABLE fdw_ddl_table (c integer) SERVER tsurugidb;
 
-PREPARE fdw_prepare_ins(integer) AS INSERT INTO fdw_ddl_table VALUES ($1);
-PREPARE fdw_prepare_sel AS SELECT * FROM fdw_ddl_table ORDER BY c;
-PREPARE fdw_prepare_upd(integer) AS UPDATE fdw_ddl_table SET c = c + $1;
-PREPARE fdw_prepare_del(integer) AS DELETE FROM fdw_ddl_table WHERE c = $1;
+PREPARE prep_insert(integer) AS INSERT INTO fdw_ddl_table VALUES ($1);
+PREPARE prep_select AS SELECT * FROM fdw_ddl_table ORDER BY c;
+PREPARE prep_update(integer) AS UPDATE fdw_ddl_table SET c = c + $1;
+PREPARE prep_delete(integer) AS DELETE FROM fdw_ddl_table WHERE c = $1;
 
-EXECUTE fdw_prepare_sel;
-EXECUTE fdw_prepare_upd(-10);
-EXECUTE fdw_prepare_sel;
-EXECUTE fdw_prepare_del(2);
-EXECUTE fdw_prepare_sel;
-EXECUTE fdw_prepare_ins(3);
-EXECUTE fdw_prepare_sel;
+EXECUTE prep_select;
+EXECUTE prep_update(-10);
+EXECUTE prep_select;
+EXECUTE prep_delete(2);
+EXECUTE prep_select;
+EXECUTE prep_insert(3);
+EXECUTE prep_select;
 
 \c contrib_regression
 DROP DATABASE contrib_regression_ddl;
@@ -213,17 +213,17 @@ CREATE EXTENSION tsurugi_fdw;
 CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
 CREATE FOREIGN TABLE fdw_ddl_table (c integer) SERVER tsurugidb;
 
-PREPARE fdw_prepare_ins(integer) AS INSERT INTO fdw_ddl_table VALUES ($1);
-PREPARE fdw_prepare_sel AS SELECT * FROM fdw_ddl_table ORDER BY c;
-PREPARE fdw_prepare_upd(integer) AS UPDATE fdw_ddl_table SET c = c + $1;
-PREPARE fdw_prepare_del(integer) AS DELETE FROM fdw_ddl_table WHERE c = $1;
+PREPARE prep_insert(integer) AS INSERT INTO fdw_ddl_table VALUES ($1);
+PREPARE prep_select AS SELECT * FROM fdw_ddl_table ORDER BY c;
+PREPARE prep_update(integer) AS UPDATE fdw_ddl_table SET c = c + $1;
+PREPARE prep_delete(integer) AS DELETE FROM fdw_ddl_table WHERE c = $1;
 
-EXECUTE fdw_prepare_upd(20);
-EXECUTE fdw_prepare_sel;
-EXECUTE fdw_prepare_del(23);
-EXECUTE fdw_prepare_sel;
-EXECUTE fdw_prepare_ins(4);
-EXECUTE fdw_prepare_sel;
+EXECUTE prep_update(20);
+EXECUTE prep_select;
+EXECUTE prep_delete(23);
+EXECUTE prep_select;
+EXECUTE prep_insert(4);
+EXECUTE prep_select;
 
 \c contrib_regression
 DROP DATABASE contrib_regression_ddl;
@@ -236,20 +236,20 @@ CREATE EXTENSION tsurugi_fdw;
 CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
 CREATE FOREIGN TABLE fdw_ddl_table (c integer) SERVER tsurugidb;
 
-PREPARE fdw_prepare_ins AS INSERT INTO fdw_ddl_table VALUES (5);
-PREPARE fdw_prepare_sel AS SELECT * FROM fdw_ddl_table ORDER BY c;
-PREPARE fdw_prepare_upd AS UPDATE fdw_ddl_table SET c = 111;
-PREPARE fdw_prepare_del(integer) AS DELETE FROM fdw_ddl_table WHERE c = $1;
-PREPARE fdw_prepare_del_all AS DELETE FROM fdw_ddl_table;
+PREPARE prep_insert AS INSERT INTO fdw_ddl_table VALUES (5);
+PREPARE prep_select AS SELECT * FROM fdw_ddl_table ORDER BY c;
+PREPARE prep_update AS UPDATE fdw_ddl_table SET c = 111;
+PREPARE prep_delete(integer) AS DELETE FROM fdw_ddl_table WHERE c = $1;
+PREPARE prep_delete_all AS DELETE FROM fdw_ddl_table;
 
-EXECUTE fdw_prepare_del(4);
-EXECUTE fdw_prepare_sel;
-EXECUTE fdw_prepare_ins;
-EXECUTE fdw_prepare_sel;
-EXECUTE fdw_prepare_upd;
-EXECUTE fdw_prepare_sel;
-EXECUTE fdw_prepare_del_all;
-EXECUTE fdw_prepare_sel;
+EXECUTE prep_delete(4);
+EXECUTE prep_select;
+EXECUTE prep_insert;
+EXECUTE prep_select;
+EXECUTE prep_update;
+EXECUTE prep_select;
+EXECUTE prep_delete_all;
+EXECUTE prep_select;
 
 \c contrib_regression
 DROP DATABASE contrib_regression_ddl;

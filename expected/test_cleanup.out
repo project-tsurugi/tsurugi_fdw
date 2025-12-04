@@ -316,6 +316,12 @@ SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_type_timestamp_wo_tz', 'tsurugid
  DROP TABLE
 (1 row)
 
+SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
 SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_type_varchar', 'tsurugidb');
  tg_execute_ddl 
 ----------------
