@@ -187,10 +187,7 @@ public:
     ERROR_CODE rollback();
 
     bool exists_prepared_statement(std::string_view name);
-    ERROR_CODE prepare(std::string_view sql,
-                              ogawayama::stub::placeholders_type& placeholders,
-                              PreparedStatementPtr& prepared_statement);
-    ERROR_CODE prepare(std::string_view name, std::string_view statement,
+    ERROR_CODE prepare(Oid server_oid, std::string_view name, std::string_view statement,
                               ogawayama::stub::placeholders_type& placeholders);
 	ERROR_CODE prepare(Oid server_oid, std::string_view statement,
 							  ogawayama::stub::placeholders_type& placeholders);
@@ -216,6 +213,14 @@ public:
 	ERROR_CODE get_table_metadata(Oid server_oid, std::string_view table_name,
 										 TableMetadataPtr& table_metadata);
 
+    ERROR_CODE tsurugi_error(ogawayama::stub::tsurugi_error_code& code);
+    std::string get_error_detail(ERROR_CODE error);
+    std::string get_error_message(ERROR_CODE error_code);
+    void error_log2(int level, std::string_view message, ERROR_CODE error);
+    void error_log3(int level, std::string_view message, ERROR_CODE error);
+    void report_error(const char* message, ERROR_CODE error, const char* sql);
+    void report_error(const char* message, ERROR_CODE error, std::string_view sql);
+
 private:
     TransactionPtr transaction_;
 	// Named statements
@@ -235,13 +240,4 @@ public:
                                                           Datum value);
     static ogawayama::stub::timestamptz_type convert_timestamptz_to_tg(Datum value);
     static takatori::decimal::triple convert_decimal_to_tg(Datum value);
-
-public:
-    ERROR_CODE tsurugi_error(ogawayama::stub::tsurugi_error_code& code);
-    std::string get_error_detail(ERROR_CODE error);
-    std::string get_error_message(ERROR_CODE error_code);
-    void error_log2(int level, std::string_view message, ERROR_CODE error);
-    void error_log3(int level, std::string_view message, ERROR_CODE error);
-    void report_error(const char* message, ERROR_CODE error, const char* sql);
-    void report_error(const char* message, ERROR_CODE error, std::string_view sql);
 };
