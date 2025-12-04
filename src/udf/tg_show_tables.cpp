@@ -73,6 +73,8 @@ tg_show_tables(PG_FUNCTION_ARGS)
 	static constexpr const char* const kKeyCount = "count";
 	static constexpr const char* const kKeyList = "list";
 
+	auto tsurugi = Tsurugi::get_instance();
+
 	// remote_schema argument
 	std::string arg_remote_schema(!PG_ARGISNULL(0) ? text_to_cstring(PG_GETARG_TEXT_P(0)) : "");
 	// server_name argument
@@ -137,13 +139,13 @@ tg_show_tables(PG_FUNCTION_ARGS)
 	TableListPtr tg_table_list;
 
 	/* Get a list of table names from Tsurugi. */
-	error = Tsurugi::get_list_tables(server_oid, tg_table_list);
+	error = tsurugi->get_list_tables(server_oid, tg_table_list);
 	if (error != ERROR_CODE::OK) {
 		ereport(ERROR,
 			(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
 			errmsg("Failed to retrieve table list from Tsurugi. (error: %d)",
 				static_cast<int>(error)),
-			errdetail("%s", Tsurugi::get_error_message(error).c_str())));
+			errdetail("%s", tsurugi->get_error_message(error).c_str())));
 	}
 
 	boost::property_tree::ptree table_list;  // table list array

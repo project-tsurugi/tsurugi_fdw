@@ -59,6 +59,8 @@ tg_execute_ddl(PG_FUNCTION_ARGS)
 			R"_(^\s*DROP\s+(TABLE|INDEX)\s+)_"
 	};
 
+	auto tsurugi = Tsurugi::get_instance();
+
 	// ddl_statement argument
 	std::string arg_ddl_statement(!PG_ARGISNULL(0) ? text_to_cstring(PG_GETARG_TEXT_P(0)) : "");
 	// server_name argument
@@ -109,25 +111,25 @@ tg_execute_ddl(PG_FUNCTION_ARGS)
 
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
 
-	error = Tsurugi::start_transaction(server_oid);
+	error = tsurugi->start_transaction(server_oid);
 	if (error != ERROR_CODE::OK) {
 		ereport(ERROR, (errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
-						errmsg("%s", Tsurugi::get_error_message(error).c_str())));
+						errmsg("%s", tsurugi->get_error_message(error).c_str())));
 	}
 
 	std::size_t num_rows;
-	error = Tsurugi::execute_statement(arg_ddl_statement, num_rows);
+	error = tsurugi->execute_statement(arg_ddl_statement, num_rows);
 	if (error != ERROR_CODE::OK) {
-		Tsurugi::rollback();
+		tsurugi->rollback();
 
 		ereport(ERROR, (errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
-						errmsg("%s", Tsurugi::get_error_message(error).c_str())));
+						errmsg("%s", tsurugi->get_error_message(error).c_str())));
 	}
 
-	error = Tsurugi::commit();
+	error = tsurugi->commit();
 	if (error != ERROR_CODE::OK) {
 		ereport(ERROR, (errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
-						errmsg("%s", Tsurugi::get_error_message(error).c_str())));
+						errmsg("%s", tsurugi->get_error_message(error).c_str())));
 	}
 
 	/* Convert to uppercase for DDL command comparison. */

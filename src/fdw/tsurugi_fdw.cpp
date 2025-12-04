@@ -29,6 +29,7 @@ extern "C" {
 #endif
 #include "postgres.h"
 #include "fdw/tsurugi_fdw.h"
+#include "fdw/tsurugi_utils.h"
 
 #include "access/xact.h"
 #include "access/htup_details.h"
@@ -317,15 +318,13 @@ tsurugi_fdw_handler(PG_FUNCTION_ARGS)
 static void 
 tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 {
-	Assert(node != nullptr);
-
-	ForeignScan* fsplan = (ForeignScan*) node->ss.ps.plan;
-	TgFdwForeignScanState* fsstate;
+	ForeignScan *fsplan = (ForeignScan *) node->ss.ps.plan;
+	TgFdwForeignScanState *fsstate;
 	RangeTblEntry *rte;
 	ForeignTable *table;
 	ForeignServer *server;
-	int			rtindex;
-	EState* 	estate = node->ss.ps.state;
+	int rtindex;
+	EState *estate = node->ss.ps.state;
 
 	elog(DEBUG1, "tsurugi_fdw : %s\nquery:\n%s", __func__, estate->es_sourceText);
 
@@ -393,8 +392,6 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
 static TupleTableSlot* 
 tsurugiIterateForeignScan(ForeignScanState* node)
 {
-	Assert(node != nullptr);
-
 	TgFdwForeignScanState* fsstate = (TgFdwForeignScanState*) node->fdw_state;
 	TupleTableSlot* tupleSlot = node->ss.ss_ScanTupleSlot;
 
@@ -406,33 +403,8 @@ tsurugiIterateForeignScan(ForeignScanState* node)
 		fsstate->num_tuples = 0;
 	    fsstate->cursor_exists = true;
 	}
-
 	ExecClearTuple(tupleSlot);
-
-	ERROR_CODE error = Tsurugi::result_set_next_row();
-	if (error == ERROR_CODE::OK)
-	{
-		make_tuple_from_result_row(Tsurugi::get_result_set(), 
-  								   tupleSlot->tts_tupleDescriptor,
-								   fsstate->retrieved_attrs,
-								   tupleSlot->tts_values,
-								   tupleSlot->tts_isnull);
-		ExecStoreVirtualTuple(tupleSlot);
-		fsstate->num_tuples++;
-	}
-	else if (error == ERROR_CODE::END_OF_ROW) 
-	{
-		/* No more rows/data exists */
-		Tsurugi::init_result_set();
-		elog(DEBUG1, "tsurugi_fdw : End of rows. (rows: %d)", 
-			(int) fsstate->num_tuples);
-	}
-	else
-	{
-		Tsurugi::init_result_set();
-		Tsurugi::report_error("Failed to retrieve result set from Tsurugi.", 
-								error, fsstate->query_string);
-	}
+	execute_foreign_scan(fsstate, tupleSlot);
 
 	elog(DEBUG5, "tsurugi_fdw : %s is done.", __func__);
 
@@ -453,9 +425,6 @@ tsurugiReScanForeignScan(ForeignScanState* node)
 	if (!fsstate->cursor_exists)
 		return;
 	
-	Tsurugi::deallocate();
-	Tsurugi::init_result_set();
-
 	fsstate->cursor_exists = false;
 	fsstate->rowidx = 0;
 	fsstate->num_tuples = 0;
@@ -487,18 +456,18 @@ tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
 	RangeTblEntry *rte;
     ForeignTable *table;
     ForeignServer *server;
-	ForeignScan* fsplan = (ForeignScan*) node->ss.ps.plan;
-	int      	rtindex;
-	EState* estate = node->ss.ps.state;
+	ForeignScan *fsplan = (ForeignScan *) node->ss.ps.plan;
+	int rtindex;
+	EState *estate = node->ss.ps.state;
+	TgFdwDirectModifyState *dmstate;
 
-	Assert(node != nullptr);
-	Assert(fsplan != nullptr);
+	Assert(node != NULL);
+	Assert(fsplan != NULL);
 
 	elog(DEBUG1, "tsurugi_fdw : %s\nquery:\n%s", __func__, estate->es_sourceText);
 
 	/* Initialize state variable */
-	TgFdwDirectModifyState* dmstate = 
-		(TgFdwDirectModifyState *) palloc0(sizeof(TgFdwDirectModifyState));
+	dmstate = (TgFdwDirectModifyState *) palloc0(sizeof(TgFdwDirectModifyState));
 	dmstate->num_tuples = -1;	/* -1 means not set yet */	
 	dmstate->orig_query = estate->es_sourceText;
 
@@ -545,8 +514,6 @@ tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
 static TupleTableSlot* 
 tsurugiIterateDirectModify(ForeignScanState* node)
 {
-	Assert(node != nullptr);
-
 	TgFdwDirectModifyState* dmstate = (TgFdwDirectModifyState*) node->fdw_state;
 	EState* estate = node->ss.ps.state;
 	TupleTableSlot *slot = node->ss.ss_ScanTupleSlot;
@@ -597,7 +564,7 @@ tsurugiExecForeignInsert(
 	TupleTableSlot *planSlot)
 {
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
-	slot = nullptr;
+	slot = NULL;
 
 	elog(ERROR, "tsurugi_fdw does not support execForeignInsert().");
 
@@ -615,7 +582,7 @@ tsurugiExecForeignUpdate(
 	TupleTableSlot *planSlot)
 {
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
-	slot = nullptr;
+	slot = NULL;
 
 	elog(ERROR, "tsurugi_fdw does not support execForeignUpdate().");
 
@@ -633,7 +600,7 @@ tsurugiExecForeignDelete(
 	TupleTableSlot *planSlot)
 {
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
-	slot = nullptr;
+	slot = NULL;
 
 	elog(ERROR, "tsurugi_fdw does not support execForeignDelete().");
 
@@ -728,154 +695,9 @@ tsurugiAnalyzeForeignTable(Relation relation,
  */
 static List* tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt, Oid serverOid)
 {
-	ERROR_CODE error = ERROR_CODE::UNKNOWN;
-
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
-	/*
-	 * Checking the options of the Import Foreign Schema statement.
-	 * If the option is specified, an error is assumed.
-	 */
-	if ((stmt->options != nullptr) && (stmt->options->length > 0))
-	{
-#if PG_VERSION_NUM >= 130000
-		auto def = static_cast<DefElem*>(lfirst(stmt->options->elements));
-#else
-		auto def = static_cast<DefElem*>(lfirst(stmt->options->head));
-#endif
-		ereport(ERROR,
-				(errcode(ERRCODE_FDW_INVALID_OPTION_NAME),
-				 errmsg(R"(unsupported import foreign schema option "%.64s")", def->defname)));
-	}
-
-	/* Get information about foreign server and user mapping. */
-	ForeignServer* server = GetForeignServer(serverOid);
-	//UserMapping* mapping = GetUserMapping(GetUserId(), server->serverid);
-
-	elog(DEBUG2, "ForeignServer::fdwid: %u", server->fdwid);
-	elog(DEBUG2, "ForeignServer::serverid: %u", server->serverid);
-	elog(DEBUG2, R"(ForeignServer::servername: "%s")", server->servername);
-
-	TableListPtr tg_table_list;
-	/* Get a list of table names from Tsurugi. */
-	error = Tsurugi::get_list_tables(server->serverid, tg_table_list);
-	if (error != ERROR_CODE::OK)
-	{
-		ereport(ERROR,
-			(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
-			 errmsg("Failed to retrieve table list from Tsurugi. (error: %d)",
-				static_cast<int>(error)),
-			 errdetail("%s", Tsurugi::get_error_message(error).c_str())));
-	}
-
-	auto tg_table_names = tg_table_list->get_table_names();
-
-#ifdef ENABLE_IMPORT_TABLE_LIMITS
-	/* The basic behavior regarding the restriction of tables to be imported is handled
-	 * by PostgreSQL functions.
-	 * FDW does not need to handle this and should be disabled.
-	 */
-	if ((stmt->list_type == FDW_IMPORT_SCHEMA_LIMIT_TO) || (stmt->list_type == FDW_IMPORT_SCHEMA_EXCEPT))
-	{
-		std::unordered_set<std::string> _table_list;
-		ListCell* lc;
-		foreach (lc, stmt->table_list)
-		{
-			_table_list.insert(((RangeVar*)lfirst(lc))->relname);
-		}
-
-		for (auto ite = tg_table_names.begin(); ite != tg_table_names.end();)
-		{
-			bool is_exclude_table = false;
-
-			if (stmt->list_type == FDW_IMPORT_SCHEMA_LIMIT_TO)
-			{
-				/* include only listed tables in import */
-				is_exclude_table = (_table_list.find(*ite) == _table_list.end());
-			}
-			else if (stmt->list_type == FDW_IMPORT_SCHEMA_EXCEPT)
-			{
-				/* exclude listed tables from import */
-				is_exclude_table = (_table_list.find(*ite) != _table_list.end());
-			}
-
-			if (is_exclude_table)
-			{
-				elog(DEBUG2, R"(exclude table "%s" from import.)", (*ite).c_str());
-				ite = tg_table_names.erase(ite);
-			}
-			else
-			{
-				++ite;
-			}
-		}
-	}
-#endif	// ENABLE_IMPORT_TABLE_LIMITS
-
-	List* result_commands = NIL;
-	/* CREATE FOREIGN TABLE statments */
-	for (const auto& table_name : tg_table_names)
-	{
-		TableMetadataPtr tg_table_metadata;
-
-		/* Get table metadata from Tsurugi. */
-		error = Tsurugi::get_table_metadata(server->serverid, table_name, tg_table_metadata);
-		if (error != ERROR_CODE::OK)
-		{
-			ereport(ERROR,
-				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
-				errmsg("Failed to retrieve table metadata from Tsurugi. (error: %d)",
-					static_cast<int>(error)),
-				errdetail("%s", Tsurugi::get_error_message(error).c_str())));
-		}
-
-		/* Get table metadata from Tsurugi. */
-		const auto &tg_columns = tg_table_metadata->columns();
-
-		elog(DEBUG2, R"(table: "%.64s")", table_name.c_str());
-
-		std::ostringstream col_def;  /* columns definition */
-		/* Create PostgreSQL column definitions based on Tsurugi column definitions. */
-		for (const auto& column : tg_columns)
-		{
-			/* Convert from Tsurugi datatype to PostgreSQL datatype. */
-			auto pg_type = Tsurugi::convert_type_to_pg(column.atom_type());
-			if (!pg_type)
-			{
-				ereport(ERROR,
-					(errcode(ERRCODE_FDW_INVALID_DATA_TYPE),
-					 errmsg(R"(unsupported tsurugi data type "%d")",
-					 	static_cast<int>(column.atom_type())),
-					 errdetail(R"(table:"%s" column:"%s" type:%d)",
-					 	table_name.c_str(),
-					 	column.name().c_str(),
-					 	static_cast<int>(column.atom_type()))));
-			}
-			std::string type_name(*pg_type);
-
-			elog(DEBUG2,
-				R"(column: {"name":"%.64s", "tsurugi_atom_type":%d, "postgres_type":"%s"})",
-				column.name().c_str(), static_cast<int>(column.atom_type()), type_name.c_str());
-
-			/* Create a column definition. */
-			if (col_def.tellp() != 0)
-			{
-				col_def << ",";
-			}
-			col_def << "\"" << column.name() << "\" " << type_name;
-		}
-
-		/* Create a CREATE FOREIGN TABLE statement. */
-		auto table_def =
-			(boost::format(R"(CREATE FOREIGN TABLE "%s" (%s) SERVER %s)")
-				% table_name.c_str() % col_def.str() % server->servername).str();
-
-		elog(DEBUG1, "%.512s", table_def.c_str());
-
-		result_commands = lappend(result_commands, pstrdup(table_def.c_str()));
-	}
-
-	return result_commands;
+	return execute_import_foreign_schema(stmt, serverOid);
 }
 
 /* ===========================================================================
@@ -975,6 +797,8 @@ static bool has_table_privilege(Oid relid, ForeignScan *fsplan)
 {
 	AclMode check_modes[3];
 	int mode_count = 0;
+	bool res = false;
+	List *has_where_clause = NULL;
 
 	/* Privilege check for main operation. */
 	switch (fsplan->operation)
@@ -990,7 +814,7 @@ static bool has_table_privilege(Oid relid, ForeignScan *fsplan)
 			check_modes[mode_count++] = ACL_UPDATE;
 
 			/* Additional SELECT privilege check for condition evaluation. */
-			auto has_where_clause = fsplan->fdw_private;
+			has_where_clause = fsplan->fdw_private;
 			if (has_where_clause != NULL)
 			{
 				check_modes[mode_count++] = ACL_SELECT;
@@ -1002,7 +826,7 @@ static bool has_table_privilege(Oid relid, ForeignScan *fsplan)
 			check_modes[mode_count++] = ACL_DELETE;
 
 			/* Additional SELECT privilege check for condition evaluation. */
-			auto has_where_clause = fsplan->fdw_private;
+			has_where_clause = fsplan->fdw_private;
 			if (has_where_clause != NULL)
 			{
 				check_modes[mode_count++] = ACL_SELECT;
@@ -1014,7 +838,7 @@ static bool has_table_privilege(Oid relid, ForeignScan *fsplan)
 			break;
 	}
 
-	bool res = false;
+	res = false;
 	for (int i = 0; i < mode_count; i++)
 	{
 		res = pg_class_aclcheck(relid, GetUserId(), check_modes[i]) == ACLCHECK_OK;

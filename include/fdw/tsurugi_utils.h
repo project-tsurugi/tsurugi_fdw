@@ -17,42 +17,25 @@
 #ifndef TSURUGI_UTILS_H
 #define TSURUGI_UTILS_H
 
-#include <string>
-#include <string_view>
-#include "ogawayama/stub/api.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 #include "postgres.h"
+#include "tsurugi_fdw.h"
 #ifdef __cplusplus
 }
 #endif
-
-#include "tsurugi_fdw.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-#if PG_VERSION_NUM >= 140000
-extern void rebuildInsertSql(StringInfo buf, Relation rel,
-				 			char *orig_query, List *target_attrs,
-				 			int values_end_len, int num_params,
-				 			int num_rows);
-#endif	/* PG_VERSION_NUM >= 140000 */
+bool is_prepare_statement(const char* query);
+void create_cursor(ForeignScanState* node);
+void execute_foreign_scan(TgFdwForeignScanState *fsstate, TupleTableSlot *tupleSlot);
+void prepare_direct_modify(TgFdwDirectModifyState *dmstate);
+void execute_direct_modify(ForeignScanState *node);
+List *execute_import_foreign_schema(ImportForeignSchemaStmt* stmt, Oid serverOid);
 #ifdef __cplusplus
 }
 #endif
-
-bool is_prepare_statement(const char* query);
-std::string make_tsurugi_query(std::string_view query_string);
-
-void make_tuple_from_result_row(ResultSetPtr result_set, 
-                                        TupleDesc tupleDescriptor,
-                                        List* retrieved_attrs,
-                                        Datum* row,
-                                        bool* is_null);
-void create_cursor(ForeignScanState* node);					
-void prepare_direct_modify(TgFdwDirectModifyState* dmstate);
-void execute_direct_modify(ForeignScanState* node);
-#endif  //TSURUGI_UTILS_H
+#endif  //	TSURUGI_UTILS_H

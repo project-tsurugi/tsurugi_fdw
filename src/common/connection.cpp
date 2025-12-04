@@ -127,15 +127,16 @@ void begin_remote_xact(ConnCacheEntry *entry)
 {
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
+	auto tsurugi = Tsurugi::get_instance();
 	/* Start main transaction if we haven't yet */
 	if (entry->xact_depth <= 0)
 	{
 		auto server_oid = entry->key;
-		ERROR_CODE error = Tsurugi::start_transaction(server_oid);
+		ERROR_CODE error = tsurugi->start_transaction(server_oid);
 		if (error != ERROR_CODE::OK)
 		{
 			elog(ERROR, "Failed to begin the Tsurugi transaction. (%d)\n%s", 
-				(int) error, Tsurugi::get_error_message(error).c_str());
+				(int) error, tsurugi->get_error_message(error).c_str());
 		}
 		entry->xact_depth = 1;
 		entry->changing_xact_state = false;
@@ -150,6 +151,7 @@ static void tsurugifdw_xact_callback(XactEvent event, void *arg)
 	HASH_SEQ_STATUS scan;
 	ConnCacheEntry *entry;
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
+	auto tsurugi = Tsurugi::get_instance();
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
@@ -172,11 +174,11 @@ static void tsurugifdw_xact_callback(XactEvent event, void *arg)
 				case XACT_EVENT_PRE_COMMIT:
 					/* Commit all remote transactions during pre-commit */
 					entry->changing_xact_state = true;
-					error = Tsurugi::commit();
+					error = tsurugi->commit();
 					if (error != ERROR_CODE::OK)
 					{
 						elog(ERROR, "Failed to commit the Tsurugi transaction. (%d)\n%s",
-							 (int)error, Tsurugi::get_error_message(error).c_str());
+							 (int)error, tsurugi->get_error_message(error).c_str());
 					}
 					entry->changing_xact_state = false;
 					break;
@@ -206,10 +208,10 @@ static void tsurugifdw_xact_callback(XactEvent event, void *arg)
 
 					/* Mark this connection as in the process of changing transaction state. */
 					entry->changing_xact_state = true;
-					error = Tsurugi::rollback();
+					error = tsurugi->rollback();
 					if (error != ERROR_CODE::OK) {
 						elog(ERROR, "Failed to rollback the Tsurugi transaction. (%d)\n%s", 
-                			(int) error, Tsurugi::get_error_message(error).c_str());
+                			(int) error, tsurugi->get_error_message(error).c_str());
 					}
 					entry->changing_xact_state = false;
 					break;

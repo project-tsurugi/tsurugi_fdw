@@ -97,6 +97,7 @@ typedef struct TgFdwDirectModifyState
 
 	/* working memory context */
 	MemoryContext temp_cxt;		/* context for per-tuple temporary data */
+	
 } TgFdwDirectModifyState;
 
 #ifdef __cplusplus
