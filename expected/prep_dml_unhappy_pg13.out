@@ -50,14 +50,14 @@ CREATE FOREIGN TABLE fdw_sel_unsupported_test (
   manager_id integer
 ) SERVER tsurugidb;
 -- Arithmetic operation
-PREPARE fdw_prepare_sel AS
+PREPARE prep_select AS
   SELECT id, name, ((value / 10000) * ref_id)::int AS lank
     FROM fdw_sel_unsupported_test;
-EXECUTE fdw_prepare_sel;
+EXECUTE prep_select;
 ERROR:  tsurugi_fdw : Contains an unsupported target entry. (113)
-DEALLOCATE fdw_prepare_sel;
+DEALLOCATE prep_select;
 -- CASE WHEN
-PREPARE fdw_prepare_sel (integer, integer) AS
+PREPARE prep_select (integer, integer) AS
   SELECT
     id, name,
     CASE
@@ -65,57 +65,57 @@ PREPARE fdw_prepare_sel (integer, integer) AS
       WHEN value >= $2 THEN 'Medium'
       ELSE 'Low' END AS lank
     FROM fdw_sel_unsupported_test;
-EXECUTE fdw_prepare_sel (100000, 75000);
+EXECUTE prep_select (100000, 75000);
 ERROR:  tsurugi_fdw : Contains an unsupported target entry. (130)
-DEALLOCATE fdw_prepare_sel;
+DEALLOCATE prep_select;
 -- WINDOW
-PREPARE fdw_prepare_sel AS
+PREPARE prep_select AS
   SELECT id, name, value, RANK() OVER w AS rk
     FROM fdw_sel_unsupported_test
     WINDOW w AS (ORDER BY value DESC);
-EXECUTE fdw_prepare_sel;
+EXECUTE prep_select;
 ERROR:  tsurugi_fdw : Contains an unsupported target entry. (111)
-DEALLOCATE fdw_prepare_sel;
+DEALLOCATE prep_select;
 -- FETCH FIRST ... WITH TIES
-PREPARE fdw_prepare_sel AS
+PREPARE prep_select AS
   SELECT * FROM fdw_sel_unsupported_test ORDER BY value
     FETCH FIRST 2 ROWS WITH TIES;
-EXECUTE fdw_prepare_sel;
+EXECUTE prep_select;
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "FETCH", expected one of {<END_OF_FILE>, %, (, *, +, ...}" region:"region(begin=60, end=65)")
 CONTEXT:  SQL query:   SELECT * FROM fdw_sel_unsupported_test ORDER BY value     FETCH FIRST 2 ROWS WITH TIES
-DEALLOCATE fdw_prepare_sel;
+DEALLOCATE prep_select;
 -- FETCH NEXT ... WITH TIES
-PREPARE fdw_prepare_sel AS
+PREPARE prep_select AS
   SELECT * FROM fdw_sel_unsupported_test ORDER BY value
     FETCH NEXT 2 ROWS WITH TIES;
-EXECUTE fdw_prepare_sel;
+EXECUTE prep_select;
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "FETCH", expected one of {<END_OF_FILE>, %, (, *, +, ...}" region:"region(begin=60, end=65)")
 CONTEXT:  SQL query:   SELECT * FROM fdw_sel_unsupported_test ORDER BY value     FETCH NEXT 2 ROWS WITH TIES
-DEALLOCATE fdw_prepare_sel;
+DEALLOCATE prep_select;
 -- OFFSET FETCH FIRST ... WITH TIES
-PREPARE fdw_prepare_sel AS
+PREPARE prep_select AS
   SELECT * FROM fdw_sel_unsupported_test ORDER BY value
     OFFSET 1 FETCH FIRST 2 ROWS WITH TIES;
-EXECUTE fdw_prepare_sel;
+EXECUTE prep_select;
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "OFFSET", expected one of {<END_OF_FILE>, %, (, *, +, ...}" region:"region(begin=60, end=66)")
 CONTEXT:  SQL query:   SELECT * FROM fdw_sel_unsupported_test ORDER BY value     OFFSET 1 FETCH FIRST 2 ROWS WITH TIES
-DEALLOCATE fdw_prepare_sel;
+DEALLOCATE prep_select;
 -- OFFSET FETCH NEXT ... WITH TIES
-PREPARE fdw_prepare_sel AS
+PREPARE prep_select AS
   SELECT * FROM fdw_sel_unsupported_test ORDER BY value
     OFFSET 1 FETCH NEXT 2 ROWS WITH TIES;
-EXECUTE fdw_prepare_sel;
+EXECUTE prep_select;
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "OFFSET", expected one of {<END_OF_FILE>, %, (, *, +, ...}" region:"region(begin=60, end=66)")
 CONTEXT:  SQL query:   SELECT * FROM fdw_sel_unsupported_test ORDER BY value     OFFSET 1 FETCH NEXT 2 ROWS WITH TIES
-DEALLOCATE fdw_prepare_sel;
+DEALLOCATE prep_select;
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_sel_unsupported_test;
 -- Test teardown: DDL of the Tsurugi

@@ -1,5 +1,6 @@
 /* Test case: unhappy path - Unsupported data types */
--- Test setup: DDL of the Tsurugi
+-- Numeric Types - integer
+--- Test setup: DDL of the Tsurugi
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_int (c INT)
 ', 'tsurugidb');
@@ -8,243 +9,11 @@ SELECT tg_execute_ddl('
  CREATE TABLE
 (1 row)
 
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_bigint (c BIGINT)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_decimal (c DECIMAL)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_decimal_p (c DECIMAL(5))
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_decimal_ps (c DECIMAL(5, 2))
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_decimal_ps0 (c DECIMAL(38, 0))
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_decimal_ps38 (c DECIMAL(38, 38))
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_numeric (c NUMERIC)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_numeric_p (c NUMERIC(5))
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_numeric_ps (c NUMERIC(5, 2))
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_numeric_ps0 (c NUMERIC(38, 0))
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_numeric_ps38 (c NUMERIC(38, 38))
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_real (c REAL)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_double (c DOUBLE)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_char (c CHAR)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_char_l (c CHAR(10))
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_varchar_l (c VARCHAR(10))
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_date (c DATE)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_time (c TIME)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_timestamp (c TIMESTAMP)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_timestamp_wo_tz (c TIMESTAMP WITHOUT TIME ZONE)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_timestamp_tz (c TIMESTAMP WITH TIME ZONE)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
--- Test setup: DDL of the PostgreSQL
+--- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE fdw_type_int (
   c integer
 ) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_bigint (
-  c bigint
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_decimal (
-  c decimal
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_decimal_p (
-  c decimal(5)
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_decimal_ps (
-  c decimal(5, 2)
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_decimal_ps0 (
-  c decimal(38, 0)
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_decimal_ps38 (
-  c decimal(38, 38)
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_numeric (
-  c numeric
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_numeric_p (
-  c numeric(5)
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_numeric_ps (
-  c numeric(5, 2)
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_numeric_ps0 (
-  c numeric(38, 0)
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_numeric_ps38 (
-  c numeric(38, 38)
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_real (
-  c real
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_double (
-  c double precision
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_char (
-  c char
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_char_l (
-  c char(10)
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_varchar_l (
-  c varchar(10)
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_date (
-  c date
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_time (
-  c time
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_timestamp (
-  c timestamp
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_timestamp_wo_tz (
-  c timestamp without time zone
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_timestamp_tz (
-  c timestamp with time zone
-) SERVER tsurugidb;
--- Numeric Types
---- integer
+--- Test
 INSERT INTO fdw_type_int VALUES (2147483648);
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
@@ -255,21 +24,16 @@ ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
 CONTEXT:  SQL query: INSERT INTO fdw_type_int VALUES (-2147483649)
+INSERT INTO fdw_type_int VALUES (2.1);  -- see tsurugi-issues#736
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
+CONTEXT:  SQL query: INSERT INTO fdw_type_int VALUES (2.1)
 INSERT INTO fdw_type_int VALUES ('invalid');
 ERROR:  invalid input syntax for type integer: "invalid"
 LINE 1: INSERT INTO fdw_type_int VALUES ('invalid');
                                          ^
-INSERT INTO fdw_type_int (c) VALUES (1.1);  -- see tsurugi-issues#736
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
-CONTEXT:  SQL query: INSERT INTO fdw_type_int (c) VALUES (1.1)
-INSERT INTO fdw_type_int (c) VALUES (0.1);  -- see tsurugi-issues#736
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
-CONTEXT:  SQL query: INSERT INTO fdw_type_int (c) VALUES (0.1)
-INSERT INTO fdw_type_int (c) VALUES (cast(0.1 as int));
+INSERT INTO fdw_type_int VALUES (0);
 UPDATE fdw_type_int SET c = 2147483648;
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
@@ -302,7 +66,30 @@ DELETE FROM fdw_type_int WHERE invalid >= 1;
 ERROR:  column "invalid" does not exist
 LINE 1: DELETE FROM fdw_type_int WHERE invalid >= 1;
                                        ^
---- bigint
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_int;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_int', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Numeric Types - bigint
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_bigint (c BIGINT)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_bigint (
+  c bigint
+) SERVER tsurugidb;
+--- Test
 INSERT INTO fdw_type_bigint VALUES (9223372036854775808);
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
@@ -313,21 +100,16 @@ ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
 CONTEXT:  SQL query: INSERT INTO fdw_type_bigint VALUES (-9223372036854775809)
+INSERT INTO fdw_type_bigint VALUES (2.1);  -- see tsurugi-issues#736
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
+CONTEXT:  SQL query: INSERT INTO fdw_type_bigint VALUES (2.1)
 INSERT INTO fdw_type_bigint VALUES ('invalid');
 ERROR:  invalid input syntax for type bigint: "invalid"
 LINE 1: INSERT INTO fdw_type_bigint VALUES ('invalid');
                                             ^
-INSERT INTO fdw_type_bigint VALUES (1.1);  -- see tsurugi-issues#736
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
-CONTEXT:  SQL query: INSERT INTO fdw_type_bigint VALUES (1.1)
-INSERT INTO fdw_type_bigint VALUES (0.1);  -- see tsurugi-issues#736
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
-CONTEXT:  SQL query: INSERT INTO fdw_type_bigint VALUES (0.1)
-INSERT INTO fdw_type_bigint VALUES (cast(0.1 as bigint));
+INSERT INTO fdw_type_bigint VALUES (0);
 UPDATE fdw_type_bigint SET c = 9223372036854775808;
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
@@ -360,7 +142,30 @@ DELETE FROM fdw_type_bigint WHERE invalid >= 1;
 ERROR:  column "invalid" does not exist
 LINE 1: DELETE FROM fdw_type_bigint WHERE invalid >= 1;
                                           ^
---- decimal
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_bigint;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_bigint', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Numeric Types - decimal
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_decimal (c DECIMAL)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_decimal (
+  c decimal
+) SERVER tsurugidb;
+--- Test
 INSERT INTO fdw_type_decimal VALUES ('invalid');
 ERROR:  invalid input syntax for type numeric: "invalid"
 LINE 1: INSERT INTO fdw_type_decimal VALUES ('invalid');
@@ -377,7 +182,30 @@ DELETE FROM fdw_type_decimal WHERE invalid >= 1;
 ERROR:  column "invalid" does not exist
 LINE 1: DELETE FROM fdw_type_decimal WHERE invalid >= 1;
                                            ^
---- decimal(5)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_decimal;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Numeric Types - decimal(5)
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_decimal_p (c DECIMAL(5))
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_decimal_p (
+  c decimal(5)
+) SERVER tsurugidb;
+--- Test
 INSERT INTO fdw_type_decimal_p VALUES (123456);
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
@@ -399,7 +227,30 @@ DELETE FROM fdw_type_decimal_p WHERE invalid >= 1;
 ERROR:  column "invalid" does not exist
 LINE 1: DELETE FROM fdw_type_decimal_p WHERE invalid >= 1;
                                              ^
---- decimal(5, 2)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_decimal_p;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_p', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Numeric Types - decimal(5, 2)
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_decimal_ps (c DECIMAL(5, 2))
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_decimal_ps (
+  c decimal(5, 2)
+) SERVER tsurugidb;
+--- Test
 INSERT INTO fdw_type_decimal_ps VALUES (1234);
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
@@ -431,7 +282,30 @@ DELETE FROM fdw_type_decimal_ps WHERE invalid >= 1;
 ERROR:  column "invalid" does not exist
 LINE 1: DELETE FROM fdw_type_decimal_ps WHERE invalid >= 1;
                                               ^
---- decimal(38, 0)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_decimal_ps;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_ps', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Numeric Types - decimal(38, 0)
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_decimal_ps0 (c DECIMAL(38, 0))
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_decimal_ps0 (
+  c decimal(38, 0)
+) SERVER tsurugidb;
+--- Test
 INSERT INTO fdw_type_decimal_ps0
   VALUES (100000000000000000000000000000000000000);
 ERROR:  Failed to execute remote SQL.
@@ -453,7 +327,30 @@ HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_decimal_value message:"invalid decimal value '340282366920938463463374607431768211456' (inexact value by rounding)" location:<input>:2:11+39)
 CONTEXT:  SQL query: INSERT INTO fdw_type_decimal_ps0
   VALUES (340282366920938463463374607431768211456)
---- decimal(38, 38)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_decimal_ps0;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_ps0', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Numeric Types - decimal(38, 38)
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_decimal_ps38 (c DECIMAL(38, 38))
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_decimal_ps38 (
+  c decimal(38, 38)
+) SERVER tsurugidb;
+--- Test
 INSERT INTO fdw_type_decimal_ps38 VALUES (1);
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
@@ -480,7 +377,30 @@ HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_decimal_value message:"invalid decimal value '0.340282366920938463463374607431768211456' (inexact value by rounding)" location:<input>:2:11+41)
 CONTEXT:  SQL query: INSERT INTO fdw_type_decimal_ps38
   VALUES (0.340282366920938463463374607431768211456)
---- numeric
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_decimal_ps38;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_ps38', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Numeric Types - numeric
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_numeric (c NUMERIC)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_numeric (
+  c numeric
+) SERVER tsurugidb;
+--- Test
 INSERT INTO fdw_type_numeric VALUES ('invalid');
 ERROR:  invalid input syntax for type numeric: "invalid"
 LINE 1: INSERT INTO fdw_type_numeric VALUES ('invalid');
@@ -497,7 +417,30 @@ DELETE FROM fdw_type_numeric WHERE invalid >= 1;
 ERROR:  column "invalid" does not exist
 LINE 1: DELETE FROM fdw_type_numeric WHERE invalid >= 1;
                                            ^
---- numeric(5)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_numeric;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Numeric Types - numeric(5)
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_numeric_p (c NUMERIC(5))
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_numeric_p (
+  c numeric(5)
+) SERVER tsurugidb;
+--- Test
 INSERT INTO fdw_type_numeric_p VALUES (123456);
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
@@ -519,7 +462,30 @@ DELETE FROM fdw_type_numeric_p WHERE invalid >= 1;
 ERROR:  column "invalid" does not exist
 LINE 1: DELETE FROM fdw_type_numeric_p WHERE invalid >= 1;
                                              ^
---- numeric(5, 2)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_numeric_p;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_p', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Numeric Types - numeric(5, 2)
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_numeric_ps (c NUMERIC(5, 2))
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_numeric_ps (
+  c numeric(5, 2)
+) SERVER tsurugidb;
+--- Test
 INSERT INTO fdw_type_numeric_ps VALUES (1234);
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
@@ -556,6 +522,16 @@ ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: ceiling(decimal(*, 1))" location:<input>:1:41+14)
 CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (ceiling(-95.3))
+INSERT INTO fdw_type_numeric_ps VALUES (CAST(cbrt(27.0) AS DECIMAL(5, 2)));
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: cbrt(decimal(*, 1))" location:<input>:1:46+10)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (CAST(cbrt(27.0) AS DECIMAL(5, 2)))
+INSERT INTO fdw_type_numeric_ps VALUES (CAST(degrees(0.5) AS DECIMAL(5, 2)));
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: degrees(decimal(*, 1))" location:<input>:1:46+12)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (CAST(degrees(0.5) AS DECIMAL(5, 2)))
 INSERT INTO fdw_type_numeric_ps VALUES (div(9,4));
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
@@ -591,16 +567,31 @@ ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: log(decimal(*, 1), decimal(*, 1))" location:<input>:1:41+14)
 CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (log(2.0, 64.0))
+INSERT INTO fdw_type_numeric_ps VALUES (CAST(pi() AS DECIMAL(5, 2)));
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: pi()" location:<input>:1:46+4)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (CAST(pi() AS DECIMAL(5, 2)))
 INSERT INTO fdw_type_numeric_ps VALUES (power(9.0, 3.0));
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: power(decimal(*, 1), decimal(*, 1))" location:<input>:1:41+15)
 CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (power(9.0, 3.0))
+INSERT INTO fdw_type_numeric_ps VALUES (CAST(radians(45.0) AS DECIMAL(5, 2)));
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: radians(decimal(*, 1))" location:<input>:1:46+13)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (CAST(radians(45.0) AS DECIMAL(5, 2)))
 INSERT INTO fdw_type_numeric_ps VALUES (sign(-8.4));
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: sign(decimal(*, 1))" location:<input>:1:41+10)
 CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (sign(-8.4))
+INSERT INTO fdw_type_numeric_ps VALUES (CAST(scale(8.41) AS DECIMAL(5, 2)));
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: scale(decimal(*, 2))" location:<input>:1:46+11)
+CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (CAST(scale(8.41) AS DECIMAL(5, 2)))
 INSERT INTO fdw_type_numeric_ps VALUES (CAST(sqrt(2.0) AS DECIMAL(5, 2)));
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
@@ -616,38 +607,36 @@ ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: trunc(decimal(*, 4), int8())" location:<input>:1:41+17)
 CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (trunc(42.4382, 2))
-INSERT INTO fdw_type_numeric_ps VALUES (CAST(cbrt(27.0) AS DECIMAL(5, 2)));
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: cbrt(decimal(*, 1))" location:<input>:1:46+10)
-CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (CAST(cbrt(27.0) AS DECIMAL(5, 2)))
-INSERT INTO fdw_type_numeric_ps VALUES (CAST(degrees(0.5) AS DECIMAL(5, 2)));
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: degrees(decimal(*, 1))" location:<input>:1:46+12)
-CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (CAST(degrees(0.5) AS DECIMAL(5, 2)))
-INSERT INTO fdw_type_numeric_ps VALUES (CAST(pi() AS DECIMAL(5, 2)));
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: pi()" location:<input>:1:46+4)
-CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (CAST(pi() AS DECIMAL(5, 2)))
-INSERT INTO fdw_type_numeric_ps VALUES (CAST(radians(45.0) AS DECIMAL(5, 2)));
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: radians(decimal(*, 1))" location:<input>:1:46+13)
-CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (CAST(radians(45.0) AS DECIMAL(5, 2)))
-INSERT INTO fdw_type_numeric_ps VALUES (CAST(scale(8.41) AS DECIMAL(5, 2)));
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:function_not_found message:"function not found: scale(decimal(*, 2))" location:<input>:1:46+11)
-CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps VALUES (CAST(scale(8.41) AS DECIMAL(5, 2)))
 INSERT INTO fdw_type_numeric_ps
   VALUES (CAST(width_bucket(5.35, 0.024, 5, 2, 5) AS DECIMAL(5, 2)));
 ERROR:  function width_bucket(numeric, numeric, integer, integer, integer) does not exist
 LINE 2:   VALUES (CAST(width_bucket(5.35, 0.024, 5, 2, 5) AS DECIMAL...
                        ^
 HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
---- numeric(38, 0)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_numeric_ps;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_ps', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Numeric Types - numeric(38, 0)
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_numeric_ps0 (c NUMERIC(38, 0))
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_numeric_ps0 (
+  c numeric(38, 0)
+) SERVER tsurugidb;
+--- Test
 INSERT INTO fdw_type_numeric_ps0
   VALUES (100000000000000000000000000000000000000);
 ERROR:  Failed to execute remote SQL.
@@ -669,7 +658,30 @@ HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_decimal_value message:"invalid decimal value '340282366920938463463374607431768211456' (inexact value by rounding)" location:<input>:2:11+39)
 CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps0
   VALUES (340282366920938463463374607431768211456)
---- numeric(38, 38)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_numeric_ps0;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_ps0', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Numeric Types - numeric(38, 38)
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_numeric_ps38 (c NUMERIC(38, 38))
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_numeric_ps38 (
+  c numeric(38, 38)
+) SERVER tsurugidb;
+--- Test
 INSERT INTO fdw_type_numeric_ps38 VALUES (1);
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
@@ -696,7 +708,30 @@ HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_decimal_value message:"invalid decimal value '0.340282366920938463463374607431768211456' (inexact value by rounding)" location:<input>:2:11+41)
 CONTEXT:  SQL query: INSERT INTO fdw_type_numeric_ps38
   VALUES (0.340282366920938463463374607431768211456)
---- real
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_numeric_ps38;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_ps38', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Numeric Types - real
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_real (c REAL)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_real (
+  c real
+) SERVER tsurugidb;
+--- Test
 INSERT INTO fdw_type_real VALUES ('invalid');
 ERROR:  invalid input syntax for type real: "invalid"
 LINE 1: INSERT INTO fdw_type_real VALUES ('invalid');
@@ -713,7 +748,30 @@ DELETE FROM fdw_type_real WHERE invalid >= 1;
 ERROR:  column "invalid" does not exist
 LINE 1: DELETE FROM fdw_type_real WHERE invalid >= 1;
                                         ^
---- double precision
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_real;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_real', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Numeric Types - double precision
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_double (c DOUBLE)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_double (
+  c double precision
+) SERVER tsurugidb;
+--- Test
 INSERT INTO fdw_type_double VALUES ('invalid');
 ERROR:  invalid input syntax for type double precision: "invalid"
 LINE 1: INSERT INTO fdw_type_double VALUES ('invalid');
@@ -730,8 +788,30 @@ DELETE FROM fdw_type_double WHERE invalid >= 1;
 ERROR:  column "invalid" does not exist
 LINE 1: DELETE FROM fdw_type_double WHERE invalid >= 1;
                                           ^
--- Character Types
---- char
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_double;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_double', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Character Types - char
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_char (c CHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_char (
+  c char
+) SERVER tsurugidb;
+--- Test
 INSERT INTO fdw_type_char VALUES ('iX');
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
@@ -755,7 +835,30 @@ DELETE FROM fdw_type_char WHERE invalid = 'i';
 ERROR:  column "invalid" does not exist
 LINE 1: DELETE FROM fdw_type_char WHERE invalid = 'i';
                                         ^
---- char(length)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_char;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_char', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Character Types - char(length)
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_char_l (c CHAR(10))
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_char_l (
+  c char(10)
+) SERVER tsurugidb;
+--- Test
 INSERT INTO fdw_type_char_l VALUES ('insert_valX');
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
@@ -780,7 +883,30 @@ DELETE FROM fdw_type_char_l WHERE invalid = 'insert_val';
 ERROR:  column "invalid" does not exist
 LINE 1: DELETE FROM fdw_type_char_l WHERE invalid = 'insert_val';
                                           ^
---- varchar(length)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_char_l;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_char_l', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Character Types - varchar(length)
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_varchar_l (c VARCHAR(10))
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_varchar_l (
+  c varchar(10)
+) SERVER tsurugidb;
+--- Test
 INSERT INTO fdw_type_varchar_l VALUES ('insert_valX');
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
@@ -805,33 +931,31 @@ DELETE FROM fdw_type_varchar_l WHERE invalid = 'insert_val';
 ERROR:  column "invalid" does not exist
 LINE 1: DELETE FROM fdw_type_varchar_l WHERE invalid = 'insert_val';
                                              ^
--- Date/Time Types
---- date
-INSERT INTO fdw_type_date VALUES (date '1/8/1999');
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_string_value message:"invalid date literal: 1/8/1999 (syntax error, unexpected <ERROR>, expecting : or -)" location:<input>)
-CONTEXT:  SQL query: INSERT INTO fdw_type_date VALUES (date '1/8/1999')
-INSERT INTO fdw_type_date VALUES (date '1/18/1999');
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_string_value message:"invalid date literal: 1/18/1999 (syntax error, unexpected <ERROR>, expecting : or -)" location:<input>)
-CONTEXT:  SQL query: INSERT INTO fdw_type_date VALUES (date '1/18/1999')
-INSERT INTO fdw_type_date VALUES (date '08-Jan-99');
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_string_value message:"invalid date literal: 08-Jan-99 (syntax error, unexpected <ERROR>, expecting <INTEGER>)" location:<input>)
-CONTEXT:  SQL query: INSERT INTO fdw_type_date VALUES (date '08-Jan-99')
-INSERT INTO fdw_type_date VALUES (date 'Jan-08-99');
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_string_value message:"invalid date literal: Jan-08-99 (syntax error, unexpected <ERROR>, expecting <INTEGER> or + or - or Z)" location:<input>)
-CONTEXT:  SQL query: INSERT INTO fdw_type_date VALUES (date 'Jan-08-99')
-INSERT INTO fdw_type_date VALUES (date 'January 8, 99 BC');
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_string_value message:"invalid date literal: January 8, 99 BC (syntax error, unexpected <ERROR>, expecting <INTEGER> or + or - or Z)" location:<input>)
-CONTEXT:  SQL query: INSERT INTO fdw_type_date VALUES (date 'January 8, 99 BC')
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_varchar_l;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_varchar_l', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Date/Time Types - date
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_date (c DATE)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_date (
+  c date
+) SERVER tsurugidb;
+--- Test
+SET DATESTYLE TO 'default';
 INSERT INTO fdw_type_date VALUES (date '01:02:03.456');
 ERROR:  invalid input syntax for type date: "01:02:03.456"
 LINE 1: INSERT INTO fdw_type_date VALUES (date '01:02:03.456');
@@ -876,7 +1000,30 @@ LINE 1: INSERT INTO fdw_type_date VALUES (date 'January 8, 99 BC');
                                                ^
 HINT:  Perhaps you need a different "datestyle" setting.
 SET DATESTYLE TO 'default';
---- time
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_date;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_date', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Date/Time Types - time
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_time (c TIME)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_time (
+  c time
+) SERVER tsurugidb;
+--- Test
 INSERT INTO fdw_type_time VALUES (date '2025/01/01');
 ERROR:  column "c" is of type time without time zone but expression is of type date
 LINE 1: INSERT INTO fdw_type_time VALUES (date '2025/01/01');
@@ -890,26 +1037,39 @@ INSERT INTO fdw_type_time VALUES (time '25:00:00');
 ERROR:  date/time field value out of range: "25:00:00"
 LINE 1: INSERT INTO fdw_type_time VALUES (time '25:00:00');
                                                ^
-INSERT INTO fdw_type_time VALUES (time '010203.456789012');
+INSERT INTO fdw_type_time VALUES (time '050607.890123456');
 ERROR:  Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_string_value message:"invalid time literal: 010203.456789012 (syntax error, unexpected <DECIMAL>, expecting <INTEGER> or + or - or Z)" location:<input>:1:40+18)
-CONTEXT:  SQL query: INSERT INTO fdw_type_time VALUES (time '010203.456789012')
+Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_string_value message:"invalid time literal: 050607.890123456 (syntax error, unexpected <DECIMAL>, expecting <INTEGER> or + or - or Z)" location:<input>:1:40+18)
+CONTEXT:  SQL query: INSERT INTO fdw_type_time VALUES (time '050607.890123456')
 INSERT INTO fdw_type_time VALUES (time 'invalid');
 ERROR:  invalid input syntax for type time: "invalid"
 LINE 1: INSERT INTO fdw_type_time VALUES (time 'invalid');
                                                ^
---- timestamp
-INSERT INTO fdw_type_timestamp VALUES (timestamp '2025/01/01');
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_string_value message:"invalid datetime literal: 2025/01/01 (syntax error, unexpected <ERROR>, expecting : or -)" location:<input>:1:50+12)
-CONTEXT:  SQL query: INSERT INTO fdw_type_timestamp VALUES (timestamp '2025/01/01')
-INSERT INTO fdw_type_timestamp VALUES (timestamp '2025/01/01 12:00');
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_string_value message:"invalid datetime literal: 2025/01/01 12:00 (syntax error, unexpected <ERROR>, expecting : or -)" location:<input>:1:50+18)
-CONTEXT:  SQL query: INSERT INTO fdw_type_timestamp VALUES (timestamp '2025/01/01 12:00')
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_time;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_time', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Date/Time Types - timestamp
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_timestamp (c TIMESTAMP)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_timestamp (
+  c timestamp
+) SERVER tsurugidb;
+--- Test
 INSERT INTO fdw_type_timestamp VALUES (timestamp '01:02:03.456');
 ERROR:  invalid input syntax for type timestamp: "01:02:03.456"
 LINE 1: INSERT INTO fdw_type_timestamp VALUES (timestamp '01:02:03.4...
@@ -926,6 +1086,16 @@ INSERT INTO fdw_type_timestamp VALUES (timestamp '2025-01-01 25:00:00');
 ERROR:  date/time field value out of range: "2025-01-01 25:00:00"
 LINE 1: INSERT INTO fdw_type_timestamp VALUES (timestamp '2025-01-01...
                                                          ^
+INSERT INTO fdw_type_timestamp VALUES (timestamp '2025/01/01');
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_string_value message:"invalid datetime literal: 2025/01/01 (syntax error, unexpected <ERROR>, expecting : or -)" location:<input>:1:50+12)
+CONTEXT:  SQL query: INSERT INTO fdw_type_timestamp VALUES (timestamp '2025/01/01')
+INSERT INTO fdw_type_timestamp VALUES (timestamp '2025/01/01 12:00');
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_string_value message:"invalid datetime literal: 2025/01/01 12:00 (syntax error, unexpected <ERROR>, expecting : or -)" location:<input>:1:50+18)
+CONTEXT:  SQL query: INSERT INTO fdw_type_timestamp VALUES (timestamp '2025/01/01 12:00')
 INSERT INTO fdw_type_timestamp VALUES (timestamp 'invalid');
 ERROR:  invalid input syntax for type timestamp: "invalid"
 LINE 1: INSERT INTO fdw_type_timestamp VALUES (timestamp 'invalid');
@@ -957,21 +1127,30 @@ LINE 1: INSERT INTO fdw_type_timestamp VALUES (timestamp 'January 8,...
                                                          ^
 HINT:  Perhaps you need a different "datestyle" setting.
 SET DATESTYLE TO 'default';
---- timestamp without time zone
-INSERT INTO fdw_type_timestamp_wo_tz
-  VALUES (timestamp without time zone '2025/01/01');
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_string_value message:"invalid datetime literal: 2025/01/01 (syntax error, unexpected <ERROR>, expecting : or -)" location:<input>:2:39+12)
-CONTEXT:  SQL query: INSERT INTO fdw_type_timestamp_wo_tz
-  VALUES (timestamp without time zone '2025/01/01')
-INSERT INTO fdw_type_timestamp_wo_tz
-  VALUES (timestamp without time zone '2025/01/01 12:00');
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_string_value message:"invalid datetime literal: 2025/01/01 12:00 (syntax error, unexpected <ERROR>, expecting : or -)" location:<input>:2:39+18)
-CONTEXT:  SQL query: INSERT INTO fdw_type_timestamp_wo_tz
-  VALUES (timestamp without time zone '2025/01/01 12:00')
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_timestamp;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Date/Time Types - timestamp without time zone
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_timestamp_wo_tz (c TIMESTAMP WITHOUT TIME ZONE)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_timestamp_wo_tz (
+  c timestamp without time zone
+) SERVER tsurugidb;
+--- Test
 INSERT INTO fdw_type_timestamp_wo_tz
   VALUES (timestamp without time zone '01:02:03.456');
 ERROR:  invalid input syntax for type timestamp: "01:02:03.456"
@@ -993,70 +1172,86 @@ ERROR:  date/time field value out of range: "2025-01-01 25:00:00"
 LINE 2:   VALUES (timestamp without time zone '2025-01-01 25:00:00')...
                                               ^
 INSERT INTO fdw_type_timestamp_wo_tz
+  VALUES (timestamp without time zone '2025/01/01');
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_string_value message:"invalid datetime literal: 2025/01/01 (syntax error, unexpected <ERROR>, expecting : or -)" location:<input>:2:39+12)
+CONTEXT:  SQL query: INSERT INTO fdw_type_timestamp_wo_tz
+  VALUES (timestamp without time zone '2025/01/01')
+INSERT INTO fdw_type_timestamp_wo_tz
+  VALUES (timestamp without time zone '2025/01/01 12:00');
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_string_value message:"invalid datetime literal: 2025/01/01 12:00 (syntax error, unexpected <ERROR>, expecting : or -)" location:<input>:2:39+18)
+CONTEXT:  SQL query: INSERT INTO fdw_type_timestamp_wo_tz
+  VALUES (timestamp without time zone '2025/01/01 12:00')
+INSERT INTO fdw_type_timestamp_wo_tz
   VALUES (timestamp without time zone 'invalid');
 ERROR:  invalid input syntax for type timestamp: "invalid"
 LINE 2:   VALUES (timestamp without time zone 'invalid');
                                               ^
 SET DATESTYLE TO ISO, YMD;
-INSERT INTO fdw_type_timestamp
+INSERT INTO fdw_type_timestamp_wo_tz
   VALUES (timestamp without time zone '1/8/1999 01:02:03');
 ERROR:  date/time field value out of range: "1/8/1999 01:02:03"
 LINE 2:   VALUES (timestamp without time zone '1/8/1999 01:02:03');
                                               ^
 HINT:  Perhaps you need a different "datestyle" setting.
-INSERT INTO fdw_type_timestamp
+INSERT INTO fdw_type_timestamp_wo_tz
   VALUES (timestamp without time zone '1/18/1999 01:02:03');
 ERROR:  date/time field value out of range: "1/18/1999 01:02:03"
 LINE 2:   VALUES (timestamp without time zone '1/18/1999 01:02:03');
                                               ^
 HINT:  Perhaps you need a different "datestyle" setting.
-INSERT INTO fdw_type_timestamp
+INSERT INTO fdw_type_timestamp_wo_tz
   VALUES (timestamp without time zone '08-Jan-99 01:02:03');
 ERROR:  date/time field value out of range: "08-Jan-99 01:02:03"
 LINE 2:   VALUES (timestamp without time zone '08-Jan-99 01:02:03');
                                               ^
 HINT:  Perhaps you need a different "datestyle" setting.
-INSERT INTO fdw_type_timestamp
+INSERT INTO fdw_type_timestamp_wo_tz
   VALUES (timestamp without time zone 'Jan-08-99 01:02:03');
 ERROR:  date/time field value out of range: "Jan-08-99 01:02:03"
 LINE 2:   VALUES (timestamp without time zone 'Jan-08-99 01:02:03');
                                               ^
 HINT:  Perhaps you need a different "datestyle" setting.
-INSERT INTO fdw_type_timestamp
+INSERT INTO fdw_type_timestamp_wo_tz
   VALUES (timestamp without time zone 'January 8, 99 BC 01:02:03');
 ERROR:  date/time field value out of range: "January 8, 99 BC 01:02:03"
 LINE 2:   VALUES (timestamp without time zone 'January 8, 99 BC 01:0...
                                               ^
 HINT:  Perhaps you need a different "datestyle" setting.
 SET DATESTYLE TO 'default';
---- timestamp with time zone
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_timestamp_wo_tz;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp_wo_tz', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Date/Time Types - timestamp with time zone
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_timestamp_tz (c TIMESTAMP WITH TIME ZONE)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_timestamp_tz (
+  c timestamp with time zone
+) SERVER tsurugidb;
+--- Test
 INSERT INTO fdw_type_timestamp_tz
   VALUES (time with time zone '04:05:06.789+9:00');
 ERROR:  column "c" is of type timestamp with time zone but expression is of type time with time zone
 LINE 2:   VALUES (time with time zone '04:05:06.789+9:00');
                                       ^
 HINT:  You will need to rewrite or cast the expression.
-INSERT INTO fdw_type_timestamp_tz
-  VALUES (timestamp with time zone '2025-01-01 12:01:02.34567 UTC');
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_string_value message:"invalid datetime literal: 2025-01-01 12:01:02.34567 UTC (syntax error, unexpected <WHITESPACE>, expecting <END_OF_FILE> or + or - or Z)" location:<input>:2:36+31)
-CONTEXT:  SQL query: INSERT INTO fdw_type_timestamp_tz
-  VALUES (timestamp with time zone '2025-01-01 12:01:02.34567 UTC')
-INSERT INTO fdw_type_timestamp_tz
-  VALUES (timestamp with time zone '2025-01-01 12:01:02.34567 Universal');
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_string_value message:"invalid datetime literal: 2025-01-01 12:01:02.34567 Universal (syntax error, unexpected <WHITESPACE>, expecting <END_OF_FILE> or + or - or Z)" location:<input>:2:36+37)
-CONTEXT:  SQL query: INSERT INTO fdw_type_timestamp_tz
-  VALUES (timestamp with time zone '2025-01-01 12:01:02.34567 Universal')
-INSERT INTO fdw_type_timestamp_tz
-  VALUES (timestamp with time zone '2025-01-01 12:00');
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_string_value message:"invalid datetime literal: 2025-01-01 12:00 (syntax error, unexpected <END_OF_FILE>, expecting :)" location:<input>:2:36+18)
-CONTEXT:  SQL query: INSERT INTO fdw_type_timestamp_tz
-  VALUES (timestamp with time zone '2025-01-01 12:00')
 INSERT INTO fdw_type_timestamp_tz
   VALUES (timestamp with time zone '2025-01-01 12:00-16:00');
 ERROR:  time zone displacement out of range: "2025-01-01 12:00-16:00"
@@ -1078,188 +1273,121 @@ ERROR:  invalid input syntax for type timestamp with time zone: "invalid+tz"
 LINE 2:   VALUES (timestamp with time zone 'invalid+tz');
                                            ^
 SET DATESTYLE TO ISO, YMD;
-INSERT INTO fdw_type_timestamp
+INSERT INTO fdw_type_timestamp_tz
   VALUES (timestamp with time zone '1/8/1999 01:02:03+0900');
 ERROR:  date/time field value out of range: "1/8/1999 01:02:03+0900"
 LINE 2:   VALUES (timestamp with time zone '1/8/1999 01:02:03+0900')...
                                            ^
 HINT:  Perhaps you need a different "datestyle" setting.
-INSERT INTO fdw_type_timestamp
+INSERT INTO fdw_type_timestamp_tz
   VALUES (timestamp with time zone '1/18/1999 01:02:03+0900');
 ERROR:  date/time field value out of range: "1/18/1999 01:02:03+0900"
 LINE 2:   VALUES (timestamp with time zone '1/18/1999 01:02:03+0900'...
                                            ^
 HINT:  Perhaps you need a different "datestyle" setting.
-INSERT INTO fdw_type_timestamp
+INSERT INTO fdw_type_timestamp_tz
   VALUES (timestamp with time zone '08-Jan-99 01:02:03+0900');
 ERROR:  date/time field value out of range: "08-Jan-99 01:02:03+0900"
 LINE 2:   VALUES (timestamp with time zone '08-Jan-99 01:02:03+0900'...
                                            ^
 HINT:  Perhaps you need a different "datestyle" setting.
-INSERT INTO fdw_type_timestamp
+INSERT INTO fdw_type_timestamp_tz
   VALUES (timestamp with time zone 'Jan-08-99 01:02:03+0900');
 ERROR:  date/time field value out of range: "Jan-08-99 01:02:03+0900"
 LINE 2:   VALUES (timestamp with time zone 'Jan-08-99 01:02:03+0900'...
                                            ^
 HINT:  Perhaps you need a different "datestyle" setting.
-INSERT INTO fdw_type_timestamp
+INSERT INTO fdw_type_timestamp_tz
   VALUES (timestamp with time zone 'January 8, 99 BC 01:02:03+0900');
 ERROR:  date/time field value out of range: "January 8, 99 BC 01:02:03+0900"
 LINE 2:   VALUES (timestamp with time zone 'January 8, 99 BC 01:02:0...
                                            ^
 HINT:  Perhaps you need a different "datestyle" setting.
+INSERT INTO fdw_type_timestamp_tz
+  VALUES (timestamp with time zone '2025-01-01 12:01:02.34567 UTC');
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_string_value message:"invalid datetime literal: 2025-01-01 12:01:02.34567 UTC (syntax error, unexpected <WHITESPACE>, expecting <END_OF_FILE> or + or - or Z)" location:<input>:2:36+31)
+CONTEXT:  SQL query: INSERT INTO fdw_type_timestamp_tz
+  VALUES (timestamp with time zone '2025-01-01 12:01:02.34567 UTC')
+INSERT INTO fdw_type_timestamp_tz
+  VALUES (timestamp with time zone '2025-01-01 12:01:02.34567 Universal');
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_string_value message:"invalid datetime literal: 2025-01-01 12:01:02.34567 Universal (syntax error, unexpected <WHITESPACE>, expecting <END_OF_FILE> or + or - or Z)" location:<input>:2:36+37)
+CONTEXT:  SQL query: INSERT INTO fdw_type_timestamp_tz
+  VALUES (timestamp with time zone '2025-01-01 12:01:02.34567 Universal')
+INSERT INTO fdw_type_timestamp_tz
+  VALUES (timestamp with time zone '2025-01-01 12:00');
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_string_value message:"invalid datetime literal: 2025-01-01 12:00 (syntax error, unexpected <END_OF_FILE>, expecting :)" location:<input>:2:36+18)
+CONTEXT:  SQL query: INSERT INTO fdw_type_timestamp_tz
+  VALUES (timestamp with time zone '2025-01-01 12:00')
 SET DATESTYLE TO 'default';
-/* Test teardown: DDL of the PostgreSQL */
-DROP FOREIGN TABLE fdw_type_int;
-DROP FOREIGN TABLE fdw_type_bigint;
-DROP FOREIGN TABLE fdw_type_decimal;
-DROP FOREIGN TABLE fdw_type_decimal_p;
-DROP FOREIGN TABLE fdw_type_decimal_ps;
-DROP FOREIGN TABLE fdw_type_decimal_ps0;
-DROP FOREIGN TABLE fdw_type_decimal_ps38;
-DROP FOREIGN TABLE fdw_type_numeric;
-DROP FOREIGN TABLE fdw_type_numeric_p;
-DROP FOREIGN TABLE fdw_type_numeric_ps;
-DROP FOREIGN TABLE fdw_type_numeric_ps0;
-DROP FOREIGN TABLE fdw_type_numeric_ps38;
-DROP FOREIGN TABLE fdw_type_real;
-DROP FOREIGN TABLE fdw_type_double;
-DROP FOREIGN TABLE fdw_type_char;
-DROP FOREIGN TABLE fdw_type_char_l;
-DROP FOREIGN TABLE fdw_type_varchar_l;
-DROP FOREIGN TABLE fdw_type_date;
-DROP FOREIGN TABLE fdw_type_time;
-DROP FOREIGN TABLE fdw_type_timestamp;
-DROP FOREIGN TABLE fdw_type_timestamp_wo_tz;
+--- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_timestamp_tz;
-/* Test teardown: DDL of the Tsurugi */
-SELECT tg_execute_ddl('DROP TABLE fdw_type_int', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
-SELECT tg_execute_ddl('DROP TABLE fdw_type_bigint', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
-SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
-SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_p', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
-SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_ps', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
-SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_ps0', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
-SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_ps38', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
-SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
-SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_p', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
-SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_ps', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
-SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_ps0', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
-SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_ps38', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
-SELECT tg_execute_ddl('DROP TABLE fdw_type_real', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
-SELECT tg_execute_ddl('DROP TABLE fdw_type_double', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
-SELECT tg_execute_ddl('DROP TABLE fdw_type_char', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
-SELECT tg_execute_ddl('DROP TABLE fdw_type_char_l', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
-SELECT tg_execute_ddl('DROP TABLE fdw_type_varchar_l', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
-SELECT tg_execute_ddl('DROP TABLE fdw_type_date', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
-SELECT tg_execute_ddl('DROP TABLE fdw_type_time', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
-SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
-SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp_wo_tz', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
+--- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp_tz', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - serial
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c1 INTEGER, c2 CHAR(14))
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c1 serial, c2 char(14)) SERVER tsurugidb;
+--- Test
+INSERT INTO fdw_type_unsupported (c2) VALUES ('serial is null');
+SELECT * FROM fdw_type_unsupported;
+ c1 |       c2       
+----+----------------
+    | serial is null
+(1 row)
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - bigserial
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c1 BIGINT, c2 CHAR(14))
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c1 bigserial, c2 char(14))
+  SERVER tsurugidb;
+-- Test
+INSERT INTO fdw_type_unsupported (c2) VALUES ('serial is null');
+SELECT * FROM fdw_type_unsupported;
+ c1 |       c2       
+----+----------------
+    | serial is null
+(1 row)
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  DROP TABLE
