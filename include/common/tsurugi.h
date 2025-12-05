@@ -214,7 +214,7 @@ public:
 										 TableMetadataPtr& table_metadata);
 
     ERROR_CODE tsurugi_error(ogawayama::stub::tsurugi_error_code& code);
-    std::string get_error_detail(ERROR_CODE error);
+    std::string get_error_detail(ERROR_CODE error_code);
     std::string get_error_message(ERROR_CODE error_code);
     void error_log2(int level, std::string_view message, ERROR_CODE error);
     void error_log3(int level, std::string_view message, ERROR_CODE error);
