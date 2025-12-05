@@ -21,7 +21,8 @@
  */
 #include <boost/format.hpp>
 
-#include "common/tsurugi.h"
+#include "tg_common/tsurugi.h"
+#include "tg_common/connection.h"
 #include "fdw/tsurugi_utils.h"
 
 #ifdef __cplusplus
@@ -186,9 +187,9 @@ enum FdwPathPrivateIndex
 	FdwPathPrivateHasLimit
 };
 
-/* ===========================================================================
+/** ===========================================================================
  * 
- * Prototype declarations
+ * 	Prototype Declarations.
  * 
  */
 #ifdef __cplusplus
@@ -206,7 +207,7 @@ static void tsurugiReScanForeignScan(ForeignScanState* node);
 static void tsurugiEndForeignScan(ForeignScanState* node);
 
 /*
- * FDW callback routines (Insert/Update/Delete)
+ * FDW callback routines (Modify)
  */
 static void tsurugiBeginDirectModify(ForeignScanState* node, int eflags);
 static TupleTableSlot* tsurugiIterateDirectModify(ForeignScanState* node);
@@ -252,7 +253,6 @@ static List* tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt,
  * Helper functions
  */
 extern PGDLLIMPORT PGPROC *MyProc;
-extern void handle_remote_xact(ForeignServer *server);
 static void make_retrieved_attrs(List* telist, List** retrieved_attrs);
 static void store_pg_data_type(TgFdwForeignScanState* fsstate, List* tlist, List** );
 
@@ -260,9 +260,9 @@ static void store_pg_data_type(TgFdwForeignScanState* fsstate, List* tlist, List
 static bool has_table_privilege(Oid relid, ForeignScan *fsplan);
 #endif  // PG_VERSION_NUM >= 160000
 
-/* ===========================================================================
+/** ===========================================================================
  * 
- * FDW Handler
+ * 	FDW Handlers.
  *
  */
 /*
@@ -306,9 +306,9 @@ tsurugi_fdw_handler(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(routine);
 }
 
-/* ===========================================================================
+/** ===========================================================================
  *
- * FDW Scan functions. 
+ * 	FDW Scan functions. 
  * 
  */
 
@@ -440,12 +440,11 @@ tsurugiEndForeignScan(ForeignScanState* node)
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 }
 
-/* ===========================================================================
+/** ===========================================================================
  *
- * FDW Modify functions.
+ * 	FDW Modify functions.
  *
  */
-
 /*
  * tsurugiBeginDirectModify
  *      Preparation for modifying foreign tables.
@@ -617,9 +616,9 @@ tsurugiEndForeignModify(EState *estate,
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 }
 
-/* ===========================================================================
+/** ===========================================================================
  *
- * FDW Explain functions.
+ * 	FDW Explain functions.
  *
  */
 /*
@@ -683,12 +682,11 @@ tsurugiAnalyzeForeignTable(Relation relation,
 	return true;
 }
 
-/* ===========================================================================
+/** ===========================================================================
  *
- * FDW Import Foreign Schema functions.
+ * 	FDW Import Foreign Schema function.
  *
  */
-
 /*
  * tsurugiImportForeignSchema
  *      Import table metadata from a foreign server.
@@ -700,9 +698,9 @@ static List* tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt, Oid serve
 	return execute_import_foreign_schema(stmt, serverOid);
 }
 
-/* ===========================================================================
+/** ===========================================================================
  *
- * Helper functions.
+ * 	Helper functions.
  * 
  */
 
@@ -849,4 +847,4 @@ static bool has_table_privilege(Oid relid, ForeignScan *fsplan)
 
 	return res;
 }
-#endif  // PG_VERSION_NUM >= 160000
+#endif  /* PG_VERSION_NUM >= 160000 */

@@ -25,10 +25,10 @@
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
 
-#include "common/tsurugi.h"
 #include "ogawayama/stub/error_code.h"
 #include "ogawayama/stub/api.h"
-#include "common/tg_numeric.h"
+#include "tg_common/tsurugi.h"
+#include "tg_common/tg_numeric.h"
 
 using namespace ogawayama;
 

@@ -19,9 +19,8 @@
  *	@file	connection.cpp
  */
 
-#include <iostream>
 #include "ogawayama/stub/error_code.h"
-#include "common/tsurugi.h"
+#include "tg_common/tsurugi.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,13 +41,13 @@ extern "C" {
 #include "utils/inval.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
-
 #include "foreign/foreign.h"
 #include "lib/stringinfo.h"
 #include "nodes/pathnodes.h"
 #include "utils/relcache.h"
 #include "libpq-fe.h"
 
+#include "tg_common/connection.h"
 #ifdef __cplusplus
 }
 #endif 
@@ -62,15 +61,14 @@ bool xact_got_connection = false;
 
 typedef struct ConnCacheEntry
 {
-	ConnCacheKey key;			/* hash key (must be first) */
-	bool keep_conn;
-	int			xact_depth;		/* 0 = no xact open, 1 = main xact open */
-	bool		changing_xact_state;	/* xact state change in process */
-	bool            invalidated;    /* true if reconnect is pending */
-	uint32          server_hashvalue;       /* hash value of foreign server OID */
+	ConnCacheKey key;				/* hash key (must be first) */
+	bool	keep_conn;
+	int		xact_depth;				/* 0 = no xact open, 1 = main xact open */
+	bool	changing_xact_state;	/* xact state change in process */
+	bool	invalidated;    		/* true if reconnect is pending */
+	uint32	server_hashvalue;       /* hash value of foreign server OID */
 } ConnCacheEntry;
 
-void handle_remote_xact(ForeignServer *server);
 void begin_remote_xact(ConnCacheEntry *entry);
 static void tsurugifdw_xact_callback(XactEvent event, void *arg);
 static void tsurugifdw_inval_callback(Datum arg, int cacheid, uint32 hashvalue);
@@ -83,7 +81,7 @@ void handle_remote_xact(ForeignServer *server)
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
-	if (ConnectionHash == NULL){
+	if (ConnectionHash == NULL) {
 		HASHCTL         ctl;
 
 		/* Create the hash table. */
@@ -122,7 +120,10 @@ void handle_remote_xact(ForeignServer *server)
 	begin_remote_xact(entry);
 }
 
-
+/**
+ * 	begin_remote_xact
+ * 		(entry)	Pointer to ConnCacheEntry.
+ */
 void begin_remote_xact(ConnCacheEntry *entry)
 {
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
@@ -161,14 +162,14 @@ static void tsurugifdw_xact_callback(XactEvent event, void *arg)
 
 	/* Scan all connection cache entries to find open remote transactions, and close them. */
 	hash_seq_init(&scan, ConnectionHash);
-	while ((entry = (ConnCacheEntry *) hash_seq_search(&scan))){
-
+	while ((entry = (ConnCacheEntry *) hash_seq_search(&scan))) 
+	{
 		/* Ignore cache entry if no open connection right now */
 		if (entry->keep_conn == false)
 			continue;
 
-		if (entry->xact_depth > 0) {
-
+		if (entry->xact_depth > 0) 
+		{
 			switch (event){
 				case XACT_EVENT_PARALLEL_PRE_COMMIT:
 				case XACT_EVENT_PRE_COMMIT:
@@ -225,6 +226,12 @@ static void tsurugifdw_xact_callback(XactEvent event, void *arg)
 
 }
 
+/**
+ * 	tsurugifdw_inval_callback
+ * 		(arg) 
+ * 		(cacheid)
+ * 		(hashvalue)
+ */
 static void
 tsurugifdw_inval_callback(Datum arg, int cacheid, uint32 hashvalue)
 {
@@ -244,7 +251,8 @@ tsurugifdw_inval_callback(Datum arg, int cacheid, uint32 hashvalue)
 			continue;
 
 		/* hashvalue == 0 means a cache reset, must clear all state */
-		if (hashvalue == 0 || (cacheid == FOREIGNSERVEROID && entry->server_hashvalue == hashvalue))
+		if (hashvalue == 0 || 
+			(cacheid == FOREIGNSERVEROID && entry->server_hashvalue == hashvalue))
 			entry->invalidated = true;
 	}
 }

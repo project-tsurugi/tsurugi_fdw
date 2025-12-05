@@ -26,7 +26,7 @@
 #include "ogawayama/stub/api.h"
 #include "ogawayama/stub/error_code.h"
 
-#include "common/tsurugi.h"
+#include "tg_common/tsurugi.h"
 #include "fdw/tsurugi_utils.h"
 
 #ifdef __cplusplus
