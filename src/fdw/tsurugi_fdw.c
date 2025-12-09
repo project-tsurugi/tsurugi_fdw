@@ -19,88 +19,23 @@
  *	@file	tsurugi_fdw.cpp
  *	@brief 	Foreign Data Wrapper for Tsurugi.
  */
-#include <boost/format.hpp>
-
-#include "tg_common/tsurugi.h"
-#include "tg_common/connection.h"
-#include "fdw/tsurugi_utils.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include "postgres.h"
 #include "fdw/tsurugi_fdw.h"
-#include "fdw/tsurugi_utils.h"
 
-#include "access/xact.h"
-#include "access/htup_details.h"
-#include "access/sysattr.h"
-#include "access/table.h"
-#include "access/tupdesc.h"
-#include "catalog/pg_class.h"
-#include "catalog/pg_type.h"
-#include "commands/defrem.h"
 #include "commands/explain.h"
-#include "commands/vacuum.h"
-#include "fmgr.h"
 #include "foreign/fdwapi.h"
 #include "miscadmin.h"
-#include "nodes/makefuncs.h"
-#include "nodes/nodeFuncs.h"
-#include "nodes/nodes.h"
-#include "nodes/primnodes.h"
-#if PG_VERSION_NUM >= 120000
-	#include "optimizer/appendinfo.h"	// get_translated_update_targetlist
-#endif  // PG_VERSION_NUM >= 140000
-#if (PG_VERSION_NUM < 140000)
-	#include "optimizer/clauses.h"
-#endif
-#include "optimizer/cost.h"
-#if PG_VERSION_NUM >= 160000
-#include "optimizer/inherit.h"
-#endif
-#include "optimizer/optimizer.h"
-#include "optimizer/pathnode.h"
-#include "optimizer/paths.h"
-#include "optimizer/planmain.h"
-#include "optimizer/planner.h"
-#include "optimizer/restrictinfo.h"
-#include "optimizer/tlist.h"
-#include "parser/parsetree.h"
-#include "parser/parse_coerce.h"
-#include "parser/parse_type.h"
-#include "utils/builtins.h"
-#include "utils/float.h"
-#include "utils/guc.h"
-#include "utils/lsyscache.h"
-#include "utils/memutils.h"
-#include "utils/numeric.h"
-#include "utils/rel.h"
-#include "utils/sampling.h"
-#include "utils/selfuncs.h"
-#include "utils/syscache.h"
 #include "nodes/pg_list.h"
-
 #if PG_VERSION_NUM >= 160000
 #include "utils/acl.h"
 #endif  // PG_VERSION_NUM >= 160000
+#include "utils/lsyscache.h"
+#include "utils/rel.h"
+
+#include "fdw/tsurugi_utils.h"
+#include "tg_common/connection.h"
 
 PG_MODULE_MAGIC;
-
-#ifdef __cplusplus
-}
-#endif
-
-int unused PG_USED_FOR_ASSERTS_ONLY;
-
-/* Default CPU cost to start up a foreign query. */
-#define DEFAULT_FDW_STARTUP_COST	100.0
-
-/* Default CPU cost to process 1 row (above and beyond cpu_tuple_cost). */
-#define DEFAULT_FDW_TUPLE_COST		0.01
-
-/* If no remote estimates, assume a sort costs 20% extra */
-#define DEFAULT_FDW_SORT_MULTIPLIER 1.2
 
 /*
  * Indexes of FDW-private information stored in fdw_private lists.
@@ -127,32 +62,6 @@ enum FdwScanPrivateIndex
 
 /*
  * Similarly, this enum describes what's kept in the fdw_private list for
- * a ModifyTable node referencing a postgres_fdw foreign table.  We store:
- *
- * 1) INSERT/UPDATE/DELETE statement text to be sent to the remote server
- * 2) Integer list of target attribute numbers for INSERT/UPDATE
- *	  (NIL for a DELETE)
- * 3) Length till the end of VALUES clause for INSERT
- *	  (-1 for a DELETE/UPDATE)
- * 4) Boolean flag showing if the remote query has a RETURNING clause
- * 5) Integer list of attribute numbers retrieved by RETURNING, if any
- */
-enum FdwForeignModifyPrivateIndex
-{
-	/* SQL statement to execute remotely (as a String node) */
-	FdwModifyPrivateUpdateSql,
-	/* Integer list of target attribute numbers for INSERT/UPDATE */
-	FdwModifyPrivateTargetAttnums,
-	/* Length till the end of VALUES clause (as an integer Value node) */
-	FdwModifyPrivateLen,
-	/* has-returning flag (as an integer Value node) */
-	FdwModifyPrivateHasReturning,
-	/* Integer list of attribute numbers retrieved by RETURNING */
-	FdwModifyPrivateRetrievedAttrs
-};
-
-/*
- * Similarly, this enum describes what's kept in the fdw_private list for
  * a ForeignScan node that modifies a foreign table directly.  We store:
  *
  * 1) UPDATE/DELETE statement text to be sent to the remote server
@@ -172,21 +81,6 @@ enum FdwDirectModifyPrivateIndex
 	FdwDirectModifyPrivateSetProcessed
 };
 
-/*
- * This enum describes what's kept in the fdw_private list for a ForeignPath.
- * We store:
- *
- * 1) Boolean flag showing if the remote query has the final sort
- * 2) Boolean flag showing if the remote query has the LIMIT clause
- */
-enum FdwPathPrivateIndex
-{
-	/* has-final-sort flag (as an integer Value node) */
-	FdwPathPrivateHasFinalSort,
-	/* has-limit flag (as an integer Value node) */
-	FdwPathPrivateHasLimit
-};
-
 /** ===========================================================================
  * 
  * 	Prototype Declarations.
@@ -201,17 +95,17 @@ PG_FUNCTION_INFO_V1(tsurugi_fdw_handler);
 /*
  * FDW callback routines (Scan)
  */
-static void tsurugiBeginForeignScan(ForeignScanState* node, int eflags);
-static TupleTableSlot* tsurugiIterateForeignScan(ForeignScanState* node);
-static void tsurugiReScanForeignScan(ForeignScanState* node);
-static void tsurugiEndForeignScan(ForeignScanState* node);
+static void tsurugiBeginForeignScan(ForeignScanState *node, int eflags);
+static TupleTableSlot* tsurugiIterateForeignScan(ForeignScanState *node);
+static void tsurugiReScanForeignScan(ForeignScanState *node);
+static void tsurugiEndForeignScan(ForeignScanState *node);
 
 /*
  * FDW callback routines (Modify)
  */
-static void tsurugiBeginDirectModify(ForeignScanState* node, int eflags);
-static TupleTableSlot* tsurugiIterateDirectModify(ForeignScanState* node);
-static void tsurugiEndDirectModify(ForeignScanState* node);
+static void tsurugiBeginDirectModify(ForeignScanState *node, int eflags);
+static TupleTableSlot* tsurugiIterateDirectModify(ForeignScanState *node);
+static void tsurugiEndDirectModify(ForeignScanState *node);
 
 static void tsurugiBeginForeignModify(ModifyTableState *mtstate,
                                         ResultRelInfo *rinfo,
@@ -236,14 +130,14 @@ static void tsurugiEndForeignModify(EState *estate,
 /*
  * FDW callback routines (Others)
  */
-static void tsurugiExplainForeignScan(ForeignScanState* node, 
-									    ExplainState* es);
-static void tsurugiExplainDirectModify(ForeignScanState* node, 
-										 ExplainState* es);
+static void tsurugiExplainForeignScan(ForeignScanState *node, 
+									    ExplainState *es);
+static void tsurugiExplainDirectModify(ForeignScanState *node, 
+										 ExplainState *es);
 static bool tsurugiAnalyzeForeignTable(Relation relation, 
-										AcquireSampleRowsFunc* func, 
+										AcquireSampleRowsFunc *func, 
 										BlockNumber* totalpages);
-static List* tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt, 
+static List* tsurugiImportForeignSchema(ImportForeignSchemaStmt *stmt, 
 										  Oid serverOid);
 #ifdef __cplusplus
 }
@@ -253,8 +147,9 @@ static List* tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt,
  * Helper functions
  */
 extern PGDLLIMPORT PGPROC *MyProc;
-static void make_retrieved_attrs(List* telist, List** retrieved_attrs);
-static void store_pg_data_type(TgFdwForeignScanState* fsstate, List* tlist, List** );
+static void make_retrieved_attrs(List* telist, List **retrieved_attrs);
+static void store_pg_data_type(TgFdwForeignScanState *fsstate, 
+								List *tlist, List **retrieved_attrs);
 
 #if PG_VERSION_NUM >= 160000
 static bool has_table_privilege(Oid relid, ForeignScan *fsplan);
@@ -272,7 +167,7 @@ static bool has_table_privilege(Oid relid, ForeignScan *fsplan);
 Datum
 tsurugi_fdw_handler(PG_FUNCTION_ARGS)
 {
-	FdwRoutine* routine = makeNode(FdwRoutine);
+	FdwRoutine *routine = makeNode(FdwRoutine);
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
@@ -295,14 +190,14 @@ tsurugi_fdw_handler(PG_FUNCTION_ARGS)
 
 	/*Support functions for IMPORT FOREIGN SCHEMA*/
 	routine->ImportForeignSchema = tsurugiImportForeignSchema;
-#if 1
+
 	/*Functions for foreign modify*/
 	routine->BeginForeignModify = tsurugiBeginForeignModify;
 	routine->ExecForeignInsert = tsurugiExecForeignInsert;
 	routine->ExecForeignUpdate = tsurugiExecForeignUpdate;
 	routine->ExecForeignDelete = tsurugiExecForeignDelete;
 	routine->EndForeignModify = tsurugiEndForeignModify;
-#endif
+
 	PG_RETURN_POINTER(routine);
 }
 
@@ -311,12 +206,11 @@ tsurugi_fdw_handler(PG_FUNCTION_ARGS)
  * 	FDW Scan functions. 
  * 
  */
-
 /**
  *  @brief  Preparation for scanning foreign tables.
  */
 static void 
-tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
+tsurugiBeginForeignScan(ForeignScanState *node, int eflags)
 {
 	ForeignScan *fsplan = (ForeignScan *) node->ss.ps.plan;
 	TgFdwForeignScanState *fsstate;
@@ -390,9 +284,9 @@ tsurugiBeginForeignScan(ForeignScanState* node, int eflags)
  *      Scanning row data from foreign tables.
  */
 static TupleTableSlot* 
-tsurugiIterateForeignScan(ForeignScanState* node)
+tsurugiIterateForeignScan(ForeignScanState *node)
 {
-	TgFdwForeignScanState* fsstate = (TgFdwForeignScanState*) node->fdw_state;
+	TgFdwForeignScanState *fsstate = (TgFdwForeignScanState *) node->fdw_state;
 	TupleTableSlot* tupleSlot = node->ss.ss_ScanTupleSlot;
 
 	elog(DEBUG3, "tsurugi_fdw : %s\nquery:\n%s", __func__, fsstate->query_string);
@@ -415,7 +309,7 @@ tsurugiIterateForeignScan(ForeignScanState* node)
  *	tsurugiReScanForeignScan
  */
 static void 
-tsurugiReScanForeignScan(ForeignScanState* node)
+tsurugiReScanForeignScan(ForeignScanState *node)
 {
 	TgFdwForeignScanState *fsstate = (TgFdwForeignScanState *) node->fdw_state;
 
@@ -435,7 +329,7 @@ tsurugiReScanForeignScan(ForeignScanState* node)
  *      Clean up for scanning foreign tables.
  */
 static void 
-tsurugiEndForeignScan(ForeignScanState* node)
+tsurugiEndForeignScan(ForeignScanState *node)
 {
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 }
@@ -450,7 +344,7 @@ tsurugiEndForeignScan(ForeignScanState* node)
  *      Preparation for modifying foreign tables.
  */
 static void 
-tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
+tsurugiBeginDirectModify(ForeignScanState *node, int eflags)
 {
 	RangeTblEntry *rte;
     ForeignTable *table;
@@ -510,11 +404,11 @@ tsurugiBeginDirectModify(ForeignScanState* node, int eflags)
  * tsurugiIterateDirectModify
  *      Execute Insert/Upate/Delete command to foreign tables.
  */
-static TupleTableSlot* 
-tsurugiIterateDirectModify(ForeignScanState* node)
+static TupleTableSlot * 
+tsurugiIterateDirectModify(ForeignScanState *node)
 {
-	TgFdwDirectModifyState* dmstate = (TgFdwDirectModifyState*) node->fdw_state;
-	EState* estate = node->ss.ps.state;
+	TgFdwDirectModifyState *dmstate = (TgFdwDirectModifyState *) node->fdw_state;
+	EState *estate = node->ss.ps.state;
 	TupleTableSlot *slot = node->ss.ss_ScanTupleSlot;
 	dmstate->slot = node->ss.ss_ScanTupleSlot;
 
@@ -535,7 +429,7 @@ tsurugiIterateDirectModify(ForeignScanState* node)
  *      Clean up for modifying foreign tables.
  */
 static void 
-tsurugiEndDirectModify(ForeignScanState* node)
+tsurugiEndDirectModify(ForeignScanState *node)
 {
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 }
@@ -555,7 +449,7 @@ tsurugiBeginForeignModify(ModifyTableState *mtstate,
 /*
  * tsurugiExecForeignInsert
  */
-static TupleTableSlot*
+static TupleTableSlot *
 tsurugiExecForeignInsert(
 	EState *estate, 
 	ResultRelInfo *rinfo, 
@@ -573,7 +467,7 @@ tsurugiExecForeignInsert(
 /*
  * tsurugiExecForeignUpdate
  */
-static TupleTableSlot*
+static TupleTableSlot *
 tsurugiExecForeignUpdate(
 	EState *estate, 
 	ResultRelInfo *rinfo, 
@@ -591,7 +485,7 @@ tsurugiExecForeignUpdate(
 /*
  * tsurugiExecForeignDelete
  */
-static TupleTableSlot*
+static TupleTableSlot *
 tsurugiExecForeignDelete(
 	EState *estate, 
 	ResultRelInfo *rinfo, 
@@ -626,8 +520,8 @@ tsurugiEndForeignModify(EState *estate,
  *		Produce extra output for EXPLAIN of a ForeignScan on a foreign table
  */
 static void 
-tsurugiExplainForeignScan(ForeignScanState* node,
-						   	ExplainState* es)
+tsurugiExplainForeignScan(ForeignScanState *node,
+						   	ExplainState *es)
 {
 	List	   *fdw_private;
 	char	   *sql;
@@ -662,8 +556,8 @@ tsurugiExplainForeignScan(ForeignScanState* node,
  *      Not in use.
  */
 static void 
-tsurugiExplainDirectModify(ForeignScanState* node,
-							ExplainState* es)
+tsurugiExplainDirectModify(ForeignScanState *node,
+							ExplainState *es)
 {
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 }
@@ -674,7 +568,7 @@ tsurugiExplainDirectModify(ForeignScanState* node,
  */
 static bool 
 tsurugiAnalyzeForeignTable(Relation relation,
-    AcquireSampleRowsFunc* func,
+    AcquireSampleRowsFunc *func,
     BlockNumber* totalpages)
 {
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
@@ -691,7 +585,7 @@ tsurugiAnalyzeForeignTable(Relation relation,
  * tsurugiImportForeignSchema
  *      Import table metadata from a foreign server.
  */
-static List* tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt, Oid serverOid)
+static List *tsurugiImportForeignSchema(ImportForeignSchemaStmt *stmt, Oid serverOid)
 {
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
@@ -705,7 +599,7 @@ static List* tsurugiImportForeignSchema(ImportForeignSchemaStmt* stmt, Oid serve
  */
 
 static void
-make_retrieved_attrs(List* telist, List** retrieved_attrs)
+make_retrieved_attrs(List *telist, List **retrieved_attrs)
 {
 	ListCell *lc;
 	int i;
@@ -735,7 +629,7 @@ make_retrieved_attrs(List* telist, List** retrieved_attrs)
  * 	understand PostgreSQL data types.
  */
 [[maybe_unused]] static void 
-store_pg_data_type(TgFdwForeignScanState* fsstate, List* tlist, List** retrieved_attrs)
+store_pg_data_type(TgFdwForeignScanState *fsstate, List *tlist, List **retrieved_attrs)
 {
 	ListCell* lc = NULL;
 
@@ -752,13 +646,13 @@ store_pg_data_type(TgFdwForeignScanState* fsstate, List* tlist, List** retrieved
 		int count = 0;
 		foreach (lc, tlist)
 		{
-			TargetEntry* entry = (TargetEntry*) lfirst(lc);
-			Node* node = (Node*) entry->expr;
+			TargetEntry *entry = (TargetEntry *) lfirst(lc);
+			Node *node = (Node *) entry->expr;
 			count++;
 
 			if (nodeTag(node) == T_Var || nodeTag(node) == T_OpExpr)
 			{
-				Var* var = (Var*) node;
+				Var *var = (Var *) node;
 				data_types[i] = var->vartype;
 				elog(DEBUG5, "tsurugi_fdw :  (att_number: %d, nodeTag: %u, vartype: %d)", 
 					 i, (unsigned int) nodeTag(node), (int) var->vartype);

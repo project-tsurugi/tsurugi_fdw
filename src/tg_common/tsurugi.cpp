@@ -15,36 +15,28 @@
  *
  *	@file	tsurugi.cpp
  */
-#include <iostream>
 #include <string>
 #include <string_view>
-#include <unordered_map>
-
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
+#include <ogawayama/stub/api.h>
+#include <ogawayama/stub/error_code.h>
 
-#include "ogawayama/stub/error_code.h"
-#include "ogawayama/stub/api.h"
 #include "tg_common/tsurugi.h"
 #include "tg_common/tg_numeric.h"
-
-using namespace ogawayama;
-
-namespace tg_metadata = jogasaki::proto::sql::common;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include "postgres.h"
 #include "access/htup_details.h"
 #include "catalog/pg_type.h"
 #include "foreign/foreign.h"
-#include "storage/proc.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/datetime.h"
-#include "utils/elog.h"
 #include "utils/lsyscache.h"
 #include "utils/numeric.h"
 #include "utils/syscache.h"
@@ -52,6 +44,9 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
+
+using namespace ogawayama;
+namespace tg_metadata = jogasaki::proto::sql::common;
 
 extern bool GetTransactionOption(boost::property_tree::ptree&);
 

@@ -15,8 +15,8 @@
  *
  *	@file	connection.h
  */
-#ifndef __CONNECTION_H__
-#define __CONNECTION_H__
+#ifndef CONNECTION_H
+#define CONNECTION_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,4 +29,4 @@ void handle_remote_xact(ForeignServer *server);
 #ifdef __cplusplus
 }
 #endif
-#endif	/*__CONNECTION_H__*/
+#endif	/* CONNECTION_H */

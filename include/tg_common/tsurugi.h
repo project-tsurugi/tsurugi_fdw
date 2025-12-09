@@ -21,16 +21,13 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
-
-#include "ogawayama/stub/error_code.h"
-#include "ogawayama/stub/api.h"
+#include <ogawayama/stub/api.h>
+#include <ogawayama/stub/error_code.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 #include "postgres.h"
-#include "postgres_ext.h"
-#include "catalog/pg_type_d.h"
 #include "nodes/pg_list.h"
 #ifdef __cplusplus
 }

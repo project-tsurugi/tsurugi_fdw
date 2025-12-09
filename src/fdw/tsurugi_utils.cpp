@@ -22,29 +22,17 @@
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
+#include <ogawayama/stub/api.h>
+#include <ogawayama/stub/error_code.h>
 
-#include "ogawayama/stub/api.h"
-#include "ogawayama/stub/error_code.h"
-
-#include "tg_common/tsurugi.h"
 #include "fdw/tsurugi_utils.h"
+#include "tg_common/tsurugi.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "commands/defrem.h"
-#include "fmgr.h"
-#include "nodes/nodeFuncs.h"
-#include "funcapi.h"
-#include "utils/date.h"
-#include "utils/fmgrprotos.h"
-#include "utils/guc.h"
-#include "utils/lsyscache.h"
-#include "utils/memutils.h"
-#include "utils/numeric.h"
+#include "postgres.h"
 #include "utils/rel.h"
-#include "utils/timestamp.h"
-
 #include "fdw/tsurugi_fdw.h"
 #ifdef __cplusplus
 }
@@ -53,7 +41,7 @@ extern "C" {
 using namespace ogawayama;
 
 static std::string make_tsurugi_query(std::string_view query_string);
-static std::string  trim_query_string(const std::string& orig_query);
+static std::string trim_query_string(const std::string& orig_query);
 static std::pair<std::string, std::string> make_prepare_statement(const char* query);
 static ogawayama::stub::placeholders_type make_placeholders(ParamListInfo param_linfo);
 static ogawayama::stub::parameters_type make_parameters(ParamListInfo param_linfo);
@@ -314,7 +302,7 @@ create_cursor(ForeignScanState* node)
     auto tsurugi = Tsurugi::get_instance();
     if (is_prepare_statement(fsstate->query_string))
     {
-        ForeignTable *ft = GetForeignTable(fsstate->rel->rd_id);
+        ForeignTable* ft = GetForeignTable(fsstate->rel->rd_id);
         // Prepare the statement.
         auto prep = tsurugi_prepare_wrapper(ft->serverid,
                                             fsstate->query_string,
@@ -488,7 +476,7 @@ execute_direct_modify(ForeignScanState* node)
 
 /** ===========================================================================
  * 
- *  Utility Functions.
+ *  Import Foreign Schema Functions.
  * 
  */
 

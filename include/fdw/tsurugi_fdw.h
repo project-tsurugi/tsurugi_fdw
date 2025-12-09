@@ -22,21 +22,14 @@
 #ifndef TSURUGI_FDW_H
 #define TSURUGI_FDW_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "postgres.h"
 #include "foreign/foreign.h"
 #include "funcapi.h"
-#include "lib/stringinfo.h"
-#include "nodes/execnodes.h"
-#include "nodes/pathnodes.h"
-#include "nodes/plannodes.h"
-#include "utils/relcache.h"
 
 /*
  * Tsurugi-FDW Foreign Scan State
  */
-typedef struct TgFdwForeignScanState
+typedef struct tg_fdw_foreign_scan_state_
 {
 	const char* 	query_string;		/* SQL Query Text */
     Relation        rel;                /* relcache entry for the foreign table */
@@ -60,7 +53,7 @@ typedef struct TgFdwForeignScanState
  /*
  * Tsurugi-FDW Direct Modify State
  */
-typedef struct TgFdwDirectModifyState
+typedef struct tg_fdw_direct_modify_state_
 {
 	ForeignServer *server;		/* Foreign server handle */
 	ForeignTable  *table;		/* Foreign scan deal with this foreign table */
@@ -97,11 +90,6 @@ typedef struct TgFdwDirectModifyState
 
 	/* working memory context */
 	MemoryContext temp_cxt;		/* context for per-tuple temporary data */
-	
 } TgFdwDirectModifyState;
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // TSURUGI_FDW_H
