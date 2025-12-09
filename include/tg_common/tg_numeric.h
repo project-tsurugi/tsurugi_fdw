@@ -21,6 +21,14 @@
  */
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "postgres.h"
+#ifdef __cplusplus
+}
+#endif
+
 /******
  * The following part is taken from postgresql/src/backend/utils/adt/numeric.c
  ******/
