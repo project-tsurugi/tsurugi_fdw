@@ -90,6 +90,14 @@ make_tsurugi_query(std::string_view query_string)
         tsurugi_query.pop_back();
     }
 
+    // convert the binary type literal.
+    std::regex pattern(R"_(('\\x([0-9a-f]*)'))_", std::regex_constants::icase);
+    auto replaced = std::regex_replace(tsurugi_query, pattern, "X'$2'");
+    tsurugi_query = replaced;
+
+    elog(DEBUG5, "tsurugi_fdw : Converted to Tsurugi query:\nsrc: %s\ndst: %s",
+        query_string.data(), replaced.c_str());
+
     return tsurugi_query;
 }
 

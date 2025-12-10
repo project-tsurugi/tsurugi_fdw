@@ -857,6 +857,7 @@ Tsurugi::convert_type_to_pg(
 		{tg_metadata::AtomType::DECIMAL, "numeric"},
 		{tg_metadata::AtomType::CHARACTER, "text"},
 		{tg_metadata::AtomType::DATE, "date"},
+		{tg_metadata::AtomType::OCTET, "bytea"},
 		{tg_metadata::AtomType::TIME_OF_DAY, "time"},
 		{tg_metadata::AtomType::TIME_POINT, "timestamp"},
 		{tg_metadata::AtomType::TIME_OF_DAY_WITH_TIME_ZONE, "time with time zone"},
@@ -923,6 +924,9 @@ Tsurugi::get_tg_column_type(const Oid pg_type)
 			break;
 		case NUMERICOID:
 			tg_type = stub::Metadata::ColumnType::Type::DECIMAL;
+			break;
+		case BYTEAOID:
+			tg_type = stub::Metadata::ColumnType::Type::OCTET;
 			break;
 		default:
 			elog(ERROR, "tsurugi_fdw : unrecognized type oid: %d", (int) pg_type);
@@ -1213,6 +1217,24 @@ Tsurugi::convert_type_to_pg(ResultSetPtr result_set, const Oid pgtype)
 			}
 			break;
 
+		case BYTEAOID:
+			{
+				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is BYTEAOID.", __func__);
+
+				std::string_view value;
+				ERROR_CODE result = result_set->next_column(value);
+				if (result == ERROR_CODE::OK)
+				{
+					bytea* pg_bytea = (bytea*)palloc(value.size() + VARHDRSZ);
+					SET_VARSIZE(pg_bytea, value.size() + VARHDRSZ);
+					memcpy(VARDATA(pg_bytea), value.data(), value.size());
+
+					is_null = false;
+					row_value = PointerGetDatum(pg_bytea);
+				}
+			}
+			break;
+
 		default:
 			elog(ERROR, "Invalid data type of PG. (%u)", pgtype);
 			break;
@@ -1441,6 +1463,21 @@ Tsurugi::convert_type_to_tg(const Oid pg_type, Datum value)
 									sign, coefficient_high, coefficient_low, exponent};
 				param = tg_decimal;
 //				param = convert_decimal_to_tg(value);
+				break;
+			}
+
+		case BYTEAOID:
+			{
+				auto datum_value = DatumGetByteaPP(value);
+				auto pg_value = VARDATA_ANY(datum_value);
+				auto pg_value_len = VARSIZE_ANY_EXHDR(datum_value);
+
+				stub::binary_type tg_value(pg_value_len);
+				if (pg_value_len > 0) {
+					memcpy(tg_value.data(), pg_value, pg_value_len);
+				}
+
+				param = tg_value;
 				break;
 			}
 		default:
