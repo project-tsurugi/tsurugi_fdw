@@ -715,6 +715,63 @@ DROP FOREIGN TABLE fdw_type_timestamp_tz;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp_tz', 'tsurugidb');
 
+-- Binary Types - bytea
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_bytea (c VARBINARY)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_bytea (
+  c bytea
+) SERVER tsurugidb;
+
+--- Test
+PREPARE prep_insert (bytea) AS INSERT INTO fdw_type_bytea VALUES ($1);
+EXECUTE prep_insert (' \x00');
+EXECUTE prep_insert ('\x00\x23');
+EXECUTE prep_insert ('\x0');
+EXECUTE prep_insert ('\x001');
+EXECUTE prep_insert ('\xqw');
+DEALLOCATE prep_insert;
+
+PREPARE prep_select (bytea) AS
+  SELECT * FROM fdw_type_bytea WHERE c = $1 ORDER BY c;
+EXECUTE prep_select (' \x00');
+EXECUTE prep_select ('\x00\x23');
+EXECUTE prep_select ('\x0');
+EXECUTE prep_select ('\x001');
+EXECUTE prep_select ('\xqw');
+DEALLOCATE prep_select;
+
+INSERT INTO fdw_type_bytea VALUES ('\x7f');
+PREPARE prep_update (bytea, bytea) AS
+  UPDATE fdw_type_bytea SET c = $1 WHERE c = $2;
+EXECUTE prep_update ('\x31', ' \x00');
+EXECUTE prep_update ('\x31', '\x00\x23');
+EXECUTE prep_update ('\x31', '\x0');
+EXECUTE prep_update ('\x31', '\x001');
+EXECUTE prep_update ('\x31', '\xqw');
+EXECUTE prep_update (' \x00', '\x7f');
+EXECUTE prep_update ('\x00\x23', '\x7f');
+EXECUTE prep_update ('\x0', '\x7f');
+EXECUTE prep_update ('\x001', '\x7f');
+EXECUTE prep_update ('\xqw', '\x7f');
+DEALLOCATE prep_update;
+
+PREPARE prep_delete (bytea) AS DELETE FROM fdw_type_bytea WHERE c = $1;
+EXECUTE prep_delete (' \x00');
+EXECUTE prep_delete ('\x00\x23');
+EXECUTE prep_delete ('\x0');
+EXECUTE prep_delete ('\x001');
+EXECUTE prep_delete ('\xqw');
+DEALLOCATE prep_delete;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_bytea;
+
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_bytea', 'tsurugidb');
+
 -- PostgreSQL Types - smallint (Tsurugi type DECIMAL(5))
 --- Test setup: DDL of the Tsurugi
 SELECT tg_execute_ddl('

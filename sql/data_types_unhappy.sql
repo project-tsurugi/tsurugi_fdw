@@ -598,6 +598,66 @@ DROP FOREIGN TABLE fdw_type_timestamp_tz;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp_tz', 'tsurugidb');
 
+-- Binary Types - bytea
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_bytea (c VARBINARY)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_bytea (
+  c bytea
+) SERVER tsurugidb;
+
+--- Test
+INSERT INTO fdw_type_bytea VALUES (' \x00');
+INSERT INTO fdw_type_bytea VALUES ('\x00 ');
+INSERT INTO fdw_type_bytea VALUES ('\x00\x23');
+INSERT INTO fdw_type_bytea VALUES ('\x0');
+INSERT INTO fdw_type_bytea VALUES ('\x001');
+INSERT INTO fdw_type_bytea VALUES ('abc');
+INSERT INTO fdw_type_bytea VALUES ('\xqw');
+
+SELECT * FROM fdw_type_bytea WHERE c = ' \x00' ORDER BY c;
+SELECT * FROM fdw_type_bytea WHERE c = '\x00 ' ORDER BY c;
+SELECT * FROM fdw_type_bytea WHERE c = '\x00\x23' ORDER BY c;
+SELECT * FROM fdw_type_bytea WHERE c = '\x0' ORDER BY c;
+SELECT * FROM fdw_type_bytea WHERE c = '\x001' ORDER BY c;
+SELECT * FROM fdw_type_bytea WHERE c = 'abc' ORDER BY c;
+SELECT * FROM fdw_type_bytea WHERE c = '' ORDER BY c;
+SELECT * FROM fdw_type_bytea WHERE c = '\xqw' ORDER BY c;
+
+INSERT INTO fdw_type_bytea VALUES ('\x7f');
+UPDATE fdw_type_bytea SET c = '\x31' WHERE c = ' \x00';
+UPDATE fdw_type_bytea SET c = '\x31' WHERE c = '\x00 ';
+UPDATE fdw_type_bytea SET c = '\x31' WHERE c = '\x00\x23';
+UPDATE fdw_type_bytea SET c = '\x31' WHERE c = '\x0';
+UPDATE fdw_type_bytea SET c = '\x31' WHERE c = '\x001';
+UPDATE fdw_type_bytea SET c = '\x31' WHERE c = 'abc';
+UPDATE fdw_type_bytea SET c = '\x31' WHERE c = '';
+UPDATE fdw_type_bytea SET c = '\x31' WHERE c = '\xqw';
+
+UPDATE fdw_type_bytea SET c = ' \x00';
+UPDATE fdw_type_bytea SET c = '\x00 ';
+UPDATE fdw_type_bytea SET c = '\x00\x23';
+UPDATE fdw_type_bytea SET c = '\x0';
+UPDATE fdw_type_bytea SET c = '\x001';
+UPDATE fdw_type_bytea SET c = 'abc';
+UPDATE fdw_type_bytea SET c = '\xqw';
+
+DELETE FROM fdw_type_bytea WHERE c = ' \x00';
+DELETE FROM fdw_type_bytea WHERE c = '\x00 ';
+DELETE FROM fdw_type_bytea WHERE c = '\x00\x23';
+DELETE FROM fdw_type_bytea WHERE c = '\x0';
+DELETE FROM fdw_type_bytea WHERE c = '\x001';
+DELETE FROM fdw_type_bytea WHERE c = 'abc';
+DELETE FROM fdw_type_bytea WHERE c = '';
+DELETE FROM fdw_type_bytea WHERE c = '\xqw';
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_bytea;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_bytea', 'tsurugidb');
+
 -- Unsupported Types - serial
 --- Test setup: DDL of the Tsurugi
 SELECT tg_execute_ddl('
