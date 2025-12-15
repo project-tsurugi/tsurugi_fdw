@@ -1583,3 +1583,722 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
  DROP TABLE
 (1 row)
 
+-- Unsupported Types - bit
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c BINARY(4))
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c bit(4)) SERVER tsurugidb;
+--- Test
+INSERT INTO fdw_type_unsupported VALUES (B'1010');
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"unsupported character string literal kind: bit_string" location:<input>:1:42+7)
+CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES (B'1010')
+INSERT INTO fdw_type_unsupported VALUES ('1010');
+-----FIXME: Disabled due to issue
+-----SELECT * FROM fdw_type_unsupported;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - bit varying
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARBINARY(4))
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c bit varying(4)) SERVER tsurugidb;
+--- Test
+INSERT INTO fdw_type_unsupported VALUES (B'1010');
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"unsupported character string literal kind: bit_string" location:<input>:1:42+7)
+CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES (B'1010')
+INSERT INTO fdw_type_unsupported VALUES ('1010');
+-----FIXME: Disabled due to issue
+-----SELECT * FROM fdw_type_unsupported;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - boolean
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c DECIMAL(1))
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c boolean) SERVER tsurugidb;
+--- Test
+INSERT INTO fdw_type_unsupported VALUES (true::boolean);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: TYPE_ANALYZE_EXCEPTION (SQL-03003: compile failed with error:inconsistent_type message:"bool() (expected: {number})" location:<input>:1:42+4)
+CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES (true::boolean)
+INSERT INTO fdw_type_unsupported VALUES (true);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_type message:"bool() (expected: {number})" location:<input>:1:42+4)
+CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES (true)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - box
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c box) SERVER tsurugidb;
+--- Test
+INSERT INTO fdw_type_unsupported VALUES ('(1,2),(3,4)'::box);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"user defined type is not supported: box" location:<input>:1:57+3)
+CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES ('(1,2),(3,4)'::box)
+INSERT INTO fdw_type_unsupported VALUES ('(1,2),(3,4)');
+-----FIXME: Disabled due to issue
+-----SELECT * FROM fdw_type_unsupported;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - cidr
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c cidr) SERVER tsurugidb;
+--- Test
+INSERT INTO fdw_type_unsupported VALUES ('192.168.0.0/24'::cidr);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"user defined type is not supported: cidr" location:<input>:1:60+4)
+CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES ('192.168.0.0/24'::cidr)
+INSERT INTO fdw_type_unsupported VALUES ('192.168.0.0/24');
+-----FIXME: Disabled due to issue
+-----SELECT * FROM fdw_type_unsupported;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - circle
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c circle) SERVER tsurugidb;
+--- Test
+INSERT INTO fdw_type_unsupported VALUES ('<(3,4),5>'::circle);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"user defined type is not supported: circle" location:<input>:1:55+6)
+CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES ('<(3,4),5>'::circle)
+INSERT INTO fdw_type_unsupported VALUES ('<(3,4),5>');
+-----FIXME: Disabled due to issue
+-----SELECT * FROM fdw_type_unsupported;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - inet
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c inet) SERVER tsurugidb;
+--- Test
+INSERT INTO fdw_type_unsupported VALUES ('192.168.0.1'::inet);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"user defined type is not supported: inet" location:<input>:1:57+4)
+CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES ('192.168.0.1'::inet)
+INSERT INTO fdw_type_unsupported VALUES ('192.168.0.1');
+-----FIXME: Disabled due to issue
+-----SELECT * FROM fdw_type_unsupported;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - interval
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c interval) SERVER tsurugidb;
+--- Test
+INSERT INTO fdw_type_unsupported VALUES ('1 day'::interval);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"unsupported type: interval" location:<input>:1:51+8)
+CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES ('1 day'::interval)
+INSERT INTO fdw_type_unsupported VALUES ('1 day');
+-----FIXME: Disabled due to issue
+-----SELECT * FROM fdw_type_unsupported;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - json
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c json) SERVER tsurugidb;
+--- Test
+INSERT INTO fdw_type_unsupported VALUES ('{"key":"value"}'::json);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"user defined type is not supported: json" location:<input>:1:61+4)
+CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES ('{"key":"value"}'::json)
+INSERT INTO fdw_type_unsupported VALUES ('{"key":"value"}');
+-----FIXME: Disabled due to issue
+-----SELECT * FROM fdw_type_unsupported;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - jsonb
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c jsonb) SERVER tsurugidb;
+--- Test
+INSERT INTO fdw_type_unsupported VALUES ('{"key":"value"}'::jsonb);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"user defined type is not supported: jsonb" location:<input>:1:61+5)
+CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES ('{"key":"value"}'::jsonb)
+INSERT INTO fdw_type_unsupported VALUES ('{"key":"value"}');
+-----FIXME: Disabled due to issue
+-----SELECT * FROM fdw_type_unsupported;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - line
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c line) SERVER tsurugidb;
+--- Test
+INSERT INTO fdw_type_unsupported VALUES ('{1,2,3}'::line);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"user defined type is not supported: line" location:<input>:1:53+4)
+CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES ('{1,2,3}'::line)
+INSERT INTO fdw_type_unsupported VALUES ('{1,2,3}');
+-----FIXME: Disabled due to issue
+-----SELECT * FROM fdw_type_unsupported;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - lseg
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c lseg) SERVER tsurugidb;
+--- Test
+INSERT INTO fdw_type_unsupported VALUES ('[(1,2),(3,4)]'::lseg);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"user defined type is not supported: lseg" location:<input>:1:59+4)
+CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES ('[(1,2),(3,4)]'::lseg)
+INSERT INTO fdw_type_unsupported VALUES ('[(1,2),(3,4)]');
+-----FIXME: Disabled due to issue
+-----SELECT * FROM fdw_type_unsupported;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - macaddr
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c macaddr) SERVER tsurugidb;
+--- Test
+INSERT INTO fdw_type_unsupported VALUES ('08:00:2b:01:02:03'::macaddr);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"user defined type is not supported: macaddr" location:<input>:1:63+7)
+CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES ('08:00:2b:01:02:03'::macaddr)
+INSERT INTO fdw_type_unsupported VALUES ('08:00:2b:01:02:03');
+-----FIXME: Disabled due to issue
+-----SELECT * FROM fdw_type_unsupported;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - macaddr8
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c macaddr8) SERVER tsurugidb;
+--- Test
+INSERT INTO fdw_type_unsupported VALUES ('08:00:2b:01:02:03:04:05'::macaddr8);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"user defined type is not supported: macaddr8" location:<input>:1:69+8)
+CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES ('08:00:2b:01:02:03:04:05'::macaddr8)
+INSERT INTO fdw_type_unsupported VALUES ('08:00:2b:01:02:03:04:05');
+-----FIXME: Disabled due to issue
+-----SELECT * FROM fdw_type_unsupported;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - money
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c money) SERVER tsurugidb;
+--- Test
+INSERT INTO fdw_type_unsupported VALUES ('$123.45'::money);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"user defined type is not supported: money" location:<input>:1:58+5)
+CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES (':param123.45'::money)
+INSERT INTO fdw_type_unsupported VALUES ('$123.45');
+-----FIXME: Disabled due to issue
+-----SELECT * FROM fdw_type_unsupported;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - path
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c path) SERVER tsurugidb;
+--- Test
+INSERT INTO fdw_type_unsupported VALUES ('[(1,2),(3,4)]'::path);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"user defined type is not supported: path" location:<input>:1:59+4)
+CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES ('[(1,2),(3,4)]'::path)
+INSERT INTO fdw_type_unsupported VALUES ('[(1,2),(3,4)]');
+-----FIXME: Disabled due to issue
+-----SELECT * FROM fdw_type_unsupported;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - pg_lsn
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c pg_lsn) SERVER tsurugidb;
+--- Test
+INSERT INTO fdw_type_unsupported VALUES ('16/B374D848'::pg_lsn);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"user defined type is not supported: pg_lsn" location:<input>:1:57+6)
+CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES ('16/B374D848'::pg_lsn)
+INSERT INTO fdw_type_unsupported VALUES ('16/B374D848');
+-----FIXME: Disabled due to issue
+-----SELECT * FROM fdw_type_unsupported;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - point
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c point) SERVER tsurugidb;
+--- Test
+INSERT INTO fdw_type_unsupported VALUES ('(1,2)'::point);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"user defined type is not supported: point" location:<input>:1:51+5)
+CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES ('(1,2)'::point)
+INSERT INTO fdw_type_unsupported VALUES ('(1,2)');
+-----FIXME: Disabled due to issue
+-----SELECT * FROM fdw_type_unsupported;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - polygon
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c polygon) SERVER tsurugidb;
+--- Test
+INSERT INTO fdw_type_unsupported VALUES ('((1,2),(3,4),(5,6))'::polygon);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"user defined type is not supported: polygon" location:<input>:1:65+7)
+CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES ('((1,2),(3,4),(5,6))'::polygon)
+INSERT INTO fdw_type_unsupported VALUES ('((1,2),(3,4),(5,6))');
+-----FIXME: Disabled due to issue
+-----SELECT * FROM fdw_type_unsupported;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - smallint
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c DECIMAL(5))
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c smallint) SERVER tsurugidb;
+--- Test
+INSERT INTO fdw_type_unsupported VALUES (1::smallint);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: UNSUPPORTED_RUNTIME_FEATURE_EXCEPTION (SQL-02050: unsupported expression)
+CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES (1::smallint)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - tsquery
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c tsquery) SERVER tsurugidb;
+--- Test
+INSERT INTO fdw_type_unsupported VALUES ('value'::tsquery);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"user defined type is not supported: tsquery" location:<input>:1:51+7)
+CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES ('value'::tsquery)
+INSERT INTO fdw_type_unsupported VALUES ('value');
+-----FIXME: Disabled due to issue
+-----SELECT * FROM fdw_type_unsupported;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - tsvector
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c tsvector) SERVER tsurugidb;
+--- Test
+INSERT INTO fdw_type_unsupported VALUES ('value:1'::tsvector);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"user defined type is not supported: tsvector" location:<input>:1:53+8)
+CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES ('value:1'::tsvector)
+INSERT INTO fdw_type_unsupported VALUES ('value:1');
+-----FIXME: Disabled due to issue
+-----SELECT * FROM fdw_type_unsupported;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - txid_snapshot
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c txid_snapshot) SERVER tsurugidb;
+--- Test
+INSERT INTO fdw_type_unsupported VALUES ('10:20:10,14,15'::txid_snapshot);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"user defined type is not supported: txid_snapshot" location:<input>:1:60+13)
+CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES ('10:20:10,14,15'::txid_snapshot)
+INSERT INTO fdw_type_unsupported VALUES ('10:20:10,14,15');
+-----FIXME: Disabled due to issue
+-----SELECT * FROM fdw_type_unsupported;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - uuid
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c uuid) SERVER tsurugidb;
+--- Test
+INSERT INTO fdw_type_unsupported VALUES ('f3d4b1ce-f2e0-49ce-8cd4-da5c8f29bff2'::uuid);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
+Tsurugi Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"user defined type is not supported: uuid" location:<input>:1:82+4)
+CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES ('f3d4b1ce-f2e0-49ce-8cd4-da5c8f29bff2'::uuid)
+INSERT INTO fdw_type_unsupported VALUES ('f3d4b1ce-f2e0-49ce-8cd4-da5c8f29bff2');
+-----FIXME: Disabled due to issue
+-----SELECT * FROM fdw_type_unsupported;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
