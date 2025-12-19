@@ -139,6 +139,26 @@ is_prepare_statement(const char* query)
                 || boost::algorithm::icontains(sql, ":param"));
 }
 
+bool
+is_supported_type(Oid pg_type)
+{
+	stub::Metadata::ColumnType::Type tg_type = stub::Metadata::ColumnType::Type::NULL_VALUE;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
+	PG_TRY();
+	{
+		tg_type = Tsurugi::get_tg_column_type(pg_type);
+	}
+	PG_CATCH();
+	{
+		return false;
+	}
+	PG_END_TRY();
+
+	return (tg_type != stub::Metadata::ColumnType::Type::NULL_VALUE);
+}
+
 /**
  *  @brief  Make prepare statement for tsurugidb.
  *  @param  (query)     SQL query.
