@@ -54,6 +54,7 @@ SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_type_time', 'tsurugidb');
 SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_type_timestamp', 'tsurugidb');
 SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_type_timestamp_tz', 'tsurugidb');
 SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_type_timestamp_wo_tz', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_type_unmatched', 'tsurugidb');
 SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_type_unsupported', 'tsurugidb');
 SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_type_unsupported_1', 'tsurugidb');
 SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_type_unsupported_2', 'tsurugidb');

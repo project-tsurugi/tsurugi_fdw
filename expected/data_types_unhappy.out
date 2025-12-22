@@ -2311,3 +2311,397 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported_2', 'tsurugidb');
  DROP TABLE
 (1 row)
 
+-- Unmatched Types - integer
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c varchar) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES ('123');
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c integer) SERVER tsurugidb;
+--- Test
+SELECT * FROM fdw_type_unmatched;
+ERROR:  tsurugi_fdw : dataset and type mismatch.
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unmatched Types - bigint
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c varchar) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES ('123');
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c bigint) SERVER tsurugidb;
+--- Test
+SELECT * FROM fdw_type_unmatched;
+ERROR:  tsurugi_fdw : dataset and type mismatch.
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unmatched Types - numeric
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c varchar) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES ('123');
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c numeric) SERVER tsurugidb;
+--- Test
+SELECT * FROM fdw_type_unmatched;
+ERROR:  tsurugi_fdw : dataset and type mismatch.
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unmatched Types - real
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c varchar) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES ('123.456');
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c real) SERVER tsurugidb;
+--- Test
+SELECT * FROM fdw_type_unmatched;
+ERROR:  tsurugi_fdw : dataset and type mismatch.
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unmatched Types - double precision
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c varchar) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES ('123.456');
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c double precision) SERVER tsurugidb;
+--- Test
+SELECT * FROM fdw_type_unmatched;
+ERROR:  tsurugi_fdw : dataset and type mismatch.
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unmatched Types - char
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c INT)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c integer) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES (1);
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c char) SERVER tsurugidb;
+--- Test
+SELECT * FROM fdw_type_unmatched;
+ERROR:  tsurugi_fdw : dataset and type mismatch.
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unmatched Types - varchar
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c INT)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c integer) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES (123);
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c varchar) SERVER tsurugidb;
+--- Test
+SELECT * FROM fdw_type_unmatched;
+ERROR:  tsurugi_fdw : dataset and type mismatch.
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unmatched Types - text
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c INT)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c integer) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES (123);
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c text) SERVER tsurugidb;
+--- Test
+SELECT * FROM fdw_type_unmatched;
+ERROR:  tsurugi_fdw : dataset and type mismatch.
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unmatched Types - date
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c TIMESTAMP)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c timestamp) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES ('2025-01-02 03:04:05');
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c date) SERVER tsurugidb;
+--- Test
+SELECT * FROM fdw_type_unmatched;
+ERROR:  tsurugi_fdw : dataset and type mismatch.
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unmatched Types - time
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c TIMESTAMP)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c timestamp) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES ('2025-01-02 03:04:05');
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c time) SERVER tsurugidb;
+--- Test
+SELECT * FROM fdw_type_unmatched;
+ERROR:  tsurugi_fdw : dataset and type mismatch.
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unmatched Types - timestamp
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c DATE)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c date) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES ('2025-01-02');
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c timestamp) SERVER tsurugidb;
+--- Test
+SELECT * FROM fdw_type_unmatched;
+ERROR:  tsurugi_fdw : dataset and type mismatch.
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unmatched Types - timestamp without time zone
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c TIMESTAMP WITH TIME ZONE)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched
+  (c timestamp with time zone) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES ('2025-01-02 03:04:05.6789+900');
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched
+  (c timestamp without time zone) SERVER tsurugidb;
+--- Test
+SELECT * FROM fdw_type_unmatched;
+ERROR:  tsurugi_fdw : dataset and type mismatch.
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unmatched Types - timestamp with time zone
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c TIMESTAMP WITHOUT TIME ZONE)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched
+  (c timestamp without time zone) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES ('2025-01-02 03:04:05.6789');
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched
+  (c timestamp with time zone) SERVER tsurugidb;
+--- Test
+SELECT * FROM fdw_type_unmatched;
+ERROR:  tsurugi_fdw : dataset and type mismatch.
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unmatched Types - bytea
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c BLOB)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c bytea) SERVER tsurugidb;
+--- Test setup: Initial Data
+INSERT INTO fdw_type_unmatched VALUES ('\x313241624364');
+--- Test
+SELECT * FROM fdw_type_unmatched;
+ERROR:  tsurugi_fdw : dataset and type mismatch.
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
