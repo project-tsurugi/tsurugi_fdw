@@ -20,7 +20,7 @@
  */
 
 #include "ogawayama/stub/error_code.h"
-#include "tg_common/tsurugi.h"
+#include "tg_common/tsurugi_api.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -126,18 +126,26 @@ void handle_remote_xact(ForeignServer *server)
  */
 void begin_remote_xact(ConnCacheEntry *entry)
 {
+	bool success = false;
+
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
-	auto tsurugi = Tsurugi::get_instance();
 	/* Start main transaction if we haven't yet */
 	if (entry->xact_depth <= 0)
 	{
-		auto server_oid = entry->key;
-		ERROR_CODE error = tsurugi->start_transaction(server_oid);
-		if (error != ERROR_CODE::OK)
+		Oid server_oid = entry->key;
+		success = tg_do_connect(server_oid);
+		if (!success)
 		{
-			elog(ERROR, "Failed to begin the Tsurugi transaction. (%d)\n%s", 
-				(int) error, tsurugi->get_error_message(error).c_str());
+			elog(ERROR, "Failed to connect to Tsurugi database.\n%s", 
+					tg_error_message());
+		}
+//		ERROR_CODE error = tsurugi->start_transaction(server_oid);
+		success = tg_do_begin(server_oid);
+		if (!success)
+		{
+			elog(ERROR, "Failed to start Tsurugi transaction.\n%s", 
+					tg_error_message());
 		}
 		entry->xact_depth = 1;
 		entry->changing_xact_state = false;
@@ -151,8 +159,7 @@ static void tsurugifdw_xact_callback(XactEvent event, void *arg)
 {
 	HASH_SEQ_STATUS scan;
 	ConnCacheEntry *entry;
-	ERROR_CODE error = ERROR_CODE::UNKNOWN;
-	auto tsurugi = Tsurugi::get_instance();
+	bool success = false;
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
@@ -175,11 +182,12 @@ static void tsurugifdw_xact_callback(XactEvent event, void *arg)
 				case XACT_EVENT_PRE_COMMIT:
 					/* Commit all remote transactions during pre-commit */
 					entry->changing_xact_state = true;
-					error = tsurugi->commit();
-					if (error != ERROR_CODE::OK)
+//					error = tsurugi->commit();
+					success = tg_do_commit();
+					if (!success)
 					{
-						elog(ERROR, "Failed to commit the Tsurugi transaction. (%d)\n%s",
-							 (int)error, tsurugi->get_error_message(error).c_str());
+						elog(ERROR, "Failed to commit the Tsurugi transaction.\n%s",
+								tg_error_message());
 					}
 					entry->changing_xact_state = false;
 					break;
@@ -209,10 +217,11 @@ static void tsurugifdw_xact_callback(XactEvent event, void *arg)
 
 					/* Mark this connection as in the process of changing transaction state. */
 					entry->changing_xact_state = true;
-					error = tsurugi->rollback();
-					if (error != ERROR_CODE::OK) {
-						elog(ERROR, "Failed to rollback the Tsurugi transaction. (%d)\n%s", 
-                			(int) error, tsurugi->get_error_message(error).c_str());
+//					error = tsurugi->rollback();
+					success = tg_do_rollback();
+					if (!success) {
+						elog(ERROR, "Failed to rollback the Tsurugi transaction.\n%s", 
+                				tg_error_message());
 					}
 					entry->changing_xact_state = false;
 					break;

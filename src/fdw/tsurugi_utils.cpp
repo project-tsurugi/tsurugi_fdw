@@ -123,8 +123,6 @@ trim_query_string(const std::string& orig_query)
 bool
 is_prepare_statement(const char* query)
 {
- 	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
-
     auto sql = trim_query_string(query);
     return (boost::algorithm::icontains(sql, "PREPARE ") 
                 || boost::algorithm::icontains(sql, "$") 
@@ -210,13 +208,7 @@ tsurugi_prepare_wrapper(Oid server_oid,
     auto prep = make_prepare_statement(query);
     auto placeholders = make_placeholders(param_linfo);
     auto prep_stmt = make_tsurugi_query(prep.second);
-    auto tsurugi = Tsurugi::get_instance();
-	ERROR_CODE error = tsurugi->prepare(server_oid, prep_stmt, placeholders);
-	if (error != ERROR_CODE::OK)
-	{
-		tsurugi->report_error("Failed to prepare the statement to Tsurugi.", 
-								error, prep_stmt);
-	}
+	Tsurugi::tsurugi().prepare(server_oid, prep_stmt, placeholders);
 
     return prep;
 }
@@ -246,7 +238,7 @@ make_parameters(ParamListInfo param_linfo)
             }
             else
             {
-                auto value = Tsurugi::convert_type_to_tg(param.ptype, param.value);
+                auto value = tsurugi::convert_type_to_tg(param.ptype, param.value);
                 params.emplace_back(param_name, value);
             }
         }
@@ -273,7 +265,7 @@ make_placeholders(ParamListInfo param_linfo)
             /* parameter name is 1 origin. */
             std::string param_name = "param" + std::to_string(i+1);
             stub::Metadata::ColumnType::Type tg_type = 
-                Tsurugi::get_tg_column_type(param_linfo->params[i].ptype);
+                tsurugi::get_tg_column_type(param_linfo->params[i].ptype);
             placeholders.emplace_back(param_name, tg_type);
         }
         elog(DEBUG1, "tsurugi_fdw : placeholders: %d", param_linfo->numParams);
@@ -291,15 +283,18 @@ make_placeholders(ParamListInfo param_linfo)
 /**
  *  @brief  Execute the query.
  *  @param  (node) Pointer to ForeignScanState structure.
- *  @return	none.
+ *  @return	(true) 	success.
+ * 			(false) failure
  */
-void
-create_cursor(ForeignScanState* node)
+bool
+tg_create_cursor(ForeignScanState* node)
 {
  	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	TgFdwForeignScanState* fsstate = (TgFdwForeignScanState*) node->fdw_state;
-    auto tsurugi = Tsurugi::get_instance();
+    
+	bool success = false;
+
     if (is_prepare_statement(fsstate->query_string))
     {
         ForeignTable* ft = GetForeignTable(fsstate->rel->rd_id);
@@ -310,26 +305,19 @@ create_cursor(ForeignScanState* node)
         // Execute the prepared statement.
         auto params = make_parameters(fsstate->param_linfo);
 
-        elog(DEBUG3, "tsurugi_fdw : Execute the prepared statement \nstmt:\n%s", 
-            prep.second.c_str());                                    
-        ERROR_CODE error = tsurugi->execute_query(params);
-        if (error != ERROR_CODE::OK)
-        {
-            tsurugi->report_error("Failed to execute the statement on Tsurugi.", 
-                                    error, prep.second);
-        }
+		elog(DEBUG3, "tsurugi_fdw : Execute the prepared statement \nstmt:\n%s", 
+				prep.second.c_str());
+		Tsurugi::tsurugi().execute_query(params);
     }
     else
     {
         // Execute the query.
         auto query = make_tsurugi_query(fsstate->query_string);
-        ERROR_CODE error = tsurugi->execute_query(query);
-        if (error != ERROR_CODE::OK)
-        {
-            tsurugi->report_error("Failed to execute the query on Tsurugi.", 
-                                    error, query.data());
-        }
+        Tsurugi::tsurugi().execute_query(query);
     }
+	success = true;
+
+	return success;
 }
 
 /**
@@ -356,7 +344,7 @@ make_tuple_from_result_row(ResultSetPtr result_set,
 
 		elog(DEBUG5, "tsurugi_fdw : %s : attnum: %d", __func__, attnum + 1);
 
-        auto tsurugi_value = Tsurugi::convert_type_to_pg(result_set, pg_attr->atttypid);
+        auto tsurugi_value = tsurugi::convert_type_to_pg(result_set, pg_attr->atttypid);
         is_null[attnum] = tsurugi_value.first;  // null flag
         if (!is_null[attnum])
             row[attnum] = tsurugi_value.second; // value       
@@ -364,36 +352,41 @@ make_tuple_from_result_row(ResultSetPtr result_set,
     result_set = nullptr;
 }
 
-void 
-execute_foreign_scan(TgFdwForeignScanState *fsstate, TupleTableSlot *tupleSlot)
+bool tg_execute_foreign_scan(TgFdwForeignScanState *fsstate, TupleTableSlot *tupleSlot)
 {
     elog(DEBUG1, "tsurugi_fdw : %s", __func__);
     
-    auto tsurugi = Tsurugi::get_instance();
-	ERROR_CODE error = tsurugi->result_set_next_row();
+	bool success = false;
+    
+	ERROR_CODE error = Tsurugi::tsurugi().result_set_next_row();
 	if (error == ERROR_CODE::OK)
 	{
-		make_tuple_from_result_row(tsurugi->get_result_set(), 
+		make_tuple_from_result_row(Tsurugi::tsurugi().get_result_set(), 
   								   tupleSlot->tts_tupleDescriptor,
 								   fsstate->retrieved_attrs,
 								   tupleSlot->tts_values,
 								   tupleSlot->tts_isnull);
 		ExecStoreVirtualTuple(tupleSlot);
 		fsstate->num_tuples++;
+		success = true;
 	}
 	else if (error == ERROR_CODE::END_OF_ROW) 
 	{
 		/* No more rows/data exists */
-		tsurugi->init_result_set();
+		Tsurugi::tsurugi().init_result_set();
 		elog(DEBUG1, "tsurugi_fdw : End of rows. (rows: %d)", 
 			(int) fsstate->num_tuples);
+		success = true;
 	}
 	else
 	{
-		tsurugi->init_result_set();
-		tsurugi->report_error("Failed to retrieve result set from Tsurugi.", 
-								error, fsstate->query_string);
-	}    
+		//	an error occurred.
+		Tsurugi::tsurugi().init_result_set();
+		Tsurugi::tsurugi().report_error("Failed to retrieve result set from Tsurugi.", 
+				error, fsstate->query_string);
+	}
+
+	return success;
 }
 
 /** ===========================================================================
@@ -407,8 +400,8 @@ execute_foreign_scan(TgFdwForeignScanState *fsstate, TupleTableSlot *tupleSlot)
  *  @param  (dmstate) Pointer to Direct Modify State structre.
  *  @return	none.
  */
-void
-prepare_direct_modify(TgFdwDirectModifyState* dmstate)
+bool
+tg_prepare_direct_modify(TgFdwDirectModifyState* dmstate)
 {
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
@@ -419,16 +412,13 @@ prepare_direct_modify(TgFdwDirectModifyState* dmstate)
 	auto prep = make_prepare_statement(dmstate->orig_query);
 	auto placeholders = make_placeholders(param_linfo);
 	auto prep_stmt = make_tsurugi_query(prep.second);
-    auto tsurugi = Tsurugi::get_instance();
+    
 
-	ERROR_CODE error = tsurugi->prepare(dmstate->server->serverid, 
+	Tsurugi::tsurugi().prepare(dmstate->server->serverid, 
                                         prep_stmt, placeholders);
-	if (error != ERROR_CODE::OK)
-	{
-		tsurugi->report_error("Failed to prepare the statement to Tsurugi.", 
-								error, prep_stmt);
-	}
 	dmstate->prep_stmt = strdup(prep_stmt.c_str());
+
+	return true;
 }
 
 /**
@@ -436,15 +426,15 @@ prepare_direct_modify(TgFdwDirectModifyState* dmstate)
  *  @param  (node) Pointer to ForeignScanStte structure.
  *  @return	none.
  */
-void
-execute_direct_modify(ForeignScanState* node)
+bool
+tg_execute_direct_modify(ForeignScanState* node)
 {
     elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	TgFdwDirectModifyState *dmstate = (TgFdwDirectModifyState *) node->fdw_state;
     dmstate->set_processed = false;
     ParamListInfo param_linfo = dmstate->param_linfo;
-    auto tsurugi = Tsurugi::get_instance();
+    
 
     if (dmstate->prep_stmt != nullptr)
     {
@@ -453,25 +443,23 @@ execute_direct_modify(ForeignScanState* node)
         if (param_linfo != nullptr && param_linfo->numParams > 0)
             params = make_parameters(param_linfo);
         elog(DEBUG3, "tsurugi_fdw : %s\nstatement:\n%s", __func__, dmstate->prep_stmt);                                    
-        ERROR_CODE error = tsurugi->execute_statement(params, dmstate->num_tuples);
-        if (error != ERROR_CODE::OK)
-        {
-            tsurugi->report_error("Failed to execute the statement on Tsurugi.", 
-                                    error, dmstate->prep_stmt);
-        }        
+        Tsurugi::tsurugi().execute_statement(
+				params, dmstate->num_tuples);
     }
     else
     {
         // Execute the original statement.
         auto stmt = make_tsurugi_query(dmstate->orig_query);
-        ERROR_CODE error = tsurugi->execute_statement(stmt, dmstate->num_tuples);
-        if (error != ERROR_CODE::OK)
-        {
-            tsurugi->report_error("Failed to execute the statement on Tsurugi.", 
-                                    error, stmt.data());
-        }
+      	auto error = 
+		Tsurugi::tsurugi().execute_statement(
+				stmt, dmstate->num_tuples);
+		if (error != ERROR_CODE::OK) {
+			return false;
+		}
     }
     dmstate->set_processed = true;
+
+	return true;
 }
 
 /** ===========================================================================
@@ -479,13 +467,12 @@ execute_direct_modify(ForeignScanState* node)
  *  Import Foreign Schema Functions.
  * 
  */
-
-List* 
-execute_import_foreign_schema(ImportForeignSchemaStmt* stmt, Oid serverOid)
+List *
+tg_execute_import_foreign_schema(ImportForeignSchemaStmt* stmt, Oid serverOid)
 {
     elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
-    auto tsurugi = Tsurugi::get_instance();
+    
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
 
     /*
@@ -514,14 +501,16 @@ execute_import_foreign_schema(ImportForeignSchemaStmt* stmt, Oid serverOid)
 
 	TableListPtr tg_table_list;
 	/* Get a list of table names from Tsurugi. */
-	error = tsurugi->get_list_tables(server->serverid, tg_table_list);
+	error = Tsurugi::tsurugi().get_list_tables(server->serverid, tg_table_list);
 	if (error != ERROR_CODE::OK)
 	{
+		/*
 		ereport(ERROR,
 			(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
 			 errmsg("Failed to retrieve table list from Tsurugi. (error: %d)",
 				static_cast<int>(error)),
-			 errdetail("%s", tsurugi->get_error_message(error).c_str())));
+			 errdetail("%s", Tsurugi::tsurugi().get_error_message(error).c_str())));
+		*/
 	}
 
 	auto tg_table_names = tg_table_list->get_table_names();
@@ -575,15 +564,15 @@ execute_import_foreign_schema(ImportForeignSchemaStmt* stmt, Oid serverOid)
 		TableMetadataPtr tg_table_metadata;
 
 		/* Get table metadata from Tsurugi. */
-		error = tsurugi->get_table_metadata(server->serverid, table_name, tg_table_metadata);
+		error = Tsurugi::tsurugi().get_table_metadata(server->serverid, table_name, tg_table_metadata);
 		if (error != ERROR_CODE::OK)
-		{
+		{	/*
 			ereport(ERROR,
 				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
 				errmsg("Failed to retrieve table metadata from Tsurugi. (error: %d)",
 					static_cast<int>(error)),
-				errdetail("%s", tsurugi->get_error_message(error).c_str())));
-		}
+				errdetail("%s", Tsurugi::tsurugi().get_error_message(error).c_str())));	*/
+		}	
 
 		/* Get table metadata from Tsurugi. */
 		const auto &tg_columns = tg_table_metadata->columns();
@@ -595,9 +584,9 @@ execute_import_foreign_schema(ImportForeignSchemaStmt* stmt, Oid serverOid)
 		for (const auto& column : tg_columns)
 		{
 			/* Convert from Tsurugi datatype to PostgreSQL datatype. */
-			auto pg_type = Tsurugi::convert_type_to_pg(column.atom_type());
+			auto pg_type = tsurugi::convert_type_to_pg(column.atom_type());
 			if (!pg_type)
-			{
+			{	/*
 				ereport(ERROR,
 					(errcode(ERRCODE_FDW_INVALID_DATA_TYPE),
 					 errmsg(R"(unsupported tsurugi data type "%d")",
@@ -605,7 +594,7 @@ execute_import_foreign_schema(ImportForeignSchemaStmt* stmt, Oid serverOid)
 					 errdetail(R"(table:"%s" column:"%s" type:%d)",
 					 	table_name.c_str(),
 					 	column.name().c_str(),
-					 	static_cast<int>(column.atom_type()))));
+					 	static_cast<int>(column.atom_type()))));*/
 			}
 			std::string type_name(*pg_type);
 

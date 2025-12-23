@@ -34,6 +34,7 @@
 
 #include "fdw/tsurugi_utils.h"
 #include "tg_common/connection.h"
+#include "tg_common/tsurugi_api.h"
 
 PG_MODULE_MAGIC;
 
@@ -288,17 +289,26 @@ tsurugiIterateForeignScan(ForeignScanState *node)
 {
 	TgFdwForeignScanState *fsstate = (TgFdwForeignScanState *) node->fdw_state;
 	TupleTableSlot* tupleSlot = node->ss.ss_ScanTupleSlot;
+	bool success = false;
 
 	elog(DEBUG3, "tsurugi_fdw : %s\nquery:\n%s", __func__, fsstate->query_string);
 
 	if (!fsstate->cursor_exists)
 	{
-		create_cursor(node);
+		success = tg_create_cursor(node);
+		if (!success)
+		{
+			elog(ERROR, "tsurugi_fdw : Failed to create cursor.\n%s", tg_error_message());
+		}
 		fsstate->num_tuples = 0;
 	    fsstate->cursor_exists = true;
 	}
 	ExecClearTuple(tupleSlot);
-	execute_foreign_scan(fsstate, tupleSlot);
+	success = tg_execute_foreign_scan(fsstate, tupleSlot);
+	if (!success)
+	{
+		elog(ERROR, "tsurugi_fdw : Failed to scan data.\n%s", tg_error_message());
+	}
 
 	elog(DEBUG5, "tsurugi_fdw : %s is done.", __func__);
 
@@ -393,11 +403,10 @@ tsurugiBeginDirectModify(ForeignScanState *node, int eflags)
 	dmstate->param_linfo = estate->es_param_list_info;
 	dmstate->server = server;
 	node->fdw_state = dmstate;
+	handle_remote_xact(server);
 
 	if (is_prepare_statement(dmstate->orig_query))
-		prepare_direct_modify(dmstate);
-
-	handle_remote_xact(server);
+		tg_prepare_direct_modify(dmstate);
 }
 
 /*
@@ -415,7 +424,7 @@ tsurugiIterateDirectModify(ForeignScanState *node)
 	elog(DEBUG1, "tsurugi_fdw : %s\nquery:\n%s", __func__, estate->es_sourceText);
 
 	if (dmstate->num_tuples == (size_t) -1)
-		execute_direct_modify(node);
+		tg_execute_direct_modify(node);
 
 	/* Increment the command es_processed count if necessary. */
 	if (dmstate->set_processed)
@@ -589,7 +598,7 @@ static List *tsurugiImportForeignSchema(ImportForeignSchemaStmt *stmt, Oid serve
 {
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
-	return execute_import_foreign_schema(stmt, serverOid);
+	return tg_execute_import_foreign_schema(stmt, serverOid);
 }
 
 /** ===========================================================================

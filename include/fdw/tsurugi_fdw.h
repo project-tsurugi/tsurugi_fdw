@@ -25,16 +25,17 @@
 #include "postgres.h"
 #include "foreign/foreign.h"
 #include "funcapi.h"
+#include "tg_common/tsurugi_api.h"
 
 /*
  * Tsurugi-FDW Foreign Scan State
  */
 typedef struct tg_fdw_foreign_scan_state_
 {
-	const char* 	query_string;		/* SQL Query Text */
+	const char		*query_string;		/* SQL Query Text */
     Relation        rel;                /* relcache entry for the foreign table */
     TupleDesc       tupdesc;            /* tuple descriptor of scan */
-    AttInMetadata*  attinmeta;          /* attribute datatype conversion */
+    AttInMetadata	*attinmeta;          /* attribute datatype conversion */
     List*           retrieved_attrs;    /* list of target attribute numbers */
 
 	bool 			cursor_exists;		/* have we created the cursor? */
@@ -55,8 +56,8 @@ typedef struct tg_fdw_foreign_scan_state_
  */
 typedef struct tg_fdw_direct_modify_state_
 {
-	ForeignServer *server;		/* Foreign server handle */
-	ForeignTable  *table;		/* Foreign scan deal with this foreign table */
+	ForeignServer 	*server;	/* Foreign server handle */
+	ForeignTable  	*table;		/* Foreign scan deal with this foreign table */
 
 	Relation	rel;			/* relcache entry for the foreign table */
 	AttInMetadata *attinmeta;	/* attribute datatype conversion metadata */

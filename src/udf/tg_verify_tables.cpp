@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Project Tsurugi.
+ * Copyright 2025 Project tsurugi.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1994, The Regents of the University of California
  *
  * @file tg_verify_tables.cpp
- * @brief Tsurugi User-Defined Functions.
+ * @brief tsurugi User-Defined Functions.
  */
 
 #include <algorithm>
@@ -83,8 +83,6 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 	static const std::unordered_map<std::string, std::string> tz_abbreviate_type = {
 		{"time without time zone", "time"}, {"timestamp without time zone", "timestamp"}};
 
-	auto tsurugi = Tsurugi::get_instance();
-
 	// remote_schema argument
 	std::string arg_remote_schema(!PG_ARGISNULL(0) ? text_to_cstring(PG_GETARG_TEXT_P(0)) : "");
 	// server_name argument
@@ -134,7 +132,7 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 	}
 
 	Oid server_oid = InvalidOid;
-	/* Get the Tsurugi server OID. */
+	/* Get the tsurugi server OID. */
 	HeapTuple srv_tuple =
 		SearchSysCache1(FOREIGNSERVERNAME, CStringGetDatum(arg_server_name.c_str()));
 	if (!HeapTupleIsValid(srv_tuple)) {
@@ -165,13 +163,13 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 	ERROR_CODE error;
 	TableListPtr tg_table_list;
 
-	/* Get a list of table names from Tsurugi. */
-	error = tsurugi->get_list_tables(server_oid, tg_table_list);
+	/* Get a list of table names from tsurugi. */
+	error = Tsurugi::tsurugi().get_list_tables(server_oid, tg_table_list);
 	if (error != ERROR_CODE::OK) {
 		ereport(ERROR, (errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
-						errmsg("Failed to retrieve table list from Tsurugi. (error: %d)",
+						errmsg("Failed to retrieve table list from tsurugi. (error: %d)",
 							   static_cast<int>(error)),
-						errdetail("%s", tsurugi->get_error_message(error).c_str())));
+						errdetail("%s", Tsurugi::tsurugi().get_detail_message(error).c_str())));
 	}
 
 	boost::property_tree::ptree list_remote;  // <tables_on_only_remote_schema> <list> array
@@ -296,17 +294,17 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 
 		TableMetadataPtr tsurugi_table_metadata;
 		/* Get table metadata from Tsurugi. */
-		error = tsurugi->get_table_metadata(server_oid, table_name, tsurugi_table_metadata);
+		error = Tsurugi::tsurugi().get_table_metadata(server_oid, table_name, tsurugi_table_metadata);
 		if (error != ERROR_CODE::OK) {
 			ereport(ERROR, (errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
-							errmsg("Failed to retrieve table metadata from Tsurugi. (error: %d)",
+							errmsg("Failed to retrieve table metadata from tsurugi. (error: %d)",
 								   static_cast<int>(error)),
-							errdetail("%s", tsurugi->get_error_message(error).c_str())));
+							errdetail("%s", Tsurugi::tsurugi().get_detail_message(error).c_str())));
 		}
 
 		/* Get table metadata from PostgreSQL. */
 		const auto& pg_columns = foreign_table_metadata.find(table_name)->second;
-		/* Get table metadata from Tsurugi. */
+		/* Get table metadata from tsurugi. */
 		const auto& tg_columns = tsurugi_table_metadata->columns();
 
 		/* Validate the number of columns. */
@@ -342,8 +340,8 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 				break;
 			}
 
-			/* Convert from Tsurugi datatype to PostgreSQL datatype. */
-			auto remote_type_pg = Tsurugi::convert_type_to_pg(tg_column.atom_type());
+			/* Convert from tsurugi datatype to PostgreSQL datatype. */
+			auto remote_type_pg = tsurugi::convert_type_to_pg(tg_column.atom_type());
 			if (!remote_type_pg) {
 				elog(DEBUG2, "Data type is unknown. %s (atom_type:%d)", pg_col_name.c_str(),
 						static_cast<int>(tg_column.atom_type()));

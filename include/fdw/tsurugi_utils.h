@@ -30,11 +30,11 @@ extern "C" {
 extern "C" {
 #endif
 bool is_prepare_statement(const char* query);
-void create_cursor(ForeignScanState* node);
-void execute_foreign_scan(TgFdwForeignScanState *fsstate, TupleTableSlot *tupleSlot);
-void prepare_direct_modify(TgFdwDirectModifyState *dmstate);
-void execute_direct_modify(ForeignScanState *node);
-List *execute_import_foreign_schema(ImportForeignSchemaStmt* stmt, Oid serverOid);
+bool tg_create_cursor(ForeignScanState* node);
+bool tg_execute_foreign_scan(TgFdwForeignScanState *fsstate, TupleTableSlot *tupleSlot);
+bool tg_prepare_direct_modify(TgFdwDirectModifyState *dmstate);
+bool tg_execute_direct_modify(ForeignScanState *node);
+List *tg_execute_import_foreign_schema(ImportForeignSchemaStmt* stmt, Oid serverOid);
 #ifdef __cplusplus
 }
 #endif
