@@ -298,7 +298,7 @@ tsurugiIterateForeignScan(ForeignScanState *node)
 		success = tg_create_cursor(node);
 		if (!success)
 		{
-			elog(ERROR, "tsurugi_fdw : Failed to create cursor.\n%s", tg_error_message());
+			elog(ERROR, "%s", tg_get_error_message());
 		}
 		fsstate->num_tuples = 0;
 	    fsstate->cursor_exists = true;
@@ -307,7 +307,7 @@ tsurugiIterateForeignScan(ForeignScanState *node)
 	success = tg_execute_foreign_scan(fsstate, tupleSlot);
 	if (!success)
 	{
-		elog(ERROR, "tsurugi_fdw : Failed to scan data.\n%s", tg_error_message());
+		elog(ERROR, "%s", tg_get_error_message());
 	}
 
 	elog(DEBUG5, "tsurugi_fdw : %s is done.", __func__);
@@ -363,6 +363,7 @@ tsurugiBeginDirectModify(ForeignScanState *node, int eflags)
 	int rtindex;
 	EState *estate = node->ss.ps.state;
 	TgFdwDirectModifyState *dmstate;
+	bool success;
 
 	Assert(node != NULL);
 	Assert(fsplan != NULL);
@@ -406,7 +407,13 @@ tsurugiBeginDirectModify(ForeignScanState *node, int eflags)
 	handle_remote_xact(server);
 
 	if (is_prepare_statement(dmstate->orig_query))
-		tg_prepare_direct_modify(dmstate);
+	{
+		success = tg_prepare_direct_modify(dmstate);
+		if (!success)
+		{
+			elog(ERROR, "%s", tg_get_error_message());
+		}
+	}
 }
 
 /*
@@ -416,6 +423,7 @@ tsurugiBeginDirectModify(ForeignScanState *node, int eflags)
 static TupleTableSlot * 
 tsurugiIterateDirectModify(ForeignScanState *node)
 {
+	bool success;
 	TgFdwDirectModifyState *dmstate = (TgFdwDirectModifyState *) node->fdw_state;
 	EState *estate = node->ss.ps.state;
 	TupleTableSlot *slot = node->ss.ss_ScanTupleSlot;
@@ -424,7 +432,13 @@ tsurugiIterateDirectModify(ForeignScanState *node)
 	elog(DEBUG1, "tsurugi_fdw : %s\nquery:\n%s", __func__, estate->es_sourceText);
 
 	if (dmstate->num_tuples == (size_t) -1)
-		tg_execute_direct_modify(node);
+	{
+		success = tg_execute_direct_modify(node);
+		if (!success)
+		{
+			elog(ERROR, "%s", tg_get_error_message());
+		}
+	}
 
 	/* Increment the command es_processed count if necessary. */
 	if (dmstate->set_processed)

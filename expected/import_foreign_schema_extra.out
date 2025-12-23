@@ -276,10 +276,14 @@ SELECT tg_execute_ddl('DROP TABLE fdw_test_type_datetime', 'tsurugidb');
  DROP TABLE
 (1 row)
 
--- Test case: 3-4
+-- Test case: 3-4-1_4
 --- Test setup: DDL of the Tsurugi
 SELECT tg_execute_ddl('
-  CREATE TABLE fdw_test_type_invalid (col_binary BINARY)
+  CREATE TABLE fdw_test_type_binary (
+    col_binary BINARY(11),
+    col_varbinary VARBINARY,
+    col_binary_var BINARY VARYING
+  )
 ', 'tsurugidb');
  tg_execute_ddl 
 ----------------
@@ -288,8 +292,54 @@ SELECT tg_execute_ddl('
 
 --- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-ERROR:  unsupported tsurugi data type "11"
-DETAIL:  table:"fdw_test_type_invalid" column:"col_binary" type:11
+\det fdw_test_type_binary
+          List of foreign tables
+ Schema |        Table         |  Server   
+--------+----------------------+-----------
+ public | fdw_test_type_binary | tsurugidb
+(1 row)
+
+\d fdw_test_type_binary;
+              Foreign table "public.fdw_test_type_binary"
+     Column     | Type  | Collation | Nullable | Default | FDW options 
+----------------+-------+-----------+----------+---------+-------------
+ col_binary     | bytea |           |          |         | 
+ col_varbinary  | bytea |           |          |         | 
+ col_binary_var | bytea |           |          |         | 
+Server: tsurugidb
+
+INSERT INTO fdw_test_type_binary (col_binary, col_varbinary, col_binary_var)
+  VALUES (
+    '\x3031323334353637383900',
+    '\x4142434445464748495000',
+    '\x6162636465666768697000'
+  );
+SELECT * FROM fdw_test_type_binary
+  WHERE col_binary = '\x3031323334353637383900';
+        col_binary        |      col_varbinary       |      col_binary_var      
+--------------------------+--------------------------+--------------------------
+ \x3031323334353637383900 | \x4142434445464748495000 | \x6162636465666768697000
+(1 row)
+
+UPDATE fdw_test_type_binary
+  SET col_binary = '\x6162636465666768697000',
+      col_varbinary = '\x3031323334353637383900',
+      col_binary_var = '\x4142434445464748495000'
+  WHERE col_varbinary = '\x4142434445464748495000';
+SELECT * FROM fdw_test_type_binary
+  WHERE col_binary_var = '\x4142434445464748495000';
+        col_binary        |      col_varbinary       |      col_binary_var      
+--------------------------+--------------------------+--------------------------
+ \x6162636465666768697000 | \x3031323334353637383900 | \x4142434445464748495000
+(1 row)
+
+DELETE FROM fdw_test_type_binary
+  WHERE col_binary = '\x6162636465666768697000';
+SELECT * FROM fdw_test_type_binary;
+ col_binary | col_varbinary | col_binary_var 
+------------+---------------+----------------
+(0 rows)
+
 --- Test teardown: DDL of the PostgreSQL
 SELECT drop_foreign_tables();
  drop_foreign_tables 
@@ -298,7 +348,7 @@ SELECT drop_foreign_tables();
 (1 row)
 
 --- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_test_type_invalid', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE fdw_test_type_binary', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  DROP TABLE

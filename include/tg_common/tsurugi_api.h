@@ -26,7 +26,7 @@ extern "C" {
 #endif
 #include "postgres.h"
 
-const char* tg_error_message();
+const char* tg_get_error_message();
 bool tg_do_connect(Oid server_oid);
 bool tg_do_begin(Oid server_oid);
 bool tg_do_commit();

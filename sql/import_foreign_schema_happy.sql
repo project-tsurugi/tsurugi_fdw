@@ -367,31 +367,6 @@ SELECT drop_foreign_tables();
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table_a', 'tsurugidb');
 
--- Test case: 2-3-1
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_test_table_1 (id INT, name CHAR(64))
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_test_table_2 (id INT, since DATE)
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_test_table_3 (id INT, timer TIME)
-', 'tsurugidb');
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_test_table_2 (id INT, since DATE) SERVER tsurugidb;
-
---- Test
-IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-\det fdw_test_*
-
---- Test teardown: DDL of the PostgreSQL
-SELECT drop_foreign_tables();
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_test_table_1', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_test_table_2', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_test_table_3', 'tsurugidb');
-
 -- Test case: 2-3-2
 --- Test setup: DDL of the Tsurugi
 SELECT tg_execute_ddl('
@@ -596,16 +571,22 @@ SELECT drop_foreign_tables();
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_type_datetime', 'tsurugidb');
 
--- Test case: 3-4
+-- Test case: 3-4-1_4
 --- Test setup: DDL of the Tsurugi
 SELECT tg_execute_ddl('
-  CREATE TABLE fdw_test_type_invalid (col_binary BINARY)
+  CREATE TABLE fdw_test_type_binary (
+    col_binary BINARY,
+    col_varbinary VARBINARY,
+    col_binary_var BINARY VARYING
+  )
 ', 'tsurugidb');
 
 --- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
+\det fdw_test_*
+\d fdw_test_type_binary;
 
 --- Test teardown: DDL of the PostgreSQL
 SELECT drop_foreign_tables();
 --- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_test_type_invalid', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE fdw_test_type_binary', 'tsurugidb');

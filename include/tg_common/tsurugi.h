@@ -207,8 +207,8 @@ public:
 										 TableMetadataPtr& table_metadata);
 
 	// Error Handling
-	std::string_view get_error_message() const {
-		return error_message_;
+	const char* get_error_message() const {
+		return error_message_.empty() ? "" : error_message_.c_str();
 	}
     void report_error(
 			std::string_view message, ERROR_CODE error, const char* sql = nullptr);

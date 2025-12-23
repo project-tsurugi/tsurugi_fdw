@@ -863,6 +863,70 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp_tz', 'tsurugidb');
 SET TIMEZONE TO 'UTC';
 SET DATESTYLE TO 'default';
 
+-- Binary Types - bytea
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_bytea (c VARBINARY)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_bytea (
+  c bytea
+) SERVER tsurugidb;
+
+--- Test
+INSERT INTO fdw_type_bytea VALUES ('\x3132330a');
+INSERT INTO fdw_type_bytea VALUES ('');
+INSERT INTO fdw_type_bytea VALUES ('\x');
+INSERT INTO fdw_type_bytea VALUES (NULL);
+SELECT * FROM fdw_type_bytea ORDER BY c;
+
+SELECT * FROM fdw_type_bytea WHERE c = '\x3132330a' ORDER BY c;
+SELECT * FROM fdw_type_bytea WHERE c <> '\x3132330a' ORDER BY c;
+SELECT * FROM fdw_type_bytea WHERE c IS NULL ORDER BY c;
+SELECT * FROM fdw_type_bytea WHERE c IS NOT NULL ORDER BY c;
+SELECT * FROM fdw_type_bytea WHERE c = '\x' ORDER BY c;
+SELECT * FROM fdw_type_bytea WHERE c <> '\x' ORDER BY c;
+
+UPDATE fdw_type_bytea SET c = '\x41424300' WHERE c = '\x3132330a';
+SELECT * FROM fdw_type_bytea ORDER BY c;
+
+UPDATE fdw_type_bytea SET c = '\x616263ff' WHERE (c <> '\x');
+SELECT * FROM fdw_type_bytea ORDER BY c;
+
+UPDATE fdw_type_bytea SET c = '\x31' WHERE c IS NULL;
+SELECT * FROM fdw_type_bytea ORDER BY c;
+
+UPDATE fdw_type_bytea SET c = NULL WHERE (c IS NOT NULL) AND (c = '\x31');
+SELECT * FROM fdw_type_bytea ORDER BY c;
+
+UPDATE fdw_type_bytea SET c = '\x4e554c4c' WHERE c = '\x';
+SELECT * FROM fdw_type_bytea ORDER BY c;
+
+UPDATE fdw_type_bytea SET c = '\x' WHERE c = '\x4e554c4c';
+SELECT * FROM fdw_type_bytea ORDER BY c;
+
+DELETE FROM fdw_type_bytea WHERE c = '\x616263ff';
+SELECT * FROM fdw_type_bytea ORDER BY c;
+
+INSERT INTO fdw_type_bytea VALUES ('\x00'), ('\xff');
+DELETE FROM fdw_type_bytea WHERE c <> '\x';
+SELECT * FROM fdw_type_bytea ORDER BY c;
+
+DELETE FROM fdw_type_bytea WHERE c = '\x';
+SELECT * FROM fdw_type_bytea ORDER BY c;
+
+INSERT INTO fdw_type_bytea VALUES ('\x00'), ('\xff');
+DELETE FROM fdw_type_bytea WHERE c IS NOT NULL;
+SELECT * FROM fdw_type_bytea ORDER BY c;
+
+DELETE FROM fdw_type_bytea WHERE c IS NULL;
+SELECT * FROM fdw_type_bytea ORDER BY c;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_bytea;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_bytea', 'tsurugidb');
+
 -- PostgreSQL Types - smallint (Tsurugi type DECIMAL(5))
 --- Test setup: DDL of the Tsurugi
 SELECT tg_execute_ddl('

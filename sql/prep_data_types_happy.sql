@@ -1265,3 +1265,161 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp_tz', 'tsurugidb');
 -- Date/Time Types - Test teardown: PostgreSQL environment
 SET TIMEZONE TO 'UTC';
 SET DATESTYLE TO 'default';
+
+-- Binary Types - bytea
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_bytea (c VARBINARY)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_bytea (
+  c bytea
+) SERVER tsurugidb;
+
+--- Test
+PREPARE prep_select_all AS SELECT * FROM fdw_type_bytea ORDER BY c;
+
+---- INSERT
+PREPARE prep_insert (bytea) AS INSERT INTO fdw_type_bytea VALUES ($1);
+EXECUTE prep_insert ('\x3132330a');
+EXECUTE prep_insert ('');
+EXECUTE prep_insert ('\x');
+EXECUTE prep_insert (NULL);
+
+EXECUTE prep_insert ('\x00 ');
+EXECUTE prep_insert ('abc');
+
+EXECUTE prep_select_all;
+
+DEALLOCATE prep_insert;
+
+---- SELECT
+PREPARE prep_select_eq (bytea) AS
+  SELECT * FROM fdw_type_bytea WHERE c = $1 ORDER BY c;
+PREPARE prep_select_ne (bytea) AS
+  SELECT * FROM fdw_type_bytea WHERE c <> $1 ORDER BY c;
+PREPARE prep_select_nl AS
+  SELECT * FROM fdw_type_bytea WHERE c IS NULL ORDER BY c;
+PREPARE prep_select_nn AS
+  SELECT * FROM fdw_type_bytea WHERE c IS NOT NULL ORDER BY c;
+
+EXECUTE prep_select_eq ('\x3132330a');
+EXECUTE prep_select_ne ('\x3132330a');
+EXECUTE prep_select_nl;
+EXECUTE prep_select_nn;
+EXECUTE prep_select_eq ('\x');
+EXECUTE prep_select_ne ('\x');
+
+EXECUTE prep_select_eq ('\x00 ');
+EXECUTE prep_select_eq ('abc');
+EXECUTE prep_select_eq ('');
+
+DEALLOCATE prep_select_eq;
+DEALLOCATE prep_select_ne;
+DEALLOCATE prep_select_nl;
+DEALLOCATE prep_select_nn;
+
+---- UPDATE
+PREPARE prep_update_eq (bytea, bytea) AS
+  UPDATE fdw_type_bytea SET c = $1 WHERE c = $2;
+PREPARE prep_update_ne (bytea, bytea) AS
+  UPDATE fdw_type_bytea SET c = $1 WHERE (c <> $2);
+PREPARE prep_update_nl (bytea) AS
+  UPDATE fdw_type_bytea SET c = $1 WHERE c IS NULL;
+PREPARE prep_update_nn (bytea, bytea) AS
+  UPDATE fdw_type_bytea SET c = $1 WHERE (c IS NOT NULL) AND (c = $2);
+
+EXECUTE prep_update_eq ('\x41424300', '\x3132330a');
+EXECUTE prep_select_all;
+
+EXECUTE prep_update_ne ('\x314263ff', '\x');
+EXECUTE prep_select_all;
+
+EXECUTE prep_update_nl ('\x00');
+EXECUTE prep_select_all;
+
+EXECUTE prep_update_nn (NULL, '\x00');
+EXECUTE prep_select_all;
+
+EXECUTE prep_update_eq ('\x4e554c4c', '\x');
+EXECUTE prep_select_all;
+
+EXECUTE prep_update_eq ('\x00', '\x4e554c4c');
+EXECUTE prep_select_all;
+
+EXECUTE prep_update_eq ('abc', '\x00 ');
+EXECUTE prep_select_all;
+
+EXECUTE prep_update_eq ('', 'abc');
+EXECUTE prep_select_all;
+
+EXECUTE prep_update_eq ('\x7f', '');
+EXECUTE prep_select_all;
+
+EXECUTE prep_update_eq ('\x00 ', '\x7f');
+EXECUTE prep_select_all;
+
+EXECUTE prep_update_eq ('abc', '\x00');
+EXECUTE prep_select_all;
+
+DEALLOCATE prep_update_eq;
+DEALLOCATE prep_update_ne;
+DEALLOCATE prep_update_nl;
+DEALLOCATE prep_update_nn;
+
+---- DELETE
+PREPARE prep_delete_all AS DELETE FROM fdw_type_bytea;
+PREPARE prep_delete_eq (bytea) AS DELETE FROM fdw_type_bytea WHERE c = $1;
+PREPARE prep_delete_ne (bytea) AS DELETE FROM fdw_type_bytea WHERE c <> $1;
+PREPARE prep_delete_nl AS DELETE FROM fdw_type_bytea WHERE c IS NULL;
+PREPARE prep_delete_nn AS DELETE FROM fdw_type_bytea WHERE c IS NOT NULL;
+
+EXECUTE prep_delete_all;
+EXECUTE prep_select_all;
+
+INSERT INTO fdw_type_bytea VALUES
+  ('\x616263ff'),
+  ('\x'),
+  ('\x00'),
+  ('\xff'),
+  (NULL);
+
+EXECUTE prep_delete_eq ('\x616263ff');
+EXECUTE prep_select_all;
+
+EXECUTE prep_delete_ne ('\x');
+EXECUTE prep_select_all;
+
+EXECUTE prep_delete_eq ('\x');
+EXECUTE prep_select_all;
+
+INSERT INTO fdw_type_bytea VALUES ('\x00'), ('\xff');
+EXECUTE prep_delete_nn;
+EXECUTE prep_select_all;
+
+EXECUTE prep_delete_nl;
+EXECUTE prep_select_all;
+
+INSERT INTO fdw_type_bytea VALUES ('\x616263'), ('\x'), ('\x00'), (NULL);
+EXECUTE prep_delete_eq ('\x00 ');
+EXECUTE prep_select_all;
+
+EXECUTE prep_delete_eq ('abc');
+EXECUTE prep_select_all;
+
+EXECUTE prep_delete_eq ('');
+EXECUTE prep_select_all;
+
+DEALLOCATE prep_delete_all;
+DEALLOCATE prep_delete_eq;
+DEALLOCATE prep_delete_ne;
+DEALLOCATE prep_delete_nl;
+DEALLOCATE prep_delete_nn;
+
+DEALLOCATE prep_select_all;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_bytea;
+
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_bytea', 'tsurugidb');

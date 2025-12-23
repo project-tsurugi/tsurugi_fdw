@@ -137,15 +137,12 @@ void begin_remote_xact(ConnCacheEntry *entry)
 		success = tg_do_connect(server_oid);
 		if (!success)
 		{
-			elog(ERROR, "Failed to connect to Tsurugi database.\n%s", 
-					tg_error_message());
+			elog(ERROR, "%s", tg_get_error_message());
 		}
-//		ERROR_CODE error = tsurugi->start_transaction(server_oid);
 		success = tg_do_begin(server_oid);
 		if (!success)
 		{
-			elog(ERROR, "Failed to start Tsurugi transaction.\n%s", 
-					tg_error_message());
+			elog(ERROR, "%s", tg_get_error_message());
 		}
 		entry->xact_depth = 1;
 		entry->changing_xact_state = false;
@@ -182,12 +179,10 @@ static void tsurugifdw_xact_callback(XactEvent event, void *arg)
 				case XACT_EVENT_PRE_COMMIT:
 					/* Commit all remote transactions during pre-commit */
 					entry->changing_xact_state = true;
-//					error = tsurugi->commit();
 					success = tg_do_commit();
 					if (!success)
 					{
-						elog(ERROR, "Failed to commit the Tsurugi transaction.\n%s",
-								tg_error_message());
+						elog(ERROR, "%s", tg_get_error_message());
 					}
 					entry->changing_xact_state = false;
 					break;
@@ -217,11 +212,9 @@ static void tsurugifdw_xact_callback(XactEvent event, void *arg)
 
 					/* Mark this connection as in the process of changing transaction state. */
 					entry->changing_xact_state = true;
-//					error = tsurugi->rollback();
 					success = tg_do_rollback();
 					if (!success) {
-						elog(ERROR, "Failed to rollback the Tsurugi transaction.\n%s", 
-                				tg_error_message());
+						elog(ERROR, "%s", tg_get_error_message());
 					}
 					entry->changing_xact_state = false;
 					break;

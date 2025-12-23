@@ -1266,10 +1266,10 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp_tz', 'tsurugidb');
  DROP TABLE
 (1 row)
 
--- PostgreSQL Types - smallint (Tsurugi type DECIMAL(5))
+-- Binary Types - bytea
 --- Test setup: DDL of the Tsurugi
 SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_unsupported (c DECIMAL(5))
+  CREATE TABLE fdw_type_bytea (c VARBINARY)
 ', 'tsurugidb');
  tg_execute_ddl 
 ----------------
@@ -1277,20 +1277,125 @@ SELECT tg_execute_ddl('
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_unsupported (c smallint) SERVER tsurugidb;
+CREATE FOREIGN TABLE fdw_type_bytea (
+  c bytea
+) SERVER tsurugidb;
 --- Test
-PREPARE prep_insert (smallint) AS
-  INSERT INTO fdw_type_unsupported VALUES ($1);
-EXECUTE prep_insert (1);
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: UNSUPPORTED(5)
-No detail message.
-CONTEXT:  SQL query:   INSERT INTO fdw_type_unsupported VALUES (:param1)
+PREPARE prep_insert (bytea) AS INSERT INTO fdw_type_bytea VALUES ($1);
+EXECUTE prep_insert (' \x00');
+ERROR:  invalid input syntax for type bytea
+LINE 1: EXECUTE prep_insert (' \x00');
+                             ^
+EXECUTE prep_insert ('\x00\x23');
+ERROR:  invalid hexadecimal digit: "\"
+LINE 1: EXECUTE prep_insert ('\x00\x23');
+                             ^
+EXECUTE prep_insert ('\x0');
+ERROR:  invalid hexadecimal data: odd number of digits
+LINE 1: EXECUTE prep_insert ('\x0');
+                             ^
+EXECUTE prep_insert ('\x001');
+ERROR:  invalid hexadecimal data: odd number of digits
+LINE 1: EXECUTE prep_insert ('\x001');
+                             ^
+EXECUTE prep_insert ('\xqw');
+ERROR:  invalid hexadecimal digit: "q"
+LINE 1: EXECUTE prep_insert ('\xqw');
+                             ^
 DEALLOCATE prep_insert;
+PREPARE prep_select (bytea) AS
+  SELECT * FROM fdw_type_bytea WHERE c = $1 ORDER BY c;
+EXECUTE prep_select (' \x00');
+ERROR:  invalid input syntax for type bytea
+LINE 1: EXECUTE prep_select (' \x00');
+                             ^
+EXECUTE prep_select ('\x00\x23');
+ERROR:  invalid hexadecimal digit: "\"
+LINE 1: EXECUTE prep_select ('\x00\x23');
+                             ^
+EXECUTE prep_select ('\x0');
+ERROR:  invalid hexadecimal data: odd number of digits
+LINE 1: EXECUTE prep_select ('\x0');
+                             ^
+EXECUTE prep_select ('\x001');
+ERROR:  invalid hexadecimal data: odd number of digits
+LINE 1: EXECUTE prep_select ('\x001');
+                             ^
+EXECUTE prep_select ('\xqw');
+ERROR:  invalid hexadecimal digit: "q"
+LINE 1: EXECUTE prep_select ('\xqw');
+                             ^
+DEALLOCATE prep_select;
+INSERT INTO fdw_type_bytea VALUES ('\x7f');
+PREPARE prep_update (bytea, bytea) AS
+  UPDATE fdw_type_bytea SET c = $1 WHERE c = $2;
+EXECUTE prep_update ('\x31', ' \x00');
+ERROR:  invalid input syntax for type bytea
+LINE 1: EXECUTE prep_update ('\x31', ' \x00');
+                                     ^
+EXECUTE prep_update ('\x31', '\x00\x23');
+ERROR:  invalid hexadecimal digit: "\"
+LINE 1: EXECUTE prep_update ('\x31', '\x00\x23');
+                                     ^
+EXECUTE prep_update ('\x31', '\x0');
+ERROR:  invalid hexadecimal data: odd number of digits
+LINE 1: EXECUTE prep_update ('\x31', '\x0');
+                                     ^
+EXECUTE prep_update ('\x31', '\x001');
+ERROR:  invalid hexadecimal data: odd number of digits
+LINE 1: EXECUTE prep_update ('\x31', '\x001');
+                                     ^
+EXECUTE prep_update ('\x31', '\xqw');
+ERROR:  invalid hexadecimal digit: "q"
+LINE 1: EXECUTE prep_update ('\x31', '\xqw');
+                                     ^
+EXECUTE prep_update (' \x00', '\x7f');
+ERROR:  invalid input syntax for type bytea
+LINE 1: EXECUTE prep_update (' \x00', '\x7f');
+                             ^
+EXECUTE prep_update ('\x00\x23', '\x7f');
+ERROR:  invalid hexadecimal digit: "\"
+LINE 1: EXECUTE prep_update ('\x00\x23', '\x7f');
+                             ^
+EXECUTE prep_update ('\x0', '\x7f');
+ERROR:  invalid hexadecimal data: odd number of digits
+LINE 1: EXECUTE prep_update ('\x0', '\x7f');
+                             ^
+EXECUTE prep_update ('\x001', '\x7f');
+ERROR:  invalid hexadecimal data: odd number of digits
+LINE 1: EXECUTE prep_update ('\x001', '\x7f');
+                             ^
+EXECUTE prep_update ('\xqw', '\x7f');
+ERROR:  invalid hexadecimal digit: "q"
+LINE 1: EXECUTE prep_update ('\xqw', '\x7f');
+                             ^
+DEALLOCATE prep_update;
+PREPARE prep_delete (bytea) AS DELETE FROM fdw_type_bytea WHERE c = $1;
+EXECUTE prep_delete (' \x00');
+ERROR:  invalid input syntax for type bytea
+LINE 1: EXECUTE prep_delete (' \x00');
+                             ^
+EXECUTE prep_delete ('\x00\x23');
+ERROR:  invalid hexadecimal digit: "\"
+LINE 1: EXECUTE prep_delete ('\x00\x23');
+                             ^
+EXECUTE prep_delete ('\x0');
+ERROR:  invalid hexadecimal data: odd number of digits
+LINE 1: EXECUTE prep_delete ('\x0');
+                             ^
+EXECUTE prep_delete ('\x001');
+ERROR:  invalid hexadecimal data: odd number of digits
+LINE 1: EXECUTE prep_delete ('\x001');
+                             ^
+EXECUTE prep_delete ('\xqw');
+ERROR:  invalid hexadecimal digit: "q"
+LINE 1: EXECUTE prep_delete ('\xqw');
+                             ^
+DEALLOCATE prep_delete;
 --- Test teardown: DDL of the PostgreSQL
-DROP FOREIGN TABLE fdw_type_unsupported;
+DROP FOREIGN TABLE fdw_type_bytea;
 --- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE fdw_type_bytea', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  DROP TABLE
@@ -1394,6 +1499,687 @@ EXECUTE prep_select_all;
 
 DEALLOCATE prep_insert;
 DEALLOCATE prep_select_all;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - bit
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c BINARY(4))
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c bit(4)) SERVER tsurugidb;
+--- Test
+PREPARE prep_insert (bit(4)) AS
+  INSERT INTO fdw_type_unsupported VALUES ($1);
+EXECUTE prep_insert (B'1010');
+ERROR:  tsurugi_fdw : unrecognized type oid: 1560
+EXECUTE prep_insert ('1010');
+ERROR:  tsurugi_fdw : unrecognized type oid: 1560
+DEALLOCATE prep_insert;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - bit varying
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARBINARY(4))
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c bit varying(4)) SERVER tsurugidb;
+--- Test
+PREPARE prep_insert (bit varying(4)) AS
+  INSERT INTO fdw_type_unsupported VALUES ($1);
+EXECUTE prep_insert (B'1010');
+ERROR:  tsurugi_fdw : unrecognized type oid: 1562
+EXECUTE prep_insert ('1010');
+ERROR:  tsurugi_fdw : unrecognized type oid: 1562
+DEALLOCATE prep_insert;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - boolean
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c DECIMAL(1))
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c boolean) SERVER tsurugidb;
+--- Test
+PREPARE prep_insert (boolean) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+EXECUTE prep_insert (true::boolean);
+ERROR:  tsurugi_fdw : unrecognized type oid: 16
+EXECUTE prep_insert (true);
+ERROR:  tsurugi_fdw : unrecognized type oid: 16
+DEALLOCATE prep_insert;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - box
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c box) SERVER tsurugidb;
+--- Test
+PREPARE prep_insert (box) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+EXECUTE prep_insert ('(1,2),(3,4)'::box);
+ERROR:  tsurugi_fdw : unrecognized type oid: 603
+EXECUTE prep_insert ('(1,2),(3,4)');
+ERROR:  tsurugi_fdw : unrecognized type oid: 603
+DEALLOCATE prep_insert;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - cidr
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c cidr) SERVER tsurugidb;
+--- Test
+PREPARE prep_insert (cidr) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+EXECUTE prep_insert ('192.168.0.0/24'::cidr);
+ERROR:  tsurugi_fdw : unrecognized type oid: 650
+EXECUTE prep_insert ('192.168.0.0/24');
+ERROR:  tsurugi_fdw : unrecognized type oid: 650
+DEALLOCATE prep_insert;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - circle
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c circle) SERVER tsurugidb;
+--- Test
+PREPARE prep_insert (circle) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+EXECUTE prep_insert ('<(3,4),5>'::circle);
+ERROR:  tsurugi_fdw : unrecognized type oid: 718
+EXECUTE prep_insert ('<(3,4),5>');
+ERROR:  tsurugi_fdw : unrecognized type oid: 718
+DEALLOCATE prep_insert;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - inet
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c inet) SERVER tsurugidb;
+--- Test
+PREPARE prep_insert (inet) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+EXECUTE prep_insert ('192.168.0.1'::inet);
+ERROR:  tsurugi_fdw : unrecognized type oid: 869
+EXECUTE prep_insert ('192.168.0.1');
+ERROR:  tsurugi_fdw : unrecognized type oid: 869
+DEALLOCATE prep_insert;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - interval
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c interval) SERVER tsurugidb;
+--- Test
+PREPARE prep_insert (interval) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+EXECUTE prep_insert ('1 day'::interval);
+ERROR:  tsurugi_fdw : unrecognized type oid: 1186
+EXECUTE prep_insert ('1 day');
+ERROR:  tsurugi_fdw : unrecognized type oid: 1186
+DEALLOCATE prep_insert;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - json
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c json) SERVER tsurugidb;
+--- Test
+PREPARE prep_insert (json) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+EXECUTE prep_insert ('{"key":"value"}'::json);
+ERROR:  tsurugi_fdw : unrecognized type oid: 114
+EXECUTE prep_insert ('{"key":"value"}');
+ERROR:  tsurugi_fdw : unrecognized type oid: 114
+DEALLOCATE prep_insert;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - jsonb
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c jsonb) SERVER tsurugidb;
+--- Test
+PREPARE prep_insert (jsonb) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+EXECUTE prep_insert ('{"key":"value"}'::jsonb);
+ERROR:  tsurugi_fdw : unrecognized type oid: 3802
+EXECUTE prep_insert ('{"key":"value"}');
+ERROR:  tsurugi_fdw : unrecognized type oid: 3802
+DEALLOCATE prep_insert;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - line
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c line) SERVER tsurugidb;
+--- Test
+PREPARE prep_insert (line) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+EXECUTE prep_insert ('{1,2,3}'::line);
+ERROR:  tsurugi_fdw : unrecognized type oid: 628
+EXECUTE prep_insert ('{1,2,3}');
+ERROR:  tsurugi_fdw : unrecognized type oid: 628
+DEALLOCATE prep_insert;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - lseg
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c lseg) SERVER tsurugidb;
+--- Test
+PREPARE prep_insert (lseg) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+EXECUTE prep_insert ('[(1,2),(3,4)]'::lseg);
+ERROR:  tsurugi_fdw : unrecognized type oid: 601
+EXECUTE prep_insert ('[(1,2),(3,4)]');
+ERROR:  tsurugi_fdw : unrecognized type oid: 601
+DEALLOCATE prep_insert;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - macaddr
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c macaddr) SERVER tsurugidb;
+--- Test
+PREPARE prep_insert (macaddr) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+EXECUTE prep_insert ('08:00:2b:01:02:03'::macaddr);
+ERROR:  tsurugi_fdw : unrecognized type oid: 829
+EXECUTE prep_insert ('08:00:2b:01:02:03');
+ERROR:  tsurugi_fdw : unrecognized type oid: 829
+DEALLOCATE prep_insert;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - macaddr8
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c macaddr8) SERVER tsurugidb;
+--- Test
+PREPARE prep_insert (macaddr8) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+EXECUTE prep_insert ('08:00:2b:01:02:03:04:05'::macaddr8);
+ERROR:  tsurugi_fdw : unrecognized type oid: 774
+EXECUTE prep_insert ('08:00:2b:01:02:03:04:05');
+ERROR:  tsurugi_fdw : unrecognized type oid: 774
+DEALLOCATE prep_insert;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - money
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c money) SERVER tsurugidb;
+--- Test
+PREPARE prep_insert (money) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+EXECUTE prep_insert ('$123.45'::money);
+ERROR:  tsurugi_fdw : unrecognized type oid: 790
+EXECUTE prep_insert ('$123.45');
+ERROR:  tsurugi_fdw : unrecognized type oid: 790
+DEALLOCATE prep_insert;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - path
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c path) SERVER tsurugidb;
+--- Test
+PREPARE prep_insert (path) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+EXECUTE prep_insert ('[(1,2),(3,4)]'::path);
+ERROR:  tsurugi_fdw : unrecognized type oid: 602
+EXECUTE prep_insert ('[(1,2),(3,4)]');
+ERROR:  tsurugi_fdw : unrecognized type oid: 602
+DEALLOCATE prep_insert;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - pg_lsn
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c pg_lsn) SERVER tsurugidb;
+--- Test
+PREPARE prep_insert (pg_lsn) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+EXECUTE prep_insert ('16/B374D848'::pg_lsn);
+ERROR:  tsurugi_fdw : unrecognized type oid: 3220
+EXECUTE prep_insert ('16/B374D848');
+ERROR:  tsurugi_fdw : unrecognized type oid: 3220
+DEALLOCATE prep_insert;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - point
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c point) SERVER tsurugidb;
+--- Test
+PREPARE prep_insert (point) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+EXECUTE prep_insert ('(1,2)'::point);
+ERROR:  tsurugi_fdw : unrecognized type oid: 600
+EXECUTE prep_insert ('(1,2)');
+ERROR:  tsurugi_fdw : unrecognized type oid: 600
+DEALLOCATE prep_insert;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - polygon
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c polygon) SERVER tsurugidb;
+--- Test
+PREPARE prep_insert (polygon) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+EXECUTE prep_insert ('((1,2),(3,4),(5,6))'::polygon);
+ERROR:  tsurugi_fdw : unrecognized type oid: 604
+EXECUTE prep_insert ('((1,2),(3,4),(5,6))');
+ERROR:  tsurugi_fdw : unrecognized type oid: 604
+DEALLOCATE prep_insert;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - smallint
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c DECIMAL(5))
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c smallint) SERVER tsurugidb;
+--- Test
+PREPARE prep_insert (smallint) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+EXECUTE prep_insert (1::smallint);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to prepare the statement to Tsurugi. error: UNSUPPORTED(5)
+No detail message.
+CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES (:param1)
+EXECUTE prep_insert (1);
+ERROR:  Failed to execute remote SQL.
+HINT:  Failed to prepare the statement to Tsurugi. error: UNSUPPORTED(5)
+No detail message.
+CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES (:param1)
+DEALLOCATE prep_insert;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - tsquery
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c tsquery) SERVER tsurugidb;
+--- Test
+PREPARE prep_insert (tsquery) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+EXECUTE prep_insert ('value'::tsquery);
+ERROR:  tsurugi_fdw : unrecognized type oid: 3615
+EXECUTE prep_insert ('value');
+ERROR:  tsurugi_fdw : unrecognized type oid: 3615
+DEALLOCATE prep_insert;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - tsvector
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c tsvector) SERVER tsurugidb;
+--- Test
+PREPARE prep_insert (tsvector) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+EXECUTE prep_insert ('value:1'::tsvector);
+ERROR:  tsurugi_fdw : unrecognized type oid: 3614
+EXECUTE prep_insert ('value:1');
+ERROR:  tsurugi_fdw : unrecognized type oid: 3614
+DEALLOCATE prep_insert;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - txid_snapshot
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c txid_snapshot) SERVER tsurugidb;
+--- Test
+PREPARE prep_insert (txid_snapshot) AS
+  INSERT INTO fdw_type_unsupported VALUES ($1);
+EXECUTE prep_insert ('10:20:10,14,15'::txid_snapshot);
+ERROR:  tsurugi_fdw : unrecognized type oid: 2970
+EXECUTE prep_insert ('10:20:10,14,15');
+ERROR:  tsurugi_fdw : unrecognized type oid: 2970
+DEALLOCATE prep_insert;
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Unsupported Types - uuid
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported (c VARCHAR)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported (c uuid) SERVER tsurugidb;
+--- Test
+PREPARE prep_insert (uuid) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+EXECUTE prep_insert ('f3d4b1ce-f2e0-49ce-8cd4-da5c8f29bff2'::uuid);
+ERROR:  tsurugi_fdw : unrecognized type oid: 2950
+EXECUTE prep_insert ('f3d4b1ce-f2e0-49ce-8cd4-da5c8f29bff2');
+ERROR:  tsurugi_fdw : unrecognized type oid: 2950
+DEALLOCATE prep_insert;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi

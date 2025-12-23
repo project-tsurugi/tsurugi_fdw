@@ -213,7 +213,7 @@ ERROR_CODE Tsurugi::init(Oid server_oid)
 	if (error != ERROR_CODE::OK)
 	{
 		stub_ = nullptr;
-		report_error("Failed to connect to shared memory of Tsurugi.", error, 
+		report_error("Failed to make shared memory for Tsurugi.", error, 
 				conn_info_.dbname());
 		return error;
 	}
@@ -404,8 +404,8 @@ Tsurugi::prepare(Oid server_oid, std::string_view prep_name, std::string_view st
 		return ERROR_CODE::INVALID_PARAMETER;
 	}
 
-	elog(DEBUG1, "tsurugi_fdw : Attempt to call Connection::prepare().\nname: %s, \nstatement:\n%s", 
-		prep_name.data(), statement.data());
+	elog(DEBUG1, "tsurugi_fdw : Attempt to call Connection::prepare().\n" \
+			"name: %s, \nstatement:\n%s", prep_name.data(), statement.data());
 
 	//	Prepare statement.
 	PreparedStatementPtr pstmt{};
@@ -561,6 +561,7 @@ Tsurugi::execute_query(ogawayama::stub::parameters_type& params)
 
 	if (transaction_ != nullptr)
 	{
+		if (!prep_stmt_) return ERROR_CODE::INVALID_PARAMETER;
 		elog(DEBUG1, "tsurugi_fdw : Attempt to call Transaction::execute_query().");
 		result_set_ = nullptr;
 		try {
@@ -877,10 +878,10 @@ void Tsurugi::report_error(std::string_view message, ERROR_CODE error, const cha
 		std::string	detail = get_detail_message(error);
 		std::ostringstream oss;
 		oss << "Failed to execute remote SQL.\n"
-			<< "SQL query: " << sql << "\n"
-			<< message << " error: " << stub::error_name(error).data()
-			<< " (" << (int) error << ")\n" << detail.data();
-		elog(LOG, "tsurugi_fdw : %s", oss.str().c_str());
+			<< "HINT:  " << message << " error: " << stub::error_name(error).data() 
+			<< "(" << (int) error << ")\n"
+			<< detail.data() << "\n" 
+			<< "CONTEXT:  SQL query: " << sql;
 		error_message_ = oss.str();
 		elog(LOG, "tsurugi_fdw : error_message_ : %s", error_message_.c_str());
 	}
@@ -922,6 +923,7 @@ std::optional<std::string_view> convert_type_to_pg(
 		{tg_metadata::AtomType::DECIMAL, "numeric"},
 		{tg_metadata::AtomType::CHARACTER, "text"},
 		{tg_metadata::AtomType::DATE, "date"},
+		{tg_metadata::AtomType::OCTET, "bytea"},
 		{tg_metadata::AtomType::TIME_OF_DAY, "time"},
 		{tg_metadata::AtomType::TIME_POINT, "timestamp"},
 		{tg_metadata::AtomType::TIME_OF_DAY_WITH_TIME_ZONE, "time with time zone"},
@@ -987,6 +989,9 @@ ogawayama::stub::Metadata::ColumnType::Type get_tg_column_type(const Oid pg_type
 			break;
 		case NUMERICOID:
 			tg_type = stub::Metadata::ColumnType::Type::DECIMAL;
+			break;
+		case BYTEAOID:
+			tg_type = stub::Metadata::ColumnType::Type::OCTET;
 			break;
 		default:
 			elog(ERROR, "tsurugi_fdw : unrecognized type oid: %d", (int) pg_type);
@@ -1276,6 +1281,24 @@ std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgt
 			}
 			break;
 
+		case BYTEAOID:
+			{
+				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is BYTEAOID.", __func__);
+
+				std::string_view value;
+				ERROR_CODE result = result_set->next_column(value);
+				if (result == ERROR_CODE::OK)
+				{
+					bytea* pg_bytea = (bytea*)palloc(value.size() + VARHDRSZ);
+					SET_VARSIZE(pg_bytea, value.size() + VARHDRSZ);
+					memcpy(VARDATA(pg_bytea), value.data(), value.size());
+
+					is_null = false;
+					row_value = PointerGetDatum(pg_bytea);
+				}
+			}
+			break;
+
 		default:
 			elog(ERROR, "Invalid data type of PG. (%u)", pgtype);
 			break;
@@ -1503,6 +1526,21 @@ ogawayama::stub::value_type convert_type_to_tg(const Oid pg_type, Datum value)
 									sign, coefficient_high, coefficient_low, exponent};
 				param = tg_decimal;
 //				param = convert_decimal_to_tg(value);
+				break;
+			}
+
+		case BYTEAOID:
+			{
+				auto datum_value = DatumGetByteaPP(value);
+				auto pg_value = VARDATA_ANY(datum_value);
+				auto pg_value_len = VARSIZE_ANY_EXHDR(datum_value);
+
+				stub::binary_type tg_value(pg_value_len);
+				if (pg_value_len > 0) {
+					memcpy(tg_value.data(), pg_value, pg_value_len);
+				}
+
+				param = tg_value;
 				break;
 			}
 		default:
