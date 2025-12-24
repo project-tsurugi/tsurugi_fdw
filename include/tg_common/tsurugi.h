@@ -228,8 +228,8 @@ private:
 public:
 	static std::optional<std::string_view> convert_type_to_pg(
 										jogasaki::proto::sql::common::AtomType tg_type);
-    static std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, 
-                                                     const Oid pgtype);
+	static std::tuple<bool, Datum, std::string> convert_type_to_pg(
+										ResultSetPtr result_set, const Oid pgtype);
     static ogawayama::stub::Metadata::ColumnType::Type get_tg_column_type(const Oid pg_type);
     static ogawayama::stub::value_type convert_type_to_tg(const Oid pg_type, 
                                                           Datum value);

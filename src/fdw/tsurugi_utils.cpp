@@ -369,13 +369,15 @@ make_tuple_from_result_row(ResultSetPtr result_set,
                             TupleDesc tupleDescriptor,
                             List* retrieved_attrs,
                             Datum* row,
-                            bool* is_null)
+                            bool* is_null,
+                            std::string &err_msg)
 {
 	elog(DEBUG5, "tsurugi_fdw : %s", __func__);
 
 	memset(row, 0, sizeof(Datum) * tupleDescriptor->natts);
 	memset(is_null, true, sizeof(bool) * tupleDescriptor->natts);
 
+    err_msg = "";
 	ListCell   *lc = NULL;
 	foreach(lc, retrieved_attrs)
 	{
@@ -384,16 +386,25 @@ make_tuple_from_result_row(ResultSetPtr result_set,
 
 		elog(DEBUG5, "tsurugi_fdw : %s : attnum: %d", __func__, attnum + 1);
 
-        auto tsurugi_value = Tsurugi::convert_type_to_pg(result_set, pg_attr->atttypid);
-        is_null[attnum] = tsurugi_value.first;  // null flag
-        if (!is_null[attnum])
-            row[attnum] = tsurugi_value.second; // value       
+        auto [res_null, res_value, res_err_msg] = Tsurugi::convert_type_to_pg(result_set, pg_attr->atttypid);
+
+        if (res_err_msg.empty())
+        {
+            is_null[attnum] = res_null;  // null flag
+            if (!is_null[attnum])
+                row[attnum] = res_value; // value
+        }
+        else
+        {
+            err_msg = res_err_msg;
+            break;
+        }
     }
     result_set = nullptr;
 }
 
 void 
-execute_foreign_scan(TgFdwForeignScanState *fsstate, TupleTableSlot *tupleSlot)
+execute_foreign_scan(TgFdwForeignScanState *fsstate, TupleTableSlot *tupleSlot, char **errorMesg)
 {
     elog(DEBUG1, "tsurugi_fdw : %s", __func__);
     
@@ -401,13 +412,22 @@ execute_foreign_scan(TgFdwForeignScanState *fsstate, TupleTableSlot *tupleSlot)
 	ERROR_CODE error = tsurugi->result_set_next_row();
 	if (error == ERROR_CODE::OK)
 	{
+		std::string err_msg;
 		make_tuple_from_result_row(tsurugi->get_result_set(), 
-  								   tupleSlot->tts_tupleDescriptor,
-								   fsstate->retrieved_attrs,
-								   tupleSlot->tts_values,
-								   tupleSlot->tts_isnull);
-		ExecStoreVirtualTuple(tupleSlot);
-		fsstate->num_tuples++;
+								tupleSlot->tts_tupleDescriptor,
+								fsstate->retrieved_attrs,
+								tupleSlot->tts_values,
+								tupleSlot->tts_isnull,
+								err_msg);
+		if (err_msg.empty())
+		{
+			ExecStoreVirtualTuple(tupleSlot);
+			fsstate->num_tuples++;
+		}
+		else
+		{
+			*errorMesg = pstrdup(err_msg.c_str());
+		}
 	}
 	else if (error == ERROR_CODE::END_OF_ROW) 
 	{

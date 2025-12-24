@@ -288,6 +288,7 @@ tsurugiIterateForeignScan(ForeignScanState *node)
 {
 	TgFdwForeignScanState *fsstate = (TgFdwForeignScanState *) node->fdw_state;
 	TupleTableSlot* tupleSlot = node->ss.ss_ScanTupleSlot;
+	char *err_mesg = NULL;
 
 	elog(DEBUG3, "tsurugi_fdw : %s\nquery:\n%s", __func__, fsstate->query_string);
 
@@ -298,7 +299,10 @@ tsurugiIterateForeignScan(ForeignScanState *node)
 	    fsstate->cursor_exists = true;
 	}
 	ExecClearTuple(tupleSlot);
-	execute_foreign_scan(fsstate, tupleSlot);
+	execute_foreign_scan(fsstate, tupleSlot, &err_mesg);
+	if (err_mesg != NULL) {
+		elog(ERROR, "tsurugi_fdw : %s", err_mesg);
+	}
 
 	elog(DEBUG5, "tsurugi_fdw : %s is done.", __func__);
 

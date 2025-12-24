@@ -943,11 +943,12 @@ Tsurugi::get_tg_column_type(const Oid pg_type)
  *  @return	(first)	flag of null value.
  * 			(second) PG value.
  */
-std::pair<bool, Datum>
+std::tuple<bool, Datum, std::string>
 Tsurugi::convert_type_to_pg(ResultSetPtr result_set, const Oid pgtype) 
 {
 	bool is_null = true;
 	Datum row_value;
+	std::string err_mesg;
 	ERROR_CODE error_code = ERROR_CODE::UNKNOWN;
 
 	switch (pgtype)
@@ -1245,16 +1246,16 @@ Tsurugi::convert_type_to_pg(ResultSetPtr result_set, const Oid pgtype)
 			break;
 
 		default:
-			elog(ERROR, "Invalid data type of PG. (%u)", pgtype);
+			err_mesg = (boost::format("Invalid data type of PG. (%u)") % pgtype).str();
 			break;
 	}
 
 	if (error_code == ERROR_CODE::COLUMN_TYPE_MISMATCH)
 	{
-		elog(ERROR, "tsurugi_fdw : result set and type mismatch.");
+		err_mesg = "dataset and type mismatch.";
 	}
 
-	return std::make_pair(is_null, row_value);
+	return {is_null, row_value, err_mesg};
 }
 
 /**

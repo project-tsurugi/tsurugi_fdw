@@ -32,7 +32,8 @@ extern "C" {
 bool is_prepare_statement(const char* query);
 bool is_supported_type(Oid pg_type);
 void create_cursor(ForeignScanState* node);
-void execute_foreign_scan(TgFdwForeignScanState *fsstate, TupleTableSlot *tupleSlot);
+void execute_foreign_scan(TgFdwForeignScanState* fsstate, TupleTableSlot* tupleSlot,
+						  char** errorMesg);
 void prepare_direct_modify(TgFdwDirectModifyState *dmstate);
 void execute_direct_modify(ForeignScanState *node);
 List *execute_import_foreign_schema(ImportForeignSchemaStmt* stmt, Oid serverOid);
