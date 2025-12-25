@@ -25,9 +25,6 @@
 extern "C" {
 #endif
 #include "postgres.h"
-#ifdef __cplusplus
-}
-#endif
 
 using namespace ogawayama;
 
@@ -59,3 +56,7 @@ bool tg_do_rollback() {
     auto error = Tsurugi::tsurugi().rollback();
     return (error == ERROR_CODE::OK) ? true : false;
 }
+
+#ifdef __cplusplus
+}   /* extern "C" */
+#endif

@@ -19,34 +19,31 @@
  *	@file	connection.cpp
  */
 
-#include "tg_common/tsurugi_api.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 #include "postgres.h"
-#include "optimizer/planner.h"
-#include "tcop/utility.h"
-#include "access/xact.h"
+#include "tg_common/connection.h"
 
+#include "access/xact.h"
 #include "access/htup_details.h"
 #include "catalog/pg_user_mapping.h"
+#include "foreign/foreign.h"
+#include "lib/stringinfo.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
+#include "nodes/pathnodes.h"
+#include "optimizer/planner.h"
 #include "pgstat.h"
 #include "storage/latch.h"
+#include "tcop/utility.h"
 #include "utils/hsearch.h"
 #include "utils/inval.h"
 #include "utils/memutils.h"
-#include "utils/syscache.h"
-#include "foreign/foreign.h"
-#include "lib/stringinfo.h"
-#include "nodes/pathnodes.h"
 #include "utils/relcache.h"
+#include "utils/syscache.h"
 #include "libpq-fe.h"
-
-#include "tg_common/connection.h"
+#include "tg_common/tsurugi_api.h"
 #ifdef __cplusplus
 }
 #endif 
