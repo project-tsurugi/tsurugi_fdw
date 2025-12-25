@@ -401,8 +401,8 @@ bool tg_execute_foreign_scan(TgFdwForeignScanState *fsstate, TupleTableSlot *tup
 		success = true;
 	}
 	else if (error == ERROR_CODE::SERVER_ERROR){
-		tsurugi->init_result_set();
-		tsurugi->report_error("Failed to execute the statement on Tsurugi.", 
+		Tsurugi::tsurugi().init_result_set();
+		Tsurugi::tsurugi().report_error("Failed to execute the statement on Tsurugi.", 
                                     error, fsstate->query_string);
 	}
 	else
