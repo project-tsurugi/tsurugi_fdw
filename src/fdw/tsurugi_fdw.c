@@ -610,9 +610,31 @@ tsurugiAnalyzeForeignTable(Relation relation,
  */
 static List *tsurugiImportForeignSchema(ImportForeignSchemaStmt *stmt, Oid serverOid)
 {
+	List* commands;
+
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
-	return tg_execute_import_foreign_schema(stmt, serverOid);
+	/*
+	 * Checking the options of the Import Foreign Schema statement.
+	 * If the option is specified, an error is assumed.
+	 */
+	if ((stmt->options != NULL) && (stmt->options->length > 0))
+	{
+#if PG_VERSION_NUM >= 130000
+		DefElem* def = lfirst(stmt->options->elements);
+#else
+		DefElem* def = lfirst(stmt->options->head);
+#endif
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_INVALID_OPTION_NAME),
+				 errmsg("unsupported import foreign schema option \"%.64s\"", def->defname)));
+	}
+
+	if (!tg_execute_import_foreign_schema(stmt, serverOid, &commands)) {
+		elog(ERROR, "%s", tg_get_error_message());
+	}
+
+	return commands;
 }
 
 /** ===========================================================================

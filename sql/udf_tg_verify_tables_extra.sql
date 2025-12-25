@@ -731,6 +731,22 @@ DROP FOREIGN TABLE udf_test_table_1;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
 
+-- Test case: 3-5-10
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE udf_test_type_table_1 (col BLOB)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_type_table_1 (col bytea) SERVER tsurugidb;
+
+--- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_type_table_1;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE udf_test_type_table_1', 'tsurugidb');
+
 -- Test case: 8-1-1
 --- Test setup: DDL of the Tsurugi
 DO $$
