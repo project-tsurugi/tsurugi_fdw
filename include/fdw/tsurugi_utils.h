@@ -30,6 +30,7 @@ extern "C" {
 extern "C" {
 #endif
 bool is_prepare_statement(const char* query);
+bool is_supported_type(Oid pg_type);
 bool tg_create_cursor(ForeignScanState* node);
 bool tg_execute_foreign_scan(TgFdwForeignScanState *fsstate, TupleTableSlot *tupleSlot);
 bool tg_prepare_direct_modify(TgFdwDirectModifyState *dmstate);

@@ -34,6 +34,9 @@
 #include "parser/parsetree.h"
 #include "parser/parse_coerce.h"
 #include "utils/rel.h"
+#include "utils/lsyscache.h"
+
+#include "fdw/tsurugi_utils.h"
 
 typedef struct tsurugi_planner_info_
 {
@@ -69,6 +72,7 @@ static PlannedStmt *create_planned_stmt(TsurugiPlannerInfo *root, Plan *plan);
 static void preprocess_targetlist2(Query *parse, ForeignScan *scan);
 static List *expand_targetlist(List *tlist, int command_type, Index result_relation, Relation rel);
 static bool contain_foreign_tables(TsurugiPlannerInfo *root, List *rtable);
+static void validate_column_types(Oid relid);
 
 /**
  *  @brief 	Alternative planner for tsurugidb.
@@ -89,6 +93,7 @@ tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 	Plan *plan = NULL;
 	PlannedStmt *stmt = NULL;
 	ModifyTable *modify = NULL;
+	ListCell *lc;
 
 #if PG_VERSION_NUM >= 130000
 	elog(DEBUG1, "tsurugi_fdw : %s\nquery:\n%s", __func__, query_string);
@@ -103,6 +108,16 @@ tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 #else
 		return standard_planner(parse2, cursorOptions, boundParams);
 #endif
+	}
+
+	/* Validate column types. */
+	foreach(lc, parse->rtable)
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
+		if ((rte->rtekind == RTE_RELATION) && (rte->relkind == RELKIND_FOREIGN_TABLE))
+		{
+			validate_column_types(rte->relid);
+		}
 	}
 
 	if (parse->hasAggs)
@@ -890,4 +905,39 @@ expand_targetlist(List *tlist, int command_type,
 	}
 
 	return new_tlist;
+}
+
+static void
+validate_column_types(Oid relid)
+{
+	Oid pg_type = InvalidOid;
+	Oid elem_type = InvalidOid;
+
+	Relation rel;
+	TupleDesc tupdesc;
+
+	rel = table_open(relid, NoLock);
+	tupdesc = RelationGetDescr(rel);
+
+	for (int i = 0; i < tupdesc->natts; i++)
+	{
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
+		if (attr->attisdropped)
+		{
+			continue;
+		}
+
+		/* Get the base type. */
+		pg_type = getBaseType(attr->atttypid);
+		/* For arrays, get the element type. */
+		elem_type = get_element_type(pg_type);
+		pg_type  = (elem_type != InvalidOid) ? getBaseType(elem_type) : pg_type;
+
+		if (!is_supported_type(pg_type))
+		{
+			elog(ERROR, "tsurugi_fdw : unrecognized type oid: %d", (int)pg_type);
+		}
+	}
+
+	table_close(rel, NoLock);
 }

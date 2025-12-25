@@ -42,6 +42,11 @@ using namespace ogawayama;
 
 static std::string make_tsurugi_query(std::string_view query_string);
 static std::string trim_query_string(const std::string& orig_query);
+static bool make_tuple_from_result_row(ResultSetPtr result_set, 
+										TupleDesc tupleDescriptor,
+										List* retrieved_attrs,
+										Datum* row,
+										bool* is_null);
 static std::pair<std::string, std::string> make_prepare_statement(const char* query);
 static ogawayama::stub::placeholders_type make_placeholders(ParamListInfo param_linfo);
 static ogawayama::stub::parameters_type make_parameters(ParamListInfo param_linfo);
@@ -135,6 +140,26 @@ is_prepare_statement(const char* query)
     return (boost::algorithm::icontains(sql, "PREPARE ") 
                 || boost::algorithm::icontains(sql, "$") 
                 || boost::algorithm::icontains(sql, ":param"));
+}
+
+bool
+is_supported_type(Oid pg_type)
+{
+	stub::Metadata::ColumnType::Type tg_type = stub::Metadata::ColumnType::Type::NULL_VALUE;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
+	PG_TRY();
+	{
+		tg_type = tsurugi::get_tg_column_type(pg_type);
+	}
+	PG_CATCH();
+	{
+		return false;
+	}
+	PG_END_TRY();
+
+	return (tg_type != stub::Metadata::ColumnType::Type::NULL_VALUE);
 }
 
 /**
@@ -347,7 +372,7 @@ tg_create_cursor(ForeignScanState* node)
  * make_tuple_from_result_row
  *      Obtain tuple data from Ogawayama and convert data type.
  */
-static void 
+static bool 
 make_tuple_from_result_row(ResultSetPtr result_set, 
                             TupleDesc tupleDescriptor,
                             List* retrieved_attrs,
@@ -360,19 +385,25 @@ make_tuple_from_result_row(ResultSetPtr result_set,
 	memset(is_null, true, sizeof(bool) * tupleDescriptor->natts);
 
 	ListCell   *lc = NULL;
-	foreach(lc, retrieved_attrs)
-	{
+	foreach(lc, retrieved_attrs) {
 		int     attnum = lfirst_int(lc) - 1;
         Form_pg_attribute pg_attr =TupleDescAttr(tupleDescriptor, attnum);
 
 		elog(DEBUG5, "tsurugi_fdw : %s : attnum: %d", __func__, attnum + 1);
 
-        auto tsurugi_value = tsurugi::convert_type_to_pg(result_set, pg_attr->atttypid);
-        is_null[attnum] = tsurugi_value.first;  // null flag
+        auto value = tsurugi::convert_type_to_pg(result_set, pg_attr->atttypid);
+        is_null[attnum] = value.first;  // null flag
         if (!is_null[attnum])
-            row[attnum] = tsurugi_value.second; // value       
+            row[attnum] = value.second; // value
+		if (!is_null[attnum] && !row[attnum]) {
+			elog(LOG, "tsurugi_fdw : Invalid data type.");
+			result_set = nullptr;
+			return false;
+		}
     }
     result_set = nullptr;
+
+	return true;
 }
 
 bool tg_execute_foreign_scan(TgFdwForeignScanState *fsstate, TupleTableSlot *tupleSlot)
@@ -384,14 +415,15 @@ bool tg_execute_foreign_scan(TgFdwForeignScanState *fsstate, TupleTableSlot *tup
 	ERROR_CODE error = Tsurugi::tsurugi().result_set_next_row();
 	if (error == ERROR_CODE::OK)
 	{
-		make_tuple_from_result_row(Tsurugi::tsurugi().get_result_set(), 
-  								   tupleSlot->tts_tupleDescriptor,
-								   fsstate->retrieved_attrs,
-								   tupleSlot->tts_values,
-								   tupleSlot->tts_isnull);
-		ExecStoreVirtualTuple(tupleSlot);
-		fsstate->num_tuples++;
-		success = true;
+		success = make_tuple_from_result_row(Tsurugi::tsurugi().get_result_set(), 
+												tupleSlot->tts_tupleDescriptor,
+												fsstate->retrieved_attrs,
+												tupleSlot->tts_values,
+												tupleSlot->tts_isnull);
+		if (success) {
+			ExecStoreVirtualTuple(tupleSlot);
+			fsstate->num_tuples++;
+		}
 	}
 	else if (error == ERROR_CODE::END_OF_ROW) 
 	{
@@ -404,8 +436,8 @@ bool tg_execute_foreign_scan(TgFdwForeignScanState *fsstate, TupleTableSlot *tup
 	{
 		//	an error occurred.
 		Tsurugi::tsurugi().init_result_set();
-//		Tsurugi::tsurugi().report_error("Failed to retrieve result set from Tsurugi.", 
-//				error, fsstate->query_string);
+		Tsurugi::tsurugi().report_error("Failed to retrieve result set from Tsurugi.", 
+				error, fsstate->query_string);
 	}
 
 	return success;

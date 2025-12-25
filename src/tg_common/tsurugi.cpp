@@ -278,7 +278,7 @@ ERROR_CODE Tsurugi::start_transaction(Oid server_oid)
 	}
 	log2(DEBUG1, "Connection::begin() is done.", error);
 	if (error != ERROR_CODE::OK) {
-		report_error("Failed to start transaction.", error);
+		report_error("Failed to start metransaction.", error);
 	}
 
 	return error;
@@ -1007,11 +1007,14 @@ ogawayama::stub::Metadata::ColumnType::Type get_tg_column_type(const Oid pg_type
  * 			(pgtype) OID of PostgreSQL data type.
  *  @return	(first)	flag of null value.
  * 			(second) PG value.
+ * 	@note	If first (null flag) is false 
+ * 			and second (row value) is null, it fails.
  */
 std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgtype) 
 {
-	bool is_null = true;
-	Datum row_value;
+	bool is_null = false;
+	Datum row_value = (Datum) nullptr;
+	ERROR_CODE error_code = ERROR_CODE::UNKNOWN;
 
 	switch (pgtype)
 	{
@@ -1019,7 +1022,8 @@ std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgt
 			{
 				std::int16_t value;
 				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is INT2OID.", __func__);
-				if (result_set->next_column(value) == ERROR_CODE::OK)
+				error_code = result_set->next_column(value);
+				if (error_code == ERROR_CODE::OK)
 				{
 					elog(DEBUG5, "tsurugi_fdw : %s : value = %d", __func__, value);
 					is_null = false;
@@ -1032,7 +1036,8 @@ std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgt
 			{
 				std::int32_t value = 0;
 				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is INT4OID.", __func__);
-				if (result_set->next_column(value) == ERROR_CODE::OK)
+				error_code = result_set->next_column(value);
+				if (error_code == ERROR_CODE::OK)
 				{
 					elog(DEBUG5, "tsurugi_fdw : %s : value = %d", __func__, value);
 					is_null = false;
@@ -1045,7 +1050,8 @@ std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgt
 			{
 				std::int64_t value;
 				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is INT8OID.", __func__);
-				if (result_set->next_column(value) == ERROR_CODE::OK)
+				error_code = result_set->next_column(value);
+				if (error_code == ERROR_CODE::OK)
 				{
 					elog(DEBUG5, "tsurugi_fdw : %s : value = %ld", __func__, value);
 					is_null = false;
@@ -1058,7 +1064,8 @@ std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgt
 			{
 				float4 value;
 				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is FLOAT4OID.", __func__);
-				if (result_set->next_column(value) == ERROR_CODE::OK)
+				error_code = result_set->next_column(value);
+				if (error_code == ERROR_CODE::OK)
 				{
 					is_null = false;
 					row_value = Float4GetDatum(value);
@@ -1070,7 +1077,8 @@ std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgt
 			{
 				float8 value;
 				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is FLOAT8OID.", __func__);
-				if (result_set->next_column(value) == ERROR_CODE::OK)
+				error_code = result_set->next_column(value);
+				if (error_code == ERROR_CODE::OK)
 				{
 					is_null = false;
 					row_value = Float8GetDatum(value);
@@ -1099,8 +1107,8 @@ std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgt
 				typemod = ((Form_pg_type) GETSTRUCT(heap_tuple))->typtypmod;
 				ReleaseSysCache(heap_tuple);
 
-				ERROR_CODE result = result_set->next_column(value);
-				if (result == ERROR_CODE::OK)
+				error_code = result_set->next_column(value);
+				if (error_code == ERROR_CODE::OK)
 				{
 					value_datum = CStringGetDatum(value.c_str());
 					if (value_datum == (Datum) nullptr)
@@ -1120,7 +1128,8 @@ std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgt
 			{
 				stub::date_type value;
 				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is DATEOID.", __func__);
-				if (result_set->next_column(value) == ERROR_CODE::OK)
+				error_code = result_set->next_column(value);
+				if (error_code == ERROR_CODE::OK)
 				{
 					DateADT date;
 					date = value.days_since_epoch();
@@ -1135,7 +1144,8 @@ std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgt
 			{
 				stub::time_type value;
 				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is TIMEOID.", __func__);
-				if (result_set->next_column(value) == ERROR_CODE::OK)
+				error_code = result_set->next_column(value);
+				if (error_code == ERROR_CODE::OK)
 				{
 					TimeADT time;
 					auto subsecond = value.subsecond().count();
@@ -1156,7 +1166,8 @@ std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgt
 			{
 				stub::timetz_type value;
 				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is TIMETZOID.", __func__);
-				if (result_set->next_column(value) == ERROR_CODE::OK)
+				error_code = result_set->next_column(value);
+				if (error_code == ERROR_CODE::OK)
 				{
 					TimeTzADT timetz;
 					auto subsecond = value.first.subsecond().count();
@@ -1183,7 +1194,8 @@ std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgt
 			{
 				stub::timestamptz_type value;
 				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is TIMESTAMPTZOID.", __func__);
-				if (result_set->next_column(value) == ERROR_CODE::OK)
+				error_code = result_set->next_column(value);
+				if (error_code == ERROR_CODE::OK)
 				{
 					Timestamp timestamp;
 					auto subsecond = value.first.subsecond().count();
@@ -1212,7 +1224,8 @@ std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgt
 			{
 				stub::timestamp_type value;
 				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is TIMESTAMPOID.", __func__);
-				if (result_set->next_column(value) == ERROR_CODE::OK)
+				error_code = result_set->next_column(value);
+				if (error_code == ERROR_CODE::OK)
 				{
 					Timestamp timestamp;
 					auto subsecond = value.subsecond().count();
@@ -1233,7 +1246,7 @@ std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgt
 			{
 				stub::decimal_type value;
 				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is NUMERICOID.", __func__);
-				auto error_code = result_set->next_column(value);
+				error_code = result_set->next_column(value);
 				if (error_code == ERROR_CODE::OK)
 				{
 					const auto sign = value.sign();
@@ -1276,18 +1289,16 @@ std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgt
 													Int32GetDatum(((NUMERIC_MAX_PRECISION << 16) |
 																			scale) + VARHDRSZ));
 					is_null = false;
-
 				}
 			}
 			break;
 
 		case BYTEAOID:
 			{
-				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is BYTEAOID.", __func__);
-
 				std::string_view value;
-				ERROR_CODE result = result_set->next_column(value);
-				if (result == ERROR_CODE::OK)
+				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is BYTEAOID.", __func__);
+				error_code = result_set->next_column(value);
+				if (error_code == ERROR_CODE::OK)
 				{
 					bytea* pg_bytea = (bytea*)palloc(value.size() + VARHDRSZ);
 					SET_VARSIZE(pg_bytea, value.size() + VARHDRSZ);
@@ -1300,11 +1311,19 @@ std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgt
 			break;
 
 		default:
-			elog(ERROR, "Invalid data type of PG. (%u)", pgtype);
+			{
+				Tsurugi::tsurugi().report_error(
+						(boost::format("Invalid data type of PG. (%u)") % pgtype).str(), 
+						ERROR_CODE::INVALID_PARAMETER);
+			}
 			break;
 	}
 
-	return std::make_pair(is_null, row_value);
+	if (error_code == ERROR_CODE::COLUMN_TYPE_MISMATCH) {
+		Tsurugi::tsurugi().report_error("dataset and type mismatch.", error_code);
+	}
+
+	return {is_null, row_value};
 }
 
 /**
