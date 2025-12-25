@@ -168,6 +168,9 @@ public:
     ERROR_CODE init(Oid server_oid);
     bool is_initialized(Oid server_oid);
 
+	struct Credential { std::string user; std::string password; };
+	Credential connected_user_map_info_;
+
 	// Transaction
     ERROR_CODE start_transaction(Oid server_oid);  
     bool in_transaction_block() { return (transaction_ != nullptr); }

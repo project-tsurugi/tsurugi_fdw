@@ -32,6 +32,7 @@ extern "C" {
 #include "postgres.h"
 
 #include "access/reloptions.h"
+#include "catalog/pg_user_mapping.h"
 #include "catalog/pg_foreign_server.h"
 #include "foreign/fdwapi.h"
 
@@ -52,6 +53,10 @@ static constexpr const char* const kOptNameKey = "key";
 static constexpr const char* const kValEndpointIpc = "ipc";
 static constexpr const char* const kValEndpointTcp = "stream";
 static constexpr const char* const kValTrue = "true";
+
+/* Defines for authentication values. */
+static constexpr const char* const kOptNameUser = "user";
+static constexpr const char* const kOptNamePassword = "password";
 
 /**
  * Describes the valid options for objects that use this wrapper.
@@ -74,6 +79,9 @@ static const std::unordered_multimap<std::string_view, Oid> VALID_OPTIONS =
 	{kOptNamePort, ForeignServerRelationId},
 	/* CREATE FOREIGN TABLE options */
 	{kOptNameKey, AttributeRelationId},
+	/* CREATE USER MAPPING options */
+	{kOptNameUser, UserMappingRelationId},
+	{kOptNamePassword, UserMappingRelationId},
 };
 
 static bool is_valid_option(std::string_view option, Oid context);
@@ -97,6 +105,7 @@ tsurugi_fdw_validator(PG_FUNCTION_ARGS)
 	std::string opt_val_address;
 	std::string opt_val_port;
 	std::string opt_val_key;
+	std::string opt_val_user;
 
 	ListCell* cell;
 	foreach (cell, options_list) {
@@ -169,6 +178,8 @@ tsurugi_fdw_validator(PG_FUNCTION_ARGS)
 			opt_val_port = opt_val;
 		} else if (opt_key == kOptNameKey) {
 			opt_val_key = opt_val;
+		} else if (opt_key == kOptNameUser) { 
+			opt_val_user = opt_val; 
 		}
 	}
 
@@ -195,6 +206,11 @@ tsurugi_fdw_validator(PG_FUNCTION_ARGS)
 				kOptNameDbname, opt_val_dbname.c_str(),
 				kOptNameAddress, opt_val_address.c_str(),
 				kOptNamePort, opt_val_port.c_str());
+	}
+
+	if (catalog == UserMappingRelationId) {
+		elog(DEBUG2, "User mapping options: %s:=[%s]",
+			kOptNameUser, opt_val_user.c_str());
 	}
 
 	PG_RETURN_VOID();

@@ -33,7 +33,9 @@ extern "C" {
 #include "postgres.h"
 #include "access/htup_details.h"
 #include "catalog/pg_type.h"
+#include "commands/defrem.h"
 #include "foreign/foreign.h"
+#include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/datetime.h"
@@ -121,6 +123,43 @@ void ConnectionInfo::parse(const List* server_opts) {
  * 
  */
 /**
+ * @brief Loads user and password from the user mapping for the current user and given server.
+ * @param server_oid OID of the foreign server.
+ */
+Tsurugi::Credential get_user_mapping_credential(Oid server_oid) {
+    Tsurugi::Credential cred{};
+    cred.user = "";
+    cred.password = "";
+
+    // Check existence of mapping for current user (no PUBLIC)
+    HeapTuple mappingTuple = SearchSysCache2(USERMAPPINGUSERSERVER,
+                                             ObjectIdGetDatum(GetUserId()),
+                                             ObjectIdGetDatum(server_oid));
+    // Mapping not found -> return empty credentials
+    if (!HeapTupleIsValid(mappingTuple)) {
+        return cred;
+    }
+    ReleaseSysCache(mappingTuple);
+
+    // Get mapping for current user
+    UserMapping* um = GetUserMapping(GetUserId(), server_oid);
+
+    // Scan options for user/password
+    ListCell* lc;
+    foreach (lc, um->options) {
+        DefElem* def = (DefElem*) lfirst(lc);
+        const char* val = (def->arg != nullptr) ? defGetString(def) : "";
+
+        if (!std::strcmp(def->defname, "user")) {
+            cred.user = val;
+        } else if (!std::strcmp(def->defname, "password")) {
+            cred.password = val;
+        }
+    }
+    return cred;
+}
+
+/**
  *  @brief Checks whether the ogawayama stub has been initialized.
  *  @param server_oid oid of tsurugi server.
  *  @retval true  if the stub is already initialized
@@ -148,6 +187,17 @@ bool Tsurugi::is_initialized(Oid server_oid)
 	if (conn_info_ != now_sever_opts)
 	{
 		elog(DEBUG4, "Connection information has been changed.");
+		return false;
+	}
+
+	/* Get the latest user mapping information. */
+	auto now_user_map_opts = get_user_mapping_credential(server_oid);
+
+	/* Check that the user mapping information matches. */
+	if (connected_user_map_info_.user != now_user_map_opts.user ||
+		connected_user_map_info_.password != now_user_map_opts.password) 
+	{
+		elog(DEBUG4, "User mapping information has changed.");
 		return false;
 	}
 
@@ -188,6 +238,12 @@ ERROR_CODE Tsurugi::init(Oid server_oid)
 				conn_info_.port().data());
 	}
 
+	/* Set user mapping options. */
+	Credential cred = get_user_mapping_credential(server_oid);
+	connected_user_map_info_ = cred;
+	ogawayama::stub::Auth auth(cred.user, cred.password);
+	elog(DEBUG2, "User mapping: user=[%s]", cred.user.c_str());
+
 	/* Release connection-related resources. */
 	stub_ = nullptr;
 	connection_ = nullptr;
@@ -220,14 +276,22 @@ ERROR_CODE Tsurugi::init(Oid server_oid)
 
 	try {
 		elog(DEBUG1, "tsurugi_fdw : Attempt to call Stub::get_connection(). (pid: %d)", getpid());
-		error = stub_->get_connection(getpid(), connection_);
+		error = stub_->get_connection(getpid(), connection_, auth);
 		log2(DEBUG1, "Stub::get_connection() is done.", error);
 	} catch (...) {
 		error = ERROR_CODE::UNKNOWN;
 		report_error("Unexpected exception occurred.", error);
 		return error;
 	}
-	if (error != ERROR_CODE::OK)
+	if (error == ERROR_CODE::AUTHENTICATION_ERROR) {
+		connection_ = nullptr;
+		ereport(ERROR,
+        (errcode(ERRCODE_INVALID_PASSWORD),
+         errmsg("Invalid username or password for Tsurugi connection. error: %s(%d)",
+                ogawayama::stub::error_name(error).data(),
+                (int) error)));
+	} 
+	else if (error != ERROR_CODE::OK)
 	{
 		connection_ = nullptr;
 		report_error("Failed to connect to Tsurugi.", error, nullptr);
