@@ -42,7 +42,6 @@ extern "C" {
 #include "utils/memutils.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
-#include "libpq-fe.h"
 #include "tg_common/tsurugi_api.h"
 #ifdef __cplusplus
 }

@@ -1007,8 +1007,7 @@ ogawayama::stub::Metadata::ColumnType::Type get_tg_column_type(const Oid pg_type
  * 			(pgtype) OID of PostgreSQL data type.
  *  @return	(first)	flag of null value.
  * 			(second) PG value.
- * 	@note	If first (null flag) is false 
- * 			and second (row value) is null, it fails.
+ * 	@note	If first (null flag) is false and second (row value) is null, it fails.
  */
 std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgtype) 
 {

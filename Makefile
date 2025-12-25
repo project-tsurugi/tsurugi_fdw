@@ -35,7 +35,8 @@ endif
 # Test settings according to regression test type
 REGRESS := test_preparation
 ifdef REGRESS_BASIC
-	REGRESS += dml_happy data_types_happy case_sensitive_happy \
+	REGRESS += privilege_happy.sql \
+			   dml_happy data_types_happy case_sensitive_happy \
 	           prep_dml_happy prep_data_types_happy prep_case_sensitive_happy \
 	           manual_tutorial \
 	           udf_transaction_happy udf_tg_show_tables_happy udf_tg_verify_tables_happy \
