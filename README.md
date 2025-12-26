@@ -15,7 +15,7 @@ The current version of tsurugi_fdw pushes down queries directly to Tsurugi, whic
 Since tsurugi_fdw accesses the Tsurugi database via IPC endpoint, the PostgreSQL installing this extension must be located on the same host as Tsurugi.
 
 * C++ Compiler `>= C++17`
-* Source code of PostgreSQL 12/13/14/15 `>=12.22`, `>=13.18`, `>=14.18`, `>=15.13`
+* Source code of PostgreSQL 12/13/14/15/16 `>=12.22`, `>=13.18`, `>=14.18`, `>=15.13`, `>=16.10`
 * Access to installed dependent modules:
   * [ogawayama](https://github.com/project-tsurugi/ogawayama)
 
@@ -179,6 +179,27 @@ Since tsurugi_fdw accesses the Tsurugi database via IPC endpoint, the PostgreSQL
             Name    |  Owner   | Foreign-data wrapper
          -----------+----------+----------------------
           tsurugidb | postgres | tsurugi_fdw
+        ```
+
+1. Create user mapping option
+
+    You can define user mapping between PostgreSQL user and Tsurugi user using `CREATE USER MAPPING` command:
+
+    ```sql
+    CREATE USER MAPPING FOR pguser
+            SERVER tsurugidb
+            OPTIONS (user 'tsurugi_user', password 'tsurugi_password');    
+    ```
+
+    * Check with the meta-command(`\deu+`)
+
+        ```sql
+        postgres=# \deu+
+                                    List of user mappings
+        Server   | User name |                     FDW options
+        -----------+-----------+------------------------------------------------------
+        tsurugidb | pguser    | ("user" 'tsurugi-user', password 'tsurugi-password')
+        (1 row)
         ```
 
 1. Create foreign tables
