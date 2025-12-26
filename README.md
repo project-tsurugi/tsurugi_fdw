@@ -181,6 +181,16 @@ Since tsurugi_fdw accesses the Tsurugi database via IPC endpoint, the PostgreSQL
           tsurugidb | postgres | tsurugi_fdw
         ```
 
+1. Create user mapping option
+
+    You can define user mapping between PostgreSQL user and Tsurugi user using `CREATE USER MAPPING` command:
+
+    ```sql
+    CREATE USER MAPPING FOR pg_user
+            SERVER tsurugidb
+            OPTIONS (user 'tsurugi_user', password 'tsurugi_password');    
+    ```
+
 1. Create foreign tables
 
     ```sql
