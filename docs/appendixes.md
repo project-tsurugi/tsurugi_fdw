@@ -1,4 +1,4 @@
-# [Tsurugi FDW for Tsurugi](./tsurugi_fdw.md)
+# [Tsurugi FDW for Tsurugi](./README.md)
 
 ## 付録
 
@@ -37,6 +37,8 @@ PostgreSQLとTsurugiはアーキテクチャおよびその性質が異なるた
 5. JDBC APIで送信可能なSQL文は、Tsurugi_FDWがサポートする[SQLコマンド](./sql_reference.md)および[ユーザ定義関数](./udf_reference.md)に限ります。  
 
 6. JDBC APIのPreparedStatementではPostgreSQLに対してはステートメントキャッシュが効きますが、PostgreSQLからTsurugiへの実行においてはステートメントキャッシュは効きません。
+
+7. Spring Frameworkを使用する場合、主キーの生成戦略に自動生成を指定できません。主キーはエンティティクラスのコンストラクタなどで手動生成する必要があります。主キーを自動生成するとTsurugiでサポートしていないRETURNING句がINSERT SQL文に付与されるため、INSERT SQL文の実行（CRUD操作のデータ作成）が失敗します。
 
 ### 制限事項
 

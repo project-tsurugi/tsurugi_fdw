@@ -2,7 +2,7 @@
 
 ## tg_show_tables
 
-tg_show_tables -  Tsurugiのテーブル定義の情報を表示する
+tg_show_tables -  Tsurugiで定義されているテーブルの情報を表示する
 
 ### 概要
 
@@ -11,6 +11,7 @@ tg_show_tables(remote_schema, server_name [, mode [, pretty] ] )
 ```
 
 ### 説明
+
 Tsurugiのスキーマ(`remote_schema`)に配置されたテーブル定義の情報を表示します。
 
 テーブル定義の情報として以下の項目を表示します。
@@ -23,40 +24,43 @@ Tsurugiのスキーマ(`remote_schema`)に配置されたテーブル定義の�
   - `list`はテーブル名のリストを表示します。`mode`で'detail'を指定した時のみ表示します。
 
 `mode`、`pretty`について、引数を指定しない場合は以下のデフォルトの設定が適用されます。
-- mode - 'summary'
-- pretty - true
+
+- mode - `detail`
+- pretty - `true`
 
 ### パラメータ
-#### remote_schema
-テーブル定義情報を表示するTsurugiのスキーマ名を指定します。 
 
-現バージョンではTsurugiでスキーマに該当する機能がないため、"tsurugi_schema"等を記述します。  
-今後、仕様変更の可能性があります。
+#### remote_schema
+
+テーブル定義情報を表示するTsurugiのスキーマ名を指定します。
+
+現バージョン(`1.6.0`など)のTsurugiではスキーマに該当する機能がないため、"`public`"等を記述してください。今後、仕様変更の可能性があります。
 
 #### server_name
-テーブル定義情報を表示するTsurugiに紐づいた外部サーバ名を指定します。  
-外部サーバ名としてCREATE SERVERコマンドで定義した値を記述します。
 
+テーブルの定義情報を表示するTsurugiに紐づいた外部サーバ名を指定します。  
+外部サーバ名として`CREATE SERVER`コマンドで定義した値を記述します。
 
 #### mode
+
 表示するテーブル定義情報の情報量を設定します。
 以下のいずれかの文字列を記述します。
 
-- **'summary'**  
+- **`summary`**  
   定義されているテーブルの数のみを表示します。
-  
 
-- **'detail'**  
+- **`detail`**  
   定義されているテーブルの数、およびテーブル名のリストを表示します。
 
 #### pretty
+
 テーブル定義情報を持つJSONオブジェクトの表示形式を設定します。
 以下のいずれかの文字列を記述します。
 
-- **true**  
+- **`true`**  
   JSONオブジェクトを整形表示します。
   
-- **false**  
+- **`false`**  
   JSONオブジェクトを非整形表示します。
 
 ### 例
@@ -64,12 +68,12 @@ Tsurugiのスキーマ(`remote_schema`)に配置されたテーブル定義の�
 #### Tsurugiのテーブル定義情報としてテーブル数のみを表示する
 
   ```sql
-  SELECT tg_show_tables('tsurugi_schema', 'tsurugi', 'summary');
+  SELECT tg_show_tables('public', 'tsurugi', 'summary');
               tg_show_tables
   --------------------------------------------
    {                                         +
        "remote_schema": {                    +
-           "remote_schema": "tsurugi_schema",+
+           "remote_schema": "public",+
            "server_name": "tsurugi",         +
            "mode": "summary",                +
            "tables_on_remote_schema": {      +
@@ -83,12 +87,12 @@ Tsurugiのスキーマ(`remote_schema`)に配置されたテーブル定義の�
 #### Tsurugiのテーブル定義情報としてテーブル数、およびテーブル名のリストを表示する
 
   ```sql
-  SELECT tg_show_tables('tsurugi_schema', 'tsurugi', 'detail');
+  SELECT tg_show_tables('public', 'tsurugi', 'detail');
               tg_show_tables
   --------------------------------------------
    {                                         +
        "remote_schema": {                    +
-           "remote_schema": "tsurugi_schema",+
+           "remote_schema": "public",+
            "server_name": "tsurugi",         +
            "mode": "detail",                 +
            "tables_on_remote_schema": {      +
