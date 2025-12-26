@@ -32,3 +32,17 @@ DROP FOREIGN TABLE fdw_test_table_2;
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table_1', 'tsurugidb');
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table_2', 'tsurugidb');
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table_3', 'tsurugidb');
+
+-- Test case: 3-5
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_test_type_invalid (col_blob BLOB)
+', 'tsurugidb');
+
+--- Test
+IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
+
+--- Test teardown: DDL of the PostgreSQL
+SELECT drop_foreign_tables();
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_test_type_invalid', 'tsurugidb');
