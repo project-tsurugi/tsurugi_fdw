@@ -17,55 +17,32 @@
 #ifndef TSURUGI_UTILS_H
 #define TSURUGI_UTILS_H
 
-#include <string>
-#include <string_view>
-#include "ogawayama/stub/api.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 #include "postgres.h"
+#include "tsurugi_fdw.h"
 #ifdef __cplusplus
 }
 #endif
-
-#include "tsurugi_fdw.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-#if PG_VERSION_NUM >= 140000
-extern void rebuildInsertSql(StringInfo buf, Relation rel,
-				 			char *orig_query, List *target_attrs,
-				 			int values_end_len, int num_params,
-				 			int num_rows);
-#endif	/* PG_VERSION_NUM >= 140000 */
+bool is_prepare_statement(const char* query);
+bool tg_create_cursor(ForeignScanState* node);
+bool tg_execute_foreign_scan(TgFdwForeignScanState *fsstate, TupleTableSlot *tupleSlot);
+bool tg_prepare_direct_modify(TgFdwDirectModifyState *dmstate);
+bool tg_execute_direct_modify(ForeignScanState *node);
+bool tg_execute_import_foreign_schema(ImportForeignSchemaStmt* stmt, Oid serverOid,
+									  List** commands);
+bool tg_execute_ddl_statement(Oid server_oid, const char* ddl_statement, char** result);
+bool tg_execute_show_tables(Oid server_oid, const char* tg_schema, const char* tg_server,
+							const char* mode, bool detail, bool pretty, char** result);
+bool tg_execute_verify_tables(Oid server_oid, const char* tg_schema, const char* tg_server,
+							  Oid pg_schema_oid, const char* pg_schema, const char* mode,
+							  bool detail, bool pretty, char** result);
 #ifdef __cplusplus
 }
 #endif
-
-bool is_prepare_statement(const char* query);
-std::string make_tsurugi_query(std::string_view query_string);
-
-void make_tuple_from_result_row(ResultSetPtr result_set, 
-                                        TupleDesc tupleDescriptor,
-                                        List* retrieved_attrs,
-                                        Datum* row,
-                                        bool* is_null);
-void create_cursor(ForeignScanState* node);					
-#ifdef __TSURUGI_PLANNER__
-void prepare_direct_modify(TgFdwDirectModifyState* dmstate);
-#else
-void prepare_direct_modify(TgFdwDirectModifyState* dmstate, List* fdw_exprs);
-#endif
-void execute_direct_modify(ForeignScanState* node);
-#if !defined (__TSURUGI_PLANNER__)
-void prepare_foreign_modify(TgFdwForeignModifyState *fmstate);
-TupleTableSlot **execute_foreign_modify(EState *estate,
-					   							ResultRelInfo *resultRelInfo,
-					   							CmdType operation,
-					   							TupleTableSlot **slots,
-					   							TupleTableSlot **planSlots,
-					   							int *numSlots);
-#endif												
-#endif  //TSURUGI_UTILS_H
+#endif  //	TSURUGI_UTILS_H

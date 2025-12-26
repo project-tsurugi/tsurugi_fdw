@@ -193,32 +193,32 @@ DELETE FROM fdw_ddl_table;
 SELECT * FROM fdw_ddl_table ORDER BY c;
 
 ---- Test setup: PREPARE statements
-PREPARE fdw_prepare_ins(integer) AS INSERT INTO fdw_ddl_table VALUES ($1);
-PREPARE fdw_prepare_upd(integer) AS UPDATE fdw_ddl_table SET c = c + $1;
-PREPARE fdw_prepare_del AS DELETE FROM fdw_ddl_table;
-PREPARE fdw_prepare_sel AS SELECT * FROM fdw_ddl_table ORDER BY c;
+PREPARE prep_insert(integer) AS INSERT INTO fdw_ddl_table VALUES ($1);
+PREPARE prep_update(integer) AS UPDATE fdw_ddl_table SET c = c + $1;
+PREPARE prep_delete AS DELETE FROM fdw_ddl_table;
+PREPARE prep_select AS SELECT * FROM fdw_ddl_table ORDER BY c;
 
 ---- correct -> incorrect (preparation)
 ALTER SERVER tsurugidb OPTIONS (ADD dbname 'incorrect_dbname');
-EXECUTE fdw_prepare_ins(1);
-EXECUTE fdw_prepare_upd(10);
-EXECUTE fdw_prepare_del;
-EXECUTE fdw_prepare_sel;
+EXECUTE prep_insert(1);
+EXECUTE prep_update(10);
+EXECUTE prep_delete;
+EXECUTE prep_select;
 
 ---- incorrect -> correct (preparation)
 ALTER SERVER tsurugidb OPTIONS (SET dbname 'tsurugi');
--- EXECUTE fdw_prepare_ins(2);
--- EXECUTE fdw_prepare_sel;
--- EXECUTE fdw_prepare_upd(20);
--- EXECUTE fdw_prepare_sel;
--- EXECUTE fdw_prepare_del;
--- EXECUTE fdw_prepare_sel;
+-- EXECUTE prep_insert(2);
+-- EXECUTE prep_select;
+-- EXECUTE prep_update(20);
+-- EXECUTE prep_select;
+-- EXECUTE prep_delete;
+-- EXECUTE prep_select;
 
 ---- Test teardown: PREPARE statements
-DEALLOCATE fdw_prepare_ins;
-DEALLOCATE fdw_prepare_sel;
-DEALLOCATE fdw_prepare_upd;
-DEALLOCATE fdw_prepare_del;
+DEALLOCATE prep_insert;
+DEALLOCATE prep_select;
+DEALLOCATE prep_update;
+DEALLOCATE prep_delete;
 
 ---- Test setup: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_ddl_table;

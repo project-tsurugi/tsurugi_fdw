@@ -90,9 +90,10 @@ tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 	PlannedStmt *stmt = NULL;
 	ModifyTable *modify = NULL;
 
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 #if PG_VERSION_NUM >= 130000
-	elog(LOG, "tsurugi_fdw : \nquery: \n%s", query_string);
+	elog(DEBUG1, "tsurugi_fdw : %s\nquery:\n%s", __func__, query_string);
+#else
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 #endif
 	if ((root->parse != NULL && root->parse->rtable == NULL) || 
 		!contain_foreign_tables(root, root->parse->rtable))
@@ -163,7 +164,7 @@ tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams)
 		}
 	}
 
-	elog(LOG, "tsurugi_fdw : tsurugi_planner() is done.");
+	elog(DEBUG1, "tsurugi_fdw : tsurugi_planner() is done.");
 
 	return stmt;
 }
@@ -406,7 +407,11 @@ create_foreign_scan(TsurugiPlannerInfo *root)
 	fnode->operation = root->parse->commandType;
 	fnode->fs_server = root->serverid;
 	fnode->fdw_exprs = NIL;
+#if PG_VERSION_NUM >= 160000
+	fnode->fdw_private = linitial(list_make1(root->parse->jointree->quals));
+#else
 	fnode->fdw_private = NIL;
+#endif  // PG_VERSION_NUM >= 160000
 	fnode->fdw_scan_tlist = NIL;
 	fnode->fdw_recheck_quals = NIL;
 	fnode->fs_relids = NULL;

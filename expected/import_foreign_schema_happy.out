@@ -1010,71 +1010,6 @@ SELECT tg_execute_ddl('DROP TABLE fdw_test_table_a', 'tsurugidb');
  DROP TABLE
 (1 row)
 
--- Test case: 2-3-1
---- Test setup: DDL of the Tsurugi
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_test_table_1 (id INT, name CHAR(64))
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_test_table_2 (id INT, since DATE)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_test_table_3 (id INT, timer TIME)
-', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
-(1 row)
-
---- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_test_table_2 (id INT, since DATE) SERVER tsurugidb;
---- Test
-IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-ERROR:  relation "fdw_test_table_2" already exists
-CONTEXT:  importing foreign table "fdw_test_table_2"
-\det fdw_test_*
-        List of foreign tables
- Schema |      Table       |  Server   
---------+------------------+-----------
- public | fdw_test_table_2 | tsurugidb
-(1 row)
-
---- Test teardown: DDL of the PostgreSQL
-SELECT drop_foreign_tables();
- drop_foreign_tables 
----------------------
- DROP FOREIGN TABLE
-(1 row)
-
---- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_test_table_1', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
-SELECT tg_execute_ddl('DROP TABLE fdw_test_table_2', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
-SELECT tg_execute_ddl('DROP TABLE fdw_test_table_3', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
-(1 row)
-
 -- Test case: 2-3-2
 --- Test setup: DDL of the Tsurugi
 SELECT tg_execute_ddl('
@@ -1614,10 +1549,14 @@ SELECT tg_execute_ddl('DROP TABLE fdw_test_type_datetime', 'tsurugidb');
  DROP TABLE
 (1 row)
 
--- Test case: 3-4
+-- Test case: 3-4-1_4
 --- Test setup: DDL of the Tsurugi
 SELECT tg_execute_ddl('
-  CREATE TABLE fdw_test_type_invalid (col_binary BINARY)
+  CREATE TABLE fdw_test_type_binary (
+    col_binary BINARY,
+    col_varbinary VARBINARY,
+    col_binary_var BINARY VARYING
+  )
 ', 'tsurugidb');
  tg_execute_ddl 
 ----------------
@@ -1626,8 +1565,22 @@ SELECT tg_execute_ddl('
 
 --- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-ERROR:  unsupported tsurugi data type "11"
-DETAIL:  table:"fdw_test_type_invalid" column:"col_binary" type:11
+\det fdw_test_*
+          List of foreign tables
+ Schema |        Table         |  Server   
+--------+----------------------+-----------
+ public | fdw_test_type_binary | tsurugidb
+(1 row)
+
+\d fdw_test_type_binary;
+              Foreign table "public.fdw_test_type_binary"
+     Column     | Type  | Collation | Nullable | Default | FDW options 
+----------------+-------+-----------+----------+---------+-------------
+ col_binary     | bytea |           |          |         | 
+ col_varbinary  | bytea |           |          |         | 
+ col_binary_var | bytea |           |          |         | 
+Server: tsurugidb
+
 --- Test teardown: DDL of the PostgreSQL
 SELECT drop_foreign_tables();
  drop_foreign_tables 
@@ -1636,7 +1589,7 @@ SELECT drop_foreign_tables();
 (1 row)
 
 --- Test teardown: DDL of the Tsurugi
-SELECT tg_execute_ddl('DROP TABLE fdw_test_type_invalid', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE fdw_test_type_binary', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  DROP TABLE

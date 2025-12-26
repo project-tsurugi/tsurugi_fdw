@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	common.h
+ *	@file	connection.h
  */
-#pragma once
+#ifndef CONNECTION_H
+#define CONNECTION_H
 
 #ifdef __cplusplus
 extern "C" {
-#endif
+#endif	
 
-/* planner flag */
-#define __TSURUGI_PLANNER__
+#include "foreign/foreign.h"
+
+void handle_remote_xact(ForeignServer *server);
 
 #ifdef __cplusplus
 }
 #endif
+#endif	/* CONNECTION_H */

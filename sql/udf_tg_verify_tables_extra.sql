@@ -586,6 +586,62 @@ SELECT tg_execute_ddl('DROP TABLE udf_test_table_binary_varying_l', 'tsurugidb')
 -- Test case: 3-5-8
 --- Test setup: DDL of the Tsurugi
 SELECT tg_execute_ddl('
+  CREATE TABLE udf_test_table_binary (col BINARY)
+', 'tsurugidb');
+SELECT tg_execute_ddl('
+  CREATE TABLE udf_test_table_binary_l (col BINARY(64))
+', 'tsurugidb');
+SELECT tg_execute_ddl('
+  CREATE TABLE udf_test_table_varbinary (col VARBINARY)
+', 'tsurugidb');
+SELECT tg_execute_ddl('
+  CREATE TABLE udf_test_table_varbinary_l (col VARBINARY(64))
+', 'tsurugidb');
+SELECT tg_execute_ddl('
+  CREATE TABLE udf_test_table_binary_varying (col BINARY VARYING)
+', 'tsurugidb');
+SELECT tg_execute_ddl('
+  CREATE TABLE udf_test_table_binary_varying_l (col BINARY VARYING(64))
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_table_binary (
+  col varchar
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_binary_l (
+  col varchar
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_varbinary (
+  col varchar
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_varbinary_l (
+  col varchar
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_binary_varying (
+  col varchar
+) SERVER tsurugidb;
+CREATE FOREIGN TABLE udf_test_table_binary_varying_l (
+  col varchar
+) SERVER tsurugidb;
+--- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_table_binary;
+DROP FOREIGN TABLE udf_test_table_binary_l;
+DROP FOREIGN TABLE udf_test_table_varbinary;
+DROP FOREIGN TABLE udf_test_table_varbinary_l;
+DROP FOREIGN TABLE udf_test_table_binary_varying;
+DROP FOREIGN TABLE udf_test_table_binary_varying_l;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_binary', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_binary_l', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_varbinary', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_varbinary_l', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_binary_varying', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE udf_test_table_binary_varying_l', 'tsurugidb');
+
+-- Test case: 3-5-9
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
   CREATE TABLE udf_test_table_boolean (col INT)
 ', 'tsurugidb');
 SELECT tg_execute_ddl('
@@ -599,9 +655,6 @@ SELECT tg_execute_ddl('
 ', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE udf_test_table_char (col CHAR)
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE udf_test_table_bytea (col BINARY)
 ', 'tsurugidb');
 --- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE udf_test_table_boolean (
@@ -619,9 +672,6 @@ CREATE FOREIGN TABLE udf_test_table_varchar (
 CREATE FOREIGN TABLE udf_test_table_char (
   col char
 ) SERVER tsurugidb;
-CREATE FOREIGN TABLE udf_test_table_bytea (
-  col bytea
-) SERVER tsurugidb;
 --- Test
 SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
 --- Test teardown: DDL of the PostgreSQL
@@ -630,14 +680,12 @@ DROP FOREIGN TABLE udf_test_table_smallint;
 DROP FOREIGN TABLE udf_test_table_numeric_p;
 DROP FOREIGN TABLE udf_test_table_varchar;
 DROP FOREIGN TABLE udf_test_table_char;
-DROP FOREIGN TABLE udf_test_table_bytea;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE udf_test_table_boolean', 'tsurugidb');
 SELECT tg_execute_ddl('DROP TABLE udf_test_table_smallint', 'tsurugidb');
 SELECT tg_execute_ddl('DROP TABLE udf_test_table_numeric_p', 'tsurugidb');
 SELECT tg_execute_ddl('DROP TABLE udf_test_table_varchar', 'tsurugidb');
 SELECT tg_execute_ddl('DROP TABLE udf_test_table_char', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE udf_test_table_bytea', 'tsurugidb');
 
 -- Test case: 4-5-1
 --- Test setup: DDL of the Tsurugi
@@ -682,6 +730,22 @@ SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'summary', '0');
 DROP FOREIGN TABLE udf_test_table_1;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE udf_test_table_1', 'tsurugidb');
+
+-- Test case: 3-5-10
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE udf_test_type_table_1 (col BLOB)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE udf_test_type_table_1 (col bytea) SERVER tsurugidb;
+
+--- Test
+SELECT tg_verify_tables('tg_schema', 'tsurugidb', 'public', 'detail', true);
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE udf_test_type_table_1;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE udf_test_type_table_1', 'tsurugidb');
 
 -- Test case: 8-1-1
 --- Test setup: DDL of the Tsurugi
