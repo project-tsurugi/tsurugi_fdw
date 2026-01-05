@@ -19,36 +19,30 @@
  *	@file	connection.cpp
  */
 
-#include <iostream>
-#include "ogawayama/stub/error_code.h"
-#include "common/tsurugi.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 #include "postgres.h"
-#include "optimizer/planner.h"
-#include "tcop/utility.h"
-#include "access/xact.h"
+#include "tg_common/connection.h"
 
+#include "access/xact.h"
 #include "access/htup_details.h"
 #include "catalog/pg_user_mapping.h"
+#include "foreign/foreign.h"
+#include "lib/stringinfo.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
+#include "nodes/pathnodes.h"
+#include "optimizer/planner.h"
 #include "pgstat.h"
 #include "storage/latch.h"
+#include "tcop/utility.h"
 #include "utils/hsearch.h"
 #include "utils/inval.h"
 #include "utils/memutils.h"
-#include "utils/syscache.h"
-
-#include "foreign/foreign.h"
-#include "lib/stringinfo.h"
-#include "nodes/pathnodes.h"
 #include "utils/relcache.h"
-#include "libpq-fe.h"
-
+#include "utils/syscache.h"
+#include "tg_common/tsurugi_api.h"
 #ifdef __cplusplus
 }
 #endif 
@@ -62,15 +56,14 @@ bool xact_got_connection = false;
 
 typedef struct ConnCacheEntry
 {
-	ConnCacheKey key;			/* hash key (must be first) */
-	bool keep_conn;
-	int			xact_depth;		/* 0 = no xact open, 1 = main xact open */
-	bool		changing_xact_state;	/* xact state change in process */
-	bool            invalidated;    /* true if reconnect is pending */
-	uint32          server_hashvalue;       /* hash value of foreign server OID */
+	ConnCacheKey key;				/* hash key (must be first) */
+	bool	keep_conn;
+	int		xact_depth;				/* 0 = no xact open, 1 = main xact open */
+	bool	changing_xact_state;	/* xact state change in process */
+	bool	invalidated;    		/* true if reconnect is pending */
+	uint32	server_hashvalue;       /* hash value of foreign server OID */
 } ConnCacheEntry;
 
-void handle_remote_xact(ForeignServer *server);
 void begin_remote_xact(ConnCacheEntry *entry);
 static void tsurugifdw_xact_callback(XactEvent event, void *arg);
 static void tsurugifdw_inval_callback(Datum arg, int cacheid, uint32 hashvalue);
@@ -83,7 +76,7 @@ void handle_remote_xact(ForeignServer *server)
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
-	if (ConnectionHash == NULL){
+	if (ConnectionHash == NULL) {
 		HASHCTL         ctl;
 
 		/* Create the hash table. */
@@ -107,7 +100,7 @@ void handle_remote_xact(ForeignServer *server)
 	key = server->serverid;
 
 	/* Find or create cached entry for requested connection. */
-	entry = static_cast<ConnCacheEntry*>(hash_search(ConnectionHash, &key, HASH_ENTER, &found));
+	entry = (ConnCacheEntry *) hash_search(ConnectionHash, &key, HASH_ENTER, &found);
 
 	if (!found) {
 		entry->keep_conn = true;
@@ -122,20 +115,29 @@ void handle_remote_xact(ForeignServer *server)
 	begin_remote_xact(entry);
 }
 
-
+/**
+ * 	begin_remote_xact
+ * 		(entry)	Pointer to ConnCacheEntry.
+ */
 void begin_remote_xact(ConnCacheEntry *entry)
 {
+	bool success = false;
+
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	/* Start main transaction if we haven't yet */
 	if (entry->xact_depth <= 0)
 	{
-		auto server_oid = entry->key;
-		ERROR_CODE error = Tsurugi::start_transaction(server_oid);
-		if (error != ERROR_CODE::OK)
+		Oid server_oid = entry->key;
+		success = tg_do_connect(server_oid);
+		if (!success)
 		{
-			elog(ERROR, "Failed to begin the Tsurugi transaction. (%d)\n%s", 
-				(int) error, Tsurugi::get_error_message(error).c_str());
+			elog(ERROR, "%s", tg_get_error_message());
+		}
+		success = tg_do_begin(server_oid);
+		if (!success)
+		{
+			elog(ERROR, "%s", tg_get_error_message());
 		}
 		entry->xact_depth = 1;
 		entry->changing_xact_state = false;
@@ -149,7 +151,7 @@ static void tsurugifdw_xact_callback(XactEvent event, void *arg)
 {
 	HASH_SEQ_STATUS scan;
 	ConnCacheEntry *entry;
-	ERROR_CODE error = ERROR_CODE::UNKNOWN;
+	bool success = false;
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
@@ -159,24 +161,23 @@ static void tsurugifdw_xact_callback(XactEvent event, void *arg)
 
 	/* Scan all connection cache entries to find open remote transactions, and close them. */
 	hash_seq_init(&scan, ConnectionHash);
-	while ((entry = (ConnCacheEntry *) hash_seq_search(&scan))){
-
+	while ((entry = (ConnCacheEntry *) hash_seq_search(&scan))) 
+	{
 		/* Ignore cache entry if no open connection right now */
 		if (entry->keep_conn == false)
 			continue;
 
-		if (entry->xact_depth > 0) {
-
+		if (entry->xact_depth > 0) 
+		{
 			switch (event){
 				case XACT_EVENT_PARALLEL_PRE_COMMIT:
 				case XACT_EVENT_PRE_COMMIT:
 					/* Commit all remote transactions during pre-commit */
 					entry->changing_xact_state = true;
-					error = Tsurugi::commit();
-					if (error != ERROR_CODE::OK)
+					success = tg_do_commit();
+					if (!success)
 					{
-						elog(ERROR, "Failed to commit the Tsurugi transaction. (%d)\n%s",
-							 (int)error, Tsurugi::get_error_message(error).c_str());
+						elog(ERROR, "%s", tg_get_error_message());
 					}
 					entry->changing_xact_state = false;
 					break;
@@ -206,10 +207,9 @@ static void tsurugifdw_xact_callback(XactEvent event, void *arg)
 
 					/* Mark this connection as in the process of changing transaction state. */
 					entry->changing_xact_state = true;
-					error = Tsurugi::rollback();
-					if (error != ERROR_CODE::OK) {
-						elog(ERROR, "Failed to rollback the Tsurugi transaction. (%d)\n%s", 
-                			(int) error, Tsurugi::get_error_message(error).c_str());
+					success = tg_do_rollback();
+					if (!success) {
+						elog(ERROR, "%s", tg_get_error_message());
 					}
 					entry->changing_xact_state = false;
 					break;
@@ -223,6 +223,12 @@ static void tsurugifdw_xact_callback(XactEvent event, void *arg)
 
 }
 
+/**
+ * 	tsurugifdw_inval_callback
+ * 		(arg) 
+ * 		(cacheid)
+ * 		(hashvalue)
+ */
 static void
 tsurugifdw_inval_callback(Datum arg, int cacheid, uint32 hashvalue)
 {
@@ -242,7 +248,8 @@ tsurugifdw_inval_callback(Datum arg, int cacheid, uint32 hashvalue)
 			continue;
 
 		/* hashvalue == 0 means a cache reset, must clear all state */
-		if (hashvalue == 0 || (cacheid == FOREIGNSERVEROID && entry->server_hashvalue == hashvalue))
+		if (hashvalue == 0 || 
+			(cacheid == FOREIGNSERVEROID && entry->server_hashvalue == hashvalue))
 			entry->invalidated = true;
 	}
 }

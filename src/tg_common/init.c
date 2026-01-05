@@ -21,7 +21,6 @@
 #include "postgres.h"
 #include "optimizer/planner.h"
 #include "tcop/utility.h"
-#include "common/common.h"
 
 extern PGDLLIMPORT planner_hook_type planner_hook;
 extern PGDLLIMPORT ProcessUtility_hook_type ProcessUtility_hook;
@@ -54,10 +53,6 @@ extern void tsurugi_ProcessUtility(PlannedStmt *pstmt,
 void
 _PG_init(void)
 {
-#ifdef __TSURUGI_PLANNER__
-  	planner_hook = tsurugi_planner;
-#else
-	planner_hook = NULL;
-#endif
+ 	planner_hook = tsurugi_planner;
   ProcessUtility_hook = tsurugi_ProcessUtility;
 }

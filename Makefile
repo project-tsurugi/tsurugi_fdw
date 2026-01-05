@@ -9,7 +9,7 @@ OBJS       = $(C_SRCS:.c=.o) $(CPP_SRCS:.cpp=.o)
 PG_CPPFLAGS = -Iinclude -I$(libpq_srcdir) -I$(includedir) -fPIC -O0 -Werror
 PG_CXXFLAGS = -Iinclude/proto \
               -Ithird_party/ogawayama/include \
-              -Ithird_party/takatori/include \
+              -Ithird_party/ogawayama/src \
               -std=c++17 -Dregister= 
 
 override rpath = -Wl,-rpath,'$$ORIGIN'
@@ -17,10 +17,11 @@ SHLIB_LINK_INTERNAL = $(libpq)
 SHLIB_LINK = -logawayama-stub -lboost_filesystem
 
 EXTENSION = tsurugi_fdw
-DATA = tsurugi_fdw--1.3.0.sql \
+DATA = tsurugi_fdw--1.4.0.sql \
 		tsurugi_fdw--1.0.0--1.1.0.sql \
 		tsurugi_fdw--1.1.0--1.2.0.sql \
-		tsurugi_fdw--1.2.0--1.3.0.sql
+		tsurugi_fdw--1.2.0--1.3.0.sql \
+		tsurugi_fdw--1.3.0--1.4.0.sql
 
 # REGRESS_BASIC: Run basic tests.
 # REGRESS_EXTRA: Run extra tests.
@@ -34,7 +35,7 @@ endif
 # Test settings according to regression test type
 REGRESS := test_preparation
 ifdef REGRESS_BASIC
-	REGRESS += ddl_happy \
+	REGRESS += ddl_happy privilege_happy \
 	           dml_happy data_types_happy case_sensitive_happy \
 	           prep_dml_happy prep_data_types_happy prep_case_sensitive_happy \
 	           manual_tutorial \
@@ -60,7 +61,7 @@ ifndef MAJORVERSION
 endif
 
 ifdef REGRESS_EXTRA
-	REGRESS += ddl_unhappy \
+	REGRESS += ddl_unhappy privilege_unhappy \
 	           dml_unhappy data_types_unhappy case_sensitive_unhappy \
 	           prep_dml_unhappy prep_data_types_unhappy prep_case_sensitive_unhappy \
 	           udf_tg_show_tables_unhappy udf_tg_show_tables_extra udf_tg_verify_tables_unhappy udf_tg_verify_tables_extra \
@@ -76,6 +77,9 @@ ifdef REGRESS_EXTRA
 	else ifeq ($(filter $(MAJORVERSION), 14 15), $(MAJORVERSION))
 		# PostgreSQL 14.x to PostgreSQL 15.x
 		REGRESS += dml_unhappy_pg14-15 prep_dml_unhappy_pg14-15
+	else ifeq ($(filter $(MAJORVERSION), 16), $(MAJORVERSION))
+		# PostgreSQL 16.x
+		REGRESS += dml_unhappy_pg16 prep_dml_unhappy_pg16
 	endif
 endif
 

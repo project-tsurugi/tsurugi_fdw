@@ -20,8 +20,8 @@ CREATE FOREIGN TABLE weather (
     the_date date default '2023-04-01'
 ) SERVER tsurugidb;
 
-/* SET DATASTYLE */
-SET datestyle TO ISO, ymd;
+/* SET DATESTYLE */
+SET DATESTYLE TO ISO, ymd;
 
 /* データの挿入 */
 INSERT INTO weather (id, city, temp_lo, temp_hi, prcp)

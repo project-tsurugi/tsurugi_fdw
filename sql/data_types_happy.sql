@@ -1,169 +1,29 @@
 /* Test case: happy path - Supported data types */
--- Test setup: PostgreSQL environment
-SET timezone TO 'UTC';
 
--- Test setup: DDL of the Tsurugi
+-- Numeric Types - integer
+--- Test setup: DDL of the Tsurugi
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_int (c INT)
 ', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_bigint (c BIGINT)
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_decimal (c DECIMAL)
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_decimal_p (c DECIMAL(5))
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_decimal_ps (c DECIMAL(5, 2))
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_decimal_ps0 (c DECIMAL(38, 0))
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_decimal_ps38 (c DECIMAL(38, 38))
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_numeric (c NUMERIC)
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_numeric_p (c NUMERIC(5))
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_numeric_ps (c NUMERIC(5, 2))
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_numeric_ps0 (c NUMERIC(38, 0))
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_numeric_ps38 (c NUMERIC(38, 38))
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_real (c REAL)
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_double (c DOUBLE)
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_char (c CHAR)
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_char_l (c CHAR(10))
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_varchar (c VARCHAR)
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_varchar_l (c VARCHAR(10))
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_text (c VARCHAR)
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_date (c DATE)
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_time (c TIME)
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_timestamp (c TIMESTAMP)
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_timestamp_wo_tz (c TIMESTAMP WITHOUT TIME ZONE)
-', 'tsurugidb');
-SELECT tg_execute_ddl('
-  CREATE TABLE fdw_type_timestamp_tz (c TIMESTAMP WITH TIME ZONE)
-', 'tsurugidb');
-
--- Test setup: DDL of the PostgreSQL
+--- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE fdw_type_int (
   c integer
 ) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_bigint (
-  c bigint
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_decimal (
-  c decimal
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_decimal_p (
-  c decimal(5)
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_decimal_ps (
-  c decimal(5, 2)
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_decimal_ps0 (
-  c decimal(38, 0)
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_decimal_ps38 (
-  c decimal(38, 38)
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_numeric (
-  c numeric
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_numeric_p (
-  c numeric(5)
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_numeric_ps (
-  c numeric(5, 2)
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_numeric_ps0 (
-  c numeric(38, 0)
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_numeric_ps38 (
-  c numeric(38, 38)
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_real (
-  c real
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_double (
-  c double precision
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_char (
-  c char
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_char_l (
-  c char(10)
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_varchar (
-  c varchar
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_varchar_l (
-  c varchar(10)
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_text (
-  c text
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_date (
-  c date
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_time (
-  c time
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_timestamp (
-  c timestamp
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_timestamp_wo_tz (
-  c timestamp without time zone
-) SERVER tsurugidb;
-CREATE FOREIGN TABLE fdw_type_timestamp_tz (
-  c timestamp with time zone
-) SERVER tsurugidb;
 
--- Numeric Types
---- integer
+--- Test
 INSERT INTO fdw_type_int VALUES (12345);
 INSERT INTO fdw_type_int VALUES (-12345);
 INSERT INTO fdw_type_int VALUES (NULL);
-INSERT INTO fdw_type_int VALUES (2147483644); --max-3
-INSERT INTO fdw_type_int VALUES (2147483645); --max-2
-INSERT INTO fdw_type_int VALUES (2147483646); --max-1
-INSERT INTO fdw_type_int VALUES (2147483647); --max
-INSERT INTO fdw_type_int VALUES (-2147483645); --min+3
-INSERT INTO fdw_type_int VALUES (-2147483646); --min+2
-INSERT INTO fdw_type_int VALUES (-2147483647); --min+1
-INSERT INTO fdw_type_int VALUES (-2147483648); --min
+INSERT INTO fdw_type_int VALUES (2147483644);  --max-3
+INSERT INTO fdw_type_int VALUES (2147483645);  --max-2
+INSERT INTO fdw_type_int VALUES (2147483646);  --max-1
+INSERT INTO fdw_type_int VALUES (2147483647);  --max
+INSERT INTO fdw_type_int VALUES (-2147483645);  --min+3
+INSERT INTO fdw_type_int VALUES (-2147483646);  --min+2
+INSERT INTO fdw_type_int VALUES (-2147483647);  --min+1
+INSERT INTO fdw_type_int VALUES (-2147483648);  --min
 INSERT INTO fdw_type_int VALUES (CAST(1.1 AS int));
+INSERT INTO fdw_type_int VALUES (cast(0.1 as int));
 SELECT * FROM fdw_type_int ORDER BY c;
 
 SELECT * FROM fdw_type_int WHERE c = 2147483647 ORDER BY c;
@@ -181,7 +41,22 @@ UPDATE fdw_type_int SET c = 2147483647 WHERE c IS NULL;
 DELETE FROM fdw_type_int WHERE c = 2147483647;
 SELECT * FROM fdw_type_int ORDER BY c;
 
---- bigint
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_int;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_int', 'tsurugidb');
+
+-- Numeric Types - bigint
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_bigint (c BIGINT)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_bigint (
+  c bigint
+) SERVER tsurugidb;
+
+--- Test
 INSERT INTO fdw_type_bigint VALUES (12345);
 INSERT INTO fdw_type_bigint VALUES (-12345);
 INSERT INTO fdw_type_bigint VALUES (NULL);
@@ -192,8 +67,9 @@ INSERT INTO fdw_type_bigint VALUES (9223372036854775807);  --max
 INSERT INTO fdw_type_bigint VALUES (-9223372036854775805);  --min+3
 INSERT INTO fdw_type_bigint VALUES (-9223372036854775806);  --min+2
 INSERT INTO fdw_type_bigint VALUES (-9223372036854775807);  --min+1
-INSERT INTO fdw_type_bigint VALUES (-9223372036854775808); --min
+INSERT INTO fdw_type_bigint VALUES (-9223372036854775808);  --min
 INSERT INTO fdw_type_bigint VALUES (CAST(1.1 AS bigint));
+INSERT INTO fdw_type_bigint VALUES (cast(0.1 as bigint));
 SELECT * FROM fdw_type_bigint ORDER BY c;
 
 SELECT * FROM fdw_type_bigint WHERE c = 9223372036854775807 ORDER BY c;
@@ -214,7 +90,22 @@ UPDATE fdw_type_bigint SET c = 9223372036854775807 WHERE c IS NULL;
 DELETE FROM fdw_type_bigint WHERE c = 9223372036854775807;
 SELECT * FROM fdw_type_bigint ORDER BY c;
 
---- decimal
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_bigint;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_bigint', 'tsurugidb');
+
+-- Numeric Types - decimal
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_decimal (c DECIMAL)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_decimal (
+  c decimal
+) SERVER tsurugidb;
+
+--- Test
 INSERT INTO fdw_type_decimal VALUES (12345);
 INSERT INTO fdw_type_decimal VALUES (-12345);
 INSERT INTO fdw_type_decimal VALUES (NULL);
@@ -229,7 +120,22 @@ SELECT * FROM fdw_type_decimal ORDER BY c DESC;
 DELETE FROM fdw_type_decimal WHERE c = -987654;
 SELECT * FROM fdw_type_decimal ORDER BY c;
 
---- decimal(5)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_decimal;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal', 'tsurugidb');
+
+-- Numeric Types - decimal(5)
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_decimal_p (c DECIMAL(5))
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_decimal_p (
+  c decimal(5)
+) SERVER tsurugidb;
+
+--- Test
 INSERT INTO fdw_type_decimal_p VALUES (12345);
 INSERT INTO fdw_type_decimal_p VALUES (-12345);
 INSERT INTO fdw_type_decimal_p VALUES (NULL);
@@ -244,7 +150,22 @@ SELECT * FROM fdw_type_decimal_p ORDER BY c DESC;
 DELETE FROM fdw_type_decimal_p WHERE c = -98765;
 SELECT * FROM fdw_type_decimal_p ORDER BY c;
 
---- decimal(5, 2)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_decimal_p;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_p', 'tsurugidb');
+
+-- Numeric Types - decimal(5, 2)
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_decimal_ps (c DECIMAL(5, 2))
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_decimal_ps (
+  c decimal(5, 2)
+) SERVER tsurugidb;
+
+--- Test
 INSERT INTO fdw_type_decimal_ps VALUES (123.45);
 INSERT INTO fdw_type_decimal_ps VALUES (-123.45);
 INSERT INTO fdw_type_decimal_ps VALUES (NULL);
@@ -259,39 +180,94 @@ SELECT * FROM fdw_type_decimal_ps ORDER BY c DESC;
 DELETE FROM fdw_type_decimal_ps WHERE c = -987.65;
 SELECT * FROM fdw_type_decimal_ps ORDER BY c;
 
-INSERT INTO fdw_type_decimal_ps VALUES(abs(-17.4));
-INSERT INTO fdw_type_decimal_ps VALUES(ceil(-42.8));
-INSERT INTO fdw_type_decimal_ps VALUES(floor(-42.8));
-INSERT INTO fdw_type_decimal_ps VALUES(mod(9, 4));
-INSERT INTO fdw_type_decimal_ps VALUES(round(42.4));
-INSERT INTO fdw_type_decimal_ps VALUES(round(42.4382, 2));
+INSERT INTO fdw_type_decimal_ps VALUES (abs(-17.4));
+INSERT INTO fdw_type_decimal_ps VALUES (ceil(-42.8));
+INSERT INTO fdw_type_decimal_ps VALUES (floor(-42.8));
+INSERT INTO fdw_type_decimal_ps VALUES (mod(9, 4));
+INSERT INTO fdw_type_decimal_ps VALUES (round(42.4));
+INSERT INTO fdw_type_decimal_ps VALUES (round(42.4382, 2));
 SELECT * FROM fdw_type_decimal_ps ORDER BY c;
 
---- decimal(38, 0)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_decimal_ps;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_ps', 'tsurugidb');
+
+-- Numeric Types - decimal(38, 0)
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_decimal_ps0 (c DECIMAL(38, 0))
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_decimal_ps0 (
+  c decimal(38, 0)
+) SERVER tsurugidb;
+
+--- Test
 INSERT INTO fdw_type_decimal_ps0 VALUES (0);
 INSERT INTO fdw_type_decimal_ps0 VALUES (1);
 INSERT INTO fdw_type_decimal_ps0 VALUES (18446744073709551615);
 INSERT INTO fdw_type_decimal_ps0 VALUES (18446744073709551616);
-INSERT INTO fdw_type_decimal_ps0 VALUES (99999999999999999999999999999999999999);
+INSERT INTO fdw_type_decimal_ps0
+  VALUES (99999999999999999999999999999999999999);
 INSERT INTO fdw_type_decimal_ps0 VALUES (-1);
 INSERT INTO fdw_type_decimal_ps0 VALUES (-18446744073709551615);
 INSERT INTO fdw_type_decimal_ps0 VALUES (-18446744073709551616);
-INSERT INTO fdw_type_decimal_ps0 VALUES (-99999999999999999999999999999999999999);
+INSERT INTO fdw_type_decimal_ps0
+  VALUES (-99999999999999999999999999999999999999);
 SELECT * FROM fdw_type_decimal_ps0 ORDER BY c;
 
---- decimal(38, 38)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_decimal_ps0;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_ps0', 'tsurugidb');
+
+-- Numeric Types - decimal(38, 38)
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_decimal_ps38 (c DECIMAL(38, 38))
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_decimal_ps38 (
+  c decimal(38, 38)
+) SERVER tsurugidb;
+
+--- Test
 INSERT INTO fdw_type_decimal_ps38 VALUES (0);
-INSERT INTO fdw_type_decimal_ps38 VALUES (0.00000000000000000000000000000000000001);
-INSERT INTO fdw_type_decimal_ps38 VALUES (0.00000000000000000018446744073709551615);
-INSERT INTO fdw_type_decimal_ps38 VALUES (0.00000000000000000018446744073709551616);
-INSERT INTO fdw_type_decimal_ps38 VALUES (0.99999999999999999999999999999999999999);
-INSERT INTO fdw_type_decimal_ps38 VALUES (-0.00000000000000000000000000000000000001);
-INSERT INTO fdw_type_decimal_ps38 VALUES (-0.00000000000000000018446744073709551615);
-INSERT INTO fdw_type_decimal_ps38 VALUES (-0.00000000000000000018446744073709551616);
-INSERT INTO fdw_type_decimal_ps38 VALUES (-0.99999999999999999999999999999999999999);
+INSERT INTO fdw_type_decimal_ps38
+  VALUES (0.00000000000000000000000000000000000001);
+INSERT INTO fdw_type_decimal_ps38
+  VALUES (0.00000000000000000018446744073709551615);
+INSERT INTO fdw_type_decimal_ps38
+  VALUES (0.00000000000000000018446744073709551616);
+INSERT INTO fdw_type_decimal_ps38
+  VALUES (0.99999999999999999999999999999999999999);
+INSERT INTO fdw_type_decimal_ps38
+  VALUES (-0.00000000000000000000000000000000000001);
+INSERT INTO fdw_type_decimal_ps38
+  VALUES (-0.00000000000000000018446744073709551615);
+INSERT INTO fdw_type_decimal_ps38
+  VALUES (-0.00000000000000000018446744073709551616);
+INSERT INTO fdw_type_decimal_ps38
+  VALUES (-0.99999999999999999999999999999999999999);
 SELECT * FROM fdw_type_decimal_ps38 ORDER BY c;
 
---- numeric
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_decimal_ps38;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_ps38', 'tsurugidb');
+
+-- Numeric Types - numeric
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_numeric (c NUMERIC)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_numeric (
+  c numeric
+) SERVER tsurugidb;
+
+--- Test
 INSERT INTO fdw_type_numeric VALUES (12345);
 INSERT INTO fdw_type_numeric VALUES (-12345);
 INSERT INTO fdw_type_numeric VALUES (NULL);
@@ -306,7 +282,22 @@ SELECT * FROM fdw_type_numeric ORDER BY c DESC;
 DELETE FROM fdw_type_numeric WHERE c = -987654;
 SELECT * FROM fdw_type_numeric ORDER BY c;
 
---- numeric(5)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_numeric;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric', 'tsurugidb');
+
+-- Numeric Types - numeric(5)
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_numeric_p (c NUMERIC(5))
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_numeric_p (
+  c numeric(5)
+) SERVER tsurugidb;
+
+--- Test
 INSERT INTO fdw_type_numeric_p VALUES (12345);
 INSERT INTO fdw_type_numeric_p VALUES (-12345);
 INSERT INTO fdw_type_numeric_p VALUES (NULL);
@@ -321,7 +312,22 @@ SELECT * FROM fdw_type_numeric_p ORDER BY c DESC;
 DELETE FROM fdw_type_numeric_p WHERE c = -98765;
 SELECT * FROM fdw_type_numeric_p ORDER BY c;
 
---- numeric(5, 2)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_numeric_p;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_p', 'tsurugidb');
+
+-- Numeric Types - numeric(5, 2)
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_numeric_ps (c NUMERIC(5, 2))
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_numeric_ps (
+  c numeric(5, 2)
+) SERVER tsurugidb;
+
+--- Test
 INSERT INTO fdw_type_numeric_ps VALUES (123.45);
 INSERT INTO fdw_type_numeric_ps VALUES (-123.45);
 INSERT INTO fdw_type_numeric_ps VALUES (NULL);
@@ -336,15 +342,30 @@ SELECT * FROM fdw_type_numeric_ps ORDER BY c DESC;
 DELETE FROM fdw_type_numeric_ps WHERE c = -987.65;
 SELECT * FROM fdw_type_numeric_ps ORDER BY c;
 
-INSERT INTO fdw_type_numeric_ps VALUES(abs(-17.4));
-INSERT INTO fdw_type_numeric_ps VALUES(ceil(-42.8));
-INSERT INTO fdw_type_numeric_ps VALUES(floor(-42.8));
-INSERT INTO fdw_type_numeric_ps VALUES(mod(9, 4));
-INSERT INTO fdw_type_numeric_ps VALUES(round(42.4));
-INSERT INTO fdw_type_numeric_ps VALUES(round(42.4382, 2));
+INSERT INTO fdw_type_numeric_ps VALUES (abs(-17.4));
+INSERT INTO fdw_type_numeric_ps VALUES (ceil(-42.8));
+INSERT INTO fdw_type_numeric_ps VALUES (floor(-42.8));
+INSERT INTO fdw_type_numeric_ps VALUES (mod(9, 4));
+INSERT INTO fdw_type_numeric_ps VALUES (round(42.4));
+INSERT INTO fdw_type_numeric_ps VALUES (round(42.4382, 2));
 SELECT * FROM fdw_type_numeric_ps ORDER BY c DESC;
 
---- numeric(38, 0)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_numeric_ps;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_ps', 'tsurugidb');
+
+-- Numeric Types - numeric(38, 0)
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_numeric_ps0 (c NUMERIC(38, 0))
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_numeric_ps0 (
+  c numeric(38, 0)
+) SERVER tsurugidb;
+
+--- Test
 INSERT INTO fdw_type_numeric_ps0 VALUES (0);
 INSERT INTO fdw_type_numeric_ps0 VALUES (1);
 INSERT INTO fdw_type_numeric_ps0 VALUES (18446744073709551615);
@@ -356,19 +377,57 @@ INSERT INTO fdw_type_numeric_ps0 VALUES (-18446744073709551616);
 INSERT INTO fdw_type_numeric_ps0 VALUES (-99999999999999999999999999999999999999);
 SELECT * FROM fdw_type_numeric_ps0 ORDER BY c DESC;
 
---- numeric(38, 38)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_numeric_ps0;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_ps0', 'tsurugidb');
+
+-- Numeric Types - numeric(38, 38)
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_numeric_ps38 (c NUMERIC(38, 38))
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_numeric_ps38 (
+  c numeric(38, 38)
+) SERVER tsurugidb;
+
+--- Test
 INSERT INTO fdw_type_numeric_ps38 VALUES (0);  -- see tsurugi-issues#736
-INSERT INTO fdw_type_numeric_ps38 VALUES (0.00000000000000000000000000000000000001);
-INSERT INTO fdw_type_numeric_ps38 VALUES (0.00000000000000000018446744073709551615);
-INSERT INTO fdw_type_numeric_ps38 VALUES (0.00000000000000000018446744073709551616);
-INSERT INTO fdw_type_numeric_ps38 VALUES (0.99999999999999999999999999999999999999);
-INSERT INTO fdw_type_numeric_ps38 VALUES (-0.00000000000000000000000000000000000001);
-INSERT INTO fdw_type_numeric_ps38 VALUES (-0.00000000000000000018446744073709551615);
-INSERT INTO fdw_type_numeric_ps38 VALUES (-0.00000000000000000018446744073709551616);
-INSERT INTO fdw_type_numeric_ps38 VALUES (-0.99999999999999999999999999999999999999);
+INSERT INTO fdw_type_numeric_ps38
+  VALUES (0.00000000000000000000000000000000000001);
+INSERT INTO fdw_type_numeric_ps38
+  VALUES (0.00000000000000000018446744073709551615);
+INSERT INTO fdw_type_numeric_ps38
+  VALUES (0.00000000000000000018446744073709551616);
+INSERT INTO fdw_type_numeric_ps38
+  VALUES (0.99999999999999999999999999999999999999);
+INSERT INTO fdw_type_numeric_ps38
+  VALUES (-0.00000000000000000000000000000000000001);
+INSERT INTO fdw_type_numeric_ps38
+  VALUES (-0.00000000000000000018446744073709551615);
+INSERT INTO fdw_type_numeric_ps38
+  VALUES (-0.00000000000000000018446744073709551616);
+INSERT INTO fdw_type_numeric_ps38
+  VALUES (-0.99999999999999999999999999999999999999);
 SELECT * FROM fdw_type_numeric_ps38 ORDER BY c DESC;
 
---- real
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_numeric_ps38;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_ps38', 'tsurugidb');
+
+-- Numeric Types - real
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_real (c REAL)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_real (
+  c real
+) SERVER tsurugidb;
+
+--- Test
 INSERT INTO fdw_type_real VALUES (0.1);
 INSERT INTO fdw_type_real VALUES (1.1);
 INSERT INTO fdw_type_real VALUES (1.2345);
@@ -386,7 +445,22 @@ SELECT * FROM fdw_type_real ORDER BY c DESC;
 DELETE FROM fdw_type_real WHERE c = CAST(-9.87654 AS real);
 SELECT * FROM fdw_type_real ORDER BY c;
 
---- double precision
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_real;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_real', 'tsurugidb');
+
+-- Numeric Types - double precision
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_double (c DOUBLE)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_double (
+  c double precision
+) SERVER tsurugidb;
+
+--- Test
 INSERT INTO fdw_type_double VALUES (0.1);
 INSERT INTO fdw_type_double VALUES (1.1);
 INSERT INTO fdw_type_double VALUES (1.2345);
@@ -404,8 +478,22 @@ SELECT * FROM fdw_type_double ORDER BY c DESC;
 DELETE FROM fdw_type_double WHERE c = CAST(-9.87654 AS double precision);
 SELECT * FROM fdw_type_double ORDER BY c;
 
--- Character Types
---- char
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_double;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_double', 'tsurugidb');
+
+-- Character Types - char
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_char (c CHAR)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_char (
+  c char
+) SERVER tsurugidb;
+
+--- Test
 INSERT INTO fdw_type_char VALUES ('a');
 INSERT INTO fdw_type_char VALUES ('');
 INSERT INTO fdw_type_char VALUES (NULL);
@@ -421,7 +509,22 @@ SELECT * FROM fdw_type_char ORDER BY c DESC;
 DELETE FROM fdw_type_char WHERE c = 'z';
 SELECT * FROM fdw_type_char ORDER BY c;
 
---- char(length)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_char;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_char', 'tsurugidb');
+
+-- Character Types - char(length)
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_char_l (c CHAR(10))
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_char_l (
+  c char(10)
+) SERVER tsurugidb;
+
+--- Test
 INSERT INTO fdw_type_char_l VALUES ('abcdef');
 INSERT INTO fdw_type_char_l VALUES ('PostgreSQL');
 INSERT INTO fdw_type_char_l VALUES ('');
@@ -438,7 +541,22 @@ SELECT * FROM fdw_type_char_l ORDER BY c DESC;
 DELETE FROM fdw_type_char_l WHERE c = 'update'::char(10);
 SELECT * FROM fdw_type_char_l ORDER BY c;
 
---- varchar
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_char_l;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_char_l', 'tsurugidb');
+
+-- Character Types - varchar
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_varchar (c VARCHAR)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_varchar (
+  c varchar
+) SERVER tsurugidb;
+
+--- Test
 INSERT INTO fdw_type_varchar VALUES ('abcdef');
 INSERT INTO fdw_type_varchar VALUES ('');
 INSERT INTO fdw_type_varchar VALUES (NULL);
@@ -454,7 +572,22 @@ SELECT * FROM fdw_type_varchar ORDER BY c DESC;
 DELETE FROM fdw_type_varchar WHERE c = 'NULL_updated';
 SELECT * FROM fdw_type_varchar ORDER BY c;
 
---- varchar(length)
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_varchar;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_varchar', 'tsurugidb');
+
+-- Character Types - varchar(length)
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_varchar_l (c VARCHAR(10))
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_varchar_l (
+  c varchar(10)
+) SERVER tsurugidb;
+
+--- Test
 INSERT INTO fdw_type_varchar_l VALUES ('abcdef');
 INSERT INTO fdw_type_varchar_l VALUES ('PostgreSQL');
 INSERT INTO fdw_type_varchar_l VALUES ('');
@@ -471,7 +604,22 @@ SELECT * FROM fdw_type_varchar_l ORDER BY c DESC;
 DELETE FROM fdw_type_varchar_l WHERE c = 'update';
 SELECT * FROM fdw_type_varchar_l ORDER BY c;
 
---- text
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_varchar_l;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_varchar_l', 'tsurugidb');
+
+-- Character Types - text
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_text (c VARCHAR)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_text (
+  c text
+) SERVER tsurugidb;
+
+--- Test
 INSERT INTO fdw_type_text VALUES ('abcdef');
 INSERT INTO fdw_type_text VALUES ('');
 INSERT INTO fdw_type_text VALUES (NULL);
@@ -487,10 +635,26 @@ SELECT * FROM fdw_type_text ORDER BY c DESC;
 DELETE FROM fdw_type_text WHERE c = 'NULL_updated';
 SELECT * FROM fdw_type_text ORDER BY c;
 
--- Date/Time Types
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_text;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_text', 'tsurugidb');
+
+-- Date/Time Types - Test setup: PostgreSQL environment
+SET TIMEZONE TO 'UTC';
 SET DATESTYLE TO ISO, YMD;
 
---- date
+-- Date/Time Types - date
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_date (c DATE)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_date (
+  c date
+) SERVER tsurugidb;
+
+--- Test
 INSERT INTO fdw_type_date VALUES (date '2025-01-01');
 INSERT INTO fdw_type_date VALUES ('2025-01-02'::date);
 INSERT INTO fdw_type_date VALUES (CAST('2025-01-03' AS date));
@@ -509,7 +673,22 @@ SELECT * FROM fdw_type_date ORDER BY c DESC;
 DELETE FROM fdw_type_date WHERE c = CAST('2025-03-10' AS date);
 SELECT * FROM fdw_type_date ORDER BY c;
 
---- time
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_date;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_date', 'tsurugidb');
+
+-- Date/Time Types - time
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_time (c TIME)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_time (
+  c time
+) SERVER tsurugidb;
+
+--- Test
 INSERT INTO fdw_type_time VALUES (time '01:02:03.456');
 INSERT INTO fdw_type_time VALUES ('03:02:01.456'::time);
 INSERT INTO fdw_type_time VALUES (CAST('02:01:03.456' AS time));
@@ -523,14 +702,28 @@ SELECT * FROM fdw_type_time ORDER BY c;
 UPDATE fdw_type_time SET c = '00:00:00.001' WHERE c IS NULL;
 SELECT * FROM fdw_type_time ORDER BY c;
 
-UPDATE fdw_type_time SET c = '05:06:12.345'::time WHERE c = time '00:00:00.001';
+UPDATE fdw_type_time SET c = '06:07:12.345'::time WHERE c = time '00:00:00.001';
 SELECT * FROM fdw_type_time ORDER BY c DESC;
 
-DELETE FROM fdw_type_time WHERE c = CAST('05:06:12.345' AS time);
+DELETE FROM fdw_type_time WHERE c = CAST('06:07:12.345' AS time);
 SELECT * FROM fdw_type_time ORDER BY c;
 
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_time;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_time', 'tsurugidb');
 
---- timestamp
+-- Date/Time Types - timestamp
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_timestamp (c TIMESTAMP)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_timestamp (
+  c timestamp
+) SERVER tsurugidb;
+
+--- Test
 INSERT INTO fdw_type_timestamp VALUES (timestamp '2025-01-01 00:00:00');
 INSERT INTO fdw_type_timestamp VALUES ('2025-01-02 00:00:00'::timestamp);
 INSERT INTO fdw_type_timestamp VALUES (CAST('2025-01-03 00:00:00' AS timestamp));
@@ -544,16 +737,31 @@ UPDATE fdw_type_timestamp SET c = '2025-01-01 00:00:00.001' WHERE c IS NULL;
 SELECT * FROM fdw_type_timestamp ORDER BY c;
 
 UPDATE fdw_type_timestamp
-  SET c = '2025-03-02 05:06:12.345'::timestamp
+  SET c = '2025-03-02 06:07:12.345'::timestamp
   WHERE c = timestamp '2025-01-01 00:00:00.001';
 SELECT * FROM fdw_type_timestamp ORDER BY c DESC;
 
 DELETE
   FROM fdw_type_timestamp
-  WHERE c = CAST('2025-03-02 05:06:12.345' AS timestamp);
+  WHERE c = CAST('2025-03-02 06:07:12.345' AS timestamp);
 SELECT * FROM fdw_type_timestamp ORDER BY c;
 
---- timestamp without time zone
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_timestamp;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp', 'tsurugidb');
+
+-- Date/Time Types - timestamp without time zone
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_timestamp_wo_tz (c TIMESTAMP WITHOUT TIME ZONE)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_timestamp_wo_tz (
+  c timestamp without time zone
+) SERVER tsurugidb;
+
+--- Test
 INSERT INTO fdw_type_timestamp_wo_tz
   VALUES (timestamp without time zone '2025-01-01 00:00:00');
 INSERT INTO fdw_type_timestamp_wo_tz
@@ -582,7 +790,22 @@ DELETE FROM fdw_type_timestamp_wo_tz
   WHERE c = CAST('2025-03-02 05:06:12.345' AS timestamp without time zone);
 SELECT * FROM fdw_type_timestamp_wo_tz ORDER BY c;
 
---- timestamp with time zone
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_timestamp_wo_tz;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp_wo_tz', 'tsurugidb');
+
+-- Date/Time Types - timestamp with time zone
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_timestamp_tz (c TIMESTAMP WITH TIME ZONE)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_timestamp_tz (
+  c timestamp with time zone
+) SERVER tsurugidb;
+
+--- Test
 INSERT INTO fdw_type_timestamp_tz
   VALUES
   (timestamp with time zone '2025-01-01 12:01:02.34567+9:00');
@@ -631,56 +854,92 @@ DELETE FROM fdw_type_timestamp_tz
   WHERE c = CAST('2025-03-02 05:06:12.345+900' AS timestamp with time zone);
 SELECT * FROM fdw_type_timestamp_tz ORDER BY c;
 
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_timestamp_tz;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp_tz', 'tsurugidb');
+
+-- Date/Time Types - Test teardown: PostgreSQL environment
+SET TIMEZONE TO 'UTC';
 SET DATESTYLE TO 'default';
 
-/* Test teardown: DDL of the PostgreSQL */
-DROP FOREIGN TABLE fdw_type_int;
-DROP FOREIGN TABLE fdw_type_bigint;
-DROP FOREIGN TABLE fdw_type_decimal;
-DROP FOREIGN TABLE fdw_type_decimal_p;
-DROP FOREIGN TABLE fdw_type_decimal_ps;
-DROP FOREIGN TABLE fdw_type_decimal_ps0;
-DROP FOREIGN TABLE fdw_type_decimal_ps38;
-DROP FOREIGN TABLE fdw_type_numeric;
-DROP FOREIGN TABLE fdw_type_numeric_p;
-DROP FOREIGN TABLE fdw_type_numeric_ps;
-DROP FOREIGN TABLE fdw_type_numeric_ps0;
-DROP FOREIGN TABLE fdw_type_numeric_ps38;
-DROP FOREIGN TABLE fdw_type_real;
-DROP FOREIGN TABLE fdw_type_double;
-DROP FOREIGN TABLE fdw_type_char;
-DROP FOREIGN TABLE fdw_type_char_l;
-DROP FOREIGN TABLE fdw_type_varchar;
-DROP FOREIGN TABLE fdw_type_varchar_l;
-DROP FOREIGN TABLE fdw_type_text;
-DROP FOREIGN TABLE fdw_type_date;
-DROP FOREIGN TABLE fdw_type_time;
-DROP FOREIGN TABLE fdw_type_timestamp;
-DROP FOREIGN TABLE fdw_type_timestamp_wo_tz;
-DROP FOREIGN TABLE fdw_type_timestamp_tz;
+-- Binary Types - bytea
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_bytea (c VARBINARY)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_bytea (
+  c bytea
+) SERVER tsurugidb;
 
-/* Test teardown: DDL of the Tsurugi */
-SELECT tg_execute_ddl('DROP TABLE fdw_type_int', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_bigint', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_p', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_ps', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_ps0', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_ps38', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_p', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_ps', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_ps0', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_ps38', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_real', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_double', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_char', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_char_l', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_varchar', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_varchar_l', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_text', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_date', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_time', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp_wo_tz', 'tsurugidb');
-SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp_tz', 'tsurugidb');
+--- Test
+INSERT INTO fdw_type_bytea VALUES ('\x3132330a');
+INSERT INTO fdw_type_bytea VALUES ('');
+INSERT INTO fdw_type_bytea VALUES ('\x');
+INSERT INTO fdw_type_bytea VALUES (NULL);
+SELECT * FROM fdw_type_bytea ORDER BY c;
+
+SELECT * FROM fdw_type_bytea WHERE c = '\x3132330a' ORDER BY c;
+SELECT * FROM fdw_type_bytea WHERE c <> '\x3132330a' ORDER BY c;
+SELECT * FROM fdw_type_bytea WHERE c IS NULL ORDER BY c;
+SELECT * FROM fdw_type_bytea WHERE c IS NOT NULL ORDER BY c;
+SELECT * FROM fdw_type_bytea WHERE c = '\x' ORDER BY c;
+SELECT * FROM fdw_type_bytea WHERE c <> '\x' ORDER BY c;
+
+UPDATE fdw_type_bytea SET c = '\x41424300' WHERE c = '\x3132330a';
+SELECT * FROM fdw_type_bytea ORDER BY c;
+
+UPDATE fdw_type_bytea SET c = '\x616263ff' WHERE (c <> '\x');
+SELECT * FROM fdw_type_bytea ORDER BY c;
+
+UPDATE fdw_type_bytea SET c = '\x31' WHERE c IS NULL;
+SELECT * FROM fdw_type_bytea ORDER BY c;
+
+UPDATE fdw_type_bytea SET c = NULL WHERE (c IS NOT NULL) AND (c = '\x31');
+SELECT * FROM fdw_type_bytea ORDER BY c;
+
+UPDATE fdw_type_bytea SET c = '\x4e554c4c' WHERE c = '\x';
+SELECT * FROM fdw_type_bytea ORDER BY c;
+
+UPDATE fdw_type_bytea SET c = '\x' WHERE c = '\x4e554c4c';
+SELECT * FROM fdw_type_bytea ORDER BY c;
+
+DELETE FROM fdw_type_bytea WHERE c = '\x616263ff';
+SELECT * FROM fdw_type_bytea ORDER BY c;
+
+INSERT INTO fdw_type_bytea VALUES ('\x00'), ('\xff');
+DELETE FROM fdw_type_bytea WHERE c <> '\x';
+SELECT * FROM fdw_type_bytea ORDER BY c;
+
+DELETE FROM fdw_type_bytea WHERE c = '\x';
+SELECT * FROM fdw_type_bytea ORDER BY c;
+
+INSERT INTO fdw_type_bytea VALUES ('\x00'), ('\xff');
+DELETE FROM fdw_type_bytea WHERE c IS NOT NULL;
+SELECT * FROM fdw_type_bytea ORDER BY c;
+
+DELETE FROM fdw_type_bytea WHERE c IS NULL;
+SELECT * FROM fdw_type_bytea ORDER BY c;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_bytea;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_bytea', 'tsurugidb');
+
+-- PostgreSQL Types - smallint (Tsurugi type DECIMAL(5))
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_postgresql (c DECIMAL(5))
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_postgresql (c smallint) SERVER tsurugidb;
+
+--- Test
+INSERT INTO fdw_type_postgresql VALUES (1);
+SELECT * FROM fdw_type_postgresql;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_postgresql;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_postgresql', 'tsurugidb');

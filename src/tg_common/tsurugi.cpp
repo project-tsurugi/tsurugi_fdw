@@ -15,36 +15,30 @@
  *
  *	@file	tsurugi.cpp
  */
-#include <iostream>
 #include <string>
 #include <string_view>
-#include <unordered_map>
-
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
+#include <ogawayama/stub/api.h>
+#include <ogawayama/stub/error_code.h>
 
-#include "common/tsurugi.h"
-#include "ogawayama/stub/error_code.h"
-#include "ogawayama/stub/api.h"
-#include "common/tg_numeric.h"
-
-using namespace ogawayama;
-
-namespace tg_metadata = jogasaki::proto::sql::common;
+#include "tg_common/tsurugi.h"
+#include "tg_common/tg_numeric.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include "postgres.h"
 #include "access/htup_details.h"
 #include "catalog/pg_type.h"
+#include "commands/defrem.h"
 #include "foreign/foreign.h"
-#include "storage/proc.h"
+#include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/datetime.h"
-#include "utils/elog.h"
 #include "utils/lsyscache.h"
 #include "utils/numeric.h"
 #include "utils/syscache.h"
@@ -53,189 +47,117 @@ extern "C" {
 }
 #endif
 
-/**
- * @class ConnectionInfo
- * @brief A class that stores Tsurugi connection information.
+using namespace ogawayama;
+namespace tg_metadata = jogasaki::proto::sql::common;
+
+extern bool GetTransactionOption(boost::property_tree::ptree&);
+
+/** =========================================================================
  * 
- * This class is used to manage and validate connection options for the Tsurugi.
- * It provides methods to parse options, check for matches, and retrieve individual server option values.
+ * 	ConnectionInfo class.
  * 
- * The supported options include:
- * 
- * - endpoint: Specifies the connection endpoint type.
- * 
- * - dbname: The name of the database to connect to.
- * 
- * - address: The address of the database server.
- * 
- * - port: The port number for the database connection.
  */
-class ConnectionInfo {
-public:
-	ConnectionInfo() {}
-	ConnectionInfo(const List* server_opts) { parse(server_opts); }
-	ConnectionInfo(const ConnectionInfo& server_opts) {
-		endpoint_ = server_opts.endpoint_;
-		dbname_ = server_opts.dbname_;
-		address_ = server_opts.address_;
-		port_ = server_opts.port_;
-	};
-
-	bool operator==(const ConnectionInfo& server_opts) const {
-		if (server_opts.endpoint_ != endpoint_) {
-			return false;
-		} else if (is_ipc()) {
-			// For IPC, all options are compared.
-			return (server_opts.dbname_ == dbname_);
-		} else if (is_stream()) {
-			// For TCP, all options are compared.
-			return (server_opts.address_ == address_) &&
-			       (server_opts.port_ == port_);
-		}
-
-		return true;
-	}
-
-	bool operator!=(const ConnectionInfo& server_opts) const {
-		return !(*this == server_opts);
-	}
-
-	/**
-	 * @brief Returns the value of the endpoint option.
-	 * @return value of the endpoint.
-	 */
-	std::string_view endpoint() const { return endpoint_; }
-
-	/**
-	 * @brief Returns the value of the dbname option.
-	 * @return value of the dbname.
-	 */
-	std::string_view dbname() const { return dbname_; }
-
-	/**
-	 * @brief Returns the value of the address option.
-	 * @return value of the address.
-	 */
-	std::string_view address() const { return address_; }
-
-	/**
-	 * @brief Returns the value of the port option.
-	 * @return value of the port.
-	 */
-	std::string_view port() const { return port_; }
-
-	std::string get_shared_memory_name()
+std::string get_shared_memory_name()
+{
+	std::string name{ogawayama::common::param::SHARED_MEMORY_NAME};
+	boost::property_tree::ptree pt;
+	const boost::filesystem::path conf_file("tsurugi_fdw.conf");
+	boost::system::error_code error;
+	if (boost::filesystem::exists(conf_file, error)) 
 	{
-		std::string name{ogawayama::common::param::SHARED_MEMORY_NAME};
-		boost::property_tree::ptree pt;
-		const boost::filesystem::path conf_file("tsurugi_fdw.conf");
-		boost::system::error_code error;
-		if (boost::filesystem::exists(conf_file, error)) 
+		boost::property_tree::read_ini("tsurugi_fdw.conf", pt);
+		boost::optional<std::string> str = 
+			pt.get_optional<std::string>("Configurations.SHARED_MEMORY_NAME");
+		if (str) 
 		{
-			boost::property_tree::read_ini("tsurugi_fdw.conf", pt);
-			boost::optional<std::string> str = 
-				pt.get_optional<std::string>("Configurations.SHARED_MEMORY_NAME");
-			if (str) 
-			{
-				name = str.get();
-			}
-		}
-
-		return name;
-	}
-
-	/**
-	 * @brief Parse the server options.
-	 * @param server_opts server options.
-	 */
-	void parse(const List* server_opts) {
-		ListCell *cell;
-
-		/* Initialize. */
-		endpoint_ = kDefEndpoint;
-		dbname_ = get_shared_memory_name();
-		address_ = kDefAddress;
-		port_ = kDefPort;
-
-		/* Get foreign server options. */
-		foreach (cell, server_opts) {
-			auto [key, value] = parse_option(cell);
-
-			auto it = opt_values_.find(key);
-			if (it != opt_values_.end()) {
-				*(it->second) = value;
-			}
+			name = str.get();
 		}
 	}
 
-	/**
-	 * @brief Returns whether the endpoint is IPC.
-	 * @retval true if the endpoint is "ipc".
-	 * @retval false otherwise.
-	 */
-	bool is_ipc() const { return endpoint_ == kValEndpointIpc; }
+	return name;
+}
 
-	/**
-	 * @brief Returns whether the endpoint is stream.
-	 * @retval true if the endpoint is "stream".
-	 * @retval false otherwise.
-	 */
-	bool is_stream() const { return endpoint_ == kValEndpointTcp; }
+/**
+ * @brief Returns key-value pairs from the ListCell format options.
+ * @param list option element.
+ * @return pair of key and value.
+ */
+std::pair<std::string, std::string> parse_option(const ListCell* list_cell) {
+	auto elem = (DefElem*) lfirst(list_cell);
+	auto opt_key = std::string(elem->defname);
+	auto opt_val = std::string(strVal(elem->arg));
 
-private:
-	/* Endpoint values */
-	static constexpr const char* const kValEndpointIpc = "ipc";
-	static constexpr const char* const kValEndpointTcp = "stream";
-	/* Option names */
-	static constexpr const char* const kOptEndpoint = "endpoint";
-	static constexpr const char* const kOptDbname = "dbname";
-	static constexpr const char* const kOptAddress = "address";
-	static constexpr const char* const kOptPort = "port";
-	/* Default values */
-	static constexpr const char* const kDefEndpoint = kValEndpointIpc;
-	static constexpr const char* const kDefDbname =
-		ogawayama::common::param::SHARED_MEMORY_NAME.data();
-	static constexpr const char* const kDefAddress = "";
-	static constexpr const char* const kDefPort = "";
+	std::transform(opt_key.begin(), opt_key.end(), opt_key.begin(),
+					[](unsigned char c) { return std::tolower(c); });
 
-	std::string endpoint_;
-	std::string dbname_;
-	std::string address_;
-	std::string port_;
-	std::unordered_map<std::string, std::string*> opt_values_ = {
-		{kOptEndpoint, &endpoint_},
-		{kOptDbname, &dbname_},
-		{kOptAddress, &address_},
-		{kOptPort, &port_},
-	};
+	return {opt_key, opt_val};
+}
 
-	/**
-	 * @brief Returns key-value pairs from the ListCell format options.
-	 * @param list option element.
-	 * @return pair of key and value.
-	 */
-	std::pair<std::string, std::string> parse_option(const ListCell* list_cell) const {
-		auto elem = (DefElem*)lfirst(list_cell);
-		auto opt_key = std::string(elem->defname);
-		auto opt_val = std::string(strVal(elem->arg));
+/**
+ * @brief Parse the server options.
+ * @param server_opts server options.
+ */
+void ConnectionInfo::parse(const List* server_opts) {
+	ListCell *cell;
 
-		std::transform(opt_key.begin(), opt_key.end(), opt_key.begin(),
-					   [](unsigned char c) { return std::tolower(c); });
+	/* Initialize. */
+	endpoint_ = kDefEndpoint;
+	dbname_ = get_shared_memory_name();
+	address_ = kDefAddress;
+	port_ = kDefPort;
 
-		return {opt_key, opt_val};
+	/* Get foreign server options. */
+	foreach (cell, server_opts) {
+		auto [key, value] = parse_option(cell);
+
+		auto it = opt_values_.find(key);
+		if (it != opt_values_.end()) {
+			*(it->second) = value;
+		}
 	}
-};
+}
 
-StubPtr Tsurugi::stub_ = nullptr;
-ConnectionPtr Tsurugi::connection_ = nullptr;
-TransactionPtr Tsurugi::transaction_ = nullptr;
-ResultSetPtr Tsurugi::result_set_ = nullptr;
-MetadataPtr Tsurugi::metadata_ = nullptr;
-std::unordered_map<std::string, PreparedStatementPtr> Tsurugi::prepared_statements_;
-PreparedStatementPtr Tsurugi::prepared_statement_ = nullptr;
-ConnectionInfo connection_info_;
+/** ===========================================================================
+ * 
+ * 	Tsurugi class.
+ * 
+ */
+/**
+ * @brief Loads user and password from the user mapping for the current user and given server.
+ * @param server_oid OID of the foreign server.
+ */
+Tsurugi::Credential get_user_mapping_credential(Oid server_oid) {
+    Tsurugi::Credential cred{};
+    cred.user = "";
+    cred.password = "";
 
-bool GetTransactionOption(boost::property_tree::ptree&);
+    // Check existence of mapping for current user (no PUBLIC)
+    HeapTuple mappingTuple = SearchSysCache2(USERMAPPINGUSERSERVER,
+                                             ObjectIdGetDatum(GetUserId()),
+                                             ObjectIdGetDatum(server_oid));
+    // Mapping not found -> return empty credentials
+    if (!HeapTupleIsValid(mappingTuple)) {
+        return cred;
+    }
+    ReleaseSysCache(mappingTuple);
+
+    // Get mapping for current user
+    UserMapping* um = GetUserMapping(GetUserId(), server_oid);
+
+    // Scan options for user/password
+    ListCell* lc;
+    foreach (lc, um->options) {
+        DefElem* def = (DefElem*) lfirst(lc);
+        const char* val = (def->arg != nullptr) ? defGetString(def) : "";
+
+        if (!std::strcmp(def->defname, "user")) {
+            cred.user = val;
+        } else if (!std::strcmp(def->defname, "password")) {
+            cred.password = val;
+        }
+    }
+    return cred;
+}
 
 /**
  *  @brief Checks whether the ogawayama stub has been initialized.
@@ -254,13 +176,6 @@ bool Tsurugi::is_initialized(Oid server_oid)
 		return false;
 	}
 
-	/* Checks if it is a transaction block in progress. */
-	if (transaction_ != nullptr)
-	{
-		elog(DEBUG4, "There is a transaction block in progress.");
-		return true;
-	}
-
 	/* Get ForeignServer object from server OID. */
 	auto server = GetForeignServer(server_oid);
 	assert(server != nullptr);
@@ -269,13 +184,24 @@ bool Tsurugi::is_initialized(Oid server_oid)
 	ConnectionInfo now_sever_opts(server->options);
 
 	/* Check that the connection information matches. */
-	if (connection_info_ != now_sever_opts)
+	if (conn_info_ != now_sever_opts)
 	{
 		elog(DEBUG4, "Connection information has been changed.");
 		return false;
 	}
 
-	elog(DEBUG4, "Already connected to the database.");
+	/* Get the latest user mapping information. */
+	auto now_user_map_opts = get_user_mapping_credential(server_oid);
+
+	/* Check that the user mapping information matches. */
+	if (connected_user_map_info_.user != now_user_map_opts.user ||
+		connected_user_map_info_.password != now_user_map_opts.password) 
+	{
+		elog(DEBUG4, "User mapping information has changed.");
+		return false;
+	}
+
+	elog(DEBUG4, "Already connected to the Tsurugi database.");
 	return true;
 }
 
@@ -292,6 +218,7 @@ ERROR_CODE Tsurugi::init(Oid server_oid)
 	auto error{ERROR_CODE::UNKNOWN};
 
 	elog(DEBUG1, "tsurugi_fdw : %s(serverid: %u)", __func__, server_oid);
+	error_message_.clear();
 
 	/* Get ForeignServer object from server OID. */
 	auto server = GetForeignServer(server_oid);
@@ -300,16 +227,22 @@ ERROR_CODE Tsurugi::init(Oid server_oid)
 	ConnectionInfo now_sever_opts(server->options);
 
 	/* Set foreign server options. */
-	connection_info_ = now_sever_opts;
+	conn_info_ = now_sever_opts;
 
-	if (connection_info_.is_ipc()) {
+	if (conn_info_.is_ipc()) {
 		elog(DEBUG2, R"(endpoint="%s", dbname="%s")",
-				connection_info_.endpoint().data(), connection_info_.dbname().data());
-	} else if (connection_info_.is_stream()) {
+				conn_info_.endpoint().data(), conn_info_.dbname().data());
+	} else if (conn_info_.is_stream()) {
 		elog(DEBUG2, R"(endpoint="%s", host="%s", port="%s")",
-				connection_info_.endpoint().data(), connection_info_.address().data(),
-				connection_info_.port().data());
+				conn_info_.endpoint().data(), conn_info_.address().data(),
+				conn_info_.port().data());
 	}
+
+	/* Set user mapping options. */
+	Credential cred = get_user_mapping_credential(server_oid);
+	connected_user_map_info_ = cred;
+	ogawayama::stub::Auth auth(cred.user, cred.password);
+	elog(DEBUG2, "User mapping: user=[%s]", cred.user.c_str());
 
 	/* Release connection-related resources. */
 	stub_ = nullptr;
@@ -321,29 +254,49 @@ ERROR_CODE Tsurugi::init(Oid server_oid)
 	 * it will be an "ipc" connection.
 	 */
 
-	elog(LOG, "tsurugi_fdw : Attempt to call make_stub(). (name: %s)",
-			connection_info_.dbname().data());
+	elog(DEBUG1, "tsurugi_fdw : Attempt to call make_stub(). (name: %s)",
+			conn_info_.dbname().data());
 
-	error = make_stub(stub_, connection_info_.dbname());
-	Tsurugi::error_log2(LOG, "make_stub() is done.", error);
+	try {
+		error = make_stub(stub_, conn_info_.dbname());
+	} catch (...) {
+		stub_ = nullptr;
+		error = ERROR_CODE::UNKNOWN;
+		report_error("Unexpected exception occurred.", error);
+		return error;
+	}
+	log2(DEBUG1, "make_stub() is done.", error);
 	if (error != ERROR_CODE::OK)
 	{
 		stub_ = nullptr;
-		Tsurugi::report_error("Failed to make shared memory for Tsurugi.", 
-			error, connection_info_.dbname());
+		report_error("Failed to make shared memory for Tsurugi.", error, 
+				conn_info_.dbname());
+		return error;
 	}
 
-	elog(LOG, "tsurugi_fdw : Attempt to call Stub::get_connection(). (pid: %d)", getpid());
-
-	error = stub_->get_connection(getpid(), connection_);
-	Tsurugi::error_log2(LOG, "Stub::get_connection() is done.", error);
-
-	if (error != ERROR_CODE::OK)
+	try {
+		elog(DEBUG1, "tsurugi_fdw : Attempt to call Stub::get_connection(). (pid: %d)", getpid());
+		error = stub_->get_connection(getpid(), connection_, auth);
+		log2(DEBUG1, "Stub::get_connection() is done.", error);
+	} catch (...) {
+		error = ERROR_CODE::UNKNOWN;
+		report_error("Unexpected exception occurred.", error);
+		return error;
+	}
+	if (error == ERROR_CODE::AUTHENTICATION_ERROR) {
+		connection_ = nullptr;
+		ereport(ERROR,
+        (errcode(ERRCODE_INVALID_PASSWORD),
+         errmsg("Invalid username or password for Tsurugi connection. error: %s(%d)",
+                ogawayama::stub::error_name(error).data(),
+                (int) error)));
+	} 
+	else if (error != ERROR_CODE::OK)
 	{
 		connection_ = nullptr;
-		Tsurugi::report_error("Failed to connect to Tsurugi.", error, nullptr);
+		report_error("Failed to connect to Tsurugi.", error, nullptr);
+		return error;
 	}
-	transaction_ = nullptr;
 
 	return ERROR_CODE::OK;
 }
@@ -359,13 +312,12 @@ ERROR_CODE Tsurugi::start_transaction(Oid server_oid)
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
-	if (!Tsurugi::is_initialized(server_oid))
+	if (!Tsurugi::tsurugi().is_initialized(server_oid))
 	{
 		/* Initializing connection to tsurugi server. */
-		auto error = Tsurugi::init(server_oid);
+		auto error = Tsurugi::tsurugi().init(server_oid);
 		if (error != ERROR_CODE::OK) {
-			ereport(ERROR, (errcode(ERRCODE_FDW_ERROR),
-							errmsg("%s", Tsurugi::get_error_message(error).c_str())));
+			return error;
 		}
 	}
 
@@ -377,12 +329,21 @@ ERROR_CODE Tsurugi::start_transaction(Oid server_oid)
 	boost::property_tree::ptree option;
 	GetTransactionOption(option);
 
-	elog(LOG, "tsurugi_fdw : Attempt to call Connection::begin(). (pid: %d)", 
+	elog(DEBUG1, "tsurugi_fdw : Attempt to call Connection::begin(). (pid: %d)", 
 		getpid());
 
-	// Start the transaction.
-	error = connection_->begin(option, transaction_);
-	Tsurugi::error_log2(LOG, "Connection::begin() is done.", error);
+	try {
+		// Start the transaction.
+		error = connection_->begin(option, transaction_);
+	} catch (...) {
+		elog(LOG, "tsurugi_fdw : Unexpected exception occurred.");
+		report_error("Unexpected exception occurred.", error);
+		error = ERROR_CODE::UNKNOWN;
+	}
+	log2(DEBUG1, "Connection::begin() is done.", error);
+	if (error != ERROR_CODE::OK) {
+		report_error("Failed to start transaction.", error);
+	}
 
 	return error;
 }
@@ -400,10 +361,15 @@ ERROR_CODE Tsurugi::commit()
 
     if (transaction_ != nullptr) 
     {
-        elog(LOG, "tsurugi_fdw : Attempt to call Transaction::commit().");
-		/* Commits the transaction. */
-        error = transaction_->commit();
-		Tsurugi::error_log2(LOG, "Transaction::commit() is done.", error);
+        elog(DEBUG1, "tsurugi_fdw : Attempt to call Transaction::commit().");
+		try {
+			/* Commits the transaction. */
+			error = transaction_->commit();
+		} catch (...) {
+			error = ERROR_CODE::UNKNOWN;
+			report_error("Unexpected exception occurred.", error);
+		}
+		log2(DEBUG1, "Transaction::commit() is done.", error);
         transaction_ = nullptr;
     }
     else
@@ -428,10 +394,15 @@ ERROR_CODE Tsurugi::rollback()
 
     if (transaction_ != nullptr) 
     {
-        elog(LOG, "tsurugi_fdw : Attempt to call Transaction::rollback().");
-		/* Rolls back the transaction. */
-        error = transaction_->rollback();
-		Tsurugi::error_log2(LOG, "Transaction::rollback() is done.", error);
+        elog(DEBUG1, "tsurugi_fdw : Attempt to call Transaction::rollback().");
+		try {
+			/* Rolls back the transaction. */
+			error = transaction_->rollback();
+		} catch (...) {
+			error = ERROR_CODE::UNKNOWN;
+			report_error("Unexpected exception occurred.", error);
+		}
+		log2(DEBUG1, "Transaction::rollback() is done.", error);
         transaction_ = nullptr;
     }
     else
@@ -454,8 +425,8 @@ bool Tsurugi::exists_prepared_statement(std::string_view prep_name)
 
 	bool exists{false};
 
-	auto ite = prepared_statements_.find(prep_name.data());
-	if (ite != prepared_statements_.end())
+	auto ite = prep_stmts_.find(prep_name.data());
+	if (ite != prep_stmts_.end())
 	{
 		elog(DEBUG3, "Prepared statement \"%s\" exists.", prep_name.data());
 		exists = true;
@@ -464,52 +435,63 @@ bool Tsurugi::exists_prepared_statement(std::string_view prep_name)
 	return exists;
 }
 
-#if 0  // Not used
 /**
- *  @brief 	Prepare a statement to tsurugidb.
+ *  @brief 	Prepare a named statement to tsurugidb.
  *  @param 	(prep_name)	prepare name.
  * 			(statement)	SQL statement.
  * 			(placeholders) information of placeholders in statement.
  *  @return	error code of ogawayama.
  */
-ERROR_CODE Tsurugi::prepare(std::string_view prep_name, std::string_view statement,
-						ogawayama::stub::placeholders_type& placeholders)
+[[maybe_unused]] ERROR_CODE 
+Tsurugi::prepare(Oid server_oid, std::string_view prep_name, std::string_view statement,
+				ogawayama::stub::placeholders_type& placeholders)
 {
     auto error{ERROR_CODE::UNKNOWN};
 
 	elog(DEBUG1, "tsurugi_fdw : %s : name: %s", __func__, prep_name.data());
 
-    if (connection_ == nullptr) 
-		Tsurugi::init();
+	if (!is_initialized(server_oid))
+	{
+		/* Initializing connection to tsurugi server. */
+		auto error = init(server_oid);
+		if (error != ERROR_CODE::OK) {
+			report_error(get_detail_message(error), error, "");
+			return error;
+		}
+	}
 
-	auto ite = prepared_statements_.find(prep_name.data());
-	if (ite != prepared_statements_.end())
+	auto ite = prep_stmts_.find(prep_name.data());
+	if (ite != prep_stmts_.end())
 	{
 		elog(WARNING, "Prepared statement \"%s\" already exists.", 
 			prep_name.data());
 		return ERROR_CODE::INVALID_PARAMETER;
 	}
 
-	elog(LOG, "tsurugi_fdw : Attempt to call Connection::prepare().\nname: %s, \nstatement:\n%s", 
-		prep_name.data(), statement.data());
+	elog(DEBUG1, "tsurugi_fdw : Attempt to call Connection::prepare().\n" \
+			"name: %s, \nstatement:\n%s", prep_name.data(), statement.data());
 
 	//	Prepare statement.
 	PreparedStatementPtr pstmt{};
-    error = connection_->prepare(statement, placeholders, pstmt);
-	Tsurugi::error_log2(LOG, "Connection::prepare() is done.", error);
+	try {
+	    error = connection_->prepare(statement, placeholders, pstmt);
+	} catch (...) {
+		error = ERROR_CODE::UNKNOWN;
+		report_error("Unexpected exception occurred.", error);
+	}
+	log2(LOG, "Connection::prepare() is done.", error);
 
 	if (error == ERROR_CODE::OK)
 	{	
 		// Add statement to prepared statements list.
-		prepared_statements_.emplace(prep_name, std::move(pstmt));
+		prep_stmts_.emplace(prep_name, std::move(pstmt));
 	}
 
     return error;	
 }
-#endif  // Not used
 
 /**
- *  @brief 	Prepare astatement to tsurugidb without name.
+ *  @brief 	Prepare a unnamed statement to tsurugidb.
  *  @param 	(server_oid) oid of tsurugi server.
  *  @param 	(statement) SQL statement
  *  @param 	(placeholders) information of placeholders in statement.
@@ -517,30 +499,39 @@ ERROR_CODE Tsurugi::prepare(std::string_view prep_name, std::string_view stateme
  *  @note	Prepared statement has a one-time lifespan.
  */
 ERROR_CODE Tsurugi::prepare(Oid server_oid, std::string_view statement,
-	            	ogawayama::stub::placeholders_type& placeholders)
+	            			ogawayama::stub::placeholders_type& placeholders)
 {
 	auto error{ERROR_CODE::UNKNOWN};
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
-	if (!Tsurugi::is_initialized(server_oid))
+	if (!is_initialized(server_oid))
 	{
 		/* Initializing connection to tsurugi server. */
-		auto error = Tsurugi::init(server_oid);
+		auto error = init(server_oid);
 		if (error != ERROR_CODE::OK) {
-			ereport(ERROR, (errcode(ERRCODE_FDW_ERROR),
-							errmsg("%s", Tsurugi::get_error_message(error).c_str())));
+			report_error(get_detail_message(error), error, "");
+			return error;
 		}
 	}
 
-	Tsurugi::deallocate();
-	elog(LOG, "tsurugi_fdw : Attempt to call Connection::prepare().\nstatement: \n%s", 
+	deallocate();
+	elog(DEBUG1, "tsurugi_fdw : Attempt to call Connection::prepare().\nstatement: \n%s", 
 		statement.data());
 
 	//	Prepare the statement.
-	error = connection_->prepare(statement, placeholders, prepared_statement_);
-	Tsurugi::error_log2(LOG, "Connection::prepare() is done.", error);
-
+	try {
+		error = connection_->prepare(statement, placeholders, prep_stmt_);
+	} catch (...) {
+		elog(LOG, "tsurugi_fdw : Unexpected exception occurred.");
+		error = ERROR_CODE::UNKNOWN;
+	}
+	log2(DEBUG1, "Connection::prepare() is done.", error);
+	if (error != ERROR_CODE::OK)
+	{
+		report_error("Failed to prepare the statement to Tsurugi.", 
+					error, statement);
+	}
 	return error;
 }
 
@@ -555,11 +546,11 @@ ERROR_CODE Tsurugi::deallocate(std::string_view prep_name)
 
 	elog(DEBUG1, "tsurugi_fdw : %s : prep_name:%s", __func__, prep_name.data());
 
-	auto ite = prepared_statements_.find(prep_name.data());
-	if (ite != prepared_statements_.end())
+	auto ite = prep_stmts_.find(prep_name.data());
+	if (ite != prep_stmts_.end())
 	{
 		ite->second = nullptr;
-		prepared_statements_.erase(ite);
+		prep_stmts_.erase(ite);
 		error = ERROR_CODE::OK;
 	}
 	else
@@ -581,7 +572,7 @@ void Tsurugi::deallocate()
 {
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
-	prepared_statement_ = nullptr;
+	prep_stmt_ = nullptr;
 }
 
 /**
@@ -598,12 +589,17 @@ Tsurugi::execute_query(std::string_view query)
 
 	if (transaction_ != nullptr)
 	{
-		elog(LOG, 
+		elog(DEBUG1, 
 			"tsurugi_fdw : Attempt to call Transaction::execute_query(). \nquery:\n%s", 
 			query.data());
 		result_set_ = nullptr;
-		error = transaction_->execute_query(query, result_set_);
-		Tsurugi::error_log2(LOG, "Transaction::execute_query() is done.", error);
+		try {
+			error = transaction_->execute_query(query, result_set_);
+		} catch (...) {
+			elog(LOG, "tsurugi_fdw : Unexpected exception occurred.");
+			error = ERROR_CODE::UNKNOWN;
+		}
+		log2(DEBUG1, "Transaction::execute_query() is done.", error);
 	}
 	else
 	{
@@ -629,10 +625,16 @@ Tsurugi::execute_query(ogawayama::stub::parameters_type& params)
 
 	if (transaction_ != nullptr)
 	{
-		elog(LOG, "tsurugi_fdw : Attempt to call Transaction::execute_query().");
+		if (!prep_stmt_) return ERROR_CODE::INVALID_PARAMETER;
+		elog(DEBUG1, "tsurugi_fdw : Attempt to call Transaction::execute_query().");
 		result_set_ = nullptr;
-		error = transaction_->execute_query(prepared_statement_, params, result_set_);
-		Tsurugi::error_log2(LOG, "Transaction::execute_query() is done.", error);
+		try {
+			error = transaction_->execute_query(prep_stmt_, params, result_set_);
+		} catch (...) {
+			elog(LOG, "tsurugi_fdw : Unexpected exception occurred.");
+			error = ERROR_CODE::UNKNOWN;
+		}
+		log2(DEBUG1, "Transaction::execute_query() is done.", error);
 	}
 	else
 	{
@@ -658,11 +660,16 @@ Tsurugi::execute_statement(std::string_view statement, std::size_t& num_rows)
 
     if (transaction_ != nullptr)
     {
-		elog(LOG, "tsurugi_fdw : Attempt to execute Transaction::execute_statement()." \
+		elog(DEBUG1, "tsurugi_fdw : Attempt to execute Transaction::execute_statement()." \
 					"\nstatement:\n%s", statement.data());
 		// Execute a statement.
-		error = transaction_->execute_statement(statement, num_rows);
-		Tsurugi::error_log2(LOG, "Transaction::execute_statement() is done.", error);
+		try {
+			error = transaction_->execute_statement(statement, num_rows);
+		} catch (...) {
+			elog(LOG, "tsurugi_fdw : Unexpected exception occurred.");
+			error = ERROR_CODE::UNKNOWN;
+		}
+		log2(DEBUG1, "Transaction::execute_statement() is done.", error);
     }
     else
     {
@@ -692,19 +699,24 @@ Tsurugi::execute_statement(std::string_view prep_name,
     if (transaction_ != nullptr)
     {
 		// find a prepared object.
-		auto ite = prepared_statements_.find(prep_name.data());
-		if (ite == prepared_statements_.end())
+		auto ite = prep_stmts_.find(prep_name.data());
+		if (ite == prep_stmts_.end())
 		{
 			elog(WARNING, "Preapred statement \"%s\" does not exist.", 
 				prep_name.data());
 			return ERROR_CODE::INVALID_PARAMETER;
 		}
-		elog(LOG, "tsurugi_fdw : Attempt to call Transaction::execute_statement()." \
+		elog(DEBUG1, "tsurugi_fdw : Attempt to call Transaction::execute_statement()." \
 			" prep_name: %s", ite->first.data());
 
 		// Execute a statement.
-		error = transaction_->execute_statement(ite->second, params, num_rows);
-		Tsurugi::error_log2(LOG, "Transaction::execute_statement() is done.", error);
+		try {
+			error = transaction_->execute_statement(ite->second, params, num_rows);
+		} catch (...) {
+			elog(LOG, "tsurugi_fdw : Unexpected exception occurred.");
+			error = ERROR_CODE::UNKNOWN;
+		}
+		log2(DEBUG1, "Transaction::execute_statement() is done.", error);
 	}
     else
     {
@@ -731,11 +743,16 @@ Tsurugi::execute_statement(ogawayama::stub::parameters_type& params,
 
     if (transaction_ != nullptr)
     {
-		elog(LOG, "tsurugi_fdw : Attempt to call Transaction::execute_statement().");	
+		elog(DEBUG1, "tsurugi_fdw : Attempt to call Transaction::execute_statement().");	
 
-		// Execute a statement.
-		error = transaction_->execute_statement(prepared_statement_, params, num_rows);
-		Tsurugi::error_log2(LOG, "Transaction::execute_statement() is done.", error);
+		try {
+			// Execute a statement.
+			error = transaction_->execute_statement(prep_stmt_, params, num_rows);
+		} catch (...) {
+			elog(LOG, "tsurugi_fdw : Unexpected exception occurred.");
+			error = ERROR_CODE::UNKNOWN;
+		}
+		log2(DEBUG1, "Transaction::execute_statement() is done.", error);
 	}
     else
     {
@@ -759,23 +776,28 @@ Tsurugi::get_list_tables(Oid server_oid, TableListPtr& table_list)
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
-	if (!Tsurugi::is_initialized(server_oid))
+	if (!Tsurugi::tsurugi().is_initialized(server_oid))
 	{
 		/* Initializing connection to tsurugi server. */
-		auto error = Tsurugi::init(server_oid);
+		auto error = Tsurugi::tsurugi().init(server_oid);
 		if (error != ERROR_CODE::OK) {
-			ereport(ERROR, (errcode(ERRCODE_FDW_ERROR),
-							errmsg("%s", Tsurugi::get_error_message(error).c_str())));
+			report_error(get_detail_message(error), error, "");
+			return error;
 		}
 	}
 
 	elog(DEBUG1, "tsurugi_fdw : Attempt to call Connection::get_list_tables(). (pid: %d)",
 		 getpid());
 
-	/* Get a list of table names from Tsurugi. */
-	error = connection_->get_list_tables(table_list);
+	try {
+		/* Get a list of table names from Tsurugi. */
+		error = connection_->get_list_tables(table_list);
+	} catch (...) {
+		elog(LOG, "tsurugi_fdw : Unexpected exception occurred.");
+		error = ERROR_CODE::UNKNOWN;
+	}
 
-	elog(LOG, "Connection::get_list_tables() done. (error: %d)", (int) error);
+	elog(DEBUG1, "Connection::get_list_tables() done. (error: %d)", (int) error);
 
 	return error;
 }
@@ -795,152 +817,61 @@ Tsurugi::get_table_metadata(Oid server_oid, std::string_view table_name,
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
-	if (!Tsurugi::is_initialized(server_oid))
+
+	if (!Tsurugi::tsurugi().is_initialized(server_oid))
 	{
 		/* Initializing connection to tsurugi server. */
-		auto error = Tsurugi::init(server_oid);
+		auto error = Tsurugi::tsurugi().init(server_oid);
 		if (error != ERROR_CODE::OK) {
-			ereport(ERROR, (errcode(ERRCODE_FDW_ERROR),
-							errmsg("%s", Tsurugi::get_error_message(error).c_str())));
+			report_error(get_detail_message(error), error, "");
+			return error;
 		}
 	}
 
 	elog(DEBUG1, "Attempt to call Connection::get_table_metadata(). (pid: %d)", getpid());
 
 	/* Get table metadata from Tsurugi. */
-	error = connection_->get_table_metadata(std::string(table_name), table_metadata);
+	error = connection_->get_table_metadata(
+										std::string(table_name), table_metadata);
 
-	elog(LOG, "Connection::get_table_metadata() done. (error: %d)", (int) error);
+	elog(DEBUG1, "Connection::get_table_metadata() done. (error: %d)", (int) error);
 
 	return error;
 }
 
 /**
- * @brief convert Tsurugi data types to PostgreSQL data types.
- * @param tg_type tsurugi data type (AtomType)
- * @return std::optional of PostgreSQL data type
- */
-std::optional<std::string_view> Tsurugi::convert_type_to_pg(
-		jogasaki::proto::sql::common::AtomType tg_type)
-{
-	static const std::unordered_map<tg_metadata::AtomType, std::string> type_mapping = {
-		{tg_metadata::AtomType::INT4, "integer"},
-		{tg_metadata::AtomType::INT8, "bigint"},
-		{tg_metadata::AtomType::FLOAT4, "real"},
-		{tg_metadata::AtomType::FLOAT8, "double precision"},
-		{tg_metadata::AtomType::DECIMAL, "numeric"},
-		{tg_metadata::AtomType::CHARACTER, "text"},
-		{tg_metadata::AtomType::DATE, "date"},
-		{tg_metadata::AtomType::TIME_OF_DAY, "time"},
-		{tg_metadata::AtomType::TIME_POINT, "timestamp"},
-		{tg_metadata::AtomType::TIME_OF_DAY_WITH_TIME_ZONE, "time with time zone"},
-		{tg_metadata::AtomType::TIME_POINT_WITH_TIME_ZONE, "timestamp with time zone"},
-	};
-
-	auto pg_type = type_mapping.find(tg_type);
-	if (pg_type != type_mapping.end())
-	{
-		return pg_type->second;
-	}
-
-	return std::nullopt;
-}
-
-/*
- *	tsurugi_error
- */
-ERROR_CODE Tsurugi::tsurugi_error(stub::tsurugi_error_code& code)
-{
-	ERROR_CODE error = ERROR_CODE::UNKNOWN;
-	if (connection_ != nullptr)
-	{
-		elog(DEBUG1, "Attempt to call Connection::tsurugi_error(). (pid: %d)", getpid());
-		error = connection_->tsurugi_error(code);
-		elog(LOG, "Connection::tsurugi_error() done. (error: %d)", (int) error);
-	}
-	else
-	{
-		elog(ERROR, "tsurugi_error: there is no connection in progress.");
-	}
-	return error;
-}
-
-/*
- *	get_error_detail
- */
-std::string Tsurugi::get_error_detail(ERROR_CODE error)
-{
-	std::string error_detail = "";
-
-	if (error == ERROR_CODE::SERVER_ERROR)
-	{
-		ERROR_CODE tsurugi_error = ERROR_CODE::UNKNOWN;
-		stub::tsurugi_error_code code{};
-		tsurugi_error = Tsurugi::tsurugi_error(code);
-		if (tsurugi_error == ERROR_CODE::OK)
-		{
-			elog(LOG, "ERROR_CODE::SERVER_ERROR\n\t"
-					  "tsurugi_error_code.type: %d\n\t"
-					  "                   code: %d\n\t"
-					  "                   name: %s\n\t"
-					  "                 detail: %s\n\t"
-					  "      supplemental_text: %s",
-						(int)code.type, code.code, code.name.c_str(),
-						code.detail.c_str(), code.supplemental_text.c_str());
-
-			std::string code_str = std::to_string(code.code);
-			size_t digits = 5;
-			int precision = digits - std::min(digits, code_str.size());
-			code_str.insert(0, precision, '0');
-
-			error_detail += "Tsurugi Server " + code.name;
-			switch (code.type)
-			{
-				case stub::tsurugi_error_code::tsurugi_error_type::sql_error:
-					error_detail += " (SQL-" + code_str + ": " + code.detail + ")";
-					break;
-				case stub::tsurugi_error_code::tsurugi_error_type::framework_error:
-					error_detail += " (SCD-" + code_str + ": " + code.detail + ")";
-					break;
-				default:
-					elog(ERROR, "Tsurugi Server Error (type: %d)", (int)code.type);
-					break;
-			}
-		}
-		else
-		{
-			elog(ERROR, "Failed to retrieve error information from Tsurugi. (%d)", (int) tsurugi_error);
-		}
-	}
-	return error_detail;
-}
-
-/**
- *  @brief 	Get detail message of tsurugi server.
+ *  @brief 	Get error message of tsurugi server.
  *  @param 	(error_code) error code of ogawayama.
  *  @return	detail error message.
  */
-std::string Tsurugi::get_error_message(ERROR_CODE error_code)
+std::string 
+Tsurugi::get_detail_message(ERROR_CODE error_code) const
 {
 	std::string message = "No detail message.";
 
-	elog(LOG, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
 	if (error_code != ERROR_CODE::SERVER_ERROR)
 	{
-		Tsurugi::error_log2(LOG, "Error code is not SERVER_ERROR.", error_code);
+		log2(LOG, "Error code is not SERVER_ERROR.", error_code);
 		return message;
 	}
 
 	if (connection_ == nullptr)
 	{
-		elog(LOG, "tsurugi_fdw : There is no connection to Tsurugi.");
+		elog(DEBUG1, "tsurugi_fdw : There is no connection to Tsurugi.");
 		return message;
 	}
 
 	//  get error message from Tsurugi.
 	stub::tsurugi_error_code error{};
-	auto ret_code = connection_->tsurugi_error(error);
+	stub::ErrorCode ret_code{};
+	try {
+		ret_code = connection_->tsurugi_error(error);
+	} catch (...) {
+		elog(LOG, "tsurugi_fdw : Unexpected exception occurred.");
+		return message;
+	}
 	if (ret_code == ERROR_CODE::OK)
 	{
 		elog(LOG, "ERROR_CODE::SERVER_ERROR\n\t"
@@ -972,7 +903,7 @@ std::string Tsurugi::get_error_message(ERROR_CODE error_code)
 	}
 	else
 	{
-		Tsurugi::error_log2(ERROR, "Failed to get Tsurugi Server Error.", ret_code);
+		log2(LOG, "Failed to get Tsurugi Server Error.", ret_code);
 	}
 
 	return message;
@@ -985,30 +916,39 @@ std::string Tsurugi::get_error_message(ERROR_CODE error_code)
  * 			(error) error code of ogawayama.
  *  @return	none.
  */
-void Tsurugi::error_log2(int level, std::string_view message, ERROR_CODE error)
+void 
+Tsurugi::log2(int level, std::string_view message, ERROR_CODE error) const
 {
 	std::string ext_message{"tsurugi_fdw : "};
 
-	ext_message += message;
-	ext_message += " (error: %s{%d})";
-	elog(level, ext_message.data(),  stub::error_name(error).data(), (int)error);	
+	if (level != ERROR) {
+		ext_message += message;
+		ext_message += " (error: %s{%d})";
+		elog(level, ext_message.data(),  stub::error_name(error).data(), (int)error);
+	}
 }
 
 /**
- *  @brief 	Output error log which has a error message, error code and a detail message.
- *  @param 	(level) log level.
- * 			(message) error message.
- * 			(error) error code of ogawayama.
+ *  @brief 	Report the error information of tsurugi_fdw.
+ *  @param 	(message) error message.
+ * 			(error) error code of Tsurugi.
+ * 			(sql) the statement that was attempted to be sent to tsurugidb.
  *  @return	none.
  */
-void Tsurugi::error_log3(int level, std::string_view message, ERROR_CODE error)
+void Tsurugi::report_error(std::string_view message, ERROR_CODE error, const char* sql)
 {
-	std::string ext_message{"tsurugi_fdw : "};
-
-	ext_message += message;
-	ext_message += " (error: %s{%d})\n%s";
-	elog(level, ext_message.data(), stub::error_name(error).data(), (int)error, 
-		Tsurugi::get_error_message(error).data());	
+	elog(LOG, "tsurugi_fdw : %s (%d)\nsql: %s", message.data(), (int) error, sql);
+	if (error_message_.empty()) {
+		std::string	detail = get_detail_message(error);
+		std::ostringstream oss;
+		oss << "Failed to execute remote SQL.\n"
+			<< "HINT:  " << message << " error: " << stub::error_name(error).data() 
+			<< "(" << (int) error << ")\n"
+			<< detail.data() << "\n" 
+			<< "CONTEXT:  SQL query: " << sql;
+		error_message_ = oss.str();
+		elog(LOG, "tsurugi_fdw : error_message_ : %s", error_message_.c_str());
+	}
 }
 
 /**
@@ -1019,32 +959,48 @@ void Tsurugi::error_log3(int level, std::string_view message, ERROR_CODE error)
  *  @return	
  */
 void 
-Tsurugi::report_error(const char* message, ERROR_CODE error, const char* sql)
+Tsurugi::report_error(std::string_view message, ERROR_CODE error, std::string_view sql)
 {
-	int			sqlstate = ERRCODE_FDW_ERROR;
-	std::string	detail = Tsurugi::get_error_message(error);
-
-	ereport(ERROR,
-			(errcode(sqlstate),
-			 errmsg("Failed to execute remote SQL."),
-			 errcontext("SQL query: %s", sql ? sql : ""),
-			 errhint("%s error: %s(%d)\n%s", 
-					message, stub::error_name(error).data(), (int) error, 
-					detail.data())
-			));	
+	report_error(message, error, sql.data());
 }
 
-/**
- *  @brief 	Report the error information of tsurugi_fdw.
- *  @param 	(message) error message.
- * 			(error) error code.
- * 			(sql) the statement that was attempted to be sent to tsurugidb.
- *  @return	
+/** ===========================================================================
+ * 	
+ * 	Tsurugi Functions.
+ * 
  */
-void 
-Tsurugi::report_error(const char* message, ERROR_CODE error, std::string_view sql)
+
+namespace tsurugi {
+/**
+ * @brief convert Tsurugi data types to PostgreSQL data types.
+ * @param tg_type tsurugi data type (AtomType)
+ * @return std::optional of PostgreSQL data type
+ */
+std::optional<std::string_view> convert_type_to_pg(
+		jogasaki::proto::sql::common::AtomType tg_type)
 {
-	Tsurugi::report_error(message, error, sql.data());
+	static const std::unordered_map<tg_metadata::AtomType, std::string> type_mapping = {
+		{tg_metadata::AtomType::INT4, "integer"},
+		{tg_metadata::AtomType::INT8, "bigint"},
+		{tg_metadata::AtomType::FLOAT4, "real"},
+		{tg_metadata::AtomType::FLOAT8, "double precision"},
+		{tg_metadata::AtomType::DECIMAL, "numeric"},
+		{tg_metadata::AtomType::CHARACTER, "text"},
+		{tg_metadata::AtomType::DATE, "date"},
+		{tg_metadata::AtomType::OCTET, "bytea"},
+		{tg_metadata::AtomType::TIME_OF_DAY, "time"},
+		{tg_metadata::AtomType::TIME_POINT, "timestamp"},
+		{tg_metadata::AtomType::TIME_OF_DAY_WITH_TIME_ZONE, "time with time zone"},
+		{tg_metadata::AtomType::TIME_POINT_WITH_TIME_ZONE, "timestamp with time zone"},
+	};
+
+	auto pg_type = type_mapping.find(tg_type);
+	if (pg_type != type_mapping.end())
+	{
+		return pg_type->second;
+	}
+
+	return std::nullopt;
 }
 
 /**
@@ -1052,8 +1008,7 @@ Tsurugi::report_error(const char* message, ERROR_CODE error, std::string_view sq
  *  @param 	(pg_type) oid of PostgreSQL data type.
  *  @return	data type id of tsurugidb.
  */
-ogawayama::stub::Metadata::ColumnType::Type 
-Tsurugi::get_tg_column_type(const Oid pg_type)
+ogawayama::stub::Metadata::ColumnType::Type get_tg_column_type(const Oid pg_type)
 {
 	auto tg_type = stub::Metadata::ColumnType::Type::NULL_VALUE;
 
@@ -1099,6 +1054,9 @@ Tsurugi::get_tg_column_type(const Oid pg_type)
 		case NUMERICOID:
 			tg_type = stub::Metadata::ColumnType::Type::DECIMAL;
 			break;
+		case BYTEAOID:
+			tg_type = stub::Metadata::ColumnType::Type::OCTET;
+			break;
 		default:
 			elog(ERROR, "tsurugi_fdw : unrecognized type oid: %d", (int) pg_type);
 			break;
@@ -1107,7 +1065,6 @@ Tsurugi::get_tg_column_type(const Oid pg_type)
 	return tg_type;
 }
 
-
 /**
  *  @brief 	Convert value from tsurugidb to PostgreSQL.
  *  @param 	(resultset)	Pointer to ResultSet object.
@@ -1115,8 +1072,7 @@ Tsurugi::get_tg_column_type(const Oid pg_type)
  *  @return	(first)	flag of null value.
  * 			(second) PG value.
  */
-std::pair<bool, Datum>
-Tsurugi::convert_type_to_pg(ResultSetPtr result_set, const Oid pgtype) 
+std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgtype) 
 {
 	bool is_null = true;
 	Datum row_value;
@@ -1129,6 +1085,7 @@ Tsurugi::convert_type_to_pg(ResultSetPtr result_set, const Oid pgtype)
 				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is INT2OID.", __func__);
 				if (result_set->next_column(value) == ERROR_CODE::OK)
 				{
+					elog(DEBUG5, "tsurugi_fdw : %s : value = %d", __func__, value);
 					is_null = false;
 					row_value = Int16GetDatum(value);
 				}
@@ -1137,10 +1094,11 @@ Tsurugi::convert_type_to_pg(ResultSetPtr result_set, const Oid pgtype)
 
 		case INT4OID:
 			{
-				std::int32_t value;
+				std::int32_t value = 0;
 				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is INT4OID.", __func__);
 				if (result_set->next_column(value) == ERROR_CODE::OK)
 				{
+					elog(DEBUG5, "tsurugi_fdw : %s : value = %d", __func__, value);
 					is_null = false;
 					row_value =  Int32GetDatum(value);
 				}
@@ -1153,6 +1111,7 @@ Tsurugi::convert_type_to_pg(ResultSetPtr result_set, const Oid pgtype)
 				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is INT8OID.", __func__);
 				if (result_set->next_column(value) == ERROR_CODE::OK)
 				{
+					elog(DEBUG5, "tsurugi_fdw : %s : value = %ld", __func__, value);
 					is_null = false;
 					row_value = Int64GetDatum(value);
 				}
@@ -1386,6 +1345,24 @@ Tsurugi::convert_type_to_pg(ResultSetPtr result_set, const Oid pgtype)
 			}
 			break;
 
+		case BYTEAOID:
+			{
+				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is BYTEAOID.", __func__);
+
+				std::string_view value;
+				ERROR_CODE result = result_set->next_column(value);
+				if (result == ERROR_CODE::OK)
+				{
+					bytea* pg_bytea = (bytea*)palloc(value.size() + VARHDRSZ);
+					SET_VARSIZE(pg_bytea, value.size() + VARHDRSZ);
+					memcpy(VARDATA(pg_bytea), value.data(), value.size());
+
+					is_null = false;
+					row_value = PointerGetDatum(pg_bytea);
+				}
+			}
+			break;
+
 		default:
 			elog(ERROR, "Invalid data type of PG. (%u)", pgtype);
 			break;
@@ -1400,8 +1377,7 @@ Tsurugi::convert_type_to_pg(ResultSetPtr result_set, const Oid pgtype)
  * 			(value) PostgreSQL datum.
  *  @return	value type of tsurugidb.
  */
-ogawayama::stub::value_type
-Tsurugi::convert_type_to_tg(const Oid pg_type, Datum value)
+ogawayama::stub::value_type convert_type_to_tg(const Oid pg_type, Datum value)
 {
 	elog(DEBUG1, "tsurugi_fdw : %s : pg_type: %d", __func__, (int) pg_type);
 
@@ -1616,6 +1592,21 @@ Tsurugi::convert_type_to_tg(const Oid pg_type, Datum value)
 //				param = convert_decimal_to_tg(value);
 				break;
 			}
+
+		case BYTEAOID:
+			{
+				auto datum_value = DatumGetByteaPP(value);
+				auto pg_value = VARDATA_ANY(datum_value);
+				auto pg_value_len = VARSIZE_ANY_EXHDR(datum_value);
+
+				stub::binary_type tg_value(pg_value_len);
+				if (pg_value_len > 0) {
+					memcpy(tg_value.data(), pg_value, pg_value_len);
+				}
+
+				param = tg_value;
+				break;
+			}
 		default:
 			elog(ERROR, "unrecognized type oid: %d", (int) pg_type);
 			break;
@@ -1669,8 +1660,7 @@ ogawayama::stub::timestamptz_type convert_timestamptz_to_tg(Datum value)
  *  @param 	(value) PostgreSQL datum.
  *  @return	decimal value of tsurugidb.
  */
-takatori::decimal::triple 
-Tsurugi::convert_decimal_to_tg(Datum value)
+takatori::decimal::triple convert_decimal_to_tg(Datum value)
 {
 	// Convert PostgreSQL NUMERIC type to string.
 	std::string pg_numeric = DatumGetCString(DirectFunctionCall1(numeric_out, value));
@@ -1741,3 +1731,4 @@ Tsurugi::convert_decimal_to_tg(Datum value)
 
 	return takatori::decimal::triple{sign, coefficient_high, coefficient_low, exponent};
 }
+} 	// namespace tsurugi
