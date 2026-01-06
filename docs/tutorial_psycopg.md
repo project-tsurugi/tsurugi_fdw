@@ -7,12 +7,12 @@ PostgreSQLのユーザインタフェースからTsurugiを利用する簡単な
 
 ### Pythonアプリケーションからの利用
 
-PostgreSQLのPsycopgを使用することでPythonアプリケーションからTsurugiを利用することができます。
+PostgreSQLのPsycopgを使用することでPythonアプリケーションからTsurugiを利用することができます。  
 Tsurugi FDWがサポートするPsycopgのAPIについては [リファレンス（Psycopg API）](./psycopg_reference.md) を参照してください。
 
 #### Psycopgの入手
 
-Psycopgのパッケージは Python Package Index (PyPI) で公開されています。
+Psycopgのパッケージは Python Package Index (PyPI) で公開されています。  
 アプリケーションの要件に適したパッケージを適用してください。
 
 * psycopg2を適用する場合
@@ -42,10 +42,10 @@ Psycopgのパッケージは Python Package Index (PyPI) で公開されてい�
 
 #### SQL文の実行（Psycopg）
 
-Corsorクラスのexecuteメソッドを使用してSQL文を実行することができます。
-CorsorクラスはConnectionクラスのcursorメソッドを使用して作成します。
+Corsorクラスのexecuteメソッドを使用してSQL文を実行することができます。  
+CorsorクラスはConnectionクラスのcursorメソッドを使用して作成します。  
 
-以下の例では、`CREATE FOREIGN TABLE`を実行して外部テーブルを作成しています。
+以下の例では、`CREATE FOREIGN TABLE`を実行して外部テーブルを作成しています。  
 
 ~~~py
     cur = conn.corsor()
@@ -83,8 +83,8 @@ Corsorクラスのexecuteメソッドを使用してTsurugiのデータを更新
 
 #### データの問い合わせ（Psycopg）
 
-Corsorクラスのexecuteメソッドを使用してTsurugiのデータを問い合わせることができます。
-問い合わせた結果は同クラスのfetchallメソッドを使用して取得することができます。
+Corsorクラスのexecuteメソッドを使用してTsurugiのデータを問い合わせることができます。  
+問い合わせた結果は同クラスのfetchallメソッドを使用して取得することができます。  
 
 ~~~py
     # SELECT文の実行
@@ -209,8 +209,8 @@ Tsurugiの `fdw_sample` テーブルに、以下の順番でデータの操作�
 * Psycopg3: [sample/psycopg3-sample/](../sample/psycopg3-sample/)
 
 > [!TIP]
-> TsurugiのテーブルおよびTsurugi FDWの外部テーブルはシェルスクリプトで作成および削除しています。  
-> テーブルの詳細はスクリプトファイル(scriptsフォルダ配下)を確認してください。
+> TsurugiのテーブルおよびTsurugi FDWの外部テーブルはシェルスクリプトを使用して作成および削除しています。  
+> テーブル操作の詳細はスクリプトファイル(scriptsフォルダ配下)を確認してください。
 
 ##### サンプルプログラムの実行イメージ
 
