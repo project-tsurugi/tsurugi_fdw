@@ -1,4 +1,4 @@
-# Copyright 2025 Project Tsurugi.
+# Copyright 2026 Project Tsurugi.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,10 @@ import time
 from datetime import datetime, time as datetime_time
 import subprocess
 import os
+
+# Psycopg3の型アダプタをカスタマイズするために必要
+import psycopg.adapt
+from psycopg.types.numeric import Int4Dumper 
 
 # データベース接続情報
 DB_URL = "postgresql://localhost:35432/tsurugi_db"
@@ -51,6 +55,11 @@ def main():
 
         # PostgreSQL への接続
         conn = psycopg.connect(DB_URL)
+
+        # Psycopg3でPythonのintをPostgreSQLのINTEGER(int4)として扱う。
+        # デフォルトではINTEGER(int4)未満の値はSMALLINT(int2)で扱われる。
+        conn.adapters.register_dumper(int, Int4Dumper)
+
         conn.autocommit = False # トランザクションを手動で制御する
         cursor = conn.cursor()
 
@@ -103,7 +112,6 @@ def main():
                 conn.rollback() # エラー時はロールバック
             finally:
                 time.sleep(1)
-
         print("") # 改行
 
         # データ挿入直後の結果を出力する
