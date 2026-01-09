@@ -20,7 +20,7 @@ import subprocess
 import os
 
 # データベース接続情報
-DB_URL = "dbname=tsurugi_db host=localhost port=35432"
+DB_URL = "dbname=tsurugi_db host=localhost port=5432"
 
 # シェルスクリプトを実行するヘルパー関数
 def run_shell_command(script_name, *args):
