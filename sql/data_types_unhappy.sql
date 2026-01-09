@@ -704,8 +704,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c bit(4)) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES (B'1010');
 INSERT INTO fdw_type_unsupported VALUES ('1010');
------FIXME: Disabled due to issue
------SELECT * FROM fdw_type_unsupported;
+SELECT * FROM fdw_type_unsupported;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -723,8 +722,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c bit varying(4)) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES (B'1010');
 INSERT INTO fdw_type_unsupported VALUES ('1010');
------FIXME: Disabled due to issue
------SELECT * FROM fdw_type_unsupported;
+SELECT * FROM fdw_type_unsupported;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -742,6 +740,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c boolean) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES (true::boolean);
 INSERT INTO fdw_type_unsupported VALUES (true);
+SELECT * FROM fdw_type_unsupported;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -759,8 +758,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c box) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('(1,2),(3,4)'::box);
 INSERT INTO fdw_type_unsupported VALUES ('(1,2),(3,4)');
------FIXME: Disabled due to issue
------SELECT * FROM fdw_type_unsupported;
+SELECT * FROM fdw_type_unsupported;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -778,8 +776,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c cidr) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('192.168.0.0/24'::cidr);
 INSERT INTO fdw_type_unsupported VALUES ('192.168.0.0/24');
------FIXME: Disabled due to issue
------SELECT * FROM fdw_type_unsupported;
+SELECT * FROM fdw_type_unsupported;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -797,8 +794,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c circle) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('<(3,4),5>'::circle);
 INSERT INTO fdw_type_unsupported VALUES ('<(3,4),5>');
------FIXME: Disabled due to issue
------SELECT * FROM fdw_type_unsupported;
+SELECT * FROM fdw_type_unsupported;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -816,8 +812,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c inet) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('192.168.0.1'::inet);
 INSERT INTO fdw_type_unsupported VALUES ('192.168.0.1');
------FIXME: Disabled due to issue
------SELECT * FROM fdw_type_unsupported;
+SELECT * FROM fdw_type_unsupported;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -835,8 +830,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c interval) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('1 day'::interval);
 INSERT INTO fdw_type_unsupported VALUES ('1 day');
------FIXME: Disabled due to issue
------SELECT * FROM fdw_type_unsupported;
+SELECT * FROM fdw_type_unsupported;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -854,8 +848,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c json) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('{"key":"value"}'::json);
 INSERT INTO fdw_type_unsupported VALUES ('{"key":"value"}');
------FIXME: Disabled due to issue
------SELECT * FROM fdw_type_unsupported;
+SELECT * FROM fdw_type_unsupported;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -873,8 +866,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c jsonb) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('{"key":"value"}'::jsonb);
 INSERT INTO fdw_type_unsupported VALUES ('{"key":"value"}');
------FIXME: Disabled due to issue
------SELECT * FROM fdw_type_unsupported;
+SELECT * FROM fdw_type_unsupported;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -892,8 +884,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c line) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('{1,2,3}'::line);
 INSERT INTO fdw_type_unsupported VALUES ('{1,2,3}');
------FIXME: Disabled due to issue
------SELECT * FROM fdw_type_unsupported;
+SELECT * FROM fdw_type_unsupported;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -911,8 +902,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c lseg) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('[(1,2),(3,4)]'::lseg);
 INSERT INTO fdw_type_unsupported VALUES ('[(1,2),(3,4)]');
------FIXME: Disabled due to issue
------SELECT * FROM fdw_type_unsupported;
+SELECT * FROM fdw_type_unsupported;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -930,8 +920,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c macaddr) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('08:00:2b:01:02:03'::macaddr);
 INSERT INTO fdw_type_unsupported VALUES ('08:00:2b:01:02:03');
------FIXME: Disabled due to issue
------SELECT * FROM fdw_type_unsupported;
+SELECT * FROM fdw_type_unsupported;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -949,8 +938,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c macaddr8) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('08:00:2b:01:02:03:04:05'::macaddr8);
 INSERT INTO fdw_type_unsupported VALUES ('08:00:2b:01:02:03:04:05');
------FIXME: Disabled due to issue
------SELECT * FROM fdw_type_unsupported;
+SELECT * FROM fdw_type_unsupported;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -968,8 +956,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c money) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('$123.45'::money);
 INSERT INTO fdw_type_unsupported VALUES ('$123.45');
------FIXME: Disabled due to issue
------SELECT * FROM fdw_type_unsupported;
+SELECT * FROM fdw_type_unsupported;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -987,8 +974,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c path) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('[(1,2),(3,4)]'::path);
 INSERT INTO fdw_type_unsupported VALUES ('[(1,2),(3,4)]');
------FIXME: Disabled due to issue
------SELECT * FROM fdw_type_unsupported;
+SELECT * FROM fdw_type_unsupported;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1006,8 +992,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c pg_lsn) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('16/B374D848'::pg_lsn);
 INSERT INTO fdw_type_unsupported VALUES ('16/B374D848');
------FIXME: Disabled due to issue
------SELECT * FROM fdw_type_unsupported;
+SELECT * FROM fdw_type_unsupported;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1025,8 +1010,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c point) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('(1,2)'::point);
 INSERT INTO fdw_type_unsupported VALUES ('(1,2)');
------FIXME: Disabled due to issue
------SELECT * FROM fdw_type_unsupported;
+SELECT * FROM fdw_type_unsupported;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1044,8 +1028,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c polygon) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('((1,2),(3,4),(5,6))'::polygon);
 INSERT INTO fdw_type_unsupported VALUES ('((1,2),(3,4),(5,6))');
------FIXME: Disabled due to issue
------SELECT * FROM fdw_type_unsupported;
+SELECT * FROM fdw_type_unsupported;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1062,6 +1045,8 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c smallint) SERVER tsurugidb;
 
 --- Test
 INSERT INTO fdw_type_unsupported VALUES (1::smallint);
+INSERT INTO fdw_type_unsupported VALUES (1);
+SELECT * FROM fdw_type_unsupported;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1079,8 +1064,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c tsquery) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('value'::tsquery);
 INSERT INTO fdw_type_unsupported VALUES ('value');
------FIXME: Disabled due to issue
------SELECT * FROM fdw_type_unsupported;
+SELECT * FROM fdw_type_unsupported;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1098,8 +1082,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c tsvector) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('value:1'::tsvector);
 INSERT INTO fdw_type_unsupported VALUES ('value:1');
------FIXME: Disabled due to issue
------SELECT * FROM fdw_type_unsupported;
+SELECT * FROM fdw_type_unsupported;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1117,8 +1100,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c txid_snapshot) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('10:20:10,14,15'::txid_snapshot);
 INSERT INTO fdw_type_unsupported VALUES ('10:20:10,14,15');
------FIXME: Disabled due to issue
------SELECT * FROM fdw_type_unsupported;
+SELECT * FROM fdw_type_unsupported;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1136,10 +1118,317 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c uuid) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('f3d4b1ce-f2e0-49ce-8cd4-da5c8f29bff2'::uuid);
 INSERT INTO fdw_type_unsupported VALUES ('f3d4b1ce-f2e0-49ce-8cd4-da5c8f29bff2');
------FIXME: Disabled due to issue
------SELECT * FROM fdw_type_unsupported;
+SELECT * FROM fdw_type_unsupported;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+
+-- Unsupported Types - Table Joins
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported_1 (c1 INT, c2 VARCHAR)
+', 'tsurugidb');
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported_2 (c1 INT, c2 VARCHAR)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported_1 (c1 integer, c2 text) SERVER tsurugidb;
+CREATE FOREIGN TABLE fdw_type_unsupported_2 (c1 integer, c2 json) SERVER tsurugidb;
+
+--- Test
+INSERT INTO fdw_type_unsupported_1 VALUES (1, 'col');
+SELECT * FROM fdw_type_unsupported_1;
+SELECT * FROM fdw_type_unsupported_2;
+SELECT * FROM fdw_type_unsupported_1 u1
+  LEFT OUTER JOIN fdw_type_unsupported_2 u2 ON u1.c1 = u2.c1;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported_1;
+DROP FOREIGN TABLE fdw_type_unsupported_2;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported_2', 'tsurugidb');
+
+-- Unmatched Types - integer
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c VARCHAR)
+', 'tsurugidb');
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c varchar) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES ('123');
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c integer) SERVER tsurugidb;
+
+--- Test
+SELECT * FROM fdw_type_unmatched;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+
+-- Unmatched Types - bigint
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c VARCHAR)
+', 'tsurugidb');
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c varchar) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES ('123');
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c bigint) SERVER tsurugidb;
+
+--- Test
+SELECT * FROM fdw_type_unmatched;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+
+-- Unmatched Types - numeric
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c VARCHAR)
+', 'tsurugidb');
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c varchar) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES ('123');
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c numeric) SERVER tsurugidb;
+
+--- Test
+SELECT * FROM fdw_type_unmatched;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+
+-- Unmatched Types - real
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c VARCHAR)
+', 'tsurugidb');
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c varchar) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES ('123.456');
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c real) SERVER tsurugidb;
+
+--- Test
+SELECT * FROM fdw_type_unmatched;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+
+-- Unmatched Types - double precision
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c VARCHAR)
+', 'tsurugidb');
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c varchar) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES ('123.456');
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c double precision) SERVER tsurugidb;
+
+--- Test
+SELECT * FROM fdw_type_unmatched;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+
+-- Unmatched Types - char
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c INT)
+', 'tsurugidb');
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c integer) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES (1);
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c char) SERVER tsurugidb;
+
+--- Test
+SELECT * FROM fdw_type_unmatched;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+
+-- Unmatched Types - varchar
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c INT)
+', 'tsurugidb');
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c integer) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES (123);
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c varchar) SERVER tsurugidb;
+
+--- Test
+SELECT * FROM fdw_type_unmatched;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+
+-- Unmatched Types - text
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c INT)
+', 'tsurugidb');
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c integer) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES (123);
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c text) SERVER tsurugidb;
+
+--- Test
+SELECT * FROM fdw_type_unmatched;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+
+-- Unmatched Types - date
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c TIMESTAMP)
+', 'tsurugidb');
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c timestamp) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES ('2025-01-02 03:04:05');
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c date) SERVER tsurugidb;
+
+--- Test
+SELECT * FROM fdw_type_unmatched;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+
+-- Unmatched Types - time
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c TIMESTAMP)
+', 'tsurugidb');
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c timestamp) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES ('2025-01-02 03:04:05');
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c time) SERVER tsurugidb;
+
+--- Test
+SELECT * FROM fdw_type_unmatched;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+
+-- Unmatched Types - timestamp
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c DATE)
+', 'tsurugidb');
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c date) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES ('2025-01-02');
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c timestamp) SERVER tsurugidb;
+
+--- Test
+SELECT * FROM fdw_type_unmatched;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+
+-- Unmatched Types - timestamp without time zone
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c TIMESTAMP WITH TIME ZONE)
+', 'tsurugidb');
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched
+  (c timestamp with time zone) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES ('2025-01-02 03:04:05.6789+900');
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched
+  (c timestamp without time zone) SERVER tsurugidb;
+
+--- Test
+SELECT * FROM fdw_type_unmatched;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+
+-- Unmatched Types - timestamp with time zone
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c TIMESTAMP WITHOUT TIME ZONE)
+', 'tsurugidb');
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched
+  (c timestamp without time zone) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES ('2025-01-02 03:04:05.6789');
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched
+  (c timestamp with time zone) SERVER tsurugidb;
+
+--- Test
+SELECT * FROM fdw_type_unmatched;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+
+-- Unmatched Types - bytea
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c BLOB)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c bytea) SERVER tsurugidb;
+--- Test setup: Initial Data
+INSERT INTO fdw_type_unmatched VALUES ('\x313241624364');
+
+--- Test
+SELECT * FROM fdw_type_unmatched;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');

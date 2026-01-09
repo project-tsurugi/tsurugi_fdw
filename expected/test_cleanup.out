@@ -334,7 +334,25 @@ SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_type_timestamp_wo_tz', 'tsurugid
  DROP TABLE
 (1 row)
 
+SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_type_unmatched', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
 SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_type_unsupported', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_type_unsupported_1', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+SELECT tg_execute_ddl('DROP TABLE IF EXISTS fdw_type_unsupported_2', 'tsurugidb');
  tg_execute_ddl 
 ----------------
  DROP TABLE

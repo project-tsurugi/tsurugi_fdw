@@ -783,14 +783,13 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c1 serial, c2 char(14)) SERVER tsurug
 --- Test
 PREPARE prep_insert (char(14)) AS
   INSERT INTO fdw_type_unsupported (c2) VALUES ($1);
-PREPARE prep_select_all AS
-  SELECT * FROM fdw_type_unsupported ORDER BY c1;
+PREPARE prep_select AS SELECT * FROM fdw_type_unsupported;
 
 EXECUTE prep_insert ('serial is null');
-EXECUTE prep_select_all;
+EXECUTE prep_select;
 
 DEALLOCATE prep_insert;
-DEALLOCATE prep_select_all;
+DEALLOCATE prep_select;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -809,14 +808,13 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c1 smallserial, c2 char(14))
 -- Test
 PREPARE prep_insert (char(14)) AS
   INSERT INTO fdw_type_unsupported (c2) VALUES ($1);
-PREPARE prep_select_all AS
-  SELECT * FROM fdw_type_unsupported ORDER BY c1;
+PREPARE prep_select AS SELECT * FROM fdw_type_unsupported;
 
 EXECUTE prep_insert ('serial is null');
-EXECUTE prep_select_all;
+EXECUTE prep_select;
 
 DEALLOCATE prep_insert;
-DEALLOCATE prep_select_all;
+DEALLOCATE prep_select;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -835,14 +833,13 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c1 bigserial, c2 char(14))
 -- Test
 PREPARE prep_insert (char(14)) AS
   INSERT INTO fdw_type_unsupported (c2) VALUES ($1);
-PREPARE prep_select_all AS
-  SELECT * FROM fdw_type_unsupported ORDER BY c1;
+PREPARE prep_select AS SELECT * FROM fdw_type_unsupported;
 
 EXECUTE prep_insert ('serial is null');
-EXECUTE prep_select_all;
+EXECUTE prep_select;
 
 DEALLOCATE prep_insert;
-DEALLOCATE prep_select_all;
+DEALLOCATE prep_select;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -858,11 +855,15 @@ SELECT tg_execute_ddl('
 CREATE FOREIGN TABLE fdw_type_unsupported (c bit(4)) SERVER tsurugidb;
 
 --- Test
-PREPARE prep_insert (bit(4)) AS
-  INSERT INTO fdw_type_unsupported VALUES ($1);
+PREPARE prep_insert (bit(4)) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+PREPARE prep_select AS SELECT * FROM fdw_type_unsupported;
+
 EXECUTE prep_insert (B'1010');
 EXECUTE prep_insert ('1010');
+EXECUTE prep_select;
+
 DEALLOCATE prep_insert;
+DEALLOCATE prep_select;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -880,9 +881,14 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c bit varying(4)) SERVER tsurugidb;
 --- Test
 PREPARE prep_insert (bit varying(4)) AS
   INSERT INTO fdw_type_unsupported VALUES ($1);
+PREPARE prep_select AS SELECT * FROM fdw_type_unsupported;
+
 EXECUTE prep_insert (B'1010');
 EXECUTE prep_insert ('1010');
+EXECUTE prep_select;
+
 DEALLOCATE prep_insert;
+DEALLOCATE prep_select;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -899,9 +905,14 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c boolean) SERVER tsurugidb;
 
 --- Test
 PREPARE prep_insert (boolean) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+PREPARE prep_select AS SELECT * FROM fdw_type_unsupported;
+
 EXECUTE prep_insert (true::boolean);
 EXECUTE prep_insert (true);
+EXECUTE prep_select;
+
 DEALLOCATE prep_insert;
+DEALLOCATE prep_select;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -918,9 +929,14 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c box) SERVER tsurugidb;
 
 --- Test
 PREPARE prep_insert (box) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+PREPARE prep_select AS SELECT * FROM fdw_type_unsupported;
+
 EXECUTE prep_insert ('(1,2),(3,4)'::box);
 EXECUTE prep_insert ('(1,2),(3,4)');
+EXECUTE prep_select;
+
 DEALLOCATE prep_insert;
+DEALLOCATE prep_select;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -937,9 +953,14 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c cidr) SERVER tsurugidb;
 
 --- Test
 PREPARE prep_insert (cidr) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+PREPARE prep_select AS SELECT * FROM fdw_type_unsupported;
+
 EXECUTE prep_insert ('192.168.0.0/24'::cidr);
 EXECUTE prep_insert ('192.168.0.0/24');
+EXECUTE prep_select;
+
 DEALLOCATE prep_insert;
+DEALLOCATE prep_select;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -956,9 +977,14 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c circle) SERVER tsurugidb;
 
 --- Test
 PREPARE prep_insert (circle) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+PREPARE prep_select AS SELECT * FROM fdw_type_unsupported;
+
 EXECUTE prep_insert ('<(3,4),5>'::circle);
 EXECUTE prep_insert ('<(3,4),5>');
+EXECUTE prep_select;
+
 DEALLOCATE prep_insert;
+DEALLOCATE prep_select;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -975,9 +1001,14 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c inet) SERVER tsurugidb;
 
 --- Test
 PREPARE prep_insert (inet) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+PREPARE prep_select AS SELECT * FROM fdw_type_unsupported;
+
 EXECUTE prep_insert ('192.168.0.1'::inet);
 EXECUTE prep_insert ('192.168.0.1');
+EXECUTE prep_select;
+
 DEALLOCATE prep_insert;
+DEALLOCATE prep_select;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -994,9 +1025,14 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c interval) SERVER tsurugidb;
 
 --- Test
 PREPARE prep_insert (interval) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+PREPARE prep_select AS SELECT * FROM fdw_type_unsupported;
+
 EXECUTE prep_insert ('1 day'::interval);
 EXECUTE prep_insert ('1 day');
+EXECUTE prep_select;
+
 DEALLOCATE prep_insert;
+DEALLOCATE prep_select;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1013,9 +1049,14 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c json) SERVER tsurugidb;
 
 --- Test
 PREPARE prep_insert (json) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+PREPARE prep_select AS SELECT * FROM fdw_type_unsupported;
+
 EXECUTE prep_insert ('{"key":"value"}'::json);
 EXECUTE prep_insert ('{"key":"value"}');
+EXECUTE prep_select;
+
 DEALLOCATE prep_insert;
+DEALLOCATE prep_select;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1032,9 +1073,14 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c jsonb) SERVER tsurugidb;
 
 --- Test
 PREPARE prep_insert (jsonb) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+PREPARE prep_select AS SELECT * FROM fdw_type_unsupported;
+
 EXECUTE prep_insert ('{"key":"value"}'::jsonb);
 EXECUTE prep_insert ('{"key":"value"}');
+EXECUTE prep_select;
+
 DEALLOCATE prep_insert;
+DEALLOCATE prep_select;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1051,9 +1097,14 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c line) SERVER tsurugidb;
 
 --- Test
 PREPARE prep_insert (line) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+PREPARE prep_select AS SELECT * FROM fdw_type_unsupported;
+
 EXECUTE prep_insert ('{1,2,3}'::line);
 EXECUTE prep_insert ('{1,2,3}');
+EXECUTE prep_select;
+
 DEALLOCATE prep_insert;
+DEALLOCATE prep_select;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1070,9 +1121,14 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c lseg) SERVER tsurugidb;
 
 --- Test
 PREPARE prep_insert (lseg) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+PREPARE prep_select AS SELECT * FROM fdw_type_unsupported;
+
 EXECUTE prep_insert ('[(1,2),(3,4)]'::lseg);
 EXECUTE prep_insert ('[(1,2),(3,4)]');
+EXECUTE prep_select;
+
 DEALLOCATE prep_insert;
+DEALLOCATE prep_select;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1089,9 +1145,14 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c macaddr) SERVER tsurugidb;
 
 --- Test
 PREPARE prep_insert (macaddr) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+PREPARE prep_select AS SELECT * FROM fdw_type_unsupported;
+
 EXECUTE prep_insert ('08:00:2b:01:02:03'::macaddr);
 EXECUTE prep_insert ('08:00:2b:01:02:03');
+EXECUTE prep_select;
+
 DEALLOCATE prep_insert;
+DEALLOCATE prep_select;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1108,9 +1169,14 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c macaddr8) SERVER tsurugidb;
 
 --- Test
 PREPARE prep_insert (macaddr8) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+PREPARE prep_select AS SELECT * FROM fdw_type_unsupported;
+
 EXECUTE prep_insert ('08:00:2b:01:02:03:04:05'::macaddr8);
 EXECUTE prep_insert ('08:00:2b:01:02:03:04:05');
+EXECUTE prep_select;
+
 DEALLOCATE prep_insert;
+DEALLOCATE prep_select;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1127,9 +1193,14 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c money) SERVER tsurugidb;
 
 --- Test
 PREPARE prep_insert (money) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+PREPARE prep_select AS SELECT * FROM fdw_type_unsupported;
+
 EXECUTE prep_insert ('$123.45'::money);
 EXECUTE prep_insert ('$123.45');
+EXECUTE prep_select;
+
 DEALLOCATE prep_insert;
+DEALLOCATE prep_select;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1146,9 +1217,14 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c path) SERVER tsurugidb;
 
 --- Test
 PREPARE prep_insert (path) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+PREPARE prep_select AS SELECT * FROM fdw_type_unsupported;
+
 EXECUTE prep_insert ('[(1,2),(3,4)]'::path);
 EXECUTE prep_insert ('[(1,2),(3,4)]');
+EXECUTE prep_select;
+
 DEALLOCATE prep_insert;
+DEALLOCATE prep_select;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1165,9 +1241,14 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c pg_lsn) SERVER tsurugidb;
 
 --- Test
 PREPARE prep_insert (pg_lsn) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+PREPARE prep_select AS SELECT * FROM fdw_type_unsupported;
+
 EXECUTE prep_insert ('16/B374D848'::pg_lsn);
 EXECUTE prep_insert ('16/B374D848');
+EXECUTE prep_select;
+
 DEALLOCATE prep_insert;
+DEALLOCATE prep_select;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1184,9 +1265,15 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c point) SERVER tsurugidb;
 
 --- Test
 PREPARE prep_insert (point) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+PREPARE prep_select AS SELECT * FROM fdw_type_unsupported;
+
+
 EXECUTE prep_insert ('(1,2)'::point);
 EXECUTE prep_insert ('(1,2)');
+EXECUTE prep_select;
+
 DEALLOCATE prep_insert;
+DEALLOCATE prep_select;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1203,9 +1290,14 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c polygon) SERVER tsurugidb;
 
 --- Test
 PREPARE prep_insert (polygon) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+PREPARE prep_select AS SELECT * FROM fdw_type_unsupported;
+
 EXECUTE prep_insert ('((1,2),(3,4),(5,6))'::polygon);
 EXECUTE prep_insert ('((1,2),(3,4),(5,6))');
+EXECUTE prep_select;
+
 DEALLOCATE prep_insert;
+DEALLOCATE prep_select;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1222,9 +1314,14 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c smallint) SERVER tsurugidb;
 
 --- Test
 PREPARE prep_insert (smallint) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+PREPARE prep_select AS SELECT * FROM fdw_type_unsupported;
+
 EXECUTE prep_insert (1::smallint);
 EXECUTE prep_insert (1);
+EXECUTE prep_select;
+
 DEALLOCATE prep_insert;
+DEALLOCATE prep_select;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1241,9 +1338,14 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c tsquery) SERVER tsurugidb;
 
 --- Test
 PREPARE prep_insert (tsquery) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+PREPARE prep_select AS SELECT * FROM fdw_type_unsupported;
+
 EXECUTE prep_insert ('value'::tsquery);
 EXECUTE prep_insert ('value');
+EXECUTE prep_select;
+
 DEALLOCATE prep_insert;
+DEALLOCATE prep_select;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1260,9 +1362,14 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c tsvector) SERVER tsurugidb;
 
 --- Test
 PREPARE prep_insert (tsvector) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+PREPARE prep_select AS SELECT * FROM fdw_type_unsupported;
+
 EXECUTE prep_insert ('value:1'::tsvector);
 EXECUTE prep_insert ('value:1');
+EXECUTE prep_select;
+
 DEALLOCATE prep_insert;
+DEALLOCATE prep_select;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1280,9 +1387,14 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c txid_snapshot) SERVER tsurugidb;
 --- Test
 PREPARE prep_insert (txid_snapshot) AS
   INSERT INTO fdw_type_unsupported VALUES ($1);
+PREPARE prep_select AS SELECT * FROM fdw_type_unsupported;
+
 EXECUTE prep_insert ('10:20:10,14,15'::txid_snapshot);
 EXECUTE prep_insert ('10:20:10,14,15');
+EXECUTE prep_select;
+
 DEALLOCATE prep_insert;
+DEALLOCATE prep_select;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1299,11 +1411,361 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c uuid) SERVER tsurugidb;
 
 --- Test
 PREPARE prep_insert (uuid) AS INSERT INTO fdw_type_unsupported VALUES ($1);
+PREPARE prep_select AS SELECT * FROM fdw_type_unsupported;
+
 EXECUTE prep_insert ('f3d4b1ce-f2e0-49ce-8cd4-da5c8f29bff2'::uuid);
 EXECUTE prep_insert ('f3d4b1ce-f2e0-49ce-8cd4-da5c8f29bff2');
+EXECUTE prep_select;
+
 DEALLOCATE prep_insert;
+DEALLOCATE prep_select;
 
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
+
+-- Unsupported Types - Table Joins
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported_1 (c1 INT, c2 VARCHAR)
+', 'tsurugidb');
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unsupported_2 (c1 INT, c2 VARCHAR)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unsupported_1 (c1 integer, c2 text) SERVER tsurugidb;
+CREATE FOREIGN TABLE fdw_type_unsupported_2 (c1 integer, c2 json) SERVER tsurugidb;
+
+--- Test
+PREPARE prep_select_1 AS SELECT * FROM fdw_type_unsupported_1;
+PREPARE prep_select_2 AS SELECT * FROM fdw_type_unsupported_2;
+PREPARE prep_select_12 AS
+  SELECT * FROM fdw_type_unsupported_1 u1
+    LEFT OUTER JOIN fdw_type_unsupported_2 u2 ON u1.c1 = u2.c1;
+
+INSERT INTO fdw_type_unsupported_1 VALUES (1, 'col');
+EXECUTE prep_select_1;
+EXECUTE prep_select_2;
+EXECUTE prep_select_12;
+
+DEALLOCATE prep_select_1;
+DEALLOCATE prep_select_2;
+DEALLOCATE prep_select_12;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unsupported_1;
+DROP FOREIGN TABLE fdw_type_unsupported_2;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported_1', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported_2', 'tsurugidb');
+
+-- Unmatched Types - integer
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c VARCHAR)
+', 'tsurugidb');
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c varchar) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES ('123');
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c integer) SERVER tsurugidb;
+
+--- Test
+PREPARE prep_select AS SELECT * FROM fdw_type_unmatched;
+EXECUTE prep_select;
+DEALLOCATE prep_select;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+
+-- Unmatched Types - bigint
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c VARCHAR)
+', 'tsurugidb');
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c varchar) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES ('123');
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c bigint) SERVER tsurugidb;
+
+--- Test
+PREPARE prep_select AS SELECT * FROM fdw_type_unmatched;
+EXECUTE prep_select;
+DEALLOCATE prep_select;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+
+-- Unmatched Types - numeric
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c VARCHAR)
+', 'tsurugidb');
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c varchar) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES ('123');
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c numeric) SERVER tsurugidb;
+
+--- Test
+PREPARE prep_select AS SELECT * FROM fdw_type_unmatched;
+EXECUTE prep_select;
+DEALLOCATE prep_select;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+
+-- Unmatched Types - real
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c VARCHAR)
+', 'tsurugidb');
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c varchar) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES ('123.456');
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c real) SERVER tsurugidb;
+
+--- Test
+PREPARE prep_select AS SELECT * FROM fdw_type_unmatched;
+EXECUTE prep_select;
+DEALLOCATE prep_select;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+
+-- Unmatched Types - double precision
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c VARCHAR)
+', 'tsurugidb');
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c varchar) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES ('123.456');
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c double precision) SERVER tsurugidb;
+
+--- Test
+PREPARE prep_select AS SELECT * FROM fdw_type_unmatched;
+EXECUTE prep_select;
+DEALLOCATE prep_select;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+
+-- Unmatched Types - char
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c INT)
+', 'tsurugidb');
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c integer) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES (1);
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c char) SERVER tsurugidb;
+
+--- Test
+PREPARE prep_select AS SELECT * FROM fdw_type_unmatched;
+EXECUTE prep_select;
+DEALLOCATE prep_select;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+
+-- Unmatched Types - varchar
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c INT)
+', 'tsurugidb');
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c integer) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES (123);
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c varchar) SERVER tsurugidb;
+
+--- Test
+PREPARE prep_select AS SELECT * FROM fdw_type_unmatched;
+EXECUTE prep_select;
+DEALLOCATE prep_select;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+
+-- Unmatched Types - text
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c INT)
+', 'tsurugidb');
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c integer) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES (123);
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c text) SERVER tsurugidb;
+
+--- Test
+PREPARE prep_select AS SELECT * FROM fdw_type_unmatched;
+EXECUTE prep_select;
+DEALLOCATE prep_select;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+
+-- Unmatched Types - date
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c TIMESTAMP)
+', 'tsurugidb');
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c timestamp) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES ('2025-01-02 03:04:05');
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c date) SERVER tsurugidb;
+
+--- Test
+PREPARE prep_select AS SELECT * FROM fdw_type_unmatched;
+EXECUTE prep_select;
+DEALLOCATE prep_select;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+
+-- Unmatched Types - time
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c TIMESTAMP)
+', 'tsurugidb');
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c timestamp) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES ('2025-01-02 03:04:05');
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c time) SERVER tsurugidb;
+
+--- Test
+PREPARE prep_select AS SELECT * FROM fdw_type_unmatched;
+EXECUTE prep_select;
+DEALLOCATE prep_select;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+
+-- Unmatched Types - timestamp
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c DATE)
+', 'tsurugidb');
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched (c date) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES ('2025-01-02');
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c timestamp) SERVER tsurugidb;
+
+--- Test
+PREPARE prep_select AS SELECT * FROM fdw_type_unmatched;
+EXECUTE prep_select;
+DEALLOCATE prep_select;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+
+-- Unmatched Types - timestamp without time zone
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c TIMESTAMP WITH TIME ZONE)
+', 'tsurugidb');
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched
+  (c timestamp with time zone) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES ('2025-01-02 03:04:05.6789+900');
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched
+  (c timestamp without time zone) SERVER tsurugidb;
+
+--- Test
+PREPARE prep_select AS SELECT * FROM fdw_type_unmatched;
+EXECUTE prep_select;
+DEALLOCATE prep_select;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+
+-- Unmatched Types - timestamp with time zone
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c TIMESTAMP WITHOUT TIME ZONE)
+', 'tsurugidb');
+--- Test setup: Initial Data
+CREATE FOREIGN TABLE fdw_type_unmatched
+  (c timestamp without time zone) SERVER tsurugidb;
+INSERT INTO fdw_type_unmatched VALUES ('2025-01-02 03:04:05.6789');
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched
+  (c timestamp with time zone) SERVER tsurugidb;
+
+--- Test
+PREPARE prep_select AS SELECT * FROM fdw_type_unmatched;
+EXECUTE prep_select;
+DEALLOCATE prep_select;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
+
+-- Unmatched Types - bytea
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_unmatched (c BLOB)
+', 'tsurugidb');
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_unmatched (c bytea) SERVER tsurugidb;
+--- Test setup: Initial Data
+INSERT INTO fdw_type_unmatched VALUES ('\x313241624364');
+
+--- Test
+PREPARE prep_select AS SELECT * FROM fdw_type_unmatched;
+EXECUTE prep_select;
+DEALLOCATE prep_select;
+
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_unmatched;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_unmatched', 'tsurugidb');
