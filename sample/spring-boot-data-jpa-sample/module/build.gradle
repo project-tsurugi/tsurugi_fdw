@@ -28,17 +28,17 @@ application {
 
 task createTable(type: Exec) {
     // Tsurugi データベースに fdw_sample テーブルを作成するタスク
-    commandLine 'sh', '-c', 'tgsql --exec -c ipc:tsurugi_fuji "create table if not exists fdw_sample (id varchar(50) primary key, num int not null, tim time)"'
+    commandLine 'sh', '-c', 'tgsql --exec -c ipc:tsurugi "create table if not exists fdw_sample (id varchar(50) primary key, num int not null, tim time)"'
 }
 
 task showTable(type: Exec) {
     // Tsurugi データベースに作成した fdw_sample テーブルを確認するタスク
-    commandLine 'sh', '-c', 'tgsql --exec -c ipc:tsurugi_fuji "\\show table fdw_sample"'
+    commandLine 'sh', '-c', 'tgsql --exec -c ipc:tsurugi "\\show table fdw_sample"'
 }
 
 task dropTable(type: Exec) {
     // Tsurugi データベースから fdw_sample テーブルを削除するタスク
-    commandLine 'sh', '-c', 'tgsql --exec -c ipc:tsurugi_fuji "drop table if exists fdw_sample"'
+    commandLine 'sh', '-c', 'tgsql --exec -c ipc:tsurugi "drop table if exists fdw_sample"'
 }
 
 task createForeignTable(type: Exec) {
