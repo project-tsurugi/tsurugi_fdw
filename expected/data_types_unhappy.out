@@ -1385,7 +1385,7 @@ LINE 1: SELECT * FROM fdw_type_bytea WHERE c = ' \x00' ORDER BY c;
                                                ^
 SELECT * FROM fdw_type_bytea WHERE c = '\x00 ' ORDER BY c;
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: TYPE_ANALYZE_EXCEPTION (SQL-03003: compile failed with error:inconsistent_type message:"character-varying(*) (expected: {octet_string})" location:<input>:1:40+7)
 CONTEXT:  SQL query: SELECT * FROM fdw_type_bytea WHERE c = '\x00 ' ORDER BY c
 SELECT * FROM fdw_type_bytea WHERE c = '\x00\x23' ORDER BY c;
@@ -1402,12 +1402,12 @@ LINE 1: SELECT * FROM fdw_type_bytea WHERE c = '\x001' ORDER BY c;
                                                ^
 SELECT * FROM fdw_type_bytea WHERE c = 'abc' ORDER BY c;
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: TYPE_ANALYZE_EXCEPTION (SQL-03003: compile failed with error:inconsistent_type message:"character-varying(*) (expected: {octet_string})" location:<input>:1:40+5)
 CONTEXT:  SQL query: SELECT * FROM fdw_type_bytea WHERE c = 'abc' ORDER BY c
 SELECT * FROM fdw_type_bytea WHERE c = '' ORDER BY c;
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: TYPE_ANALYZE_EXCEPTION (SQL-03003: compile failed with error:inconsistent_type message:"character-varying(*) (expected: {octet_string})" location:<input>:1:40+2)
 CONTEXT:  SQL query: SELECT * FROM fdw_type_bytea WHERE c = '' ORDER BY c
 SELECT * FROM fdw_type_bytea WHERE c = '\xqw' ORDER BY c;
@@ -2020,7 +2020,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c money) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('$123.45'::money);
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"user defined type is not supported: money" location:<input>:1:58+5)
 CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES (':param123.45'::money)
 INSERT INTO fdw_type_unsupported VALUES ('$123.45');

@@ -21,7 +21,7 @@ PREPARE prep_insert (integer) AS
   INSERT INTO fdw_Case_Table (col) VALUES ($1);
 EXECUTE prep_insert (1000);
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:table_not_found message:"table "fdw_Case_Table" is not found" location:<input>:1:15+14)
 CONTEXT:  SQL query:   INSERT INTO fdw_Case_Table (col) VALUES (:param1)
 DEALLOCATE prep_insert;
@@ -29,7 +29,7 @@ PREPARE prep_insert (integer) AS
   INSERT INTO fdw_Case_table (col) VALUES ($1);
 EXECUTE prep_insert (2000);
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:table_not_found message:"table "fdw_Case_table" is not found" location:<input>:1:15+14)
 CONTEXT:  SQL query:   INSERT INTO fdw_Case_table (col) VALUES (:param1)
 DEALLOCATE prep_insert;
@@ -37,7 +37,7 @@ PREPARE prep_insert (integer) AS
   INSERT INTO fdw_CASE_table (col) VALUES ($1);
 EXECUTE prep_insert (3000);
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:table_not_found message:"table "fdw_CASE_table" is not found" location:<input>:1:15+14)
 CONTEXT:  SQL query:   INSERT INTO fdw_CASE_table (col) VALUES (:param1)
 DEALLOCATE prep_insert;
@@ -45,7 +45,7 @@ PREPARE prep_insert (integer) AS
   INSERT INTO fdw_CASE_TABLE (col) VALUES ($1);
 EXECUTE prep_insert (4000);
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:table_not_found message:"table "fdw_CASE_TABLE" is not found" location:<input>:1:15+14)
 CONTEXT:  SQL query:   INSERT INTO fdw_CASE_TABLE (col) VALUES (:param1)
 DEALLOCATE prep_insert;
@@ -53,7 +53,7 @@ PREPARE prep_insert (integer) AS
   INSERT INTO public.fdw_Case_Table (col) VALUES ($1);
 EXECUTE prep_insert (5000);
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:table_not_found message:"table "fdw_Case_Table" is not found" location:<input>:1:15+14)
 CONTEXT:  SQL query:   INSERT INTO fdw_Case_Table (col) VALUES (:param1)
 DEALLOCATE prep_insert;
@@ -61,7 +61,7 @@ PREPARE prep_insert (integer) AS
   INSERT INTO fdw_case_table (COL) VALUES ($1);
 EXECUTE prep_insert (6000);
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:column_not_found message:"column is not found: fdw_case_table.COL" location:<input>:1:31+3)
 CONTEXT:  SQL query:   INSERT INTO fdw_case_table (COL) VALUES (:param1)
 DEALLOCATE prep_insert;
@@ -83,7 +83,7 @@ PREPARE prep_update (integer) AS
   UPDATE fdw_Case_Table SET col = $1;
 EXECUTE prep_update (1000);
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:table_not_found message:"table "fdw_Case_Table" is not found" location:<input>:1:10+14)
 CONTEXT:  SQL query:   UPDATE fdw_Case_Table SET col = :param1
 DEALLOCATE prep_update;
@@ -91,7 +91,7 @@ PREPARE prep_update (integer) AS
   UPDATE fdw_Case_table SET col = $1;
 EXECUTE prep_update (2000);
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:table_not_found message:"table "fdw_Case_table" is not found" location:<input>:1:10+14)
 CONTEXT:  SQL query:   UPDATE fdw_Case_table SET col = :param1
 DEALLOCATE prep_update;
@@ -99,7 +99,7 @@ PREPARE prep_update (integer) AS
   UPDATE fdw_CASE_table SET col = $1;
 EXECUTE prep_update (3000);
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:table_not_found message:"table "fdw_CASE_table" is not found" location:<input>:1:10+14)
 CONTEXT:  SQL query:   UPDATE fdw_CASE_table SET col = :param1
 DEALLOCATE prep_update;
@@ -107,7 +107,7 @@ PREPARE prep_update (integer) AS
   UPDATE fdw_CASE_TABLE SET col = $1;
 EXECUTE prep_update (4000);
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:table_not_found message:"table "fdw_CASE_TABLE" is not found" location:<input>:1:10+14)
 CONTEXT:  SQL query:   UPDATE fdw_CASE_TABLE SET col = :param1
 DEALLOCATE prep_update;
@@ -115,7 +115,7 @@ PREPARE prep_update (integer) AS
   UPDATE public.fdw_Case_Table SET col = $1;
 EXECUTE prep_update (5000);
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:table_not_found message:"table "fdw_Case_Table" is not found" location:<input>:1:10+14)
 CONTEXT:  SQL query:   UPDATE fdw_Case_Table SET col = :param1
 DEALLOCATE prep_update;
@@ -123,7 +123,7 @@ PREPARE prep_update (integer) AS
   UPDATE fdw_case_table SET COL = $1;
 EXECUTE prep_update (100);
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:column_not_found message:"UPDATE SET target column is not found: fdw_case_table.COL" location:<input>:1:29+3)
 CONTEXT:  SQL query:   UPDATE fdw_case_table SET COL = :param1
 DEALLOCATE prep_update;
@@ -131,7 +131,7 @@ PREPARE prep_update (integer, integer) AS
   UPDATE fdw_case_table SET col = $1 WHERE COL > $2;
 EXECUTE prep_update (100, 5000);
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:variable_not_found message:"variable "COL" is not found, searching for {column_variable, field_variable, schema_variable}" location:<input>:1:49+3)
 CONTEXT:  SQL query:   UPDATE fdw_case_table SET col = :param1 WHERE COL > :param2
 DEALLOCATE prep_update;
@@ -148,35 +148,35 @@ LINE 2:   UPDATE fdw_case_table SET col = $1 WHERE "COL" > $2;
 PREPARE prep_delete AS DELETE FROM fdw_Case_Table;
 EXECUTE prep_delete;
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:table_not_found message:"table "fdw_Case_Table" is not found" location:<input>:1:13+14)
 CONTEXT:  SQL query: DELETE FROM fdw_Case_Table
 DEALLOCATE prep_delete;
 PREPARE prep_delete AS DELETE FROM fdw_Case_table;
 EXECUTE prep_delete;
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:table_not_found message:"table "fdw_Case_table" is not found" location:<input>:1:13+14)
 CONTEXT:  SQL query: DELETE FROM fdw_Case_table
 DEALLOCATE prep_delete;
 PREPARE prep_delete AS DELETE FROM fdw_CASE_table;
 EXECUTE prep_delete;
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:table_not_found message:"table "fdw_CASE_table" is not found" location:<input>:1:13+14)
 CONTEXT:  SQL query: DELETE FROM fdw_CASE_table
 DEALLOCATE prep_delete;
 PREPARE prep_delete AS DELETE FROM fdw_CASE_TABLE;
 EXECUTE prep_delete;
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:table_not_found message:"table "fdw_CASE_TABLE" is not found" location:<input>:1:13+14)
 CONTEXT:  SQL query: DELETE FROM fdw_CASE_TABLE
 DEALLOCATE prep_delete;
 PREPARE prep_delete AS DELETE FROM public.fdw_Case_Table;
 EXECUTE prep_delete;
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:table_not_found message:"table "fdw_Case_Table" is not found" location:<input>:1:13+14)
 CONTEXT:  SQL query: DELETE FROM fdw_Case_Table
 DEALLOCATE prep_delete;

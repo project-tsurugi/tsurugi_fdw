@@ -561,7 +561,7 @@ PREPARE prep_insert AS
     VALUES (100000000000000000000000000000000000000);
 EXECUTE prep_insert;
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_decimal_value message:"invalid decimal value '100000000000000000000000000000000000000' (inexact value by rounding)" location:<input>:1:48+39)
 CONTEXT:  SQL query:   INSERT INTO fdw_type_numeric_ps0     VALUES (100000000000000000000000000000000000000)
 DEALLOCATE prep_insert;
@@ -570,7 +570,7 @@ PREPARE prep_insert AS
     VALUES (340282366920938463463374607431768211455);
 EXECUTE prep_insert;
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_decimal_value message:"invalid decimal value '340282366920938463463374607431768211455' (inexact value by rounding)" location:<input>:1:48+39)
 CONTEXT:  SQL query:   INSERT INTO fdw_type_numeric_ps0     VALUES (340282366920938463463374607431768211455)
 DEALLOCATE prep_insert;
@@ -579,7 +579,7 @@ PREPARE prep_insert AS
     VALUES (340282366920938463463374607431768211456);
 EXECUTE prep_insert;
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_decimal_value message:"invalid decimal value '340282366920938463463374607431768211456' (inexact value by rounding)" location:<input>:1:48+39)
 CONTEXT:  SQL query:   INSERT INTO fdw_type_numeric_ps0     VALUES (340282366920938463463374607431768211456)
 DEALLOCATE prep_insert;
@@ -2058,12 +2058,12 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c smallint) SERVER tsurugidb;
 PREPARE prep_insert (smallint) AS INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE prep_insert (1::smallint);
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: UNSUPPORTED(5)
+HINT:  Failed to execute the statement on Tsurugi. error: UNSUPPORTED(5)
 No detail message.
 CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES (:param1)
 EXECUTE prep_insert (1);
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: UNSUPPORTED(5)
+HINT:  Failed to execute the statement on Tsurugi. error: UNSUPPORTED(5)
 No detail message.
 CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES (:param1)
 DEALLOCATE prep_insert;

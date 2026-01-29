@@ -47,7 +47,7 @@ SELECT ref_id, COUNT(*), SUM(value)
   GROUP BY ALL ref_id
   ORDER BY ref_id;
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "ALL", expected one of {(, +, -, ?, ABS, ...}" region:"region(begin=79, end=82)")
 CONTEXT:  SQL query: SELECT ref_id, COUNT(*), SUM(value)
   FROM fdw_sel_unsupported_test
@@ -59,7 +59,7 @@ SELECT ref_id, COUNT(*), SUM(value)
   GROUP BY DISTINCT ref_id
   ORDER BY ref_id;
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "DISTINCT", expected one of {(, +, -, ?, ABS, ...}" region:"region(begin=79, end=87)")
 CONTEXT:  SQL query: SELECT ref_id, COUNT(*), SUM(value)
   FROM fdw_sel_unsupported_test
@@ -69,7 +69,7 @@ CONTEXT:  SQL query: SELECT ref_id, COUNT(*), SUM(value)
 SELECT * FROM fdw_sel_unsupported_test ORDER BY value
   FETCH FIRST 2 ROWS WITH TIES;
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "FETCH", expected one of {<END_OF_FILE>, %, (, *, +, ...}" region:"region(begin=56, end=61)")
 CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test ORDER BY value
   FETCH FIRST 2 ROWS WITH TIES
@@ -77,7 +77,7 @@ CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test ORDER BY value
 SELECT * FROM fdw_sel_unsupported_test ORDER BY value
   FETCH NEXT 2 ROWS WITH TIES;
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "FETCH", expected one of {<END_OF_FILE>, %, (, *, +, ...}" region:"region(begin=56, end=61)")
 CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test ORDER BY value
   FETCH NEXT 2 ROWS WITH TIES
@@ -85,7 +85,7 @@ CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test ORDER BY value
 SELECT * FROM fdw_sel_unsupported_test ORDER BY value
   OFFSET 1 FETCH FIRST 2 ROWS WITH TIES;
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "OFFSET", expected one of {<END_OF_FILE>, %, (, *, +, ...}" region:"region(begin=56, end=62)")
 CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test ORDER BY value
   OFFSET 1 FETCH FIRST 2 ROWS WITH TIES
@@ -93,7 +93,7 @@ CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test ORDER BY value
 SELECT * FROM fdw_sel_unsupported_test ORDER BY value
   OFFSET 1 FETCH NEXT 2 ROWS WITH TIES;
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "OFFSET", expected one of {<END_OF_FILE>, %, (, *, +, ...}" region:"region(begin=56, end=62)")
 CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test ORDER BY value
   OFFSET 1 FETCH NEXT 2 ROWS WITH TIES

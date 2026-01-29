@@ -91,7 +91,7 @@ SELECT *
   FROM fdw_sel_unsupported_test
   WHERE value = (SELECT MAX(value) FROM fdw_sel_unsupported_test);
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: UNSUPPORTED_COMPILER_FEATURE_EXCEPTION (SQL-03010: compile failed with error:unsupported_feature message:"unsupported scalar expression: {"node_kind":"subquery","expression":{"node_kind":"query","elements":[{"node_kind":"column","value":{"node_kind":"builtin_set_function_invocation","function":"max","arguments":[{"node_kind":"variable_reference","name":{"node_kind":"simple","identifier":"value","identifier_kind":"regular"}}]}}],"from":[{"node_kind":"table_reference","is_only":false,"name":{"node_kind":"simple","identifier":"fdw_sel_unsupported_test","identifier_kind":"regular"}}],"order_by":[]}}" location:<input>:3:17+49)
 CONTEXT:  SQL query: SELECT *
   FROM fdw_sel_unsupported_test
@@ -99,32 +99,32 @@ CONTEXT:  SQL query: SELECT *
 -- SELECT DISTINCT ON
 SELECT DISTINCT ON (id) id, name FROM fdw_sel_unsupported_test ORDER BY id;
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "ON", expected one of {(, *, +, -, ?, ...}" region:"region(begin=16, end=18)")
 CONTEXT:  SQL query: SELECT DISTINCT ON (id) id, name FROM fdw_sel_unsupported_test ORDER BY id
 -- ORDER BY USING operator
 SELECT * FROM fdw_sel_unsupported_test ORDER BY value USING >;
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "USING", expected one of {<END_OF_FILE>, %, (, *, +, ...}" region:"region(begin=54, end=59)")
 CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test ORDER BY value USING >
 -- LIMIT ALL
 SELECT * FROM fdw_sel_unsupported_test LIMIT ALL;
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "ALL", expected one of {(, +, -, ?, ABS, ...}" region:"region(begin=45, end=48)")
 CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test LIMIT ALL
 -- LIMIT OFFSET
 SELECT * FROM fdw_sel_unsupported_test LIMIT 2 OFFSET 1;
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "OFFSET", expected one of {<END_OF_FILE>, %, *, +, -, ...}" region:"region(begin=47, end=53)")
 CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test LIMIT 2 OFFSET 1
 -- FETCH FIRST ... ONLY
 SELECT * FROM fdw_sel_unsupported_test
   ORDER BY value FETCH FIRST 2 ROWS ONLY;
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "FETCH", expected one of {<END_OF_FILE>, %, (, *, +, ...}" region:"region(begin=56, end=61)")
 CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test
   ORDER BY value FETCH FIRST 2 ROWS ONLY
@@ -132,7 +132,7 @@ CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test
 SELECT * FROM fdw_sel_unsupported_test
   ORDER BY value FETCH NEXT 2 ROWS ONLY;
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "FETCH", expected one of {<END_OF_FILE>, %, (, *, +, ...}" region:"region(begin=56, end=61)")
 CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test
   ORDER BY value FETCH NEXT 2 ROWS ONLY
@@ -140,7 +140,7 @@ CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test
 SELECT * FROM fdw_sel_unsupported_test ORDER BY value
   OFFSET 1 FETCH FIRST 2 ROWS ONLY;
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "OFFSET", expected one of {<END_OF_FILE>, %, (, *, +, ...}" region:"region(begin=56, end=62)")
 CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test ORDER BY value
   OFFSET 1 FETCH FIRST 2 ROWS ONLY
@@ -148,7 +148,7 @@ CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test ORDER BY value
 SELECT * FROM fdw_sel_unsupported_test ORDER BY value
   OFFSET 1 FETCH NEXT 2 ROWS ONLY;
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "OFFSET", expected one of {<END_OF_FILE>, %, (, *, +, ...}" region:"region(begin=56, end=62)")
 CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test ORDER BY value
   OFFSET 1 FETCH NEXT 2 ROWS ONLY
@@ -156,7 +156,7 @@ CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test ORDER BY value
 BEGIN;
 SELECT * FROM fdw_sel_unsupported_test FOR UPDATE NOWAIT;
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "FOR", expected one of {<END_OF_FILE>, ,, ., ;, AS, ...}" region:"region(begin=39, end=42)")
 CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test FOR UPDATE NOWAIT
 END;
@@ -164,7 +164,7 @@ END;
 BEGIN;
 SELECT * FROM fdw_sel_unsupported_test FOR UPDATE SKIP LOCKED;
 ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "FOR", expected one of {<END_OF_FILE>, ,, ., ;, AS, ...}" region:"region(begin=39, end=42)")
 CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test FOR UPDATE SKIP LOCKED
 END;
