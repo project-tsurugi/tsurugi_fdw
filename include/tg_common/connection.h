@@ -22,9 +22,10 @@
 extern "C" {
 #endif	
 
+#include "tg_common/tsurugi_api.h"
 #include "foreign/foreign.h"
 
-void handle_remote_xact(ForeignServer *server);
+TGtx *handle_remote_xact(ForeignServer *server);
 
 #ifdef __cplusplus
 }

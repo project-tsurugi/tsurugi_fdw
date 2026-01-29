@@ -18,18 +18,12 @@
  *
  *	@file	connection.cpp
  */
-
 #include "tg_common/tsurugi_api.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include "postgres.h"
 #include "optimizer/planner.h"
 #include "tcop/utility.h"
 #include "access/xact.h"
-
 #include "access/htup_details.h"
 #include "catalog/pg_user_mapping.h"
 #include "mb/pg_wchar.h"
@@ -44,7 +38,6 @@ extern "C" {
 #include "lib/stringinfo.h"
 #include "nodes/pathnodes.h"
 #include "utils/relcache.h"
-#include "libpq-fe.h"
 
 #include "tg_common/connection.h"
 #ifdef __cplusplus
@@ -61,6 +54,8 @@ bool xact_got_connection = false;
 typedef struct ConnCacheEntry
 {
 	ConnCacheKey key;				/* hash key (must be first) */
+	TGconn	*tg_conn;				/* connection handle */
+	TGtx	*tg_tx;					/* transaction handle */
 	bool	keep_conn;
 	int		xact_depth;				/* 0 = no xact open, 1 = main xact open */
 	bool	changing_xact_state;	/* xact state change in process */
@@ -72,7 +67,7 @@ void begin_remote_xact(ConnCacheEntry *entry);
 static void tsurugifdw_xact_callback(XactEvent event, void *arg);
 static void tsurugifdw_inval_callback(Datum arg, int cacheid, uint32 hashvalue);
 
-void handle_remote_xact(ForeignServer *server)
+TGtx *handle_remote_xact(ForeignServer *server)
 {
 	bool found;
 	ConnCacheEntry *entry;
@@ -107,6 +102,8 @@ void handle_remote_xact(ForeignServer *server)
 	entry = (ConnCacheEntry *) hash_search(ConnectionHash, &key, HASH_ENTER, &found);
 
 	if (!found) {
+		entry->tg_conn = NULL;
+		entry->tg_tx = NULL;
 		entry->keep_conn = true;
 		entry->xact_depth = 0;
 		entry->changing_xact_state = false;
@@ -117,6 +114,8 @@ void handle_remote_xact(ForeignServer *server)
 
 	/* Start a new remote transaction if needed. */
 	begin_remote_xact(entry);
+
+	return entry->tg_tx;
 }
 
 /**
@@ -125,7 +124,7 @@ void handle_remote_xact(ForeignServer *server)
  */
 void begin_remote_xact(ConnCacheEntry *entry)
 {
-	bool success = false;
+	TG_STATUS tg_status;
 
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
 
@@ -133,15 +132,29 @@ void begin_remote_xact(ConnCacheEntry *entry)
 	if (entry->xact_depth <= 0)
 	{
 		Oid server_oid = entry->key;
-		success = tg_do_connect(server_oid);
-		if (!success)
+		entry->tg_conn = tg_conn_new(server_oid);
+		if (!entry->tg_conn)
 		{
-			elog(ERROR, "%s", tg_get_error_message());
+			elog(ERROR, "tsurugi_fdw : Failed to create a connection handle.");
 		}
-		success = tg_do_begin(server_oid);
-		if (!success)
+		tg_status = tg_conn_connect(entry->tg_conn);
+		if (tg_status != TG_STATUS_OK)
 		{
-			elog(ERROR, "%s", tg_get_error_message());
+			elog(ERROR, "%s", tg_conn_error_message(entry->tg_conn));
+			tg_conn_close(entry->tg_conn);
+		}
+		entry->tg_tx = tg_tx_new(entry->tg_conn);
+		if (!entry->tg_tx)
+		{
+			elog(ERROR, "tsurugi_fdw: Failed to create transaction handle. ");
+			tg_conn_close(entry->tg_conn);
+		}
+		tg_status = tg_tx_begin(entry->tg_tx);
+		if (tg_status != TG_STATUS_OK)
+		{
+			elog(ERROR, "%s", tg_tx_error_message(entry->tg_tx));
+			tg_tx_free(entry->tg_tx);
+			tg_conn_close(entry->tg_conn);
 		}
 		entry->xact_depth = 1;
 		entry->changing_xact_state = false;
@@ -155,9 +168,19 @@ static void tsurugifdw_xact_callback(XactEvent event, void *arg)
 {
 	HASH_SEQ_STATUS scan;
 	ConnCacheEntry *entry;
-	bool success = false;
+	TG_STATUS tg_status;
+	static const char *XACT_EVENTS[] = {
+		"XACT_EVENT_COMMIT",
+		"XACT_EVENT_PARALLEL_COMMIT",
+		"XACT_EVENT_ABORT",
+		"XACT_EVENT_PARALLEL_ABORT",
+		"XACT_EVENT_PREPARE",
+		"XACT_EVENT_PRE_COMMIT",
+		"XACT_EVENT_PARALLEL_PRE_COMMIT",
+		"XACT_EVENT_PRE_PREPARE",
+	};
 
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw : %s (event: %s)", __func__, XACT_EVENTS[event]);
 
 	/* Quick exit if no connections were touched in this transaction. */
 	if (!xact_got_connection)
@@ -178,10 +201,12 @@ static void tsurugifdw_xact_callback(XactEvent event, void *arg)
 				case XACT_EVENT_PRE_COMMIT:
 					/* Commit all remote transactions during pre-commit */
 					entry->changing_xact_state = true;
-					success = tg_do_commit();
-					if (!success)
+					tg_status = tg_tx_commit(entry->tg_tx);
+					if (tg_status != TG_STATUS_OK)
 					{
-						elog(ERROR, "%s", tg_get_error_message());
+						tg_tx_free(entry->tg_tx);
+						tg_conn_close(entry->tg_conn);
+						elog(ERROR, "tsurugi_fdw :  %s", tg_tx_error_message(entry->tg_tx));
 					}
 					entry->changing_xact_state = false;
 					break;
@@ -211,9 +236,11 @@ static void tsurugifdw_xact_callback(XactEvent event, void *arg)
 
 					/* Mark this connection as in the process of changing transaction state. */
 					entry->changing_xact_state = true;
-					success = tg_do_rollback();
-					if (!success) {
-						elog(ERROR, "%s", tg_get_error_message());
+					tg_status = tg_tx_rollback(entry->tg_tx);
+					if (tg_status != TG_STATUS_OK) {
+						tg_tx_free(entry->tg_tx);
+						tg_conn_close(entry->tg_conn);
+						elog(ERROR, "%s", tg_tx_error_message(entry->tg_tx));
 					}
 					entry->changing_xact_state = false;
 					break;

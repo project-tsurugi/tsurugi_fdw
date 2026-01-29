@@ -49,6 +49,10 @@ typedef struct tg_fdw_foreign_scan_state_
     /* batch operation stuff */
     size_t          rowidx;             /* current index of rows */
 	size_t			num_tuples;         /* # of tuples in array */
+
+	TGtx			*tg_tx;				/* Tsurugi transaction handle */
+	TGstmt			*tg_stmt;			/* Tsurugi statement handle */
+	TGresult		*tg_result;			/* Tsurugi Result set handle */	
 } TgFdwForeignScanState;
 
  /*
@@ -91,6 +95,9 @@ typedef struct tg_fdw_direct_modify_state_
 
 	/* working memory context */
 	MemoryContext temp_cxt;		/* context for per-tuple temporary data */
+
+	TGtx* 			tg_tx;		/* Tsurugi transaction handle */
+	TGstmt*			tg_stmt;	/* Statement handle */
 } TgFdwDirectModifyState;
 
 #endif // TSURUGI_FDW_H

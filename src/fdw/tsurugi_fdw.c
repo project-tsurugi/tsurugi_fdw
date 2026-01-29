@@ -210,7 +210,7 @@ tsurugi_fdw_handler(PG_FUNCTION_ARGS)
 /**
  *  @brief  Preparation for scanning foreign tables.
  */
-static void 
+ static void 
 tsurugiBeginForeignScan(ForeignScanState *node, int eflags)
 {
 	ForeignScan *fsplan = (ForeignScan *) node->ss.ps.plan;
@@ -277,7 +277,7 @@ tsurugiBeginForeignScan(ForeignScanState *node, int eflags)
 	}
 	fsstate->attinmeta = TupleDescGetAttInMetadata(fsstate->tupdesc);
 
-	handle_remote_xact(server);
+	fsstate->tg_tx = handle_remote_xact(server);
 }
 
 /*
@@ -289,27 +289,53 @@ tsurugiIterateForeignScan(ForeignScanState *node)
 {
 	TgFdwForeignScanState *fsstate = (TgFdwForeignScanState *) node->fdw_state;
 	TupleTableSlot* tupleSlot = node->ss.ss_ScanTupleSlot;
-	bool success = false;
+	TG_STATUS tg_status;
+	bool has_row;
 
 	elog(DEBUG3, "tsurugi_fdw : %s\nquery:\n%s", __func__, fsstate->query_string);
 
 	if (!fsstate->cursor_exists)
 	{
-		success = tg_create_cursor(node);
-		if (!success)
-		{
-			elog(ERROR, "%s", tg_get_error_message());
+		fsstate->tg_stmt = tg_stmt_new(fsstate->tg_tx, fsstate->query_string);
+		if (!fsstate->tg_stmt) {
+			elog(ERROR, "%s", tg_stmt_error_message(fsstate->tg_stmt));
+		}
+		if (is_prepare_statement(fsstate->query_string))
+			tg_stmt_bind_parameters(fsstate->tg_stmt, fsstate->param_linfo);
+		tg_status = tg_stmt_execute_query(fsstate->tg_stmt, &fsstate->tg_result);
+		if (tg_status != TG_STATUS_OK) {
+			elog(ERROR, "%s", tg_stmt_error_message(fsstate->tg_stmt));
 		}
 		fsstate->num_tuples = 0;
 	    fsstate->cursor_exists = true;
 	}
 	ExecClearTuple(tupleSlot);
-	success = tg_execute_foreign_scan(fsstate, tupleSlot);
-	if (!success)
-	{
-		elog(ERROR, "%s", tg_get_error_message());
-	}
 
+	tg_status = tg_result_next(fsstate->tg_result, &has_row);
+	if (tg_status != TG_STATUS_OK)
+	{
+		tg_result_free(fsstate->tg_result);
+		elog(ERROR, "%s", tg_stmt_error_message(fsstate->tg_stmt));
+	}
+	if (has_row) 
+	{
+		tg_status = tg_result_get_tuple(fsstate->tg_result, 
+										fsstate->retrieved_attrs, 
+										tupleSlot);
+		if (tg_status != TG_STATUS_OK)
+		{
+			tg_result_free(fsstate->tg_result);
+			elog(ERROR, "%s", tg_result_error_message(fsstate->tg_result));
+		}
+		fsstate->num_tuples++;
+	}
+	else
+	{
+		/* No more rows/data exists */
+		tg_result_free(fsstate->tg_result);
+		elog(DEBUG1, "tsurugi_fdw : End of rows. (rows: %d)", 
+				(int) fsstate->num_tuples);
+	}
 	elog(DEBUG5, "tsurugi_fdw : %s is done.", __func__);
 
 	return tupleSlot;
@@ -341,7 +367,9 @@ tsurugiReScanForeignScan(ForeignScanState *node)
 static void 
 tsurugiEndForeignScan(ForeignScanState *node)
 {
+	TgFdwForeignScanState *fsstate = (TgFdwForeignScanState *) node->fdw_state;
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	tg_stmt_free(fsstate->tg_stmt);
 }
 
 /** ===========================================================================
@@ -349,6 +377,7 @@ tsurugiEndForeignScan(ForeignScanState *node)
  * 	FDW Modify functions.
  *
  */
+/* Direct Modify */
 /*
  * tsurugiBeginDirectModify
  *      Preparation for modifying foreign tables.
@@ -363,7 +392,6 @@ tsurugiBeginDirectModify(ForeignScanState *node, int eflags)
 	int rtindex;
 	EState *estate = node->ss.ps.state;
 	TgFdwDirectModifyState *dmstate;
-	bool success;
 
 	Assert(node != NULL);
 	Assert(fsplan != NULL);
@@ -404,16 +432,7 @@ tsurugiBeginDirectModify(ForeignScanState *node, int eflags)
 	dmstate->param_linfo = estate->es_param_list_info;
 	dmstate->server = server;
 	node->fdw_state = dmstate;
-	handle_remote_xact(server);
-
-	if (is_prepare_statement(dmstate->orig_query))
-	{
-		success = tg_prepare_direct_modify(dmstate);
-		if (!success)
-		{
-			elog(ERROR, "%s", tg_get_error_message());
-		}
-	}
+	dmstate->tg_tx = handle_remote_xact(server);
 }
 
 /*
@@ -423,7 +442,7 @@ tsurugiBeginDirectModify(ForeignScanState *node, int eflags)
 static TupleTableSlot * 
 tsurugiIterateDirectModify(ForeignScanState *node)
 {
-	bool success;
+	TG_STATUS tg_status;
 	TgFdwDirectModifyState *dmstate = (TgFdwDirectModifyState *) node->fdw_state;
 	EState *estate = node->ss.ps.state;
 	TupleTableSlot *slot = node->ss.ss_ScanTupleSlot;
@@ -433,10 +452,23 @@ tsurugiIterateDirectModify(ForeignScanState *node)
 
 	if (dmstate->num_tuples == (size_t) -1)
 	{
-		success = tg_execute_direct_modify(node);
-		if (!success)
+		dmstate->tg_stmt = tg_stmt_new(dmstate->tg_tx, dmstate->orig_query);
+		if (!dmstate->tg_stmt)
 		{
-			elog(ERROR, "%s", tg_get_error_message());
+			elog(ERROR, "%s", tg_stmt_error_message(dmstate->tg_stmt));
+		}
+		if (dmstate->param_linfo != NULL && dmstate->param_linfo->numParams > 0)
+		{
+			tg_status = tg_stmt_bind_parameters(dmstate->tg_stmt, dmstate->param_linfo);
+			if (tg_status != TG_STATUS_OK)
+			{
+				elog(ERROR, "%s", tg_stmt_error_message(dmstate->tg_stmt));
+			}
+		}
+		tg_status = tg_stmt_execute_statement(dmstate->tg_stmt, &dmstate->num_tuples);
+		if (tg_status != TG_STATUS_OK)
+		{
+			elog(ERROR, "%s", tg_stmt_error_message(dmstate->tg_stmt));
 		}
 	}
 
@@ -454,8 +486,12 @@ tsurugiIterateDirectModify(ForeignScanState *node)
 static void 
 tsurugiEndDirectModify(ForeignScanState *node)
 {
+	TgFdwDirectModifyState *dmstate = (TgFdwDirectModifyState *) node->fdw_state;
 	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	tg_stmt_free(dmstate->tg_stmt);
 }
+
+/* Foreign Modify */
 /*
  * tsurugiBeginForeignModify
  */

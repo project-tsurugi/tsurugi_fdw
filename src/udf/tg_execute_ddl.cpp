@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "tg_common/tsurugi.h"
+#include "tg_common/tsurugi_api.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -107,28 +108,55 @@ tg_execute_ddl(PG_FUNCTION_ARGS)
 			  << "  ddl_statement: " << arg_ddl_statement;
 	elog(DEBUG2, "%s", debug_log.str().c_str());
 
-	ERROR_CODE error = ERROR_CODE::UNKNOWN;
-
-	error = Tsurugi::tsurugi().start_transaction(server_oid);
-	if (error != ERROR_CODE::OK) {
-		ereport(ERROR, (errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
-						errmsg("%s", Tsurugi::tsurugi().get_detail_message(error).c_str())));
+	auto tg_conn = tg_conn_new(server_oid);
+	if (!tg_conn) {
+		elog(ERROR, "tsurugi_fdw : Failed to create a connection handle.");
 	}
-
+	auto tg_status = tg_conn_connect(tg_conn);
+	if (tg_status != TG_STATUS_OK) {
+		elog(ERROR, "%s", tg_conn_error_message(tg_conn));
+		tg_conn_close(tg_conn);
+	}
+	auto tg_tx = tg_tx_new(tg_conn);
+	if (!tg_tx) {
+		elog(ERROR, "tsurugi_fdw : Failed to create a transaction handle.");
+		tg_conn_close(tg_conn);
+	}
+	tg_status = tg_tx_begin(tg_tx);
+	if (tg_status != TG_STATUS_OK) {
+		elog(ERROR, "tsurugi_fdw : Failed to start the transaction. " \
+				"(detail: %s)", tg_tx_error_message(tg_tx));
+		tg_tx_free(tg_tx);
+		tg_conn_close(tg_conn);
+	}
 	std::size_t num_rows;
-	error = Tsurugi::tsurugi().execute_statement(arg_ddl_statement, num_rows);
-	if (error != ERROR_CODE::OK) {
-		Tsurugi::tsurugi().rollback();
-
+	TGstmt* tg_stmt = tg_stmt_new(tg_tx, arg_ddl_statement.c_str());
+	if (!tg_stmt) {
 		ereport(ERROR, (errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
-						errmsg("%s", Tsurugi::tsurugi().get_detail_message(error).c_str())));
+						errmsg("tsurugi_fdw : Failed to ceate statement handle.")));
+		tg_tx_free(tg_tx);
+		tg_conn_close(tg_conn);
 	}
-
-	error = Tsurugi::tsurugi().commit();
-	if (error != ERROR_CODE::OK) {
+	tg_status = tg_stmt_execute_statement(tg_stmt, &num_rows);
+	if (tg_status != TG_STATUS_OK) {
 		ereport(ERROR, (errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
-						errmsg("%s", Tsurugi::tsurugi().get_detail_message(error).c_str())));
+						errmsg("tsurugi_fdw : Failed to execute the statement. " \
+								"(detail: %s)", tg_stmt_error_message(tg_stmt))));
+		tg_stmt_free(tg_stmt);
+		tg_tx_free(tg_tx);
+		tg_conn_close(tg_conn);
 	}
+	tg_status = tg_tx_commit(tg_tx);
+	if (tg_status != TG_STATUS_OK) {
+		tg_stmt_free(tg_stmt);
+		tg_tx_free(tg_tx);
+		ereport(ERROR, (errcode(ERRCODE_FDW_UNABLE_TO_CREATE_REPLY),
+						errmsg("tsurugi_fdw : Failed to commit the transaction. " \
+							"(detail: %s)", tg_tx_error_message(tg_tx))));
+	}
+	tg_stmt_free(tg_stmt);
+	tg_tx_free(tg_tx);
+	tg_conn_close(tg_conn);
 
 	/* Convert to uppercase for DDL command comparison. */
 	std::string ddl_command(std::regex_replace(match.str(), std::regex(R"(^\s+|\s+$)"), ""));
