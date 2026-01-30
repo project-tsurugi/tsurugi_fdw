@@ -10,9 +10,9 @@ SELECT tg_execute_ddl('
     manager_id INT
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test setup: DDL of the PostgreSQL
@@ -45,8 +45,8 @@ ERROR:  tsurugi_fdw : Contains an unsupported target entry. (109)
 DROP FOREIGN TABLE fdw_sel_unsupported_test;
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_sel_unsupported_test', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 

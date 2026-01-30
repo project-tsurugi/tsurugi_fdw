@@ -6,9 +6,9 @@ SET timezone TO 'Asia/Tokyo';
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_valid_test (id INTEGER)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test setup: DDL of the PostgreSQL
@@ -25,9 +25,9 @@ DEALLOCATE valid;
 DROP FOREIGN TABLE fdw_valid_test;
 -- Test setup: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_valid_test', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 /* Test case: happy path - Standard DML statement variations (preparation) */
@@ -37,9 +37,9 @@ SELECT tg_execute_ddl('
     c1 INTEGER NOT NULL PRIMARY KEY
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('
@@ -51,9 +51,9 @@ SELECT tg_execute_ddl('
     c5 DATE
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test setup: DDL of the PostgreSQL
@@ -1167,15 +1167,15 @@ DROP FOREIGN TABLE fdw_dml_basic_table_1;
 DROP FOREIGN TABLE fdw_dml_basic_table_2;
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_dml_basic_table_1', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('DROP TABLE fdw_dml_basic_table_2', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 /* Test case: happy path - Aggregation related testing */
@@ -1191,9 +1191,9 @@ SELECT tg_execute_ddl('
     c7 VARCHAR(5)
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test setup: DDL of the PostgreSQL
@@ -1305,9 +1305,9 @@ DEALLOCATE prep_select;
 DROP FOREIGN TABLE fdw_group_basic_table;
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_group_basic_table', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 /* Test case: happy path - JOIN related testing */
@@ -1323,9 +1323,9 @@ SELECT tg_execute_ddl('
     c7 VARCHAR(26)
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('
@@ -1339,9 +1339,9 @@ SELECT tg_execute_ddl('
     c7 VARCHAR(26)
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test setup: DDL of the PostgreSQL
@@ -1477,15 +1477,15 @@ DROP FOREIGN TABLE fdw_join_basic_table_1;
 DROP FOREIGN TABLE fdw_join_basic_table_2;
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_join_basic_table_1', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('DROP TABLE fdw_join_basic_table_2', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 /* Test case: happy path - Supported SELECT statement patterns */
@@ -1499,9 +1499,9 @@ SELECT tg_execute_ddl('
     manager_id INT
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('
@@ -1510,9 +1510,9 @@ SELECT tg_execute_ddl('
     name VARCHAR(100) NOT NULL
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test setup: DDL of the PostgreSQL
@@ -1964,15 +1964,15 @@ DROP FOREIGN TABLE fdw_select_variation_table_1;
 DROP FOREIGN TABLE fdw_select_variation_table_2;
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_select_variation_table_1', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('DROP TABLE fdw_select_variation_table_2', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 /* Test case: happy path - Supported INSERT statement patterns */
@@ -1991,9 +1991,9 @@ SELECT tg_execute_ddl('
     c_tstmp TIMESTAMP DEFAULT TIMESTAMP ''2025-03-03 03:03:03''
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test setup: DDL of the PostgreSQL
@@ -2041,9 +2041,9 @@ DEALLOCATE prep_select_all;
 DROP FOREIGN TABLE fdw_ins_variation_table;
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_ins_variation_table', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 /* Test case: happy path - Supported UPDATE statement patterns */
@@ -2063,9 +2063,9 @@ SELECT tg_execute_ddl('
     c_tstmptz TIMESTAMP WITH TIME ZONE
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test setup: DDL of the PostgreSQL
@@ -2323,9 +2323,9 @@ DEALLOCATE prep_select;
 DROP FOREIGN TABLE fdw_upd_variation_table;
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_upd_variation_table', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 /* Test case: happy path - Supported DELETE statement patterns */
@@ -2337,9 +2337,9 @@ SELECT tg_execute_ddl('
     value_col INT
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test setup: DDL of the PostgreSQL
@@ -2451,9 +2451,9 @@ DEALLOCATE prep_select;
 DROP FOREIGN TABLE fdw_del_variation_table;
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_del_variation_table', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 /* Test teardown: PostgreSQL environment */

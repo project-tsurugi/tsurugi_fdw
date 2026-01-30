@@ -4,9 +4,9 @@
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_invalid_test (id INTEGER)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test setup: DDL of the PostgreSQL
@@ -20,9 +20,9 @@ DEALLOCATE invalid;
 DROP FOREIGN TABLE fdw_invalid_test;
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_invalid_test', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 /* Test case: unhappy path - Unsupported SELECT statement patterns */
@@ -36,9 +36,9 @@ SELECT tg_execute_ddl('
     manager_id INT
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test setup: DDL of the PostgreSQL
@@ -83,8 +83,8 @@ PREPARE prep_select AS
     GROUP BY ALL ref_id
     ORDER BY ref_id;
 EXECUTE prep_select;
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "ALL", expected one of {(, +, -, ?, ABS, ...}" region:"region(begin=85, end=88)")
 CONTEXT:  SQL query:   SELECT ref_id, COUNT(*), SUM(value)     FROM fdw_sel_unsupported_test     GROUP BY ALL ref_id     ORDER BY ref_id
 DEALLOCATE prep_select;
@@ -95,8 +95,8 @@ PREPARE prep_select AS
     GROUP BY DISTINCT ref_id
     ORDER BY ref_id;
 EXECUTE prep_select;
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "DISTINCT", expected one of {(, +, -, ?, ABS, ...}" region:"region(begin=85, end=93)")
 CONTEXT:  SQL query:   SELECT ref_id, COUNT(*), SUM(value)     FROM fdw_sel_unsupported_test     GROUP BY DISTINCT ref_id     ORDER BY ref_id
 DEALLOCATE prep_select;
@@ -105,8 +105,8 @@ PREPARE prep_select AS
   SELECT * FROM fdw_sel_unsupported_test ORDER BY value
     FETCH FIRST 2 ROWS WITH TIES;
 EXECUTE prep_select;
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "FETCH", expected one of {<END_OF_FILE>, %, (, *, +, ...}" region:"region(begin=60, end=65)")
 CONTEXT:  SQL query:   SELECT * FROM fdw_sel_unsupported_test ORDER BY value     FETCH FIRST 2 ROWS WITH TIES
 DEALLOCATE prep_select;
@@ -115,8 +115,8 @@ PREPARE prep_select AS
   SELECT * FROM fdw_sel_unsupported_test ORDER BY value
     FETCH NEXT 2 ROWS WITH TIES;
 EXECUTE prep_select;
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "FETCH", expected one of {<END_OF_FILE>, %, (, *, +, ...}" region:"region(begin=60, end=65)")
 CONTEXT:  SQL query:   SELECT * FROM fdw_sel_unsupported_test ORDER BY value     FETCH NEXT 2 ROWS WITH TIES
 DEALLOCATE prep_select;
@@ -125,8 +125,8 @@ PREPARE prep_select AS
   SELECT * FROM fdw_sel_unsupported_test ORDER BY value
     OFFSET 1 FETCH FIRST 2 ROWS WITH TIES;
 EXECUTE prep_select;
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "OFFSET", expected one of {<END_OF_FILE>, %, (, *, +, ...}" region:"region(begin=60, end=66)")
 CONTEXT:  SQL query:   SELECT * FROM fdw_sel_unsupported_test ORDER BY value     OFFSET 1 FETCH FIRST 2 ROWS WITH TIES
 DEALLOCATE prep_select;
@@ -135,8 +135,8 @@ PREPARE prep_select AS
   SELECT * FROM fdw_sel_unsupported_test ORDER BY value
     OFFSET 1 FETCH NEXT 2 ROWS WITH TIES;
 EXECUTE prep_select;
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "OFFSET", expected one of {<END_OF_FILE>, %, (, *, +, ...}" region:"region(begin=60, end=66)")
 CONTEXT:  SQL query:   SELECT * FROM fdw_sel_unsupported_test ORDER BY value     OFFSET 1 FETCH NEXT 2 ROWS WITH TIES
 DEALLOCATE prep_select;
@@ -144,8 +144,8 @@ DEALLOCATE prep_select;
 DROP FOREIGN TABLE fdw_sel_unsupported_test;
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_sel_unsupported_test', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 

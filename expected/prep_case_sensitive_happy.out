@@ -6,9 +6,9 @@ SELECT tg_execute_ddl('
     Col INT
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test setup: DDL of the PostgreSQL
@@ -149,8 +149,8 @@ DEALLOCATE prep_select;
 DROP FOREIGN TABLE fdw_case_table;
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_case_table', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 

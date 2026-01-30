@@ -4,9 +4,9 @@ SELECT tg_execute_ddl('
         column1 INTEGER NOT NULL PRIMARY KEY
     )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('
@@ -14,9 +14,9 @@ SELECT tg_execute_ddl('
         column1 INTEGER NOT NULL PRIMARY KEY
     )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('
@@ -24,9 +24,9 @@ SELECT tg_execute_ddl('
         column1 INTEGER NOT NULL PRIMARY KEY
     )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 /* Test setup: DDL of the PostgreSQL */
@@ -238,20 +238,20 @@ DROP FOREIGN TABLE t3_user_management;
 RESET ROLE;
 /* Test teardown: DDL of the Tsurugi */
 SELECT tg_execute_ddl('DROP TABLE t1_user_management', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('DROP TABLE t2_user_management', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('DROP TABLE t3_user_management', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 

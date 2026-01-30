@@ -13,23 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	connection.h
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, The Regents of the University of California
+ *
+ * @file tg_conn_cache.h
  */
-#ifndef CONNECTION_H
-#define CONNECTION_H
+#ifndef TG_CONN_CACHE_H
+#define TG_CONN_CACHE_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif	
-
+#include "postgres.h"
 #include "tg_common/tsurugi_api.h"
-#include "foreign/foreign.h"
 
-TGconn *tg_get_connection(ForeignServer *server, UserMapping *user);
-//TGconn *handle_remote_xact(ForeignServer *server);
-void tg_do_sql_command(TGconn *conn, const char *sql);
+extern void tg_conn_cache_init(void);
 
-#ifdef __cplusplus
-}
-#endif
-#endif	/* CONNECTION_H */
+extern TGconn *tg_get_or_open_connection(Oid serverid, Oid userid,
+										 const char *endpoint);
+
+extern TGconn *tg_get_connection_for_xact(Oid serverid, Oid userid,
+										 const char *endpoint);
+
+extern void tg_invalidate_connection(Oid serverid, Oid userid);
+
+#endif  /* TG_CONN_CACHE_H */

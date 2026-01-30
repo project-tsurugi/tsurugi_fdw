@@ -5,9 +5,9 @@ SELECT tg_execute_ddl('
     column1 INTEGER NOT NULL PRIMARY KEY
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('
@@ -15,9 +15,9 @@ SELECT tg_execute_ddl('
     column1 INTEGER NOT NULL PRIMARY KEY
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('
@@ -25,9 +25,9 @@ SELECT tg_execute_ddl('
     column1 INTEGER NOT NULL PRIMARY KEY
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('
@@ -35,9 +35,9 @@ SELECT tg_execute_ddl('
     column1 INTEGER NOT NULL PRIMARY KEY
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('
@@ -45,9 +45,9 @@ SELECT tg_execute_ddl('
     column1 INTEGER NOT NULL PRIMARY KEY
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('
@@ -55,9 +55,9 @@ SELECT tg_execute_ddl('
     column1 INTEGER NOT NULL PRIMARY KEY
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('
@@ -65,9 +65,9 @@ SELECT tg_execute_ddl('
     column1 INTEGER NOT NULL PRIMARY KEY
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('
@@ -75,9 +75,9 @@ SELECT tg_execute_ddl('
     column1 INTEGER NOT NULL PRIMARY KEY
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test setup: DDL of the PostgreSQL
@@ -1659,50 +1659,50 @@ DROP FOREIGN TABLE re_table1;
 DROP FOREIGN TABLE re_table2;
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE tg_table', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('DROP TABLE udf_table1', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('DROP TABLE wp_table1', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('DROP TABLE wp_table2', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('DROP TABLE ri_table1', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('DROP TABLE ri_table2', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('DROP TABLE re_table1', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('DROP TABLE re_table2', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 

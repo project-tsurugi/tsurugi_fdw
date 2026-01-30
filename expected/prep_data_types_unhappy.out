@@ -4,9 +4,9 @@
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_int (c INT)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -27,7 +27,7 @@ LINE 1: EXECUTE prep_insert ('invalid');
 DEALLOCATE prep_insert;
 PREPARE prep_insert_ex AS INSERT INTO fdw_type_int VALUES (2.1);
 EXECUTE prep_insert_ex;
-ERROR:  Failed to execute remote SQL.
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
 CONTEXT:  SQL query: INSERT INTO fdw_type_int VALUES (2.1)
@@ -62,9 +62,9 @@ LINE 2:   DELETE FROM fdw_type_int WHERE invalid >= 1;
 DROP FOREIGN TABLE fdw_type_int;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_int', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Numeric Types - bigint
@@ -72,9 +72,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_int', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_bigint (c BIGINT)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -95,7 +95,7 @@ LINE 1: EXECUTE prep_insert ('invalid');
 DEALLOCATE prep_insert;
 PREPARE prep_insert_ex AS INSERT INTO fdw_type_bigint VALUES (2.1);
 EXECUTE prep_insert_ex;
-ERROR:  Failed to execute remote SQL.
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: An error occurred in evaluating values. error:lost_precision)
 CONTEXT:  SQL query: INSERT INTO fdw_type_bigint VALUES (2.1)
@@ -130,9 +130,9 @@ LINE 2:   DELETE FROM fdw_type_bigint WHERE invalid >= 1;
 DROP FOREIGN TABLE fdw_type_bigint;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_bigint', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Numeric Types - decimal
@@ -140,9 +140,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_bigint', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_decimal (c DECIMAL)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -176,9 +176,9 @@ LINE 2:   DELETE FROM fdw_type_decimal WHERE invalid >= 1;
 DROP FOREIGN TABLE fdw_type_decimal;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Numeric Types - decimal(5)
@@ -186,9 +186,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_decimal_p (c DECIMAL(5))
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -199,7 +199,7 @@ CREATE FOREIGN TABLE fdw_type_decimal_p (
 PREPARE prep_insert (decimal(5)) AS
   INSERT INTO fdw_type_decimal_p VALUES ($1);
 EXECUTE prep_insert (123456);
-ERROR:  Failed to execute remote SQL.
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: error in evaluating expression: lost_precision: value loses precision by conversion)
 CONTEXT:  SQL query:   INSERT INTO fdw_type_decimal_p VALUES (:param1)
@@ -227,9 +227,9 @@ LINE 2:   DELETE FROM fdw_type_decimal_p WHERE invalid >= 1;
 DROP FOREIGN TABLE fdw_type_decimal_p;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_p', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Numeric Types - decimal(5, 2)
@@ -237,9 +237,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_p', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_decimal_ps (c DECIMAL(5, 2))
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -250,17 +250,17 @@ CREATE FOREIGN TABLE fdw_type_decimal_ps (
 PREPARE prep_insert (decimal(5, 2)) AS
   INSERT INTO fdw_type_decimal_ps VALUES ($1);
 EXECUTE prep_insert (1234);
-ERROR:  Failed to execute remote SQL.
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: error in evaluating expression: lost_precision: value loses precision by conversion)
 CONTEXT:  SQL query:   INSERT INTO fdw_type_decimal_ps VALUES (:param1)
 EXECUTE prep_insert (1234.56);
-ERROR:  Failed to execute remote SQL.
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: error in evaluating expression: lost_precision: value loses precision by conversion)
 CONTEXT:  SQL query:   INSERT INTO fdw_type_decimal_ps VALUES (:param1)
 EXECUTE prep_insert (123.567);
-ERROR:  Failed to execute remote SQL.
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: error in evaluating expression: lost_precision: value loses precision by conversion)
 CONTEXT:  SQL query:   INSERT INTO fdw_type_decimal_ps VALUES (:param1)
@@ -288,9 +288,9 @@ LINE 2:   DELETE FROM fdw_type_decimal_ps WHERE invalid >= 1;
 DROP FOREIGN TABLE fdw_type_decimal_ps;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_ps', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Numeric Types - decimal(38, 0)
@@ -298,9 +298,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_ps', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_decimal_ps0 (c DECIMAL(38, 0))
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -311,12 +311,12 @@ CREATE FOREIGN TABLE fdw_type_decimal_ps0 (
 PREPARE prep_insert (decimal(38, 0)) AS
   INSERT INTO fdw_type_decimal_ps0 VALUES ($1);
 EXECUTE prep_insert (100000000000000000000000000000000000000);
-ERROR:  Failed to execute remote SQL.
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: error in evaluating expression: lost_precision: value loses precision by conversion)
 CONTEXT:  SQL query:   INSERT INTO fdw_type_decimal_ps0 VALUES (:param1)
 EXECUTE prep_insert (340282366920938463463374607431768211455);
-ERROR:  Failed to execute remote SQL.
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: error in evaluating expression: lost_precision: value loses precision by conversion)
 CONTEXT:  SQL query:   INSERT INTO fdw_type_decimal_ps0 VALUES (:param1)
@@ -327,9 +327,9 @@ DEALLOCATE prep_insert;
 DROP FOREIGN TABLE fdw_type_decimal_ps0;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_ps0', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Numeric Types - decimal(38, 38)
@@ -337,9 +337,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_ps0', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_decimal_ps38 (c DECIMAL(38, 38))
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -350,17 +350,17 @@ CREATE FOREIGN TABLE fdw_type_decimal_ps38 (
 PREPARE prep_insert (decimal(38, 38)) AS
   INSERT INTO fdw_type_decimal_ps38 VALUES ($1);
 EXECUTE prep_insert (1);
-ERROR:  Failed to execute remote SQL.
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: error in evaluating expression: lost_precision: value loses precision by conversion)
 CONTEXT:  SQL query:   INSERT INTO fdw_type_decimal_ps38 VALUES (:param1)
 EXECUTE prep_insert (0.000000000000000000000000000000000000001);
-ERROR:  Failed to execute remote SQL.
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: error in evaluating expression: lost_precision: value loses precision by conversion)
 CONTEXT:  SQL query:   INSERT INTO fdw_type_decimal_ps38 VALUES (:param1)
 EXECUTE prep_insert (0.340282366920938463463374607431768211455);
-ERROR:  Failed to execute remote SQL.
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: error in evaluating expression: lost_precision: value loses precision by conversion)
 CONTEXT:  SQL query:   INSERT INTO fdw_type_decimal_ps38 VALUES (:param1)
@@ -371,9 +371,9 @@ DEALLOCATE prep_insert;
 DROP FOREIGN TABLE fdw_type_decimal_ps38;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_ps38', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Numeric Types - numeric
@@ -381,9 +381,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_decimal_ps38', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_numeric (c NUMERIC)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -417,9 +417,9 @@ LINE 2:   DELETE FROM fdw_type_numeric WHERE invalid >= 1;
 DROP FOREIGN TABLE fdw_type_numeric;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Numeric Types - numeric(5)
@@ -427,9 +427,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_numeric_p (c NUMERIC(5))
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -440,7 +440,7 @@ CREATE FOREIGN TABLE fdw_type_numeric_p (
 PREPARE prep_insert (numeric(5)) AS
   INSERT INTO fdw_type_numeric_p VALUES ($1);
 EXECUTE prep_insert (123456);
-ERROR:  Failed to execute remote SQL.
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: error in evaluating expression: lost_precision: value loses precision by conversion)
 CONTEXT:  SQL query:   INSERT INTO fdw_type_numeric_p VALUES (:param1)
@@ -468,9 +468,9 @@ LINE 2:   DELETE FROM fdw_type_numeric_p WHERE invalid >= 1;
 DROP FOREIGN TABLE fdw_type_numeric_p;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_p', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Numeric Types - numeric(5, 2)
@@ -478,9 +478,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_p', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_numeric_ps (c NUMERIC(5, 2))
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -491,17 +491,17 @@ CREATE FOREIGN TABLE fdw_type_numeric_ps (
 PREPARE prep_insert (numeric(5, 2)) AS
   INSERT INTO fdw_type_numeric_ps VALUES ($1);
 EXECUTE prep_insert (1234);
-ERROR:  Failed to execute remote SQL.
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: error in evaluating expression: lost_precision: value loses precision by conversion)
 CONTEXT:  SQL query:   INSERT INTO fdw_type_numeric_ps VALUES (:param1)
 EXECUTE prep_insert (1234.56);
-ERROR:  Failed to execute remote SQL.
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: error in evaluating expression: lost_precision: value loses precision by conversion)
 CONTEXT:  SQL query:   INSERT INTO fdw_type_numeric_ps VALUES (:param1)
 EXECUTE prep_insert (123.567);
-ERROR:  Failed to execute remote SQL.
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: error in evaluating expression: lost_precision: value loses precision by conversion)
 CONTEXT:  SQL query:   INSERT INTO fdw_type_numeric_ps VALUES (:param1)
@@ -536,9 +536,9 @@ HINT:  No function matches the given name and argument types. You might need to 
 DROP FOREIGN TABLE fdw_type_numeric_ps;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_ps', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Numeric Types - numeric(38, 0)
@@ -546,9 +546,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_ps', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_numeric_ps0 (c NUMERIC(38, 0))
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -560,8 +560,8 @@ PREPARE prep_insert AS
   INSERT INTO fdw_type_numeric_ps0
     VALUES (100000000000000000000000000000000000000);
 EXECUTE prep_insert;
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_decimal_value message:"invalid decimal value '100000000000000000000000000000000000000' (inexact value by rounding)" location:<input>:1:48+39)
 CONTEXT:  SQL query:   INSERT INTO fdw_type_numeric_ps0     VALUES (100000000000000000000000000000000000000)
 DEALLOCATE prep_insert;
@@ -569,8 +569,8 @@ PREPARE prep_insert AS
   INSERT INTO fdw_type_numeric_ps0
     VALUES (340282366920938463463374607431768211455);
 EXECUTE prep_insert;
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_decimal_value message:"invalid decimal value '340282366920938463463374607431768211455' (inexact value by rounding)" location:<input>:1:48+39)
 CONTEXT:  SQL query:   INSERT INTO fdw_type_numeric_ps0     VALUES (340282366920938463463374607431768211455)
 DEALLOCATE prep_insert;
@@ -578,8 +578,8 @@ PREPARE prep_insert AS
   INSERT INTO fdw_type_numeric_ps0
     VALUES (340282366920938463463374607431768211456);
 EXECUTE prep_insert;
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: SERVER_ERROR(13)
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_ANALYZE_EXCEPTION (SQL-03005: compile failed with error:unsupported_decimal_value message:"invalid decimal value '340282366920938463463374607431768211456' (inexact value by rounding)" location:<input>:1:48+39)
 CONTEXT:  SQL query:   INSERT INTO fdw_type_numeric_ps0     VALUES (340282366920938463463374607431768211456)
 DEALLOCATE prep_insert;
@@ -587,9 +587,9 @@ DEALLOCATE prep_insert;
 DROP FOREIGN TABLE fdw_type_numeric_ps0;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_ps0', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Numeric Types - numeric(38, 38)
@@ -597,9 +597,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_ps0', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_numeric_ps38 (c NUMERIC(38, 38))
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -610,17 +610,17 @@ CREATE FOREIGN TABLE fdw_type_numeric_ps38 (
 PREPARE prep_insert (numeric(38, 38)) AS
   INSERT INTO fdw_type_numeric_ps38 VALUES ($1);
 EXECUTE prep_insert (1);
-ERROR:  Failed to execute remote SQL.
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: error in evaluating expression: lost_precision: value loses precision by conversion)
 CONTEXT:  SQL query:   INSERT INTO fdw_type_numeric_ps38 VALUES (:param1)
 EXECUTE prep_insert (0.000000000000000000000000000000000000001);
-ERROR:  Failed to execute remote SQL.
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: error in evaluating expression: lost_precision: value loses precision by conversion)
 CONTEXT:  SQL query:   INSERT INTO fdw_type_numeric_ps38 VALUES (:param1)
 EXECUTE prep_insert (0.340282366920938463463374607431768211455);
-ERROR:  Failed to execute remote SQL.
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_EVALUATION_EXCEPTION (SQL-02011: error in evaluating expression: lost_precision: value loses precision by conversion)
 CONTEXT:  SQL query:   INSERT INTO fdw_type_numeric_ps38 VALUES (:param1)
@@ -631,9 +631,9 @@ DEALLOCATE prep_insert;
 DROP FOREIGN TABLE fdw_type_numeric_ps38;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_ps38', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Numeric Types - real
@@ -641,9 +641,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_numeric_ps38', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_real (c REAL)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -677,9 +677,9 @@ LINE 2:   DELETE FROM fdw_type_real WHERE invalid >= 1;
 DROP FOREIGN TABLE fdw_type_real;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_real', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Numeric Types - double precision
@@ -687,9 +687,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_real', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_double (c DOUBLE)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -723,9 +723,9 @@ LINE 2:   DELETE FROM fdw_type_double WHERE invalid >= 1;
 DROP FOREIGN TABLE fdw_type_double;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_double', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Character Types - char
@@ -733,9 +733,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_double', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_char (c CHAR)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -746,7 +746,7 @@ CREATE FOREIGN TABLE fdw_type_char (
 PREPARE prep_insert (char) AS
   INSERT INTO fdw_type_char VALUES ($1);
 EXECUTE prep_insert ('iX');
-ERROR:  Failed to execute remote SQL.
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_TOO_LONG_EXCEPTION (SQL-02058: lost_precision_value_too_long: value is too long to convert source length:2 target length:1)
 CONTEXT:  SQL query:   INSERT INTO fdw_type_char VALUES (:param1)
@@ -754,7 +754,7 @@ EXECUTE prep_insert ('i');
 DEALLOCATE prep_insert;
 PREPARE prep_update (char) AS UPDATE fdw_type_char SET c = $1;
 EXECUTE prep_update ('uX');
-ERROR:  Failed to execute remote SQL.
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_TOO_LONG_EXCEPTION (SQL-02058: lost_precision_value_too_long: value is too long to convert source length:2 target length:1)
 CONTEXT:  SQL query: UPDATE fdw_type_char SET c = :param1
@@ -778,9 +778,9 @@ LINE 2:   DELETE FROM fdw_type_char WHERE invalid = 'i';
 DROP FOREIGN TABLE fdw_type_char;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_char', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Character Types - char(length)
@@ -788,9 +788,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_char', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_char_l (c CHAR(10))
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -801,7 +801,7 @@ CREATE FOREIGN TABLE fdw_type_char_l (
 PREPARE prep_insert (char(10)) AS
   INSERT INTO fdw_type_char_l VALUES ($1);
 EXECUTE prep_insert ('insert_valX');
-ERROR:  Failed to execute remote SQL.
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_TOO_LONG_EXCEPTION (SQL-02058: lost_precision_value_too_long: value is too long to convert source length:11 target length:10)
 CONTEXT:  SQL query:   INSERT INTO fdw_type_char_l VALUES (:param1)
@@ -809,7 +809,7 @@ EXECUTE prep_insert ('insert_val');
 DEALLOCATE prep_insert;
 PREPARE prep_update AS UPDATE fdw_type_char_l SET c = $1;
 EXECUTE prep_update ('update_valX');
-ERROR:  Failed to execute remote SQL.
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_TOO_LONG_EXCEPTION (SQL-02058: lost_precision_value_too_long: value is too long to convert source length:11 target length:10)
 CONTEXT:  SQL query: UPDATE fdw_type_char_l SET c = :param1
@@ -833,9 +833,9 @@ LINE 2:   DELETE FROM fdw_type_char_l WHERE invalid = 'insert_val';
 DROP FOREIGN TABLE fdw_type_char_l;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_char_l', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Character Types - varchar(length)
@@ -843,9 +843,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_char_l', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_varchar_l (c VARCHAR(10))
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -856,7 +856,7 @@ CREATE FOREIGN TABLE fdw_type_varchar_l (
 PREPARE prep_insert (varchar(10)) AS
   INSERT INTO fdw_type_varchar_l VALUES ($1);
 EXECUTE prep_insert ('insert_valX');
-ERROR:  Failed to execute remote SQL.
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_TOO_LONG_EXCEPTION (SQL-02058: lost_precision_value_too_long: value is too long to convert source length:11 target length:10)
 CONTEXT:  SQL query:   INSERT INTO fdw_type_varchar_l VALUES (:param1)
@@ -865,7 +865,7 @@ DEALLOCATE prep_insert;
 PREPARE prep_update (varchar(10)) AS
   UPDATE fdw_type_varchar_l SET c = $1;
 EXECUTE prep_update ('update_valX');
-ERROR:  Failed to execute remote SQL.
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: VALUE_TOO_LONG_EXCEPTION (SQL-02058: lost_precision_value_too_long: value is too long to convert source length:11 target length:10)
 CONTEXT:  SQL query:   UPDATE fdw_type_varchar_l SET c = :param1
@@ -889,9 +889,9 @@ LINE 2:   DELETE FROM fdw_type_varchar_l WHERE invalid = 'insert_val...
 DROP FOREIGN TABLE fdw_type_varchar_l;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_varchar_l', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Date/Time Types - date
@@ -899,9 +899,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_varchar_l', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_date (c DATE)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -965,9 +965,9 @@ SET DATESTYLE TO 'default';
 DROP FOREIGN TABLE fdw_type_date;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_date', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Date/Time Types - time
@@ -975,9 +975,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_date', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_time (c TIME)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -1010,9 +1010,9 @@ LINE 2:   INSERT INTO fdw_type_time VALUES (time 'invalid');
 DROP FOREIGN TABLE fdw_type_time;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_time', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Date/Time Types - timestamp
@@ -1020,9 +1020,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_time', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_timestamp (c TIMESTAMP)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -1090,9 +1090,9 @@ SET DATESTYLE TO 'default';
 DROP FOREIGN TABLE fdw_type_timestamp;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Date/Time Types - timestamp without time zone
@@ -1100,9 +1100,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_timestamp_wo_tz (c TIMESTAMP WITHOUT TIME ZONE)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -1175,9 +1175,9 @@ SET DATESTYLE TO 'default';
 DROP FOREIGN TABLE fdw_type_timestamp_wo_tz;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp_wo_tz', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Date/Time Types - timestamp with time zone
@@ -1185,9 +1185,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp_wo_tz', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_timestamp_tz (c TIMESTAMP WITH TIME ZONE)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -1261,9 +1261,9 @@ SET DATESTYLE TO 'default';
 DROP FOREIGN TABLE fdw_type_timestamp_tz;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp_tz', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Binary Types - bytea
@@ -1271,9 +1271,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp_tz', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_bytea (c VARBINARY)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -1396,9 +1396,9 @@ DEALLOCATE prep_delete;
 DROP FOREIGN TABLE fdw_type_bytea;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_bytea', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Unsupported Types - serial
@@ -1406,9 +1406,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_bytea', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_unsupported (c1 INTEGER, c2 CHAR(14))
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -1431,9 +1431,9 @@ DEALLOCATE prep_select_all;
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Unsupported Types - smallserial
@@ -1441,9 +1441,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_unsupported (c1 DECIMAL(5), c2 CHAR(14))
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -1467,9 +1467,9 @@ DEALLOCATE prep_select_all;
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Unsupported Types - bigserial
@@ -1477,9 +1477,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_unsupported (c1 BIGINT, c2 CHAR(14))
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -1503,9 +1503,9 @@ DEALLOCATE prep_select_all;
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Unsupported Types - bit
@@ -1513,9 +1513,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_unsupported (c BINARY(4))
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -1524,17 +1524,17 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c bit(4)) SERVER tsurugidb;
 PREPARE prep_insert (bit(4)) AS
   INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE prep_insert (B'1010');
-ERROR:  tsurugi_fdw : unrecognized type oid: 1560
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 EXECUTE prep_insert ('1010');
-ERROR:  tsurugi_fdw : unrecognized type oid: 1560
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 DEALLOCATE prep_insert;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Unsupported Types - bit varying
@@ -1542,9 +1542,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_unsupported (c VARBINARY(4))
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -1553,17 +1553,17 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c bit varying(4)) SERVER tsurugidb;
 PREPARE prep_insert (bit varying(4)) AS
   INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE prep_insert (B'1010');
-ERROR:  tsurugi_fdw : unrecognized type oid: 1562
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 EXECUTE prep_insert ('1010');
-ERROR:  tsurugi_fdw : unrecognized type oid: 1562
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 DEALLOCATE prep_insert;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Unsupported Types - boolean
@@ -1571,9 +1571,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_unsupported (c DECIMAL(1))
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -1581,17 +1581,17 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c boolean) SERVER tsurugidb;
 --- Test
 PREPARE prep_insert (boolean) AS INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE prep_insert (true::boolean);
-ERROR:  tsurugi_fdw : unrecognized type oid: 16
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 EXECUTE prep_insert (true);
-ERROR:  tsurugi_fdw : unrecognized type oid: 16
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 DEALLOCATE prep_insert;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Unsupported Types - box
@@ -1599,9 +1599,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_unsupported (c VARCHAR)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -1609,17 +1609,17 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c box) SERVER tsurugidb;
 --- Test
 PREPARE prep_insert (box) AS INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE prep_insert ('(1,2),(3,4)'::box);
-ERROR:  tsurugi_fdw : unrecognized type oid: 603
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 EXECUTE prep_insert ('(1,2),(3,4)');
-ERROR:  tsurugi_fdw : unrecognized type oid: 603
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 DEALLOCATE prep_insert;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Unsupported Types - cidr
@@ -1627,9 +1627,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_unsupported (c VARCHAR)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -1637,17 +1637,17 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c cidr) SERVER tsurugidb;
 --- Test
 PREPARE prep_insert (cidr) AS INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE prep_insert ('192.168.0.0/24'::cidr);
-ERROR:  tsurugi_fdw : unrecognized type oid: 650
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 EXECUTE prep_insert ('192.168.0.0/24');
-ERROR:  tsurugi_fdw : unrecognized type oid: 650
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 DEALLOCATE prep_insert;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Unsupported Types - circle
@@ -1655,9 +1655,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_unsupported (c VARCHAR)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -1665,17 +1665,17 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c circle) SERVER tsurugidb;
 --- Test
 PREPARE prep_insert (circle) AS INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE prep_insert ('<(3,4),5>'::circle);
-ERROR:  tsurugi_fdw : unrecognized type oid: 718
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 EXECUTE prep_insert ('<(3,4),5>');
-ERROR:  tsurugi_fdw : unrecognized type oid: 718
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 DEALLOCATE prep_insert;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Unsupported Types - inet
@@ -1683,9 +1683,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_unsupported (c VARCHAR)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -1693,17 +1693,17 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c inet) SERVER tsurugidb;
 --- Test
 PREPARE prep_insert (inet) AS INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE prep_insert ('192.168.0.1'::inet);
-ERROR:  tsurugi_fdw : unrecognized type oid: 869
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 EXECUTE prep_insert ('192.168.0.1');
-ERROR:  tsurugi_fdw : unrecognized type oid: 869
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 DEALLOCATE prep_insert;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Unsupported Types - interval
@@ -1711,9 +1711,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_unsupported (c VARCHAR)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -1721,17 +1721,17 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c interval) SERVER tsurugidb;
 --- Test
 PREPARE prep_insert (interval) AS INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE prep_insert ('1 day'::interval);
-ERROR:  tsurugi_fdw : unrecognized type oid: 1186
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 EXECUTE prep_insert ('1 day');
-ERROR:  tsurugi_fdw : unrecognized type oid: 1186
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 DEALLOCATE prep_insert;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Unsupported Types - json
@@ -1739,9 +1739,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_unsupported (c VARCHAR)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -1749,17 +1749,17 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c json) SERVER tsurugidb;
 --- Test
 PREPARE prep_insert (json) AS INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE prep_insert ('{"key":"value"}'::json);
-ERROR:  tsurugi_fdw : unrecognized type oid: 114
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 EXECUTE prep_insert ('{"key":"value"}');
-ERROR:  tsurugi_fdw : unrecognized type oid: 114
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 DEALLOCATE prep_insert;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Unsupported Types - jsonb
@@ -1767,9 +1767,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_unsupported (c VARCHAR)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -1777,17 +1777,17 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c jsonb) SERVER tsurugidb;
 --- Test
 PREPARE prep_insert (jsonb) AS INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE prep_insert ('{"key":"value"}'::jsonb);
-ERROR:  tsurugi_fdw : unrecognized type oid: 3802
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 EXECUTE prep_insert ('{"key":"value"}');
-ERROR:  tsurugi_fdw : unrecognized type oid: 3802
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 DEALLOCATE prep_insert;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Unsupported Types - line
@@ -1795,9 +1795,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_unsupported (c VARCHAR)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -1805,17 +1805,17 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c line) SERVER tsurugidb;
 --- Test
 PREPARE prep_insert (line) AS INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE prep_insert ('{1,2,3}'::line);
-ERROR:  tsurugi_fdw : unrecognized type oid: 628
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 EXECUTE prep_insert ('{1,2,3}');
-ERROR:  tsurugi_fdw : unrecognized type oid: 628
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 DEALLOCATE prep_insert;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Unsupported Types - lseg
@@ -1823,9 +1823,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_unsupported (c VARCHAR)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -1833,17 +1833,17 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c lseg) SERVER tsurugidb;
 --- Test
 PREPARE prep_insert (lseg) AS INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE prep_insert ('[(1,2),(3,4)]'::lseg);
-ERROR:  tsurugi_fdw : unrecognized type oid: 601
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 EXECUTE prep_insert ('[(1,2),(3,4)]');
-ERROR:  tsurugi_fdw : unrecognized type oid: 601
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 DEALLOCATE prep_insert;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Unsupported Types - macaddr
@@ -1851,9 +1851,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_unsupported (c VARCHAR)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -1861,17 +1861,17 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c macaddr) SERVER tsurugidb;
 --- Test
 PREPARE prep_insert (macaddr) AS INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE prep_insert ('08:00:2b:01:02:03'::macaddr);
-ERROR:  tsurugi_fdw : unrecognized type oid: 829
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 EXECUTE prep_insert ('08:00:2b:01:02:03');
-ERROR:  tsurugi_fdw : unrecognized type oid: 829
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 DEALLOCATE prep_insert;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Unsupported Types - macaddr8
@@ -1879,9 +1879,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_unsupported (c VARCHAR)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -1889,17 +1889,17 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c macaddr8) SERVER tsurugidb;
 --- Test
 PREPARE prep_insert (macaddr8) AS INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE prep_insert ('08:00:2b:01:02:03:04:05'::macaddr8);
-ERROR:  tsurugi_fdw : unrecognized type oid: 774
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 EXECUTE prep_insert ('08:00:2b:01:02:03:04:05');
-ERROR:  tsurugi_fdw : unrecognized type oid: 774
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 DEALLOCATE prep_insert;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Unsupported Types - money
@@ -1907,9 +1907,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_unsupported (c VARCHAR)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -1917,17 +1917,17 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c money) SERVER tsurugidb;
 --- Test
 PREPARE prep_insert (money) AS INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE prep_insert ('$123.45'::money);
-ERROR:  tsurugi_fdw : unrecognized type oid: 790
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 EXECUTE prep_insert ('$123.45');
-ERROR:  tsurugi_fdw : unrecognized type oid: 790
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 DEALLOCATE prep_insert;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Unsupported Types - path
@@ -1935,9 +1935,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_unsupported (c VARCHAR)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -1945,17 +1945,17 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c path) SERVER tsurugidb;
 --- Test
 PREPARE prep_insert (path) AS INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE prep_insert ('[(1,2),(3,4)]'::path);
-ERROR:  tsurugi_fdw : unrecognized type oid: 602
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 EXECUTE prep_insert ('[(1,2),(3,4)]');
-ERROR:  tsurugi_fdw : unrecognized type oid: 602
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 DEALLOCATE prep_insert;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Unsupported Types - pg_lsn
@@ -1963,9 +1963,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_unsupported (c VARCHAR)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -1973,17 +1973,17 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c pg_lsn) SERVER tsurugidb;
 --- Test
 PREPARE prep_insert (pg_lsn) AS INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE prep_insert ('16/B374D848'::pg_lsn);
-ERROR:  tsurugi_fdw : unrecognized type oid: 3220
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 EXECUTE prep_insert ('16/B374D848');
-ERROR:  tsurugi_fdw : unrecognized type oid: 3220
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 DEALLOCATE prep_insert;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Unsupported Types - point
@@ -1991,9 +1991,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_unsupported (c VARCHAR)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -2001,17 +2001,17 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c point) SERVER tsurugidb;
 --- Test
 PREPARE prep_insert (point) AS INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE prep_insert ('(1,2)'::point);
-ERROR:  tsurugi_fdw : unrecognized type oid: 600
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 EXECUTE prep_insert ('(1,2)');
-ERROR:  tsurugi_fdw : unrecognized type oid: 600
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 DEALLOCATE prep_insert;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Unsupported Types - polygon
@@ -2019,9 +2019,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_unsupported (c VARCHAR)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -2029,17 +2029,17 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c polygon) SERVER tsurugidb;
 --- Test
 PREPARE prep_insert (polygon) AS INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE prep_insert ('((1,2),(3,4),(5,6))'::polygon);
-ERROR:  tsurugi_fdw : unrecognized type oid: 604
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 EXECUTE prep_insert ('((1,2),(3,4),(5,6))');
-ERROR:  tsurugi_fdw : unrecognized type oid: 604
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 DEALLOCATE prep_insert;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Unsupported Types - smallint
@@ -2047,9 +2047,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_unsupported (c DECIMAL(5))
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -2057,13 +2057,13 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c smallint) SERVER tsurugidb;
 --- Test
 PREPARE prep_insert (smallint) AS INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE prep_insert (1::smallint);
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: UNSUPPORTED(5)
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: UNSUPPORTED(5)
 No detail message.
 CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES (:param1)
 EXECUTE prep_insert (1);
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to prepare the statement to Tsurugi. error: UNSUPPORTED(5)
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: UNSUPPORTED(5)
 No detail message.
 CONTEXT:  SQL query: INSERT INTO fdw_type_unsupported VALUES (:param1)
 DEALLOCATE prep_insert;
@@ -2071,9 +2071,9 @@ DEALLOCATE prep_insert;
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Unsupported Types - tsquery
@@ -2081,9 +2081,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_unsupported (c VARCHAR)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -2091,17 +2091,17 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c tsquery) SERVER tsurugidb;
 --- Test
 PREPARE prep_insert (tsquery) AS INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE prep_insert ('value'::tsquery);
-ERROR:  tsurugi_fdw : unrecognized type oid: 3615
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 EXECUTE prep_insert ('value');
-ERROR:  tsurugi_fdw : unrecognized type oid: 3615
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 DEALLOCATE prep_insert;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Unsupported Types - tsvector
@@ -2109,9 +2109,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_unsupported (c VARCHAR)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -2119,17 +2119,17 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c tsvector) SERVER tsurugidb;
 --- Test
 PREPARE prep_insert (tsvector) AS INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE prep_insert ('value:1'::tsvector);
-ERROR:  tsurugi_fdw : unrecognized type oid: 3614
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 EXECUTE prep_insert ('value:1');
-ERROR:  tsurugi_fdw : unrecognized type oid: 3614
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 DEALLOCATE prep_insert;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Unsupported Types - txid_snapshot
@@ -2137,9 +2137,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_unsupported (c VARCHAR)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -2148,17 +2148,17 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c txid_snapshot) SERVER tsurugidb;
 PREPARE prep_insert (txid_snapshot) AS
   INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE prep_insert ('10:20:10,14,15'::txid_snapshot);
-ERROR:  tsurugi_fdw : unrecognized type oid: 2970
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 EXECUTE prep_insert ('10:20:10,14,15');
-ERROR:  tsurugi_fdw : unrecognized type oid: 2970
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 DEALLOCATE prep_insert;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Unsupported Types - uuid
@@ -2166,9 +2166,9 @@ SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_unsupported (c VARCHAR)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -2176,16 +2176,16 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c uuid) SERVER tsurugidb;
 --- Test
 PREPARE prep_insert (uuid) AS INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE prep_insert ('f3d4b1ce-f2e0-49ce-8cd4-da5c8f29bff2'::uuid);
-ERROR:  tsurugi_fdw : unrecognized type oid: 2950
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 EXECUTE prep_insert ('f3d4b1ce-f2e0-49ce-8cd4-da5c8f29bff2');
-ERROR:  tsurugi_fdw : unrecognized type oid: 2950
+ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
 DEALLOCATE prep_insert;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_type_unsupported', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 

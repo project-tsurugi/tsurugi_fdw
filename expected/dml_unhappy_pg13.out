@@ -10,9 +10,9 @@ SELECT tg_execute_ddl('
     manager_id INT
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test setup: DDL of the PostgreSQL
@@ -44,32 +44,32 @@ ERROR:  tsurugi_fdw : Contains an unsupported target entry. (111)
 -- FETCH FIRST ... WITH TIES
 SELECT * FROM fdw_sel_unsupported_test ORDER BY value
   FETCH FIRST 2 ROWS WITH TIES;
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "FETCH", expected one of {<END_OF_FILE>, %, (, *, +, ...}" region:"region(begin=56, end=61)")
 CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test ORDER BY value
   FETCH FIRST 2 ROWS WITH TIES
 -- FETCH NEXT ... WITH TIES
 SELECT * FROM fdw_sel_unsupported_test ORDER BY value
   FETCH NEXT 2 ROWS WITH TIES;
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "FETCH", expected one of {<END_OF_FILE>, %, (, *, +, ...}" region:"region(begin=56, end=61)")
 CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test ORDER BY value
   FETCH NEXT 2 ROWS WITH TIES
 -- OFFSET FETCH FIRST ... WITH TIES
 SELECT * FROM fdw_sel_unsupported_test ORDER BY value
   OFFSET 1 FETCH FIRST 2 ROWS WITH TIES;
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "OFFSET", expected one of {<END_OF_FILE>, %, (, *, +, ...}" region:"region(begin=56, end=62)")
 CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test ORDER BY value
   OFFSET 1 FETCH FIRST 2 ROWS WITH TIES
 -- OFFSET FETCH NEXT ... WITH TIES
 SELECT * FROM fdw_sel_unsupported_test ORDER BY value
   OFFSET 1 FETCH NEXT 2 ROWS WITH TIES;
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
+HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
 Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "OFFSET", expected one of {<END_OF_FILE>, %, (, *, +, ...}" region:"region(begin=56, end=62)")
 CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test ORDER BY value
   OFFSET 1 FETCH NEXT 2 ROWS WITH TIES
@@ -77,8 +77,8 @@ CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test ORDER BY value
 DROP FOREIGN TABLE fdw_sel_unsupported_test;
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_sel_unsupported_test', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 

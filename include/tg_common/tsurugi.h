@@ -132,8 +132,7 @@ private:
 	static constexpr const char* const kOptPort = "port";
 	/* Default values */
 	static constexpr const char* const kDefEndpoint = kValEndpointIpc;
-	static constexpr const char* const kDefDbname =
-								ogawayama::common::param::SHARED_MEMORY_NAME.data();
+	const std::string_view kDefDbname = ogawayama::common::param::SHARED_MEMORY_NAME;
 	static constexpr const char* const kDefAddress = "";
 	static constexpr const char* const kDefPort = "";
 

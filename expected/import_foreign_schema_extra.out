@@ -35,9 +35,9 @@ SELECT tg_execute_ddl('
     col_decimal_max DECIMAL(*)
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test
@@ -101,9 +101,9 @@ SELECT drop_foreign_tables();
 
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_type_num', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test case: 3-2-1_4
@@ -122,9 +122,9 @@ SELECT tg_execute_ddl('
     col_character_varying_l CHARACTER VARYING(64)
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test
@@ -194,9 +194,9 @@ SELECT drop_foreign_tables();
 
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_type_str', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test case: 3-3-1_4
@@ -210,9 +210,9 @@ SELECT tg_execute_ddl('
     col_timestamp_tz TIMESTAMP WITH TIME ZONE
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test
@@ -271,9 +271,9 @@ SELECT drop_foreign_tables();
 
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_type_datetime', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test case: 3-4-1_4
@@ -285,9 +285,9 @@ SELECT tg_execute_ddl('
     col_binary_var BINARY VARYING
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test
@@ -349,9 +349,9 @@ SELECT drop_foreign_tables();
 
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_type_binary', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test case: 4-1-1
@@ -360,9 +360,9 @@ SELECT tg_execute_ddl('
   CREATE TABLE fdw_test_table_name2_________3_________4_________5_________6__
     (id INT, name VARCHAR)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test
@@ -393,9 +393,9 @@ SELECT drop_foreign_tables();
 SELECT tg_execute_ddl('
   DROP TABLE fdw_test_table_name2_________3_________4_________5_________6__
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test case: 4-1-2
@@ -404,9 +404,9 @@ SELECT tg_execute_ddl('
   CREATE TABLE fdw_test_table_name2_________3_________4_________5_________6___
     (id INT, name VARCHAR)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test
@@ -437,9 +437,9 @@ SELECT drop_foreign_tables();
 SELECT tg_execute_ddl('
   DROP TABLE fdw_test_table_name2_________3_________4_________5_________6___
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test case: 4-1-3
@@ -448,9 +448,9 @@ SELECT tg_execute_ddl('
   CREATE TABLE fdw_test_table_name2_________3_________4_________5_________6____
     (id INT, name VARCHAR)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test
@@ -482,9 +482,9 @@ SELECT drop_foreign_tables();
 SELECT tg_execute_ddl('
   DROP TABLE fdw_test_table_name2_________3_________4_________5_________6____
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test case: 4-2-1
@@ -495,9 +495,9 @@ SELECT tg_execute_ddl('
     columnname_________2_________3_________4_________5_________6__ VARCHAR
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test
@@ -526,9 +526,9 @@ SELECT drop_foreign_tables();
 
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test case: 4-2-2
@@ -539,9 +539,9 @@ SELECT tg_execute_ddl('
     columnname_________2_________3_________4_________5_________6___ VARCHAR
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test
@@ -570,9 +570,9 @@ SELECT drop_foreign_tables();
 
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test case: 4-2-3
@@ -583,9 +583,9 @@ SELECT tg_execute_ddl('
     columnname_________2_________3_________4_________5_________6____ VARCHAR
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test
@@ -615,9 +615,9 @@ SELECT drop_foreign_tables();
 
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test case: 6-1

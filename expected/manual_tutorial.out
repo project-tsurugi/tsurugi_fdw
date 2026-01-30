@@ -9,9 +9,9 @@ SELECT tg_execute_ddl('
         the_date date default DATE ''2023-04-01''
     )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 /* Test setup: DDL of the PostgreSQL */
@@ -64,6 +64,7 @@ SELECT * FROM weather ORDER BY id;
 
 /* データベースロールの作成 */
 CREATE ROLE jonathan;
+CREATE USER MAPPING FOR Jonathan SERVER tsurugidb;
 /* アクセス権の付与 */
 GRANT SELECT ON weather TO jonathan;    -- Tsurugiテーブルにアクセス権を付与します
 /* Tsurugiテーブルのアクセス制御 */
@@ -81,6 +82,7 @@ RESET ROLE;                         -- 現在のデータベースロールを�
 /* アクセス権の剥奪 */
 REVOKE SELECT ON weather FROM jonathan;
 /* データベースロールの削除 */
+DROP USER MAPPING FOR Jonathan SERVER tsurugidb;
 DROP ROLE jonathan;
 /* 明示的にトランザクションブロックを開始する */
 BEGIN;
@@ -220,8 +222,8 @@ SELECT * FROM weather ORDER BY id;  -- レグレッションテスト確認用
 DROP FOREIGN TABLE weather;
 /* Test teardown: DDL of the Tsurugi */
 SELECT tg_execute_ddl('DROP TABLE weather', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 

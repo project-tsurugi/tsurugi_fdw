@@ -35,10 +35,10 @@ endif
 # Test settings according to regression test type
 REGRESS := test_preparation
 ifdef REGRESS_BASIC
-	REGRESS += ddl_happy privilege_happy \
-	           dml_happy data_types_happy case_sensitive_happy \
+	REGRESS += dml_happy data_types_happy case_sensitive_happy \
 	           prep_dml_happy prep_data_types_happy prep_case_sensitive_happy \
 	           manual_tutorial \
+			   ddl_happy privilege_happy \
 	           udf_transaction_happy udf_tg_show_tables_happy udf_tg_verify_tables_happy \
 	           import_foreign_schema_happy
 endif
@@ -61,11 +61,11 @@ ifndef MAJORVERSION
 endif
 
 ifdef REGRESS_EXTRA
-	REGRESS += ddl_unhappy privilege_unhappy \
-	           dml_unhappy data_types_unhappy case_sensitive_unhappy \
+	REGRESS += dml_unhappy data_types_unhappy case_sensitive_unhappy \
 	           prep_dml_unhappy prep_data_types_unhappy prep_case_sensitive_unhappy \
-	           udf_tg_show_tables_unhappy udf_tg_show_tables_extra udf_tg_verify_tables_unhappy udf_tg_verify_tables_extra \
 	           udf_transaction_unhappy \
+			   ddl_unhappy privilege_unhappy \
+	           udf_tg_show_tables_unhappy udf_tg_show_tables_extra udf_tg_verify_tables_unhappy udf_tg_verify_tables_extra \
 	           import_foreign_schema_unhappy import_foreign_schema_extra
 
 	ifeq ($(MAJORVERSION), 12)

@@ -13,25 +13,25 @@ ERROR:  server "unknown_server" does not exist
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_test_table_1 (id INT, name CHAR(64))
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_test_table_2 (id INT, since DATE)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_test_table_3 (id INT, timer TIME)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
@@ -51,21 +51,21 @@ CONTEXT:  importing foreign table "fdw_test_table_2"
 DROP FOREIGN TABLE fdw_test_table_2;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table_1', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table_2', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('DROP TABLE fdw_test_table_3', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test case: 3-5
@@ -73,17 +73,14 @@ SELECT tg_execute_ddl('DROP TABLE fdw_test_table_3', 'tsurugidb');
 SELECT tg_execute_ddl('
   CREATE TABLE fdw_test_type_invalid (col_blob BLOB)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 --- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-ERROR:  Failed to execute remote SQL.
-HINT:  unsupported tsurugi data type "22". (table:"fdw_test_type_invalid" column:"col_blob") error: UNSUPPORTED(5)
-No detail message.
-CONTEXT:  SQL query: 
+ERROR:  tsurugi_fdw: unsupported tsurugi data type "22". (table:"fdw_test_type_invalid" column:"col_blob")
 --- Test teardown: DDL of the PostgreSQL
 SELECT drop_foreign_tables();
  drop_foreign_tables 
@@ -93,8 +90,8 @@ SELECT drop_foreign_tables();
 
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_test_type_invalid', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 

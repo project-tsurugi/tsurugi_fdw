@@ -224,10 +224,10 @@ ERROR_CODE Tsurugi::init(Oid server_oid)
 	auto server = GetForeignServer(server_oid);
 	assert(server != nullptr);
 
-	ConnectionInfo now_sever_opts(server->options);
+	ConnectionInfo now_sever_opts{server->options};
 
 	/* Set foreign server options. */
-	conn_info_ = now_sever_opts;
+//	conn_info_ = now_sever_opts;
 
 	if (conn_info_.is_ipc()) {
 		elog(DEBUG2, R"(endpoint="%s", dbname="%s")",
@@ -977,8 +977,7 @@ namespace tsurugi {
  * @return std::optional of PostgreSQL data type
  */
 std::optional<std::string_view> convert_type_to_pg(
-		jogasaki::proto::sql::common::AtomType tg_type)
-{
+		jogasaki::proto::sql::common::AtomType tg_type) {
 	static const std::unordered_map<tg_metadata::AtomType, std::string> type_mapping = {
 		{tg_metadata::AtomType::INT4, "integer"},
 		{tg_metadata::AtomType::INT8, "bigint"},
@@ -1058,7 +1057,7 @@ ogawayama::stub::Metadata::ColumnType::Type get_tg_column_type(const Oid pg_type
 			tg_type = stub::Metadata::ColumnType::Type::OCTET;
 			break;
 		default:
-			elog(ERROR, "tsurugi_fdw : unrecognized type oid: %d", (int) pg_type);
+			elog(LOG, "tsurugi_fdw : unrecognized type oid: %d", (int) pg_type);
 			break;
 	}
 
@@ -1364,6 +1363,7 @@ std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgt
 			break;
 
 		default:
+			/* unsuported data type */
 			elog(ERROR, "Invalid data type of PG. (%u)", pgtype);
 			break;
 	}
@@ -1608,7 +1608,7 @@ ogawayama::stub::value_type convert_type_to_tg(const Oid pg_type, Datum value)
 				break;
 			}
 		default:
-			elog(ERROR, "unrecognized type oid: %d", (int) pg_type);
+			elog(LOG, "unrecognized type oid: %d", (int) pg_type);
 			break;
 	}
 

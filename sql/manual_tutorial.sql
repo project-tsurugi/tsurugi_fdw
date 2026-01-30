@@ -46,6 +46,7 @@ SELECT * FROM weather ORDER BY id;
 
 /* データベースロールの作成 */
 CREATE ROLE jonathan;
+CREATE USER MAPPING FOR Jonathan SERVER tsurugidb;
 
 /* アクセス権の付与 */
 GRANT SELECT ON weather TO jonathan;    -- Tsurugiテーブルにアクセス権を付与します
@@ -60,6 +61,7 @@ RESET ROLE;                         -- 現在のデータベースロールを�
 REVOKE SELECT ON weather FROM jonathan;
 
 /* データベースロールの削除 */
+DROP USER MAPPING FOR Jonathan SERVER tsurugidb;
 DROP ROLE jonathan;
 
 /* 明示的にトランザクションブロックを開始する */

@@ -26,10 +26,15 @@
 #include "postgres.h"
 /* Related include files for PostgreSQL. */
 #include "catalog/pg_foreign_server.h"
+#include "miscadmin.h"
+#include "nodes/parsenodes.h"
+#include "parser/parser.h"
+#include "tcop/utility.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 
-#include "fdw/tsurugi_utils.h"
+#include "tg_common/tsurugi_api.h"
+#include "tg_common/connection.h"
 
 PG_FUNCTION_INFO_V1(tg_execute_ddl);
 
@@ -50,19 +55,22 @@ tg_execute_ddl(PG_FUNCTION_ARGS)
 	static const size_t allowed_statement_count =
 		sizeof(allowed_statement) / sizeof(allowed_statement[0]);
 
+	ForeignServer *server;
+	UserMapping *user;
 	Oid server_oid = InvalidOid;
+	Oid user_oid = InvalidOid;
 	char debug_log[1024];
-	HeapTuple srv_tuple;
+//	HeapTuple srv_tuple;
 	bool success;
-	char* ddl_command;
+	TGconn *tg_conn;
 
 	// ddl_statement argument
-	char* arg_ddl_statement = (!PG_ARGISNULL(0) ? text_to_cstring(PG_GETARG_TEXT_P(0)) : "");
+	char* arg_ddl = (!PG_ARGISNULL(0) ? text_to_cstring(PG_GETARG_TEXT_P(0)) : "");
 	// server_name argument
 	char* arg_server_name = (!PG_ARGISNULL(1) ? text_to_cstring(PG_GETARG_TEXT_P(1)) : "");
 
 	/* Validate server_name argument. */
-	if (strlen(arg_ddl_statement) == 0) {
+	if (strlen(arg_ddl) == 0) {
 		ereport(ERROR, (errcode(ERRCODE_FDW_INVALID_ATTRIBUTE_VALUE),
 						errmsg("missing required argument %s", kArgServerName)));
 	}
@@ -79,7 +87,7 @@ tg_execute_ddl(PG_FUNCTION_ARGS)
 		int match;
 
 		regcomp(&regex, allowed_statement[i], REG_EXTENDED | REG_ICASE);
-		match = regexec(&regex, arg_ddl_statement, 0, NULL, 0);
+		match = regexec(&regex, arg_ddl, 0, NULL, 0);
 		regfree(&regex);
 
 		if (match == 0)
@@ -90,30 +98,36 @@ tg_execute_ddl(PG_FUNCTION_ARGS)
 	}
 	if (!success) {
 		ereport(ERROR, (errcode(ERRCODE_FDW_INVALID_ATTRIBUTE_VALUE),
-						errmsg("\"%s\" is not supported", arg_ddl_statement)));
+						errmsg("\"%s\" is not supported", arg_ddl)));
 	}
 
 	/* Get the Tsurugi server OID. */
+#if 0
 	srv_tuple = SearchSysCache1(FOREIGNSERVERNAME, CStringGetDatum(arg_server_name));
 	if (!HeapTupleIsValid(srv_tuple)) {
 		ereport(ERROR, (errcode(ERRCODE_FDW_UNABLE_TO_ESTABLISH_CONNECTION),
 						errmsg("server \"%s\" does not exist", arg_server_name)));
 	}
 	server_oid = ((Form_pg_foreign_server)GETSTRUCT(srv_tuple))->oid;
+	user_oid = GetUserId();
 	ReleaseSysCache(srv_tuple);
+#else
+    server_oid = get_foreign_server_oid(arg_server_name, false);
+	user_oid = GetUserId();
+#endif
+	server = GetForeignServer(server_oid);
+	user = GetUserMapping(user_oid, server_oid);
 
 	snprintf(debug_log, sizeof(debug_log),
 			 "tsurugi_fdw : %s\n"
 			 "Arguments:\n"
 			 "  server_name  : %s\n"
 			 "  ddl_statement: %s",
-			 __func__, arg_server_name, arg_ddl_statement);
+			 __func__, arg_server_name, arg_ddl);
 	elog(DEBUG2, "%s", debug_log);
 
-	success = tg_execute_ddl_statement(server_oid, arg_ddl_statement, &ddl_command);
-	if (!success) {
-		elog(ERROR, "%s", tg_get_error_message());
-	}
+	tg_conn = tg_get_connection(server, user);
+	tg_do_sql_command(tg_conn, arg_ddl);
 
-	PG_RETURN_TEXT_P(cstring_to_text(ddl_command));
+	PG_RETURN_TEXT_P(cstring_to_text("execute succeeded"));
 }

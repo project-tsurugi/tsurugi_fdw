@@ -20,17 +20,18 @@
  * @brief tsurugi User-Defined Functions.
  */
 
-
 /* Primary include file for PostgreSQL (first file to be included). */
 #include "postgres.h"
 /* Related include files for PostgreSQL. */
 #include "catalog/namespace.h"
 #include "catalog/pg_foreign_server.h"
 #include "catalog/pg_type.h"
+#include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 
-#include "fdw/tsurugi_utils.h"
+#include "tg_common/connection.h"
+//#include "fdw/tsurugi_utils.h"
 
 PG_FUNCTION_INFO_V1(tg_verify_tables);
 
@@ -43,111 +44,117 @@ PG_FUNCTION_INFO_V1(tg_verify_tables);
  * @param PG_FUNCTION_ARGS UDF arguments
  * @return Datum (JSON type) execution result report.
  */
-Datum
-tg_verify_tables(PG_FUNCTION_ARGS)
+Datum tg_verify_tables(PG_FUNCTION_ARGS)
 {
-	static const char* const kArgRemoteSchema = "remote_schema";
-	static const char* const kArgServerName = "server_name";
-	static const char* const kArgLocalSchema = "local_schema";
-	static const char* const kArgMode = "mode";
-	static const char* const kArgModeSummary = "summary";
-	static const char* const kArgModeDetail = "detail";
-	static const char* const kArgPretty = "pretty";
+	static const char *const kArgRemoteSchema = "remote_schema";
+	static const char *const kArgServerName = "server_name";
+	static const char *const kArgLocalSchema = "local_schema";
+	static const char *const kArgMode = "mode";
+	static const char *const kArgModeSummary = "summary";
+	static const char *const kArgModeDetail = "detail";
+	static const char *const kArgPretty = "pretty";
 
-	Oid server_oid = InvalidOid;
-	Oid local_schema_oid;
-	bool detail_mode;
-	bool success;
-	char* result_json;
+	TG_VERIFY_TABLE_PARAM param;
+	ForeignServer *server;
+	UserMapping *user;
+//	Oid user_oid;
+	char *result_json;
+	TG_STATUS tg_status;
+	TGconn *tg_conn;
 
 	char debug_log[1024];
-	HeapTuple srv_tuple;
+//	HeapTuple srv_tuple;
 
 	// remote_schema argument
-	char* arg_remote_schema = (!PG_ARGISNULL(0) ? text_to_cstring(PG_GETARG_TEXT_P(0)) : "");
+	param.remote_schema = (!PG_ARGISNULL(0) ? text_to_cstring(PG_GETARG_TEXT_P(0)) : "");
 	// server_name argument
-	char* arg_server_name = (!PG_ARGISNULL(1) ? text_to_cstring(PG_GETARG_TEXT_P(1)) : "");
+	param.server_name = (!PG_ARGISNULL(1) ? text_to_cstring(PG_GETARG_TEXT_P(1)) : "");
 	// local_schema argument
-	char* arg_local_schema = (!PG_ARGISNULL(2) ? text_to_cstring(PG_GETARG_TEXT_P(2)) : "");
+	param.local_schema = (!PG_ARGISNULL(2) ? text_to_cstring(PG_GETARG_TEXT_P(2)) : "");
 	// mode argument
-	char* arg_mode = (!PG_ARGISNULL(3) ? text_to_cstring(PG_GETARG_TEXT_P(3)) : "");
+	param.mode = (!PG_ARGISNULL(3) ? text_to_cstring(PG_GETARG_TEXT_P(3)) : "");
 	// pretty argument
-	bool arg_pretty = PG_GETARG_BOOL(4);
+	param.pretty = PG_GETARG_BOOL(4);
 
 	/* Convert mode argument value to lowercase. */
-	for (char* ptr = arg_mode; *ptr != '\0'; ptr++) {
-			*ptr = tolower((unsigned char)*ptr);
+	for (char *ptr = param.mode; *ptr != '\0'; ptr++)
+	{
+		*ptr = tolower((unsigned char)*ptr);
 	}
 
 	/* Validate remote_schema argument. */
-	if (strlen(arg_remote_schema) == 0) {
+	if (strlen(param.remote_schema) == 0)
 		ereport(ERROR, (errcode(ERRCODE_FDW_INVALID_ATTRIBUTE_VALUE),
-						errmsg("missing required argument \"%s\"", kArgRemoteSchema)));
-	}
+		                errmsg("missing required argument \"%s\"", kArgRemoteSchema)));
 
 	/* Validate server_name argument. */
-	if (strlen(arg_server_name) == 0) {
+	if (strlen(param.server_name) == 0)
 		ereport(ERROR, (errcode(ERRCODE_FDW_INVALID_ATTRIBUTE_VALUE),
-						errmsg("missing required argument \"%s\"", kArgServerName)));
-	}
+		                errmsg("missing required argument \"%s\"", kArgServerName)));
 
 	/* Validate local schema argument. Only if the target is 'verification'. */
-	if (strlen(arg_local_schema) == 0) {
+	if (strlen(param.local_schema) == 0)
 		ereport(ERROR, (errcode(ERRCODE_FDW_INVALID_ATTRIBUTE_VALUE),
-						errmsg("missing required argument \"%s\"", kArgLocalSchema)));
-	}
+		                errmsg("missing required argument \"%s\"", kArgLocalSchema)));
 
 	/* Validate report mode argument. */
-	if ((strcasecmp(arg_mode, kArgModeSummary) != 0) && (strcasecmp(arg_mode, kArgModeDetail) != 0)) {
-		ereport(ERROR, (errcode(ERRCODE_FDW_INVALID_ATTRIBUTE_VALUE),
-						errmsg("invalid value (\"%s\") for parameter \"%s\"", arg_mode, kArgMode),
-						errdetail("expected '%s' or '%s'", kArgModeSummary, kArgModeDetail)));
-	}
+	if ((strcasecmp(param.mode, kArgModeSummary) != 0) &&
+	    (strcasecmp(param.mode, kArgModeDetail) != 0))
+		ereport(
+		    ERROR,
+		    (errcode(ERRCODE_FDW_INVALID_ATTRIBUTE_VALUE),
+		     errmsg("invalid value (\"%s\") for parameter \"%s\"", param.mode, kArgMode),
+		     errdetail("expected '%s' or '%s'", kArgModeSummary, kArgModeDetail)));
 
 	/* Validate pretty argument. */
-	if (PG_ARGISNULL(4)) {
+	if (PG_ARGISNULL(4))
 		ereport(ERROR, (errcode(ERRCODE_FDW_INVALID_ATTRIBUTE_VALUE),
-						errmsg("invalid value (NULL) for parameter \"%s\"", kArgPretty),
-						errdetail("expected true or false")));
-	}
+		                errmsg("invalid value (NULL) for parameter \"%s\"", kArgPretty),
+		                errdetail("expected true or false")));
 
 	/* Get the Tsurugi server OID. */
-	srv_tuple =
-		SearchSysCache1(FOREIGNSERVERNAME, CStringGetDatum(arg_server_name));
-	if (!HeapTupleIsValid(srv_tuple)) {
+#if 0
+	srv_tuple = SearchSysCache1(FOREIGNSERVERNAME, CStringGetDatum(param.server_name));
+	if (!HeapTupleIsValid(srv_tuple))
 		ereport(ERROR, (errcode(ERRCODE_FDW_UNABLE_TO_ESTABLISH_CONNECTION),
-						errmsg("server \"%s\" does not exist", arg_server_name)));
-	}
-	server_oid = ((Form_pg_foreign_server)GETSTRUCT(srv_tuple))->oid;
-	ReleaseSysCache(srv_tuple);
+		                errmsg("server \"%s\" does not exist", param.server_name)));
 
-	local_schema_oid = InvalidOid;
+	param.server_id = ((Form_pg_foreign_server) GETSTRUCT(srv_tuple))->oid;
+	ReleaseSysCache(srv_tuple);
+#else
+	param.server_id = get_foreign_server_oid(param.server_name, false);
+	server = GetForeignServer(param.server_id);
+	user = GetUserMapping(GetUserId(), param.server_id);
+#endif
+
+	param.local_schema_oid = InvalidOid;
 	/* Get the local schema OID. */
-	local_schema_oid = get_namespace_oid(arg_local_schema, true);
-	if (!OidIsValid(local_schema_oid)) {
-		ereport(ERROR, (errcode(ERRCODE_FDW_SCHEMA_NOT_FOUND),
-						errmsg("local schema \"%s\" does not exist", arg_local_schema)));
+	param.local_schema_oid = get_namespace_oid(param.local_schema, true);
+	if (!OidIsValid(param.local_schema_oid))
+	{
+		ereport(ERROR,
+		        (errcode(ERRCODE_FDW_SCHEMA_NOT_FOUND),
+		         errmsg("local schema \"%s\" does not exist", param.local_schema)));
 	}
 
 	snprintf(debug_log, sizeof(debug_log),
-			 "tsurugi_fdw : %s\n"
-			 "Arguments:\n"
-			 "  remote_schema: %s\n"
-			 "  server_name  : %s (%u)\n"
-			 "  local_schema : %s\n"
-			 "  mode         : %s\n"
-			 "  pretty       : %s",
-			 __func__, arg_remote_schema, arg_server_name, server_oid, arg_local_schema, arg_mode,
-			 (arg_pretty ? "true" : "false"));
+	         "tsurugi_fdw : %s\n"
+	         "Arguments:\n"
+	         "  remote_schema: %s\n"
+	         "  server_name  : %s (%u)\n"
+	         "  local_schema : %s\n"
+	         "  mode         : %s\n"
+	         "  pretty       : %s",
+	         __func__, param.remote_schema, param.server_name, param.server_id,
+	         param.local_schema, param.mode, (param.pretty ? "true" : "false"));
 	elog(DEBUG2, "%s", debug_log);
 
-	detail_mode = (strcasecmp(arg_mode, kArgModeDetail) == 0);
-	success =
-		tg_execute_verify_tables(server_oid, arg_remote_schema, arg_server_name, local_schema_oid,
-								 arg_local_schema, arg_mode, detail_mode, arg_pretty, &result_json);
-	if (!success) {
-		elog(ERROR, "%s", tg_get_error_message());
-	}
+	param.detail = (strcasecmp(param.mode, kArgModeDetail) == 0);
+
+	tg_conn = tg_get_connection(server, user);
+	tg_status = tg_exec_verify_tables(tg_conn, &param, &result_json);
+	if (tg_status != TG_STATUS_OK)
+		elog(ERROR, "%s", tg_global_error_message());
 
 	PG_RETURN_DATUM(DirectFunctionCall1(json_in, CStringGetDatum(result_json)));
 }

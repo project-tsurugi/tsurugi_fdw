@@ -3,14 +3,15 @@
 SELECT tg_execute_ddl('
     CREATE TABLE fdw_privilege_test (col INTEGER)
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 /* Test setup: DDL of the PostgreSQL */
 CREATE FOREIGN TABLE fdw_privilege_test (col integer) SERVER tsurugidb;
 CREATE ROLE tgfdw_regress_user;
+CREATE USER MAPPING FOR tgfdw_regress_user SERVER tsurugidb;
 -- No privileges
 SET ROLE tgfdw_regress_user;
 INSERT INTO fdw_privilege_test VALUES (1);            -- failed
@@ -128,11 +129,12 @@ DELETE FROM fdw_privilege_test;
 RESET ROLE;
 /* Test teardown: DDL of the PostgreSQL */
 DROP FOREIGN TABLE fdw_privilege_test;
+DROP USER MAPPING FOR tgfdw_regress_user SERVER tsurugidb;
 DROP ROLE tgfdw_regress_user;
 /* Test teardown: DDL of the Tsurugi */
 SELECT tg_execute_ddl('DROP TABLE fdw_privilege_test', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
