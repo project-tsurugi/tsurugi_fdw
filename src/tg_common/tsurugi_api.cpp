@@ -31,6 +31,7 @@
 extern "C" {
 #endif
 #include "postgres.h"
+#include "catalog/pg_type_d.h"
 #include "commands/defrem.h"
 #include "executor/spi.h"
 #include "foreign/foreign.h"
