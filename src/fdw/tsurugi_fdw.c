@@ -23,6 +23,7 @@
 #include "postgres.h"
 
 #include "access/table.h"
+#include "catalog/pg_type_d.h"
 #include "commands/defrem.h"
 #include "commands/explain.h"
 #include "foreign/fdwapi.h"
