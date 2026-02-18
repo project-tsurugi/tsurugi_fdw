@@ -18,10 +18,11 @@
  *
  *	@file	connection.c
  */
-#include "tg_common/tsurugi_api.h"
-
+#ifdef __cplusplus
+exern "C" {
+#endif
 #include "postgres.h"
-#include "tg_common/connection.h"
+#include "connection.h"
 
 #include "access/htup_details.h"
 #include "access/xact.h"
@@ -43,7 +44,7 @@
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 
-#include "tg_common/connection.h"
+#include "tsurugi_api.h"
 #ifdef __cplusplus
 }
 #endif

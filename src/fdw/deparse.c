@@ -18,8 +18,7 @@
  *
  */
 #include "postgres.h"
-
-#include "fdw/tsurugi_fdw.h"
+#include "tsurugi_fdw.h"
 
 #include "access/htup_details.h"
 #include "access/sysattr.h"

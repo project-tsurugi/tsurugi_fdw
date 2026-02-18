@@ -27,7 +27,6 @@
 #include <iostream>
 
 #include "ogawayama/stub/transaction_option.h"
-#include "tg_common/tsurugi.h"
 
 #ifdef __cplusplus
 extern "C" {

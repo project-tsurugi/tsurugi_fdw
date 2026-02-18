@@ -22,11 +22,10 @@
 extern "C" {
 #endif	
 
-#include "tg_common/tsurugi_api.h"
+#include "tsurugi_api.h"
 #include "foreign/foreign.h"
 
 TGconn *tg_get_connection(ForeignServer *server, UserMapping *user);
-//TGconn *handle_remote_xact(ForeignServer *server);
 void tg_do_sql_command(TGconn *conn, const char *sql);
 
 #ifdef __cplusplus

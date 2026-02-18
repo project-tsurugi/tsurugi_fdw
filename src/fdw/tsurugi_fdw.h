@@ -26,7 +26,7 @@
 #include "foreign/foreign.h"
 #include "funcapi.h"
 #include "nodes/pathnodes.h"
-#include "tg_common/tsurugi_api.h"
+#include "tsurugi_api.h"
 
 /*
  * Tsurugi-FDW Foreign Scan State

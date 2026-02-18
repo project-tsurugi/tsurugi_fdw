@@ -53,6 +53,5 @@ extern void tsurugi_ProcessUtility(PlannedStmt *pstmt,
 void
 _PG_init(void)
 {
-// 	planner_hook = tsurugi_planner;
   ProcessUtility_hook = tsurugi_ProcessUtility;
 }
