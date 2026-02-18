@@ -80,10 +80,8 @@ SELECT tg_execute_ddl('
 
 --- Test
 IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
-ERROR:  Failed to execute remote SQL.
-HINT:  unsupported tsurugi data type "22". (table:"fdw_test_type_invalid" column:"col_blob") error: UNSUPPORTED(5)
-No detail message.
-CONTEXT:  SQL query: 
+ERROR:  unsupported tsurugi data type "22"
+DETAIL:  table:"fdw_test_type_invalid" column:"col_blob" type:22
 --- Test teardown: DDL of the PostgreSQL
 SELECT drop_foreign_tables();
  drop_foreign_tables 

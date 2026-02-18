@@ -1,0 +1,373 @@
+/* Test case: unhappy path - Unsupported data types (preparation) - PostgreSQL 18 */
+-- Date/Time Types - date
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_date (c DATE)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_date (
+  c date
+) SERVER tsurugidb;
+--- Test
+SET DATESTYLE TO 'default';
+PREPARE prep_insert AS
+  INSERT INTO fdw_type_date VALUES (date '01:02:03.456');
+ERROR:  invalid input syntax for type date: "01:02:03.456"
+LINE 2:   INSERT INTO fdw_type_date VALUES (date '01:02:03.456');
+                                                 ^
+PREPARE prep_insert AS
+  INSERT INTO fdw_type_date VALUES (time '01:02:03.456');
+ERROR:  column "c" is of type date but expression is of type time without time zone
+LINE 2:   INSERT INTO fdw_type_date VALUES (time '01:02:03.456');
+                                                 ^
+HINT:  You will need to rewrite or cast the expression.
+PREPARE prep_insert AS
+  INSERT INTO fdw_type_date VALUES (date '2021-02-30');
+ERROR:  date/time field value out of range: "2021-02-30"
+LINE 2:   INSERT INTO fdw_type_date VALUES (date '2021-02-30');
+                                                 ^
+PREPARE prep_insert AS
+  INSERT INTO fdw_type_date VALUES (date 'invalid');
+ERROR:  invalid input syntax for type date: "invalid"
+LINE 2:   INSERT INTO fdw_type_date VALUES (date 'invalid');
+                                                 ^
+SET DATESTYLE TO ISO, YMD;
+PREPARE prep_insert (date) AS
+  INSERT INTO fdw_type_date VALUES ($1);
+EXECUTE prep_insert (date '1/8/1999');
+ERROR:  date/time field value out of range: "1/8/1999"
+LINE 1: EXECUTE prep_insert (date '1/8/1999');
+                                  ^
+HINT:  Perhaps you need a different "DateStyle" setting.
+EXECUTE prep_insert (date '1/18/1999');
+ERROR:  date/time field value out of range: "1/18/1999"
+LINE 1: EXECUTE prep_insert (date '1/18/1999');
+                                  ^
+HINT:  Perhaps you need a different "DateStyle" setting.
+EXECUTE prep_insert (date '08-Jan-99');
+ERROR:  date/time field value out of range: "08-Jan-99"
+LINE 1: EXECUTE prep_insert (date '08-Jan-99');
+                                  ^
+HINT:  Perhaps you need a different "DateStyle" setting.
+EXECUTE prep_insert (date 'Jan-08-99');
+ERROR:  date/time field value out of range: "Jan-08-99"
+LINE 1: EXECUTE prep_insert (date 'Jan-08-99');
+                                  ^
+HINT:  Perhaps you need a different "DateStyle" setting.
+EXECUTE prep_insert (date 'January 8, 99 BC');
+ERROR:  date/time field value out of range: "January 8, 99 BC"
+LINE 1: EXECUTE prep_insert (date 'January 8, 99 BC');
+                                  ^
+HINT:  Perhaps you need a different "DateStyle" setting.
+DEALLOCATE prep_insert;
+SET DATESTYLE TO 'default';
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_date;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_date', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Date/Time Types - time
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_time (c TIME)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_time (
+  c time
+) SERVER tsurugidb;
+--- Test
+PREPARE prep_insert AS
+  INSERT INTO fdw_type_time VALUES (date '2025/01/01');
+ERROR:  column "c" is of type time without time zone but expression is of type date
+LINE 2:   INSERT INTO fdw_type_time VALUES (date '2025/01/01');
+                                                 ^
+HINT:  You will need to rewrite or cast the expression.
+PREPARE prep_insert AS
+  INSERT INTO fdw_type_time VALUES (time '2025/01/01');
+ERROR:  invalid input syntax for type time: "2025/01/01"
+LINE 2:   INSERT INTO fdw_type_time VALUES (time '2025/01/01');
+                                                 ^
+PREPARE prep_insert AS
+  INSERT INTO fdw_type_time VALUES (time '25:00:00');
+ERROR:  date/time field value out of range: "25:00:00"
+LINE 2:   INSERT INTO fdw_type_time VALUES (time '25:00:00');
+                                                 ^
+PREPARE prep_insert AS
+  INSERT INTO fdw_type_time VALUES (time 'invalid');
+ERROR:  invalid input syntax for type time: "invalid"
+LINE 2:   INSERT INTO fdw_type_time VALUES (time 'invalid');
+                                                 ^
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_time;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_time', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Date/Time Types - timestamp
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_timestamp (c TIMESTAMP)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_timestamp (
+  c timestamp
+) SERVER tsurugidb;
+--- Test
+PREPARE prep_insert AS
+  INSERT INTO fdw_type_timestamp VALUES (timestamp '01:02:03.456');
+ERROR:  invalid input syntax for type timestamp: "01:02:03.456"
+LINE 2: ... INSERT INTO fdw_type_timestamp VALUES (timestamp '01:02:03....
+                                                             ^
+PREPARE prep_insert AS
+  INSERT INTO fdw_type_timestamp VALUES (date '2021-02-30');
+ERROR:  date/time field value out of range: "2021-02-30"
+LINE 2:   INSERT INTO fdw_type_timestamp VALUES (date '2021-02-30');
+                                                      ^
+PREPARE prep_insert AS
+  INSERT INTO fdw_type_timestamp
+    VALUES (timestamp '2021-02-30 04:05:06.789');
+ERROR:  date/time field value out of range: "2021-02-30 04:05:06.789"
+LINE 3:     VALUES (timestamp '2021-02-30 04:05:06.789');
+                              ^
+PREPARE prep_insert AS
+  INSERT INTO fdw_type_timestamp VALUES (timestamp '2025-01-01 25:00:00');
+ERROR:  date/time field value out of range: "2025-01-01 25:00:00"
+LINE 2: ... INSERT INTO fdw_type_timestamp VALUES (timestamp '2025-01-0...
+                                                             ^
+PREPARE prep_insert AS
+  INSERT INTO fdw_type_timestamp VALUES (timestamp 'invalid');
+ERROR:  invalid input syntax for type timestamp: "invalid"
+LINE 2: ... INSERT INTO fdw_type_timestamp VALUES (timestamp 'invalid')...
+                                                             ^
+SET DATESTYLE TO ISO, YMD;
+PREPARE prep_insert (timestamp) AS
+  INSERT INTO fdw_type_timestamp VALUES ($1);
+EXECUTE prep_insert (timestamp '1/8/1999 01:02:03');
+ERROR:  date/time field value out of range: "1/8/1999 01:02:03"
+LINE 1: EXECUTE prep_insert (timestamp '1/8/1999 01:02:03');
+                                       ^
+HINT:  Perhaps you need a different "DateStyle" setting.
+EXECUTE prep_insert (timestamp '1/18/1999 01:02:03');
+ERROR:  date/time field value out of range: "1/18/1999 01:02:03"
+LINE 1: EXECUTE prep_insert (timestamp '1/18/1999 01:02:03');
+                                       ^
+HINT:  Perhaps you need a different "DateStyle" setting.
+EXECUTE prep_insert (timestamp '08-Jan-99 01:02:03');
+ERROR:  date/time field value out of range: "08-Jan-99 01:02:03"
+LINE 1: EXECUTE prep_insert (timestamp '08-Jan-99 01:02:03');
+                                       ^
+HINT:  Perhaps you need a different "DateStyle" setting.
+EXECUTE prep_insert (timestamp 'Jan-08-99 01:02:03');
+ERROR:  date/time field value out of range: "Jan-08-99 01:02:03"
+LINE 1: EXECUTE prep_insert (timestamp 'Jan-08-99 01:02:03');
+                                       ^
+HINT:  Perhaps you need a different "DateStyle" setting.
+EXECUTE prep_insert (timestamp 'January 8, 99 BC 01:02:03');
+ERROR:  date/time field value out of range: "January 8, 99 BC 01:02:03"
+LINE 1: EXECUTE prep_insert (timestamp 'January 8, 99 BC 01:02:03');
+                                       ^
+HINT:  Perhaps you need a different "DateStyle" setting.
+DEALLOCATE prep_insert;
+SET DATESTYLE TO 'default';
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_timestamp;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Date/Time Types - timestamp without time zone
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_timestamp_wo_tz (c TIMESTAMP WITHOUT TIME ZONE)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_timestamp_wo_tz (
+  c timestamp without time zone
+) SERVER tsurugidb;
+--- Test
+PREPARE prep_insert AS
+  INSERT INTO fdw_type_timestamp_wo_tz
+    VALUES (timestamp without time zone '01:02:03.456');
+ERROR:  invalid input syntax for type timestamp: "01:02:03.456"
+LINE 3:     VALUES (timestamp without time zone '01:02:03.456');
+                                                ^
+PREPARE prep_insert AS
+  INSERT INTO fdw_type_timestamp_wo_tz
+    VALUES (date '2021-02-30');
+ERROR:  date/time field value out of range: "2021-02-30"
+LINE 3:     VALUES (date '2021-02-30');
+                         ^
+PREPARE prep_insert AS
+  INSERT INTO fdw_type_timestamp_wo_tz
+    VALUES (timestamp without time zone '2021-02-30 04:05:06.789');
+ERROR:  date/time field value out of range: "2021-02-30 04:05:06.789"
+LINE 3:     VALUES (timestamp without time zone '2021-02-30 04:05:06...
+                                                ^
+PREPARE prep_insert AS
+  INSERT INTO fdw_type_timestamp_wo_tz
+    VALUES (timestamp without time zone '2025-01-01 25:00:00');
+ERROR:  date/time field value out of range: "2025-01-01 25:00:00"
+LINE 3:     VALUES (timestamp without time zone '2025-01-01 25:00:00...
+                                                ^
+PREPARE prep_insert AS
+  INSERT INTO fdw_type_timestamp_wo_tz
+    VALUES (timestamp without time zone 'invalid');
+ERROR:  invalid input syntax for type timestamp: "invalid"
+LINE 3:     VALUES (timestamp without time zone 'invalid');
+                                                ^
+SET DATESTYLE TO ISO, YMD;
+PREPARE prep_insert (timestamp without time zone) AS
+  INSERT INTO fdw_type_timestamp_wo_tz VALUES ($1);
+EXECUTE prep_insert (timestamp without time zone '1/8/1999 01:02:03');
+ERROR:  date/time field value out of range: "1/8/1999 01:02:03"
+LINE 1: EXECUTE prep_insert (timestamp without time zone '1/8/1999 0...
+                                                         ^
+HINT:  Perhaps you need a different "DateStyle" setting.
+EXECUTE prep_insert (timestamp without time zone '1/18/1999 01:02:03');
+ERROR:  date/time field value out of range: "1/18/1999 01:02:03"
+LINE 1: EXECUTE prep_insert (timestamp without time zone '1/18/1999 ...
+                                                         ^
+HINT:  Perhaps you need a different "DateStyle" setting.
+EXECUTE prep_insert (timestamp without time zone '08-Jan-99 01:02:03');
+ERROR:  date/time field value out of range: "08-Jan-99 01:02:03"
+LINE 1: EXECUTE prep_insert (timestamp without time zone '08-Jan-99 ...
+                                                         ^
+HINT:  Perhaps you need a different "DateStyle" setting.
+EXECUTE prep_insert (timestamp without time zone 'Jan-08-99 01:02:03');
+ERROR:  date/time field value out of range: "Jan-08-99 01:02:03"
+LINE 1: EXECUTE prep_insert (timestamp without time zone 'Jan-08-99 ...
+                                                         ^
+HINT:  Perhaps you need a different "DateStyle" setting.
+EXECUTE prep_insert
+  (timestamp without time zone 'January 8, 99 BC 01:02:03');
+ERROR:  date/time field value out of range: "January 8, 99 BC 01:02:03"
+LINE 2:   (timestamp without time zone 'January 8, 99 BC 01:02:03');
+                                       ^
+HINT:  Perhaps you need a different "DateStyle" setting.
+DEALLOCATE prep_insert;
+SET DATESTYLE TO 'default';
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_timestamp_wo_tz;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp_wo_tz', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+
+-- Date/Time Types - timestamp with time zone
+--- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_type_timestamp_tz (c TIMESTAMP WITH TIME ZONE)
+', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ CREATE TABLE
+(1 row)
+
+--- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_type_timestamp_tz (
+  c timestamp with time zone
+) SERVER tsurugidb;
+--- Test
+PREPARE prep_insert AS
+  INSERT INTO fdw_type_timestamp_tz
+    VALUES (time with time zone '04:05:06.789+9:00');
+ERROR:  column "c" is of type timestamp with time zone but expression is of type time with time zone
+LINE 3:     VALUES (time with time zone '04:05:06.789+9:00');
+                                        ^
+HINT:  You will need to rewrite or cast the expression.
+PREPARE prep_insert AS
+  INSERT INTO fdw_type_timestamp_tz
+    VALUES (timestamp with time zone '2025-01-01 12:00-16:00');
+ERROR:  time zone displacement out of range: "2025-01-01 12:00-16:00"
+LINE 3:     VALUES (timestamp with time zone '2025-01-01 12:00-16:00...
+                                             ^
+PREPARE prep_insert AS
+  INSERT INTO fdw_type_timestamp_tz
+    VALUES (timestamp with time zone '2025-01-01 12:00+16:00');
+ERROR:  time zone displacement out of range: "2025-01-01 12:00+16:00"
+LINE 3:     VALUES (timestamp with time zone '2025-01-01 12:00+16:00...
+                                             ^
+PREPARE prep_insert AS
+  INSERT INTO fdw_type_timestamp_tz
+    VALUES (timestamp with time zone '2021-02-30 04:05:06.789+9:00');
+ERROR:  date/time field value out of range: "2021-02-30 04:05:06.789+9:00"
+LINE 3:     VALUES (timestamp with time zone '2021-02-30 04:05:06.78...
+                                             ^
+PREPARE prep_insert AS
+  INSERT INTO fdw_type_timestamp_tz
+    VALUES (timestamp with time zone 'invalid+tz');
+ERROR:  invalid input syntax for type timestamp with time zone: "invalid+tz"
+LINE 3:     VALUES (timestamp with time zone 'invalid+tz');
+                                             ^
+SET DATESTYLE TO ISO, YMD;
+PREPARE prep_insert (timestamp with time zone) AS
+  INSERT INTO fdw_type_timestamp_tz VALUES ($1);
+EXECUTE prep_insert (timestamp with time zone '1/8/1999 01:02:03+0900');
+ERROR:  date/time field value out of range: "1/8/1999 01:02:03+0900"
+LINE 1: EXECUTE prep_insert (timestamp with time zone '1/8/1999 01:0...
+                                                      ^
+HINT:  Perhaps you need a different "DateStyle" setting.
+EXECUTE prep_insert (timestamp with time zone '1/18/1999 01:02:03+0900');
+ERROR:  date/time field value out of range: "1/18/1999 01:02:03+0900"
+LINE 1: EXECUTE prep_insert (timestamp with time zone '1/18/1999 01:...
+                                                      ^
+HINT:  Perhaps you need a different "DateStyle" setting.
+EXECUTE prep_insert (timestamp with time zone '08-Jan-99 01:02:03+0900');
+ERROR:  date/time field value out of range: "08-Jan-99 01:02:03+0900"
+LINE 1: EXECUTE prep_insert (timestamp with time zone '08-Jan-99 01:...
+                                                      ^
+HINT:  Perhaps you need a different "DateStyle" setting.
+EXECUTE prep_insert (timestamp with time zone 'Jan-08-99 01:02:03+0900');
+ERROR:  date/time field value out of range: "Jan-08-99 01:02:03+0900"
+LINE 1: EXECUTE prep_insert (timestamp with time zone 'Jan-08-99 01:...
+                                                      ^
+HINT:  Perhaps you need a different "DateStyle" setting.
+EXECUTE prep_insert
+  (timestamp with time zone 'January 8, 99 BC 01:02:03+0900');
+ERROR:  date/time field value out of range: "January 8, 99 BC 01:02:03+0900"
+LINE 2:   (timestamp with time zone 'January 8, 99 BC 01:02:03+0900'...
+                                    ^
+HINT:  Perhaps you need a different "DateStyle" setting.
+DEALLOCATE prep_insert;
+SET DATESTYLE TO 'default';
+--- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_type_timestamp_tz;
+--- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_type_timestamp_tz', 'tsurugidb');
+ tg_execute_ddl 
+----------------
+ DROP TABLE
+(1 row)
+

@@ -8,12 +8,16 @@ CREATE DATABASE contrib_regression_ddl;
 --- Test case: table exists before
 CREATE TABLE tsurugifdw_regressiontest(id INT);
 CREATE EXTENSION tsurugi_fdw;
-\dx tsurugi_fdw
+SELECT e.extname "Name", e.extversion "Version", d.description "Description"
+  FROM pg_extension e JOIN pg_description d ON e.oid = d.objoid
+  WHERE e.extname = 'tsurugi_fdw';
 DROP TABLE tsurugifdw_regressiontest;
 
 --- Test case: table does not exist
 CREATE EXTENSION tsurugi_fdw;
-\dx tsurugi_fdw
+SELECT e.extname "Name", e.extversion "Version", d.description "Description"
+  FROM pg_extension e JOIN pg_description d ON e.oid = d.objoid
+  WHERE e.extname = 'tsurugi_fdw';
 
 --- Test case: DDL restriction - tsurugi_fdw is enabled
 ---- Test setup: DDL of the PostgreSQL

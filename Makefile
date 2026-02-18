@@ -70,16 +70,28 @@ ifdef REGRESS_EXTRA
 
 	ifeq ($(MAJORVERSION), 12)
 		# PostgreSQL 12.x
-		REGRESS += dml_unhappy_pg12 prep_dml_unhappy_pg12
+		REGRESS += dml_unhappy_pg12 prep_dml_unhappy_pg12 \
+		           data_types_unhappy_pg12-17 prep_data_types_unhappy_pg12-17
 	else ifeq ($(MAJORVERSION), 13)
 		# PostgreSQL 13.x
-		REGRESS += dml_unhappy_pg13 prep_dml_unhappy_pg13
+		REGRESS += dml_unhappy_pg13 prep_dml_unhappy_pg13 \
+		           data_types_unhappy_pg12-17 prep_data_types_unhappy_pg12-17
 	else ifeq ($(filter $(MAJORVERSION), 14 15), $(MAJORVERSION))
 		# PostgreSQL 14.x to PostgreSQL 15.x
-		REGRESS += dml_unhappy_pg14-15 prep_dml_unhappy_pg14-15
+		REGRESS += dml_unhappy_pg14-15 prep_dml_unhappy_pg14-15 \
+		           data_types_unhappy_pg12-17 prep_data_types_unhappy_pg12-17
 	else ifeq ($(filter $(MAJORVERSION), 16), $(MAJORVERSION))
 		# PostgreSQL 16.x
-		REGRESS += dml_unhappy_pg16 prep_dml_unhappy_pg16
+		REGRESS += dml_unhappy_pg16 prep_dml_unhappy_pg16 \
+		           data_types_unhappy_pg12-17 prep_data_types_unhappy_pg12-17
+	else ifeq ($(filter $(MAJORVERSION), 17), $(MAJORVERSION))
+		# PostgreSQL 17.x
+		REGRESS += dml_unhappy_pg17-18 prep_dml_unhappy_pg17-18 \
+		           data_types_unhappy_pg12-17 prep_data_types_unhappy_pg12-17
+	else ifeq ($(filter $(MAJORVERSION), 18), $(MAJORVERSION))
+		# PostgreSQL 18.x
+		REGRESS += dml_unhappy_pg17-18 prep_dml_unhappy_pg17-18 \
+		           data_types_unhappy_pg18 prep_data_types_unhappy_pg18
 	endif
 endif
 
