@@ -39,6 +39,7 @@ extern "C" {
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/params.h"
+#include "utils/relcache.h"
 #include "tg_common/tsurugi_api.h"
 #ifdef __cplusplus
 }
