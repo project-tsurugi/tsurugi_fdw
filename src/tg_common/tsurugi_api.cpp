@@ -33,9 +33,11 @@ extern "C" {
 #include "postgres.h"
 #include "catalog/pg_type_d.h"
 #include "commands/defrem.h"
+#include "executor/executor.h"
 #include "executor/spi.h"
 #include "foreign/foreign.h"
 #include "miscadmin.h"
+#include "nodes/nodeFuncs.h"
 #include "nodes/params.h"
 #include "tg_common/tsurugi_api.h"
 #ifdef __cplusplus
@@ -46,7 +48,7 @@ using namespace ogawayama;
 
 namespace {
 constexpr size_t kErrMsgSize = 1024;
-char g_global_error[kErrMsgSize] = "no error";
+char g_global_error[kErrMsgSize] = "tsurugi_fdw: no error";
 
 typedef struct {
     char msg[kErrMsgSize];
@@ -538,12 +540,13 @@ size_t make_placeholders(ParamListInfo param_linfo,
         for (auto i = 0; i < param_linfo->numParams; i++) {
             /* parameter name is 1 origin. */
             std::string param_name = "param" + std::to_string(i+1);
-            stub::Metadata::ColumnType::Type tg_type = 
-                    tsurugi::get_tg_column_type(param_linfo->params[i].ptype);
-            if (tg_type == stub::Metadata::ColumnType::Type::NULL_VALUE) {
+            stub::Metadata::ColumnType::Type column_type;
+            auto success = tsurugi::get_tg_column_type(
+                    param_linfo->params[i].ptype, column_type);
+            if (!success) {
                 return i+1;
             }
-            placeholders.emplace_back(param_name, tg_type);
+            placeholders.emplace_back(param_name, column_type);
         }
         elog(DEBUG1, "tsurugi_fdw: placeholders: %d", param_linfo->numParams);
     }
@@ -556,17 +559,19 @@ size_t make_placeholders(ParamListInfo param_linfo,
  *  @param  (param_linfo) ParamListInfo structure.
  *          (params) parameters_type object.
  *  @return	(0) success
- *          (othes) failure, param number where the error occurred.
+ *          (others) failure, param number where error occurred.
  */
 size_t make_parameters(ParamListInfo param_linfo, 
         ogawayama::stub::parameters_type& params) noexcept {
 	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
 
+    int param_num = 0;
     params.clear();
     if (param_linfo != nullptr) {
         for (auto i = 0; i < param_linfo->numParams; i++) {	
             /* parameter number is 1 origin. */
-            auto param_name = "param" + std::to_string(i+1);
+            param_num = i + 1;
+            auto param_name = "param" + std::to_string(param_num);
             ParamExternData param = param_linfo->params[i];
             if (param.isnull) {
                 std::monostate mono{};
@@ -574,7 +579,7 @@ size_t make_parameters(ParamListInfo param_linfo,
             } else {
                 auto value = tsurugi::convert_type_to_tg(param.ptype, param.value);
                 if (std::holds_alternative<std::monostate>(value)) {
-                    return i+1;
+                    return param_num;
                 }
                 params.emplace_back(param_name, value);
             }
@@ -582,6 +587,119 @@ size_t make_parameters(ParamListInfo param_linfo,
     }
 
     return 0;
+}
+
+size_t make_placeholders(Relation rel, 
+        ogawayama::stub::placeholders_type& placeholders) noexcept {
+    TupleDesc tupdesc = RelationGetDescr(rel);
+    size_t param_num = 0;
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
+	for (int i = 0; i < tupdesc->natts; i++) {
+		/* parameter name is 1 origin. */
+        param_num = i + 1;
+		std::string param_name = "param" + std::to_string(param_num);
+        stub::Metadata::ColumnType::Type column_type;
+        auto success = tsurugi::get_tg_column_type(tupdesc->attrs[i].atttypid, column_type);
+        if (!success) {
+            return param_num;
+        }
+		placeholders.emplace_back(param_name, column_type);
+	}
+
+    return 0;
+}
+#if 0
+/**
+ *  @brief  Bind parameters of a prepared statement.
+ *  @param  (econtext) Pointer toExprContext structure.
+ *          (param_exprs) ExprState List.
+ *          (params) paramters_type object.
+ *  @return	(0) success.
+ *          (others) failure. parameter number which error occurred.
+ */
+size_t make_parameters(
+        ExprContext* econtext, List* param_exprs, stub::parameters_type& params) {
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
+	size_t param_num = 0;
+	ListCell   *lc;
+	foreach(lc, param_exprs) {
+		ExprState*  expr_state = (ExprState*) lfirst(lc);
+		bool		isNull;
+        
+        /* parameter number is 1 origin. */
+        auto param_name = "param" + std::to_string(++param_num);
+
+        /* Evaluate the parameter expression */
+		Datum expr_value = ExecEvalExpr(expr_state, econtext, &isNull);
+
+		/*
+		 * Get string representation of each parameter value by invoking
+		 * type-specific output function, unless the value is null.
+		 */
+		if (isNull) {
+			std::monostate mono{};
+            params.emplace_back(param_name, mono);
+        } else {
+            Oid typoid = exprType((Node*) expr_state->expr);
+ 			auto value = tsurugi::convert_type_to_tg(typoid, expr_value);
+            if (std::holds_alternative<std::monostate>(value)) {
+                return param_num;
+            }
+            params.emplace_back(param_name, value);
+        }
+        param_num++;
+	}
+    elog(DEBUG1, "tsurugi_fdw: parameters count: %d", (int) param_num);
+
+    return 0;
+}
+#endif
+/*
+ *	make_parameters_type
+ *		Bind parameters of prepared statement.
+ */
+size_t make_parameters(
+        Relation rel, List* target_attrs, TupleTableSlot **slots, 
+        ogawayama::stub::parameters_type& params) noexcept {
+	TupleDesc tupdesc = RelationGetDescr(rel);
+
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
+	if (tupdesc == nullptr || slots == nullptr) {
+        return 0;
+    }
+
+    int param_num = 0;
+    ListCell   *lc;
+    foreach(lc, target_attrs) {	
+        int			attnum = lfirst_int(lc);
+        Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
+        Datum		expr_value;
+        bool		isnull;	
+        // parameter number is 1 origin.
+        std::string param_name = "param" + std::to_string(++param_num);
+
+        /* Ignore generated columns; they are set to DEFAULT */
+        if (attr->attgenerated)
+            continue;
+        expr_value = slot_getattr(slots[0], attnum, &isnull);
+        if (isnull) {
+            std::monostate mono{};
+            params.emplace_back(param_name, mono);
+        } else {
+            auto value = tsurugi::convert_type_to_tg(attr->atttypid, expr_value);
+            if (std::holds_alternative<std::monostate>(value)) {
+                return param_num;
+            }
+            params.emplace_back(param_name, value);
+        }
+    }
+    elog(DEBUG1, "tsurugi_fdw : parameter count: %d", param_num);
+
+	return 0;
 }
 
 /**
@@ -771,9 +889,9 @@ TG_STATUS tg_conn_tx_begin(TGconn* tg_conn) noexcept {
     try {
        	boost::property_tree::ptree option;
         GetTransactionOption(option);
-        elog(DEBUG1, "Attempt to call begin().");
+        elog(DEBUG1, "tsurugi_fdw: Attempt to call begin().");
         auto error = tg_conn->impl->begin(option, tg_conn->tx);
-       	log2(DEBUG1, "begin() is done.", error);
+       	log2(DEBUG1, "tsurugi_fdw: begin() is done.", error);
         if (error != ERROR_CODE::OK) {
             auto msg = tg_make_error_message(tg_conn, 
                     "Failed to start the transaction on Tsurugi.", error);
@@ -925,13 +1043,41 @@ TG_STATUS tg_stmt_bind_parameters(TGstmt* tg_stmt, ParamListInfo param_linfo) no
         return TG_STATUS_INVALID_ARG;
     }
     auto param_num = make_placeholders(param_linfo, tg_stmt->placeholders);
-    if (param_num != 0) {
+    if (param_num > 0) {
         std::ostringstream msg;
         msg << "Unsupported parameter found. (param number: " << param_num << ")";
         return set_error(tg_stmt->error, msg.str());
     }
     param_num = make_parameters(param_linfo, tg_stmt->paramerters);
-    if (param_num != 0) {
+    if (param_num > 0) {
+        std::ostringstream msg;
+        msg << "Unsupported parameter found. (param number: " << param_num << ")";
+        return set_error(tg_stmt->error, msg.str());
+    }
+    set_ok(tg_stmt->error);
+    return TG_STATUS_OK;
+}
+
+/**
+ *  tg_stmt_set_placeholders
+ */
+TG_STATUS tg_stmt_bind_parameters2(TGstmt* tg_stmt, 
+        Relation rel, List* target_attrs, TupleTableSlot **slots) noexcept {
+    elog(DEBUG1, "tsurugi_fdw: %s", __func__);
+
+    if (!tg_stmt) {
+        set_error("tg_stmt_bind_parameters: null stmt");
+        return TG_STATUS_INVALID_ARG;
+    }
+
+    auto param_num = make_placeholders(rel, tg_stmt->placeholders);
+    if (param_num > 0) {
+        std::ostringstream msg;
+        msg << "Unsupported parameter found. (param number: " << param_num << ")";
+        return set_error(tg_stmt->error, msg.str());
+    }
+    param_num = make_parameters(rel, target_attrs, slots, tg_stmt->paramerters);
+    if (param_num > 0) {
         std::ostringstream msg;
         msg << "Unsupported parameter found. (param number: " << param_num << ")";
         return set_error(tg_stmt->error, msg.str());

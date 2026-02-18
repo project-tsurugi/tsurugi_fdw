@@ -1065,6 +1065,68 @@ ogawayama::stub::Metadata::ColumnType::Type get_tg_column_type(const Oid pg_type
 }
 
 /**
+ *  @brief 	Convert a data type id from PostgreSQL to tsurugidb.
+ *  @param 	(pg_type) oid of PostgreSQL data type.
+ *  @return	data type id of tsurugidb.
+ */
+bool get_tg_column_type(
+		const Oid pg_type, ogawayama::stub::Metadata::ColumnType::Type& tg_type) {
+
+	elog(DEBUG5, "tsurugi_fdw : %s : pg_type: %d", __func__, (int) pg_type);
+
+	tg_type = stub::Metadata::ColumnType::Type::NULL_VALUE;
+	switch (pg_type)
+	{
+		case INT2OID:
+			tg_type = stub::Metadata::ColumnType::Type::INT16;
+			break;
+		case INT4OID:
+			tg_type = stub::Metadata::ColumnType::Type::INT32;
+			break;
+		case INT8OID:
+			tg_type = stub::Metadata::ColumnType::Type::INT64;
+			break;
+		case FLOAT4OID:
+			tg_type = stub::Metadata::ColumnType::Type::FLOAT32;
+			break;
+		case FLOAT8OID:
+			tg_type = stub::Metadata::ColumnType::Type::FLOAT64;
+			break;
+		case BPCHAROID:
+		case VARCHAROID:
+		case TEXTOID:
+			tg_type = stub::Metadata::ColumnType::Type::TEXT;
+			break;
+		case DATEOID:
+			tg_type = stub::Metadata::ColumnType::Type::DATE;
+			break;
+		case TIMEOID:
+			tg_type = stub::Metadata::ColumnType::Type::TIME;
+			break;
+		case TIMESTAMPOID:
+			tg_type = stub::Metadata::ColumnType::Type::TIMESTAMP;
+			break;
+		case TIMETZOID:
+			tg_type = stub::Metadata::ColumnType::Type::TIMETZ;
+			break;
+		case TIMESTAMPTZOID:
+			tg_type = stub::Metadata::ColumnType::Type::TIMESTAMPTZ;
+			break;
+		case NUMERICOID:
+			tg_type = stub::Metadata::ColumnType::Type::DECIMAL;
+			break;
+		case BYTEAOID:
+			tg_type = stub::Metadata::ColumnType::Type::OCTET;
+			break;
+		default:
+			elog(LOG, "tsurugi_fdw : unrecognized type oid: %d", (int) pg_type);
+			return false;
+	}
+
+	return true;
+}
+
+/**
  *  @brief 	Convert value from tsurugidb to PostgreSQL.
  *  @param 	(resultset)	Pointer to ResultSet object.
  * 			(pgtype) OID of PostgreSQL data type.

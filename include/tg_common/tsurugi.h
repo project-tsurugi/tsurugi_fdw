@@ -246,6 +246,8 @@ std::optional<std::string_view> convert_type_to_pg(
 ogawayama::stub::value_type convert_type_to_tg(const Oid pg_type, Datum value);
 std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgtype);
 ogawayama::stub::Metadata::ColumnType::Type get_tg_column_type(const Oid pg_type);
+bool get_tg_column_type(
+		const Oid pg_type, ogawayama::stub::Metadata::ColumnType::Type& tg_type);
 ogawayama::stub::timestamptz_type convert_timestamptz_to_tg(Datum value);
 takatori::decimal::triple convert_decimal_to_tg(Datum value);
 }	// namespace tsurugi

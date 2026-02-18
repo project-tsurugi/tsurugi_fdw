@@ -26,6 +26,7 @@ extern "C"
 #include "executor/tuptable.h"
 #include "nodes/params.h"
 #include "nodes/parsenodes.h"
+#include "utils/relcache.h"
 
 #ifdef __cplusplus
 #define TG_NOEXCEPT noexcept
@@ -89,6 +90,8 @@ TGstmt *tg_stmt_prepare(TGconn *tg_conn, const char *sql) TG_NOEXCEPT;
 void tg_stmt_destroy(TGstmt *tg_stmt) TG_NOEXCEPT;
 /* Bind */
 TG_STATUS tg_stmt_bind_parameters(TGstmt *tg_stmt, ParamListInfo param_linfo) TG_NOEXCEPT;
+TG_STATUS tg_stmt_bind_parameters2(TGstmt* tg_stmt, 
+        Relation rel, List* target_attrs, TupleTableSlot **slots) TG_NOEXCEPT;
 /* Execute */
 TGresult *tg_stmt_execute_query(TGstmt *tg_stmt) TG_NOEXCEPT;
 TG_STATUS tg_stmt_execute_statement(TGstmt *tg_stmt, size_t *num_rows) TG_NOEXCEPT;
