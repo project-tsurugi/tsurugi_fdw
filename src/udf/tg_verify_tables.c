@@ -138,7 +138,7 @@ Datum tg_verify_tables(PG_FUNCTION_ARGS)
 	}
 
 	snprintf(debug_log, sizeof(debug_log),
-	         "tsurugi_fdw : %s\n"
+	         "tsurugi_fdw: %s\n"
 	         "Arguments:\n"
 	         "  remote_schema: %s\n"
 	         "  server_name  : %s (%u)\n"

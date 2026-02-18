@@ -115,7 +115,7 @@ Datum tg_show_tables(PG_FUNCTION_ARGS)
 	user = GetUserMapping(user_oid, server_oid);
 
 	snprintf(debug_log, sizeof(debug_log),
-	         "tsurugi_fdw : %s\n"
+	         "tsurugi_fdw: %s\n"
 	         "Arguments:\n"
 	         "  remote_schema: %s\n"
 	         "  server_name  : %s (%u)\n"

@@ -62,7 +62,6 @@ const char *tg_get_database_name() TG_NOEXCEPT;
 const char *tg_global_error_message(void) TG_NOEXCEPT;
 
 /** ===========================================================================
- * 
  *  Connection/Transaction functions.
  */
 /* Connection */
@@ -70,36 +69,40 @@ TGconn* tg_conn_open(
 		const char* endpoint, const char *user, const char *password) TG_NOEXCEPT;
 TG_STATUS tg_conn_close(TGconn *tg_conn) TG_NOEXCEPT;
 void tg_conn_destroy(TGconn *tg_conn) TG_NOEXCEPT;
+
 /* Sub Transaction */
 void tg_conn_set_subxact_seen(TGconn *tg_conn, int seen) TG_NOEXCEPT;
 int tg_conn_get_subxact_seen(const TGconn *tg_conn) TG_NOEXCEPT;
+
 /* Transaction */
 bool tg_conn_tx_active(const TGconn *tg_conn) TG_NOEXCEPT;
 TG_STATUS tg_conn_tx_begin(TGconn *tg_conn) TG_NOEXCEPT; /* no-op if already active */
 TG_STATUS tg_conn_tx_commit(TGconn *tg_conn) TG_NOEXCEPT; /* no-op if not active */
 TG_STATUS tg_conn_tx_rollback(TGconn *tg_conn) TG_NOEXCEPT; /* no-op if not active */
+
 /* Error */
 const char *tg_conn_error_message(const TGconn *tg_conn) TG_NOEXCEPT;
 
 /** ===========================================================================
- * 
  *  Statement functions.
  */
 /* Prepare */
 TGstmt *tg_stmt_prepare(TGconn *tg_conn, const char *sql) TG_NOEXCEPT;
 void tg_stmt_destroy(TGstmt *tg_stmt) TG_NOEXCEPT;
+
 /* Bind */
 TG_STATUS tg_stmt_bind_parameters(TGstmt *tg_stmt, ParamListInfo param_linfo) TG_NOEXCEPT;
 TG_STATUS tg_stmt_bind_parameters2(TGstmt* tg_stmt, 
         Relation rel, List* target_attrs, TupleTableSlot **slots) TG_NOEXCEPT;
+
 /* Execute */
 TGresult *tg_stmt_execute_query(TGstmt *tg_stmt) TG_NOEXCEPT;
 TG_STATUS tg_stmt_execute_statement(TGstmt *tg_stmt, size_t *num_rows) TG_NOEXCEPT;
+
 /* Error */
 const char *tg_stmt_error_message(const TGstmt *tg_stmt) TG_NOEXCEPT;
 
 /** ===========================================================================
- * 
  *  ResultSet functions.
  */
 void tg_result_destroy(TGresult *tg_result) TG_NOEXCEPT;
@@ -110,7 +113,6 @@ TG_STATUS tg_result_get_tuple(TGresult *tg_result,
 const char *tg_result_error_message(const TGresult *tg_rs) TG_NOEXCEPT;
 
 /** ===========================================================================
- * 
  *  UDF functions.
  */
 typedef struct
@@ -146,8 +148,6 @@ TG_STATUS tg_exec_show_tables(TGconn *tg_conn,
 TG_STATUS tg_exec_verify_tables(TGconn *tg_conn,
 						TG_VERIFY_TABLE_PARAM *param,
 						char **result_json) TG_NOEXCEPT;
-
-
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

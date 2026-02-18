@@ -160,7 +160,7 @@ tg_get_connection(ForeignServer *server, UserMapping *user)
 	ConnCacheEntry *entry = NULL;
 	ConnCacheKey key;
 
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
 	if (!CallbacksRegistered)
 		tg_register_callbacks();
@@ -216,7 +216,7 @@ tg_make_new_connection(ConnCacheEntry *entry, ForeignServer *server, UserMapping
 
 	Assert(entry->conn == NULL);
 
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
 	entry->serverid = server->serverid;
 	entry->xact_depth = 0;
@@ -266,7 +266,7 @@ tg_begin_remote_tx(ConnCacheEntry *entry)
 {
 	TG_STATUS tg_status;
 
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
 	if (entry->xact_depth <= 0)
 	{
@@ -305,7 +305,7 @@ static void tsurugifdw_xact_callback(XactEvent event, void *arg)
 	ConnCacheEntry *entry;
 	TG_STATUS tg_status;
 
-	elog(DEBUG1, "tsurugi_fdw : %s (event: %d)", __func__, event);
+	elog(DEBUG1, "tsurugi_fdw: %s (event: %d)", __func__, event);
 
 	/* Quick exit if no connections were touched in this transaction. */
 	if (!xact_got_connection)
@@ -388,7 +388,7 @@ tsurugifdw_inval_callback(Datum arg, int cacheid, uint32 hashvalue)
 
 	Assert(cacheid == FOREIGNSERVEROID);
 
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
 	/* ConnectionHash must exist already, if we're registered */
 	hash_seq_init(&scan, ConnectionHash);

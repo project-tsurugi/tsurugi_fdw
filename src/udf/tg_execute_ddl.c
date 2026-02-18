@@ -119,7 +119,7 @@ tg_execute_ddl(PG_FUNCTION_ARGS)
 	user = GetUserMapping(user_oid, server_oid);
 
 	snprintf(debug_log, sizeof(debug_log),
-			 "tsurugi_fdw : %s\n"
+			 "tsurugi_fdw: %s\n"
 			 "Arguments:\n"
 			 "  server_name  : %s\n"
 			 "  ddl_statement: %s",

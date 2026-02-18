@@ -70,7 +70,7 @@ get_useful_ecs_for_relation(PlannerInfo *root, RelOptInfo *rel)
 	ListCell   *lc;
 	Relids		relids;
 
-	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
 
 	/*
 	 * First, consider whether any active EC is potentially useful for a merge
@@ -170,7 +170,7 @@ get_useful_pathkeys_for_relation(PlannerInfo *root, RelOptInfo *rel)
 //	EquivalenceClass *query_ec = NULL;
 	ListCell   *lc;
 
-	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
 
 	/*
 	 * Pushing the query_pathkeys to the remote server is always worth
@@ -221,7 +221,7 @@ ec_member_matches_foreign(PlannerInfo *root, RelOptInfo *rel,
 	ec_member_foreign_arg *state = (ec_member_foreign_arg *) arg;
 	Expr	   *expr = em->em_expr;
 
-	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
 
 	/*
 	 * If we've identified what we're processing in the current scan, we only
@@ -262,7 +262,7 @@ set_transmission_modes(void)
 {
 	int			nestlevel = NewGUCNestLevel();
 
-	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
 
 	/*
 	 * The values set here should match what pg_dump does.  See also
@@ -290,7 +290,7 @@ set_transmission_modes(void)
 void
 reset_transmission_modes(int nestlevel)
 {
-	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
 
 	AtEOXact_GUC(true, nestlevel);
 }
@@ -308,7 +308,7 @@ build_remote_returning(Index rtindex, Relation rel, List *returningList)
 	List	   *vars;
 	ListCell   *lc;
 
-	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
 
 	Assert(returningList);
 
@@ -410,7 +410,7 @@ rebuild_fdw_scan_tlist(ForeignScan *fscan, List *tlist)
 	List	   *old_tlist = fscan->fdw_scan_tlist;
 	ListCell   *lc;
 
-	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
 
 	foreach(lc, old_tlist)
 	{
@@ -442,7 +442,7 @@ merge_fdw_options(TgFdwRelationInfo *fpinfo,
 				  const TgFdwRelationInfo *fpinfo_o,
 				  const TgFdwRelationInfo *fpinfo_i)
 {
-	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
 
 	/* We must always have fpinfo_o. */
 	Assert(fpinfo_o);
@@ -502,7 +502,7 @@ tsurugi_foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 	int			i;
 	List	   *tlist = NIL;
 
-	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
 
 	/* We currently don't support pushing Grouping Sets. */
 	if (query->groupingSets)
@@ -753,7 +753,7 @@ add_foreign_grouping_paths(PlannerInfo *root, RelOptInfo *input_rel,
 	Cost		startup_cost = 0;
 	Cost		total_cost = 0;
 
-	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
 
 	/* Nothing to be done, if there is no grouping or aggregation required. */
 	if (!parse->groupClause && !parse->groupingSets && !parse->hasAggs &&
@@ -852,7 +852,7 @@ add_foreign_ordered_paths(PlannerInfo *root, RelOptInfo *input_rel,
 	ForeignPath *ordered_path;
 	ListCell   *lc;
 
-	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
 
 	/* Shouldn't get here unless the query has ORDER BY */
 	Assert(parse->sortClause);
@@ -987,7 +987,7 @@ add_foreign_final_paths(PlannerInfo *root, RelOptInfo *input_rel,
 	List	   *fdw_private;
 	ForeignPath *final_path;
 
-	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
 
 	/*
 	 * Currently, we only support this for SELECT commands
@@ -1213,7 +1213,7 @@ find_em_expr_for_rel(EquivalenceClass *ec, RelOptInfo *rel)
 {
 	ListCell   *lc_em;
 
-	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
 
 	foreach(lc_em, ec->ec_members)
 	{
@@ -1247,7 +1247,7 @@ find_em_expr_for_input_target(PlannerInfo *root,
 	ListCell   *lc1;
 	int			i;
 
-	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
 
 	i = 0;
 	foreach(lc1, target->exprs)
@@ -1324,7 +1324,7 @@ add_paths_with_pathkeys_for_rel(PlannerInfo *root, RelOptInfo *rel,
 	List	   *useful_pathkeys_list = NIL; /* List of all pathkeys */
 	ListCell   *lc;
 
-	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
 
 	useful_pathkeys_list = get_useful_pathkeys_for_relation(root, rel);
 
@@ -1458,7 +1458,7 @@ tsurugi_foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointyp
 	ListCell   *lc;
 	List	   *joinclauses;
 
-	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
 
 	/*
 	 * We support pushing down INNER, LEFT, RIGHT and FULL OUTER joins.

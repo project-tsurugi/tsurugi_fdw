@@ -26,7 +26,7 @@ CREATE FOREIGN TABLE fdw_sel_unsupported_test (
 -- Arithmetic operation
 SELECT id, name, ((value / 10000) * ref_id)::int AS lank
   FROM fdw_sel_unsupported_test;
-ERROR:  tsurugi_fdw : Contains an unsupported target entry. (117)
+ERROR:  tsurugi_fdw: Contains an unsupported target entry. (117)
 -- CASE WHEN
 SELECT
   id, name,
@@ -35,12 +35,12 @@ SELECT
     WHEN value >= 75000 THEN 'Medium'
     ELSE 'Low' END AS lank
   FROM fdw_sel_unsupported_test;
-ERROR:  tsurugi_fdw : Contains an unsupported target entry. (134)
+ERROR:  tsurugi_fdw: Contains an unsupported target entry. (134)
 -- WINDOW
 SELECT id, name, value, RANK() OVER w AS rk
   FROM fdw_sel_unsupported_test
   WINDOW w AS (ORDER BY value DESC);
-ERROR:  tsurugi_fdw : Contains an unsupported target entry. (115)
+ERROR:  tsurugi_fdw: Contains an unsupported target entry. (115)
 -- GROUP BY ALL
 SELECT ref_id, COUNT(*), SUM(value)
   FROM fdw_sel_unsupported_test

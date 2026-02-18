@@ -52,7 +52,7 @@ extern "C" {
  */
 bool tg_execute_import_foreign_schema(
 		ImportForeignSchemaStmt* stmt, Oid serverOid, List **commands) {
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
 	*commands = nullptr;

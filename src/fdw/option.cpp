@@ -98,7 +98,7 @@ tsurugi_fdw_validator(PG_FUNCTION_ARGS)
 	List* options_list = untransformRelOptions(PG_GETARG_DATUM(0));
 	Oid catalog = PG_GETARG_OID(1);
 
-	elog(DEBUG2, "tsurugi_fdw : %s(%d)", __func__, catalog);
+	elog(DEBUG2, "tsurugi_fdw: %s(%d)", __func__, catalog);
 
 	std::string opt_val_endpoint;
 	std::string opt_val_dbname;

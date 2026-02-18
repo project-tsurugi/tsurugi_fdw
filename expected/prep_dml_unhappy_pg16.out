@@ -14,7 +14,7 @@ CREATE FOREIGN TABLE fdw_invalid_test (id integer) SERVER tsurugidb;
 -- invalid PREPARE statement
 PREPARE invalid (int) AS SELECT $1 FROM fdw_invalid_test;
 EXECUTE invalid(1);
-ERROR:  tsurugi_fdw : Contains an unsupported target entry. (8)
+ERROR:  tsurugi_fdw: Contains an unsupported target entry. (8)
 DEALLOCATE invalid;
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_invalid_test;
@@ -54,7 +54,7 @@ PREPARE prep_select AS
   SELECT id, name, ((value / 10000) * ref_id)::int AS lank
     FROM fdw_sel_unsupported_test;
 EXECUTE prep_select;
-ERROR:  tsurugi_fdw : Contains an unsupported target entry. (13)
+ERROR:  tsurugi_fdw: Contains an unsupported target entry. (13)
 DEALLOCATE prep_select;
 -- CASE WHEN
 PREPARE prep_select (integer, integer) AS
@@ -66,7 +66,7 @@ PREPARE prep_select (integer, integer) AS
       ELSE 'Low' END AS lank
     FROM fdw_sel_unsupported_test;
 EXECUTE prep_select (100000, 75000);
-ERROR:  tsurugi_fdw : Contains an unsupported target entry. (30)
+ERROR:  tsurugi_fdw: Contains an unsupported target entry. (30)
 DEALLOCATE prep_select;
 -- WINDOW
 PREPARE prep_select AS
@@ -74,7 +74,7 @@ PREPARE prep_select AS
     FROM fdw_sel_unsupported_test
     WINDOW w AS (ORDER BY value DESC);
 EXECUTE prep_select;
-ERROR:  tsurugi_fdw : Contains an unsupported target entry. (11)
+ERROR:  tsurugi_fdw: Contains an unsupported target entry. (11)
 DEALLOCATE prep_select;
 -- GROUP BY ALL
 PREPARE prep_select AS

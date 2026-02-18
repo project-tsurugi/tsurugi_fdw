@@ -167,7 +167,7 @@ Tsurugi::Credential get_user_mapping_credential(Oid server_oid) {
  */
 bool Tsurugi::is_initialized(Oid server_oid)
 {
-	elog(DEBUG1, "tsurugi_fdw : %s(serverid: %u)", __func__, server_oid);
+	elog(DEBUG1, "tsurugi_fdw: %s(serverid: %u)", __func__, server_oid);
 
 	/* Check if it is not connected. */
 	if ((stub_ == nullptr) || (connection_ == nullptr))
@@ -217,7 +217,7 @@ ERROR_CODE Tsurugi::init(Oid server_oid)
 {
 	auto error{ERROR_CODE::UNKNOWN};
 
-	elog(DEBUG1, "tsurugi_fdw : %s(serverid: %u)", __func__, server_oid);
+	elog(DEBUG1, "tsurugi_fdw: %s(serverid: %u)", __func__, server_oid);
 	error_message_.clear();
 
 	/* Get ForeignServer object from server OID. */
@@ -254,7 +254,7 @@ ERROR_CODE Tsurugi::init(Oid server_oid)
 	 * it will be an "ipc" connection.
 	 */
 
-	elog(DEBUG1, "tsurugi_fdw : Attempt to call make_stub(). (name: %s)",
+	elog(DEBUG1, "tsurugi_fdw: Attempt to call make_stub(). (name: %s)",
 			conn_info_.dbname().data());
 
 	try {
@@ -275,7 +275,7 @@ ERROR_CODE Tsurugi::init(Oid server_oid)
 	}
 
 	try {
-		elog(DEBUG1, "tsurugi_fdw : Attempt to call Stub::get_connection(). (pid: %d)", getpid());
+		elog(DEBUG1, "tsurugi_fdw: Attempt to call Stub::get_connection(). (pid: %d)", getpid());
 		error = stub_->get_connection(getpid(), connection_, auth);
 		log2(DEBUG1, "Stub::get_connection() is done.", error);
 	} catch (...) {
@@ -310,7 +310,7 @@ ERROR_CODE Tsurugi::start_transaction(Oid server_oid)
 {
 	auto error{ERROR_CODE::UNKNOWN};
 
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
 	if (!Tsurugi::tsurugi().is_initialized(server_oid))
 	{
@@ -322,21 +322,21 @@ ERROR_CODE Tsurugi::start_transaction(Oid server_oid)
 	}
 
 	if (transaction_ != nullptr) {
-		elog(NOTICE, "tsurugi_fdw : There is already transaction block in progress.");
+		elog(NOTICE, "tsurugi_fdw: There is already transaction block in progress.");
 		return ERROR_CODE::OK;
 	}
 
 	boost::property_tree::ptree option;
 	GetTransactionOption(option);
 
-	elog(DEBUG1, "tsurugi_fdw : Attempt to call Connection::begin(). (pid: %d)", 
+	elog(DEBUG1, "tsurugi_fdw: Attempt to call Connection::begin(). (pid: %d)", 
 		getpid());
 
 	try {
 		// Start the transaction.
 		error = connection_->begin(option, transaction_);
 	} catch (...) {
-		elog(LOG, "tsurugi_fdw : Unexpected exception occurred.");
+		elog(LOG, "tsurugi_fdw: Unexpected exception occurred.");
 		report_error("Unexpected exception occurred.", error);
 		error = ERROR_CODE::UNKNOWN;
 	}
@@ -357,11 +357,11 @@ ERROR_CODE Tsurugi::commit()
 {
     auto error{ERROR_CODE::UNKNOWN};
 
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
     if (transaction_ != nullptr) 
     {
-        elog(DEBUG1, "tsurugi_fdw : Attempt to call Transaction::commit().");
+        elog(DEBUG1, "tsurugi_fdw: Attempt to call Transaction::commit().");
 		try {
 			/* Commits the transaction. */
 			error = transaction_->commit();
@@ -390,11 +390,11 @@ ERROR_CODE Tsurugi::rollback()
 {
     auto error{ERROR_CODE::UNKNOWN};
 
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
     if (transaction_ != nullptr) 
     {
-        elog(DEBUG1, "tsurugi_fdw : Attempt to call Transaction::rollback().");
+        elog(DEBUG1, "tsurugi_fdw: Attempt to call Transaction::rollback().");
 		try {
 			/* Rolls back the transaction. */
 			error = transaction_->rollback();
@@ -421,7 +421,7 @@ ERROR_CODE Tsurugi::rollback()
  */
 bool Tsurugi::exists_prepared_statement(std::string_view prep_name)
 {
-	elog(DEBUG1, "tsurugi_fdw : %s : name: %s", __func__, prep_name.data());
+	elog(DEBUG1, "tsurugi_fdw: %s : name: %s", __func__, prep_name.data());
 
 	bool exists{false};
 
@@ -448,7 +448,7 @@ Tsurugi::prepare(Oid server_oid, std::string_view prep_name, std::string_view st
 {
     auto error{ERROR_CODE::UNKNOWN};
 
-	elog(DEBUG1, "tsurugi_fdw : %s : name: %s", __func__, prep_name.data());
+	elog(DEBUG1, "tsurugi_fdw: %s : name: %s", __func__, prep_name.data());
 
 	if (!is_initialized(server_oid))
 	{
@@ -468,7 +468,7 @@ Tsurugi::prepare(Oid server_oid, std::string_view prep_name, std::string_view st
 		return ERROR_CODE::INVALID_PARAMETER;
 	}
 
-	elog(DEBUG1, "tsurugi_fdw : Attempt to call Connection::prepare().\n" \
+	elog(DEBUG1, "tsurugi_fdw: Attempt to call Connection::prepare().\n" \
 			"name: %s, \nstatement:\n%s", prep_name.data(), statement.data());
 
 	//	Prepare statement.
@@ -503,7 +503,7 @@ ERROR_CODE Tsurugi::prepare(Oid server_oid, std::string_view statement,
 {
 	auto error{ERROR_CODE::UNKNOWN};
 
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
 	if (!is_initialized(server_oid))
 	{
@@ -516,14 +516,14 @@ ERROR_CODE Tsurugi::prepare(Oid server_oid, std::string_view statement,
 	}
 
 	deallocate();
-	elog(DEBUG1, "tsurugi_fdw : Attempt to call Connection::prepare().\nstatement: \n%s", 
+	elog(DEBUG1, "tsurugi_fdw: Attempt to call Connection::prepare().\nstatement: \n%s", 
 		statement.data());
 
 	//	Prepare the statement.
 	try {
 		error = connection_->prepare(statement, placeholders, prep_stmt_);
 	} catch (...) {
-		elog(LOG, "tsurugi_fdw : Unexpected exception occurred.");
+		elog(LOG, "tsurugi_fdw: Unexpected exception occurred.");
 		error = ERROR_CODE::UNKNOWN;
 	}
 	log2(DEBUG1, "Connection::prepare() is done.", error);
@@ -544,7 +544,7 @@ ERROR_CODE Tsurugi::deallocate(std::string_view prep_name)
 {
 	auto error{ERROR_CODE::OK};
 
-	elog(DEBUG1, "tsurugi_fdw : %s : prep_name:%s", __func__, prep_name.data());
+	elog(DEBUG1, "tsurugi_fdw: %s : prep_name:%s", __func__, prep_name.data());
 
 	auto ite = prep_stmts_.find(prep_name.data());
 	if (ite != prep_stmts_.end())
@@ -570,7 +570,7 @@ ERROR_CODE Tsurugi::deallocate(std::string_view prep_name)
  */
 void Tsurugi::deallocate()
 {
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
 	prep_stmt_ = nullptr;
 }
@@ -585,18 +585,18 @@ Tsurugi::execute_query(std::string_view query)
 {
     auto error{ERROR_CODE::UNKNOWN};
 
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
 	if (transaction_ != nullptr)
 	{
 		elog(DEBUG1, 
-			"tsurugi_fdw : Attempt to call Transaction::execute_query(). \nquery:\n%s", 
+			"tsurugi_fdw: Attempt to call Transaction::execute_query(). \nquery:\n%s", 
 			query.data());
 		result_set_ = nullptr;
 		try {
 			error = transaction_->execute_query(query, result_set_);
 		} catch (...) {
-			elog(LOG, "tsurugi_fdw : Unexpected exception occurred.");
+			elog(LOG, "tsurugi_fdw: Unexpected exception occurred.");
 			error = ERROR_CODE::UNKNOWN;
 		}
 		log2(DEBUG1, "Transaction::execute_query() is done.", error);
@@ -621,17 +621,17 @@ Tsurugi::execute_query(ogawayama::stub::parameters_type& params)
 {
     auto error{ERROR_CODE::UNKNOWN};
 
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
 	if (transaction_ != nullptr)
 	{
 		if (!prep_stmt_) return ERROR_CODE::INVALID_PARAMETER;
-		elog(DEBUG1, "tsurugi_fdw : Attempt to call Transaction::execute_query().");
+		elog(DEBUG1, "tsurugi_fdw: Attempt to call Transaction::execute_query().");
 		result_set_ = nullptr;
 		try {
 			error = transaction_->execute_query(prep_stmt_, params, result_set_);
 		} catch (...) {
-			elog(LOG, "tsurugi_fdw : Unexpected exception occurred.");
+			elog(LOG, "tsurugi_fdw: Unexpected exception occurred.");
 			error = ERROR_CODE::UNKNOWN;
 		}
 		log2(DEBUG1, "Transaction::execute_query() is done.", error);
@@ -656,17 +656,17 @@ Tsurugi::execute_statement(std::string_view statement, std::size_t& num_rows)
 {
     auto error{ERROR_CODE::UNKNOWN};
 
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
     if (transaction_ != nullptr)
     {
-		elog(DEBUG1, "tsurugi_fdw : Attempt to execute Transaction::execute_statement()." \
+		elog(DEBUG1, "tsurugi_fdw: Attempt to execute Transaction::execute_statement()." \
 					"\nstatement:\n%s", statement.data());
 		// Execute a statement.
 		try {
 			error = transaction_->execute_statement(statement, num_rows);
 		} catch (...) {
-			elog(LOG, "tsurugi_fdw : Unexpected exception occurred.");
+			elog(LOG, "tsurugi_fdw: Unexpected exception occurred.");
 			error = ERROR_CODE::UNKNOWN;
 		}
 		log2(DEBUG1, "Transaction::execute_statement() is done.", error);
@@ -694,7 +694,7 @@ Tsurugi::execute_statement(std::string_view prep_name,
 {
     auto error{ERROR_CODE::UNKNOWN};
 
-	elog(DEBUG1, "tsurugi_fdw : %s : prep_name:%s ", __func__, prep_name.data());
+	elog(DEBUG1, "tsurugi_fdw: %s : prep_name:%s ", __func__, prep_name.data());
 
     if (transaction_ != nullptr)
     {
@@ -706,14 +706,14 @@ Tsurugi::execute_statement(std::string_view prep_name,
 				prep_name.data());
 			return ERROR_CODE::INVALID_PARAMETER;
 		}
-		elog(DEBUG1, "tsurugi_fdw : Attempt to call Transaction::execute_statement()." \
+		elog(DEBUG1, "tsurugi_fdw: Attempt to call Transaction::execute_statement()." \
 			" prep_name: %s", ite->first.data());
 
 		// Execute a statement.
 		try {
 			error = transaction_->execute_statement(ite->second, params, num_rows);
 		} catch (...) {
-			elog(LOG, "tsurugi_fdw : Unexpected exception occurred.");
+			elog(LOG, "tsurugi_fdw: Unexpected exception occurred.");
 			error = ERROR_CODE::UNKNOWN;
 		}
 		log2(DEBUG1, "Transaction::execute_statement() is done.", error);
@@ -739,17 +739,17 @@ Tsurugi::execute_statement(ogawayama::stub::parameters_type& params,
 {
     auto error{ERROR_CODE::UNKNOWN};
 
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
     if (transaction_ != nullptr)
     {
-		elog(DEBUG1, "tsurugi_fdw : Attempt to call Transaction::execute_statement().");	
+		elog(DEBUG1, "tsurugi_fdw: Attempt to call Transaction::execute_statement().");	
 
 		try {
 			// Execute a statement.
 			error = transaction_->execute_statement(prep_stmt_, params, num_rows);
 		} catch (...) {
-			elog(LOG, "tsurugi_fdw : Unexpected exception occurred.");
+			elog(LOG, "tsurugi_fdw: Unexpected exception occurred.");
 			error = ERROR_CODE::UNKNOWN;
 		}
 		log2(DEBUG1, "Transaction::execute_statement() is done.", error);
@@ -774,7 +774,7 @@ Tsurugi::get_list_tables(Oid server_oid, TableListPtr& table_list)
 {
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
 
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
 	if (!Tsurugi::tsurugi().is_initialized(server_oid))
 	{
@@ -786,14 +786,14 @@ Tsurugi::get_list_tables(Oid server_oid, TableListPtr& table_list)
 		}
 	}
 
-	elog(DEBUG1, "tsurugi_fdw : Attempt to call Connection::get_list_tables(). (pid: %d)",
+	elog(DEBUG1, "tsurugi_fdw: Attempt to call Connection::get_list_tables(). (pid: %d)",
 		 getpid());
 
 	try {
 		/* Get a list of table names from Tsurugi. */
 		error = connection_->get_list_tables(table_list);
 	} catch (...) {
-		elog(LOG, "tsurugi_fdw : Unexpected exception occurred.");
+		elog(LOG, "tsurugi_fdw: Unexpected exception occurred.");
 		error = ERROR_CODE::UNKNOWN;
 	}
 
@@ -815,7 +815,7 @@ Tsurugi::get_table_metadata(Oid server_oid, std::string_view table_name,
 {
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
 
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
 
 	if (!Tsurugi::tsurugi().is_initialized(server_oid))
@@ -849,7 +849,7 @@ Tsurugi::get_detail_message(ERROR_CODE error_code) const
 {
 	std::string message = "No detail message.";
 
-	elog(DEBUG1, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
 	if (error_code != ERROR_CODE::SERVER_ERROR)
 	{
@@ -859,7 +859,7 @@ Tsurugi::get_detail_message(ERROR_CODE error_code) const
 
 	if (connection_ == nullptr)
 	{
-		elog(DEBUG1, "tsurugi_fdw : There is no connection to Tsurugi.");
+		elog(DEBUG1, "tsurugi_fdw: There is no connection to Tsurugi.");
 		return message;
 	}
 
@@ -869,7 +869,7 @@ Tsurugi::get_detail_message(ERROR_CODE error_code) const
 	try {
 		ret_code = connection_->tsurugi_error(error);
 	} catch (...) {
-		elog(LOG, "tsurugi_fdw : Unexpected exception occurred.");
+		elog(LOG, "tsurugi_fdw: Unexpected exception occurred.");
 		return message;
 	}
 	if (ret_code == ERROR_CODE::OK)
@@ -919,7 +919,7 @@ Tsurugi::get_detail_message(ERROR_CODE error_code) const
 void 
 Tsurugi::log2(int level, std::string_view message, ERROR_CODE error) const
 {
-	std::string ext_message{"tsurugi_fdw : "};
+	std::string ext_message{"tsurugi_fdw: "};
 
 	if (level != ERROR) {
 		ext_message += message;
@@ -937,7 +937,7 @@ Tsurugi::log2(int level, std::string_view message, ERROR_CODE error) const
  */
 void Tsurugi::report_error(std::string_view message, ERROR_CODE error, const char* sql)
 {
-	elog(LOG, "tsurugi_fdw : %s (%d)\nsql: %s", message.data(), (int) error, sql);
+	elog(LOG, "tsurugi_fdw: %s (%d)\nsql: %s", message.data(), (int) error, sql);
 	if (error_message_.empty()) {
 		std::string	detail = get_detail_message(error);
 		std::ostringstream oss;
@@ -947,7 +947,7 @@ void Tsurugi::report_error(std::string_view message, ERROR_CODE error, const cha
 			<< detail.data() << "\n" 
 			<< "CONTEXT:  SQL query: " << sql;
 		error_message_ = oss.str();
-		elog(LOG, "tsurugi_fdw : error_message_ : %s", error_message_.c_str());
+		elog(LOG, "tsurugi_fdw: error_message_ : %s", error_message_.c_str());
 	}
 }
 
@@ -1011,7 +1011,7 @@ ogawayama::stub::Metadata::ColumnType::Type get_tg_column_type(const Oid pg_type
 {
 	auto tg_type = stub::Metadata::ColumnType::Type::NULL_VALUE;
 
-	elog(DEBUG5, "tsurugi_fdw : %s : pg_type: %d", __func__, (int) pg_type);
+	elog(DEBUG5, "tsurugi_fdw: %s : pg_type: %d", __func__, (int) pg_type);
 
 	switch (pg_type)
 	{
@@ -1057,7 +1057,7 @@ ogawayama::stub::Metadata::ColumnType::Type get_tg_column_type(const Oid pg_type
 			tg_type = stub::Metadata::ColumnType::Type::OCTET;
 			break;
 		default:
-			elog(LOG, "tsurugi_fdw : unrecognized type oid: %d", (int) pg_type);
+			elog(LOG, "tsurugi_fdw: unrecognized type oid: %d", (int) pg_type);
 			break;
 	}
 
@@ -1072,7 +1072,7 @@ ogawayama::stub::Metadata::ColumnType::Type get_tg_column_type(const Oid pg_type
 bool get_tg_column_type(
 		const Oid pg_type, ogawayama::stub::Metadata::ColumnType::Type& tg_type) {
 
-	elog(DEBUG5, "tsurugi_fdw : %s : pg_type: %d", __func__, (int) pg_type);
+	elog(DEBUG5, "tsurugi_fdw: %s : pg_type: %d", __func__, (int) pg_type);
 
 	tg_type = stub::Metadata::ColumnType::Type::NULL_VALUE;
 	switch (pg_type)
@@ -1119,7 +1119,7 @@ bool get_tg_column_type(
 			tg_type = stub::Metadata::ColumnType::Type::OCTET;
 			break;
 		default:
-			elog(LOG, "tsurugi_fdw : unrecognized type oid: %d", (int) pg_type);
+			elog(LOG, "tsurugi_fdw: unrecognized type oid: %d", (int) pg_type);
 			return false;
 	}
 
@@ -1143,10 +1143,10 @@ std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgt
 		case INT2OID:
 			{
 				std::int16_t value;
-				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is INT2OID.", __func__);
+				elog(DEBUG5, "tsurugi_fdw: %s : pgtype is INT2OID.", __func__);
 				if (result_set->next_column(value) == ERROR_CODE::OK)
 				{
-					elog(DEBUG5, "tsurugi_fdw : %s : value = %d", __func__, value);
+					elog(DEBUG5, "tsurugi_fdw: %s : value = %d", __func__, value);
 					is_null = false;
 					row_value = Int16GetDatum(value);
 				}
@@ -1156,10 +1156,10 @@ std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgt
 		case INT4OID:
 			{
 				std::int32_t value = 0;
-				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is INT4OID.", __func__);
+				elog(DEBUG5, "tsurugi_fdw: %s : pgtype is INT4OID.", __func__);
 				if (result_set->next_column(value) == ERROR_CODE::OK)
 				{
-					elog(DEBUG5, "tsurugi_fdw : %s : value = %d", __func__, value);
+					elog(DEBUG5, "tsurugi_fdw: %s : value = %d", __func__, value);
 					is_null = false;
 					row_value =  Int32GetDatum(value);
 				}
@@ -1169,10 +1169,10 @@ std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgt
 		case INT8OID:
 			{
 				std::int64_t value;
-				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is INT8OID.", __func__);
+				elog(DEBUG5, "tsurugi_fdw: %s : pgtype is INT8OID.", __func__);
 				if (result_set->next_column(value) == ERROR_CODE::OK)
 				{
-					elog(DEBUG5, "tsurugi_fdw : %s : value = %ld", __func__, value);
+					elog(DEBUG5, "tsurugi_fdw: %s : value = %ld", __func__, value);
 					is_null = false;
 					row_value = Int64GetDatum(value);
 				}
@@ -1182,7 +1182,7 @@ std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgt
 		case FLOAT4OID:
 			{
 				float4 value;
-				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is FLOAT4OID.", __func__);
+				elog(DEBUG5, "tsurugi_fdw: %s : pgtype is FLOAT4OID.", __func__);
 				if (result_set->next_column(value) == ERROR_CODE::OK)
 				{
 					is_null = false;
@@ -1194,7 +1194,7 @@ std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgt
 		case FLOAT8OID:
 			{
 				float8 value;
-				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is FLOAT8OID.", __func__);
+				elog(DEBUG5, "tsurugi_fdw: %s : pgtype is FLOAT8OID.", __func__);
 				if (result_set->next_column(value) == ERROR_CODE::OK)
 				{
 					is_null = false;
@@ -1207,7 +1207,7 @@ std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgt
 		case VARCHAROID:
 		case TEXTOID:
 			{
-				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is BPCHAROID/VARCHAROID/TEXTOID.", __func__);
+				elog(DEBUG5, "tsurugi_fdw: %s : pgtype is BPCHAROID/VARCHAROID/TEXTOID.", __func__);
 				std::string value;
 				Datum value_datum;
 				HeapTuple 	heap_tuple;
@@ -1218,7 +1218,7 @@ std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgt
 											ObjectIdGetDatum(pgtype));
 				if (!HeapTupleIsValid(heap_tuple))
 				{
-					elog(ERROR, "tsurugi_fdw : cache lookup failed for type %u", pgtype);
+					elog(ERROR, "tsurugi_fdw: cache lookup failed for type %u", pgtype);
 				}
 				typinput = ((Form_pg_type) GETSTRUCT(heap_tuple))->typinput;
 				typemod = ((Form_pg_type) GETSTRUCT(heap_tuple))->typtypmod;
@@ -1244,7 +1244,7 @@ std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgt
 		case DATEOID:
 			{
 				stub::date_type value;
-				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is DATEOID.", __func__);
+				elog(DEBUG5, "tsurugi_fdw: %s : pgtype is DATEOID.", __func__);
 				if (result_set->next_column(value) == ERROR_CODE::OK)
 				{
 					DateADT date;
@@ -1259,7 +1259,7 @@ std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgt
 		case TIMEOID:
 			{
 				stub::time_type value;
-				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is TIMEOID.", __func__);
+				elog(DEBUG5, "tsurugi_fdw: %s : pgtype is TIMEOID.", __func__);
 				if (result_set->next_column(value) == ERROR_CODE::OK)
 				{
 					TimeADT time;
@@ -1280,7 +1280,7 @@ std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgt
 		case TIMETZOID:
 			{
 				stub::timetz_type value;
-				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is TIMETZOID.", __func__);
+				elog(DEBUG5, "tsurugi_fdw: %s : pgtype is TIMETZOID.", __func__);
 				if (result_set->next_column(value) == ERROR_CODE::OK)
 				{
 					TimeTzADT timetz;
@@ -1307,7 +1307,7 @@ std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgt
 		case TIMESTAMPTZOID:
 			{
 				stub::timestamptz_type value;
-				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is TIMESTAMPTZOID.", __func__);
+				elog(DEBUG5, "tsurugi_fdw: %s : pgtype is TIMESTAMPTZOID.", __func__);
 				if (result_set->next_column(value) == ERROR_CODE::OK)
 				{
 					Timestamp timestamp;
@@ -1336,7 +1336,7 @@ std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgt
 		case TIMESTAMPOID:
 			{
 				stub::timestamp_type value;
-				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is TIMESTAMPOID.", __func__);
+				elog(DEBUG5, "tsurugi_fdw: %s : pgtype is TIMESTAMPOID.", __func__);
 				if (result_set->next_column(value) == ERROR_CODE::OK)
 				{
 					Timestamp timestamp;
@@ -1357,7 +1357,7 @@ std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgt
 		case NUMERICOID:
 			{
 				stub::decimal_type value;
-				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is NUMERICOID.", __func__);
+				elog(DEBUG5, "tsurugi_fdw: %s : pgtype is NUMERICOID.", __func__);
 				auto error_code = result_set->next_column(value);
 				if (error_code == ERROR_CODE::OK)
 				{
@@ -1408,7 +1408,7 @@ std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgt
 
 		case BYTEAOID:
 			{
-				elog(DEBUG5, "tsurugi_fdw : %s : pgtype is BYTEAOID.", __func__);
+				elog(DEBUG5, "tsurugi_fdw: %s : pgtype is BYTEAOID.", __func__);
 
 				std::string_view value;
 				ERROR_CODE result = result_set->next_column(value);
@@ -1441,7 +1441,7 @@ std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgt
  */
 ogawayama::stub::value_type convert_type_to_tg(const Oid pg_type, Datum value)
 {
-	elog(DEBUG1, "tsurugi_fdw : %s : pg_type: %d", __func__, (int) pg_type);
+	elog(DEBUG1, "tsurugi_fdw: %s : pg_type: %d", __func__, (int) pg_type);
 
 	ogawayama::stub::value_type param{};
 	switch (pg_type)

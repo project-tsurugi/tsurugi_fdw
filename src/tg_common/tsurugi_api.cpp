@@ -110,6 +110,8 @@ extern bool GetTransactionOption(boost::property_tree::ptree&);
 /** ===========================================================================
  * 
  *  Error Handlings.
+ * 
+ *  ===========================================================================
  */
 namespace {
 
@@ -348,6 +350,8 @@ const char* tg_global_error_message(void) noexcept {
 /** ===========================================================================
  * 
  *  Helper functions.
+ * 
+ *  ===========================================================================
  */
 namespace {
 /**
@@ -596,7 +600,7 @@ size_t make_placeholders(Relation rel,
     TupleDesc tupdesc = RelationGetDescr(rel);
     size_t param_num = 0;
 
-	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
 
 	for (int i = 0; i < tupdesc->natts; i++) {
 		/* parameter name is 1 origin. */
@@ -623,7 +627,7 @@ size_t make_placeholders(Relation rel,
  */
 size_t make_parameters(
         ExprContext* econtext, List* param_exprs, stub::parameters_type& params) {
-	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
 
 	size_t param_num = 0;
 	ListCell   *lc;
@@ -668,7 +672,7 @@ size_t make_parameters(
         ogawayama::stub::parameters_type& params) noexcept {
 	TupleDesc tupdesc = RelationGetDescr(rel);
 
-	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
 
 	if (tupdesc == nullptr || slots == nullptr) {
         return 0;
@@ -699,7 +703,7 @@ size_t make_parameters(
             params.emplace_back(param_name, value);
         }
     }
-    elog(DEBUG1, "tsurugi_fdw : parameter count: %d", param_num);
+    elog(DEBUG1, "tsurugi_fdw: parameter count: %d", param_num);
 
 	return 0;
 }
@@ -734,6 +738,8 @@ void make_tuple_from_result_row(ResultSetPtr result_set, TupleDesc tupleDescript
 /** ===========================================================================
  *  
  *  Tsurugi APIs.
+ * 
+ *  ===========================================================================
  */
 extern "C" {
 /**
@@ -973,7 +979,7 @@ const char*	tg_conn_error_message(const TGconn* tg_conn) noexcept {
 
 /** ===========================================================================
  * 
- *  Execute Statement Functions.
+ *  Statement Functions.
  */
 /**
  *  tg_stmt_prepare
@@ -1212,7 +1218,6 @@ const char* tg_stmt_error_message(const TGstmt* tg_stmt) noexcept {
 /** ===========================================================================
  * 
  *  ResultSet Functions.
- * 
  */
 /**
  *  tg_result_destroy

@@ -70,7 +70,7 @@ PREPARE prep_select AS
   UNION
   SELECT * FROM fdw_sel_unsupported_test;
 EXECUTE prep_select;
-ERROR:  tsurugi_fdw : tsurugi_fdw doesn't yet support implicit JOIN.
+ERROR:  tsurugi_fdw: tsurugi_fdw doesn't yet support implicit JOIN.
 DEALLOCATE prep_select;
 -- UNION ALL
 PREPARE prep_select AS
@@ -78,7 +78,7 @@ PREPARE prep_select AS
   UNION ALL
   SELECT * FROM fdw_sel_unsupported_test;
 EXECUTE prep_select;
-ERROR:  tsurugi_fdw : tsurugi_fdw doesn't yet support implicit JOIN.
+ERROR:  tsurugi_fdw: tsurugi_fdw doesn't yet support implicit JOIN.
 DEALLOCATE prep_select;
 -- UNION DISTINCT
 PREPARE prep_select AS
@@ -86,7 +86,7 @@ PREPARE prep_select AS
   UNION DISTINCT
   SELECT id, name FROM fdw_sel_unsupported_test ORDER BY id, name;
 EXECUTE prep_select;
-ERROR:  tsurugi_fdw : tsurugi_fdw doesn't yet support implicit JOIN.
+ERROR:  tsurugi_fdw: tsurugi_fdw doesn't yet support implicit JOIN.
 DEALLOCATE prep_select;
 -- INTERSECT
 PREPARE prep_select AS
@@ -94,7 +94,7 @@ PREPARE prep_select AS
   INTERSECT
   SELECT id FROM fdw_sel_unsupported_test ORDER BY id;
 EXECUTE prep_select;
-ERROR:  tsurugi_fdw : tsurugi_fdw doesn't yet support implicit JOIN.
+ERROR:  tsurugi_fdw: tsurugi_fdw doesn't yet support implicit JOIN.
 DEALLOCATE prep_select;
 -- INTERSECT ALL
 PREPARE prep_select AS
@@ -102,7 +102,7 @@ PREPARE prep_select AS
   INTERSECT ALL
   SELECT id FROM fdw_sel_unsupported_test ORDER BY id;
 EXECUTE prep_select;
-ERROR:  tsurugi_fdw : tsurugi_fdw doesn't yet support implicit JOIN.
+ERROR:  tsurugi_fdw: tsurugi_fdw doesn't yet support implicit JOIN.
 DEALLOCATE prep_select;
 -- INTERSECT DISTINCT
 PREPARE prep_select AS
@@ -110,7 +110,7 @@ PREPARE prep_select AS
   INTERSECT DISTINCT
   SELECT id FROM fdw_sel_unsupported_test ORDER BY id;
 EXECUTE prep_select;
-ERROR:  tsurugi_fdw : tsurugi_fdw doesn't yet support implicit JOIN.
+ERROR:  tsurugi_fdw: tsurugi_fdw doesn't yet support implicit JOIN.
 DEALLOCATE prep_select;
 -- EXCEPT
 PREPARE prep_select AS
@@ -118,7 +118,7 @@ PREPARE prep_select AS
   EXCEPT
   SELECT id FROM fdw_sel_unsupported_test ORDER BY id;
 EXECUTE prep_select;
-ERROR:  tsurugi_fdw : tsurugi_fdw doesn't yet support implicit JOIN.
+ERROR:  tsurugi_fdw: tsurugi_fdw doesn't yet support implicit JOIN.
 DEALLOCATE prep_select;
 -- EXCEPT ALL
 PREPARE prep_select AS
@@ -126,7 +126,7 @@ PREPARE prep_select AS
   EXCEPT ALL
   SELECT id FROM fdw_sel_unsupported_test ORDER BY id;
 EXECUTE prep_select;
-ERROR:  tsurugi_fdw : tsurugi_fdw doesn't yet support implicit JOIN.
+ERROR:  tsurugi_fdw: tsurugi_fdw doesn't yet support implicit JOIN.
 DEALLOCATE prep_select;
 -- EXCEPT DISTINCT
 PREPARE prep_select AS
@@ -134,7 +134,7 @@ PREPARE prep_select AS
   EXCEPT DISTINCT
   SELECT id FROM fdw_sel_unsupported_test ORDER BY id;
 EXECUTE prep_select;
-ERROR:  tsurugi_fdw : tsurugi_fdw doesn't yet support implicit JOIN.
+ERROR:  tsurugi_fdw: tsurugi_fdw doesn't yet support implicit JOIN.
 DEALLOCATE prep_select;
 -- WITH
 PREPARE prep_select AS

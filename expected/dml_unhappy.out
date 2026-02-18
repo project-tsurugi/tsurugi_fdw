@@ -27,47 +27,47 @@ CREATE FOREIGN TABLE fdw_sel_unsupported_test (
 SELECT * FROM fdw_sel_unsupported_test
 UNION
 SELECT * FROM fdw_sel_unsupported_test;
-ERROR:  tsurugi_fdw : tsurugi_fdw doesn't yet support implicit JOIN.
+ERROR:  tsurugi_fdw: tsurugi_fdw doesn't yet support implicit JOIN.
 -- UNION ALL
 SELECT * FROM fdw_sel_unsupported_test
 UNION ALL
 SELECT * FROM fdw_sel_unsupported_test;
-ERROR:  tsurugi_fdw : tsurugi_fdw doesn't yet support implicit JOIN.
+ERROR:  tsurugi_fdw: tsurugi_fdw doesn't yet support implicit JOIN.
 -- UNION DISTINCT
 SELECT ref_id, name FROM fdw_sel_unsupported_test
 UNION DISTINCT
 SELECT id, name FROM fdw_sel_unsupported_test ORDER BY ref_id, name;
-ERROR:  tsurugi_fdw : tsurugi_fdw doesn't yet support implicit JOIN.
+ERROR:  tsurugi_fdw: tsurugi_fdw doesn't yet support implicit JOIN.
 -- INTERSECT
 SELECT ref_id FROM fdw_sel_unsupported_test
 INTERSECT
 SELECT id FROM fdw_sel_unsupported_test ORDER BY ref_id;
-ERROR:  tsurugi_fdw : tsurugi_fdw doesn't yet support implicit JOIN.
+ERROR:  tsurugi_fdw: tsurugi_fdw doesn't yet support implicit JOIN.
 -- INTERSECT ALL
 SELECT ref_id FROM fdw_sel_unsupported_test
 INTERSECT ALL
 SELECT id FROM fdw_sel_unsupported_test ORDER BY ref_id;
-ERROR:  tsurugi_fdw : tsurugi_fdw doesn't yet support implicit JOIN.
+ERROR:  tsurugi_fdw: tsurugi_fdw doesn't yet support implicit JOIN.
 -- INTERSECT DISTINCT
 SELECT ref_id FROM fdw_sel_unsupported_test
 INTERSECT DISTINCT
 SELECT id FROM fdw_sel_unsupported_test ORDER BY ref_id;
-ERROR:  tsurugi_fdw : tsurugi_fdw doesn't yet support implicit JOIN.
+ERROR:  tsurugi_fdw: tsurugi_fdw doesn't yet support implicit JOIN.
 -- EXCEPT
 SELECT ref_id FROM fdw_sel_unsupported_test
 EXCEPT
 SELECT id FROM fdw_sel_unsupported_test ORDER BY ref_id;
-ERROR:  tsurugi_fdw : tsurugi_fdw doesn't yet support implicit JOIN.
+ERROR:  tsurugi_fdw: tsurugi_fdw doesn't yet support implicit JOIN.
 -- EXCEPT ALL
 SELECT ref_id FROM fdw_sel_unsupported_test
 EXCEPT ALL
 SELECT id FROM fdw_sel_unsupported_test ORDER BY ref_id;
-ERROR:  tsurugi_fdw : tsurugi_fdw doesn't yet support implicit JOIN.
+ERROR:  tsurugi_fdw: tsurugi_fdw doesn't yet support implicit JOIN.
 -- EXCEPT DISTINCT
 SELECT ref_id FROM fdw_sel_unsupported_test
 EXCEPT DISTINCT
 SELECT id FROM fdw_sel_unsupported_test ORDER BY ref_id;
-ERROR:  tsurugi_fdw : tsurugi_fdw doesn't yet support implicit JOIN.
+ERROR:  tsurugi_fdw: tsurugi_fdw doesn't yet support implicit JOIN.
 -- WITH
 -----FIXME: Disabled due to issues
 -----WITH value_data AS (
