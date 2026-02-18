@@ -2073,9 +2073,10 @@ tsurugiExecForeignInsert(EState *estate,
 /*
  * tsurugiExecForeignUpdate
  */
-static TupleTableSlot *tsurugiExecForeignUpdate(EState *estate, ResultRelInfo *rinfo,
-												TupleTableSlot *slot,
-												TupleTableSlot *planSlot)
+static TupleTableSlot *
+tsurugiExecForeignUpdate(EState *estate, ResultRelInfo *rinfo,
+						TupleTableSlot *slot,
+						TupleTableSlot *planSlot)
 {
 	TupleTableSlot **rslot;
 	int numSlots = 1;
@@ -2091,9 +2092,10 @@ static TupleTableSlot *tsurugiExecForeignUpdate(EState *estate, ResultRelInfo *r
 /*
  * tsurugiExecForeignDelete
  */
-static TupleTableSlot *tsurugiExecForeignDelete(EState *estate, ResultRelInfo *rinfo,
-												TupleTableSlot *slot,
-												TupleTableSlot *planSlot)
+static TupleTableSlot *
+tsurugiExecForeignDelete(EState *estate, ResultRelInfo *rinfo,
+							TupleTableSlot *slot,
+							TupleTableSlot *planSlot)
 {
 	TupleTableSlot **rslot;
 	int numSlots = 1;
