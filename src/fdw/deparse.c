@@ -1863,7 +1863,7 @@ deparseUpdateSql(StringInfo buf, RangeTblEntry *rte,
 		first = false;
 
 		deparseColumnRef(buf, rtindex, attnum, rte, false);
-		appendStringInfo(buf, " = ::param%d", pindex);
+		appendStringInfo(buf, " = :param%d", pindex);
 		pindex++;
 	}
 }
