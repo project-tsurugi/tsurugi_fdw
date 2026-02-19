@@ -14,22 +14,28 @@
  * limitations under the License.
  *
  */
+#include <memory>
+#include <optional>
+#include <regex>
+#include <string>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
 #include <boost/property_tree/ini_parser.hpp>
-#include <memory>
-#include <regex>
-#include <string>
+#include <boost/property_tree/json_parser.hpp>
 #define BOOST_BIND_GLOBAL_PLACEHOLDERS
 #include <ogawayama/stub/api.h>
 #include <ogawayama/stub/error_code.h>
-#include <boost/property_tree/json_parser.hpp>
+
 #include "tsurugi.hpp"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include "postgres.h"
+#include "tsurugi_api.h"
+
 #include "catalog/pg_type_d.h"
 #include "commands/defrem.h"
 #include "executor/executor.h"
@@ -38,8 +44,6 @@ extern "C" {
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/params.h"
-#include "postgres.h"
-#include "tsurugi_api.h"
 #include "utils/rel.h"
 #include "utils/relcache.h"
 #ifdef __cplusplus
@@ -134,8 +138,8 @@ inline TG_STATUS set_ok(ErrorState& error) noexcept {
 /**
  *  @brief  Set the error message to global error.
  */
-inline TG_STATUS set_error(const char* msg,
-						   const TG_STATUS code = TG_STATUS_ERROR) noexcept {
+inline TG_STATUS set_error(
+		const char* msg, const TG_STATUS code = TG_STATUS_ERROR) noexcept {
 	try {
 		std::ostringstream oss;
 		oss << "tsurugi_fdw: " << msg;
@@ -148,8 +152,8 @@ inline TG_STATUS set_error(const char* msg,
 /**
  *  @brief  Set the error message to global error.
  */
-inline TG_STATUS set_error(std::string_view msg,
-						   const TG_STATUS code = TG_STATUS_ERROR) noexcept {
+inline TG_STATUS set_error(
+		std::string_view msg, const TG_STATUS code = TG_STATUS_ERROR) noexcept {
 	try {
 		std::ostringstream oss;
 		oss << "tsurugi_fdw: " << msg;
@@ -163,7 +167,7 @@ inline TG_STATUS set_error(std::string_view msg,
  *  @brief  Set the error message to error object.
  */
 inline TG_STATUS set_error(ErrorState& error, std::string_view msg,
-						   const TG_STATUS code = TG_STATUS_ERROR) noexcept {
+		const TG_STATUS code = TG_STATUS_ERROR) noexcept {
 	try {
 		std::ostringstream oss;
 		oss << "tsurugi_fdw: " << msg;
@@ -180,7 +184,7 @@ inline TG_STATUS set_error(ErrorState& error, std::string_view msg,
 inline TG_STATUS set_exception() noexcept {
 	elog(DEBUG1, "tsurugi_fdw: %s (what: none)", __func__);
 	set_error_msg(g_global_error, kErrMsgSize,
-				  "tsurugi_fdw: Unexpected exception occurred.");
+			"tsurugi_fdw: Unexpected exception occurred.");
 	return TG_STATUS_EXCEPTION;
 }
 
@@ -191,7 +195,8 @@ inline TG_STATUS set_exception(const std::exception& e) noexcept {
 	elog(DEBUG1, "tsurugi_fdw: %s (what: %s)", __func__, e.what());
 	try {
 		std::ostringstream oss;
-		oss << "tsurugi_fdw: Unexpected exception occurred. (what: " << e.what() << ")";
+		oss << "tsurugi_fdw: Unexpected exception occurred. (what: " << e.what()
+			<< ")";
 		set_error_msg(g_global_error, sizeof(g_global_error), oss.str());
 	} catch (...) {
 	}
@@ -206,7 +211,7 @@ inline TG_STATUS set_exception(ErrorState& error) noexcept {
 	try {
 		std::ostringstream oss;
 		set_error_msg(error.msg, kErrMsgSize,
-					  "tsurugi_fdw: Unexpected exception occurred.");
+				"tsurugi_fdw: Unexpected exception occurred.");
 		error.code = TG_STATUS_EXCEPTION;
 	} catch (...) {
 	}
@@ -216,11 +221,13 @@ inline TG_STATUS set_exception(ErrorState& error) noexcept {
 /**
  *  @brief  Set the expection w/ what to error object.
  */
-inline TG_STATUS set_exception(ErrorState& error, const std::exception& e) noexcept {
+inline TG_STATUS set_exception(
+		ErrorState& error, const std::exception& e) noexcept {
 	elog(DEBUG1, "tsurugi_fdw: %s (what: %s)", __func__, e.what());
 	try {
 		std::ostringstream oss;
-		oss << "tsurugi_fdw: Unexpected exception occurred. (what: " << e.what() << ")";
+		oss << "tsurugi_fdw: Unexpected exception occurred. (what: " << e.what()
+			<< ")";
 		set_error_msg(error.msg, kErrMsgSize, oss.str());
 		error.code = TG_STATUS_EXCEPTION;
 	} catch (...) {
@@ -235,13 +242,15 @@ inline TG_STATUS set_exception(ErrorState& error, const std::exception& e) noexc
  * 			(error) error code of ogawayama.
  *  @return	none.
  */
-void log2(const int level, std::string_view message, const ERROR_CODE error) noexcept {
+void log2(const int level, std::string_view message,
+		const ERROR_CODE error) noexcept {
 	assert(level != ERROR);
 
 	try {
 		std::ostringstream oss;
-		oss << "tsurugi_fdw: " << message << "(error: " << error_name(error).data() << "{"
-			<< (int)error << "})";
+		oss << "tsurugi_fdw: " << message
+			<< "(error: " << error_name(error).data() << "{" << (int) error
+			<< "})";
 		elog(level, "%s", oss.str().c_str());
 	} catch (...) {
 	}
@@ -252,8 +261,8 @@ void log2(const int level, std::string_view message, const ERROR_CODE error) noe
  *  @param 	(error_code) error code of ogawayama.
  *  @return	detail error message.
  */
-std::string get_detail_message(const TGconn* tg_conn,
-							   const ERROR_CODE error_code) noexcept {
+std::string get_detail_message(
+		const TGconn* tg_conn, const ERROR_CODE error_code) noexcept {
 	std::string message = "No detail message.";
 	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
@@ -272,31 +281,37 @@ std::string get_detail_message(const TGconn* tg_conn,
 	auto ret_code = tg_conn->impl->tsurugi_error(error);
 	if (ret_code == ERROR_CODE::OK) {
 		elog(LOG,
-			 "ERROR_CODE::SERVER_ERROR\n\t"
-			 "tsurugi_error_code.type: %d\n\t"
-			 "                   code: %d\n\t"
-			 "                   name: %s\n\t"
-			 "                 detail: %s\n\t"
-			 "      supplemental_text: %s",
-			 (int)error.type, error.code, error.name.c_str(), error.detail.c_str(),
-			 error.supplemental_text.c_str());
+				"ERROR_CODE::SERVER_ERROR\n\t"
+				"tsurugi_error_code.type: %d\n\t"
+				"                   code: %d\n\t"
+				"                   name: %s\n\t"
+				"                 detail: %s\n\t"
+				"      supplemental_text: %s",
+				(int) error.type, error.code, error.name.c_str(),
+				error.detail.c_str(), error.supplemental_text.c_str());
 
 		std::string detail_code;
 		try {
 			switch (error.type) {
 				case stub::tsurugi_error_code::tsurugi_error_type::sql_error:
-					detail_code = "SQL-" + (boost::format("%05d") % error.code).str();
+					detail_code =
+							"SQL-" + (boost::format("%05d") % error.code).str();
 					break;
-				case stub::tsurugi_error_code::tsurugi_error_type::framework_error:
-					detail_code = "SCD-" + (boost::format("%05d") % error.code).str();
+				case stub::tsurugi_error_code::tsurugi_error_type::
+						framework_error:
+					detail_code =
+							"SCD-" + (boost::format("%05d") % error.code).str();
 					break;
 				default:
-					elog(WARNING, "Unknown error type. (type: %d)", (int)error.type);
-					detail_code = "UNKNOWN-" + (boost::format("%05d") % error.code).str();
+					elog(WARNING, "Unknown error type. (type: %d)",
+							(int) error.type);
+					detail_code = "UNKNOWN-" +
+								  (boost::format("%05d") % error.code).str();
 					break;
 			}
 		} catch (...) {
-			elog(LOG, "tsurugi_fdw: Unexpected exception occurred in %s.", __func__);
+			elog(LOG, "tsurugi_fdw: Unexpected exception occurred in %s.",
+					__func__);
 			return message;
 		}
 		// build error message.
@@ -318,12 +333,12 @@ std::string get_detail_message(const TGconn* tg_conn,
  *  @return	none.
  */
 std::string tg_make_error_message(TGconn* tg_conn, std::string_view message,
-								  ERROR_CODE error, std::string_view sql = {}) {
+		ERROR_CODE error, std::string_view sql = {}) {
 	std::string detail = get_detail_message(tg_conn, error);
 	std::ostringstream msg;
 	msg << "Failed to execute remote SQL.\n"
-		<< "HINT:  " << message << " error: " << stub::error_name(error).data() << "("
-		<< (int)error << ")\n"
+		<< "HINT:  " << message << " error: " << stub::error_name(error).data()
+		<< "(" << (int) error << ")\n"
 		<< detail.data() << "\n"
 		<< "CONTEXT:  SQL query: " << sql;
 	elog(DEBUG3, "tsurugi_fdw: %s\n%s", __func__, msg.str().c_str());
@@ -358,16 +373,18 @@ std::string get_shared_memory_name() noexcept {
 		boost::system::error_code error;
 		if (fs::exists(conf_file, error)) {
 			boost::property_tree::read_ini("tsurugi_fdw.conf", pt);
-			boost::optional<std::string> str =
-				pt.get_optional<std::string>("Configurations.SHARED_MEMORY_NAME");
-			if (str) {
-				shm_name = str.get();
+			boost::optional<std::string> value = pt.get_optional<std::string>(
+					"Configurations.SHARED_MEMORY_NAME");
+			if (value) {
+				shm_name = value.get();
 			}
 		}
 	} catch (fs::filesystem_error& e) {
-		elog(DEBUG1, "tsurugi_fdw: filesystem exception occurred (what: %s)", e.what());
+		elog(DEBUG1, "tsurugi_fdw: filesystem exception occurred (what: %s)",
+				e.what());
 	} catch (...) {
-		elog(LOG, "tsurugi_fdw: Unexpected exception occurred in %s.", __func__);
+		elog(LOG, "tsurugi_fdw: Unexpected exception occurred in %s.",
+				__func__);
 	}
 
 	return shm_name;
@@ -391,9 +408,11 @@ std::string trim_query_string(const std::string& orig_query) noexcept {
 		std::replace(query.begin(), query.end(), '\n', ' ');
 		elog(DEBUG3, "tsurugi_fdw:\ntrimmed query string:\n%s", query.c_str());
 	} catch (std::regex_error& e) {
-		elog(DEBUG1, "tsurugi_fdw: Regex exception occuuured. (what: %s)", e.what());
+		elog(DEBUG1, "tsurugi_fdw: Regex exception occuuured. (what: %s)",
+				e.what());
 	} catch (...) {
-		elog(LOG, "tsurugi_fdw: Unexpected exception occurred in %s.", __func__);
+		elog(LOG, "tsurugi_fdw: Unexpected exception occurred in %s.",
+				__func__);
 	}
 	return query;
 }
@@ -412,15 +431,19 @@ static std::string make_tsurugi_query(std::string_view query_string) noexcept {
 	try {
 		// erase public schema.
 		std::smatch regex_match;
-		std::regex regex_public(PUBLIC_remote_schema, std::regex_constants::icase);
+		std::regex regex_public(
+				PUBLIC_remote_schema, std::regex_constants::icase);
 		while (std::regex_search(tsurugi_query, regex_match, regex_public)) {
-			std::string::size_type erase_pos = tsurugi_query.find(regex_match.str(0));
+			std::string::size_type erase_pos =
+					tsurugi_query.find(regex_match.str(0));
 			std::size_t erase_size = regex_match.str(0).size();
 			tsurugi_query.erase(erase_pos, erase_size);
 		}
 		std::regex regex_double_quotation(PUBLIC_DOUBLE_QUOTATION);
-		while (std::regex_search(tsurugi_query, regex_match, regex_double_quotation)) {
-			std::string::size_type erase_pos = tsurugi_query.find(regex_match.str(0));
+		while (std::regex_search(
+				tsurugi_query, regex_match, regex_double_quotation)) {
+			std::string::size_type erase_pos =
+					tsurugi_query.find(regex_match.str(0));
 			std::size_t erase_size = regex_match.str(0).size();
 			tsurugi_query.erase(erase_pos, erase_size);
 		}
@@ -431,15 +454,19 @@ static std::string make_tsurugi_query(std::string_view query_string) noexcept {
 		}
 
 		// convert the binary type literal.
-		std::regex pattern(R"_(('\\x([0-9a-f]*)'))_", std::regex_constants::icase);
+		std::regex pattern(
+				R"_(('\\x([0-9a-f]*)'))_", std::regex_constants::icase);
 		auto replaced = std::regex_replace(tsurugi_query, pattern, "X'$2'");
 		tsurugi_query = replaced;
-		elog(DEBUG5, "tsurugi_fdw: Converted to Tsurugi query:\nsrc: %s\ndst: %s",
-			 query_string.data(), replaced.c_str());
+		elog(DEBUG5,
+				"tsurugi_fdw: Converted to Tsurugi query:\nsrc: %s\ndst: %s",
+				query_string.data(), replaced.c_str());
 	} catch (std::regex_error& e) {
-		elog(DEBUG1, "tsurugi_fdw: Regex exception occurred. (what:%s)", e.what());
+		elog(DEBUG1, "tsurugi_fdw: Regex exception occurred. (what:%s)",
+				e.what());
 	} catch (...) {
-		elog(LOG, "tsurugi_fdw: Unexpected exception occurred in %s.", __func__);
+		elog(LOG, "tsurugi_fdw: Unexpected exception occurred in %s.",
+				__func__);
 	}
 
 	return tsurugi_query;
@@ -462,7 +489,7 @@ bool is_prepare_statement(const char* query) noexcept {
  *          (second)    prepare statement.
  */
 std::pair<std::string, std::string> extract_prepare_statement(
-	const char* query) noexcept {
+		const char* query) noexcept {
 	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
 
 	auto orig_query = trim_query_string(query);
@@ -481,16 +508,18 @@ std::pair<std::string, std::string> extract_prepare_statement(
 		for (auto& token : tokens) {
 			if (!pg_strcasecmp(prev_token.c_str(), "PREPARE"))
 				prep_name = token;
-			else if (!pg_strcasecmp(prev_token.c_str(), "AS") || !prep_stmt.empty())
+			else if (!pg_strcasecmp(prev_token.c_str(), "AS") ||
+					 !prep_stmt.empty())
 				prep_stmt += token + " ";
 			prev_token = token;
 		}
-		if (!prep_stmt.empty()) prep_stmt.pop_back();  // remove a last space character.
+		if (!prep_stmt.empty())
+			prep_stmt.pop_back();  // remove a last space character.
 	} else {
 		prep_stmt = orig_query;
 	}
 	elog(DEBUG3, "tsurugi_fdw: prep_name: %s,\nprepare statement = \n%s",
-		 prep_name.c_str(), prep_stmt.c_str());
+			prep_name.c_str(), prep_stmt.c_str());
 
 	if (boost::algorithm::icontains(query, "$")) {
 		try {
@@ -504,16 +533,18 @@ std::pair<std::string, std::string> extract_prepare_statement(
 				offset = pos + to.length();
 			}
 		} catch (const std::logic_error& e) {
-			elog(LOG, "tsurugi_fdw: A logic_error exception occurred. (what: %s)",
-				 e.what());
+			elog(LOG,
+					"tsurugi_fdw: A logic_error exception occurred. (what: %s)",
+					e.what());
 			return std::pair{"", ""};
 		} catch (const std::exception& e) {
-			elog(LOG, "tsurugi_fdw: An exception occurred. (what: %s)", e.what());
+			elog(LOG, "tsurugi_fdw: An exception occurred. (what: %s)",
+					e.what());
 			return std::pair{"", ""};
 		}
 	}
 	elog(DEBUG3, "tsurugi_fdw: prep_name: %s,\nprepare statement = \n%s",
-		 prep_name.c_str(), prep_stmt.c_str());
+			prep_name.c_str(), prep_stmt.c_str());
 	return std::pair{prep_name, prep_stmt};
 }
 
@@ -525,21 +556,21 @@ std::pair<std::string, std::string> extract_prepare_statement(
  *          (othes) failure, param number where the error occurred.
  */
 size_t make_placeholders(ParamListInfo param_linfo,
-						 ogawayama::stub::placeholders_type& placeholders) noexcept {
+		ogawayama::stub::placeholders_type& placeholders) noexcept {
 	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
 
 	placeholders.clear();
+	size_t param_num = 0;
 	if (param_linfo != nullptr) {
 		for (auto i = 0; i < param_linfo->numParams; i++) {
-			/* parameter name is 1 origin. */
-			std::string param_name = "param" + std::to_string(i + 1);
-			stub::Metadata::ColumnType::Type column_type;
-			auto success =
-				tsurugi::get_tg_column_type(param_linfo->params[i].ptype, column_type);
-			if (!success) {
-				return i + 1;
+			/* parameter number is 1 origin. */
+			std::string param_name = "param" + std::to_string(++param_num);
+			auto tg_type =
+					tg_convert_type_pg_to_tg(param_linfo->params[i].ptype);
+			if (!tg_type) {
+				return param_num;
 			}
-			placeholders.emplace_back(param_name, column_type);
+			placeholders.emplace_back(param_name, tg_type.value());
 		}
 		elog(DEBUG1, "tsurugi_fdw: placeholders: %d", param_linfo->numParams);
 	}
@@ -555,7 +586,7 @@ size_t make_placeholders(ParamListInfo param_linfo,
  *          (others) failure, param number where error occurred.
  */
 size_t make_parameters(ParamListInfo param_linfo,
-					   ogawayama::stub::parameters_type& params) noexcept {
+		ogawayama::stub::parameters_type& params) noexcept {
 	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
 
 	int param_num = 0;
@@ -570,11 +601,12 @@ size_t make_parameters(ParamListInfo param_linfo,
 				std::monostate mono{};
 				params.emplace_back(param_name, mono);
 			} else {
-				auto value = tsurugi::convert_type_to_tg(param.ptype, param.value);
-				if (std::holds_alternative<std::monostate>(value)) {
+				auto tg_value =
+						tg_convert_value_pg_to_tg(param.ptype, param.value);
+				if (!tg_value) {
 					return param_num;
 				}
-				params.emplace_back(param_name, value);
+				params.emplace_back(param_name, tg_value.value());
 			}
 		}
 	}
@@ -583,7 +615,7 @@ size_t make_parameters(ParamListInfo param_linfo,
 }
 
 size_t make_placeholders(Relation rel,
-						 ogawayama::stub::placeholders_type& placeholders) noexcept {
+		ogawayama::stub::placeholders_type& placeholders) noexcept {
 	TupleDesc tupdesc = RelationGetDescr(rel);
 	size_t param_num = 0;
 
@@ -593,13 +625,11 @@ size_t make_placeholders(Relation rel,
 		/* parameter name is 1 origin. */
 		param_num = i + 1;
 		std::string param_name = "param" + std::to_string(param_num);
-		stub::Metadata::ColumnType::Type column_type;
-		auto success =
-			tsurugi::get_tg_column_type(tupdesc->attrs[i].atttypid, column_type);
-		if (!success) {
+		auto tg_type = tg_convert_type_pg_to_tg(tupdesc->attrs[i].atttypid);
+		if (!tg_type) {
 			return param_num;
 		}
-		placeholders.emplace_back(param_name, column_type);
+		placeholders.emplace_back(param_name, tg_type.value());
 	}
 
 	return 0;
@@ -656,7 +686,7 @@ size_t make_parameters(
  *		Bind parameters of prepared statement.
  */
 size_t make_parameters(Relation rel, List* target_attrs, TupleTableSlot** slots,
-					   ogawayama::stub::parameters_type& params) noexcept {
+		ogawayama::stub::parameters_type& params) noexcept {
 	TupleDesc tupdesc = RelationGetDescr(rel);
 
 	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
@@ -670,23 +700,23 @@ size_t make_parameters(Relation rel, List* target_attrs, TupleTableSlot** slots,
 	foreach (lc, target_attrs) {
 		int attnum = lfirst_int(lc);
 		Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
-		Datum expr_value;
+		Datum pg_value;
 		bool isnull;
 		// parameter number is 1 origin.
 		std::string param_name = "param" + std::to_string(++param_num);
 
 		/* Ignore generated columns; they are set to DEFAULT */
 		if (attr->attgenerated) continue;
-		expr_value = slot_getattr(slots[0], attnum, &isnull);
+		pg_value = slot_getattr(slots[0], attnum, &isnull);
 		if (isnull) {
 			std::monostate mono{};
 			params.emplace_back(param_name, mono);
 		} else {
-			auto value = tsurugi::convert_type_to_tg(attr->atttypid, expr_value);
-			if (std::holds_alternative<std::monostate>(value)) {
+			auto tg_value = tg_convert_value_pg_to_tg(attr->atttypid, pg_value);
+			if (!tg_value) {
 				return param_num;
 			}
-			params.emplace_back(param_name, value);
+			params.emplace_back(param_name, tg_value.value());
 		}
 	}
 	elog(DEBUG1, "tsurugi_fdw: parameter count: %d", param_num);
@@ -695,11 +725,12 @@ size_t make_parameters(Relation rel, List* target_attrs, TupleTableSlot** slots,
 }
 
 /**
- *  @brief Obtain tuple data from Ogawayama, and convert data type to PG data type.
+ *  @brief Obtain tuple data from Ogawayama, and convert data type to PG data
+ * type.
  */
-void make_tuple_from_result_row(ResultSetPtr result_set, TupleDesc tupleDescriptor,
-								List* retrieved_attrs, Datum* row,
-								bool* is_null) noexcept {
+bool make_tuple_from_result_row(ResultSetPtr result_set,
+		TupleDesc tupleDescriptor, List* retrieved_attrs, Datum* row,
+		bool* is_null) noexcept {
 	elog(DEBUG5, "tsurugi_fdw: %s", __func__);
 	memset(row, 0, sizeof(*row) * tupleDescriptor->natts);
 	memset(is_null, true, sizeof(*is_null) * tupleDescriptor->natts);
@@ -709,16 +740,16 @@ void make_tuple_from_result_row(ResultSetPtr result_set, TupleDesc tupleDescript
 		const int attnum = lfirst_int(lc) - 1;
 		Form_pg_attribute pg_attr = TupleDescAttr(tupleDescriptor, attnum);
 		elog(DEBUG5, "tsurugi_fdw: %s : attnum: %d", __func__, attnum + 1);
-		const auto tsurugi_value =
-			tsurugi::convert_type_to_pg(result_set, pg_attr->atttypid);
-
-		is_null[attnum] = tsurugi_value.first;	// null flag
-		if (!is_null[attnum]) {
-			row[attnum] = tsurugi_value.second;	 // value
+		auto pg_value =
+				tg_convert_value_tg_to_pg(result_set, pg_attr->atttypid);
+		if (!pg_value) {
+			result_set = nullptr;
+			return false;
 		}
+		is_null[attnum] = pg_value.value().first;
+		row[attnum] = pg_value.value().second;
 	}
-	// free unique_ptr
-	result_set = nullptr;
+	return true;
 }
 }  // namespace
 
@@ -740,9 +771,10 @@ const char* tg_get_database_name() noexcept {
 /**
  *  tg_conn_connect
  */
-TGconn* tg_conn_open(const char* endpoint, const char* user,
-					 const char* password) noexcept {
-	elog(DEBUG1, "tsurugi_fdw: %s (endpoint: %s, user: %s)", __func__, endpoint, user);
+TGconn* tg_conn_open(
+		const char* endpoint, const char* user, const char* password) noexcept {
+	elog(DEBUG1, "tsurugi_fdw: %s (endpoint: %s, user: %s)", __func__, endpoint,
+			user);
 	if (!endpoint || endpoint[0] == '\0') {
 		set_error("Database name is empty.");
 		return nullptr;
@@ -756,14 +788,16 @@ TGconn* tg_conn_open(const char* endpoint, const char* user,
 
 	try {
 		if (!tg_conn->stub) {
-			elog(DEBUG1, "tsurugi_fdw: Attempt to call make_stub(). (endpoint: %s)",
-				 endpoint);
+			elog(DEBUG1,
+					"tsurugi_fdw: Attempt to call make_stub(). (endpoint: %s)",
+					endpoint);
 			auto error = make_stub(tg_conn->stub, endpoint);
 			log2(DEBUG1, "make_stub() is done.", error);
 			if (error != ERROR_CODE::OK) {
-				auto msg = tg_make_error_message(
-					tg_conn, "Failed to attach the shared memory of Tsurugi database.",
-					error, tg_conn->endpoint);
+				auto msg = tg_make_error_message(tg_conn,
+						"Failed to attach the shared memory of Tsurugi "
+						"database.",
+						error, tg_conn->endpoint);
 				set_error(msg);
 				delete tg_conn;
 				return nullptr;
@@ -772,14 +806,16 @@ TGconn* tg_conn_open(const char* endpoint, const char* user,
 
 		if (!tg_conn->impl) {
 			ogawayama::stub::Auth auth{user, password};
-			elog(DEBUG1, "tsurugi_fdw: Attempt to call get_connection(). (pid: %d)",
-				 MyProcPid);
-			auto error = tg_conn->stub->get_connection(MyProcPid, tg_conn->impl, auth);
+			elog(DEBUG1,
+					"tsurugi_fdw: Attempt to call get_connection(). (pid: %d)",
+					MyProcPid);
+			auto error = tg_conn->stub->get_connection(
+					MyProcPid, tg_conn->impl, auth);
 			log2(DEBUG1, "get_connection() is done.", error);
 			if (error != ERROR_CODE::OK) {
 				auto msg = tg_make_error_message(tg_conn,
-												 "Failed to connect to Tsurugi database.",
-												 error, tg_conn->endpoint);
+						"Failed to connect to Tsurugi database.", error,
+						tg_conn->endpoint);
 				set_error(msg);
 				delete tg_conn;
 				return nullptr;
@@ -801,7 +837,8 @@ TGconn* tg_conn_open(const char* endpoint, const char* user,
 TG_STATUS tg_conn_close(TGconn* tg_conn) noexcept {
 	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 	if (!tg_conn) {
-		return set_error(tg_conn->error, "tg_conn_close: null", TG_STATUS_INVALID_ARG);
+		return set_error(
+				tg_conn->error, "tg_conn_close: null", TG_STATUS_INVALID_ARG);
 	};
 	try {
 		tg_conn->tx = nullptr;
@@ -863,16 +900,17 @@ TG_STATUS tg_conn_tx_begin(TGconn* tg_conn) noexcept {
 	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
 	if (!tg_conn) {
-		return set_error(tg_conn->error, "Invalid arguments in tg_conn_tx_begin.",
-						 TG_STATUS_INVALID_ARG);
+		return set_error(tg_conn->error,
+				"Invalid arguments in tg_conn_tx_begin.",
+				TG_STATUS_INVALID_ARG);
 	}
 	if (!tg_conn->impl) {
 		return set_error(tg_conn->error, "Not connected to Tsurugi.",
-						 TG_STATUS_INVALID_ARG);
+				TG_STATUS_INVALID_ARG);
 	}
 	if (tg_conn->subxact_seen) {
 		return set_error(tg_conn->error, "Sub transaction is not supported.",
-						 TG_STATUS_ERROR);
+				TG_STATUS_ERROR);
 	}
 	if (tg_conn->tx) return TG_STATUS_OK;  // tx is already active.
 
@@ -883,8 +921,8 @@ TG_STATUS tg_conn_tx_begin(TGconn* tg_conn) noexcept {
 		auto error = tg_conn->impl->begin(option, tg_conn->tx);
 		log2(DEBUG1, "tsurugi_fdw: begin() is done.", error);
 		if (error != ERROR_CODE::OK) {
-			auto msg = tg_make_error_message(
-				tg_conn, "Failed to start the transaction on Tsurugi.", error);
+			auto msg = tg_make_error_message(tg_conn,
+					"Failed to start the transaction on Tsurugi.", error);
 			return set_error(tg_conn->error, msg);
 		}
 	} catch (const std::exception& e) {
@@ -901,20 +939,21 @@ TG_STATUS tg_conn_tx_commit(TGconn* tg_conn) noexcept {
 	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
 	if (!tg_conn) {
-		return set_error(tg_conn->error, "Invalid arguments in tg_conn_tx_begin.",
-						 TG_STATUS_INVALID_ARG);
+		return set_error(tg_conn->error,
+				"Invalid arguments in tg_conn_tx_begin.",
+				TG_STATUS_INVALID_ARG);
 	}
 	if (!tg_conn_tx_active(tg_conn)) {
 		return set_error(tg_conn->error, "Remote transaction is not active.",
-						 TG_STATUS_INVALID_ARG);
+				TG_STATUS_INVALID_ARG);
 	}
 	try {
 		elog(DEBUG1, "tsurugi_fdw: Attempt to call commit().");
 		auto error = tg_conn->tx->commit();
 		log2(DEBUG1, "tsurugi_fdw: commit() is done.", error);
 		if (error != ERROR_CODE::OK) {
-			auto msg = tg_make_error_message(tg_conn, "Failed to commit the transaction.",
-											 error);
+			auto msg = tg_make_error_message(
+					tg_conn, "Failed to commit the transaction.", error);
 			return set_error(tg_conn->error, msg);
 		}
 	} catch (const std::exception& error) {
@@ -936,13 +975,13 @@ TG_STATUS tg_conn_tx_rollback(TGconn* tg_conn) noexcept {
 	}
 	if (!tg_conn_tx_active(tg_conn)) {
 		return set_error(tg_conn->error, "This transaction is not active.",
-						 TG_STATUS_INVALID_ARG);
+				TG_STATUS_INVALID_ARG);
 	}
 	try {
 		auto error = tg_conn->tx->rollback();
 		if (error != ERROR_CODE::OK) {
 			auto msg = tg_make_error_message(
-				tg_conn, "Failed to rollback the transaction.", error);
+					tg_conn, "Failed to rollback the transaction.", error);
 			return set_error(tg_conn->error, msg);
 		}
 	} catch (const std::exception& error) {
@@ -978,7 +1017,7 @@ TGstmt* tg_stmt_prepare(TGconn* tg_conn, const char* sql) noexcept {
 	}
 	if (!tg_conn_tx_active(tg_conn)) {
 		set_error(tg_conn->error, "Remote transaction is not active.",
-				  TG_STATUS_NOT_ACTIVE);
+				TG_STATUS_NOT_ACTIVE);
 		return nullptr;
 	}
 
@@ -1024,7 +1063,8 @@ void tg_stmt_destroy(TGstmt* tg_stmt) noexcept {
 /**
  *  tg_stmt_set_placeholders
  */
-TG_STATUS tg_stmt_bind_parameters(TGstmt* tg_stmt, ParamListInfo param_linfo) noexcept {
+TG_STATUS tg_stmt_bind_parameters(
+		TGstmt* tg_stmt, ParamListInfo param_linfo) noexcept {
 	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
 	if (!tg_stmt) {
@@ -1034,13 +1074,15 @@ TG_STATUS tg_stmt_bind_parameters(TGstmt* tg_stmt, ParamListInfo param_linfo) no
 	auto param_num = make_placeholders(param_linfo, tg_stmt->placeholders);
 	if (param_num > 0) {
 		std::ostringstream msg;
-		msg << "Unsupported parameter found. (param number: " << param_num << ")";
+		msg << "Unsupported parameter found. (param number: " << param_num
+			<< ")";
 		return set_error(tg_stmt->error, msg.str());
 	}
 	param_num = make_parameters(param_linfo, tg_stmt->paramerters);
 	if (param_num > 0) {
 		std::ostringstream msg;
-		msg << "Unsupported parameter found. (param number: " << param_num << ")";
+		msg << "Unsupported parameter found. (param number: " << param_num
+			<< ")";
 		return set_error(tg_stmt->error, msg.str());
 	}
 	set_ok(tg_stmt->error);
@@ -1050,8 +1092,8 @@ TG_STATUS tg_stmt_bind_parameters(TGstmt* tg_stmt, ParamListInfo param_linfo) no
 /**
  *  tg_stmt_set_placeholders
  */
-TG_STATUS tg_stmt_bind_parameters2(TGstmt* tg_stmt, Relation rel, List* target_attrs,
-								   TupleTableSlot** slots) noexcept {
+TG_STATUS tg_stmt_bind_parameters2(TGstmt* tg_stmt, Relation rel,
+		List* target_attrs, TupleTableSlot** slots) noexcept {
 	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
 	if (!tg_stmt) {
@@ -1062,13 +1104,15 @@ TG_STATUS tg_stmt_bind_parameters2(TGstmt* tg_stmt, Relation rel, List* target_a
 	auto param_num = make_placeholders(rel, tg_stmt->placeholders);
 	if (param_num > 0) {
 		std::ostringstream msg;
-		msg << "Unsupported parameter found. (param number: " << param_num << ")";
+		msg << "Unsupported parameter found. (param number: " << param_num
+			<< ")";
 		return set_error(tg_stmt->error, msg.str());
 	}
 	param_num = make_parameters(rel, target_attrs, slots, tg_stmt->paramerters);
 	if (param_num > 0) {
 		std::ostringstream msg;
-		msg << "Unsupported parameter found. (param number: " << param_num << ")";
+		msg << "Unsupported parameter found. (param number: " << param_num
+			<< ")";
 		return set_error(tg_stmt->error, msg.str());
 	}
 	set_ok(tg_stmt->error);
@@ -1106,24 +1150,26 @@ TGresult* tg_stmt_execute_query(TGstmt* tg_stmt) noexcept {
 	try {
 		//  Prepare the query.
 		elog(DEBUG1, "tsurugi_fdw: Attempt to call prepare()");
-		auto error =
-			tg_conn->impl->prepare(tg_stmt->sql, tg_stmt->placeholders, tg_stmt->impl);
+		auto error = tg_conn->impl->prepare(
+				tg_stmt->sql, tg_stmt->placeholders, tg_stmt->impl);
 		elog(DEBUG1, "tsurugi_fdw: prepare() is done.");
 		if (error != ERROR_CODE::OK) {
-			auto msg = tg_make_error_message(
-				tg_conn, "Failed to execute the query on Tsurugi.", error, tg_stmt->sql);
+			auto msg = tg_make_error_message(tg_conn,
+					"Failed to execute the query on Tsurugi.", error,
+					tg_stmt->sql);
 			set_error(tg_stmt->error, msg, TG_STATUS_TSURUGI_ERROR);
 			delete tg_result;
 			return nullptr;
 		}
 		//  Execute the prepared query.
 		elog(DEBUG1, "tsurugi_fdw: Attempt to call execute_query()");
-		error = tg_conn->tx->execute_query(tg_stmt->impl, tg_stmt->paramerters,
-										   tg_result->impl);
+		error = tg_conn->tx->execute_query(
+				tg_stmt->impl, tg_stmt->paramerters, tg_result->impl);
 		log2(DEBUG1, "tsurugi_fdw: execute_query() is done.", error);
 		if (error != ERROR_CODE::OK) {
-			auto msg = tg_make_error_message(
-				tg_conn, "Failed to execute the query on Tsurugi.", error, tg_stmt->sql);
+			auto msg = tg_make_error_message(tg_conn,
+					"Failed to execute the query on Tsurugi.", error,
+					tg_stmt->sql);
 			set_error(tg_stmt->error, msg, TG_STATUS_TSURUGI_ERROR);
 			delete tg_result;
 			return nullptr;
@@ -1144,7 +1190,8 @@ TGresult* tg_stmt_execute_query(TGstmt* tg_stmt) noexcept {
 /**
  *  tg_stmt_execute_statement
  */
-TG_STATUS tg_stmt_execute_statement(TGstmt* tg_stmt, size_t* num_rows) noexcept {
+TG_STATUS tg_stmt_execute_statement(
+		TGstmt* tg_stmt, size_t* num_rows) noexcept {
 	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
 	if (!tg_stmt) {
@@ -1157,23 +1204,24 @@ TG_STATUS tg_stmt_execute_statement(TGstmt* tg_stmt, size_t* num_rows) noexcept 
 	try {
 		//  Prepare the query.
 		elog(DEBUG1, "tsurugi_fdw: Attempt to call prepare()");
-		auto error =
-			tg_conn->impl->prepare(tg_stmt->sql, tg_stmt->placeholders, tg_stmt->impl);
+		auto error = tg_conn->impl->prepare(
+				tg_stmt->sql, tg_stmt->placeholders, tg_stmt->impl);
 		elog(DEBUG1, "tsurugi_fdw: prepare() is done.");
 		if (error != ERROR_CODE::OK) {
-			auto msg = tg_make_error_message(
-				tg_conn, "Failed to execute the statement on Tsurugi.", error,
-				tg_stmt->sql);
+			auto msg = tg_make_error_message(tg_conn,
+					"Failed to execute the statement on Tsurugi.", error,
+					tg_stmt->sql);
 			return set_error(tg_stmt->error, msg, TG_STATUS_TSURUGI_ERROR);
 		}
 		//  Execute the prepared statement.
 		elog(DEBUG1, "tsurugi_fdw: Attempt to call execute_statement()");
-		error = tg_conn->tx->execute_statement(tg_stmt->impl, tg_stmt->paramerters, rows);
+		error = tg_conn->tx->execute_statement(
+				tg_stmt->impl, tg_stmt->paramerters, rows);
 		log2(DEBUG1, "execute_statement() is done.", error);
 		if (error != ERROR_CODE::OK) {
-			auto msg = tg_make_error_message(
-				tg_conn, "Failed to execute the statement on Tsurugi.", error,
-				tg_stmt->sql);
+			auto msg = tg_make_error_message(tg_conn,
+					"Failed to execute the statement on Tsurugi.", error,
+					tg_stmt->sql);
 			return set_error(tg_stmt->error, msg, TG_STATUS_TSURUGI_ERROR);
 		}
 	} catch (std::exception& e) {
@@ -1228,7 +1276,7 @@ TG_STATUS tg_result_next(TGresult* tg_result) noexcept {
 				return TG_STATUS_END_OF_ROW;
 			default:
 				return set_error(tg_result->error, "ResultSet::next() failed.",
-								 TG_STATUS_TSURUGI_ERROR);
+						TG_STATUS_TSURUGI_ERROR);
 		}
 	} catch (std::exception& e) {
 		return set_exception(tg_result->error, e);
@@ -1240,13 +1288,12 @@ TG_STATUS tg_result_next(TGresult* tg_result) noexcept {
  *  tg_result_get_tuple
  */
 TG_STATUS tg_result_get_tuple(TGresult* tg_result, List* retrieved_attrs,
-							  TupleTableSlot* tupleSlot) noexcept {
+		TupleTableSlot* tupleSlot) noexcept {
 	assert(tg_result && retrieved_attrs && tupleSlot);
 	elog(DEBUG5, "tsurugi_fdw: %s", __func__);
 
 	make_tuple_from_result_row(tg_result->impl, tupleSlot->tts_tupleDescriptor,
-							   retrieved_attrs, tupleSlot->tts_values,
-							   tupleSlot->tts_isnull);
+			retrieved_attrs, tupleSlot->tts_values, tupleSlot->tts_isnull);
 	ExecStoreVirtualTuple(tupleSlot);
 	set_ok(tg_result->error);
 	return TG_STATUS_OK;
@@ -1269,13 +1316,14 @@ const char* tg_result_error_message(const TGresult* tg_result) noexcept {
 TG_STATUS tg_get_list_tables(TGconn* tg_conn, TableListPtr& tables) noexcept {
 	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
 	try {
-		elog(DEBUG1, "tsurugi_fdw: Attempt to call Connection::get_list_tables().");
+		elog(DEBUG1,
+				"tsurugi_fdw: Attempt to call Connection::get_list_tables().");
 		/* Get a list of table names from Tsurugi. */
 		auto error = tg_conn->impl->get_list_tables(tables);
 		log2(DEBUG1, "Connection::get_list_tables() is done.", error);
 		if (error != ERROR_CODE::OK) {
 			auto msg = tg_make_error_message(
-				tg_conn, "Failed to execute get_list_table().", error);
+					tg_conn, "Failed to execute get_list_table().", error);
 			return set_error(msg, TG_STATUS_TSURUGI_ERROR);
 		}
 	} catch (std::exception& e) {
@@ -1291,15 +1339,16 @@ TG_STATUS tg_get_list_tables(TGconn* tg_conn, TableListPtr& tables) noexcept {
  *  @note Use tg_global_error_message() to retrieve the error message.
  */
 TG_STATUS tg_get_table_metadata(TGconn* tg_conn, const std::string& table_name,
-								TableMetadataPtr& table_metadata) noexcept {
+		TableMetadataPtr& table_metadata) noexcept {
 	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
 	try {
 		elog(DEBUG1, "tsurugi_fdw: Attempt to call get_table_metadata().");
-		auto error = tg_conn->impl->get_table_metadata(table_name, table_metadata);
+		auto error =
+				tg_conn->impl->get_table_metadata(table_name, table_metadata);
 		log2(DEBUG1, "tsurugi_fdw: get_table_metadata() is done.", error);
 		if (error != ERROR_CODE::OK) {
-			auto msg = tg_make_error_message(
-				tg_conn, "Failed to retrieve table metadata from Tsurugi.", error);
+			auto msg = tg_make_error_message(tg_conn,
+					"Failed to retrieve table metadata from Tsurugi.", error);
 			return set_error(msg, TG_STATUS_TSURUGI_ERROR);
 		}
 	} catch (std::exception& e) {
@@ -1314,8 +1363,9 @@ TG_STATUS tg_get_table_metadata(TGconn* tg_conn, const std::string& table_name,
  *  @brief Execute import foreign schema.
  *  @note Use tg_global_error_message() to retrieve the error message.
  */
-TG_STATUS tg_exec_import_foreign_schema(TGconn* tg_conn, ImportForeignSchemaStmt* stmt,
-										Oid serverOid, List** commands) noexcept {
+TG_STATUS tg_exec_import_foreign_schema(TGconn* tg_conn,
+		ImportForeignSchemaStmt* stmt, Oid serverOid,
+		List** commands) noexcept {
 	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
 	/* Get information about foreign server and user mapping. */
@@ -1333,16 +1383,16 @@ TG_STATUS tg_exec_import_foreign_schema(TGconn* tg_conn, ImportForeignSchemaStmt
 	auto tg_table_names = table_list->get_table_names();
 
 #ifdef ENABLE_IMPORT_TABLE_LIMITS
-	/* The basic behavior regarding the restriction of tables to be imported is handled
-	 * by PostgreSQL functions.
-	 * FDW does not need to handle this and should be disabled.
+	/* The basic behavior regarding the restriction of tables to be imported is
+	 * handled by PostgreSQL functions. FDW does not need to handle this and
+	 * should be disabled.
 	 */
 	if ((stmt->list_type == FDW_IMPORT_SCHEMA_LIMIT_TO) ||
-		(stmt->list_type == FDW_IMPORT_SCHEMA_EXCEPT)) {
+			(stmt->list_type == FDW_IMPORT_SCHEMA_EXCEPT)) {
 		std::unordered_set<std::string> _table_list;
 		ListCell* lc;
 		foreach (lc, stmt->table_list) {
-			_table_list.insert(((RangeVar*)lfirst(lc))->relname);
+			_table_list.insert(((RangeVar*) lfirst(lc))->relname);
 		}
 
 		for (auto ite = tg_table_names.begin(); ite != tg_table_names.end();) {
@@ -1350,14 +1400,17 @@ TG_STATUS tg_exec_import_foreign_schema(TGconn* tg_conn, ImportForeignSchemaStmt
 
 			if (stmt->list_type == FDW_IMPORT_SCHEMA_LIMIT_TO) {
 				/* include only listed tables in import */
-				is_exclude_table = (_table_list.find(*ite) == _table_list.end());
+				is_exclude_table =
+						(_table_list.find(*ite) == _table_list.end());
 			} else if (stmt->list_type == FDW_IMPORT_SCHEMA_EXCEPT) {
 				/* exclude listed tables from import */
-				is_exclude_table = (_table_list.find(*ite) != _table_list.end());
+				is_exclude_table =
+						(_table_list.find(*ite) != _table_list.end());
 			}
 
 			if (is_exclude_table) {
-				elog(DEBUG2, R"(exclude table "%s" from import.)", (*ite).c_str());
+				elog(DEBUG2, R"(exclude table "%s" from import.)",
+						(*ite).c_str());
 				ite = tg_table_names.erase(ite);
 			} else {
 				++ite;
@@ -1372,7 +1425,8 @@ TG_STATUS tg_exec_import_foreign_schema(TGconn* tg_conn, ImportForeignSchemaStmt
 		TableMetadataPtr tg_table_metadata;
 
 		/* Get table metadata from Tsurugi. */
-		auto tg_status = tg_get_table_metadata(tg_conn, table_name, tg_table_metadata);
+		auto tg_status =
+				tg_get_table_metadata(tg_conn, table_name, tg_table_metadata);
 		if (tg_status != TG_STATUS_OK) {
 			return tg_status;
 		}
@@ -1383,24 +1437,25 @@ TG_STATUS tg_exec_import_foreign_schema(TGconn* tg_conn, ImportForeignSchemaStmt
 		elog(DEBUG2, R"(table: "%.64s")", table_name.c_str());
 
 		std::ostringstream col_def; /* columns definition */
-		/* Create PostgreSQL column definitions based on Tsurugi column definitions. */
+		/* Create PostgreSQL column definitions based on Tsurugi column
+		 * definitions. */
 		for (const auto& column : tg_columns) {
 			/* Convert from Tsurugi datatype to PostgreSQL datatype. */
-			auto pg_type = tsurugi::convert_type_to_pg(column.atom_type());
+			auto pg_type = tg_convert_type_tg_to_pg(column.atom_type());
 			if (!pg_type) {
 				auto msg =
-					boost::format(
-						R"(unsupported tsurugi data type "%d". (table:"%s" column:"%s"))") %
-					static_cast<int>(column.atom_type()) % table_name % column.name();
+						boost::format(
+								R"(unsupported tsurugi data type "%d". (table:"%s" column:"%s"))") %
+						static_cast<int>(column.atom_type()) % table_name %
+						column.name();
 				return set_error(msg.str());
 			}
-			std::string type_name(*pg_type);
+			std::string type_name(pg_type.value());
 
-			elog(
-				DEBUG2,
-				R"(column: {"name":"%.64s", "tsurugi_atom_type":%d, "postgres_type":"%s"})",
-				column.name().c_str(), static_cast<int>(column.atom_type()),
-				type_name.c_str());
+			elog(DEBUG2,
+					R"(column: {"name":"%.64s", "tsurugi_atom_type":%d, "postgres_type":"%s"})",
+					column.name().c_str(), static_cast<int>(column.atom_type()),
+					type_name.c_str());
 
 			/* Create a column definition. */
 			if (col_def.tellp() != 0) {
@@ -1410,9 +1465,10 @@ TG_STATUS tg_exec_import_foreign_schema(TGconn* tg_conn, ImportForeignSchemaStmt
 		}
 
 		/* Create a CREATE FOREIGN TABLE statement. */
-		auto table_def = (boost::format(R"(CREATE FOREIGN TABLE "%s" (%s) SERVER %s)") %
-						  table_name.c_str() % col_def.str() % server->servername)
-							 .str();
+		auto table_def =
+				(boost::format(R"(CREATE FOREIGN TABLE "%s" (%s) SERVER %s)") %
+						table_name.c_str() % col_def.str() % server->servername)
+						.str();
 
 		elog(DEBUG1, "%.512s", table_def.c_str());
 
@@ -1426,13 +1482,14 @@ TG_STATUS tg_exec_import_foreign_schema(TGconn* tg_conn, ImportForeignSchemaStmt
  *  @brief Show table list in remote database.
  *  @note Use tg_global_error_message() to retrieve the error message.
  */
-TG_STATUS tg_exec_show_tables(TGconn* tg_conn, TG_SHOW_TABLE_PARAM* param,
-							  char** result) noexcept {
+TG_STATUS tg_exec_show_tables(
+		TGconn* tg_conn, TG_SHOW_TABLE_PARAM* param, char** result) noexcept {
 	static constexpr const char* const kKeyRootObject = "remote_schema";
 	static constexpr const char* const kKeyRemoteSchema = "remote_schema";
 	static constexpr const char* const kKeyServerName = "server_name";
 	static constexpr const char* const kKeyMode = "mode";
-	static constexpr const char* const kKeyRemoteTable = "tables_on_remote_schema";
+	static constexpr const char* const kKeyRemoteTable =
+			"tables_on_remote_schema";
 	static constexpr const char* const kKeyCount = "count";
 	static constexpr const char* const kKeyList = "list";
 
@@ -1456,7 +1513,8 @@ TG_STATUS tg_exec_show_tables(TGconn* tg_conn, TG_SHOW_TABLE_PARAM* param,
 
 	boost::property_tree::ptree pt_root;		// root object
 	boost::property_tree::ptree remote_schema;	// <remote_schema> object
-	boost::property_tree::ptree remote_tables;	// <tables_on_remote_schema> object
+	boost::property_tree::ptree
+			remote_tables;	// <tables_on_remote_schema> object
 
 	/* Add to table count. */
 	remote_tables.put(kKeyCount, table_list.size());
@@ -1482,7 +1540,8 @@ TG_STATUS tg_exec_show_tables(TGconn* tg_conn, TG_SHOW_TABLE_PARAM* param,
 	std::stringstream ss;
 	/* Convert to JSON. */
 	try {
-		boost::property_tree::json_parser::write_json(ss, pt_root, param->pretty);
+		boost::property_tree::json_parser::write_json(
+				ss, pt_root, param->pretty);
 	} catch (const std::exception& e) {
 		return set_exception(e);
 	} catch (...) {
@@ -1498,15 +1557,21 @@ TG_STATUS tg_exec_show_tables(TGconn* tg_conn, TG_SHOW_TABLE_PARAM* param,
 	std::string separator = (param->pretty ? " " : "");
 
 	/* Converts the value of a numeric item from a string to a number. */
-	auto pattern_num = (boost::format(R"_("%s":\s*"(\d+)")_") % kKeyCount).str();
-	auto replace_num = (boost::format(R"("%s":%s$1)") % kKeyCount % separator).str();
-	json_str = std::regex_replace(json_str, std::regex(pattern_num), replace_num);
+	auto pattern_num =
+			(boost::format(R"_("%s":\s*"(\d+)")_") % kKeyCount).str();
+	auto replace_num =
+			(boost::format(R"("%s":%s$1)") % kKeyCount % separator).str();
+	json_str =
+			std::regex_replace(json_str, std::regex(pattern_num), replace_num);
 
-	/* Converts an empty value of an array item from an empty character to an empty array.
+	/* Converts an empty value of an array item from an empty character to an
+	 * empty array.
 	 */
 	auto pattern_array = (boost::format(R"("%s":\s*"")") % kKeyList).str();
-	auto replace_array = (boost::format(R"("%s":%s[])") % kKeyList % separator).str();
-	json_str = std::regex_replace(json_str, std::regex(pattern_array), replace_array);
+	auto replace_array =
+			(boost::format(R"("%s":%s[])") % kKeyList % separator).str();
+	json_str = std::regex_replace(
+			json_str, std::regex(pattern_array), replace_array);
 
 	*result = pstrdup(json_str.c_str());
 
@@ -1517,22 +1582,26 @@ TG_STATUS tg_exec_show_tables(TGconn* tg_conn, TG_SHOW_TABLE_PARAM* param,
  *  @brief Verify table names between local schema and remote schema.
  *  @note Use tg_global_error_message() to retrieve the error message.
  */
-TG_STATUS tg_exec_verify_tables(TGconn* tg_conn, TG_VERIFY_TABLE_PARAM* param,
-								char** result) noexcept {
+TG_STATUS tg_exec_verify_tables(
+		TGconn* tg_conn, TG_VERIFY_TABLE_PARAM* param, char** result) noexcept {
 	static constexpr const char* const kKeyRootObject = "verification";
 	static constexpr const char* const kKeyRemoteSchema = "remote_schema";
 	static constexpr const char* const kKeyServerName = "server_name";
 	static constexpr const char* const kKeyLocalSchema = "local_schema";
 	static constexpr const char* const kKeyMode = "mode";
-	static constexpr const char* const kKeyRemoteOnly = "tables_on_only_remote_schema";
+	static constexpr const char* const kKeyRemoteOnly =
+			"tables_on_only_remote_schema";
 	static constexpr const char* const kKeyLocalOnly =
-		"foreign_tables_on_only_local_schema";
-	static constexpr const char* const kKeyAltered = "tables_that_need_to_be_altered";
-	static constexpr const char* const kKeyAvailable = "available_foreign_table";
+			"foreign_tables_on_only_local_schema";
+	static constexpr const char* const kKeyAltered =
+			"tables_that_need_to_be_altered";
+	static constexpr const char* const kKeyAvailable =
+			"available_foreign_table";
 	static constexpr const char* const kKeyCount = "count";
 	static constexpr const char* const kKeyList = "list";
-	static const std::unordered_map<std::string, std::string> tz_abbreviate_type = {
-		{"time without time zone", "time"}, {"timestamp without time zone", "timestamp"}};
+	static const std::unordered_map<std::string, std::string>
+			tz_abbreviate_type = {{"time without time zone", "time"},
+					{"timestamp without time zone", "timestamp"}};
 
 	ERROR_CODE error = ERROR_CODE::UNKNOWN;
 	TableListPtr tables;
@@ -1542,12 +1611,13 @@ TG_STATUS tg_exec_verify_tables(TGconn* tg_conn, TG_VERIFY_TABLE_PARAM* param,
 	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
 	boost::property_tree::ptree
-		list_remote;  // <tables_on_only_remote_schema> <list> array
+			list_remote;  // <tables_on_only_remote_schema> <list> array
 	boost::property_tree::ptree
-		list_local;	 // <foreign_tables_on_only_local_schema> <list> array
+			list_local;	 // <foreign_tables_on_only_local_schema> <list> array
 	boost::property_tree::ptree
-		list_altered;  // <tables_that_need_to_be_altered> <list> array
-	boost::property_tree::ptree list_available;	 // <available_foreign_table> <list> array
+			list_altered;  // <tables_that_need_to_be_altered> <list> array
+	boost::property_tree::ptree
+			list_available;	 // <available_foreign_table> <list> array
 
 	if (SPI_connect() != SPI_OK_CONNECT) {
 		return set_error("Failed to execute SPI_connect", TG_STATUS_SPI_ERROR);
@@ -1558,35 +1628,38 @@ TG_STATUS tg_exec_verify_tables(TGconn* tg_conn, TG_VERIFY_TABLE_PARAM* param,
 	static const int kValDatatype = 3;
 	static const int kValAtttypmod = 4;
 	static constexpr const char* const kMetadataQuery =
-		"SELECT "
-		"  c.relname, a.attname, format_type(a.atttypid, a.atttypmod) AS datatype, "
-		"a.atttypmod "
-		"FROM pg_foreign_table ft "
-		"  JOIN pg_class c ON ft.ftrelid = c.oid "
-		"  JOIN pg_namespace n ON c.relnamespace = n.oid "
-		"  JOIN pg_attribute a ON a.attrelid = c.oid "
-		"WHERE "
-		"  (n.oid = $1) AND (ft.ftserver = $2) AND (a.attnum > 0) AND (NOT "
-		"a.attisdropped) "
-		"ORDER BY c.relname, a.attnum";
+			"SELECT "
+			"  c.relname, a.attname, format_type(a.atttypid, a.atttypmod) AS "
+			"datatype, "
+			"a.atttypmod "
+			"FROM pg_foreign_table ft "
+			"  JOIN pg_class c ON ft.ftrelid = c.oid "
+			"  JOIN pg_namespace n ON c.relnamespace = n.oid "
+			"  JOIN pg_attribute a ON a.attrelid = c.oid "
+			"WHERE "
+			"  (n.oid = $1) AND (ft.ftserver = $2) AND (a.attnum > 0) AND (NOT "
+			"a.attisdropped) "
+			"ORDER BY c.relname, a.attnum";
 
 	Oid argtypes[2] = {OIDOID, OIDOID};
 	Datum values[2] = {ObjectIdGetDatum(param->local_schema_oid),
-					   ObjectIdGetDatum(param->server_id)};
+			ObjectIdGetDatum(param->server_id)};
 	char nulls[2] = {' ', ' '};
 
 	/* Refer to the system catalog. */
-	int res = SPI_execute_with_args(kMetadataQuery, sizeof(values), argtypes, values,
-									nulls, true, 0);
+	int res = SPI_execute_with_args(
+			kMetadataQuery, sizeof(values), argtypes, values, nulls, true, 0);
 	if (res != SPI_OK_SELECT) {
-		auto msg = boost::format("Failed to SPI_execute_with_args. (error: %d)") % res;
+		auto msg =
+				boost::format("Failed to SPI_execute_with_args. (error: %d)") %
+				res;
 		return set_error(msg.str(), TG_STATUS_SPI_ERROR);
 	}
 
 	// Metadata of foreign tables
 	std::unordered_map<std::string,
-					   std::vector<std::tuple<std::string, std::string, int, int>>>
-		foreign_table_metadata = {};
+			std::vector<std::tuple<std::string, std::string, int, int>>>
+			foreign_table_metadata = {};
 
 	// List of Tsurugi table names
 	auto tg_status = tg_get_list_tables(tg_conn, tables);
@@ -1597,8 +1670,8 @@ TG_STATUS tg_exec_verify_tables(TGconn* tg_conn, TG_VERIFY_TABLE_PARAM* param,
 
 	std::string skip_table_name = "";
 
-	/* Verifies whether foreign tables in the local schema exist in the remote schema,
-	 * and if so, retrieves metadata for the external tables.
+	/* Verifies whether foreign tables in the local schema exist in the remote
+	 * schema, and if so, retrieves metadata for the external tables.
 	 */
 	for (uint64 i = 0; i < SPI_processed; i++) {
 		HeapTuple spi_tuple = SPI_tuptable->vals[i];
@@ -1611,13 +1684,15 @@ TG_STATUS tg_exec_verify_tables(TGconn* tg_conn, TG_VERIFY_TABLE_PARAM* param,
 		}
 
 		/* Add to a table that exists only in the remote schema. */
-		auto ite = std::find(tg_table_names.begin(), tg_table_names.end(), rel_name);
+		auto ite = std::find(
+				tg_table_names.begin(), tg_table_names.end(), rel_name);
 		if (ite == tg_table_names.end()) {
-			elog(DEBUG2, R"(Tables that do not exist in the remote schema. "%s")",
-				 rel_name.c_str());
+			elog(DEBUG2,
+					R"(Tables that do not exist in the remote schema. "%s")",
+					rel_name.c_str());
 			/* Add to a table that exists only in the remote schema. */
 			list_local.push_back(
-				std::make_pair("", boost::property_tree::ptree(rel_name)));
+					std::make_pair("", boost::property_tree::ptree(rel_name)));
 			skip_table_name = rel_name;
 			continue;
 		}
@@ -1628,7 +1703,8 @@ TG_STATUS tg_exec_verify_tables(TGconn* tg_conn, TG_VERIFY_TABLE_PARAM* param,
 
 		// data type (string)
 		std::string datatype(SPI_getvalue(spi_tuple, tupdesc, kValDatatype));
-		std::transform(datatype.begin(), datatype.end(), datatype.begin(), ::tolower);
+		std::transform(
+				datatype.begin(), datatype.end(), datatype.begin(), ::tolower);
 
 		bool is_null;
 		// precision
@@ -1636,7 +1712,8 @@ TG_STATUS tg_exec_verify_tables(TGconn* tg_conn, TG_VERIFY_TABLE_PARAM* param,
 		// scale
 		int scale = -1;
 
-		Datum typmod_datum = SPI_getbinval(spi_tuple, tupdesc, kValAtttypmod, &is_null);
+		Datum typmod_datum =
+				SPI_getbinval(spi_tuple, tupdesc, kValAtttypmod, &is_null);
 		int32 typmod = (!is_null ? DatumGetInt32(typmod_datum) : -1);
 		if (typmod != -1) {
 			precision = ((typmod - VARHDRSZ) >> 16) & 0xFFFF;
@@ -1645,20 +1722,23 @@ TG_STATUS tg_exec_verify_tables(TGconn* tg_conn, TG_VERIFY_TABLE_PARAM* param,
 
 		/* Stores metadata for foreign tables. */
 		foreign_table_metadata[rel_name].emplace_back(
-			std::make_tuple(column_name, datatype, precision, scale));
+				std::make_tuple(column_name, datatype, precision, scale));
 	}
 
 	SPI_finish();
 
-	/* Verifies whether tables in the remote schema exist in the local schema. */
+	/* Verifies whether tables in the remote schema exist in the local schema.
+	 */
 	for (auto ite = tg_table_names.begin(); ite != tg_table_names.end();) {
 		/* Verify that a remote table exists on the local. */
 		if (foreign_table_metadata.find(*ite) == foreign_table_metadata.end()) {
-			elog(DEBUG2, R"(Tables that do not exist in the local schema. "%s")",
-				 (*ite).c_str());
+			elog(DEBUG2,
+					R"(Tables that do not exist in the local schema. "%s")",
+					(*ite).c_str());
 
 			/* Add to a table that exists only in the remote schema. */
-			list_remote.push_back(std::make_pair("", boost::property_tree::ptree(*ite)));
+			list_remote.push_back(
+					std::make_pair("", boost::property_tree::ptree(*ite)));
 			/* Exclude from metadata validation. */
 			tg_table_names.erase(ite);
 
@@ -1669,26 +1749,30 @@ TG_STATUS tg_exec_verify_tables(TGconn* tg_conn, TG_VERIFY_TABLE_PARAM* param,
 
 	/* Metadata Validation */
 	for (const auto& table_name : tg_table_names) {
-		elog(DEBUG2, R"(Metadata Validation: table name: "%s")", table_name.c_str());
+		elog(DEBUG2, R"(Metadata Validation: table name: "%s")",
+				table_name.c_str());
 
 		TableMetadataPtr tg_table_metadata;
 		/* Get table metadata from Tsurugi. */
-		auto tg_status = tg_get_table_metadata(tg_conn, table_name, tg_table_metadata);
+		auto tg_status =
+				tg_get_table_metadata(tg_conn, table_name, tg_table_metadata);
 		if (tg_status != TG_STATUS_OK) {
-			auto msg = tg_make_error_message(
-				tg_conn, "Failed to get table metadata from tsurugi.", error);
+			auto msg = tg_make_error_message(tg_conn,
+					"Failed to get table metadata from tsurugi.", error);
 			return set_error(msg);
 		}
 
 		/* Get table metadata from PostgreSQL. */
-		const auto& pg_columns = foreign_table_metadata.find(table_name)->second;
+		const auto& pg_columns =
+				foreign_table_metadata.find(table_name)->second;
 		/* Get table metadata from tsurugi. */
 		const auto& tg_columns = tg_table_metadata->columns();
 
 		/* Validate the number of columns. */
 		if (pg_columns.size() != static_cast<size_t>(tg_columns.size())) {
-			elog(DEBUG2, "Number of columns does not match. local:%lu / remote:%d",
-				 pg_columns.size(), tg_columns.size());
+			elog(DEBUG2,
+					"Number of columns does not match. local:%lu / remote:%d",
+					pg_columns.size(), tg_columns.size());
 
 			boost::property_tree::ptree item;
 			item.put("", table_name);
@@ -1703,28 +1787,30 @@ TG_STATUS tg_exec_verify_tables(TGconn* tg_conn, TG_VERIFY_TABLE_PARAM* param,
 		/* Validate the column metadata. */
 		for (const auto& pg_column : pg_columns) {
 			// Foreign table metadata
-			const auto& [pg_col_name, pg_col_type, pg_col_precision, pg_col_scale] =
-				pg_column;
+			const auto& [pg_col_name, pg_col_type, pg_col_precision,
+					pg_col_scale] = pg_column;
 			const auto& tg_column = tg_columns.at(idx++);
 
-			elog(DEBUG5, R"(Column Validation: column name: "%s")", pg_col_name.c_str());
+			elog(DEBUG5, R"(Column Validation: column name: "%s")",
+					pg_col_name.c_str());
 
 			/* Validate the column name. */
 			if (pg_col_name != tg_column.name()) {
-				elog(
-					DEBUG2,
-					R"_(Name of column does not match. position:%d (local:"%s" / remote:"%s"))_",
-					idx, pg_col_name.c_str(), tg_column.name().c_str());
+				elog(DEBUG2,
+						R"_(Name of column does not match. position:%d (local:"%s" / remote:"%s"))_",
+						idx, pg_col_name.c_str(), tg_column.name().c_str());
 
 				matched = false;
 				break;
 			}
 
 			/* Convert from tsurugi datatype to PostgreSQL datatype. */
-			auto remote_type_pg = tsurugi::convert_type_to_pg(tg_column.atom_type());
+			auto remote_type_pg =
+					tg_convert_type_tg_to_pg(tg_column.atom_type());
 			if (!remote_type_pg) {
 				elog(DEBUG2, "Data type is unknown. %s (atom_type:%d)",
-					 pg_col_name.c_str(), static_cast<int>(tg_column.atom_type()));
+						pg_col_name.c_str(),
+						static_cast<int>(tg_column.atom_type()));
 
 				matched = false;
 				break;
@@ -1738,12 +1824,13 @@ TG_STATUS tg_exec_verify_tables(TGconn* tg_conn, TG_VERIFY_TABLE_PARAM* param,
 			}
 
 			/* Validate the data type. */
-			auto ite = std::find(local_type.begin(), local_type.end(), *remote_type_pg);
+			auto ite = std::find(local_type.begin(), local_type.end(),
+					remote_type_pg.value());
 			if (ite == local_type.end()) {
-				elog(
-					DEBUG2,
-					R"_(Datatype of column does not match. %s (local:"%s" / remote:"%s"))_",
-					pg_col_name.c_str(), local_type[0].c_str(), remote_type_pg->data());
+				elog(DEBUG2,
+						R"_(Datatype of column does not match. %s (local:"%s" / remote:"%s"))_",
+						pg_col_name.c_str(), local_type[0].c_str(),
+						remote_type_pg->data());
 
 				matched = false;
 				break;
@@ -1751,11 +1838,10 @@ TG_STATUS tg_exec_verify_tables(TGconn* tg_conn, TG_VERIFY_TABLE_PARAM* param,
 
 			/* Validate the precision and scale. */
 			if ((pg_col_precision != -1) || (pg_col_scale != -1)) {
-				elog(
-					DEBUG2,
-					R"_(Column precision/scale does not match. "%s (local: %s(%d,%d) / remote:%s))_",
-					pg_col_name.c_str(), local_type[0].c_str(), pg_col_precision,
-					pg_col_scale, remote_type_pg->data());
+				elog(DEBUG2,
+						R"_(Column precision/scale does not match. "%s (local: %s(%d,%d) / remote:%s))_",
+						pg_col_name.c_str(), local_type[0].c_str(),
+						pg_col_precision, pg_col_scale, remote_type_pg->data());
 
 				matched = false;
 				break;
@@ -1787,10 +1873,8 @@ TG_STATUS tg_exec_verify_tables(TGconn* tg_conn, TG_VERIFY_TABLE_PARAM* param,
 
 	/* Child object of a validation object. */
 	std::map<const char*, const boost::property_tree::ptree*> child_object = {
-		{kKeyRemoteOnly, &list_remote},
-		{kKeyLocalOnly, &list_local},
-		{kKeyAltered, &list_altered},
-		{kKeyAvailable, &list_available}};
+			{kKeyRemoteOnly, &list_remote}, {kKeyLocalOnly, &list_local},
+			{kKeyAltered, &list_altered}, {kKeyAvailable, &list_available}};
 
 	/* Verification object is configured. */
 	for (const auto& object : child_object) {
@@ -1817,7 +1901,8 @@ TG_STATUS tg_exec_verify_tables(TGconn* tg_conn, TG_VERIFY_TABLE_PARAM* param,
 	std::stringstream ss;
 	/* Convert to JSON. */
 	try {
-		boost::property_tree::json_parser::write_json(ss, pt_root, param->pretty);
+		boost::property_tree::json_parser::write_json(
+				ss, pt_root, param->pretty);
 	} catch (const std::exception& e) {
 		return set_exception(e);
 	} catch (...) {
@@ -1833,15 +1918,21 @@ TG_STATUS tg_exec_verify_tables(TGconn* tg_conn, TG_VERIFY_TABLE_PARAM* param,
 	std::string separator = (param->pretty ? " " : "");
 
 	/* Converts the value of a numeric item from a string to a number. */
-	auto pattern_num = (boost::format(R"_("%s":\s*"(\d+)")_") % kKeyCount).str();
-	auto replace_num = (boost::format(R"("%s":%s$1)") % kKeyCount % separator).str();
-	json_str = std::regex_replace(json_str, std::regex(pattern_num), replace_num);
+	auto pattern_num =
+			(boost::format(R"_("%s":\s*"(\d+)")_") % kKeyCount).str();
+	auto replace_num =
+			(boost::format(R"("%s":%s$1)") % kKeyCount % separator).str();
+	json_str =
+			std::regex_replace(json_str, std::regex(pattern_num), replace_num);
 
-	/* Converts an empty value of an array item from an empty character to an empty array.
+	/* Converts an empty value of an array item from an empty character to an
+	 * empty array.
 	 */
 	auto pattern_array = (boost::format(R"("%s":\s*"")") % kKeyList).str();
-	auto replace_array = (boost::format(R"("%s":%s[])") % kKeyList % separator).str();
-	json_str = std::regex_replace(json_str, std::regex(pattern_array), replace_array);
+	auto replace_array =
+			(boost::format(R"("%s":%s[])") % kKeyList % separator).str();
+	json_str = std::regex_replace(
+			json_str, std::regex(pattern_array), replace_array);
 
 	*result = pstrdup(json_str.c_str());
 

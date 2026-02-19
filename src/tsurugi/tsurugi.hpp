@@ -24,26 +24,22 @@
 extern "C" {
 #endif
 #include "postgres.h"
+
 #include "nodes/pg_list.h"
 #ifdef __cplusplus
 }
 #endif
 
-namespace tsurugi {
-// datatype converter
-std::optional<std::string_view> convert_type_to_pg(
-	jogasaki::proto::sql::common::AtomType tg_type);
+using TgColumnType = ogawayama::stub::Metadata::ColumnType::Type;
+using TgValue = ogawayama::stub::value_type;
 
-ogawayama::stub::value_type convert_type_to_tg(const Oid pg_type, Datum value);
+std::optional<std::string_view> tg_convert_type_tg_to_pg(
+		jogasaki::proto::sql::common::AtomType tg_type);
 
-std::pair<bool, Datum> convert_type_to_pg(ResultSetPtr result_set, const Oid pgtype);
+std::optional<TgColumnType> tg_convert_type_pg_to_tg(const Oid pg_type);
 
-ogawayama::stub::Metadata::ColumnType::Type get_tg_column_type(const Oid pg_type);
+std::optional<std::pair<bool, Datum>> tg_convert_value_tg_to_pg(
+		ResultSetPtr result_set, const Oid pgtype);
 
-bool get_tg_column_type(const Oid pg_type,
-						ogawayama::stub::Metadata::ColumnType::Type& tg_type);
-
-ogawayama::stub::timestamptz_type convert_timestamptz_to_tg(Datum value);
-
-takatori::decimal::triple convert_decimal_to_tg(Datum value);
-}  // namespace tsurugi
+std::optional<TgValue> tg_convert_value_pg_to_tg(
+		const Oid pg_type, Datum pg_value);
