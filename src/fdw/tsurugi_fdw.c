@@ -266,7 +266,6 @@ static void tsurugiAddForeignUpdateTargets(
  * Helper functions
  */
 extern PGDLLIMPORT PGPROC *MyProc;
-extern void				   handle_remote_xact(ForeignServer *server);
 
 #if PG_VERSION_NUM >= 140000
 static ForeignScan *find_modifytable_subplan(
@@ -1730,7 +1729,7 @@ tsurugiPlanDirectModify(
 #endif	// PG_VERSION_NUM >= 140000
 
 	table_close(rel, NoLock);
-	elog(LOG, "tsurugi_fdw: %s : Selected Direct Modify.", __func__);
+	elog(LOG, "tsurugi_fdw: execute direct modify.");
 
 	return true;
 }
@@ -1828,7 +1827,7 @@ tsurugiIterateDirectModify(ForeignScanState *node)
 	if (dmstate->num_tuples == (size_t) -1)
 	{
 		dmstate->tg_stmt =
-				tg_stmt_prepare(dmstate->tg_conn, dmstate->orig_query);
+				tg_stmt_prepare(dmstate->tg_conn, dmstate->query);
 		if (!dmstate->tg_stmt)
 			elog(ERROR, "%s", tg_stmt_error_message(dmstate->tg_stmt));
 
