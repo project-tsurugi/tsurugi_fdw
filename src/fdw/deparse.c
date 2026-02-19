@@ -2548,10 +2548,6 @@ deparseConst(Const *node, deparse_expr_cxt *context, int showtype)
 	if (node->constisnull)
 	{
 		appendStringInfoString(buf, "NULL");
-		if (showtype >= 0)
-			appendStringInfo(buf, "::%s",
-							 deparse_type_name(node->consttype,
-											   node->consttypmod));
 		return;
 	}
 
