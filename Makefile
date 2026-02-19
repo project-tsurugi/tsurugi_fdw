@@ -33,7 +33,7 @@ ifndef REGRESS_BASIC
 endif
 
 # Test settings according to regression test type
-REGRESS := test_preparation
+REGRESS := preparation
 ifdef REGRESS_BASIC
 	REGRESS += dml_happy data_types_happy case_sensitive_happy \
 	           prep_dml_happy prep_data_types_happy prep_case_sensitive_happy \
