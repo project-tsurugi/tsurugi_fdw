@@ -17,8 +17,9 @@
  */
 #pragma once
 
-#include <ogawayama/stub/api.h>
 #include <optional>
+
+#include <ogawayama/stub/api.h>
 
 #ifdef __cplusplus
 extern "C" {

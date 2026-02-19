@@ -15,8 +15,6 @@
  *
  *	@file	tsurugi.cpp
  */
-#include "tsurugi.hpp"
-
 #include <string>
 #include <string_view>
 
@@ -24,6 +22,7 @@
 #include <ogawayama/stub/error_code.h>
 #include <boost/multiprecision/cpp_int.hpp>
 
+#include "tsurugi.hpp"
 #include "tg_numeric.hpp"
 
 #ifdef __cplusplus

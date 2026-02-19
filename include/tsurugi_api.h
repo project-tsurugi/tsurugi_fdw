@@ -19,10 +19,11 @@
 #define TSURUGI_API_H
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
+
 #include "postgres.h"
+
 #include "executor/tuptable.h"
 #include "nodes/params.h"
 #include "nodes/parsenodes.h"

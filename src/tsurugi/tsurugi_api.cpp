@@ -614,6 +614,13 @@ size_t make_parameters(ParamListInfo param_linfo,
 	return 0;
 }
 
+/**
+ *  @brief  Make placeholders of prepare statement.
+ *  @param  (rel) Pointer to Relation object..
+ *          (placeholders) placeholders_type object.
+ *  @return	(0) success
+ *          (othes) failure, param number where the error occurred.
+ */
 size_t make_placeholders(Relation rel,
 		ogawayama::stub::placeholders_type& placeholders) noexcept {
 	TupleDesc tupdesc = RelationGetDescr(rel);
@@ -630,7 +637,10 @@ size_t make_placeholders(Relation rel,
 			return param_num;
 		}
 		placeholders.emplace_back(param_name, tg_type.value());
+		elog(DEBUG3, "tsurugi_fdw: param number %d, placeholder id: %d", 
+				(int) param_num, (int) tg_type.value());
 	}
+	elog(DEBUG1, "tsurugi_fdw: placeholder count: %d", (int) param_num);
 
 	return 0;
 }
@@ -1152,7 +1162,7 @@ TGresult* tg_stmt_execute_query(TGstmt* tg_stmt) noexcept {
 		elog(DEBUG1, "tsurugi_fdw: Attempt to call prepare()");
 		auto error = tg_conn->impl->prepare(
 				tg_stmt->sql, tg_stmt->placeholders, tg_stmt->impl);
-		elog(DEBUG1, "tsurugi_fdw: prepare() is done.");
+		log2(DEBUG1, "tsurugi_fdw: prepare() is done.", error);
 		if (error != ERROR_CODE::OK) {
 			auto msg = tg_make_error_message(tg_conn,
 					"Failed to execute the query on Tsurugi.", error,
@@ -1206,7 +1216,7 @@ TG_STATUS tg_stmt_execute_statement(
 		elog(DEBUG1, "tsurugi_fdw: Attempt to call prepare()");
 		auto error = tg_conn->impl->prepare(
 				tg_stmt->sql, tg_stmt->placeholders, tg_stmt->impl);
-		elog(DEBUG1, "tsurugi_fdw: prepare() is done.");
+		log2(DEBUG1, "tsurugi_fdw: prepare() is done.", error);
 		if (error != ERROR_CODE::OK) {
 			auto msg = tg_make_error_message(tg_conn,
 					"Failed to execute the statement on Tsurugi.", error,
