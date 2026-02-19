@@ -2198,7 +2198,7 @@ tsurugiExecForeignUpdate(
 	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
 	rslot = tg_execute_foreign_modify(
-			estate, rinfo, CMD_INSERT, &slot, &planSlot, &numSlots);
+			estate, rinfo, CMD_UPDATE, &slot, &planSlot, &numSlots);
 
 	return rslot ? *rslot : NULL;
 }
@@ -2219,7 +2219,7 @@ tsurugiExecForeignDelete(
 	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
 	rslot = tg_execute_foreign_modify(
-			estate, rinfo, CMD_INSERT, &slot, &planSlot, &numSlots);
+			estate, rinfo, CMD_DELETE, &slot, &planSlot, &numSlots);
 
 	return rslot ? *rslot : NULL;
 }
