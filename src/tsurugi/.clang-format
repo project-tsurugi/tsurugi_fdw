@@ -1,11 +1,13 @@
 BasedOnStyle: Google
 Language: Cpp
-ColumnLimit: 90
+ColumnLimit: 80
 DerivePointerAlignment: false
 IncludeBlocks: Preserve
-IndentCaseBlocks: true
-IndentCaseLabels: true
 IndentWidth: 4
 TabWidth: 4
 UseTab: Always
 PointerAlignment: Left
+ContinuationIndentWidth: 8
+AlignAfterOpenBracket: DontAlign
+IndentWrappedFunctionNames: false
+SpaceAfterCStyleCast: true
