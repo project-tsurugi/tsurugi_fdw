@@ -2376,10 +2376,9 @@ deparseStringLiteral(StringInfo buf, const char *val)
 	 * backslashes.  This will fail on remote servers before 8.1, but those
 	 * are long out of support.
 	 */
-#if 0
 	if (strchr(val, '\\') != NULL)
 		appendStringInfoChar(buf, ESCAPE_STRING_SYNTAX);
-#endif
+
 	appendStringInfoChar(buf, '\'');
 	for (valptr = val; *valptr; valptr++)
 	{
@@ -2596,6 +2595,9 @@ deparseConst(Const *node, deparse_expr_cxt *context, int showtype)
 		case VARBITOID:
 			appendStringInfo(buf, "B'%s'", extval);
 			break;
+		case BYTEAOID:
+			appendStringInfo(buf, "'%s'", extval);
+			break;
 		case BOOLOID:
 			if (strcmp(extval, "t") == 0)
 				appendStringInfoString(buf, "true");
@@ -2646,6 +2648,7 @@ deparseConst(Const *node, deparse_expr_cxt *context, int showtype)
 			needlabel = (node->consttypmod >= 0);
 			showtype = -1;
 			break;
+		case BYTEAOID:
 		case DATEOID:
 		case TIMEOID:
 		case TIMESTAMPOID:

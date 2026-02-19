@@ -2009,7 +2009,7 @@ SELECT tg_execute_ddl('
 (1 row)
 
 --- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_postgresql (c smallint) SERVER tsurugidb;
+CREATE FOREIGN TABLE fdw_type_postgresql (c int) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_postgresql VALUES (1);
 SELECT * FROM fdw_type_postgresql;
