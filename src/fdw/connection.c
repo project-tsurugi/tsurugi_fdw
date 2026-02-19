@@ -233,7 +233,7 @@ tg_make_new_connection(ConnCacheEntry *entry, ForeignServer *server, UserMapping
 	foreach(lc, server->options)
 	{
 		DefElem	*def = (DefElem *) lfirst(lc);
-		if (!strcmp(def->defname, "db_name"))
+		if (!strcmp(def->defname, "dbname"))
 			db_name = defGetString(def);
 	}
 
