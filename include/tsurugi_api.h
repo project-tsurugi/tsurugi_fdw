@@ -25,6 +25,7 @@ extern "C" {
 #include "postgres.h"
 
 #include "executor/tuptable.h"
+#include "nodes/execnodes.h"
 #include "nodes/params.h"
 #include "nodes/parsenodes.h"
 #include "utils/relcache.h"
@@ -94,7 +95,9 @@ void tg_stmt_destroy(TGstmt *tg_stmt) TG_NOEXCEPT;
 
 /* Bind */
 TG_STATUS tg_stmt_bind_parameters(TGstmt *tg_stmt, ParamListInfo param_linfo) TG_NOEXCEPT;
-TG_STATUS tg_stmt_bind_parameters2(TGstmt* tg_stmt, 
+TG_STATUS tg_stmt_bind_params_for_query(TGstmt* tg_stmt, 
+		List* fdwexprs, ExprContext* econtext, List* param_exprs) TG_NOEXCEPT;
+TG_STATUS tg_stmt_bind_params_for_statement(TGstmt* tg_stmt, 
         Relation rel, List* target_attrs, TupleTableSlot **slots) TG_NOEXCEPT;
 
 /* Execute */

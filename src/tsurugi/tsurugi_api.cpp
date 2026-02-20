@@ -42,6 +42,7 @@ extern "C" {
 #include "executor/spi.h"
 #include "foreign/foreign.h"
 #include "miscadmin.h"
+#include "nodes/execnodes.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/params.h"
 #include "utils/rel.h"
@@ -615,7 +616,36 @@ size_t make_parameters(ParamListInfo param_linfo,
 }
 
 /**
- *  @brief  Make placeholders of prepare statement.
+ *  @brief  Make placeholders of prepare statement. (for query)
+ *  @param  (fdw_exprs) parameter node list.
+ * 			(placeholders) placeholders_type object.
+ *  @return	(0) success
+ *          (othes) failure, param number where the error occurred.
+ */
+size_t make_placeholders(
+		List* fdw_exprs, ogawayama::stub::placeholders_type& placeholders) {
+	elog(DEBUG3, "tsurugi_fdw : %s", __func__);
+
+	size_t param_num = 0;
+	ListCell* lc;
+	foreach (lc, fdw_exprs) {
+		Node* param_expr = (Node*) lfirst(lc);
+
+		/* parameter name is 1 origin. */
+		std::string param_name = "param" + std::to_string(++param_num);
+		auto tg_type = tg_convert_type_pg_to_tg(exprType(param_expr));
+		if (!tg_type) {
+			return param_num;
+		}
+		placeholders.emplace_back(param_name, tg_type.value());
+	}
+	elog(DEBUG1, "tsurugi_fdw : placeholders: %d", (int) param_num);
+
+	return 0;
+}
+
+/**
+ *  @brief  Make placeholders of prepare statement. (for statement)
  *  @param  (rel) Pointer to Relation object..
  *          (placeholders) placeholders_type object.
  *  @return	(0) success
@@ -637,36 +667,36 @@ size_t make_placeholders(Relation rel,
 			return param_num;
 		}
 		placeholders.emplace_back(param_name, tg_type.value());
-		elog(DEBUG3, "tsurugi_fdw: param number %d, placeholder id: %d", 
+		elog(DEBUG3, "tsurugi_fdw: param number %d, placeholder id: %d",
 				(int) param_num, (int) tg_type.value());
 	}
 	elog(DEBUG1, "tsurugi_fdw: placeholder count: %d", (int) param_num);
 
 	return 0;
 }
-#if 0
+
 /**
- *  @brief  Bind parameters of a prepared statement.
+ *  @brief  Bind parameters of prepared statement. (for query)
  *  @param  (econtext) Pointer toExprContext structure.
  *          (param_exprs) ExprState List.
  *          (params) paramters_type object.
  *  @return	(0) success.
  *          (others) failure. parameter number which error occurred.
  */
-size_t make_parameters(
-        ExprContext* econtext, List* param_exprs, stub::parameters_type& params) {
+size_t make_parameters(ExprContext* econtext, List* param_exprs,
+		stub::parameters_type& params) {
 	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
 
 	size_t param_num = 0;
-	ListCell   *lc;
-	foreach(lc, param_exprs) {
-		ExprState*  expr_state = (ExprState*) lfirst(lc);
-		bool		isNull;
-        
-        /* parameter number is 1 origin. */
-        auto param_name = "param" + std::to_string(++param_num);
+	ListCell* lc;
+	foreach (lc, param_exprs) {
+		ExprState* expr_state = (ExprState*) lfirst(lc);
+		bool isNull;
 
-        /* Evaluate the parameter expression */
+		/* parameter number is 1 origin. */
+		auto param_name = "param" + std::to_string(++param_num);
+
+		/* Evaluate the parameter expression */
 		Datum expr_value = ExecEvalExpr(expr_state, econtext, &isNull);
 
 		/*
@@ -675,25 +705,30 @@ size_t make_parameters(
 		 */
 		if (isNull) {
 			std::monostate mono{};
-            params.emplace_back(param_name, mono);
-        } else {
-            Oid typoid = exprType((Node*) expr_state->expr);
- 			auto value = tsurugi::convert_type_to_tg(typoid, expr_value);
-            if (std::holds_alternative<std::monostate>(value)) {
-                return param_num;
-            }
-            params.emplace_back(param_name, value);
-        }
-        param_num++;
+			params.emplace_back(param_name, mono);
+		} else {
+			Oid typoid = exprType((Node*) expr_state->expr);
+			auto tg_value = tg_convert_value_pg_to_tg(typoid, expr_value);
+			if (!tg_value) {
+				return param_num;
+			}
+			params.emplace_back(param_name, tg_value.value());
+		}
+		param_num++;
 	}
-    elog(DEBUG1, "tsurugi_fdw: parameters count: %d", (int) param_num);
+	elog(DEBUG1, "tsurugi_fdw: parameters count: %d", (int) param_num);
 
-    return 0;
+	return 0;
 }
-#endif
-/*
- *	make_parameters_type
- *		Bind parameters of prepared statement.
+
+/**
+ *  @brief  Bind parameters of prepared statement. (for statement)
+ *  @param  (rel) Pointer to Relation object.
+ *          (target_attrs) target_attr List.
+ * 			(slots) Pointer to TupleTableSlot pointer.
+ *          (params) paramters_type object.
+ *  @return	(0) success.
+ *          (others) failure. parameter number which error occurred.
  */
 size_t make_parameters(Relation rel, List* target_attrs, TupleTableSlot** slots,
 		ogawayama::stub::parameters_type& params) noexcept {
@@ -1100,9 +1135,39 @@ TG_STATUS tg_stmt_bind_parameters(
 }
 
 /**
- *  tg_stmt_set_placeholders
+ *  tg_stmt_bind_params_for_query
  */
-TG_STATUS tg_stmt_bind_parameters2(TGstmt* tg_stmt, Relation rel,
+TG_STATUS tg_stmt_bind_params_for_query(TGstmt* tg_stmt, List* fdw_exprs,
+		ExprContext* econtext, List* param_exprs) noexcept {
+	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
+
+	if (!tg_stmt) {
+		set_error("tg_stmt_bind_parameters: null stmt");
+		return TG_STATUS_INVALID_ARG;
+	}
+
+	auto param_num = make_placeholders(fdw_exprs, tg_stmt->placeholders);
+	if (param_num > 0) {
+		std::ostringstream msg;
+		msg << "Unsupported parameter found. (param number: " << param_num
+			<< ")";
+		return set_error(tg_stmt->error, msg.str());
+	}
+	param_num = make_parameters(econtext, param_exprs, tg_stmt->paramerters);
+	if (param_num > 0) {
+		std::ostringstream msg;
+		msg << "Unsupported parameter found. (param number: " << param_num
+			<< ")";
+		return set_error(tg_stmt->error, msg.str());
+	}
+	set_ok(tg_stmt->error);
+	return TG_STATUS_OK;
+}
+
+/**
+ *  tg_stmt_bind_params_for_statement
+ */
+TG_STATUS tg_stmt_bind_params_for_statement(TGstmt* tg_stmt, Relation rel,
 		List* target_attrs, TupleTableSlot** slots) noexcept {
 	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 

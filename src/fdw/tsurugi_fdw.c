@@ -1300,6 +1300,9 @@ tsurugiBeginForeignScan(ForeignScanState *node, int eflags)
 	}
 	fsstate->attinmeta = TupleDescGetAttInMetadata(fsstate->tupdesc);
 
+	fsstate->numParams = list_length(fsplan->fdw_exprs);
+	fsstate->param_exprs = ExecInitExprList(fsplan->fdw_exprs, (PlanState *) node);
+
 	/* Get the server object from the ForeignTable associated with the
 	 * relation. */
 	rte				 = exec_rt_fetch(rtindex, estate);
@@ -1330,6 +1333,8 @@ tsurugiIterateForeignScan(ForeignScanState *node)
 	TgFdwForeignScanState *fsstate = (TgFdwForeignScanState *) node->fdw_state;
 	TupleTableSlot		  *tupleSlot = node->ss.ss_ScanTupleSlot;
 	TG_STATUS			   tg_status;
+	ExprContext *econtext = node->ss.ps.ps_ExprContext;
+	ForeignScan* fsplan = (ForeignScan*) node->ss.ps.plan;
 
 	elog(DEBUG3,
 		 "tsurugi_fdw: %s\nquery:\n%s",
@@ -1343,13 +1348,10 @@ tsurugiIterateForeignScan(ForeignScanState *node)
 		if (!fsstate->tg_stmt)
 			elog(ERROR, "%s", tg_global_error_message());
 
-		if (fsstate->param_linfo != NULL)
-		{
-			tg_status = tg_stmt_bind_parameters(
-					fsstate->tg_stmt, fsstate->param_linfo);
-			if (tg_status != TG_STATUS_OK)
-				elog(ERROR, "%s", tg_stmt_error_message(fsstate->tg_stmt));
-		}
+		tg_status = tg_stmt_bind_params_for_query(
+				fsstate->tg_stmt, fsplan->fdw_exprs, econtext, fsstate->param_exprs);
+		if (tg_status != TG_STATUS_OK)
+			elog(ERROR, "%s", tg_stmt_error_message(fsstate->tg_stmt));
 
 		fsstate->tg_result = tg_stmt_execute_query(fsstate->tg_stmt);
 		if (!fsstate->tg_result)
@@ -2666,7 +2668,7 @@ tg_execute_foreign_modify(
 	elog(DEBUG1, "tsurugi_fdw: %s (operation: %d)", __func__, operation);
 
 	fmstate->tg_stmt = tg_stmt_prepare(fmstate->tg_conn, fmstate->query);
-	tg_status		 = tg_stmt_bind_parameters2(
+	tg_status		 = tg_stmt_bind_params_for_statement(
 			   fmstate->tg_stmt, fmstate->rel, fmstate->target_attrs, slots);
 	if (tg_status != TG_STATUS_OK)
 		elog(ERROR, "%s", tg_stmt_error_message(fmstate->tg_stmt));
