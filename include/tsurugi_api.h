@@ -65,7 +65,8 @@ const char *tg_global_error_message(void) TG_NOEXCEPT;
 
 /* -------------------------------------------------------------------------
  * Connection/Transaction functions.
- * ------------------------------------------------------------------------- */
+ * ------------------------------------------------------------------------- 
+ */
 /* Connection */
 TGconn* tg_conn_open(
 		const char* endpoint, const char *user, const char *password) TG_NOEXCEPT;
@@ -87,8 +88,8 @@ const char *tg_conn_error_message(const TGconn *tg_conn) TG_NOEXCEPT;
 
 /* -------------------------------------------------------------------------
  * Statement functions.
- * ------------------------------------------------------------------------- */
-
+ * ------------------------------------------------------------------------- 
+ */
 /* Prepare */
 TGstmt *tg_stmt_prepare(TGconn *tg_conn, const char *sql) TG_NOEXCEPT;
 void tg_stmt_destroy(TGstmt *tg_stmt) TG_NOEXCEPT;
@@ -109,8 +110,8 @@ const char *tg_stmt_error_message(const TGstmt *tg_stmt) TG_NOEXCEPT;
 
 /* -------------------------------------------------------------------------
  * ResultSet functions.
- * ------------------------------------------------------------------------- */
-
+ * ------------------------------------------------------------------------- 
+ */
 void tg_result_destroy(TGresult *tg_result) TG_NOEXCEPT;
 TG_STATUS tg_result_next(TGresult *tg_result) TG_NOEXCEPT;
 TG_STATUS tg_result_get_tuple(TGresult *tg_result,
@@ -120,7 +121,8 @@ const char *tg_result_error_message(const TGresult *tg_rs) TG_NOEXCEPT;
 
 /* -------------------------------------------------------------------------
  * UDF functions
- * ------------------------------------------------------------------------- */
+ * ------------------------------------------------------------------------- 
+ */
 typedef struct
 {
 	const char *schema_name;
