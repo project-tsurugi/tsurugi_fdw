@@ -287,11 +287,6 @@ store_pg_data_type(TgFdwForeignScanState *fsstate, List *tlist, List **);
 #if PG_VERSION_NUM >= 140000
 static int get_batch_size_option(Relation rel);
 #endif
-
-#if PG_VERSION_NUM >= 160000
-static bool has_table_privilege(Oid relid, ForeignScan *fsplan);
-#endif	// PG_VERSION_NUM >= 160000
-
 static TupleTableSlot **tg_execute_foreign_modify(
 		EState			*estate,
 		ResultRelInfo	*resultRelInfo,
@@ -1313,17 +1308,6 @@ tsurugiBeginForeignScan(ForeignScanState *node, int eflags)
 	server			 = GetForeignServer(table->serverid);
 	user			 = GetUserMapping(GetUserId(), table->serverid);
 	fsstate->tg_conn = tg_get_connection(server, user);
-
-#if PG_VERSION_NUM >= 160000
-	/* Permission check */
-	if (!has_table_privilege(rte->relid, fsplan))
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied for foreign table %s",
-						get_rel_name(table->relid))));
-	}
-#endif	// PG_VERSION_NUM >= 160000
 }
 
 /*
@@ -1798,17 +1782,6 @@ tsurugiBeginDirectModify(ForeignScanState *node, int eflags)
 	dmstate->server	 = server;
 	user			 = GetUserMapping(GetUserId(), server->serverid);
 	dmstate->tg_conn = tg_get_connection(server, user);
-
-#if PG_VERSION_NUM >= 160000
-	/* Permission check */
-	if (!has_table_privilege(rte->relid, fsplan))
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied for foreign table %s",
-						get_rel_name(table->relid))));
-	}
-#endif	// PG_VERSION_NUM >= 160000
 }
 
 /*
@@ -2582,75 +2555,6 @@ get_batch_size_option(Relation rel)
 	return batch_size;
 }
 #endif
-
-#if PG_VERSION_NUM >= 160000
-/**
- * @brief Check table privileges for a specific operation.
- * @param relid OID of the relation (table) to check.
- * @param fsplan ForeignScan node for the foreign table access plan.
- * @retval true if the user has the required privileges.
- * @retval false otherwise.
- */
-static bool
-has_table_privilege(Oid relid, ForeignScan *fsplan)
-{
-	AclMode check_modes[3];
-	int		mode_count		 = 0;
-	bool	res				 = false;
-	List   *has_where_clause = NULL;
-
-	/* Privilege check for main operation. */
-	switch (fsplan->operation)
-	{
-	case CMD_SELECT:
-		check_modes[mode_count++] = ACL_SELECT;
-		break;
-	case CMD_INSERT:
-		check_modes[mode_count++] = ACL_INSERT;
-		break;
-	case CMD_UPDATE:
-	{
-		check_modes[mode_count++] = ACL_UPDATE;
-
-		/* Additional SELECT privilege check for condition evaluation. */
-		has_where_clause = fsplan->fdw_private;
-		if (has_where_clause != NULL)
-		{
-			check_modes[mode_count++] = ACL_SELECT;
-		}
-		break;
-	}
-	case CMD_DELETE:
-	{
-		check_modes[mode_count++] = ACL_DELETE;
-
-		/* Additional SELECT privilege check for condition evaluation. */
-		has_where_clause = fsplan->fdw_private;
-		if (has_where_clause != NULL)
-		{
-			check_modes[mode_count++] = ACL_SELECT;
-		}
-		break;
-	}
-	default:
-		check_modes[mode_count++] = N_ACL_RIGHTS;
-		break;
-	}
-
-	res = false;
-	for (int i = 0; i < mode_count; i++)
-	{
-		res = pg_class_aclcheck(relid, GetUserId(), check_modes[i]) ==
-			  ACLCHECK_OK;
-		if (res == false)
-		{
-			break;
-		}
-	}
-
-	return res;
-}
-#endif /* PG_VERSION_NUM >= 160000 */
 
 /*
  * tsurugi_execute_insert
