@@ -21,11 +21,6 @@ CREATE FOREIGN TABLE fdw_sel_unsupported_test (
   manager_id INT
 ) SERVER tsurugidb;
 
--- Sub queries
-SELECT *
-  FROM fdw_sel_unsupported_test
-  WHERE value = (SELECT MAX(value) FROM fdw_sel_unsupported_test);
-
 -- LIMIT OFFSET
 SELECT * FROM fdw_sel_unsupported_test LIMIT 2 OFFSET 1;
 

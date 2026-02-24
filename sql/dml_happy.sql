@@ -567,6 +567,11 @@ SELECT ref_id, COUNT(*), SUM(value)
 -- LIMIT
 SELECT * FROM fdw_select_variation_table_1 ORDER BY id LIMIT 2;
 
+-- Sub queries
+SELECT *
+  FROM fdw_select_variation_table_1
+  WHERE value = (SELECT MAX(value) FROM fdw_select_variation_table_1);
+
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_select_variation_table_1;
 DROP FOREIGN TABLE fdw_select_variation_table_2;

@@ -1959,6 +1959,17 @@ EXECUTE prep_select;
 (2 rows)
 
 DEALLOCATE prep_select;
+-- Sub queries
+PREPARE fdw_prepare_sel AS
+  SELECT * FROM fdw_select_variation_table_1
+    WHERE value = (SELECT MAX(value) FROM fdw_select_variation_table_1);
+EXECUTE fdw_prepare_sel;
+  id  |   name    |   value   | ref_id | manager_id 
+------+-----------+-----------+--------+------------
+ 1000 | name-1000 | 100000.00 |        |           
+(1 row)
+
+DEALLOCATE fdw_prepare_sel;
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_select_variation_table_1;
 DROP FOREIGN TABLE fdw_select_variation_table_2;

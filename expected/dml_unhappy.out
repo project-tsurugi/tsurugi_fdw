@@ -23,14 +23,6 @@ CREATE FOREIGN TABLE fdw_sel_unsupported_test (
   ref_id INT,
   manager_id INT
 ) SERVER tsurugidb;
--- Sub queries
-SELECT *
-  FROM fdw_sel_unsupported_test
-  WHERE value = (SELECT MAX(value) FROM fdw_sel_unsupported_test);
-ERROR:  tsurugi_fdw: Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYMBOL_ANALYZE_EXCEPTION (SQL-03004: compile failed with error:variable_not_found message:"placeholder is not found: :param1" location:<input>:1:90+7)
-CONTEXT:  SQL query: SELECT id, name, value, ref_id, manager_id FROM fdw_sel_unsupported_test WHERE ((value = :param1))
 -- LIMIT OFFSET
 SELECT * FROM fdw_sel_unsupported_test LIMIT 2 OFFSET 1;
 ERROR:  tsurugi_fdw: Failed to execute remote SQL.

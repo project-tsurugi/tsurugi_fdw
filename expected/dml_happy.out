@@ -1508,6 +1508,15 @@ SELECT * FROM fdw_select_variation_table_1 ORDER BY id LIMIT 2;
  1001 | name-1001 |  60000.00 |      1 |       1002
 (2 rows)
 
+-- Sub queries
+SELECT *
+  FROM fdw_select_variation_table_1
+  WHERE value = (SELECT MAX(value) FROM fdw_select_variation_table_1);
+  id  |   name    |   value   | ref_id | manager_id 
+------+-----------+-----------+--------+------------
+ 1000 | name-1000 | 100000.00 |        |           
+(1 row)
+
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_select_variation_table_1;
 DROP FOREIGN TABLE fdw_select_variation_table_2;

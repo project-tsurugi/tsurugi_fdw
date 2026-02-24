@@ -35,13 +35,6 @@ CREATE FOREIGN TABLE fdw_sel_unsupported_test (
   value integer
 ) SERVER tsurugidb;
 
--- Sub queries
-PREPARE fdw_prepare_sel AS
-  SELECT * FROM fdw_sel_unsupported_test
-    WHERE value = (SELECT MAX(value) FROM fdw_sel_unsupported_test);
-EXECUTE fdw_prepare_sel;
-DEALLOCATE fdw_prepare_sel;
-
 -- LIMIT OFFSET
 PREPARE fdw_prepare_sel AS
   SELECT * FROM fdw_sel_unsupported_test LIMIT 2 OFFSET 1;

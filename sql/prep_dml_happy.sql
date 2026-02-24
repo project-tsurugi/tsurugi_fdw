@@ -1002,6 +1002,13 @@ PREPARE prep_select AS
 EXECUTE prep_select;
 DEALLOCATE prep_select;
 
+-- Sub queries
+PREPARE fdw_prepare_sel AS
+  SELECT * FROM fdw_select_variation_table_1
+    WHERE value = (SELECT MAX(value) FROM fdw_select_variation_table_1);
+EXECUTE fdw_prepare_sel;
+DEALLOCATE fdw_prepare_sel;
+
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_select_variation_table_1;
 DROP FOREIGN TABLE fdw_select_variation_table_2;
