@@ -773,6 +773,184 @@ size_t make_parameters(Relation rel, List* target_attrs, TupleTableSlot** slots,
 }
 
 /**
+ *  @brief  Append a named parameter to params, converting a PostgreSQL value to TG format.
+ *  @param  (params) Destination parameters_type object.
+ *          (name) Parameter name.
+ *          (atttypid) PostgreSQL type OID of the value.
+ *          (pg_value) PostgreSQL Datum value.
+ *          (isnull) True if the value is NULL.
+ *  @return (true) success.
+ *          (false) failure. conversion error occurred.
+>>>>>>> Stashed changes
+ */
+inline bool append_param(ogawayama::stub::parameters_type& params,
+                         const std::string& name,
+                         Oid atttypid,
+                         Datum pg_value,
+                         bool isnull) noexcept
+{
+	/* If NULL, append a null marker (std::monostate) and return success. */
+    if (isnull) {
+        params.emplace_back(name, std::monostate{});
+        return true;
+    }
+
+	/* Convert the PostgreSQL Datum to a Tsurugi value. */
+    auto tg_value = tg_convert_value_pg_to_tg(atttypid, pg_value);
+    if (!tg_value) {
+        return false;
+    }
+
+	/* Append the converted value and return success. */
+    params.emplace_back(name, tg_value.value());
+    return true;
+}
+
+/**
+ *  @brief  Bind target attributes as parameters for a prepared statement.
+ *  @param  (tupdesc) Tuple descriptor which provides attribute metadata.
+ *          (target_attrs) List of target attribute numbers (attnum).
+ *          (slots) TupleTableSlot array used to fetch attribute values.
+ *          (param_num) Parameter counter (incremented while binding).
+ *          (params) Destination parameters_type object.
+ *  @return (0) success.
+ *          (others) failure. parameter number which error occurred.
+ */
+size_t bind_target_attrs(TupleDesc tupdesc,
+                         List* target_attrs,
+                         TupleTableSlot** slots,
+                         int& param_num,
+                         ogawayama::stub::parameters_type& params) noexcept
+{
+    ListCell* lc = nullptr;
+    foreach (lc, target_attrs) {
+        const int attnum = lfirst_int(lc);
+        Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
+
+        /* Ignore generated columns; they are set to DEFAULT */
+        if (attr->attgenerated) {
+            continue;
+        }
+
+		/* Generate a unique parameter name like "paramN". */
+		const std::string param_name = "param" + std::to_string(++param_num);
+
+		/* Fetch the attribute value from the slot and detect NULL. */
+        bool isnull = false;
+        Datum pg_value = slot_getattr(slots[0], attnum, &isnull);
+
+		/* Append the parameter (with conversion); return the failing param number on error. */
+        if (!append_param(params, param_name, attr->atttypid, pg_value, isnull)) {
+            return param_num;
+        }
+    }
+    return 0;
+}
+
+/**
+ *  @brief  Bind key attributes (marked by foreign column option "key") from junk attributes as parameters.
+ *  @param  (rel) Target relation.
+ *          (slots) TupleTableSlot array which provides tuple descriptor (column metadata).
+ *          (planSlots) TupleTableSlot array used to fetch junk attribute values from the plan.
+ *          (junk_idx) Mapping from slot attribute index to junk attribute number.
+ *          (param_num) Parameter counter (incremented while binding).
+ *          (params) Destination parameters_type object.
+ *  @return (0) success.
+ *          (others) failure. parameter number which error occurred.
+ */
+size_t bind_key_attrs_from_junk(Relation rel,
+                                TupleTableSlot** slots,
+                                TupleTableSlot** planSlots,
+                                AttrNumber* junk_idx,
+                                int& param_num,
+                                ogawayama::stub::parameters_type& params) noexcept
+{
+    const Oid relid = RelationGetRelid(rel);
+    TupleDesc slotdesc = slots[0]->tts_tupleDescriptor;
+
+	/* Scan all attributes in the slot descriptor. */
+    for (int i = 0; i < slotdesc->natts; i++) {
+        Form_pg_attribute attr = TupleDescAttr(slotdesc, i);
+
+		/* Ignore generated columns; they are set to DEFAULT */
+        if (attr->attgenerated) {
+            continue;
+        }
+
+		/* Get column number and its foreign column options. */
+        const AttrNumber attnum = attr->attnum;
+        List* options = GetForeignColumnOptions(relid, attnum);
+
+		/* Find option entries that mark this column as a key. */
+        ListCell* oc = nullptr;
+        foreach (oc, options) {
+			/* Check whether the option is "key=true". */
+            DefElem* def = (DefElem*) lfirst(oc);
+            if (!(strcmp(def->defname, "key") == 0 && defGetBoolean(def))) {
+                continue;
+            }
+
+			/* Generate a unique parameter name like "paramN". */
+            const std::string param_name = "param" + std::to_string(++param_num);
+
+			/* Resolve the corresponding junk attribute number for this column. */
+            const AttrNumber junk = junk_idx[i];
+            if (junk == InvalidAttrNumber) {
+                continue;
+            }
+
+			/* Fetch the key value from the plan's junk attribute. */
+            bool isnull = false;
+            Datum pg_value = ExecGetJunkAttribute(planSlots[0], junk, &isnull);
+
+			/* Append the parameter (with conversion); return the failing param number on error. */
+            if (!append_param(params, param_name, attr->atttypid, pg_value, isnull)) {
+                return param_num;
+            }
+        }
+    }
+    return 0;
+}
+
+/*
+ *  make_parameters_type
+ *      Bind parameters of prepared statement.
+ */
+size_t make_parameters(Relation rel,
+                       List* target_attrs,
+                       TupleTableSlot** slots,
+                       TupleTableSlot** planSlots,
+                       AttrNumber* junk_idx,
+                       ogawayama::stub::parameters_type& params) noexcept
+{
+    TupleDesc tupdesc = RelationGetDescr(rel);
+	int param_num = 0;
+
+    elog(DEBUG3, "tsurugi_fdw: %s", __func__);
+
+    if (tupdesc == nullptr || slots == nullptr || slots[0] == nullptr) {
+        return 0;
+    }
+
+	/* 1) Bind values for target attributes (e.g., INSERT/SET clause). */
+    size_t failed_param = bind_target_attrs(tupdesc, target_attrs, slots, param_num, params);
+    if (failed_param != 0) {
+        return failed_param;
+    }
+
+	/* 2) Bind key attributes (for WHERE clause) from plan's junk attributes when available. */
+	if (planSlots && planSlots[0] && junk_idx) {
+        failed_param = bind_key_attrs_from_junk(rel, slots, planSlots, junk_idx, param_num, params);
+        if (failed_param != 0) {
+            return failed_param;
+        }
+    }
+
+    elog(DEBUG1, "tsurugi_fdw: parameter count: %d", param_num);
+    return 0;
+}
+
+/**
  *  @brief Obtain tuple data from Ogawayama, and convert data type to PG data
  * type.
  */
@@ -1191,6 +1369,35 @@ TG_STATUS tg_stmt_bind_params_for_statement(TGstmt* tg_stmt, Relation rel,
 		return set_error(tg_stmt->error, msg.str());
 	}
 	param_num = make_parameters(rel, target_attrs, slots, tg_stmt->paramerters);
+	if (param_num > 0) {
+		std::ostringstream msg;
+		msg << "Unsupported parameter found. (param number: " << param_num
+			<< ")";
+		return set_error(tg_stmt->error, msg.str());
+	}
+	set_ok(tg_stmt->error);
+	return TG_STATUS_OK;
+}
+
+TG_STATUS tg_stmt_bind_parameters2(TGstmt* tg_stmt, Relation rel,
+		List* target_attrs, TupleTableSlot** slots,
+		TupleTableSlot** planSlots,AttrNumber* junk_idx) noexcept {
+	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
+
+	if (!tg_stmt) {
+		set_error("tg_stmt_bind_parameters: null stmt");
+		return TG_STATUS_INVALID_ARG;
+	}
+
+	auto param_num = make_placeholders(rel, tg_stmt->placeholders);
+	if (param_num > 0) {
+		std::ostringstream msg;
+		msg << "Unsupported parameter found. (param number: " << param_num
+			<< ")";
+		return set_error(tg_stmt->error, msg.str());
+	}
+	param_num = make_parameters(rel, target_attrs, slots, planSlots, junk_idx,
+                                tg_stmt->paramerters);
 	if (param_num > 0) {
 		std::ostringstream msg;
 		msg << "Unsupported parameter found. (param number: " << param_num

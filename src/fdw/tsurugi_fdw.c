@@ -27,6 +27,7 @@
 #include "commands/explain.h"
 #include "foreign/fdwapi.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "nodes/pathnodes.h"
 #include "nodes/pg_list.h"
 #if PG_VERSION_NUM >= 120000
@@ -1419,20 +1420,70 @@ tsurugiEndForeignScan(ForeignScanState *node)
  * tsurugiAddForeignUpdateTargets
  *
  */
+static void
+tsurugiAddForeignUpdateTargets(
 #if PG_VERSION_NUM >= 140000
-static void
-tsurugiAddForeignUpdateTargets(
-		PlannerInfo	  *root,
-		Index		   rtindex,
-		RangeTblEntry *target_rte,
-		Relation	   target_relation)
+        PlannerInfo   *root,
+        Index          rtindex,
 #else
-static void
-tsurugiAddForeignUpdateTargets(
-		Query *parsetree, RangeTblEntry *target_rte, Relation target_relation)
-#endif	// PG_VERSION_NUM >= 140000
+        Query         *parsetree,
+#endif
+        RangeTblEntry *target_rte,
+        Relation       target_relation)
 {
-	elog(DEBUG2, "tsurugi_fdw: %s", __func__);
+    Oid         relid = RelationGetRelid(target_relation);
+    TupleDesc   tupdesc = target_relation->rd_att;
+
+    for (int i = 0; i < tupdesc->natts; i++)
+    {
+        Form_pg_attribute att = TupleDescAttr(tupdesc, i);
+        AttrNumber  attrno = att->attnum;
+        List       *options;
+        ListCell   *lc;
+
+        if (att->attisdropped)
+            continue;
+
+        options = GetForeignColumnOptions(relid, attrno);
+
+        foreach(lc, options)
+        {
+            DefElem *def = (DefElem *) lfirst(lc);
+
+            if (strcmp(def->defname, "key") == 0 && defGetBoolean(def))
+            {
+                Var *var;
+
+#if PG_VERSION_NUM < 140000
+                Index rtindex = parsetree->resultRelation;
+                TargetEntry *tle;
+#endif
+                var = makeVar(rtindex,
+                              attrno,
+                              att->atttypid,
+                              att->atttypmod,
+                              att->attcollation,
+                              0);
+
+#if PG_VERSION_NUM >= 140000
+				// PG14以降：行識別用として登録
+                add_row_identity_var(root, var, rtindex,
+                                     pstrdup(NameStr(att->attname)));
+#else
+				// PG13以前：targetList に “隠し列(resjunk)” として追加
+                tle = makeTargetEntry((Expr *) var,
+                                      list_length(parsetree->targetList) + 1,
+                                      pstrdup(NameStr(att->attname)),
+                                      true /* resjunk */);
+                parsetree->targetList = lappend(parsetree->targetList, tle);
+#endif
+            }
+            else if (strcmp(def->defname, "key") == 0)
+            {
+                elog(ERROR, "impossible column option \"%s\"", def->defname);
+            }
+        }
+    }
 }
 
 /* -------------------------------------------------------------------------
@@ -1985,6 +2036,9 @@ tsurugiPlanForeignModify(
 	case CMD_UPDATE:
 		deparseUpdateSql(&sql, rte, resultRelation, rel, targetAttrs);
 		break;
+	case CMD_DELETE:
+		deparseDeleteSql(&sql, rte, resultRelation, rel, NIL, &retrieved_attrs);
+		break;
 	default:
 		elog(ERROR, "unexpected operation: %d", (int) operation);
 		break;
@@ -2039,8 +2093,17 @@ tsurugiBeginForeignModify(
 	ForeignTable			*table;
 	ForeignServer			*server;
 	UserMapping				*user;
+	Oid   					foreignTableId;
+	Plan 					*subplan;
 
 	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
+
+	foreignTableId = RelationGetRelid(rel);
+#if (PG_VERSION_NUM >= 140000)
+	subplan = outerPlanState(mtstate)->plan;
+#else
+	subplan = mtstate->mt_plans[subplan_index]->plan;
+#endif
 
 	/*
 	 * Do nothing in EXPLAIN (no ANALYZE) case.  resultRelInfo->ri_FdwState
@@ -2139,6 +2202,16 @@ tsurugiBeginForeignModify(
 	user				 = GetUserMapping(GetUserId(), server->serverid);
 	fmstate->tg_conn	 = tg_get_connection(server, user);
 	fmstate->param_linfo = estate->es_param_list_info;
+
+	fmstate->junk_idx = palloc0(RelationGetDescr(rel)->natts * sizeof(AttrNumber));
+	/* loop through table columns */
+	for (int i = 0; i < RelationGetDescr(rel)->natts; ++i)
+	{
+		/* for primary key columns, get the resjunk attribute number and store it */
+		fmstate->junk_idx[i] =
+			ExecFindJunkAttributeInTlist(subplan->targetlist,
+										get_attname(foreignTableId, i + 1, false));
+	}
 }
 
 /*
@@ -2573,6 +2646,9 @@ tg_execute_foreign_modify(
 											   resultRelInfo->ri_FdwState;
 	TG_STATUS tg_status;
 	size_t	  n_rows = 0;
+	/* silence unused warnings (depends on build flags) */
+	(void) estate;
+	(void) numSlots;
 
 	/* The operation should be INSERT, UPDATE, or DELETE */
 	Assert(operation == CMD_INSERT || operation == CMD_UPDATE ||
@@ -2581,8 +2657,9 @@ tg_execute_foreign_modify(
 	elog(DEBUG1, "tsurugi_fdw: %s (operation: %d)", __func__, operation);
 
 	fmstate->tg_stmt = tg_stmt_prepare(fmstate->tg_conn, fmstate->query);
-	tg_status		 = tg_stmt_bind_params_for_statement(
-			   fmstate->tg_stmt, fmstate->rel, fmstate->target_attrs, slots);
+	tg_status		 = tg_stmt_bind_parameters2(
+				fmstate->tg_stmt, fmstate->rel,
+				fmstate->target_attrs, slots, planSlots, fmstate->junk_idx);
 	if (tg_status != TG_STATUS_OK)
 		elog(ERROR, "%s", tg_stmt_error_message(fmstate->tg_stmt));
 	tg_status = tg_stmt_execute_statement(fmstate->tg_stmt, &n_rows);

@@ -109,6 +109,7 @@ static char *deparse_type_name(Oid type_oid, int32 typemod);
 bool is_foreign_pathkey(PlannerInfo *root,
 							   RelOptInfo *baserel,
 							   PathKey *pathkey);
+static List *tsurugi_get_key_attrs_from_column_options(Relation rel);
 
 /*
  * Functions to construct string representation of a node tree.
@@ -1309,27 +1310,12 @@ deparseLockingClause(deparse_expr_cxt *context)
 		if (bms_is_member(relid, fpinfo->lower_subquery_rels))
 			continue;
 
-		/*
-		 * Add FOR UPDATE/SHARE if appropriate.  We apply locking during the
-		 * initial row fetch, rather than later on as is done for local
-		 * tables. The extra roundtrips involved in trying to duplicate the
-		 * local semantics exactly don't seem worthwhile (see also comments
-		 * for RowMarkType).
-		 *
-		 * Note: because we actually run the query as a cursor, this assumes
-		 * that DECLARE CURSOR ... FOR UPDATE is supported, which it isn't
-		 * before 8.3.
-		 */
+		/* Do not add FOR UPDATE for UPDATE/DELETE target relation in tsurugi_fdw. */
 		if (relid == root->parse->resultRelation &&
 			(root->parse->commandType == CMD_UPDATE ||
 			 root->parse->commandType == CMD_DELETE))
 		{
-			/* Relation is UPDATE/DELETE target, so use FOR UPDATE */
-			appendStringInfoString(buf, " FOR UPDATE");
-
-			/* Add the relation alias if we are here for a join relation */
-			if (IS_JOIN_REL(rel))
-				appendStringInfo(buf, " OF %s%d", REL_ALIAS_PREFIX, relid);
+			/* Intentionally no remote FOR UPDATE clause */
 		}
 		else
 		{
@@ -1829,6 +1815,47 @@ deparseInsertSql(StringInfo buf, RangeTblEntry *rte,
 						 withCheckOptionList, returningList, retrieved_attrs);
 }
 
+static List * tsurugi_get_key_attrs_from_column_options(Relation rel)
+{
+    Oid         relid = RelationGetRelid(rel);
+    TupleDesc   tupdesc = RelationGetDescr(rel);
+    List       *key_attrs = NIL;
+    int         attnum;
+
+    for (attnum = 1; attnum <= tupdesc->natts; attnum++)
+    {
+        Form_pg_attribute attr;
+        List       *opts;
+        ListCell   *lc;
+
+        attr = TupleDescAttr(tupdesc, attnum - 1);
+        if (attr->attisdropped)
+            continue;
+
+        opts = GetForeignColumnOptions(relid, attnum);
+		if (opts == NIL)
+            continue;
+
+        foreach(lc, opts)
+        {
+            DefElem *def = (DefElem *) lfirst(lc);
+			if (strcmp(def->defname, "key") == 0 && defGetBoolean(def))
+            {
+                key_attrs = lappend_int(key_attrs, attnum);
+                break;
+            }
+        }
+    }
+
+	if (key_attrs == NIL)
+        ereport(ERROR,
+                (errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+                 errmsg("no key column specified for foreign table"),
+                 errdetail("For UPDATE or DELETE, at least one foreign table column must be marked as key column."),
+                 errhint("Set the option \"%s\" on the columns that belong to the key.", "key")));
+    return key_attrs;
+}
+
 /*
  * deparse remote UPDATE statement
  *
@@ -1844,6 +1871,8 @@ deparseUpdateSql(StringInfo buf, RangeTblEntry *rte,
 	AttrNumber	pindex;
 	bool		first;
 	ListCell   *lc;
+	List *keyAttnums;
+	bool first_key = true;
 
 	elog(DEBUG4, "tsurugi_fdw: %s\ndeparsed sql:\n%s", __func__, buf->data);
 
@@ -1862,6 +1891,18 @@ deparseUpdateSql(StringInfo buf, RangeTblEntry *rte,
 		first = false;
 
 		deparseColumnRef(buf, rtindex, attnum, rte, false);
+		appendStringInfo(buf, " = :param%d", pindex);
+		pindex++;
+	}
+
+	keyAttnums = tsurugi_get_key_attrs_from_column_options(rel);
+    foreach(lc, keyAttnums)
+    {
+        int attnum = lfirst_int(lc);
+
+        appendStringInfoString(buf, first_key ? " WHERE " : " AND ");
+		first_key = false;
+        deparseColumnRef(buf, rtindex, attnum, rte, false);
 		appendStringInfo(buf, " = :param%d", pindex);
 		pindex++;
 	}
@@ -1975,11 +2016,27 @@ deparseDeleteSql(StringInfo buf, RangeTblEntry *rte,
 				 List *returningList,
 				 List **retrieved_attrs)
 {
+    List     *keyAttnums;
+    ListCell *lc;
+    bool      first_key = true;
+    AttrNumber pindex = 1;
+
 	elog(DEBUG4, "tsurugi_fdw: %s\nsql:\n%s", __func__, buf->data);
 
 	appendStringInfoString(buf, "DELETE FROM ");
 	deparseRelation(buf, rel);
-	appendStringInfoString(buf, " WHERE ctid = $1");
+
+	keyAttnums = tsurugi_get_key_attrs_from_column_options(rel);
+    foreach(lc, keyAttnums)
+    {
+        int attnum = lfirst_int(lc);
+
+        appendStringInfoString(buf, first_key ? " WHERE " : " AND ");
+        first_key = false;
+
+        deparseColumnRef(buf, rtindex, attnum, rte, false);
+        appendStringInfo(buf, " = :param%d", pindex++);
+    }
 
 	deparseReturningList(buf, rte, rtindex, rel,
 						 rel->trigdesc && rel->trigdesc->trig_delete_after_row,
