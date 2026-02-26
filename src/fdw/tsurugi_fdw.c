@@ -1744,7 +1744,7 @@ tsurugiBeginDirectModify(ForeignScanState *node, int eflags)
 	Assert(node != NULL);
 	Assert(fsplan != NULL);
 
-	elog(DEBUG1, "tsurugi_fdw: %s\n%s", __func__, estate->es_sourceText);
+	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
 	/* Initialize state variable */
 	dmstate = (TgFdwDirectModifyState *) palloc0(
@@ -1799,10 +1799,7 @@ tsurugiIterateDirectModify(ForeignScanState *node)
 	dmstate->slot		   = node->ss.ss_ScanTupleSlot;
 	dmstate->set_processed = true;
 
-	elog(DEBUG1,
-		 "tsurugi_fdw: %s\nquery:\n%s",
-		 __func__,
-		 estate->es_sourceText);
+	elog(DEBUG1, "tsurugi_fdw: %s",__func__);
 
 	if (dmstate->num_tuples == (size_t) -1)
 	{
