@@ -272,7 +272,7 @@ std::optional<TgColumnType> tg_convert_type_pg_to_tg(const Oid pg_type) {
 			tg_type = stub::Metadata::ColumnType::Type::OCTET;
 			break;
 		default:
-			elog(LOG, "tsurugi_fdw: unrecognized type oid: %d", (int) pg_type);
+			elog(LOG, "tsurugi_fdw: Unrecognized type oid: %d", (int) pg_type);
 			return std::nullopt;
 	}
 
@@ -763,7 +763,7 @@ std::optional<TgValue> tg_convert_value_pg_to_tg(
 					sign = 0;
 					break;
 				default:
-					elog(LOG, "unrecognized numeric sign = 0x%x", numeric_sign);
+					elog(LOG, "tsurugi_fdw: Unrecognized numeric sign = 0x%x", numeric_sign);
 					return false;
 			}
 
@@ -771,7 +771,7 @@ std::optional<TgValue> tg_convert_value_pg_to_tg(
 			if (mp_coefficient >
 					std::numeric_limits<
 							boost::multiprecision::uint128_t>::max()) {
-				elog(LOG, "tsurugi_fdw: numeric coefficient field overflow");
+				elog(LOG, "tsurugi_fdw: Numeric coefficient field overflow");
 				return false;
 			}
 			std::uint64_t coefficient_high =
@@ -806,7 +806,7 @@ std::optional<TgValue> tg_convert_value_pg_to_tg(
 			break;
 		}
 		default: {
-			elog(LOG, "unrecognized type oid: %d", (int) pg_type);
+			elog(LOG, "Unrecognized type oid: %d", (int) pg_type);
 			return std::nullopt;
 		}
 	}

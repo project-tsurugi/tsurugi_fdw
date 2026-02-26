@@ -127,7 +127,7 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 	{
         case T_CreateStmt:
 		{
-			elog(LOG, "tsurugi_fdw: %s : T_CreateStmt", __func__);
+			elog(DEBUG1, "tsurugi_fdw: %s : T_CreateStmt", __func__);
 
 			if (IsTsurugifdwInstalled())
 			{
@@ -148,7 +148,7 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 
 		case T_CreateTableAsStmt:
 		{
-			elog(LOG, "tsurugi_fdw: %s : T_CreateTableAsStmt", __func__);
+			elog(DEBUG1, "tsurugi_fdw: %s : T_CreateTableAsStmt", __func__);
 
 			if (IsTsurugifdwInstalled())
 			{
@@ -180,7 +180,7 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 
 		case T_CreateForeignTableStmt:
 		{
-			elog(LOG, "tsurugi_fdw: %s : T_CreateForeignTableStmt", __func__);
+			elog(DEBUG1, "tsurugi_fdw: %s : T_CreateForeignTableStmt", __func__);
 						
 			if (IsTsurugifdwInstalled())
 			{
@@ -214,7 +214,7 @@ tsurugi_ProcessUtility(PlannedStmt *pstmt,
 		{
 			CreateExtensionStmt *stmt = (CreateExtensionStmt *) pstmt->utilityStmt;
 
-			elog(LOG, "tsurugi_fdw: %s : T_CreateExtensionStmt", __func__);
+			elog(DEBUG1, "tsurugi_fdw: %s : T_CreateExtensionStmt", __func__);
 
 			if (strcmp(stmt->extname, "tsurugi_fdw") == 0) {
 				if(!noTablesInDatabase()){

@@ -1475,7 +1475,7 @@ tsurugiPlanDirectModify(
 			{"", "SELECT", "UPDATE", "INSERT", "DELETE", "UTILITY"};
 
 	/* operation - 1:SELECT, 2:UPDATE, 3:INSERT, 4:DELETE, 5:UTILITY */
-	elog(LOG,
+	elog(DEBUG3,
 		 "tsurugi_fdw: %s (operation= %s(%d))",
 		 __func__,
 		 operations[operation],
@@ -1669,10 +1669,10 @@ tsurugiPlanDirectModify(
 				&retrieved_attrs);
 		break;
 	default:
-		elog(ERROR, "unexpected operation: %d", (int) operation);
+		elog(ERROR, "Unexpected operation in %s: %d", __func__, (int) operation);
 		break;
 	}
-	elog(LOG, "tsurugi_fdw: \ndeparsed sql:\n%s", sql.data);
+	elog(DEBUG1, "tsurugi_fdw: \ndeparsed sql:\n%s", sql.data);
 
 	/*
 	 * Update the operation info.
@@ -1720,7 +1720,7 @@ tsurugiPlanDirectModify(
 #endif	// PG_VERSION_NUM >= 140000
 
 	table_close(rel, NoLock);
-	elog(LOG, "tsurugi_fdw: execute direct modify.");
+	elog(DEBUG1, "tsurugi_fdw: execute direct modify.");
 
 	return true;
 }
@@ -1990,7 +1990,7 @@ tsurugiPlanForeignModify(
 		break;
 	}
 
-	elog(LOG, "tsurugi_fdw: %s : \ndeparsed sql:\n%s", __func__, sql.data);
+	elog(DEBUG1, "tsurugi_fdw: %s : \ndeparsed sql:\n%s", __func__, sql.data);
 
 	table_close(rel, NoLock);
 
