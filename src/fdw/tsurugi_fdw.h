@@ -136,7 +136,8 @@ typedef struct tsurugi_fdw_foreign_modify_state_
 	int num_slots; /* number of slots to insert */
 
 	/* working memory context */
-	MemoryContext temp_cxt; /* context for per-tuple temporary data */
+	MemoryContext temp_cxt;		/* context for per-tuple temporary data */
+	AttrNumber *junk_idx;
 
 	/* for update row movement if subplan result rel */
 	struct TgFdwForeignModifyState *aux_fmstate; /* foreign-insert state, if

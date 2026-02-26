@@ -100,6 +100,9 @@ TG_STATUS tg_stmt_bind_params_for_query(TGstmt* tg_stmt,
 		List* fdwexprs, ExprContext* econtext, List* param_exprs) TG_NOEXCEPT;
 TG_STATUS tg_stmt_bind_params_for_statement(TGstmt* tg_stmt, 
         Relation rel, List* target_attrs, TupleTableSlot **slots) TG_NOEXCEPT;
+TG_STATUS tg_stmt_bind_parameters2(TGstmt* tg_stmt, 
+		Relation rel, List* target_attrs, TupleTableSlot **slots,
+		TupleTableSlot **planSlots, AttrNumber *junk_idx) TG_NOEXCEPT;
 
 /* Execute */
 TGresult *tg_stmt_execute_query(TGstmt *tg_stmt) TG_NOEXCEPT;
