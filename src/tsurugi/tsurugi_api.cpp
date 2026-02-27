@@ -1334,15 +1334,15 @@ TG_STATUS tg_stmt_bind_params_for_query(TGstmt* tg_stmt, List* fdw_exprs,
 	auto param_num = make_placeholders(fdw_exprs, tg_stmt->placeholders);
 	if (param_num > 0) {
 		std::ostringstream msg;
-		msg << "Unsupported parameter found. (param number: " << param_num
-			<< ")";
+		msg << "Unsupported placeholder found. (number: " << param_num
+			<< ")\nsql query: " << tg_stmt->sql;
 		return set_error(tg_stmt->error, msg.str());
 	}
 	param_num = make_parameters(econtext, param_exprs, tg_stmt->paramerters);
 	if (param_num > 0) {
 		std::ostringstream msg;
 		msg << "Unsupported parameter found. (param number: " << param_num
-			<< ")";
+			<< ")\nsql query: " << tg_stmt->sql;
 		return set_error(tg_stmt->error, msg.str());
 	}
 	set_ok(tg_stmt->error);
@@ -1364,15 +1364,15 @@ TG_STATUS tg_stmt_bind_params_for_statement(TGstmt* tg_stmt, Relation rel,
 	auto param_num = make_placeholders(rel, tg_stmt->placeholders);
 	if (param_num > 0) {
 		std::ostringstream msg;
-		msg << "Unsupported parameter found. (param number: " << param_num
-			<< ")";
+		msg << "Unsupported placeholder found. (number: " << param_num
+			<< ")\nsql query: " << tg_stmt->sql;
 		return set_error(tg_stmt->error, msg.str());
 	}
 	param_num = make_parameters(rel, target_attrs, slots, tg_stmt->paramerters);
 	if (param_num > 0) {
 		std::ostringstream msg;
 		msg << "Unsupported parameter found. (param number: " << param_num
-			<< ")";
+			<< ")\nsql query: " << tg_stmt->sql;
 		return set_error(tg_stmt->error, msg.str());
 	}
 	set_ok(tg_stmt->error);
@@ -1393,7 +1393,7 @@ TG_STATUS tg_stmt_bind_parameters2(TGstmt* tg_stmt, Relation rel,
 	if (param_num > 0) {
 		std::ostringstream msg;
 		msg << "Unsupported parameter found. (param number: " << param_num
-			<< ")";
+			<< ")\nsql query: " << tg_stmt->sql;
 		return set_error(tg_stmt->error, msg.str());
 	}
 	param_num = make_parameters(rel, target_attrs, slots, planSlots, junk_idx,
@@ -1401,7 +1401,7 @@ TG_STATUS tg_stmt_bind_parameters2(TGstmt* tg_stmt, Relation rel,
 	if (param_num > 0) {
 		std::ostringstream msg;
 		msg << "Unsupported parameter found. (param number: " << param_num
-			<< ")";
+			<< ")\nsql query: " << tg_stmt->sql;
 		return set_error(tg_stmt->error, msg.str());
 	}
 	set_ok(tg_stmt->error);
@@ -1412,7 +1412,7 @@ TG_STATUS tg_stmt_bind_parameters2(TGstmt* tg_stmt, Relation rel,
  *  tg_stmt_execute_query
  */
 TGresult* tg_stmt_execute_query(TGstmt* tg_stmt) noexcept {
-	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw: %s\nsql:\n%s", __func__, tg_stmt->sql.c_str());
 
 	if (!tg_stmt) {
 		set_error(tg_stmt->error, "tg_stmt_execute_query: null stmt");
@@ -1481,7 +1481,7 @@ TGresult* tg_stmt_execute_query(TGstmt* tg_stmt) noexcept {
  */
 TG_STATUS tg_stmt_execute_statement(
 		TGstmt* tg_stmt, size_t* num_rows) noexcept {
-	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
+	elog(DEBUG1, "tsurugi_fdw: %s\nsql:\n%s", __func__, tg_stmt->sql.c_str());
 
 	if (!tg_stmt) {
 		set_error("tg_stmt_execute_statement: null stmt");
