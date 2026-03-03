@@ -25,7 +25,7 @@ class FdwSample(models.Model):
     tim = models.TimeField()
 
     class Meta:
-        managed = True # Djangoがテーブルを作成・変更しないように設定
+        managed = False # Djangoがテーブルを作成・変更しないように設定
         db_table = 'fdw_sample' # データベース内のテーブル名を指定
 
     def __str__(self):
