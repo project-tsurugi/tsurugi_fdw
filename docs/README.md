@@ -3,6 +3,7 @@
 - [概要](./preface.md)
 - [セットアップ](./setup.md)
 - [チュートリアル](./tutorial.md)
+- [チュートリアル（JDBC API）](./tutorial_jdbc.md)
 - [チュートリアル（Spring Framework）](./tutorial_spring.md)
 - [チュートリアル（Psycopg）](./tutorial_psycopg.md)
 - [チュートリアル（Django）](./tutorial_django.md)
