@@ -1057,6 +1057,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c bit(4)) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES (B'1010');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
@@ -1081,6 +1082,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c bit varying(4)) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES (B'1010');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
@@ -1105,6 +1107,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c boolean) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES (true);
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
@@ -1129,6 +1132,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c box) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('(1,2),(3,4)'::box);
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
@@ -1153,6 +1157,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c cidr) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('192.168.0.0/24');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
@@ -1177,6 +1182,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c circle) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('<(3,4),5>');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
@@ -1201,6 +1207,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c inet) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('192.168.0.1');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
@@ -1225,6 +1232,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c interval) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('1 day');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
@@ -1249,6 +1257,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c json) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('{"key":"value"}');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
@@ -1273,6 +1282,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c jsonb) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('{"key":"value"}');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
@@ -1297,6 +1307,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c line) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('{1,2,3}');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
@@ -1321,6 +1332,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c lseg) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('[(1,2),(3,4)]');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
@@ -1345,6 +1357,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c macaddr) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('08:00:2b:01:02:03');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
@@ -1369,6 +1382,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c macaddr8) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('08:00:2b:01:02:03:04:05');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
@@ -1393,6 +1407,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c money) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('$123.45');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
@@ -1417,6 +1432,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c path) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('[(1,2),(3,4)]');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
@@ -1441,6 +1457,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c pg_lsn) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('16/B374D848');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
@@ -1465,6 +1482,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c point) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('(1,2)');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
@@ -1489,6 +1507,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c polygon) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('((1,2),(3,4),(5,6))');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
@@ -1567,6 +1586,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c tsquery) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('value');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
@@ -1591,6 +1611,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c tsvector) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('value:1');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
@@ -1615,6 +1636,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c txid_snapshot) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('10:20:10,14,15');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi
@@ -1639,6 +1661,7 @@ CREATE FOREIGN TABLE fdw_type_unsupported (c uuid) SERVER tsurugidb;
 --- Test
 INSERT INTO fdw_type_unsupported VALUES ('f3d4b1ce-f2e0-49ce-8cd4-da5c8f29bff2');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
 --- Test teardown: DDL of the Tsurugi

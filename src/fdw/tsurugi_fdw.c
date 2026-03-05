@@ -1415,7 +1415,8 @@ tsurugiEndForeignScan(ForeignScanState *node)
 {
 	TgFdwForeignScanState *fsstate = (TgFdwForeignScanState *) node->fdw_state;
 	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
-	tg_stmt_destroy(fsstate->tg_stmt);
+	if (fsstate)
+    	tg_stmt_destroy(fsstate->tg_stmt);
 }
 
 /* -------------------------------------------------------------------------
@@ -1824,6 +1825,10 @@ tsurugiBeginDirectModify(ForeignScanState *node, int eflags)
 	dmstate->param_types = NULL;
 	dmstate->prep_name	 = NULL;
 	dmstate->param_linfo = estate->es_param_list_info;
+
+	dmstate->numParams = list_length(fsplan->fdw_exprs);
+	dmstate->param_exprs = ExecInitExprList(fsplan->fdw_exprs, (PlanState *) node);
+
 	node->fdw_state		 = dmstate;
 
 	if (fsplan->scan.scanrelid > 0)

@@ -717,7 +717,6 @@ size_t make_parameters(ExprContext* econtext, List* param_exprs,
 			}
 			params.emplace_back(param_name, tg_value.value());
 		}
-		param_num++;
 	}
 	elog(DEBUG1, "tsurugi_fdw: parameters count: %d", (int) param_num);
 

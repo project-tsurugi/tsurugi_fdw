@@ -180,15 +180,6 @@ CREATE FOREIGN TABLE fdw_del_variation_table_2 (
   key_col varchar(100)
 ) SERVER tsurugidb;
 
--- USING
-PREPARE fdw_prepare_del AS
-  DELETE FROM fdw_del_variation_table_1
-    USING fdw_del_variation_table_2
-      WHERE fdw_del_variation_table_1.key_col =
-        fdw_del_variation_table_2.key_col;
-EXECUTE fdw_prepare_del;
-DEALLOCATE fdw_prepare_del;
-
 -- RETURNING
 PREPARE fdw_prepare_del AS
   DELETE FROM fdw_del_variation_table_1 WHERE key_col = 'key6'

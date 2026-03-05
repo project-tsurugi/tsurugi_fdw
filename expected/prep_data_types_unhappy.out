@@ -1190,6 +1190,7 @@ PREPARE fdw_prepare_unsupported (bit) AS
   INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE fdw_prepare_unsupported (B'1010');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 DEALLOCATE fdw_prepare_unsupported;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1217,6 +1218,7 @@ PREPARE fdw_prepare_unsupported (bit varying) AS
   INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE fdw_prepare_unsupported (B'1010');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 DEALLOCATE fdw_prepare_unsupported;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1244,6 +1246,7 @@ PREPARE fdw_prepare_unsupported (boolean) AS
   INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE fdw_prepare_unsupported (true);
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 DEALLOCATE fdw_prepare_unsupported;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1271,6 +1274,7 @@ PREPARE fdw_prepare_unsupported (box) AS
   INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE fdw_prepare_unsupported ('(1,2),(3,4)'::box);
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 DEALLOCATE fdw_prepare_unsupported;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1298,6 +1302,7 @@ PREPARE fdw_prepare_unsupported (cidr) AS
   INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE fdw_prepare_unsupported ('192.168.0.0/24');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 DEALLOCATE fdw_prepare_unsupported;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1325,6 +1330,7 @@ PREPARE fdw_prepare_unsupported (circle) AS
   INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE fdw_prepare_unsupported ('<(3,4),5>');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 DEALLOCATE fdw_prepare_unsupported;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1352,6 +1358,7 @@ PREPARE fdw_prepare_unsupported (inet) AS
   INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE fdw_prepare_unsupported ('192.168.0.1');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 DEALLOCATE fdw_prepare_unsupported;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1379,6 +1386,7 @@ PREPARE fdw_prepare_unsupported (interval) AS
   INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE fdw_prepare_unsupported ('1 day');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 DEALLOCATE fdw_prepare_unsupported;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1406,6 +1414,7 @@ PREPARE fdw_prepare_unsupported (json) AS
   INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE fdw_prepare_unsupported ('{"key":"value"}');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 DEALLOCATE fdw_prepare_unsupported;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1433,6 +1442,7 @@ PREPARE fdw_prepare_unsupported (jsonb) AS
   INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE fdw_prepare_unsupported ('{"key":"value"}');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 DEALLOCATE fdw_prepare_unsupported;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1460,6 +1470,7 @@ PREPARE fdw_prepare_unsupported (line) AS
   INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE fdw_prepare_unsupported ('{1,2,3}');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 DEALLOCATE fdw_prepare_unsupported;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1487,6 +1498,7 @@ PREPARE fdw_prepare_unsupported (lseg) AS
   INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE fdw_prepare_unsupported ('[(1,2),(3,4)]');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 DEALLOCATE fdw_prepare_unsupported;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1514,6 +1526,7 @@ PREPARE fdw_prepare_unsupported (macaddr) AS
   INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE fdw_prepare_unsupported ('08:00:2b:01:02:03');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 DEALLOCATE fdw_prepare_unsupported;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1541,6 +1554,7 @@ PREPARE fdw_prepare_unsupported (macaddr8) AS
   INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE fdw_prepare_unsupported ('08:00:2b:01:02:03:04:05');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 DEALLOCATE fdw_prepare_unsupported;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1568,6 +1582,7 @@ PREPARE fdw_prepare_unsupported (money) AS
   INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE fdw_prepare_unsupported ('$123.45');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 DEALLOCATE fdw_prepare_unsupported;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1595,6 +1610,7 @@ PREPARE fdw_prepare_unsupported (path) AS
   INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE fdw_prepare_unsupported ('[(1,2),(3,4)]');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 DEALLOCATE fdw_prepare_unsupported;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1622,6 +1638,7 @@ PREPARE fdw_prepare_unsupported (pg_lsn) AS
   INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE fdw_prepare_unsupported ('16/B374D848');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 DEALLOCATE fdw_prepare_unsupported;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1649,6 +1666,7 @@ PREPARE fdw_prepare_unsupported (point) AS
   INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE fdw_prepare_unsupported ('(1,2)');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 DEALLOCATE fdw_prepare_unsupported;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1676,6 +1694,7 @@ PREPARE fdw_prepare_unsupported (polygon) AS
   INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE fdw_prepare_unsupported ('((1,2),(3,4),(5,6))');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 DEALLOCATE fdw_prepare_unsupported;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1763,6 +1782,7 @@ PREPARE fdw_prepare_unsupported (tsquery) AS
   INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE fdw_prepare_unsupported ('value');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 DEALLOCATE fdw_prepare_unsupported;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1790,6 +1810,7 @@ PREPARE fdw_prepare_unsupported (tsvector) AS
   INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE fdw_prepare_unsupported ('value:1');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 DEALLOCATE fdw_prepare_unsupported;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1817,6 +1838,7 @@ PREPARE fdw_prepare_unsupported (txid_snapshot) AS
   INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE fdw_prepare_unsupported ('10:20:10,14,15');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 DEALLOCATE fdw_prepare_unsupported;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;
@@ -1844,6 +1866,7 @@ PREPARE fdw_prepare_unsupported (uuid) AS
   INSERT INTO fdw_type_unsupported VALUES ($1);
 EXECUTE fdw_prepare_unsupported ('f3d4b1ce-f2e0-49ce-8cd4-da5c8f29bff2');
 ERROR:  tsurugi_fdw: Unsupported parameter found. (param number: 1)
+sql query: INSERT INTO fdw_type_unsupported(c) VALUES (:param1)
 DEALLOCATE fdw_prepare_unsupported;
 --- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_type_unsupported;

@@ -747,8 +747,23 @@ SELECT tg_execute_ddl('
     value_col INT
   )
 ', 'tsurugidb');
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_del_variation_table_2 (
+    id INT PRIMARY KEY,
+    key_col VARCHAR(100),
+    value_col INT
+  )
+', 'tsurugidb');
+
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE fdw_del_variation_table (
+  id integer,
+  key_col text,
+  value_col integer
+) SERVER tsurugidb;
+ALTER FOREIGN TABLE fdw_del_variation_table
+  ALTER COLUMN id OPTIONS (key 'true');
+CREATE FOREIGN TABLE fdw_del_variation_table_2 (
   id integer,
   key_col text,
   value_col integer
@@ -769,6 +784,11 @@ INSERT INTO fdw_del_variation_table
     (9, 'key9', 90),
     (10, 'key10', 100);
 SELECT * FROM fdw_del_variation_table ORDER BY id;
+INSERT INTO fdw_del_variation_table_2 
+  (id, key_col, value_col) 
+  VALUES
+    (1, 'key2', 0);
+SELECT * FROM fdw_del_variation_table_2 ORDER BY id;
 
 -- Test
 DELETE FROM fdw_del_variation_table WHERE id BETWEEN 3 AND 5;
@@ -785,13 +805,21 @@ DELETE
   WHERE (key_col <> 'key2') AND (value_col < 90);
 SELECT * FROM fdw_del_variation_table ORDER BY key_col DESC;
 
+-- USING
+DELETE FROM fdw_del_variation_table
+  USING fdw_del_variation_table_2
+    WHERE fdw_del_variation_table.key_col = fdw_del_variation_table_2.key_col;
+SELECT * FROM fdw_del_variation_table;
+
 DELETE FROM fdw_del_variation_table;
 SELECT * FROM fdw_del_variation_table;
 
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_del_variation_table;
+DROP FOREIGN TABLE fdw_del_variation_table_2;
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_del_variation_table', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE fdw_del_variation_table_2', 'tsurugidb');
 
 /* Test teardown: PostgreSQL environment */
 SET datestyle TO 'default';

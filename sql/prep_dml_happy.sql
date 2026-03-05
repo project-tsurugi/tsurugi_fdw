@@ -1271,12 +1271,26 @@ SELECT tg_execute_ddl('
     value_col INT
   )
 ', 'tsurugidb');
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_del_variation_table_2 (
+    id INT PRIMARY KEY,
+    key_col VARCHAR(100),
+    value_col INT
+  )
+', 'tsurugidb');
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE fdw_del_variation_table (
   id integer,
   key_col text,
   value_col integer
 ) SERVER tsurugidb;
+CREATE FOREIGN TABLE fdw_del_variation_table_2 (
+  id integer,
+  key_col text,
+  value_col integer
+) SERVER tsurugidb;
+ALTER FOREIGN TABLE fdw_del_variation_table
+  ALTER COLUMN id OPTIONS (key 'true');
 
 -- Initialization of test data
 PREPARE prep_insert
@@ -1296,6 +1310,13 @@ DEALLOCATE prep_insert;
 
 PREPARE prep_select AS SELECT * FROM fdw_del_variation_table ORDER BY id;
 EXECUTE prep_select;
+
+PREPARE prep_insert_2
+  (integer, text, integer) AS
+  INSERT INTO fdw_del_variation_table_2 (id, key_col, value_col)
+  VALUES ($1, $2, $3);
+EXECUTE prep_insert_2 (1, 'key2', 0);
+DEALLOCATE prep_insert_2;
 
 -- Test
 PREPARE prep_delete (integer, integer) AS
@@ -1325,6 +1346,16 @@ EXECUTE prep_delete ('key2', 90);
 EXECUTE prep_select;
 DEALLOCATE prep_delete;
 
+-- USING
+PREPARE fdw_prepare AS
+  DELETE FROM fdw_del_variation_table
+    USING fdw_del_variation_table_2
+      WHERE fdw_del_variation_table.key_col =
+        fdw_del_variation_table_2.key_col;
+EXECUTE fdw_prepare;
+EXECUTE prep_select;
+DEALLOCATE fdw_prepare;
+
 PREPARE prep_delete AS
   DELETE FROM fdw_del_variation_table;
 EXECUTE prep_delete;
@@ -1334,8 +1365,10 @@ DEALLOCATE prep_delete;
 DEALLOCATE prep_select;
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_del_variation_table;
+DROP FOREIGN TABLE fdw_del_variation_table_2;
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_del_variation_table', 'tsurugidb');
+SELECT tg_execute_ddl('DROP TABLE fdw_del_variation_table_2', 'tsurugidb');
 
 /* Test teardown: PostgreSQL environment */
 SET datestyle TO 'default';
