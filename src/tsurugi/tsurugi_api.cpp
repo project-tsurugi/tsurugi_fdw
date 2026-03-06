@@ -780,7 +780,6 @@ size_t make_parameters(Relation rel, List* target_attrs, TupleTableSlot** slots,
  *          (isnull) True if the value is NULL.
  *  @return (true) success.
  *          (false) failure. conversion error occurred.
->>>>>>> Stashed changes
  */
 inline bool append_param(ogawayama::stub::parameters_type& params,
                          const std::string& name,
@@ -805,6 +804,23 @@ inline bool append_param(ogawayama::stub::parameters_type& params,
     return true;
 }
 
+inline bool append_param(ogawayama::stub::placeholders_type& placeholders,
+                         const std::string& name,
+                         Oid atttypid,
+                         Datum /*pg_value*/,
+                         bool /*isnull*/) noexcept
+{
+	/* Convert the PostgreSQL Datum to a Tsurugi value. */
+    auto tg_type = tg_convert_type_pg_to_tg(atttypid);
+    if (!tg_type) {
+		return false;
+	}
+
+	/* Append the converted value and return success. */
+    placeholders.emplace_back(name, tg_type.value());
+    return true;
+}
+
 /**
  *  @brief  Bind target attributes as parameters for a prepared statement.
  *  @param  (tupdesc) Tuple descriptor which provides attribute metadata.
@@ -815,11 +831,12 @@ inline bool append_param(ogawayama::stub::parameters_type& params,
  *  @return (0) success.
  *          (others) failure. parameter number which error occurred.
  */
+template <class ParamOut>
 size_t bind_target_attrs(TupleDesc tupdesc,
                          List* target_attrs,
                          TupleTableSlot** slots,
                          int& param_num,
-                         ogawayama::stub::parameters_type& params) noexcept
+                         ParamOut& params) noexcept
 {
     ListCell* lc = nullptr;
     foreach (lc, target_attrs) {
@@ -857,12 +874,13 @@ size_t bind_target_attrs(TupleDesc tupdesc,
  *  @return (0) success.
  *          (others) failure. parameter number which error occurred.
  */
+template <class ParamOut>
 size_t bind_key_attrs_from_junk(Relation rel,
                                 TupleTableSlot** slots,
                                 TupleTableSlot** planSlots,
                                 AttrNumber* junk_idx,
                                 int& param_num,
-                                ogawayama::stub::parameters_type& params) noexcept
+                                ParamOut& params) noexcept
 {
     const Oid relid = RelationGetRelid(rel);
     TupleDesc slotdesc = slots[0]->tts_tupleDescriptor;
@@ -889,14 +907,14 @@ size_t bind_key_attrs_from_junk(Relation rel,
                 continue;
             }
 
-			/* Generate a unique parameter name like "paramN". */
-            const std::string param_name = "param" + std::to_string(++param_num);
-
 			/* Resolve the corresponding junk attribute number for this column. */
             const AttrNumber junk = junk_idx[i];
             if (junk == InvalidAttrNumber) {
                 continue;
             }
+
+            /* Generate a unique parameter name like "paramN". */
+            const std::string param_name = "param" + std::to_string(++param_num);
 
 			/* Fetch the key value from the plan's junk attribute. */
             bool isnull = false;
@@ -906,6 +924,39 @@ size_t bind_key_attrs_from_junk(Relation rel,
             if (!append_param(params, param_name, attr->atttypid, pg_value, isnull)) {
                 return param_num;
             }
+        }
+    }
+    return 0;
+}
+
+size_t make_placeholders(Relation rel,
+                          List* target_attrs,
+                          TupleTableSlot** slots,
+                          TupleTableSlot** planSlots,
+                          AttrNumber* junk_idx,
+                          ogawayama::stub::placeholders_type& placeholders) noexcept
+{
+    TupleDesc tupdesc = RelationGetDescr(rel);
+    int param_num = 0;
+
+	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
+
+    if (!tupdesc || !slots || !slots[0]) {
+		return 0;
+	} 
+    placeholders.clear();
+
+	/* Bind placeholders for target attributes. */
+    size_t failed_param = bind_target_attrs(tupdesc, target_attrs, slots, param_num, placeholders);
+    if (failed_param != 0){
+		return failed_param;
+	}
+
+	/* Bind placeholders for key attributes from junk, if available. */
+    if (planSlots && planSlots[0] && junk_idx) {
+        failed_param = bind_key_attrs_from_junk(rel, slots, planSlots, junk_idx, param_num, placeholders);
+        if (failed_param != 0){
+			return failed_param;
         }
     }
     return 0;
@@ -1378,7 +1429,7 @@ TG_STATUS tg_stmt_bind_params_for_statement(TGstmt* tg_stmt, Relation rel,
 	return TG_STATUS_OK;
 }
 
-TG_STATUS tg_stmt_bind_parameters2(TGstmt* tg_stmt, Relation rel,
+TG_STATUS tg_stmt_bind_parameters_for_modify(TGstmt* tg_stmt, Relation rel,
 		List* target_attrs, TupleTableSlot** slots,
 		TupleTableSlot** planSlots,AttrNumber* junk_idx) noexcept {
 	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
@@ -1388,7 +1439,7 @@ TG_STATUS tg_stmt_bind_parameters2(TGstmt* tg_stmt, Relation rel,
 		return TG_STATUS_INVALID_ARG;
 	}
 
-	auto param_num = make_placeholders(rel, tg_stmt->placeholders);
+	auto param_num = make_placeholders(rel, target_attrs, slots, planSlots, junk_idx, tg_stmt->placeholders);
 	if (param_num > 0) {
 		std::ostringstream msg;
 		msg << "Unsupported parameter found. (param number: " << param_num

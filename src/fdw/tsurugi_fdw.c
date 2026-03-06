@@ -2684,7 +2684,7 @@ tg_execute_foreign_modify(
 	elog(DEBUG1, "tsurugi_fdw: %s (operation: %d)", __func__, operation);
 
 	fmstate->tg_stmt = tg_stmt_prepare(fmstate->tg_conn, fmstate->query);
-	tg_status		 = tg_stmt_bind_parameters2(
+	tg_status		 = tg_stmt_bind_parameters_for_modify(
 			   fmstate->tg_stmt,
 			   fmstate->rel,
 			   fmstate->target_attrs,
