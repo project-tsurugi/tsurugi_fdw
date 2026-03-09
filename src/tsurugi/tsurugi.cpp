@@ -565,6 +565,27 @@ std::optional<std::pair<bool, Datum>> tg_convert_value_tg_to_pg(
 	return std::make_pair(is_null, pg_value);
 }
 
+static inline void
+reject_infinite_timestamp(Oid pg_type, Datum pg_value)
+{
+    if (pg_type == TIMESTAMPOID)
+    {
+        Timestamp ts = DatumGetTimestamp(pg_value);
+        if (TIMESTAMP_NOT_FINITE(ts))
+            ereport(ERROR,
+                    (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("'infinity' is not supported in tsurugi_fdw.")));
+    }
+    else if (pg_type == TIMESTAMPTZOID)
+    {
+        TimestampTz ts = DatumGetTimestampTz(pg_value);
+        if (TIMESTAMP_NOT_FINITE(ts))
+            ereport(ERROR,
+                    (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("'infinity' is not supported in tsurugi_fdw.")));
+    }
+}
+
 /**
  *  @brief 	Convert PostgreSQL value to Tsurugi value.
  *  @param 	(pg_type) OID of PostgreSQL data type.
@@ -576,6 +597,8 @@ std::optional<std::pair<bool, Datum>> tg_convert_value_tg_to_pg(
 std::optional<TgValue> tg_convert_value_pg_to_tg(
 		const Oid pg_type, Datum pg_value) {
 	elog(DEBUG1, "tsurugi_fdw: %s : pg_type: %d", __func__, (int) pg_type);
+
+	reject_infinite_timestamp(pg_type, pg_value);
 
 	TgValue tg_value;
 	switch (pg_type) {
