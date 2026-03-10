@@ -77,11 +77,6 @@ DATABASES = {
 
 `django_project/settings.py` ファイルに設定したデータベース接続情報は、データベースへの操作を行うときに（最初の接続 または 前の接続がクローズされている場合）読み込まれ、自動でデータベースに接続します。  
 
-> [!NOTE]
-> Djangoは認証やセッションなどのマイグレーション情報を DATABASES['default'] に保持します。  
-> Djangoのマイグレーション機能を利用する場合は、Tsurugiの外部テーブルを格納するデータベースとDjangoのマイグレーション情報を格納するデータベースを分ける必要があります。  
-> Djangoプロジェクトで複数のデータベースを扱う方法については [Djangoの公式ドキュメント](https://docs.djangoproject.com/ja/6.0/topics/db/multi-db/)を参照してください。  
-
 #### SQL文の実行（Django）
 
 Djangoを使用してSQL文を実行する方法はいくつかありますが、`cursor` オブジェクトの `execute` メソッドを使用する方法を説明します。  
@@ -166,10 +161,14 @@ class FdwSample(models.Model): # models.Modelを継承
 ~~~
 
 > [!IMPORTANT]
-> **ORMを使用する場合、主キーが存在しないTsuguriのテーブルを操作することはできません。**  
-> **また主キーはフィールドオプションのdefaultで手動生成する必要があります。**  
 >
-> 主キーを自動生成するとTsurugiでサポートしていないRETURNING句がINSERT SQL文に付与されるため、INSERT SQL文の実行（CRUD操作のデータ作成）が失敗します。  
+> * **`managed` メタオプションについて**  
+>   Tsurugi FDWはTsurugiへのDDL実行が非サポートのため、Tsurugiテーブルを定義するモデルクラスでは `managed` メタオプションを `False` に設定する必要があります。  
+>   `managed` が `True`（デフォルト）の場合、モデルに対して行った属性の変更やモデル自体の追加および削除などの変更は Django が管理します（意図しないDDLが実行され失敗する）。  
+>
+> * **主キーの生成戦略について**  
+>   TsurugiはINSERT SQL文のRETURNING句が非サポートのため、Tsurugiテーブルを定義するモデルクラスでは `default` フィールドオプションなどを使用して主キーを手動生成する必要があります。
+>   主キーを自動生成（デフォルト）すると、INSERT SQL文にRETURNING句が付与され SQL文の実行（CRUD操作のデータ作成）が失敗します。  
 
 ##### データベース操作
 
