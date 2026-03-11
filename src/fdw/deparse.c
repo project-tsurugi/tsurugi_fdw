@@ -2608,10 +2608,6 @@ deparseConst(Const *node, deparse_expr_cxt *context, int showtype)
 		return;
 	}
 
-	/* Fix TEXT type to VARCHAR type. */
-	if(node->consttype == TEXTOID) 
-		node->consttype = VARCHAROID;
-
 	getTypeOutputInfo(node->consttype,
 					  &typoutput, &typIsVarlena);
 	extval = OidOutputFunctionCall(typoutput, node->constvalue);
@@ -2714,9 +2710,15 @@ deparseConst(Const *node, deparse_expr_cxt *context, int showtype)
 			break;
 	}
 	if (needlabel || showtype > 0) 
-		appendStringInfo(buf, "::%s",
-						 deparse_type_name(node->consttype,
-										   node->consttypmod));
+	{
+		if (node->consttype == TEXTOID)
+			/* Cast TEXT constants as ::varchar on output. */
+			appendStringInfoString(buf, "::varchar");
+		else
+			appendStringInfo(buf, "::%s",
+							deparse_type_name(node->consttype,
+											node->consttypmod));
+	}
 }
 
 /*
