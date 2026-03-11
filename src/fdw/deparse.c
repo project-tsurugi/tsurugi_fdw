@@ -1940,8 +1940,10 @@ deparseDirectUpdateSql(StringInfo buf, PlannerInfo *root,
 	int			nestlevel;
 	bool		first;
 	RangeTblEntry *rte = planner_rt_fetch(rtindex, root);
-	ListCell   *lc,
-			   *lc2;
+	ListCell	*lc;
+#if PG_VERSION_NUM >= 140000
+	ListCell	*lc2;
+#endif
 
 	/* Set up context struct for recursion */
 	context.root = root;
@@ -1960,6 +1962,7 @@ deparseDirectUpdateSql(StringInfo buf, PlannerInfo *root,
 	nestlevel = set_transmission_modes();
 
 	first = true;
+#if PG_VERSION_NUM >= 140000
 	forboth(lc, targetlist, lc2, targetAttrs)
 	{
 		TargetEntry *tle = lfirst_node(TargetEntry, lc);
@@ -1967,7 +1970,16 @@ deparseDirectUpdateSql(StringInfo buf, PlannerInfo *root,
 
 		/* update's new-value expressions shouldn't be resjunk */
 		Assert(!tle->resjunk);
+#else
+	foreach(lc, targetAttrs)
+	{
+		int			attnum = lfirst_int(lc);
+		TargetEntry *tle = get_tle_by_resno(targetlist, attnum);
 
+		if (!tle)
+			elog(ERROR, "attribute number %d not found in UPDATE targetlist",
+				 attnum);
+#endif
 		if (!first)
 			appendStringInfoString(buf, ", ");
 		first = false;
