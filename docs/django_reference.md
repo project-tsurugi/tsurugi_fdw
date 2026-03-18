@@ -28,8 +28,13 @@ Tsurugiへのデータアクセスで使用する基本的なオブジェクト�
 
 Tsurugiへのデータアクセスで使用する基本的なメソッドを示します。  
 
-表の「動作確認」列は Tsurugiへのデータアクセスで使用したメソッドの検証状況を示しています。  
-問題なく検証できたメソッドには「〇」、動作すると思われるが検証できていないメソッドには「－」、Tsurugiの仕様により事前に動作しないことが判っているメソッドには「×」を記入しています。
+「動作確認」列は Tsurugiへのデータアクセスで使用したメソッドの検証状況を示しています。  
+検証できたメソッドには「〇」、検証できていないメソッドには「－」を記入しています。
+
+- 動作確認環境バージョン情報
+  - Tsurugi：1.9.0
+  - Tsurugi FDW：1.4.0
+  - Django：6.0.2
 
 #### Connectionオブジェクト
 
@@ -41,9 +46,9 @@ Tsurugiへのデータアクセスで使用する基本的なメソッドを示�
 | `close()`                 | データベース接続を閉じる | 〇 |
 | `commit()`                | トランザクションをコミットする | 〇 |
 | `rollback()`              | トランザクションをロールバックする | 〇 |
-| `savepoint()`             | 新しいセーブポイント生成する | × |
-| `savepoint_commit(sid)`   | 指定セーブポイントをコミットする | × |
-| `savepoint_rollback(sid)` | 指定セーブポイントにロールバックする | × |
+| `savepoint()`             | 新しいセーブポイント生成する | － |
+| `savepoint_commit(sid)`   | 指定セーブポイントをコミットする | － |
+| `savepoint_rollback(sid)` | 指定セーブポイントにロールバックする | － |
 | `set_autocommit(value)`   | オートコミットを有効/無効に切り替える | 〇 |
 | `get_autocommit()`        | オートコミット状態を取得する | 〇 |
 | `ensure_connection()`     | 接続状態を保証（必要なら再接続）する | ー |
@@ -105,42 +110,42 @@ Djangoのモデル（データ）の基底クラス。
 
 | フィールドクラス名        | 説明 | 動作確認 |
 | :------------------------ | :--- | :------: |
-| `AutoField`               | 整数の自動増分主キー | × |
-| `BigAutoField`            | 64bit整数の自動増分キー | × |
-| `SmallAutoField`          | 16bit整数の自動増分キー | × |
+| `AutoField`               | 整数の自動増分主キー | － |
+| `BigAutoField`            | 64bit整数の自動増分キー | － |
+| `SmallAutoField`          | 16bit整数の自動増分キー | － |
 | `BinaryField`             | バイナリデータ | － |
-| `BooleanField`            | 真偽値フィールド | × |
+| `BooleanField`            | 真偽値フィールド | － |
 | `CharField`               | 可変長文字列 (最大長指定) | 〇 |
 | `DateField`               | 日付のみ (YYYY-MM-DD) | － |
 | `DateTimeField`           | 日付＋時刻 | － |
 | `DecimalField`            | 固定小数点数 | － |
-| `DurationField`           | タイムデルタ型 | × |
-| `EmailField`              | メールアドレス（CharFieldのバリデーション付き） | × |
-| `FileField`               | ファイルアップロード用 | × |
-| `FilePathField`           | サーバー上のファイルパス選択 | × |
+| `DurationField`           | タイムデルタ型 | － |
+| `EmailField`              | メールアドレス（CharFieldのバリデーション付き） | － |
+| `FileField`               | ファイルアップロード用 | － |
+| `FilePathField`           | サーバー上のファイルパス選択 | － |
 | `FloatField`              | 浮動小数点数(double) | － |
-| `ImageField`              | 画像アップロード用（Pillow依存） | × |
-| `GenericIPAddressField`   | IPv4 or IPv6 アドレス | × |
+| `ImageField`              | 画像アップロード用（Pillow依存） | － |
+| `GenericIPAddressField`   | IPv4 or IPv6 アドレス | － |
 | `IntegerField`            | 32bit整数 | 〇 |
 | `BigIntegerField`         | 64bit整数 | － |
-| `SmallIntegerField`       | 16bit整数 | × |
+| `SmallIntegerField`       | 16bit整数 | － |
 | `PositiveIntegerField`    | 0以上の整数 | － |
 | `PositiveBigIntegerField` | 0以上の64bit整数 | － |
-| `PositiveSmallIntegerField` | 0以上の16bit整数 | × |
+| `PositiveSmallIntegerField` | 0以上の16bit整数 | － |
 | `SlugField`               | スラッグ(短いラベル・URLに適した文字列) | － |
 | `TextField`               | 長文テキスト | 〇 |
 | `TimeField`               | 時刻のみ (hh:mm[:ss[.uuuuuu]]) | 〇 |
-| `URLField`                | URL文字列（CharFieldのバリデーション付き） | × |
-| `UUIDField`               | UUID値 | × |
-| `ForeignKey`              | リレーション（多対一） | × |
-| `OneToOneField`           | リレーション（一対一） | × |
-| `ManyToManyField`         | リレーション（多対多） | × |
-| `JSONField`               | JSON値/構造体 | × |
-| `ArrayField`              | 配列フィールド（PostgreSQL専用） | × |
-| `HStoreField`             | キーバリューペア（PostgreSQL専用） | × |
-| `CICharField`             | 大文字小文字無視でのCharField（PostgreSQL専用） | × |
-| `CIEmailField`            | 大文字小文字無視でのEmailField（PostgreSQL専用） | × |
-| `IPAddressField`          | IPv4アドレス | × |
+| `URLField`                | URL文字列（CharFieldのバリデーション付き） | － |
+| `UUIDField`               | UUID値 | － |
+| `ForeignKey`              | リレーション（多対一） | － |
+| `OneToOneField`           | リレーション（一対一） | － |
+| `ManyToManyField`         | リレーション（多対多） | － |
+| `JSONField`               | JSON値/構造体 | － |
+| `ArrayField`              | 配列フィールド（PostgreSQL専用） | － |
+| `HStoreField`             | キーバリューペア（PostgreSQL専用） | － |
+| `CICharField`             | 大文字小文字無視でのCharField（PostgreSQL専用） | － |
+| `CIEmailField`            | 大文字小文字無視でのEmailField（PostgreSQL専用） | － |
+| `IPAddressField`          | IPv4アドレス | － |
 
 ##### Metaサブクラス
 
@@ -232,9 +237,9 @@ Djangoのモデル（データ）の基底クラス。
 | `get_autocommit(using=None)` | オートコミット状態を取得する | 〇 |
 | `commit(using=None)`      | 明示的にトランザクションコミットする | 〇 |
 | `rollback(using=None)`    | 明示的にトランザクションロールバックする | 〇 |
-| `savepoint(using=None)`   | セーブポイント作成しそのIDを返却する | × |
-| `savepoint_rollback(sid, using=None)` | 指定したセーブポイントまでロールバックする | × |
-| `savepoint_commit(sid, using=None)` | 指定したセーブポイントでコミットする | × |
+| `savepoint(using=None)`   | セーブポイント作成しそのIDを返却する | － |
+| `savepoint_rollback(sid, using=None)` | 指定したセーブポイントまでロールバックする | － |
+| `savepoint_commit(sid, using=None)` | 指定したセーブポイントでコミットする | － |
 | `get_connection(using=None)` | 接続オブジェクトを返す | ー |
 
 #### Utilsモジュール
