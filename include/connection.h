@@ -25,8 +25,8 @@ extern "C" {
 #include "tsurugi_api.h"
 #include "foreign/foreign.h"
 
-TGconn *tg_get_connection(ForeignServer *server, UserMapping *user);
-void tg_do_sql_command(TGconn *conn, const char *sql);
+TGconn *tsurugi_get_connection(ForeignServer *server, UserMapping *user);
+void tsurugi_do_sql_command(TGconn *conn, const char *sql);
 
 #ifdef __cplusplus
 }

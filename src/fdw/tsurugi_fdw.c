@@ -1311,7 +1311,7 @@ tsurugiBeginForeignScan(ForeignScanState *node, int eflags)
 	table			 = GetForeignTable(rte->relid);
 	server			 = GetForeignServer(table->serverid);
 	user			 = GetUserMapping(GetUserId(), table->serverid);
-	fsstate->tg_conn = tg_get_connection(server, user);
+	fsstate->tg_conn = tsurugi_get_connection(server, user);
 }
 
 /*
@@ -1848,7 +1848,7 @@ tsurugiBeginDirectModify(ForeignScanState *node, int eflags)
 	server			 = GetForeignServer(table->serverid);
 	dmstate->server	 = server;
 	user			 = GetUserMapping(GetUserId(), server->serverid);
-	dmstate->tg_conn = tg_get_connection(server, user);
+	dmstate->tg_conn = tsurugi_get_connection(server, user);
 }
 
 /*
@@ -2193,7 +2193,7 @@ tsurugiBeginForeignModify(
 	table				 = GetForeignTable(rte->relid);
 	server				 = GetForeignServer(table->serverid);
 	user				 = GetUserMapping(GetUserId(), server->serverid);
-	fmstate->tg_conn	 = tg_get_connection(server, user);
+	fmstate->tg_conn	 = tsurugi_get_connection(server, user);
 	fmstate->param_linfo = estate->es_param_list_info;
 
 	fmstate->junk_idx = palloc0(
@@ -2410,7 +2410,7 @@ tsurugiImportForeignSchema(ImportForeignSchemaStmt *stmt, Oid serverOid)
 
 	server	= GetForeignServer(serverOid);
 	user	= GetUserMapping(GetUserId(), serverOid);
-	tg_conn = tg_get_connection(server, user);
+	tg_conn = tsurugi_get_connection(server, user);
 
 	tg_status =
 			tg_exec_import_foreign_schema(tg_conn, stmt, serverOid, &commands);

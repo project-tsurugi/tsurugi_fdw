@@ -648,37 +648,6 @@ size_t make_placeholders(
 }
 
 /**
- *  @brief  Make placeholders of prepare statement. (for statement)
- *  @param  (rel) Pointer to Relation object..
- *          (placeholders) placeholders_type object.
- *  @return	(0) success
- *          (othes) failure, param number where the error occurred.
- */
-size_t make_placeholders(Relation rel,
-		ogawayama::stub::placeholders_type& placeholders) noexcept {
-	TupleDesc tupdesc = RelationGetDescr(rel);
-	size_t param_num = 0;
-
-	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
-
-	for (int i = 0; i < tupdesc->natts; i++) {
-		/* parameter name is 1 origin. */
-		param_num = i + 1;
-		std::string param_name = "param" + std::to_string(param_num);
-		auto tg_type = tg_convert_type_pg_to_tg(tupdesc->attrs[i].atttypid);
-		if (!tg_type) {
-			return param_num;
-		}
-		placeholders.emplace_back(param_name, tg_type.value());
-		elog(DEBUG3, "tsurugi_fdw: param number %d, placeholder id: %d",
-				(int) param_num, (int) tg_type.value());
-	}
-	elog(DEBUG1, "tsurugi_fdw: placeholder count: %d", (int) param_num);
-
-	return 0;
-}
-
-/**
  *  @brief  Bind parameters of prepared statement. (for query)
  *  @param  (econtext) Pointer toExprContext structure.
  *          (param_exprs) ExprState List.
@@ -719,54 +688,6 @@ size_t make_parameters(ExprContext* econtext, List* param_exprs,
 		}
 	}
 	elog(DEBUG1, "tsurugi_fdw: parameters count: %d", (int) param_num);
-
-	return 0;
-}
-
-/**
- *  @brief  Bind parameters of prepared statement. (for statement)
- *  @param  (rel) Pointer to Relation object.
- *          (target_attrs) target_attr List.
- * 			(slots) Pointer to TupleTableSlot pointer.
- *          (params) paramters_type object.
- *  @return	(0) success.
- *          (others) failure. parameter number which error occurred.
- */
-size_t make_parameters(Relation rel, List* target_attrs, TupleTableSlot** slots,
-		ogawayama::stub::parameters_type& params) noexcept {
-	TupleDesc tupdesc = RelationGetDescr(rel);
-
-	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
-
-	if (tupdesc == nullptr || slots == nullptr) {
-		return 0;
-	}
-
-	int param_num = 0;
-	ListCell* lc;
-	foreach (lc, target_attrs) {
-		int attnum = lfirst_int(lc);
-		Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
-		Datum pg_value;
-		bool isnull;
-		// parameter number is 1 origin.
-		std::string param_name = "param" + std::to_string(++param_num);
-
-		/* Ignore generated columns; they are set to DEFAULT */
-		if (attr->attgenerated) continue;
-		pg_value = slot_getattr(slots[0], attnum, &isnull);
-		if (isnull) {
-			std::monostate mono{};
-			params.emplace_back(param_name, mono);
-		} else {
-			auto tg_value = tg_convert_value_pg_to_tg(attr->atttypid, pg_value);
-			if (!tg_value) {
-				return param_num;
-			}
-			params.emplace_back(param_name, tg_value.value());
-		}
-	}
-	elog(DEBUG1, "tsurugi_fdw: parameter count: %d", param_num);
 
 	return 0;
 }
@@ -1389,36 +1310,6 @@ TG_STATUS tg_stmt_bind_params_for_query(TGstmt* tg_stmt, List* fdw_exprs,
 		return set_error(tg_stmt->error, msg.str());
 	}
 	param_num = make_parameters(econtext, param_exprs, tg_stmt->paramerters);
-	if (param_num > 0) {
-		std::ostringstream msg;
-		msg << "Unsupported parameter found. (param number: " << param_num
-			<< ")\nsql query: " << tg_stmt->sql;
-		return set_error(tg_stmt->error, msg.str());
-	}
-	set_ok(tg_stmt->error);
-	return TG_STATUS_OK;
-}
-
-/**
- *  tg_stmt_bind_params_for_statement
- */
-TG_STATUS tg_stmt_bind_params_for_statement(TGstmt* tg_stmt, Relation rel,
-		List* target_attrs, TupleTableSlot** slots) noexcept {
-	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
-
-	if (!tg_stmt) {
-		set_error("tg_stmt_bind_parameters: null stmt");
-		return TG_STATUS_INVALID_ARG;
-	}
-
-	auto param_num = make_placeholders(rel, tg_stmt->placeholders);
-	if (param_num > 0) {
-		std::ostringstream msg;
-		msg << "Unsupported placeholder found. (number: " << param_num
-			<< ")\nsql query: " << tg_stmt->sql;
-		return set_error(tg_stmt->error, msg.str());
-	}
-	param_num = make_parameters(rel, target_attrs, slots, tg_stmt->paramerters);
 	if (param_num > 0) {
 		std::ostringstream msg;
 		msg << "Unsupported parameter found. (param number: " << param_num

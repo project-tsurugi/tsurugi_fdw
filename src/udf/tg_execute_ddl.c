@@ -130,8 +130,8 @@ tg_execute_ddl(PG_FUNCTION_ARGS)
 			arg_ddl);
 	elog(DEBUG2, "%s", debug_log);
 
-	tg_conn = tg_get_connection(server, user);
-	tg_do_sql_command(tg_conn, arg_ddl);
+	tg_conn = tsurugi_get_connection(server, user);
+	tsurugi_do_sql_command(tg_conn, arg_ddl);
 
 	PG_RETURN_TEXT_P(cstring_to_text("execute succeeded"));
 }

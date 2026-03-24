@@ -98,8 +98,6 @@ void tg_stmt_destroy(TGstmt *tg_stmt) TG_NOEXCEPT;
 TG_STATUS tg_stmt_bind_parameters(TGstmt *tg_stmt, ParamListInfo param_linfo) TG_NOEXCEPT;
 TG_STATUS tg_stmt_bind_params_for_query(TGstmt* tg_stmt, 
 		List* fdwexprs, ExprContext* econtext, List* param_exprs) TG_NOEXCEPT;
-TG_STATUS tg_stmt_bind_params_for_statement(TGstmt* tg_stmt, 
-        Relation rel, List* target_attrs, TupleTableSlot **slots) TG_NOEXCEPT;
 TG_STATUS tg_stmt_bind_parameters_for_modify(TGstmt* tg_stmt, 
 		Relation rel, List* target_attrs, TupleTableSlot **slots,
 		TupleTableSlot **planSlots, AttrNumber *junk_idx) TG_NOEXCEPT;

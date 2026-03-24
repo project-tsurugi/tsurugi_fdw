@@ -143,7 +143,7 @@ tg_show_tables(PG_FUNCTION_ARGS)
 
 	param.detail = (strcasecmp(param.mode, kArgModeDetail) == 0);
 
-	tg_conn	  = tg_get_connection(server, user);
+	tg_conn	  = tsurugi_get_connection(server, user);
 	tg_status = tg_exec_show_tables(tg_conn, &param, &result_json);
 	if (tg_status != TG_STATUS_OK)
 		elog(ERROR, "%s", tg_global_error_message());
