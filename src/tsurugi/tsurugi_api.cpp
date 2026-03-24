@@ -1630,7 +1630,7 @@ TG_STATUS tg_result_next(TGresult* tg_result) noexcept {
  */
 TG_STATUS tg_result_get_tuple(TGresult* tg_result, List* retrieved_attrs,
 		TupleTableSlot* tupleSlot) noexcept {
-	assert(tg_result && retrieved_attrs && tupleSlot);
+	assert(tg_result && tupleSlot);
 	elog(DEBUG5, "tsurugi_fdw: %s", __func__);
 
 	make_tuple_from_result_row(tg_result->impl, tupleSlot->tts_tupleDescriptor,

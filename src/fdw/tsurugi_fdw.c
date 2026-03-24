@@ -1132,7 +1132,7 @@ tsurugiGetForeignJoinPaths(
 	 * the entry.
 	 */
 	fpinfo = (TgFdwRelationInfo *) palloc0(sizeof(TgFdwRelationInfo));
-	fpinfo->pushdown_safe = true;
+	fpinfo->pushdown_safe = false;
 	joinrel->fdw_private  = fpinfo;
 	/* attrs_used is only for base relations. */
 	fpinfo->attrs_used = NULL;
@@ -1672,26 +1672,10 @@ tsurugiPlanDirectModify(
 	 */
 	remote_exprs = fpinfo->final_remote_exprs;
 
-	/*
-	 * Extract the relevant RETURNING list if any.
-	 */
 	if (plan->returningLists)
-	{
-		returningList = (List *) list_nth(plan->returningLists, subplan_index);
-
-		/*
-		 * When performing an UPDATE/DELETE .. RETURNING on a join directly,
-		 * we fetch from the foreign server any Vars specified in RETURNING
-		 * that refer not only to the target relation but to non-target
-		 * relations.  So we'll deparse them into the RETURNING clause of the
-		 * remote query; use a targetlist consisting of them instead, which
-		 * will be adjusted to be new fdw_scan_tlist of the foreign-scan plan
-		 * node below.
-		 */
-		if (fscan->scan.scanrelid == 0)
-			returningList =
-					build_remote_returning(resultRelation, rel, returningList);
-	}
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+				 errmsg("RETURNING clause is not supported")));
 
 	/*
 	 * Construct the SQL command string.
