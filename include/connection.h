@@ -25,6 +25,32 @@ extern "C" {
 #include "tsurugi_api.h"
 #include "foreign/foreign.h"
 
+/*
+ * Initialize connection cache and register callbacks.
+ *
+ * Should be called from _PG_init().
+ */
+extern void tsurugi_init_connections(void);
+
+/*
+ * Get a cached connection and ensure remote tx is started.
+ *
+ * Key: (serverid, userid) from server/user mapping.
+ * Remote tx will be committed/rolled back by xact callback.
+ *
+ * Automatically starts remote tx if not already started in current xact.
+ */
+extern TGconn *tsurugi_get_connection(ForeignServer *server,
+									  UserMapping *user);
+
+/*
+ * Invalidate cached connection for (serverid, userid).
+ *
+ * Intended for error paths; must not ereport(ERROR) if called from
+ * abort callbacks.
+ */
+extern void tsurugi_invalidate_connection(Oid serverid, Oid userid);
+
 TGconn *tsurugi_get_connection(ForeignServer *server, UserMapping *user);
 void tsurugi_do_sql_command(TGconn *conn, const char *sql);
 

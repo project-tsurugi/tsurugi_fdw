@@ -75,7 +75,7 @@ void tg_conn_destroy(TGconn *tg_conn) TG_NOEXCEPT;
 
 /* Sub Transaction */
 void tg_conn_set_subxact_seen(TGconn *tg_conn, int seen) TG_NOEXCEPT;
-int tg_conn_get_subxact_seen(const TGconn *tg_conn) TG_NOEXCEPT;
+bool tg_conn_get_subxact_seen(const TGconn *tg_conn) TG_NOEXCEPT;
 
 /* Transaction */
 bool tg_conn_tx_active(const TGconn *tg_conn) TG_NOEXCEPT;

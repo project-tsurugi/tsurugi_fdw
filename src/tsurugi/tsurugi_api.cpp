@@ -984,7 +984,7 @@ TGconn* tg_conn_open(
 		set_error("out of memory (new TGconn)");
 		return nullptr;
 	}
-	tg_conn->subxact_seen = 0;
+	tg_conn->subxact_seen = false;
 
 	try {
 		if (!tg_conn->stub) {
@@ -1023,7 +1023,11 @@ TGconn* tg_conn_open(
 		}
 		set_ok(tg_conn->error);
 		return tg_conn;
-	} catch (const std::exception& error) {
+	} catch (const std::exception& e) {
+		set_exception(e);
+		delete tg_conn;
+		return nullptr;
+	} catch (...) {
 		set_exception();
 		delete tg_conn;
 		return nullptr;
@@ -1078,12 +1082,12 @@ void tg_conn_set_subxact_seen(TGconn* tg_conn, int seen) noexcept {
 /**
  *  tg_conn_get_subxact_seen
  */
-int tg_conn_get_subxact_seen(const TGconn* tg_conn) noexcept {
+bool tg_conn_get_subxact_seen(const TGconn* tg_conn) noexcept {
 	if (!tg_conn) {
 		set_error("tg_conn_get_subxact_seen: null");
 		return 0;
 	}
-	return tg_conn->subxact_seen ? 1 : 0;
+	return tg_conn->subxact_seen;
 }
 
 /**
@@ -1147,6 +1151,11 @@ TG_STATUS tg_conn_tx_commit(TGconn* tg_conn) noexcept {
 		return set_error(tg_conn->error, "Remote transaction is not active.",
 				TG_STATUS_INVALID_ARG);
 	}
+	if (tg_conn->subxact_seen) {
+		return set_error(tg_conn->error, "Sub transaction is not supported.",
+				TG_STATUS_ERROR);
+	}
+	
 	try {
 		elog(DEBUG1, "tsurugi_fdw: Attempt to call commit().");
 		auto error = tg_conn->tx->commit();
@@ -1221,6 +1230,11 @@ TGstmt* tg_stmt_prepare(TGconn* tg_conn, const char* sql) noexcept {
 				TG_STATUS_NOT_ACTIVE);
 		return nullptr;
 	}
+	if (tg_conn->subxact_seen) {
+		set_error(tg_conn->error, "Sub transaction is not supported.",
+				TG_STATUS_ERROR);
+		return nullptr;
+	}	
 
 	//  Create TGstmt handle.
 	TGstmt* tg_stmt = new (std::nothrow) TGstmt;
@@ -1368,6 +1382,11 @@ TGresult* tg_stmt_execute_query(TGstmt* tg_stmt) noexcept {
 		set_error(tg_stmt->error, "tg_stmt_execute_query: null tx");
 		return nullptr;
 	}
+	if (tg_conn->subxact_seen) {
+		set_error(tg_conn->error, "Sub transaction is not supported.",
+				TG_STATUS_ERROR);
+		return nullptr;
+	}
 
 	TGresult* tg_result = new (std::nothrow) TGresult;
 	if (!tg_result) {
@@ -1425,12 +1444,16 @@ TG_STATUS tg_stmt_execute_statement(
 	elog(DEBUG1, "tsurugi_fdw: %s\nsql:\n%s", __func__, tg_stmt->sql.c_str());
 
 	if (!tg_stmt) {
-		set_error("tg_stmt_execute_statement: null stmt");
-		return TG_STATUS_INVALID_ARG;
+		return set_error("tg_stmt_execute_statement: null stmt", TG_STATUS_INVALID_ARG);
 	}
 	if (num_rows) *num_rows = 0;
 	size_t rows = 0;
 	TGconn* tg_conn = tg_stmt->conn;
+	if (tg_conn->subxact_seen) {
+		return set_error(tg_conn->error, "Sub transaction is not supported.",
+				TG_STATUS_ERROR);
+	}
+
 	try {
 		//  Prepare the query.
 		elog(DEBUG1, "tsurugi_fdw: Attempt to call prepare()");
@@ -1499,6 +1522,12 @@ TG_STATUS tg_result_next(TGresult* tg_result) noexcept {
 		set_error("tg_stmt_execute_statement: null stmt");
 		return TG_STATUS_INVALID_ARG;
 	}
+	TGconn* tg_conn = tg_result->stmt->conn;
+	if (tg_conn->subxact_seen) {
+		return set_error(tg_conn->error, "Sub transaction is not supported.",
+				TG_STATUS_ERROR);
+	}
+	
 	try {
 		auto error = tg_result->impl->next();
 		switch (error) {
