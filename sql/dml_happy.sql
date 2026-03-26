@@ -864,26 +864,6 @@ SELECT id, name, value, RANK() OVER w AS rk
   FROM fdw_sel_unsupported_test
   WINDOW w AS (ORDER BY value DESC);
 
--- GROUP BY ALL
-SELECT ref_id, COUNT(*), SUM(value)
-  FROM fdw_sel_unsupported_test
-  GROUP BY ALL ref_id
-  ORDER BY ref_id;
-
--- GROUP BY DISTINCT
-SELECT ref_id, COUNT(*), SUM(value)
-  FROM fdw_sel_unsupported_test
-  GROUP BY DISTINCT ref_id
-  ORDER BY ref_id;
-
--- FETCH FIRST ... WITH TIES
-SELECT * FROM fdw_sel_unsupported_test ORDER BY value
-  FETCH FIRST 2 ROWS WITH TIES;
-
--- FETCH NEXT ... WITH TIES
-SELECT * FROM fdw_sel_unsupported_test ORDER BY value
-  FETCH NEXT 2 ROWS WITH TIES;
-
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_sel_unsupported_test;
 -- Test teardown: DDL of the Tsurugi

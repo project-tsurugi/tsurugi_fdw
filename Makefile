@@ -66,7 +66,7 @@ ifdef REGRESS_EXTRA
 	           udf_transaction_unhappy \
 			   ddl_unhappy privilege_unhappy \
 	           udf_tg_show_tables_unhappy udf_tg_show_tables_extra udf_tg_verify_tables_unhappy udf_tg_verify_tables_extra \
-	           import_foreign_schema_unhappy import_foreign_schema_extra
+	           import_foreign_schema_unhappy import_foreign_schema_extra subselect update delete with
 
 	ifeq ($(MAJORVERSION), 12)
 		# PostgreSQL 12.x

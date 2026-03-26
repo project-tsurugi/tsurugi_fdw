@@ -204,10 +204,7 @@ PREPARE fdw_prepare_upd AS
     SET value_col = value_col + 1 WHERE key_col = 'key3'
     RETURNING id, key_col AS updated_key, value_col;
 EXECUTE fdw_prepare_upd;
-ERROR:  tsurugi_fdw: Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "RETURNING", expected one of {<END_OF_FILE>, %, *, +, -, ...}" region:"region(begin=100, end=109)")
-CONTEXT:  SQL query: UPDATE fdw_upd_unsupported_test SET value_col = (value_col + 1) WHERE ((key_col = 'key3'::varchar)) RETURNING id, key_col, value_col
+ERROR:  RETURNING clause is not supported
 DEALLOCATE fdw_prepare_upd;
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_upd_unsupported_test;
@@ -256,10 +253,7 @@ PREPARE fdw_prepare_del AS
   DELETE FROM fdw_del_variation_table_1 WHERE key_col = 'key6'
     RETURNING id, key_col AS deleted_key;
 EXECUTE fdw_prepare_del;
-ERROR:  tsurugi_fdw: Failed to execute remote SQL.
-HINT:  Failed to execute the statement on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "RETURNING", expected one of {<END_OF_FILE>, %, *, +, -, ...}" region:"region(begin=74, end=83)")
-CONTEXT:  SQL query: DELETE FROM fdw_del_variation_table_1 WHERE ((key_col = 'key6'::varchar)) RETURNING id, key_col
+ERROR:  RETURNING clause is not supported
 DEALLOCATE fdw_prepare_del;
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_del_variation_table_1;

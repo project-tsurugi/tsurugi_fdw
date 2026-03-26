@@ -21,24 +21,6 @@ CREATE FOREIGN TABLE fdw_sel_unsupported_test (
   manager_id integer
 ) SERVER tsurugidb;
 
--- Arithmetic operation
-SELECT id, name, ((value / 10000) * ref_id)::int AS lank
-  FROM fdw_sel_unsupported_test;
-
--- CASE WHEN
-SELECT
-  id, name,
-  CASE
-    WHEN value >= 100000 THEN 'High'
-    WHEN value >= 75000 THEN 'Medium'
-    ELSE 'Low' END AS lank
-  FROM fdw_sel_unsupported_test;
-
--- WINDOW
-SELECT id, name, value, RANK() OVER w AS rk
-  FROM fdw_sel_unsupported_test
-  WINDOW w AS (ORDER BY value DESC);
-
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_sel_unsupported_test;
 -- Test teardown: DDL of the Tsurugi

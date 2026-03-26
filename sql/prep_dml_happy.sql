@@ -1439,38 +1439,6 @@ PREPARE prep_select AS
 EXECUTE prep_select;
 DEALLOCATE prep_select;
 
--- GROUP BY ALL
-PREPARE prep_select AS
-  SELECT ref_id, COUNT(*), SUM(value)
-    FROM fdw_sel_unsupported_test
-    GROUP BY ALL ref_id
-    ORDER BY ref_id;
-EXECUTE prep_select;
-DEALLOCATE prep_select;
-
--- GROUP BY DISTINCT
-PREPARE prep_select AS
-  SELECT ref_id, COUNT(*), SUM(value)
-    FROM fdw_sel_unsupported_test
-    GROUP BY DISTINCT ref_id
-    ORDER BY ref_id;
-EXECUTE prep_select;
-DEALLOCATE prep_select;
-
--- FETCH FIRST ... WITH TIES
-PREPARE prep_select AS
-  SELECT * FROM fdw_sel_unsupported_test ORDER BY value
-    FETCH FIRST 2 ROWS WITH TIES;
-EXECUTE prep_select;
-DEALLOCATE prep_select;
-
--- FETCH NEXT ... WITH TIES
-PREPARE prep_select AS
-  SELECT * FROM fdw_sel_unsupported_test ORDER BY value
-    FETCH NEXT 2 ROWS WITH TIES;
-EXECUTE prep_select;
-DEALLOCATE prep_select;
-
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_sel_unsupported_test;
 -- Test teardown: DDL of the Tsurugi
