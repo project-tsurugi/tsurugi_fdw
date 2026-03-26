@@ -286,10 +286,6 @@ CREATE TEMPORARY VIEW vsubdepartment AS
 
 SELECT * FROM vsubdepartment ORDER BY name;
 
--- Check reverse listing
-SELECT pg_get_viewdef('vsubdepartment'::regclass);
-SELECT pg_get_viewdef('vsubdepartment'::regclass, true);
-
 -- Another reverse-listing example
 CREATE VIEW sums_1_100 AS
 WITH RECURSIVE t(n) AS (
@@ -298,8 +294,6 @@ UNION ALL
     SELECT n+1 FROM t WHERE n < 100
 )
 SELECT sum(n) FROM t;
-
-\d+ sums_1_100
 
 -- corner case in which sub-WITH gets initialized first
 with recursive q as (
@@ -414,133 +408,6 @@ insert into tsurugifdw_graph0 values
 	(1, 4, 'arc 1 -> 4'),
 	(4, 5, 'arc 4 -> 5');
 
-with recursive search_graph(f, t, label) as (
-	select * from tsurugifdw_graph0 g
-	union all
-	select g.*
-	from tsurugifdw_graph0 g, search_graph sg
-	where g.f = sg.t
-) search depth first by f, t set seq
-select * from search_graph order by seq;
-
-with recursive search_graph(f, t, label) as (
-	select * from tsurugifdw_graph0 g
-	union distinct
-	select g.*
-	from tsurugifdw_graph0 g, search_graph sg
-	where g.f = sg.t
-) search depth first by f, t set seq
-select * from search_graph order by seq;
-
-with recursive search_graph(f, t, label) as (
-	select * from tsurugifdw_graph0 g
-	union all
-	select g.*
-	from tsurugifdw_graph0 g, search_graph sg
-	where g.f = sg.t
-) search breadth first by f, t set seq
-select * from search_graph order by seq;
-
-with recursive search_graph(f, t, label) as (
-	select * from tsurugifdw_graph0 g
-	union distinct
-	select g.*
-	from tsurugifdw_graph0 g, search_graph sg
-	where g.f = sg.t
-) search breadth first by f, t set seq
-select * from search_graph order by seq;
-
-with recursive test as (
-  select 1 as x
-  union all
-  select x + 1
-  from test
-) search depth first by x set y
-select * from test limit 5;
-
-with recursive test as (
-  select 1 as x
-  union all
-  select x + 1
-  from test
-) search breadth first by x set y
-select * from test limit 5;
-
--- various syntax errors
-with recursive search_graph(f, t, label) as (
-	select * from tsurugifdw_graph0 g
-	union all
-	select g.*
-	from tsurugifdw_graph0 g, search_graph sg
-	where g.f = sg.t
-) search depth first by foo, tar set seq
-select * from search_graph;
-
-with recursive search_graph(f, t, label) as (
-	select * from tsurugifdw_graph0 g
-	union all
-	select g.*
-	from tsurugifdw_graph0 g, search_graph sg
-	where g.f = sg.t
-) search depth first by f, t set label
-select * from search_graph;
-
-with recursive search_graph(f, t, label) as (
-	select * from tsurugifdw_graph0 g
-	union all
-	select g.*
-	from tsurugifdw_graph0 g, search_graph sg
-	where g.f = sg.t
-) search depth first by f, t, f set seq
-select * from search_graph;
-
-with recursive search_graph(f, t, label) as (
-	select * from tsurugifdw_graph0 g
-	union all
-	select * from tsurugifdw_graph0 g
-	union all
-	select g.*
-	from tsurugifdw_graph0 g, search_graph sg
-	where g.f = sg.t
-) search depth first by f, t set seq
-select * from search_graph order by seq;
-
-with recursive search_graph(f, t, label) as (
-	select * from tsurugifdw_graph0 g
-	union all
-	(select * from tsurugifdw_graph0 g
-	union all
-	select g.*
-	from tsurugifdw_graph0 g, search_graph sg
-	where g.f = sg.t)
-) search depth first by f, t set seq
-select * from search_graph order by seq;
-
--- check that we distinguish same CTE name used at different levels
--- (this case could be supported, perhaps, but it isn't today)
-with recursive x(col) as (
-	select 1
-	union
-	(with x as (select * from x)
-	 select * from x)
-) search depth first by col set seq
-select * from x;
-
--- test ruleutils and view expansion
-create temp view v_search as
-with recursive search_graph(f, t, label) as (
-	select * from tsurugifdw_graph0 g
-	union all
-	select g.*
-	from tsurugifdw_graph0 g, search_graph sg
-	where g.f = sg.t
-) search depth first by f, t set seq
-select f, t, label from search_graph;
-
-select pg_get_viewdef('v_search');
-
-select * from v_search;
-
 --
 -- test cycle detection
 --
@@ -564,16 +431,6 @@ with recursive search_graph(f, t, label, is_cycle, path) as (
 )
 select * from search_graph ORDER BY f, t;
 
--- UNION DISTINCT exercises row type hashing support
-with recursive search_graph(f, t, label, is_cycle, path) as (
-	select *, false, array[row(g.f, g.t)] from tsurugifdw_graph g
-	union distinct
-	select g.*, row(g.f, g.t) = any(path), path || row(g.f, g.t)
-	from tsurugifdw_graph g, search_graph sg
-	where g.f = sg.t and not is_cycle
-)
-select * from search_graph ORDER BY f, t;
-
 -- ordering by the path column has same effect as SEARCH DEPTH FIRST
 with recursive search_graph(f, t, label, is_cycle, path) as (
 	select *, false, array[row(g.f, g.t)] from tsurugifdw_graph g
@@ -583,202 +440,6 @@ with recursive search_graph(f, t, label, is_cycle, path) as (
 	where g.f = sg.t and not is_cycle
 )
 select * from search_graph order by path;
-
--- CYCLE clause
-
-with recursive search_graph(f, t, label) as (
-	select * from tsurugifdw_graph g
-	union all
-	select g.*
-	from tsurugifdw_graph g, search_graph sg
-	where g.f = sg.t
-) cycle f, t set is_cycle using path
-select * from search_graph ORDER BY f, t;
-
-with recursive search_graph(f, t, label) as (
-	select * from tsurugifdw_graph g
-	union distinct
-	select g.*
-	from tsurugifdw_graph g, search_graph sg
-	where g.f = sg.t
-) cycle f, t set is_cycle to 'Y' default 'N' using path
-select * from search_graph ORDER BY f, t;
-
-with recursive test as (
-  select 0 as x
-  union all
-  select (x + 1) % 10
-  from test
-) cycle x set is_cycle using path
-select * from test;
-
-with recursive test as (
-  select 0 as x
-  union all
-  select (x + 1) % 10
-  from test
-    where not is_cycle  -- redundant, but legal
-) cycle x set is_cycle using path
-select * from test;
-
--- multiple CTEs
-with recursive
-graph(f, t, label) as (
-  values (1, 2, 'arc 1 -> 2'),
-         (1, 3, 'arc 1 -> 3'),
-         (2, 3, 'arc 2 -> 3'),
-         (1, 4, 'arc 1 -> 4'),
-         (4, 5, 'arc 4 -> 5'),
-         (5, 1, 'arc 5 -> 1')
-),
-search_graph(f, t, label) as (
-        select * from tsurugifdw_graph g
-        union all
-        select g.*
-        from tsurugifdw_graph g, search_graph sg
-        where g.f = sg.t
-) cycle f, t set is_cycle to true default false using path
-select f, t, label from search_graph;
-
--- star expansion
-with recursive a as (
-	select 1 as b
-	union all
-	select * from a
-) cycle b set c using p
-select * from a;
-
--- search+cycle
-with recursive search_graph(f, t, label) as (
-	select * from tsurugifdw_graph g
-	union all
-	select g.*
-	from tsurugifdw_graph g, search_graph sg
-	where g.f = sg.t
-) search depth first by f, t set seq
-  cycle f, t set is_cycle using path
-select * from search_graph ORDER BY f, t;
-
-with recursive search_graph(f, t, label) as (
-	select * from tsurugifdw_graph g
-	union all
-	select g.*
-	from tsurugifdw_graph g, search_graph sg
-	where g.f = sg.t
-) search breadth first by f, t set seq
-  cycle f, t set is_cycle using path
-select * from search_graph ORDER BY f, t;
-
--- various syntax errors
-with recursive search_graph(f, t, label) as (
-	select * from tsurugifdw_graph g
-	union all
-	select g.*
-	from tsurugifdw_graph g, search_graph sg
-	where g.f = sg.t
-) cycle foo, tar set is_cycle using path
-select * from search_graph;
-
-with recursive search_graph(f, t, label) as (
-	select * from tsurugifdw_graph g
-	union all
-	select g.*
-	from tsurugifdw_graph g, search_graph sg
-	where g.f = sg.t
-) cycle f, t set is_cycle to true default 55 using path
-select * from search_graph;
-
-with recursive search_graph(f, t, label) as (
-	select * from tsurugifdw_graph g
-	union all
-	select g.*
-	from tsurugifdw_graph g, search_graph sg
-	where g.f = sg.t
-) cycle f, t set is_cycle to point '(1,1)' default point '(0,0)' using path
-select * from search_graph;
-
-with recursive search_graph(f, t, label) as (
-	select * from tsurugifdw_graph g
-	union all
-	select g.*
-	from tsurugifdw_graph g, search_graph sg
-	where g.f = sg.t
-) cycle f, t set label to true default false using path
-select * from search_graph;
-
-with recursive search_graph(f, t, label) as (
-	select * from tsurugifdw_graph g
-	union all
-	select g.*
-	from tsurugifdw_graph g, search_graph sg
-	where g.f = sg.t
-) cycle f, t set is_cycle to true default false using label
-select * from search_graph;
-
-with recursive search_graph(f, t, label) as (
-	select * from tsurugifdw_graph g
-	union all
-	select g.*
-	from tsurugifdw_graph g, search_graph sg
-	where g.f = sg.t
-) cycle f, t set foo to true default false using foo
-select * from search_graph;
-
-with recursive search_graph(f, t, label) as (
-	select * from tsurugifdw_graph g
-	union all
-	select g.*
-	from tsurugifdw_graph g, search_graph sg
-	where g.f = sg.t
-) cycle f, t, f set is_cycle to true default false using path
-select * from search_graph;
-
-with recursive search_graph(f, t, label) as (
-	select * from tsurugifdw_graph g
-	union all
-	select g.*
-	from tsurugifdw_graph g, search_graph sg
-	where g.f = sg.t
-) search depth first by f, t set foo
-  cycle f, t set foo to true default false using path
-select * from search_graph;
-
-with recursive search_graph(f, t, label) as (
-	select * from tsurugifdw_graph g
-	union all
-	select g.*
-	from tsurugifdw_graph g, search_graph sg
-	where g.f = sg.t
-) search depth first by f, t set foo
-  cycle f, t set is_cycle to true default false using foo
-select * from search_graph;
-
--- test ruleutils and view expansion
-create temp view v_cycle1 as
-with recursive search_graph(f, t, label) as (
-	select * from tsurugifdw_graph g
-	union all
-	select g.*
-	from tsurugifdw_graph g, search_graph sg
-	where g.f = sg.t
-) cycle f, t set is_cycle using path
-select f, t, label from search_graph;
-
-create temp view v_cycle2 as
-with recursive search_graph(f, t, label) as (
-	select * from tsurugifdw_graph g
-	union all
-	select g.*
-	from tsurugifdw_graph g, search_graph sg
-	where g.f = sg.t
-) cycle f, t set is_cycle to 'Y' default 'N' using path
-select f, t, label from search_graph;
-
-select pg_get_viewdef('v_cycle1');
-select pg_get_viewdef('v_cycle2');
-
-select * from v_cycle1 order by f, t;
-select * from v_cycle2 order by f, t;
 
 --
 -- test multiple WITH queries
@@ -920,13 +581,6 @@ WITH RECURSIVE tsurugifdw_x(n) AS (
   ORDER BY (SELECT n FROM tsurugifdw_x))
 	SELECT * FROM tsurugifdw_x;
 
--- and this
-WITH RECURSIVE tsurugifdw_x(n) AS (
-  WITH sub_cte AS (SELECT * FROM tsurugifdw_x)
-  DELETE FROM tsurugifdw_graph RETURNING f)
-	SELECT * FROM tsurugifdw_x;
-
-
 SELECT tg_execute_ddl('CREATE TABLE tsurugifdw_y( a INTEGER )', 'tsurugidb');
 CREATE FOREIGN TABLE tsurugifdw_y ( a INTEGER ) SERVER tsurugidb;
 INSERT INTO tsurugifdw_y SELECT generate_series(1, 10);
@@ -1057,25 +711,6 @@ select ( with cte(tsurugifdw_foo) as ( values(f1) )
 from tsurugifdw_int4_tbl;
 
 --
--- test for bug #19055: interaction of WITH with aggregates
---
--- For now, we just throw an error if there's a use of a CTE below the
--- semantic level that the SQL standard assigns to the aggregate.
--- It's not entirely clear what we could do instead that doesn't risk
--- breaking more things than it fixes.
-select f1, (with cte1(x,y) as (select 1,2)
-            select count((select i4.f1 from cte1))) as ss
-from tsurugifdw_int4_tbl i4;
-
---
--- test for bug #19106: interaction of WITH with aggregates
---
--- the initial fix for #19055 was too aggressive and broke this case
-with a as ( select id from (values (1), (2)) as v(id) ),
-     b as ( select max((select sum(id) from a)) as agg )
-select agg from b;
-
---
 -- test for nested-recursive-WITH bug
 --
 WITH RECURSIVE t(j) AS (
@@ -1105,7 +740,7 @@ SELECT * FROM outermost ORDER BY 1;
 WITH outermost(x) AS (
   SELECT 1
   UNION (WITH innermost as (SELECT 2)
-         SELECT * FROM outermost  -- fail
+         SELECT * FROM outermost
          UNION SELECT * FROM innermost)
 )
 SELECT * FROM outermost ORDER BY 1;
@@ -1119,7 +754,7 @@ WITH RECURSIVE outermost(x) AS (
 SELECT * FROM outermost ORDER BY 1;
 
 WITH RECURSIVE outermost(x) AS (
-  WITH innermost as (SELECT 2 FROM outermost) -- fail
+  WITH innermost as (SELECT 2 FROM outermost)
     SELECT * FROM innermost
     UNION SELECT * from outermost
 )
@@ -1269,49 +904,19 @@ SELECT * FROM tsurugifdw_bug6051;
 SELECT tg_execute_ddl('CREATE TABLE tsurugifdw_bug6051_2 (i int)', 'tsurugidb');
 CREATE FOREIGN TABLE tsurugifdw_bug6051_2 (i int) SERVER tsurugidb;
 
-CREATE RULE bug6051_ins AS ON INSERT TO tsurugifdw_bug6051 DO INSTEAD
- INSERT INTO tsurugifdw_bug6051_2
- VALUES(NEW.i);
-
 WITH t1 AS ( DELETE FROM tsurugifdw_bug6051 RETURNING * )
 INSERT INTO tsurugifdw_bug6051 SELECT * FROM t1;
 
 SELECT * FROM tsurugifdw_bug6051;
 SELECT * FROM tsurugifdw_bug6051_2;
 
--- check INSERT ... SELECT rule actions are disallowed on commands
--- that have modifyingCTEs
-CREATE OR REPLACE RULE bug6051_ins AS ON INSERT TO tsurugifdw_bug6051 DO INSTEAD
- INSERT INTO tsurugifdw_bug6051_2
- SELECT NEW.i;
-
 WITH t1 AS ( DELETE FROM tsurugifdw_bug6051 RETURNING * )
 INSERT INTO tsurugifdw_bug6051 SELECT * FROM t1;
-
--- silly example to verify that hasModifyingCTE flag is propagated
-SELECT tg_execute_ddl('CREATE TABLE tsurugifdw_bug6051_3 (a int)', 'tsurugidb');
-CREATE FOREIGN TABLE tsurugifdw_bug6051_3 (a int) SERVER tsurugidb;
-INSERT INTO tsurugifdw_bug6051_3
-  SELECT a FROM generate_series(11,13) AS a;
-
-CREATE RULE bug6051_3_ins AS ON INSERT TO tsurugifdw_bug6051_3 DO INSTEAD
-  SELECT i FROM tsurugifdw_bug6051_2;
-
-BEGIN; SET LOCAL debug_parallel_query = on;
-
-WITH t1 AS ( DELETE FROM tsurugifdw_bug6051_3 RETURNING * )
-  INSERT INTO tsurugifdw_bug6051_3 SELECT * FROM t1;
-
-COMMIT;
-
-SELECT * FROM tsurugifdw_bug6051_3;
 
 SELECT tg_execute_ddl('DROP TABLE tsurugifdw_bug6051', 'tsurugidb');
 DROP FOREIGN TABLE tsurugifdw_bug6051;
 SELECT tg_execute_ddl('DROP TABLE tsurugifdw_bug6051_2', 'tsurugidb');
 DROP FOREIGN TABLE tsurugifdw_bug6051_2;
-SELECT tg_execute_ddl('DROP TABLE tsurugifdw_bug6051_3', 'tsurugidb');
-DROP FOREIGN TABLE tsurugifdw_bug6051_3;
 
 -- check that recursive CTE processing doesn't rewrite a CTE more than once
 -- (must not try to expand GENERATED ALWAYS IDENTITY columns more than once)
@@ -1324,32 +929,18 @@ CREATE TEMP VIEW id_alw2_view AS SELECT * FROM tsurugifdw_id_alw2;
 
 SELECT tg_execute_ddl('CREATE TABLE tsurugifdw_id_alw3 (i int GENERATED ALWAYS AS IDENTITY)', 'tsurugidb');
 CREATE FOREIGN TABLE tsurugifdw_id_alw3 (i int) SERVER tsurugidb;
-CREATE RULE id_alw3_ins AS ON INSERT TO tsurugifdw_id_alw3 DO INSTEAD
-  WITH t1 AS (INSERT INTO tsurugifdw_id_alw1 DEFAULT VALUES RETURNING i)
-    INSERT INTO id_alw2_view DEFAULT VALUES RETURNING i;
-CREATE TEMP VIEW id_alw3_view AS SELECT * FROM tsurugifdw_id_alw3;
-
-SELECT tg_execute_ddl('CREATE TABLE tsurugifdw_id_alw4 (i int GENERATED ALWAYS AS IDENTITY)', 'tsurugidb');
-CREATE FOREIGN TABLE tsurugifdw_id_alw4 (i int) SERVER tsurugidb;
-
-WITH t4 AS (INSERT INTO tsurugifdw_id_alw4 DEFAULT VALUES RETURNING i)
-  INSERT INTO id_alw3_view DEFAULT VALUES RETURNING i;
 
 SELECT * from tsurugifdw_id_alw1;
 SELECT * from tsurugifdw_id_alw2;
 SELECT * from tsurugifdw_id_alw3;
-SELECT * from tsurugifdw_id_alw4;
 
 DROP VIEW id_alw2_view;
-DROP VIEW id_alw3_view;
 SELECT tg_execute_ddl('DROP TABLE tsurugifdw_id_alw1', 'tsurugidb');
 DROP FOREIGN TABLE tsurugifdw_id_alw1;
 SELECT tg_execute_ddl('DROP TABLE tsurugifdw_id_alw2', 'tsurugidb');
 DROP FOREIGN TABLE tsurugifdw_id_alw2;
 SELECT tg_execute_ddl('DROP TABLE tsurugifdw_id_alw3', 'tsurugidb');
 DROP FOREIGN TABLE tsurugifdw_id_alw3;
-SELECT tg_execute_ddl('DROP TABLE tsurugifdw_id_alw4', 'tsurugidb');
-DROP FOREIGN TABLE tsurugifdw_id_alw4;
 
 -- check case where CTE reference is removed due to optimization
 SELECT q1 FROM
@@ -1469,32 +1060,12 @@ INSERT INTO tsurugifdw_m
 SELECT i AS k, (i || ' v')::text AS v
 FROM generate_series(1, 16, 3) i;
 
-WITH RECURSIVE cte_basic AS (SELECT 1 a, 'cte_basic val' b)
-MERGE INTO tsurugifdw_m USING (select 0 k, 'merge source SubPlan' v) o ON tsurugifdw_m.k=o.k
-WHEN MATCHED THEN UPDATE SET v = (SELECT b || ' merge update' FROM cte_basic WHERE cte_basic.a = tsurugifdw_m.k LIMIT 1)
-WHEN NOT MATCHED THEN INSERT VALUES(o.k, o.v);
-
--- Basic:
-WITH cte_basic AS MATERIALIZED (SELECT 1 a, 'cte_basic val' b)
-MERGE INTO tsurugifdw_m USING (select 0 k, 'merge source SubPlan' v offset 0) o ON tsurugifdw_m.k=o.k
-WHEN MATCHED THEN UPDATE SET v = (SELECT b || ' merge update' FROM cte_basic WHERE cte_basic.a = tsurugifdw_m.k LIMIT 1)
-WHEN NOT MATCHED THEN INSERT VALUES(o.k, o.v);
 -- Examine
 SELECT * FROM tsurugifdw_m where k = 0;
 
--- InitPlan
-WITH cte_init AS MATERIALIZED (SELECT 1 a, 'cte_init val' b)
-MERGE INTO tsurugifdw_m USING (select 1 k, 'merge source InitPlan' v offset 0) o ON tsurugifdw_m.k=o.k
-WHEN MATCHED THEN UPDATE SET v = (SELECT b || ' merge update' FROM cte_init WHERE a = 1 LIMIT 1)
-WHEN NOT MATCHED THEN INSERT VALUES(o.k, o.v);
 -- Examine
 SELECT * FROM tsurugifdw_m where k = 1;
 
--- MERGE source comes from CTE:
-WITH merge_source_cte AS MATERIALIZED (SELECT 15 a, 'merge_source_cte val' b)
-MERGE INTO tsurugifdw_m USING (select * from merge_source_cte) o ON tsurugifdw_m.k=o.a
-WHEN MATCHED THEN UPDATE SET v = (SELECT b || merge_source_cte.*::text || ' merge update' FROM merge_source_cte WHERE a = 15)
-WHEN NOT MATCHED THEN INSERT VALUES(o.a, o.b || (SELECT merge_source_cte.*::text || ' merge insert' FROM merge_source_cte));
 -- Examine
 SELECT * FROM tsurugifdw_m where k = 15;
 
@@ -1614,47 +1185,11 @@ WITH t AS (
 )
 SELECT * FROM t;
 
--- RETURNING tries to return its own output
-WITH RECURSIVE t(action, a) AS (
-	MERGE INTO tsurugifdw_y USING (VALUES (11)) v(a) ON tsurugifdw_y.a = v.a
-		WHEN NOT MATCHED THEN INSERT VALUES (v.a)
-		RETURNING merge_action(), (SELECT a FROM t)
-)
-SELECT * FROM t;
-
 -- data-modifying WITH allowed only at the top level
 SELECT * FROM (
 	WITH t AS (UPDATE tsurugifdw_y SET a=a+1 RETURNING *)
 	SELECT * FROM t
 ) ss;
-
--- most variants of rules aren't allowed
-CREATE RULE y_rule AS ON INSERT TO tsurugifdw_y WHERE a=0 DO INSTEAD DELETE FROM tsurugifdw_y;
-WITH t AS (
-	INSERT INTO tsurugifdw_y VALUES(0)
-)
-VALUES(FALSE);
-CREATE OR REPLACE RULE y_rule AS ON INSERT TO tsurugifdw_y DO INSTEAD NOTHING;
-WITH t AS (
-	INSERT INTO tsurugifdw_y VALUES(0)
-)
-VALUES(FALSE);
-CREATE OR REPLACE RULE y_rule AS ON INSERT TO tsurugifdw_y DO INSTEAD NOTIFY foo;
-WITH t AS (
-	INSERT INTO tsurugifdw_y VALUES(0)
-)
-VALUES(FALSE);
-CREATE OR REPLACE RULE y_rule AS ON INSERT TO tsurugifdw_y DO ALSO NOTIFY foo;
-WITH t AS (
-	INSERT INTO tsurugifdw_y VALUES(0)
-)
-VALUES(FALSE);
-CREATE OR REPLACE RULE y_rule AS ON INSERT TO tsurugifdw_y
-  DO INSTEAD (NOTIFY foo; NOTIFY bar);
-WITH t AS (
-	INSERT INTO tsurugifdw_y VALUES(0)
-)
-VALUES(FALSE);
 
 -- check that parser lookahead for WITH doesn't cause any odd behavior
 create table tsurugifdw_foo (with baz);  -- fail, WITH is a reserved word

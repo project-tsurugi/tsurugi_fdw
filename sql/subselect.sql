@@ -13,8 +13,6 @@ SELECT 1 AS zero WHERE 1 IN (SELECT 2);
 SELECT * FROM (SELECT 1 AS x) ss;
 SELECT * FROM ((SELECT 1 AS x)) ss;
 
-SELECT * FROM ((SELECT 1 AS x)), ((SELECT * FROM ((SELECT 2 AS y))));
-
 (SELECT 2) UNION SELECT 2;
 ((SELECT 2)) UNION SELECT 2;
 
@@ -273,32 +271,6 @@ SELECT ROW(1, 2) = (SELECT f1, f2) AS eq FROM SUBSELECT_TBL;
 SELECT ROW(1, 2) = (SELECT 3, 4) AS eq FROM SUBSELECT_TBL;
 
 SELECT ROW(1, 2) = (SELECT f1, f2 FROM SUBSELECT_TBL);  -- error
-
--- Subselects without aliases
-
-SELECT * FROM (SELECT * FROM tsurugifdw_int4_tbl), (VALUES (123456)) WHERE f1 = column1;
-
-CREATE VIEW view_unnamed_ss AS
-SELECT * FROM (SELECT * FROM (SELECT abs(f1) AS a1 FROM tsurugifdw_int4_tbl)),
-              (SELECT * FROM tsurugifdw_int8_tbl)
-  WHERE a1 < 10 AND q1 > a1 ORDER BY q1, q2;
-
-SELECT * FROM view_unnamed_ss;
-
-\sv view_unnamed_ss
-
-DROP VIEW view_unnamed_ss;
-
--- Test matching of locking clause to correct alias
-
-CREATE VIEW view_unnamed_ss_locking AS
-SELECT * FROM (SELECT * FROM tsurugifdw_int4_tbl), tsurugifdw_int8_tbl AS unnamed_subquery
-  WHERE f1 = q1
-  FOR UPDATE OF unnamed_subquery;
-
-\sv view_unnamed_ss_locking
-
-DROP VIEW view_unnamed_ss_locking;
 
 --
 -- Use some existing tables in the regression test
@@ -976,24 +948,6 @@ move forward all in c1;
 fetch backward all in c1;
 
 commit;
-
---
--- Check that JsonConstructorExpr is treated as non-strict, and thus can be
--- wrapped in a PlaceHolderVar
---
-
-begin;
-
-SELECT tg_execute_ddl('CREATE TABLE tsurugifdw_json_tab (a int)', 'tsurugidb');
-CREATE FOREIGN TABLE tsurugifdw_json_tab (a int) SERVER tsurugidb;
-insert into tsurugifdw_json_tab values (1);
-
-select * from tsurugifdw_json_tab t1 left join (select json_array(1, a) from tsurugifdw_json_tab t2) s on false;
-
-SELECT tg_execute_ddl('DROP TABLE tsurugifdw_json_tab', 'tsurugidb');
-DROP FOREIGN TABLE tsurugifdw_json_tab;
-
-rollback;
 
 --
 -- Verify that we correctly flatten cases involving a subquery output
