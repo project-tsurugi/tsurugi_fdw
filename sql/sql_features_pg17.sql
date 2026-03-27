@@ -1,0 +1,781 @@
+--
+-- Alias-required error for nested derived tables in FROM
+--
+SELECT * FROM ((SELECT 1 AS x)), ((SELECT * FROM ((SELECT 2 AS y))));
+
+SELECT tg_execute_ddl('
+    CREATE TABLE tsurugifdw_int4_tbl (
+        f1 int
+    )
+', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_int4_tbl (
+  f1 int4
+) SERVER tsurugidb;
+
+INSERT INTO tsurugifdw_int4_tbl(f1) VALUES
+  ('   0  '),
+  ('123456     '),
+  ('    -123456'),
+  ('2147483647'),  -- largest and smallest values
+  ('-2147483647');
+
+SELECT * FROM tsurugifdw_int4_tbl;
+
+SELECT tg_execute_ddl('
+    CREATE TABLE tsurugifdw_int8_tbl (
+        q1 bigint, q2 bigint
+    )
+', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_int8_tbl (
+  q1 int8, q2 int8
+) SERVER tsurugidb;
+
+INSERT INTO tsurugifdw_int8_tbl VALUES
+  ('  123   ','  456'),
+  ('123   ','4567890123456789'),
+  ('4567890123456789','123'),
+  (+4567890123456789,'4567890123456789'),
+  ('+4567890123456789','-4567890123456789');
+
+SELECT * FROM tsurugifdw_int8_tbl;
+
+-- Subselects without aliases
+CREATE VIEW view_unnamed_ss AS
+SELECT * FROM (SELECT * FROM (SELECT abs(f1) AS a1 FROM tsurugifdw_int4_tbl)),
+              (SELECT * FROM tsurugifdw_int8_tbl)
+  WHERE a1 < 10 AND q1 > a1 ORDER BY q1, q2;
+
+SELECT * FROM view_unnamed_ss;
+
+\sv view_unnamed_ss
+
+DROP VIEW view_unnamed_ss;
+
+-- Test matching of locking clause to correct alias
+
+CREATE VIEW view_unnamed_ss_locking AS
+SELECT * FROM (SELECT * FROM tsurugifdw_int4_tbl), tsurugifdw_int8_tbl AS unnamed_subquery
+  WHERE f1 = q1
+  FOR UPDATE OF unnamed_subquery;
+
+\sv view_unnamed_ss_locking
+
+DROP VIEW view_unnamed_ss_locking;
+
+SELECT tg_execute_ddl('
+    DROP TABLE tsurugifdw_int4_tbl', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_int4_tbl;
+
+SELECT tg_execute_ddl('
+    DROP TABLE tsurugifdw_int8_tbl', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_int8_tbl;
+
+--
+-- Function resolution for json_array (existence and argument type matching)
+---
+begin;
+
+SELECT tg_execute_ddl('CREATE TABLE tsurugifdw_json_tab (a int)', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_json_tab (a int) SERVER tsurugidb;
+insert into tsurugifdw_json_tab values (1);
+
+select * from tsurugifdw_json_tab t1 left join (select json_array(1, a) from tsurugifdw_json_tab t2) s on false;
+
+SELECT tg_execute_ddl('DROP TABLE tsurugifdw_json_tab', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_json_tab;
+
+rollback;
+
+-- UPDATE
+SELECT tg_execute_ddl('
+    CREATE TABLE tsurugifdw_update_test (
+        a   INT DEFAULT 10,
+        b   INT,
+        c   VARCHAR
+    )
+', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_update_test (
+    a   INT DEFAULT 10,
+    b   INT,
+    c   VARCHAR
+) SERVER tsurugidb;
+SELECT tg_execute_ddl('
+    CREATE TABLE tsurugifdw_upsert_test (
+        a   INT PRIMARY KEY,
+        b   VARCHAR
+    )
+', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_upsert_test (
+    a   INT,
+    b   VARCHAR
+) SERVER tsurugidb;
+ALTER FOREIGN TABLE tsurugifdw_upsert_test
+  ALTER COLUMN a OPTIONS (ADD key 'true');
+ALTER FOREIGN TABLE tsurugifdw_upsert_test
+  ALTER COLUMN b OPTIONS (ADD key 'true');
+INSERT INTO tsurugifdw_update_test VALUES (5, 10, 'foo');
+INSERT INTO tsurugifdw_update_test(b, a) VALUES (15, 10);
+-- error, you're not supposed to qualify the target column
+UPDATE tsurugifdw_update_test t SET t.b = t.b + 10 WHERE t.a = 10;
+
+-- 
+-- Fails before ON CONFLICT checks due to undefined pg_current_xact_id()
+-- 
+INSERT INTO tsurugifdw_upsert_test VALUES (2, 'Beeble') ON CONFLICT(a)
+  DO UPDATE SET (b, a) = (SELECT b || ', Excluded', a from tsurugifdw_upsert_test i WHERE i.a = excluded.a)
+  RETURNING tableoid::regclass, xmin = pg_current_xact_id()::xid AS xmin_correct, xmax = 0 AS xmax_correct;
+-- currently xmax is set after a conflict - that's probably not good,
+-- but it seems worthwhile to have to be explicit if that changes.
+INSERT INTO tsurugifdw_upsert_test VALUES (2, 'Brox') ON CONFLICT(a)
+  DO UPDATE SET (b, a) = (SELECT b || ', Excluded', a from tsurugifdw_upsert_test i WHERE i.a = excluded.a)
+  RETURNING tableoid::regclass, xmin = pg_current_xact_id()::xid AS xmin_correct, xmax = pg_current_xact_id()::xid AS xmax_correct;
+
+SELECT tg_execute_ddl('
+    DROP TABLE tsurugifdw_update_test', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_update_test;
+SELECT tg_execute_ddl('
+    DROP TABLE tsurugifdw_upsert_test', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_upsert_test;
+
+-- WITH
+SELECT tg_execute_ddl('
+    CREATE TABLE tsurugifdw_department(
+        id INTEGER PRIMARY KEY,
+        parent_department INTEGER,
+        name VARCHAR
+    )
+', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_department (
+        id INTEGER,
+        parent_department INTEGER,
+        name TEXT
+) SERVER tsurugidb;
+
+INSERT INTO tsurugifdw_department VALUES (0, NULL, 'ROOT');
+INSERT INTO tsurugifdw_department VALUES (1, 0, 'A');
+INSERT INTO tsurugifdw_department VALUES (2, 1, 'B');
+INSERT INTO tsurugifdw_department VALUES (3, 2, 'C');
+INSERT INTO tsurugifdw_department VALUES (4, 2, 'D');
+INSERT INTO tsurugifdw_department VALUES (5, 0, 'E');
+INSERT INTO tsurugifdw_department VALUES (6, 4, 'F');
+INSERT INTO tsurugifdw_department VALUES (7, 5, 'G');
+
+-- via a VIEW
+CREATE TEMPORARY VIEW vsubdepartment AS
+	WITH RECURSIVE subdepartment AS
+	(
+		 -- non recursive term
+		SELECT * FROM tsurugifdw_department WHERE name = 'A'
+		UNION ALL
+		-- recursive term
+		SELECT d.* FROM tsurugifdw_department AS d, subdepartment AS sd
+			WHERE d.parent_department = sd.id
+	)
+	SELECT * FROM subdepartment;
+
+SELECT * FROM vsubdepartment ORDER BY name;
+
+--
+-- pg_get_viewdef auto-qualification of final SELECT column references in a recursive CTE
+--
+SELECT pg_get_viewdef('vsubdepartment'::regclass);
+SELECT pg_get_viewdef('vsubdepartment'::regclass, true);
+
+DROP VIEW sums_1_100;
+CREATE VIEW sums_1_100 AS
+WITH RECURSIVE t(n) AS (
+    VALUES (1)
+UNION ALL
+    SELECT n+1 FROM t WHERE n < 100
+)
+SELECT sum(n) FROM t;
+
+\d+ sums_1_100
+
+DROP VIEW sums_1_100;
+SELECT tg_execute_ddl('DROP TABLE tsurugifdw_department', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_department CASCADE;
+
+--
+-- Parsing of the SEARCH DEPTH FIRST clause in WITH RECURSIVE
+--
+SELECT tg_execute_ddl('CREATE TABLE tsurugifdw_graph0 ( f int, t int, label varchar )', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_graph0 ( f int, t int, label text ) SERVER tsurugidb;
+
+insert into tsurugifdw_graph0 values
+	(1, 2, 'arc 1 -> 2'),
+	(1, 3, 'arc 1 -> 3'),
+	(2, 3, 'arc 2 -> 3'),
+	(1, 4, 'arc 1 -> 4'),
+	(4, 5, 'arc 4 -> 5');
+
+with recursive search_graph(f, t, label) as (
+	select * from tsurugifdw_graph0 g
+	union all
+	select g.*
+	from tsurugifdw_graph0 g, search_graph sg
+	where g.f = sg.t
+) search depth first by f, t set seq
+select * from search_graph order by seq;
+
+with recursive search_graph(f, t, label) as (
+	select * from tsurugifdw_graph0 g
+	union distinct
+	select g.*
+	from tsurugifdw_graph0 g, search_graph sg
+	where g.f = sg.t
+) search depth first by f, t set seq
+select * from search_graph order by seq;
+
+with recursive search_graph(f, t, label) as (
+	select * from tsurugifdw_graph0 g
+	union all
+	select g.*
+	from tsurugifdw_graph0 g, search_graph sg
+	where g.f = sg.t
+) search breadth first by f, t set seq
+select * from search_graph order by seq;
+
+with recursive search_graph(f, t, label) as (
+	select * from tsurugifdw_graph0 g
+	union distinct
+	select g.*
+	from tsurugifdw_graph0 g, search_graph sg
+	where g.f = sg.t
+) search breadth first by f, t set seq
+select * from search_graph order by seq;
+
+with recursive test as (
+  select 1 as x
+  union all
+  select x + 1
+  from test
+) search depth first by x set y
+select * from test limit 5;
+
+with recursive test as (
+  select 1 as x
+  union all
+  select x + 1
+  from test
+) search breadth first by x set y
+select * from test limit 5;
+
+-- various syntax errors
+with recursive search_graph(f, t, label) as (
+	select * from tsurugifdw_graph0 g
+	union all
+	select g.*
+	from tsurugifdw_graph0 g, search_graph sg
+	where g.f = sg.t
+) search depth first by foo, tar set seq
+select * from search_graph;
+
+with recursive search_graph(f, t, label) as (
+	select * from tsurugifdw_graph0 g
+	union all
+	select g.*
+	from tsurugifdw_graph0 g, search_graph sg
+	where g.f = sg.t
+) search depth first by f, t set label
+select * from search_graph;
+
+with recursive search_graph(f, t, label) as (
+	select * from tsurugifdw_graph0 g
+	union all
+	select g.*
+	from tsurugifdw_graph0 g, search_graph sg
+	where g.f = sg.t
+) search depth first by f, t, f set seq
+select * from search_graph;
+
+with recursive search_graph(f, t, label) as (
+	select * from tsurugifdw_graph0 g
+	union all
+	select * from tsurugifdw_graph0 g
+	union all
+	select g.*
+	from tsurugifdw_graph0 g, search_graph sg
+	where g.f = sg.t
+) search depth first by f, t set seq
+select * from search_graph order by seq;
+
+with recursive search_graph(f, t, label) as (
+	select * from tsurugifdw_graph0 g
+	union all
+	(select * from tsurugifdw_graph0 g
+	union all
+	select g.*
+	from tsurugifdw_graph0 g, search_graph sg
+	where g.f = sg.t)
+) search depth first by f, t set seq
+select * from search_graph order by seq;
+
+-- check that we distinguish same CTE name used at different levels
+-- (this case could be supported, perhaps, but it isn't today)
+with recursive x(col) as (
+	select 1
+	union
+	(with x as (select * from x)
+	 select * from x)
+) search depth first by col set seq
+select * from x;
+
+-- test ruleutils and view expansion
+create temp view v_search as
+with recursive search_graph(f, t, label) as (
+	select * from tsurugifdw_graph0 g
+	union all
+	select g.*
+	from tsurugifdw_graph0 g, search_graph sg
+	where g.f = sg.t
+) search depth first by f, t set seq
+select f, t, label from search_graph;
+
+select pg_get_viewdef('v_search');
+
+select * from v_search;
+
+SELECT tg_execute_ddl('DROP TABLE tsurugifdw_graph0', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_graph0;
+
+--
+-- Recursive CTE UNION DISTINCT requires all column types to be hashable
+--
+SELECT tg_execute_ddl('CREATE TABLE tsurugifdw_graph ( f int, t int, label varchar )', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_graph ( f int, t int, label text ) SERVER tsurugidb;
+with recursive search_graph(f, t, label, is_cycle, path) as (
+	select *, false, array[row(g.f, g.t)] from tsurugifdw_graph g
+	union distinct
+	select g.*, row(g.f, g.t) = any(path), path || row(g.f, g.t)
+	from tsurugifdw_graph g, search_graph sg
+	where g.f = sg.t and not is_cycle
+)
+select * from search_graph ORDER BY f, t;
+
+--
+--  Parsing of the CYCLE clause in WITH RECURSIVE
+--
+with recursive search_graph(f, t, label) as (
+	select * from tsurugifdw_graph g
+	union all
+	select g.*
+	from tsurugifdw_graph g, search_graph sg
+	where g.f = sg.t
+) cycle f, t set is_cycle using path
+select * from search_graph ORDER BY f, t;
+
+with recursive search_graph(f, t, label) as (
+	select * from tsurugifdw_graph g
+	union distinct
+	select g.*
+	from tsurugifdw_graph g, search_graph sg
+	where g.f = sg.t
+) cycle f, t set is_cycle to 'Y' default 'N' using path
+select * from search_graph ORDER BY f, t;
+
+with recursive test as (
+  select 0 as x
+  union all
+  select (x + 1) % 10
+  from test
+) cycle x set is_cycle using path
+select * from test;
+
+with recursive test as (
+  select 0 as x
+  union all
+  select (x + 1) % 10
+  from test
+    where not is_cycle  -- redundant, but legal
+) cycle x set is_cycle using path
+select * from test;
+
+-- multiple CTEs
+with recursive
+graph(f, t, label) as (
+  values (1, 2, 'arc 1 -> 2'),
+         (1, 3, 'arc 1 -> 3'),
+         (2, 3, 'arc 2 -> 3'),
+         (1, 4, 'arc 1 -> 4'),
+         (4, 5, 'arc 4 -> 5'),
+         (5, 1, 'arc 5 -> 1')
+),
+search_graph(f, t, label) as (
+        select * from tsurugifdw_graph g
+        union all
+        select g.*
+        from tsurugifdw_graph g, search_graph sg
+        where g.f = sg.t
+) cycle f, t set is_cycle to true default false using path
+select f, t, label from search_graph;
+
+-- star expansion
+with recursive a as (
+	select 1 as b
+	union all
+	select * from a
+) cycle b set c using p
+select * from a;
+
+-- search+cycle
+with recursive search_graph(f, t, label) as (
+	select * from tsurugifdw_graph g
+	union all
+	select g.*
+	from tsurugifdw_graph g, search_graph sg
+	where g.f = sg.t
+) search depth first by f, t set seq
+  cycle f, t set is_cycle using path
+select * from search_graph ORDER BY f, t;
+
+with recursive search_graph(f, t, label) as (
+	select * from tsurugifdw_graph g
+	union all
+	select g.*
+	from tsurugifdw_graph g, search_graph sg
+	where g.f = sg.t
+) search breadth first by f, t set seq
+  cycle f, t set is_cycle using path
+select * from search_graph ORDER BY f, t;
+
+-- various syntax errors
+with recursive search_graph(f, t, label) as (
+	select * from tsurugifdw_graph g
+	union all
+	select g.*
+	from tsurugifdw_graph g, search_graph sg
+	where g.f = sg.t
+) cycle foo, tar set is_cycle using path
+select * from search_graph;
+
+with recursive search_graph(f, t, label) as (
+	select * from tsurugifdw_graph g
+	union all
+	select g.*
+	from tsurugifdw_graph g, search_graph sg
+	where g.f = sg.t
+) cycle f, t set is_cycle to true default 55 using path
+select * from search_graph;
+
+with recursive search_graph(f, t, label) as (
+	select * from tsurugifdw_graph g
+	union all
+	select g.*
+	from tsurugifdw_graph g, search_graph sg
+	where g.f = sg.t
+) cycle f, t set is_cycle to point '(1,1)' default point '(0,0)' using path
+select * from search_graph;
+
+with recursive search_graph(f, t, label) as (
+	select * from tsurugifdw_graph g
+	union all
+	select g.*
+	from tsurugifdw_graph g, search_graph sg
+	where g.f = sg.t
+) cycle f, t set label to true default false using path
+select * from search_graph;
+
+with recursive search_graph(f, t, label) as (
+	select * from tsurugifdw_graph g
+	union all
+	select g.*
+	from tsurugifdw_graph g, search_graph sg
+	where g.f = sg.t
+) cycle f, t set is_cycle to true default false using label
+select * from search_graph;
+
+with recursive search_graph(f, t, label) as (
+	select * from tsurugifdw_graph g
+	union all
+	select g.*
+	from tsurugifdw_graph g, search_graph sg
+	where g.f = sg.t
+) cycle f, t set foo to true default false using foo
+select * from search_graph;
+
+with recursive search_graph(f, t, label) as (
+	select * from tsurugifdw_graph g
+	union all
+	select g.*
+	from tsurugifdw_graph g, search_graph sg
+	where g.f = sg.t
+) cycle f, t, f set is_cycle to true default false using path
+select * from search_graph;
+
+with recursive search_graph(f, t, label) as (
+	select * from tsurugifdw_graph g
+	union all
+	select g.*
+	from tsurugifdw_graph g, search_graph sg
+	where g.f = sg.t
+) search depth first by f, t set foo
+  cycle f, t set foo to true default false using path
+select * from search_graph;
+
+with recursive search_graph(f, t, label) as (
+	select * from tsurugifdw_graph g
+	union all
+	select g.*
+	from tsurugifdw_graph g, search_graph sg
+	where g.f = sg.t
+) search depth first by f, t set foo
+  cycle f, t set is_cycle to true default false using foo
+select * from search_graph;
+
+-- test ruleutils and view expansion
+create temp view v_cycle1 as
+with recursive search_graph(f, t, label) as (
+	select * from tsurugifdw_graph g
+	union all
+	select g.*
+	from tsurugifdw_graph g, search_graph sg
+	where g.f = sg.t
+) cycle f, t set is_cycle using path
+select f, t, label from search_graph;
+
+create temp view v_cycle2 as
+with recursive search_graph(f, t, label) as (
+	select * from tsurugifdw_graph g
+	union all
+	select g.*
+	from tsurugifdw_graph g, search_graph sg
+	where g.f = sg.t
+) cycle f, t set is_cycle to 'Y' default 'N' using path
+select f, t, label from search_graph;
+
+select pg_get_viewdef('v_cycle1');
+select pg_get_viewdef('v_cycle2');
+
+select * from v_cycle1 order by f, t;
+select * from v_cycle2 order by f, t;
+
+--
+-- Error precedence for data-modifying statements inside a recursive CTE
+--
+WITH RECURSIVE tsurugifdw_x(n) AS (
+  WITH sub_cte AS (SELECT * FROM tsurugifdw_x)
+  DELETE FROM tsurugifdw_graph RETURNING f)
+	SELECT * FROM tsurugifdw_x;
+
+SELECT tg_execute_ddl('DROP TABLE tsurugifdw_graph', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_graph;
+
+--
+-- Error precedence for a nested CTE inside an aggregate
+--
+select f1, (with cte1(x,y) as (select 1,2)
+            select count((select i4.f1 from cte1))) as ss
+from tsurugifdw_int4_tbl i4;
+
+SELECT tg_execute_ddl('CREATE TABLE tsurugifdw_bug6051 (i int)', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_bug6051 (i int) SERVER tsurugidb;
+INSERT INTO tsurugifdw_bug6051
+  SELECT i FROM generate_series(1,3) AS t(i);
+
+SELECT tg_execute_ddl('CREATE TABLE tsurugifdw_bug6051_2 (i int)', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_bug6051_2 (i int) SERVER tsurugidb;
+
+--
+-- Error precedence for creating a RULE on a foreign table
+--
+CREATE RULE bug6051_ins AS ON INSERT TO tsurugifdw_bug6051 DO INSTEAD
+ INSERT INTO tsurugifdw_bug6051_2
+ VALUES(NEW.i);
+
+-- check INSERT ... SELECT rule actions are disallowed on commands
+-- that have modifyingCTEs
+CREATE OR REPLACE RULE bug6051_ins AS ON INSERT TO tsurugifdw_bug6051 DO INSTEAD
+ INSERT INTO tsurugifdw_bug6051_2
+ SELECT NEW.i;
+
+
+-- silly example to verify that hasModifyingCTE flag is propagated
+SELECT tg_execute_ddl('CREATE TABLE tsurugifdw_bug6051_3 (a int)', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_bug6051_3 (a int) SERVER tsurugidb;
+INSERT INTO tsurugifdw_bug6051_3
+  SELECT a FROM generate_series(11,13) AS a;
+
+CREATE RULE bug6051_3_ins AS ON INSERT TO tsurugifdw_bug6051_3 DO INSTEAD
+  SELECT i FROM tsurugifdw_bug6051_2;
+
+--
+--  Recognition of the debug_parallel_query configuration parameter
+--
+BEGIN; SET LOCAL debug_parallel_query = on;
+
+WITH t1 AS ( DELETE FROM tsurugifdw_bug6051_3 RETURNING * )
+  INSERT INTO tsurugifdw_bug6051_3 SELECT * FROM t1;
+
+COMMIT;
+
+SELECT * FROM tsurugifdw_bug6051_3;
+
+SELECT tg_execute_ddl('DROP TABLE tsurugifdw_bug6051', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_bug6051;
+SELECT tg_execute_ddl('DROP TABLE tsurugifdw_bug6051_2', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_bug6051_2;
+SELECT tg_execute_ddl('DROP TABLE tsurugifdw_bug6051_3', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_bug6051_3;
+
+SELECT tg_execute_ddl('CREATE TABLE tsurugifdw_id_alw1 (i int GENERATED ALWAYS AS IDENTITY)', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_id_alw1 (i int) SERVER tsurugidb;
+SELECT tg_execute_ddl('CREATE TABLE tsurugifdw_id_alw3 (i int GENERATED ALWAYS AS IDENTITY)', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_id_alw3 (i int) SERVER tsurugidb;
+SELECT tg_execute_ddl('CREATE TABLE tsurugifdw_id_alw4 (i int GENERATED ALWAYS AS IDENTITY)', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_id_alw4 (i int) SERVER tsurugidb;
+
+CREATE RULE id_alw3_ins AS ON INSERT TO tsurugifdw_id_alw3 DO INSTEAD
+  WITH t1 AS (INSERT INTO tsurugifdw_id_alw1 DEFAULT VALUES RETURNING i)
+    INSERT INTO id_alw2_view DEFAULT VALUES RETURNING i;
+CREATE TEMP VIEW id_alw3_view AS SELECT * FROM tsurugifdw_id_alw3;
+
+WITH t4 AS (INSERT INTO tsurugifdw_id_alw4 DEFAULT VALUES RETURNING i)
+  INSERT INTO id_alw3_view DEFAULT VALUES RETURNING i;
+
+SELECT tg_execute_ddl('DROP TABLE tsurugifdw_id_alw1', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_id_alw1;
+SELECT tg_execute_ddl('DROP TABLE tsurugifdw_id_alw3', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_id_alw3;
+SELECT tg_execute_ddl('DROP TABLE tsurugifdw_id_alw4', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_id_alw4;
+
+-- WITH referenced by MERGE statement
+SELECT tg_execute_ddl('CREATE TABLE tsurugifdw_m ( k INTEGER PRIMARY KEY, v VARCHAR )', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_m ( k INTEGER, v TEXT ) SERVER tsurugidb;
+INSERT INTO tsurugifdw_m
+SELECT i AS k, (i || ' v')::text AS v
+FROM generate_series(1, 16, 3) i;
+
+--
+-- MERGE syntax acceptance (syntax error occurs before WITH RECURSIVE restriction)
+--
+WITH RECURSIVE cte_basic AS (SELECT 1 a, 'cte_basic val' b)
+MERGE INTO tsurugifdw_m USING (select 0 k, 'merge source SubPlan' v) o ON tsurugifdw_m.k=o.k
+WHEN MATCHED THEN UPDATE SET v = (SELECT b || ' merge update' FROM cte_basic WHERE cte_basic.a = tsurugifdw_m.k LIMIT 1)
+WHEN NOT MATCHED THEN INSERT VALUES(o.k, o.v);
+
+--
+-- Unsupported MERGE on a foreign table (MERGE itself is a syntax error)
+--
+WITH cte_basic AS MATERIALIZED (SELECT 1 a, 'cte_basic val' b)
+MERGE INTO tsurugifdw_m USING (select 0 k, 'merge source SubPlan' v offset 0) o ON tsurugifdw_m.k=o.k
+WHEN MATCHED THEN UPDATE SET v = (SELECT b || ' merge update' FROM cte_basic WHERE cte_basic.a = tsurugifdw_m.k LIMIT 1)
+WHEN NOT MATCHED THEN INSERT VALUES(o.k, o.v);
+
+-- InitPlan
+WITH cte_init AS MATERIALIZED (SELECT 1 a, 'cte_init val' b)
+MERGE INTO tsurugifdw_m USING (select 1 k, 'merge source InitPlan' v offset 0) o ON tsurugifdw_m.k=o.k
+WHEN MATCHED THEN UPDATE SET v = (SELECT b || ' merge update' FROM cte_init WHERE a = 1 LIMIT 1)
+WHEN NOT MATCHED THEN INSERT VALUES(o.k, o.v);
+
+-- MERGE source comes from CTE:
+WITH merge_source_cte AS MATERIALIZED (SELECT 15 a, 'merge_source_cte val' b)
+MERGE INTO tsurugifdw_m USING (select * from merge_source_cte) o ON tsurugifdw_m.k=o.a
+WHEN MATCHED THEN UPDATE SET v = (SELECT b || merge_source_cte.*::text || ' merge update' FROM merge_source_cte WHERE a = 15)
+WHEN NOT MATCHED THEN INSERT VALUES(o.a, o.b || (SELECT merge_source_cte.*::text || ' merge insert' FROM merge_source_cte));
+
+SELECT tg_execute_ddl('DROP TABLE tsurugifdw_m', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_m;
+
+--
+-- Error precedence for MERGE inside a recursive CTE
+--
+SELECT tg_execute_ddl('CREATE TABLE tsurugifdw_y( a INTEGER )', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_y ( a INTEGER ) SERVER tsurugidb;
+ALTER FOREIGN TABLE tsurugifdw_y ALTER COLUMN a OPTIONS (key 'true');
+INSERT INTO tsurugifdw_y SELECT generate_series(1, 10);
+WITH RECURSIVE t(action, a) AS (
+	MERGE INTO tsurugifdw_y USING (VALUES (11)) v(a) ON tsurugifdw_y.a = v.a
+		WHEN NOT MATCHED THEN INSERT VALUES (v.a)
+		RETURNING merge_action(), (SELECT a FROM t)
+)
+SELECT * FROM t;
+
+-- most variants of rules aren't allowed
+CREATE RULE y_rule AS ON INSERT TO tsurugifdw_y WHERE a=0 DO INSTEAD DELETE FROM tsurugifdw_y;
+WITH t AS (
+	INSERT INTO tsurugifdw_y VALUES(0)
+)
+VALUES(FALSE);
+CREATE OR REPLACE RULE y_rule AS ON INSERT TO tsurugifdw_y DO INSTEAD NOTHING;
+WITH t AS (
+	INSERT INTO tsurugifdw_y VALUES(0)
+)
+VALUES(FALSE);
+CREATE OR REPLACE RULE y_rule AS ON INSERT TO tsurugifdw_y DO INSTEAD NOTIFY foo;
+WITH t AS (
+	INSERT INTO tsurugifdw_y VALUES(0)
+)
+VALUES(FALSE);
+CREATE OR REPLACE RULE y_rule AS ON INSERT TO tsurugifdw_y DO ALSO NOTIFY foo;
+WITH t AS (
+	INSERT INTO tsurugifdw_y VALUES(0)
+)
+VALUES(FALSE);
+CREATE OR REPLACE RULE y_rule AS ON INSERT TO tsurugifdw_y
+  DO INSTEAD (NOTIFY foo; NOTIFY bar);
+WITH t AS (
+	INSERT INTO tsurugifdw_y VALUES(0)
+)
+VALUES(FALSE);
+
+SELECT tg_execute_ddl('DROP TABLE tsurugifdw_y', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_y;
+
+--
+-- No GROUP BY error when selecting from an aggregated CTE
+--
+with a as ( select id from (values (1), (2)) as v(id) ),
+     b as ( select max((select sum(id) from a)) as agg )
+select agg from b;
+
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_sel_unsupported_test (
+    id INTEGER PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    value NUMERIC(10,2) NOT NULL,
+    ref_id INT,
+    manager_id INT
+  )
+', 'tsurugidb');
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_sel_unsupported_test (
+  id integer,
+  name varchar(100),
+  value numeric,
+  ref_id integer,
+  manager_id integer
+) SERVER tsurugidb;
+
+--
+-- Parsing of FETCH FIRST/NEXT ... WITH TIES
+--
+-- FETCH FIRST ... WITH TIES
+SELECT * FROM fdw_sel_unsupported_test ORDER BY value
+  FETCH FIRST 2 ROWS WITH TIES;
+
+-- FETCH NEXT ... WITH TIES
+SELECT * FROM fdw_sel_unsupported_test ORDER BY value
+  FETCH NEXT 2 ROWS WITH TIES;
+
+-- FETCH FIRST ... WITH TIES (PREPARE)
+PREPARE prep_select AS
+  SELECT * FROM fdw_sel_unsupported_test ORDER BY value
+    FETCH FIRST 2 ROWS WITH TIES;
+EXECUTE prep_select;
+DEALLOCATE prep_select;
+
+-- FETCH NEXT ... WITH TIES (PREPARE)
+PREPARE prep_select AS
+  SELECT * FROM fdw_sel_unsupported_test ORDER BY value
+    FETCH NEXT 2 ROWS WITH TIES;
+EXECUTE prep_select;
+DEALLOCATE prep_select;
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_sel_unsupported_test;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_sel_unsupported_test', 'tsurugidb');
