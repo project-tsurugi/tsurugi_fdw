@@ -1,0 +1,14 @@
+[project]
+name = "django-sample"
+version = "0.1.0"
+dependencies = [
+    "Django",
+    "psycopg[binary]",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["django_sample_project", "my_app"]
