@@ -154,8 +154,8 @@ Since tsurugi_fdw accesses the Tsurugi database via IPC endpoint, the PostgreSQL
         CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
         ```
 
-        Notice:  
-        If you have changed the name of the Tsurugi database from its default (default is '`tsurugi`'), you need to set the new database name to PostgreSQL as well.
+        > [!IMPORTANT]
+        > If you have changed the name of the Tsurugi database from its default (default is '`tsurugi`'), you need to set the new database name to PostgreSQL as well.
 
         ```sql
         CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw OPTIONS (dbname 'new-database-name');
@@ -188,7 +188,7 @@ Since tsurugi_fdw accesses the Tsurugi database via IPC endpoint, the PostgreSQL
     ```sql
     CREATE USER MAPPING FOR pguser
             SERVER tsurugidb
-            OPTIONS (user 'tsurugi_user', password 'tsurugi_password');    
+            OPTIONS (user 'tsurugi-user', password 'tsurugi-password');    
     ```
 
     * Check with the meta-command(`\deu+`)
@@ -205,30 +205,31 @@ Since tsurugi_fdw accesses the Tsurugi database via IPC endpoint, the PostgreSQL
 1. Create foreign tables
 
     ```sql
-    CREATE FOREIGN TABLE tg_table (... columns ... ) SERVER tsurugi;
+    CREATE FOREIGN TABLE tg_table (... columns ... ) SERVER tsurugidb;
     ```
 
     You can also import the tables of a specific schema in Tsurugi database.
 
     ```sql
-    IMPORT FOREIGN SCHEMA public FROM SERVER tsurugi INTO public;
+    IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
     ```
 
-    Notice:  
-    For the `key` option, you need to specify the column(s) that uniquely identify a row in the Tsurugi table (typically the PRIMARY KEY column(s)):
-
-    - Mark the column(s) that uniquely identify a row with `OPTIONS (key 'true')` in the foreign table.
-    - If not specified correctly, **wrong results may occur** when executing `UPDATE` or `DELETE` via the foreign table.
+    > [!CAUTION]
+    > If you plan to execute `UPDATE` or `DELETE` via the foreign table, specify the column(s) that uniquely identify a row (typically the PRIMARY KEY) using the `key` option.
+    >
+    > If it’s not specified correctly, wrong results may occur when executing `UPDATE` or `DELETE`.
+    >
+    > Mark the column(s) that uniquely identify a row (for a composite key, mark all key columns) with `OPTIONS (key 'true')` in the foreign table definition.
 
     ```sql
     CREATE FOREIGN TABLE tg_table(
     column1 integer OPTIONS (key 'true'),
     column2 text
     )
-    SERVER tsurugi;
+    SERVER tsurugidb;
     ```
 
-    If you want to add `key` later, use `ALTER FOREIGN TABLE`:
+    If you want to add `key` later, use `ALTER FOREIGN TABLE` (note that `IMPORT FOREIGN SCHEMA` does not set the `key` option automatically):
 
     ```sql
     ALTER FOREIGN TABLE tg_table
