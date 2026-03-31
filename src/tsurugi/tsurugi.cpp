@@ -293,7 +293,7 @@ std::optional<std::pair<bool, Datum>> tg_convert_value_tg_to_pg(
 	bool is_null = true;
 	Datum pg_value = (Datum) 0;
 
-	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
+	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
 
 	switch (pgtype) {
 		case INT2OID: {
@@ -596,7 +596,7 @@ reject_infinite_timestamp(Oid pg_type, Datum pg_value)
  */
 std::optional<TgValue> tg_convert_value_pg_to_tg(
 		const Oid pg_type, Datum pg_value) {
-	elog(DEBUG1, "tsurugi_fdw: %s : pg_type: %d", __func__, (int) pg_type);
+	elog(DEBUG3, "tsurugi_fdw: %s : pg_type: %d", __func__, (int) pg_type);
 
 	reject_infinite_timestamp(pg_type, pg_value);
 
