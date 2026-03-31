@@ -154,7 +154,7 @@ Since tsurugi_fdw accesses the Tsurugi database via IPC endpoint, the PostgreSQL
         CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
         ```
 
-        > [!IMPORTANT]
+        > **IMPORTANT**
         > If you have changed the name of the Tsurugi database from its default (default is '`tsurugi`'), you need to set the new database name to PostgreSQL as well.
 
         ```sql
@@ -214,7 +214,7 @@ Since tsurugi_fdw accesses the Tsurugi database via IPC endpoint, the PostgreSQL
     IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
     ```
 
-    > [!CAUTION]
+    > **CAUTION**
     > If you plan to execute `UPDATE` or `DELETE` via the foreign table, specify the column(s) that uniquely identify a row (typically the PRIMARY KEY) using the `key` option.
     >
     > If it’s not specified correctly, wrong results may occur when executing `UPDATE` or `DELETE`.
