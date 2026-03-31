@@ -15,7 +15,7 @@ The current version of tsurugi_fdw pushes down queries directly to Tsurugi, whic
 Since tsurugi_fdw accesses the Tsurugi database via IPC endpoint, the PostgreSQL installing this extension must be located on the same host as Tsurugi.
 
 * C++ Compiler `>= C++17`
-* Source code of PostgreSQL 12/13/14/15/16 `>=12.22`, `>=13.18`, `>=14.18`, `>=15.13`, `>=16.10`
+* Source code of PostgreSQL 14/15/16/17 `>=14.18`, `>=15.13`, `>=16.10`, `>=17.8`
 * Access to installed dependent modules:
   * [ogawayama](https://github.com/project-tsurugi/ogawayama)
 
@@ -43,8 +43,8 @@ Since tsurugi_fdw accesses the Tsurugi database via IPC endpoint, the PostgreSQL
         ```
 
     ```sh
-    curl -sL https://ftp.postgresql.org/pub/source/v15.13/postgresql-15.13.tar.bz2 | tar -xj
-    cd postgresql-15.13
+    curl -sL https://ftp.postgresql.org/pub/source/v17.8/postgresql-17.8.tar.bz2 | tar -xj
+    cd postgresql-17.8
     ./configure --prefix=$HOME/pgsql
     make
     make install
@@ -212,6 +212,27 @@ Since tsurugi_fdw accesses the Tsurugi database via IPC endpoint, the PostgreSQL
 
     ```sql
     IMPORT FOREIGN SCHEMA public FROM SERVER tsurugi INTO public;
+    ```
+
+    Notice:  
+    For the `key` option, you need to specify the column(s) that uniquely identify a row in the Tsurugi table (typically the PRIMARY KEY column(s)):
+
+    - Mark the column(s) that uniquely identify a row with `OPTIONS (key 'true')` in the foreign table.
+    - If not specified correctly, **wrong results may occur** when executing `UPDATE` or `DELETE` via the foreign table.
+
+    ```sql
+    CREATE FOREIGN TABLE tg_table(
+    column1 integer OPTIONS (key 'true'),
+    column2 text
+    )
+    SERVER tsurugi;
+    ```
+
+    If you want to add `key` later, use `ALTER FOREIGN TABLE`:
+
+    ```sql
+    ALTER FOREIGN TABLE tg_table
+    ALTER COLUMN column1 OPTIONS (ADD key 'true');
     ```
 
 1. Execute DML using foreign tables.
