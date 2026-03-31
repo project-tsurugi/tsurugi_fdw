@@ -998,8 +998,8 @@ TGconn* tg_conn_open(
 				auto msg = tg_make_error_message(tg_conn,
 						"Failed to attach the shared memory of Tsurugi "
 						"database.",
-						error, tg_conn->endpoint);
-				set_error(msg);
+						error, endpoint);
+				set_error(msg, TG_STATUS_TSURUGI_ERROR);
 				delete tg_conn;
 				return nullptr;
 			}
@@ -1017,7 +1017,7 @@ TGconn* tg_conn_open(
 				auto msg = tg_make_error_message(tg_conn,
 						"Failed to connect to Tsurugi database.", error,
 						tg_conn->endpoint);
-				set_error(msg);
+				set_error(msg, TG_STATUS_TSURUGI_ERROR);
 				delete tg_conn;
 				return nullptr;
 			}

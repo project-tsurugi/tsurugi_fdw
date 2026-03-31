@@ -435,7 +435,7 @@ ALTER SERVER tsurugidb OPTIONS (dbname 'incorrect');
 \des+
                                                 List of foreign servers
    Name    |  Owner   | Foreign-data wrapper | Access privileges | Type | Version |     FDW options      | Description 
------------+----------+-------------------------+----------------------+------+---------+-------------------------+-------------
+-----------+----------+----------------------+-------------------+------+---------+----------------------+-------------
  tsurugidb | postgres | tsurugi_fdw          |                   |      |         | (dbname 'incorrect') | 
 (1 row)
 
@@ -448,7 +448,7 @@ END;
 \des+
                                            List of foreign servers
    Name    |  Owner   | Foreign-data wrapper | Access privileges | Type | Version | FDW options | Description 
------------+----------+-------------------------+----------------------+------+---------+-------------+-------------
+-----------+----------+----------------------+-------------------+------+---------+-------------+-------------
  tsurugidb | postgres | tsurugi_fdw          |                   |      |         |             | 
 (1 row)
 
@@ -467,7 +467,7 @@ ALTER SERVER tsurugidb OPTIONS (dbname 'incorrect');
 \des+
                                                 List of foreign servers
    Name    |  Owner   | Foreign-data wrapper | Access privileges | Type | Version |     FDW options      | Description 
------------+----------+-------------------------+----------------------+------+---------+-------------------------+-------------
+-----------+----------+----------------------+-------------------+------+---------+----------------------+-------------
  tsurugidb | postgres | tsurugi_fdw          |                   |      |         | (dbname 'incorrect') | 
 (1 row)
 
@@ -499,7 +499,7 @@ ALTER SERVER tsurugidb OPTIONS (dbname 'incorrect-1');
 \des+
                                                  List of foreign servers
    Name    |  Owner   | Foreign-data wrapper | Access privileges | Type | Version |      FDW options       | Description 
------------+----------+-------------------------+----------------------+------+---------+---------------------------+-------------
+-----------+----------+----------------------+-------------------+------+---------+------------------------+-------------
  tsurugidb | postgres | tsurugi_fdw          |                   |      |         | (dbname 'incorrect-1') | 
 (1 row)
 
@@ -508,7 +508,7 @@ ALTER SERVER tsurugidb OPTIONS (SET dbname 'incorrect-2');
 \des+
                                                  List of foreign servers
    Name    |  Owner   | Foreign-data wrapper | Access privileges | Type | Version |      FDW options       | Description 
------------+----------+-------------------------+----------------------+------+---------+---------------------------+-------------
+-----------+----------+----------------------+-------------------+------+---------+------------------------+-------------
  tsurugidb | postgres | tsurugi_fdw          |                   |      |         | (dbname 'incorrect-2') | 
 (1 row)
 
@@ -517,7 +517,7 @@ ALTER SERVER tsurugidb OPTIONS (SET dbname 'incorrect-3');
 \des+
                                                  List of foreign servers
    Name    |  Owner   | Foreign-data wrapper | Access privileges | Type | Version |      FDW options       | Description 
------------+----------+-------------------------+----------------------+------+---------+---------------------------+-------------
+-----------+----------+----------------------+-------------------+------+---------+------------------------+-------------
  tsurugidb | postgres | tsurugi_fdw          |                   |      |         | (dbname 'incorrect-3') | 
 (1 row)
 
@@ -531,7 +531,7 @@ ALTER SERVER tsurugidb OPTIONS (SET dbname 'incorrect-4');
 \des+
                                                  List of foreign servers
    Name    |  Owner   | Foreign-data wrapper | Access privileges | Type | Version |      FDW options       | Description 
------------+----------+-------------------------+----------------------+------+---------+---------------------------+-------------
+-----------+----------+----------------------+-------------------+------+---------+------------------------+-------------
  tsurugidb | postgres | tsurugi_fdw          |                   |      |         | (dbname 'incorrect-4') | 
 (1 row)
 
@@ -547,7 +547,7 @@ ALTER SERVER tsurugidb OPTIONS (DROP dbname);
 \des+
                                            List of foreign servers
    Name    |  Owner   | Foreign-data wrapper | Access privileges | Type | Version | FDW options | Description 
------------+----------+-------------------------+----------------------+------+---------+-------------+-------------
+-----------+----------+----------------------+-------------------+------+---------+-------------+-------------
  tsurugidb | postgres | tsurugi_fdw          |                   |      |         |             | 
 (1 row)
 
@@ -601,8 +601,8 @@ ALTER SERVER tsurugidb OPTIONS (SET dbname 'tsurugi');
 DROP DATABASE contrib_regression_ddl;
 --- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_ddl_table', 'tsurugidb');
-   tg_execute_ddl   
+  tg_execute_ddl   
 -------------------
- DROP TABLE
+ execute succeeded
 (1 row)
 

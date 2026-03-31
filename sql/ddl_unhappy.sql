@@ -131,7 +131,6 @@ CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw
 ALTER SERVER tsurugidb OPTIONS (DROP address);
 ALTER SERVER tsurugidb OPTIONS (DROP port);
 ALTER SERVER tsurugidb OPTIONS (DROP address, DROP port);
-DROP USER MAPPING IF EXISTS FOR postgres SERVER tsurugidb;
 DROP SERVER tsurugidb;
 
 --- Test case: endpoint option validation

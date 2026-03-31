@@ -339,8 +339,7 @@ make_new_connection(ConnCacheEntry *entry, Oid serverid)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_FDW_UNABLE_TO_ESTABLISH_CONNECTION),
-				 errmsg("failed to connect to Tsurugi server: %s",
-						tg_global_error_message())));
+				 errmsg("%s", tg_global_error_message())));
 	}
 
 	elog(DEBUG3, "tsurugi_fdw: new connection %p established", entry->conn);
