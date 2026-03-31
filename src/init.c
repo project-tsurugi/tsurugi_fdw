@@ -29,7 +29,7 @@ extern void _PG_init(void);
 extern PlannedStmt *tsurugi_planner(Query *parse2, const char *query_string, int cursorOptions, ParamListInfo boundParams);
 #else
 extern PlannedStmt *tsurugi_planner(Query *parse2, int cursorOptions, ParamListInfo boundParams);
-#endif  // PG_VERSION_NUM >= 130000
+#endif  /* PG_VERSION_NUM >= 130000 */
 #if PG_VERSION_NUM >= 140000
 extern void tsurugi_ProcessUtility(PlannedStmt *pstmt, const char *query_string,
                                    bool readOnlyTree, ProcessUtilityContext context,
@@ -53,6 +53,5 @@ extern void tsurugi_ProcessUtility(PlannedStmt *pstmt,
 void
 _PG_init(void)
 {
- 	planner_hook = tsurugi_planner;
   ProcessUtility_hook = tsurugi_ProcessUtility;
 }

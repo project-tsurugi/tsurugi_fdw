@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Project Tsurugi.
+ * Copyright 2023-2025 Project Tsurugi.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *	@file	tsurugi_api.h
+ *	@file	tsurugi.hpp
  */
-#ifndef TSURUGI_API_H
-#define TSURUGI_API_H
+#pragma once
+
+#include <optional>
+
+#include <ogawayama/stub/api.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 #include "postgres.h"
 
-const char* tg_get_error_message();
-bool tg_do_connect(Oid server_oid);
-bool tg_do_begin(Oid server_oid);
-bool tg_do_commit();
-bool tg_do_rollback();
-
+#include "nodes/pg_list.h"
 #ifdef __cplusplus
-} /* extern "C" */
+}
 #endif
 
-#endif /* TSURUGI_API_H */
+using TgColumnType = ogawayama::stub::Metadata::ColumnType::Type;
+using TgValue = ogawayama::stub::value_type;
+
+std::optional<std::string_view> tg_convert_type_tg_to_pg(
+		jogasaki::proto::sql::common::AtomType tg_type);
+
+std::optional<TgColumnType> tg_convert_type_pg_to_tg(const Oid pg_type);
+
+std::optional<std::pair<bool, Datum>> tg_convert_value_tg_to_pg(
+		ResultSetPtr result_set, const Oid pgtype);
+
+std::optional<TgValue> tg_convert_value_pg_to_tg(
+		const Oid pg_type, Datum pg_value);

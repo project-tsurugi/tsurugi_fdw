@@ -119,9 +119,11 @@ CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw
 CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw
   OPTIONS (endpoint 'stream', port '12345');
 CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
+CREATE USER MAPPING FOR postgres SERVER tsurugidb;
 ALTER SERVER tsurugidb OPTIONS (endpoint 'stream');
 ALTER SERVER tsurugidb OPTIONS (endpoint 'stream', address '127.0.0.1');
 ALTER SERVER tsurugidb OPTIONS (endpoint 'stream', port '12345');
+DROP USER MAPPING IF EXISTS FOR postgres SERVER tsurugidb;
 DROP SERVER tsurugidb;
 
 CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw
@@ -174,6 +176,7 @@ CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw
 --- Test case: dbname option value is incorrect
 ---- Test setup: DDL of the PostgreSQL
 CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
+CREATE USER MAPPING FOR postgres SERVER tsurugidb;
 CREATE FOREIGN TABLE fdw_ddl_table (c integer) SERVER tsurugidb;
 
 ---- correct -> incorrect
@@ -222,6 +225,7 @@ DEALLOCATE prep_delete;
 
 ---- Test setup: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_ddl_table;
+DROP USER MAPPING IF EXISTS FOR postgres SERVER tsurugidb;
 DROP SERVER tsurugidb;
 
 --- Operations during a transaction
@@ -234,6 +238,7 @@ CREATE DATABASE contrib_regression_ddl;
 
 CREATE EXTENSION tsurugi_fdw;
 CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
+CREATE USER MAPPING FOR postgres SERVER tsurugidb;
 CREATE FOREIGN TABLE fdw_ddl_table (c integer) SERVER tsurugidb;
 
 ---- Test case: Alter server (incorrect server) - Connected outside a transaction
@@ -269,6 +274,7 @@ CREATE DATABASE contrib_regression_ddl;
 
 CREATE EXTENSION tsurugi_fdw;
 CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
+CREATE USER MAPPING FOR postgres SERVER tsurugidb;
 CREATE FOREIGN TABLE fdw_ddl_table (c integer) SERVER tsurugidb;
 
 ---- Test case: ALTER SERVER during operations
@@ -308,6 +314,7 @@ CREATE DATABASE contrib_regression_ddl;
 
 CREATE EXTENSION tsurugi_fdw;
 CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
+CREATE USER MAPPING FOR postgres SERVER tsurugidb;
 CREATE FOREIGN TABLE fdw_ddl_table (c integer) SERVER tsurugidb;
 
 --- Test case: ALTER SERVER during operations

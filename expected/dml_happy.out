@@ -8,9 +8,9 @@ SELECT tg_execute_ddl('
     c1 INTEGER NOT NULL PRIMARY KEY
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('
@@ -22,9 +22,9 @@ SELECT tg_execute_ddl('
     c5 DATE
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test setup: DDL of the PostgreSQL
@@ -817,15 +817,15 @@ DROP FOREIGN TABLE fdw_dml_basic_table_1;
 DROP FOREIGN TABLE fdw_dml_basic_table_2;
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_dml_basic_table_1', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('DROP TABLE fdw_dml_basic_table_2', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 /* Test case: happy path - Aggregation related testing */
@@ -841,9 +841,9 @@ SELECT tg_execute_ddl('
     c7 VARCHAR(5)
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test setup: DDL of the PostgreSQL
@@ -936,9 +936,9 @@ SELECT c7, COUNT(c1), SUM(c2), AVG(c3), MIN(c4), MAX(c5)
 DROP FOREIGN TABLE fdw_group_basic_table;
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_group_basic_table', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 /* Test case: happy path - JOIN related testing */
@@ -954,9 +954,9 @@ SELECT tg_execute_ddl('
     c7 VARCHAR(26)
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('
@@ -970,9 +970,9 @@ SELECT tg_execute_ddl('
     c7 VARCHAR(26)
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test setup: DDL of the PostgreSQL
@@ -1099,15 +1099,15 @@ DROP FOREIGN TABLE fdw_join_basic_table_1;
 DROP FOREIGN TABLE fdw_join_basic_table_2;
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_join_basic_table_1', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('DROP TABLE fdw_join_basic_table_2', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 /* Test case: happy path - Supported SELECT statement patterns */
@@ -1121,9 +1121,9 @@ SELECT tg_execute_ddl('
     manager_id INT
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('
@@ -1132,9 +1132,9 @@ SELECT tg_execute_ddl('
     name VARCHAR(100) NOT NULL
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test setup: DDL of the PostgreSQL
@@ -1508,20 +1508,29 @@ SELECT * FROM fdw_select_variation_table_1 ORDER BY id LIMIT 2;
  1001 | name-1001 |  60000.00 |      1 |       1002
 (2 rows)
 
+-- Sub queries
+SELECT *
+  FROM fdw_select_variation_table_1
+  WHERE value = (SELECT MAX(value) FROM fdw_select_variation_table_1);
+  id  |   name    |   value   | ref_id | manager_id 
+------+-----------+-----------+--------+------------
+ 1000 | name-1000 | 100000.00 |        |           
+(1 row)
+
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_select_variation_table_1;
 DROP FOREIGN TABLE fdw_select_variation_table_2;
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_select_variation_table_1', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 SELECT tg_execute_ddl('DROP TABLE fdw_select_variation_table_2', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 /* Test case: happy path - Supported INSERT statement patterns */
@@ -1540,9 +1549,9 @@ SELECT tg_execute_ddl('
     c_tstmp TIMESTAMP DEFAULT TIMESTAMP ''2025-03-03 03:03:03''
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test setup: DDL of the PostgreSQL
@@ -1582,9 +1591,9 @@ SELECT * FROM fdw_ins_variation_table ORDER BY c_big;
 DROP FOREIGN TABLE fdw_ins_variation_table;
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_ins_variation_table', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 /* Test case: happy path - Supported UPDATE statement patterns */
@@ -1604,9 +1613,9 @@ SELECT tg_execute_ddl('
     c_tstmptz TIMESTAMP WITH TIME ZONE
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test setup: DDL of the PostgreSQL
@@ -1787,9 +1796,9 @@ SELECT * FROM fdw_upd_variation_table ORDER BY c_tstmptz DESC;
 DROP FOREIGN TABLE fdw_upd_variation_table;
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_upd_variation_table', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 /* Test case: happy path - Supported DELETE statement patterns */
@@ -1801,13 +1810,32 @@ SELECT tg_execute_ddl('
     value_col INT
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
+(1 row)
+
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_del_variation_table_2 (
+    id INT PRIMARY KEY,
+    key_col VARCHAR(100),
+    value_col INT
+  )
+', 'tsurugidb');
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test setup: DDL of the PostgreSQL
 CREATE FOREIGN TABLE fdw_del_variation_table (
+  id integer,
+  key_col text,
+  value_col integer
+) SERVER tsurugidb;
+ALTER FOREIGN TABLE fdw_del_variation_table
+  ALTER COLUMN id OPTIONS (key 'true');
+CREATE FOREIGN TABLE fdw_del_variation_table_2 (
   id integer,
   key_col text,
   value_col integer
@@ -1840,6 +1868,16 @@ SELECT * FROM fdw_del_variation_table ORDER BY id;
   9 | key9    |        90
  10 | key10   |       100
 (10 rows)
+
+INSERT INTO fdw_del_variation_table_2 
+  (id, key_col, value_col) 
+  VALUES
+    (1, 'key2', 0);
+SELECT * FROM fdw_del_variation_table_2 ORDER BY id;
+ id | key_col | value_col 
+----+---------+-----------
+  1 | key2    |         0
+(1 row)
 
 -- Test
 DELETE FROM fdw_del_variation_table WHERE id BETWEEN 3 AND 5;
@@ -1886,6 +1924,16 @@ SELECT * FROM fdw_del_variation_table ORDER BY key_col DESC;
   2 | key2    |        20
 (2 rows)
 
+-- USING
+DELETE FROM fdw_del_variation_table
+  USING fdw_del_variation_table_2
+    WHERE fdw_del_variation_table.key_col = fdw_del_variation_table_2.key_col;
+SELECT * FROM fdw_del_variation_table;
+ id | key_col | value_col 
+----+---------+-----------
+  9 | key9    |        90
+(1 row)
+
 DELETE FROM fdw_del_variation_table;
 SELECT * FROM fdw_del_variation_table;
  id | key_col | value_col 
@@ -1894,13 +1942,80 @@ SELECT * FROM fdw_del_variation_table;
 
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_del_variation_table;
+DROP FOREIGN TABLE fdw_del_variation_table_2;
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_del_variation_table', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
+(1 row)
+
+SELECT tg_execute_ddl('DROP TABLE fdw_del_variation_table_2', 'tsurugidb');
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 /* Test teardown: PostgreSQL environment */
 SET datestyle TO 'default';
 SET timezone TO DEFAULT;
+/* Test case: unhappy path - Unsupported SELECT statement patterns */
+-- Test setup: DDL of the Tsurugi
+SELECT tg_execute_ddl('
+  CREATE TABLE fdw_sel_unsupported_test (
+    id INTEGER PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    value NUMERIC(10,2) NOT NULL,
+    ref_id INT,
+    manager_id INT
+  )
+', 'tsurugidb');
+  tg_execute_ddl   
+-------------------
+ execute succeeded
+(1 row)
+
+-- Test setup: DDL of the PostgreSQL
+CREATE FOREIGN TABLE fdw_sel_unsupported_test (
+  id integer,
+  name varchar(100),
+  value numeric,
+  ref_id integer,
+  manager_id integer
+) SERVER tsurugidb;
+-- Arithmetic operation
+SELECT id, name, ((value / 10000) * ref_id)::int AS lank
+  FROM fdw_sel_unsupported_test;
+ id | name | lank 
+----+------+------
+(0 rows)
+
+-- CASE WHEN
+SELECT
+  id, name,
+  CASE
+    WHEN value >= 100000 THEN 'High'
+    WHEN value >= 75000 THEN 'Medium'
+    ELSE 'Low' END AS lank
+  FROM fdw_sel_unsupported_test;
+ id | name | lank 
+----+------+------
+(0 rows)
+
+-- WINDOW
+SELECT id, name, value, RANK() OVER w AS rk
+  FROM fdw_sel_unsupported_test
+  WINDOW w AS (ORDER BY value DESC);
+ id | name | value | rk 
+----+------+-------+----
+(0 rows)
+
+-- Test teardown: DDL of the PostgreSQL
+DROP FOREIGN TABLE fdw_sel_unsupported_test;
+-- Test teardown: DDL of the Tsurugi
+SELECT tg_execute_ddl('DROP TABLE fdw_sel_unsupported_test', 'tsurugidb');
+  tg_execute_ddl   
+-------------------
+ execute succeeded
+(1 row)
+

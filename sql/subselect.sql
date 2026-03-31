@@ -1,0 +1,1028 @@
+--
+-- SUBSELECT
+--
+
+SELECT 1 AS one WHERE 1 IN (SELECT 1);
+
+SELECT 1 AS zero WHERE 1 NOT IN (SELECT 1);
+
+SELECT 1 AS zero WHERE 1 IN (SELECT 2);
+
+-- Check grammar's handling of extra parens in assorted contexts
+
+SELECT * FROM (SELECT 1 AS x) ss;
+SELECT * FROM ((SELECT 1 AS x)) ss;
+
+(SELECT 2) UNION SELECT 2;
+((SELECT 2)) UNION SELECT 2;
+
+SELECT ((SELECT 2) UNION SELECT 2);
+SELECT (((SELECT 2)) UNION SELECT 2);
+
+SELECT (SELECT ARRAY[1,2,3])[1];
+SELECT ((SELECT ARRAY[1,2,3]))[2];
+SELECT (((SELECT ARRAY[1,2,3])))[3];
+
+-- Set up some simple test tables
+SELECT tg_execute_ddl('
+    CREATE TABLE subselect_tbl (
+        f1 integer,
+        f2 integer,
+        f3 float
+    )
+', 'tsurugidb');
+CREATE FOREIGN TABLE SUBSELECT_TBL (
+  f1 integer,
+  f2 integer,
+  f3 float
+) SERVER tsurugidb;
+
+INSERT INTO SUBSELECT_TBL VALUES (1, 2, 3);
+INSERT INTO SUBSELECT_TBL VALUES (2, 3, 4);
+INSERT INTO SUBSELECT_TBL VALUES (3, 4, 5);
+INSERT INTO SUBSELECT_TBL VALUES (1, 1, 1);
+INSERT INTO SUBSELECT_TBL VALUES (2, 2, 2);
+INSERT INTO SUBSELECT_TBL VALUES (3, 3, 3);
+INSERT INTO SUBSELECT_TBL VALUES (6, 7, 8);
+INSERT INTO SUBSELECT_TBL VALUES (8, 9, NULL);
+
+SELECT * FROM SUBSELECT_TBL;
+
+SELECT tg_execute_ddl('
+    CREATE TABLE tsurugifdw_int4_tbl (
+        f1 int
+    )
+', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_int4_tbl (
+  f1 int4
+) SERVER tsurugidb;
+
+INSERT INTO tsurugifdw_int4_tbl(f1) VALUES
+  ('   0  '),
+  ('123456     '),
+  ('    -123456'),
+  ('2147483647'),  -- largest and smallest values
+  ('-2147483647');
+
+SELECT * FROM tsurugifdw_int4_tbl;
+
+SELECT tg_execute_ddl('
+    CREATE TABLE tsurugifdw_int8_tbl (
+        q1 bigint, q2 bigint
+    )
+', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_int8_tbl (
+  q1 int8, q2 int8
+) SERVER tsurugidb;
+
+INSERT INTO tsurugifdw_int8_tbl VALUES
+  ('  123   ','  456'),
+  ('123   ','4567890123456789'),
+  ('4567890123456789','123'),
+  (+4567890123456789,'4567890123456789'),
+  ('+4567890123456789','-4567890123456789');
+
+SELECT * FROM tsurugifdw_int8_tbl;
+
+SELECT tg_execute_ddl('
+CREATE TABLE tsurugifdw_tenk1 (
+	unique1		integer,
+	unique2		integer,
+	two			integer,
+	four		integer,
+	ten			integer,
+	twenty		integer,
+	hundred		integer,
+	thousand	integer,
+	twothousand	integer,
+	fivethous	integer,
+	tenthous	integer,
+	odd			integer,
+	even		integer,
+	stringu1	VARCHAR,
+	stringu2	VARCHAR,
+	string4		VARCHAR
+)', 'tsurugidb');
+
+CREATE FOREIGN TABLE tsurugifdw_tenk1 (
+	unique1		int4,
+	unique2		int4,
+	two			int4,
+	four		int4,
+	ten			int4,
+	twenty		int4,
+	hundred		int4,
+	thousand	int4,
+	twothousand	int4,
+	fivethous	int4,
+	tenthous	int4,
+	odd			int4,
+	even		int4,
+	stringu1	varchar,
+	stringu2	varchar,
+	string4		varchar
+) SERVER tsurugidb;
+INSERT INTO tsurugifdw_tenk1 (
+  unique1, unique2, two, four, ten, twenty, hundred, thousand, twothousand, fivethous, tenthous, odd, even, stringu1, stringu2, string4
+) VALUES
+(8800,0,0,0,0,0,0,800,800,3800,8800,0,1,'MAAAAA','AAAAAA','AAAAxx'),
+(1891,1,1,3,1,11,91,891,1891,1891,1891,182,183,'TUAAAA','BAAAAA','HHHHxx'),
+(3420,2,0,0,0,0,20,420,1420,3420,3420,40,41,'OBAAAA','CAAAAA','OOOOxx'),
+(9850,3,0,2,0,10,50,850,1850,4850,9850,100,101,'WOAAAA','DAAAAA','VVVVxx'),
+(7164,4,0,0,4,4,64,164,1164,2164,7164,128,129,'OPAAAA','EAAAAA','AAAAxx'),
+(8009,5,1,1,9,9,9,9,9,3009,8009,18,19,'BWAAAA','FAAAAA','HHHHxx'),
+(5057,6,1,1,7,17,57,57,1057,57,5057,114,115,'NMAAAA','GAAAAA','OOOOxx'),
+(6701,7,1,1,1,1,1,701,701,1701,6701,2,3,'TXAAAA','HAAAAA','VVVVxx'),
+(4321,8,1,1,1,1,21,321,321,4321,4321,42,43,'FKAAAA','IAAAAA','AAAAxx'),
+(3043,9,1,3,3,3,43,43,1043,3043,3043,86,87,'BNAAAA','JAAAAA','HHHHxx'),
+(1314,10,0,2,4,14,14,314,1314,1314,1314,28,29,'OYAAAA','KAAAAA','OOOOxx'),
+(1504,11,0,0,4,4,4,504,1504,1504,1504,8,9,'WFAAAA','LAAAAA','VVVVxx'),
+(5222,12,0,2,2,2,22,222,1222,222,5222,44,45,'WSAAAA','MAAAAA','AAAAxx'),
+(6243,13,1,3,3,3,43,243,243,1243,6243,86,87,'DGAAAA','NAAAAA','HHHHxx'),
+(5471,14,1,3,1,11,71,471,1471,471,5471,142,143,'LCAAAA','OAAAAA','OOOOxx'),
+(5006,15,0,2,6,6,6,6,1006,6,5006,12,13,'OKAAAA','PAAAAA','VVVVxx'),
+(5387,16,1,3,7,7,87,387,1387,387,5387,174,175,'FZAAAA','QAAAAA','AAAAxx'),
+(5785,17,1,1,5,5,85,785,1785,785,5785,170,171,'NOAAAA','RAAAAA','HHHHxx'),
+(6621,18,1,1,1,1,21,621,621,1621,6621,42,43,'RUAAAA','SAAAAA','OOOOxx'),
+(6969,19,1,1,9,9,69,969,969,1969,6969,138,139,'BIAAAA','TAAAAA','VVVVxx'),
+(9460,20,0,0,0,0,60,460,1460,4460,9460,120,121,'WZAAAA','UAAAAA','AAAAxx'),
+(59,21,1,3,9,19,59,59,59,59,59,118,119,'HCAAAA','VAAAAA','HHHHxx'),
+(8020,22,0,0,0,0,20,20,20,3020,8020,40,41,'MWAAAA','WAAAAA','OOOOxx'),
+(7695,23,1,3,5,15,95,695,1695,2695,7695,190,191,'ZJAAAA','XAAAAA','VVVVxx'),
+(3442,24,0,2,2,2,42,442,1442,3442,3442,84,85,'KCAAAA','YAAAAA','AAAAxx'),
+(5119,25,1,3,9,19,19,119,1119,119,5119,38,39,'XOAAAA','ZAAAAA','HHHHxx'),
+(646,26,0,2,6,6,46,646,646,646,646,92,93,'WYAAAA','ABAAAA','OOOOxx'),
+(9605,27,1,1,5,5,5,605,1605,4605,9605,10,11,'LFAAAA','BBAAAA','VVVVxx'),
+(263,28,1,3,3,3,63,263,263,263,263,126,127,'DKAAAA','CBAAAA','AAAAxx'),
+(3269,29,1,1,9,9,69,269,1269,3269,3269,138,139,'TVAAAA','DBAAAA','HHHHxx'),
+(1839,30,1,3,9,19,39,839,1839,1839,1839,78,79,'TSAAAA','EBAAAA','OOOOxx'),
+(9144,31,0,0,4,4,44,144,1144,4144,9144,88,89,'SNAAAA','FBAAAA','VVVVxx'),
+(2513,32,1,1,3,13,13,513,513,2513,2513,26,27,'RSAAAA','GBAAAA','AAAAxx'),
+(8850,33,0,2,0,10,50,850,850,3850,8850,100,101,'KCAAAA','HBAAAA','HHHHxx'),
+(236,34,0,0,6,16,36,236,236,236,236,72,73,'CJAAAA','IBAAAA','OOOOxx'),
+(3162,35,0,2,2,2,62,162,1162,3162,3162,124,125,'QRAAAA','JBAAAA','VVVVxx'),
+(4380,36,0,0,0,0,80,380,380,4380,4380,160,161,'MMAAAA','KBAAAA','AAAAxx'),
+(8095,37,1,3,5,15,95,95,95,3095,8095,190,191,'JZAAAA','LBAAAA','HHHHxx'),
+(209,38,1,1,9,9,9,209,209,209,209,18,19,'BIAAAA','MBAAAA','OOOOxx'),
+(3055,39,1,3,5,15,55,55,1055,3055,3055,110,111,'NNAAAA','NBAAAA','VVVVxx'),
+(6921,40,1,1,1,1,21,921,921,1921,6921,42,43,'FGAAAA','OBAAAA','AAAAxx'),
+(7046,41,0,2,6,6,46,46,1046,2046,7046,92,93,'ALAAAA','PBAAAA','HHHHxx'),
+(7912,42,0,0,2,12,12,912,1912,2912,7912,24,25,'ISAAAA','QBAAAA','OOOOxx'),
+(7267,43,1,3,7,7,67,267,1267,2267,7267,134,135,'NTAAAA','RBAAAA','VVVVxx'),
+(3599,44,1,3,9,19,99,599,1599,3599,3599,198,199,'LIAAAA','SBAAAA','AAAAxx'),
+(923,45,1,3,3,3,23,923,923,923,923,46,47,'NJAAAA','TBAAAA','HHHHxx'),
+(1437,46,1,1,7,17,37,437,1437,1437,1437,74,75,'HDAAAA','UBAAAA','OOOOxx'),
+(6439,47,1,3,9,19,39,439,439,1439,6439,78,79,'RNAAAA','VBAAAA','VVVVxx'),
+(6989,48,1,1,9,9,89,989,989,1989,6989,178,179,'VIAAAA','WBAAAA','AAAAxx'),
+(8798,49,0,2,8,18,98,798,798,3798,8798,196,197,'KAAAAA','XBAAAA','HHHHxx'),
+(5960,50,0,0,0,0,60,960,1960,960,5960,120,121,'GVAAAA','YBAAAA','OOOOxx'),
+(5832,51,0,0,2,12,32,832,1832,832,5832,64,65,'IQAAAA','ZBAAAA','VVVVxx'),
+(6066,52,0,2,6,6,66,66,66,1066,6066,132,133,'IZAAAA','ACAAAA','AAAAxx'),
+(322,53,0,2,2,2,22,322,322,322,322,44,45,'KMAAAA','BCAAAA','HHHHxx'),
+(8321,54,1,1,1,1,21,321,321,3321,8321,42,43,'BIAAAA','CCAAAA','OOOOxx'),
+(734,55,0,2,4,14,34,734,734,734,734,68,69,'GCAAAA','DCAAAA','VVVVxx'),
+(688,56,0,0,8,8,88,688,688,688,688,176,177,'MAAAAA','ECAAAA','AAAAxx'),
+(4212,57,0,0,2,12,12,212,212,4212,4212,24,25,'AGAAAA','FCAAAA','HHHHxx'),
+(9653,58,1,1,3,13,53,653,1653,4653,9653,106,107,'HHAAAA','GCAAAA','OOOOxx'),
+(2677,59,1,1,7,17,77,677,677,2677,2677,154,155,'ZYAAAA','HCAAAA','VVVVxx'),
+(5423,60,1,3,3,3,23,423,1423,423,5423,46,47,'PAAAAA','ICAAAA','AAAAxx'),
+(2592,61,0,0,2,12,92,592,592,2592,2592,184,185,'SVAAAA','JCAAAA','HHHHxx'),
+(3233,62,1,1,3,13,33,233,1233,3233,3233,66,67,'JUAAAA','KCAAAA','OOOOxx'),
+(5032,63,0,0,2,12,32,32,1032,32,5032,64,65,'OLAAAA','LCAAAA','VVVVxx'),
+(2525,64,1,1,5,5,25,525,525,2525,2525,50,51,'DTAAAA','MCAAAA','AAAAxx'),
+(4450,65,0,2,0,10,50,450,450,4450,4450,100,101,'EPAAAA','NCAAAA','HHHHxx'),
+(5778,66,0,2,8,18,78,778,1778,778,5778,156,157,'GOAAAA','OCAAAA','OOOOxx'),
+(5852,67,0,0,2,12,52,852,1852,852,5852,104,105,'CRAAAA','PCAAAA','VVVVxx'),
+(5404,68,0,0,4,4,4,404,1404,404,5404,8,9,'WZAAAA','QCAAAA','AAAAxx'),
+(6223,69,1,3,3,3,23,223,223,1223,6223,46,47,'JFAAAA','RCAAAA','HHHHxx'),
+(6133,70,1,1,3,13,33,133,133,1133,6133,66,67,'XBAAAA','SCAAAA','OOOOxx'),
+(9112,71,0,0,2,12,12,112,1112,4112,9112,24,25,'MMAAAA','TCAAAA','VVVVxx'),
+(7575,72,1,3,5,15,75,575,1575,2575,7575,150,151,'JFAAAA','UCAAAA','AAAAxx'),
+(7414,73,0,2,4,14,14,414,1414,2414,7414,28,29,'EZAAAA','VCAAAA','HHHHxx'),
+(9741,74,1,1,1,1,41,741,1741,4741,9741,82,83,'RKAAAA','WCAAAA','OOOOxx'),
+(3767,75,1,3,7,7,67,767,1767,3767,3767,134,135,'XOAAAA','XCAAAA','VVVVxx'),
+(9372,76,0,0,2,12,72,372,1372,4372,9372,144,145,'MWAAAA','YCAAAA','AAAAxx'),
+(8976,77,0,0,6,16,76,976,976,3976,8976,152,153,'GHAAAA','ZCAAAA','HHHHxx'),
+(4071,78,1,3,1,11,71,71,71,4071,4071,142,143,'PAAAAA','ADAAAA','OOOOxx'),
+(1311,79,1,3,1,11,11,311,1311,1311,1311,22,23,'LYAAAA','BDAAAA','VVVVxx'),
+(2604,80,0,0,4,4,4,604,604,2604,2604,8,9,'EWAAAA','CDAAAA','AAAAxx'),
+(8840,81,0,0,0,0,40,840,840,3840,8840,80,81,'ACAAAA','DDAAAA','HHHHxx'),
+(567,82,1,3,7,7,67,567,567,567,567,134,135,'VVAAAA','EDAAAA','OOOOxx'),
+(5215,83,1,3,5,15,15,215,1215,215,5215,30,31,'PSAAAA','FDAAAA','VVVVxx'),
+(5474,84,0,2,4,14,74,474,1474,474,5474,148,149,'OCAAAA','GDAAAA','AAAAxx'),
+(3906,85,0,2,6,6,6,906,1906,3906,3906,12,13,'GUAAAA','HDAAAA','HHHHxx'),
+(1769,86,1,1,9,9,69,769,1769,1769,1769,138,139,'BQAAAA','IDAAAA','OOOOxx'),
+(1454,87,0,2,4,14,54,454,1454,1454,1454,108,109,'YDAAAA','JDAAAA','VVVVxx'),
+(6877,88,1,1,7,17,77,877,877,1877,6877,154,155,'NEAAAA','KDAAAA','AAAAxx'),
+(6501,89,1,1,1,1,1,501,501,1501,6501,2,3,'BQAAAA','LDAAAA','HHHHxx'),
+(934,90,0,2,4,14,34,934,934,934,934,68,69,'YJAAAA','MDAAAA','OOOOxx'),
+(4075,91,1,3,5,15,75,75,75,4075,4075,150,151,'TAAAAA','NDAAAA','VVVVxx'),
+(3180,92,0,0,0,0,80,180,1180,3180,3180,160,161,'ISAAAA','ODAAAA','AAAAxx'),
+(7787,93,1,3,7,7,87,787,1787,2787,7787,174,175,'NNAAAA','PDAAAA','HHHHxx'),
+(6401,94,1,1,1,1,1,401,401,1401,6401,2,3,'FMAAAA','QDAAAA','OOOOxx'),
+(4244,95,0,0,4,4,44,244,244,4244,4244,88,89,'GHAAAA','RDAAAA','VVVVxx'),
+(4591,96,1,3,1,11,91,591,591,4591,4591,182,183,'PUAAAA','SDAAAA','AAAAxx'),
+(4113,97,1,1,3,13,13,113,113,4113,4113,26,27,'FCAAAA','TDAAAA','HHHHxx'),
+(5925,98,1,1,5,5,25,925,1925,925,5925,50,51,'XTAAAA','UDAAAA','OOOOxx'),
+(1987,99,1,3,7,7,87,987,1987,1987,1987,174,175,'LYAAAA','VDAAAA','VVVVxx');
+
+-- Uncorrelated subselects
+
+SELECT f1 AS "Constant Select" FROM SUBSELECT_TBL
+  WHERE f1 IN (SELECT 1);
+
+SELECT f1 AS "Uncorrelated Field" FROM SUBSELECT_TBL
+  WHERE f1 IN (SELECT f2 FROM SUBSELECT_TBL);
+
+SELECT f1 AS "Uncorrelated Field" FROM SUBSELECT_TBL
+  WHERE f1 IN (SELECT f2 FROM SUBSELECT_TBL WHERE
+    f2 IN (SELECT f1 FROM SUBSELECT_TBL)) ORDER BY f1 DESC;
+
+SELECT f1, f2
+  FROM SUBSELECT_TBL
+  WHERE (f1, f2) NOT IN (SELECT f2, CAST(f3 AS int4) FROM SUBSELECT_TBL
+                         WHERE f3 IS NOT NULL);
+
+-- Correlated subselects
+
+SELECT f1 AS "Correlated Field", f2 AS "Second Field"
+  FROM SUBSELECT_TBL upper
+  WHERE f1 IN (SELECT f2 FROM SUBSELECT_TBL WHERE f1 = upper.f1);
+
+SELECT f1 AS "Correlated Field", f3 AS "Second Field"
+  FROM SUBSELECT_TBL upper
+  WHERE f1 IN
+    (SELECT f2 FROM SUBSELECT_TBL WHERE CAST(upper.f2 AS float) = f3);
+
+SELECT f1 AS "Correlated Field", f3 AS "Second Field"
+  FROM SUBSELECT_TBL upper
+  WHERE f3 IN (SELECT upper.f1 + f2 FROM SUBSELECT_TBL
+               WHERE f2 = CAST(f3 AS integer));
+
+SELECT f1 AS "Correlated Field"
+  FROM SUBSELECT_TBL
+  WHERE (f1, f2) IN (SELECT f2, CAST(f3 AS int4) FROM SUBSELECT_TBL
+                     WHERE f3 IS NOT NULL);
+
+-- Check ROWCOMPARE cases, both correlated and not
+
+SELECT ROW(1, 2) = (SELECT f1, f2) AS eq FROM SUBSELECT_TBL;
+
+SELECT ROW(1, 2) = (SELECT 3, 4) AS eq FROM SUBSELECT_TBL;
+
+SELECT ROW(1, 2) = (SELECT f1, f2 FROM SUBSELECT_TBL);  -- error
+
+--
+-- Use some existing tables in the regression test
+--
+
+SELECT ss.f1 AS "Correlated Field", ss.f3 AS "Second Field"
+  FROM SUBSELECT_TBL ss
+  WHERE f1 NOT IN (SELECT f1+1 FROM tsurugifdw_int4_tbl
+                   WHERE f1 != ss.f1 AND f1 < 2147483647);
+
+-- tsurugi_fdw/Tsurugi does not support some cast functions (e.g., float8(int8))
+-- select q1, float8(count(*)) / (select count(*) from tsurugifdw_int8_tbl)
+-- from tsurugifdw_int8_tbl group by q1 order by q1;
+
+-- Unspecified-type literals in output columns should resolve as text
+
+SELECT *, pg_typeof(f1) FROM
+  (SELECT 'tsurugifdw_foo' AS f1 FROM generate_series(1,3)) ss ORDER BY 1;
+
+-- check materialization of an initplan reference (bug #14524)
+select 1 = all (select (select 1));
+
+--
+-- Test cases to catch unpleasant interactions between IN-join processing
+-- and subquery pullup.
+--
+
+select count(*) from
+  (select 1 from tsurugifdw_tenk1 a
+   where unique1 IN (select hundred from tsurugifdw_tenk1 b)) ss;
+select count(distinct ss.ten) from
+  (select ten from tsurugifdw_tenk1 a
+   where unique1 IN (select hundred from tsurugifdw_tenk1 b)) ss;
+select count(*) from
+  (select 1 from tsurugifdw_tenk1 a
+   where unique1 IN (select distinct hundred from tsurugifdw_tenk1 b)) ss;
+select count(distinct ss.ten) from
+  (select ten from tsurugifdw_tenk1 a
+   where unique1 IN (select distinct hundred from tsurugifdw_tenk1 b)) ss;
+
+--
+-- Test cases to check for overenthusiastic optimization of
+-- "IN (SELECT DISTINCT ...)" and related cases.  Per example from
+-- Luca Pireddu and Michael Fuhr.
+--
+SELECT tg_execute_ddl('
+    DROP TABLE IF EXISTS tsurugifdw_foo', 'tsurugidb');
+SELECT tg_execute_ddl('
+    CREATE TABLE tsurugifdw_foo (id integer)
+', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_foo (id integer) SERVER tsurugidb;
+SELECT tg_execute_ddl('
+    DROP TABLE IF EXISTS tsurugifdw_bar', 'tsurugidb');
+SELECT tg_execute_ddl('
+    CREATE TABLE tsurugifdw_bar (id1 integer, id2 integer)
+', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_bar (id1 integer, id2 integer) SERVER tsurugidb;
+INSERT INTO tsurugifdw_foo VALUES (1);
+INSERT INTO tsurugifdw_bar VALUES (1, 1);
+INSERT INTO tsurugifdw_bar VALUES (2, 2);
+INSERT INTO tsurugifdw_bar VALUES (3, 1);
+-- These cases require an extra level of distinct-ing above subquery
+SELECT * FROM tsurugifdw_foo WHERE id IN
+    (SELECT id2 FROM (SELECT DISTINCT id1, id2 FROM tsurugifdw_bar) AS s);
+SELECT * FROM tsurugifdw_foo WHERE id IN
+    (SELECT id2 FROM (SELECT id1,id2 FROM tsurugifdw_bar GROUP BY id1,id2) AS s);
+SELECT * FROM tsurugifdw_foo WHERE id IN
+    (SELECT id2 FROM (SELECT id1, id2 FROM tsurugifdw_bar UNION
+                      SELECT id1, id2 FROM tsurugifdw_bar) AS s);
+
+-- These cases do not
+SELECT * FROM tsurugifdw_foo WHERE id IN
+    (SELECT id2 FROM (SELECT DISTINCT ON (id2) id1, id2 FROM tsurugifdw_bar) AS s);
+SELECT * FROM tsurugifdw_foo WHERE id IN
+    (SELECT id2 FROM (SELECT id2 FROM tsurugifdw_bar GROUP BY id2) AS s);
+SELECT * FROM tsurugifdw_foo WHERE id IN
+    (SELECT id2 FROM (SELECT id2 FROM tsurugifdw_bar UNION
+                      SELECT id2 FROM tsurugifdw_bar) AS s);
+
+--
+-- Test case to catch problems with multiply nested sub-SELECTs not getting
+-- recalculated properly.  Per bug report from Didier Moens.
+--
+SELECT tg_execute_ddl('
+    CREATE TABLE tsurugifdw_orderstest (
+        approver_ref integer,
+        po_ref integer,
+        ordercanceled integer
+    )', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_orderstest (
+    approver_ref integer,
+    po_ref integer,
+    ordercanceled integer
+) SERVER tsurugidb;
+
+INSERT INTO tsurugifdw_orderstest VALUES (1, 1, 0);
+INSERT INTO tsurugifdw_orderstest VALUES (66, 5, 0);
+INSERT INTO tsurugifdw_orderstest VALUES (66, 6, 0);
+INSERT INTO tsurugifdw_orderstest VALUES (66, 7, 0);
+INSERT INTO tsurugifdw_orderstest VALUES (66, 1, 1);
+INSERT INTO tsurugifdw_orderstest VALUES (66, 8, 0);
+INSERT INTO tsurugifdw_orderstest VALUES (66, 1, 0);
+INSERT INTO tsurugifdw_orderstest VALUES (77, 1, 0);
+INSERT INTO tsurugifdw_orderstest VALUES (1, 1, 0);
+INSERT INTO tsurugifdw_orderstest VALUES (66, 1, 0);
+INSERT INTO tsurugifdw_orderstest VALUES (1, 1, 0);
+
+CREATE VIEW orders_view AS
+SELECT *,
+(SELECT CASE
+   WHEN ord.approver_ref=1 THEN '---' ELSE 'Approved'
+ END) AS "Approved",
+(SELECT CASE
+ WHEN ord.ordercanceled = 1
+ THEN 'Canceled'
+ ELSE
+  (SELECT CASE
+		WHEN ord.po_ref=1
+		THEN
+		 (SELECT CASE
+				WHEN ord.approver_ref=1
+				THEN '---'
+				ELSE 'Approved'
+			END)
+		ELSE 'PO'
+	END)
+END) AS "Status",
+(CASE
+ WHEN ord.ordercanceled = 1
+ THEN 'Canceled'
+ ELSE
+  (CASE
+		WHEN ord.po_ref=1
+		THEN
+		 (CASE
+				WHEN ord.approver_ref=1
+				THEN '---'
+				ELSE 'Approved'
+			END)
+		ELSE 'PO'
+	END)
+END) AS "Status_OK"
+FROM tsurugifdw_orderstest ord;
+
+SELECT * FROM orders_view;
+
+SELECT tg_execute_ddl('
+    DROP TABLE tsurugifdw_orderstest', 'tsurugidb');
+DROP VIEW orders_view;
+DROP FOREIGN TABLE tsurugifdw_orderstest;
+
+--
+-- Test cases to catch situations where rule rewriter fails to propagate
+-- hasSubLinks flag correctly.  Per example from Kyle Bateman.
+--
+
+SELECT tg_execute_ddl('
+    CREATE TABLE tsurugifdw_parts (
+      partnum     varchar,
+      cost        double precision
+    )', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_parts (
+    partnum     text,
+    cost        float8
+) SERVER tsurugidb;
+
+SELECT tg_execute_ddl('
+    CREATE TABLE tsurugifdw_shipped (
+      ttype       char(2),
+      ordnum      integer,
+      partnum     varchar,
+      value       double precision
+    )', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_shipped (
+      ttype       char(2),
+      ordnum      int4,
+      partnum     text,
+      value       float8
+) SERVER tsurugidb;
+ALTER FOREIGN TABLE tsurugifdw_shipped
+  ALTER COLUMN ttype OPTIONS (ADD key 'true');
+
+create temp view tsurugifdw_shipped_view as
+    select * from tsurugifdw_shipped where ttype = 'wt';
+
+create rule tsurugifdw_shipped_view_insert as on insert to tsurugifdw_shipped_view do instead
+    insert into tsurugifdw_shipped values('wt', new.ordnum, new.partnum, new.value);
+
+insert into tsurugifdw_parts (partnum, cost) values (1, 1234.56);
+
+insert into tsurugifdw_shipped_view (ordnum, partnum, value)
+    values (0, 1, (select cost from tsurugifdw_parts where partnum = '1'));
+
+select * from tsurugifdw_shipped_view;
+
+create rule tsurugifdw_shipped_view_update as on update to tsurugifdw_shipped_view do instead
+    update tsurugifdw_shipped set partnum = new.partnum, value = new.value
+        where ttype = new.ttype and ordnum = new.ordnum;
+
+update tsurugifdw_shipped_view set value = 11
+    from tsurugifdw_int4_tbl a join tsurugifdw_int4_tbl b
+      on (a.f1 = (select f1 from tsurugifdw_int4_tbl c where c.f1=b.f1))
+    where ordnum = a.f1;
+
+select * from tsurugifdw_shipped_view;
+
+DROP VIEW tsurugifdw_shipped_view;
+
+--
+-- Test cases involving PARAM_EXEC parameters and min/max index optimizations.
+-- Per bug report from David Sanchez i Gregori.
+--
+
+select * from (
+  select max(unique1) from tsurugifdw_tenk1 as a
+  where exists (select 1 from tsurugifdw_tenk1 as b where b.thousand = a.unique2)
+) ss;
+
+-- Tsurugi does not support boolean predicates (e.g., NOT/EXISTS).
+-- select * from (
+--   select min(unique1) from tsurugifdw_tenk1 as a
+--   where not exists (select 1 from tsurugifdw_tenk1 as b where b.unique2 = 10000)
+-- ) ss;
+
+--
+-- Test case for bug #4290: bogus calculation of subplan param sets
+--
+
+SELECT tg_execute_ddl('
+    CREATE TABLE tsurugifdw_ta (
+      id int primary key, val int)', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_ta (
+      id int , val int
+) SERVER tsurugidb;
+
+insert into tsurugifdw_ta values(1,1);
+insert into tsurugifdw_ta values(2,2);
+
+SELECT tg_execute_ddl('
+    CREATE TABLE tsurugifdw_tb (
+      id int primary key, aval int)', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_tb (
+      id int , aval int
+) SERVER tsurugidb;
+
+insert into tsurugifdw_tb values(1,1);
+insert into tsurugifdw_tb values(2,1);
+insert into tsurugifdw_tb values(3,2);
+insert into tsurugifdw_tb values(4,2);
+
+SELECT tg_execute_ddl('
+    CREATE TABLE tsurugifdw_tc (
+      id int primary key, aid int)', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_tc (
+      id int , aid int
+) SERVER tsurugidb;
+
+insert into tsurugifdw_tc values(1,1);
+insert into tsurugifdw_tc values(2,2);
+
+select
+  ( select min(tsurugifdw_tb.id) from tsurugifdw_tb
+    where tsurugifdw_tb.aval = (select tsurugifdw_ta.val from tsurugifdw_ta where tsurugifdw_ta.id = tsurugifdw_tc.aid) ) as min_tb_id
+from tsurugifdw_tc;
+
+SELECT tg_execute_ddl('DROP TABLE tsurugifdw_ta', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_ta;
+SELECT tg_execute_ddl('DROP TABLE tsurugifdw_tb', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_tb;
+SELECT tg_execute_ddl('DROP TABLE tsurugifdw_tc', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_tc;
+
+--
+-- Test case for 8.3 "failed to locate grouping columns" bug
+--
+
+SELECT tg_execute_ddl('
+    CREATE TABLE tsurugifdw_t1 (
+      f1 numeric(14,0), f2 varchar(30))', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_t1 (
+      f1 numeric(14,0), f2 varchar(30)
+) SERVER tsurugidb;
+
+select * from
+  (select distinct f1, f2, (select f2 from tsurugifdw_t1 x where x.f1 = up.f1) as fs
+   from tsurugifdw_t1 up) ss
+group by f1,f2,fs;
+
+SELECT tg_execute_ddl('DROP TABLE tsurugifdw_t1', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_t1;
+
+--
+-- Test case for bug #5514 (mishandling of whole-row Vars in subselects)
+--
+
+SELECT tg_execute_ddl('
+    CREATE TABLE tsurugifdw_table_a (id integer)', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_table_a (id integer) SERVER tsurugidb;
+insert into tsurugifdw_table_a values (42);
+
+create temp view view_a as select * from tsurugifdw_table_a;
+
+select view_a from view_a;
+select (select view_a) from view_a;
+select (select (select view_a)) from view_a;
+select (select (a.*)::text) from view_a a;
+
+DROP VIEW view_a;
+SELECT tg_execute_ddl('DROP TABLE tsurugifdw_table_a', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_table_a;
+
+--
+-- Test case for bug #19037: no relation entry for relid N
+--
+
+-- tsurugi_fdw deparsing does not support this expression
+-- select (1 = any(array_agg(f1))) = any (select false) from tsurugifdw_int4_tbl;
+
+--
+-- Check that whole-row Vars reading the result of a subselect don't include
+-- any junk columns therein
+--
+
+select q from (select max(f1) from tsurugifdw_int4_tbl group by f1 order by f1) q;
+with q as (select max(f1) from tsurugifdw_int4_tbl group by f1 order by f1)
+  select q from q;
+
+--
+-- Test case for sublinks pushed down into subselects via join alias expansion
+--
+
+select
+  (select sq1) as qq1
+from
+  (select exists(select 1 from tsurugifdw_int4_tbl where f1 = q2) as sq1, 42 as dummy
+   from tsurugifdw_int8_tbl) sq0
+  join
+  tsurugifdw_int4_tbl i4 on dummy = i4.f1;
+
+--
+-- Test case for cross-type partial matching in hashed subplan (bug #7597)
+--
+
+SELECT tg_execute_ddl('
+    CREATE TABLE tsurugifdw_outer_7597 (f1 integer, f2 integer)', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_outer_7597 (f1 int4, f2 int4) SERVER tsurugidb;
+insert into tsurugifdw_outer_7597 values (0, 0);
+insert into tsurugifdw_outer_7597 values (1, 0);
+insert into tsurugifdw_outer_7597 values (0, null);
+insert into tsurugifdw_outer_7597 values (1, null);
+
+SELECT tg_execute_ddl('
+    CREATE TABLE tsurugifdw_inner_7597 (c1 bigint, c2 bigint)', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_inner_7597 (c1 int8, c2 int8) SERVER tsurugidb;
+insert into tsurugifdw_inner_7597 values(0, null);
+
+select * from tsurugifdw_outer_7597 where (f1, f2) not in (select * from tsurugifdw_inner_7597);
+
+SELECT tg_execute_ddl('DROP TABLE tsurugifdw_outer_7597', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_outer_7597;
+SELECT tg_execute_ddl('DROP TABLE tsurugifdw_inner_7597', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_inner_7597;
+
+--
+-- Similar test case using text that verifies that collation
+-- information is passed through by execTuplesEqual() in nodeSubplan.c
+-- (otherwise it would error in texteq())
+--
+
+SELECT tg_execute_ddl('
+    CREATE TABLE tsurugifdw_outer_text (f1 varchar, f2 varchar)', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_outer_text (f1 text, f2 text) SERVER tsurugidb;
+insert into tsurugifdw_outer_text values ('a', 'a');
+insert into tsurugifdw_outer_text values ('b', 'a');
+insert into tsurugifdw_outer_text values ('a', null);
+insert into tsurugifdw_outer_text values ('b', null);
+
+SELECT tg_execute_ddl('
+    CREATE TABLE tsurugifdw_inner_text (c1 varchar, c2 varchar)', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_inner_text (c1 text, c2 text) SERVER tsurugidb;
+insert into tsurugifdw_inner_text values ('a', null);
+insert into tsurugifdw_inner_text values ('123', '456');
+
+select * from tsurugifdw_outer_text where (f1, f2) not in (select * from tsurugifdw_inner_text);
+
+SELECT tg_execute_ddl('DROP TABLE tsurugifdw_outer_text', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_outer_text;
+
+--
+-- Another test case for cross-type hashed subplans: comparison of
+-- inner-side values must be done with appropriate operator
+--
+
+select 'tsurugifdw_foo'::text in (select 'tsurugifdw_bar'::name union all select 'tsurugifdw_bar'::name);
+
+--
+-- Test that we don't try to hash nested records (bug #17363)
+-- (Hashing could be supported, but for now we don't)
+--
+
+select row(row(row(1))) = any (select row(row(1)));
+
+--
+-- Test case for premature memory release during hashing of subplan output
+--
+
+select '1'::text in (select '1'::name union all select '1'::name);
+
+--
+-- Test that we don't try to use a hashed subplan if the simplified
+-- testexpr isn't of the right shape
+--
+
+-- this fails by default, of course
+select * from tsurugifdw_int8_tbl where q1 in (select c1 from tsurugifdw_inner_text);
+
+begin;
+
+-- make an operator to allow it to succeed
+create function bogus_int8_text_eq(int8, text) returns boolean
+language sql as 'select $1::text = $2';
+
+create operator = (procedure=bogus_int8_text_eq, leftarg=int8, rightarg=text);
+
+select * from tsurugifdw_int8_tbl where q1 in (select c1 from tsurugifdw_inner_text);
+
+-- inlining of this function results in unusual number of hash clauses,
+-- which we can still cope with
+create or replace function bogus_int8_text_eq(int8, text) returns boolean
+language sql as 'select $1::text = $2 and $1::text = $2';
+
+select * from tsurugifdw_int8_tbl where q1 in (select c1 from tsurugifdw_inner_text);
+
+-- inlining of this function causes LHS and RHS to be switched,
+-- which we can't cope with, so hashing should be abandoned
+create or replace function bogus_int8_text_eq(int8, text) returns boolean
+language sql as 'select $2 = $1::text';
+
+select * from tsurugifdw_int8_tbl where q1 in (select c1 from tsurugifdw_inner_text);
+
+rollback;  -- to get rid of the bogus operator
+
+SELECT tg_execute_ddl('DROP TABLE tsurugifdw_inner_text', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_inner_text;
+
+--
+-- Test resolution of hashed vs non-hashed implementation of EXISTS subplan
+--
+select count(*) from tsurugifdw_tenk1 t
+where (exists(select 1 from tsurugifdw_tenk1 k where k.unique1 = t.unique2) or ten < 0);
+
+select count(*) from tsurugifdw_tenk1 t
+where (exists(select 1 from tsurugifdw_tenk1 k where k.unique1 = t.unique2) or ten < 0)
+  and thousand = 1;
+
+--
+-- Test case for planner bug with nested EXISTS handling
+--
+select a.thousand from tsurugifdw_tenk1 a, tsurugifdw_tenk1 b
+where a.thousand = b.thousand
+  and exists ( select 1 from tsurugifdw_tenk1 c where b.hundred = c.hundred
+                   and not exists ( select 1 from tsurugifdw_tenk1 d
+                                    where a.thousand = d.thousand ) );
+
+--
+-- Test rescan of a hashed subplan (the use of random() is to prevent the
+-- sub-select from being pulled up, which would result in not hashing)
+--
+SELECT tg_execute_ddl('
+  CREATE TABLE tsurugifdw_onek (
+    unique1      integer,
+    unique2      integer,
+    two          integer,
+    four         integer,
+    ten          integer,
+    twenty       integer,
+    hundred      integer,
+    thousand     integer,
+    twothousand  integer,
+    fivethous    integer,
+    tenthous     integer,
+    odd          integer,
+    even         integer,
+    stringu1     varchar,
+    stringu2     varchar,
+    string4      varchar
+  )', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_onek (
+  unique1      integer,
+  unique2      integer,
+  two          integer,
+  four         integer,
+  ten          integer,
+  twenty       integer,
+  hundred      integer,
+  thousand     integer,
+  twothousand  integer,
+  fivethous    integer,
+  tenthous     integer,
+  odd          integer,
+  even         integer,
+  stringu1     varchar,
+  stringu2     varchar,
+  string4      varchar
+) SERVER tsurugidb;
+INSERT INTO tsurugifdw_onek (
+  unique1, unique2, two, four, ten, twenty, hundred, thousand, twothousand,
+  fivethous, tenthous, odd, even, stringu1, stringu2, string4
+) VALUES
+  (1, 101, 2, 4, 0, 20, 100, 1000, 2000, 5000, 10000, 1, 0, 'u1_1', 'u2_1', 's4_1'),
+  (2, 102, 2, 4, 0, 20, 200, 1000, 2000, 5000, 10000, 0, 1, 'u1_2', 'u2_2', 's4_2'),
+  (4, 104, 2, 4, 0, 20, 400, 1000, 2000, 5000, 10000, 0, 1, 'u1_4', 'u2_4', 's4_4'),
+  (3, 2,   2, 4, 1, 20, 300, 1000, 2000, 5000, 10000, 1, 0, 'u1_3', 'u2_3', 's4_3'),
+  (5, 1,   2, 6, 1, 20, 500, 1000, 2000, 5000, 10000, 1, 0, 'u1_5', 'u2_5', 's4_5');
+select sum(ss.tst::int) from
+  tsurugifdw_onek o cross join lateral (
+  select i.ten in (select f1 from tsurugifdw_int4_tbl where f1 <= o.hundred) as tst,
+         random() as r
+  from tsurugifdw_onek i where i.unique1 = o.unique1 ) ss
+where o.ten = 0;
+
+--
+-- Test rescan of a SetOp node
+--
+select count(*) from
+  tsurugifdw_onek o cross join lateral (
+    select * from tsurugifdw_onek i1 where i1.unique1 = o.unique1
+    except
+    select * from tsurugifdw_onek i2 where i2.unique1 = o.unique2
+  ) ss
+where o.ten = 1;
+
+--
+-- Test rescan of a RecursiveUnion node
+--
+select sum(o.four), sum(ss.a) from
+  tsurugifdw_onek o cross join lateral (
+    with recursive x(a) as
+      (select o.four as a
+       union
+       select a + 1 from x
+       where a < 10)
+    select * from x
+  ) ss
+where o.ten = 1;
+
+SELECT tg_execute_ddl('DROP TABLE tsurugifdw_onek', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_onek;
+
+--
+-- Check we don't misoptimize a NOT IN where the subquery returns no rows.
+--
+SELECT tg_execute_ddl('CREATE TABLE tsurugifdw_notinouter (a int)', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_notinouter (a int) SERVER tsurugidb;
+SELECT tg_execute_ddl('CREATE TABLE tsurugifdw_notininner (b int not null)', 'tsurugidb');
+CREATE FOREIGN TABLE tsurugifdw_notininner (b int) SERVER tsurugidb;
+insert into tsurugifdw_notinouter values (null), (1);
+
+select * from tsurugifdw_notinouter where a not in (select b from tsurugifdw_notininner);
+
+SELECT tg_execute_ddl('DROP TABLE tsurugifdw_notinouter', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_notinouter;
+SELECT tg_execute_ddl('DROP TABLE tsurugifdw_notininner', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_notininner;
+
+--
+-- Check behavior with a SubPlan in VALUES (bug #14924)
+--
+select val.x
+  from generate_series(1,10) as s(i),
+  lateral (
+    values ((select s.i + 1)), (s.i + 101)
+  ) as val(x)
+where s.i < 10 and (select val.x) < 110;
+
+-- another variant of that (bug #16213)
+select * from
+(values
+  (3 not in (select * from (values (1), (2)) ss1)),
+  (false)
+) ss;
+
+--
+-- Check sane behavior with nested IN SubLinks
+--
+select * from tsurugifdw_int4_tbl where
+  (case when f1 in (select unique1 from tsurugifdw_tenk1 a) then f1 else null end) in
+  (select ten from tsurugifdw_tenk1 b);
+
+--
+-- Check for incorrect optimization when IN subquery contains a SRF
+--
+select * from tsurugifdw_int4_tbl o where (f1, f1) in
+  (select f1, generate_series(1,50) / 10 g from tsurugifdw_int4_tbl i group by f1);
+
+--
+-- check for over-optimization of whole-row Var referencing an Append plan
+--
+select (select q from
+         (select 1,2,3 where f1 > 0
+          union all
+          select 4,5,6.0 where f1 <= 0
+         ) q )
+from tsurugifdw_int4_tbl;
+
+--
+-- Check for sane handling of a lateral reference in a subquery's quals
+-- (most of the complication here is to prevent the test case from being
+-- flattened too much)
+--
+select * from
+    tsurugifdw_int4_tbl i4,
+    lateral (
+        select i4.f1 > 1 as b, 1 as id
+        from (select random() order by 1) as t1
+      union all
+        select true as b, 2 as id
+    ) as t2
+where b and f1 >= 0;
+
+--
+-- Check that volatile quals aren't pushed down past a DISTINCT:
+-- nextval() should not be called more than the nominal number of times
+--
+create temp sequence ts1;
+
+select * from
+  (select distinct ten from tsurugifdw_tenk1) ss
+  where ten < 10 + nextval('ts1')
+  order by 1;
+
+select nextval('ts1');
+
+--
+-- Check that volatile quals aren't pushed down past a set-returning function;
+-- while a nonvolatile qual can be, if it doesn't reference the SRF.
+--
+create function tattle(x int, y int) returns bool
+volatile language plpgsql as $$
+begin
+  raise notice 'x = %, y = %', x, y;
+  return x > y;
+end$$;
+
+select * from
+  (select 9 as x, unnest(array[1,2,3,11,12,13]) as u) ss
+  where tattle(x, 8);
+
+-- if we pretend it's stable, we get different results:
+alter function tattle(x int, y int) stable;
+
+select * from
+  (select 9 as x, unnest(array[1,2,3,11,12,13]) as u) ss
+  where tattle(x, 8);
+
+-- although even a stable qual should not be pushed down if it references SRF
+select * from
+  (select 9 as x, unnest(array[1,2,3,11,12,13]) as u) ss
+  where tattle(x, u);
+
+drop function tattle(x int, y int);
+
+--
+-- Ensure that backward scan direction isn't propagated into
+-- expression subqueries (bug #15336)
+--
+
+begin;
+
+declare c1 scroll cursor for
+ select * from generate_series(1,4) i
+  where i <> all (values (2),(3));
+
+move forward all in c1;
+fetch backward all in c1;
+
+commit;
+
+--
+-- Verify that we correctly flatten cases involving a subquery output
+-- expression that doesn't need to be wrapped in a PlaceHolderVar
+--
+select tname, attname from (
+select relname::information_schema.sql_identifier as tname, * from
+  (select * from pg_class c) ss1) ss2
+  right join pg_attribute a on a.attrelid = ss2.oid
+where tname = 'tsurugifdw_tenk1' and attnum = 1;
+
+-- Check behavior when there's a lateral reference in the output expression
+select t1.ten, sum(x) from
+  tsurugifdw_tenk1 t1 left join lateral (
+    select t1.ten + t2.ten as x, t2.fivethous from tsurugifdw_tenk1 t2
+  ) ss on t1.unique1 = ss.fivethous
+group by t1.ten
+order by t1.ten;
+
+select t1.q1, x from
+  tsurugifdw_int8_tbl t1 left join
+  (tsurugifdw_int8_tbl t2 left join
+   lateral (select t2.q1+t3.q1 as x, * from tsurugifdw_int8_tbl t3) t3 on t2.q2 = t3.q2)
+  on t1.q2 = t2.q2
+order by 1, 2;
+
+--
+-- Tests for CTE inlining behavior
+--
+
+with recursive x(a) as
+  ((values ('a'), ('b'))
+   union all
+   (with z as not materialized (select * from x)
+    select z.a || z1.a as a from z cross join z as z1
+    where length(z.a || z1.a) < 5))
+select * from x;
+
+with recursive x(a) as
+  ((values ('a'), ('b'))
+   union all
+   (with z as not materialized (select * from x)
+    select z.a || z.a as a from z
+    where length(z.a || z.a) < 5))
+select * from x;
+
+SELECT tg_execute_ddl('
+    DROP TABLE subselect_tbl', 'tsurugidb');
+DROP FOREIGN TABLE SUBSELECT_TBL;
+
+SELECT tg_execute_ddl('
+    DROP TABLE tsurugifdw_int4_tbl', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_int4_tbl;
+
+SELECT tg_execute_ddl('
+    DROP TABLE tsurugifdw_int8_tbl', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_int8_tbl;
+
+SELECT tg_execute_ddl('
+    DROP TABLE tsurugifdw_foo', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_foo;
+
+SELECT tg_execute_ddl('
+    DROP TABLE tsurugifdw_bar', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_bar;
+
+SELECT tg_execute_ddl('
+    DROP TABLE tsurugifdw_parts', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_parts;
+
+SELECT tg_execute_ddl('
+    DROP TABLE tsurugifdw_shipped', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_shipped;
+
+SELECT tg_execute_ddl('
+    DROP TABLE tsurugifdw_tenk1', 'tsurugidb');
+DROP FOREIGN TABLE tsurugifdw_tenk1;
+

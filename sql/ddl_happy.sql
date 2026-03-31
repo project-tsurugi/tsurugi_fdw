@@ -57,7 +57,6 @@ ALTER SERVER tsurugidb
 
 ALTER SERVER tsurugidb OPTIONS (SET endpoint 'ipc', SET dbname 'test_db_2');
 \des+ tsurugidb
-
 DROP SERVER tsurugidb;
 
 --- Test case: CREATE SERVER ... OPTIONS .../ALTER SERVER ...: TCP
@@ -88,6 +87,7 @@ CREATE DATABASE contrib_regression_ddl;
 CREATE EXTENSION tsurugi_fdw;
 
 CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
+CREATE USER MAPPING FOR postgres SERVER tsurugidb;
 CREATE FOREIGN TABLE fdw_ddl_table (c integer) SERVER tsurugidb;
 
 INSERT INTO fdw_ddl_table VALUES (1), (2);
@@ -106,6 +106,7 @@ CREATE DATABASE contrib_regression_ddl;
 CREATE EXTENSION tsurugi_fdw;
 
 CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
+CREATE USER MAPPING FOR postgres SERVER tsurugidb;
 CREATE FOREIGN TABLE fdw_ddl_table (c integer) SERVER tsurugidb;
 
 SELECT * FROM fdw_ddl_table ORDER BY c;
@@ -125,6 +126,7 @@ CREATE DATABASE contrib_regression_ddl;
 CREATE EXTENSION tsurugi_fdw;
 
 CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
+CREATE USER MAPPING FOR postgres SERVER tsurugidb;
 CREATE FOREIGN TABLE fdw_ddl_table (c integer) SERVER tsurugidb;
 
 UPDATE fdw_ddl_table SET c = c + 20;
@@ -143,6 +145,7 @@ CREATE DATABASE contrib_regression_ddl;
 CREATE EXTENSION tsurugi_fdw;
 
 CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
+CREATE USER MAPPING FOR postgres SERVER tsurugidb;
 CREATE FOREIGN TABLE fdw_ddl_table (c integer) SERVER tsurugidb;
 
 DELETE FROM fdw_ddl_table WHERE c = 4;
@@ -163,6 +166,7 @@ CREATE DATABASE contrib_regression_ddl;
 CREATE EXTENSION tsurugi_fdw;
 
 CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
+CREATE USER MAPPING FOR postgres SERVER tsurugidb;
 CREATE FOREIGN TABLE fdw_ddl_table (c integer) SERVER tsurugidb;
 
 PREPARE prep_insert(integer, integer) AS
@@ -187,6 +191,7 @@ CREATE DATABASE contrib_regression_ddl;
 CREATE EXTENSION tsurugi_fdw;
 
 CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
+CREATE USER MAPPING FOR postgres SERVER tsurugidb;
 CREATE FOREIGN TABLE fdw_ddl_table (c integer) SERVER tsurugidb;
 
 PREPARE prep_insert(integer) AS INSERT INTO fdw_ddl_table VALUES ($1);
@@ -211,6 +216,7 @@ CREATE DATABASE contrib_regression_ddl;
 CREATE EXTENSION tsurugi_fdw;
 
 CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
+CREATE USER MAPPING FOR postgres SERVER tsurugidb;
 CREATE FOREIGN TABLE fdw_ddl_table (c integer) SERVER tsurugidb;
 
 PREPARE prep_insert(integer) AS INSERT INTO fdw_ddl_table VALUES ($1);
@@ -234,6 +240,7 @@ CREATE DATABASE contrib_regression_ddl;
 CREATE EXTENSION tsurugi_fdw;
 
 CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
+CREATE USER MAPPING FOR postgres SERVER tsurugidb;
 CREATE FOREIGN TABLE fdw_ddl_table (c integer) SERVER tsurugidb;
 
 PREPARE prep_insert AS INSERT INTO fdw_ddl_table VALUES (5);
@@ -263,23 +270,28 @@ CREATE EXTENSION tsurugi_fdw;
 ---- Test case: Create server - COMMIT
 BEGIN;
 CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
+CREATE USER MAPPING FOR postgres SERVER tsurugidb;
 \des+
 COMMIT;
 \des+
 
 ---- Test case: Re-create server - COMMIT
 BEGIN;
+DROP USER MAPPING FOR postgres SERVER tsurugidb;
 DROP SERVER tsurugidb;
 CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw OPTIONS (endpoint 'ipc');
+CREATE USER MAPPING FOR postgres SERVER tsurugidb;
 \des+
 COMMIT;
 \des+
 
 ---- Test case: Re-create server - ROLLBACK
 BEGIN;
+DROP USER MAPPING FOR postgres SERVER tsurugidb;
 DROP SERVER tsurugidb;
 CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw
   OPTIONS (endpoint 'stream', address '127.0.0.1', port '12345');
+CREATE USER MAPPING FOR postgres SERVER tsurugidb;
 \des+
 ROLLBACK;
 \des+
@@ -293,6 +305,7 @@ CREATE DATABASE contrib_regression_ddl;
 
 CREATE EXTENSION tsurugi_fdw;
 CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
+CREATE USER MAPPING FOR postgres SERVER tsurugidb;
 CREATE FOREIGN TABLE fdw_ddl_table (c integer) SERVER tsurugidb;
 
 ---- Test case: Alter server (incorrect server) - Connected in a transaction
@@ -314,6 +327,7 @@ CREATE DATABASE contrib_regression_ddl;
 
 CREATE EXTENSION tsurugi_fdw;
 CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
+CREATE USER MAPPING FOR postgres SERVER tsurugidb;
 CREATE FOREIGN TABLE fdw_ddl_table (c integer) SERVER tsurugidb;
 
 ---- Test case: Alter server (correct server) - Connected in a transaction
@@ -337,6 +351,7 @@ CREATE DATABASE contrib_regression_ddl;
 
 CREATE EXTENSION tsurugi_fdw;
 CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
+CREATE USER MAPPING FOR postgres SERVER tsurugidb;
 CREATE FOREIGN TABLE fdw_ddl_table (c integer) SERVER tsurugidb;
 
 ---- Test case: ALTER SERVER during operations

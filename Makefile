@@ -17,11 +17,12 @@ SHLIB_LINK_INTERNAL = $(libpq)
 SHLIB_LINK = -logawayama-stub -lboost_filesystem
 
 EXTENSION = tsurugi_fdw
-DATA = tsurugi_fdw--1.4.0.sql \
+DATA = tsurugi_fdw--1.5.0.sql \
 		tsurugi_fdw--1.0.0--1.1.0.sql \
 		tsurugi_fdw--1.1.0--1.2.0.sql \
 		tsurugi_fdw--1.2.0--1.3.0.sql \
-		tsurugi_fdw--1.3.0--1.4.0.sql
+		tsurugi_fdw--1.3.0--1.4.0.sql \
+		tsurugi_fdw--1.4.0--1.5.0.sql
 
 # REGRESS_BASIC: Run basic tests.
 # REGRESS_EXTRA: Run extra tests.
@@ -33,12 +34,12 @@ ifndef REGRESS_BASIC
 endif
 
 # Test settings according to regression test type
-REGRESS := test_preparation
+REGRESS := preparation
 ifdef REGRESS_BASIC
-	REGRESS += ddl_happy privilege_happy \
-	           dml_happy data_types_happy case_sensitive_happy \
+	REGRESS += dml_happy data_types_happy case_sensitive_happy \
 	           prep_dml_happy prep_data_types_happy prep_case_sensitive_happy \
 	           manual_tutorial \
+			   ddl_happy privilege_happy \
 	           udf_transaction_happy udf_tg_show_tables_happy udf_tg_verify_tables_happy \
 	           import_foreign_schema_happy
 endif
@@ -61,12 +62,12 @@ ifndef MAJORVERSION
 endif
 
 ifdef REGRESS_EXTRA
-	REGRESS += ddl_unhappy privilege_unhappy \
-	           dml_unhappy data_types_unhappy case_sensitive_unhappy \
+	REGRESS += dml_unhappy data_types_unhappy case_sensitive_unhappy \
 	           prep_dml_unhappy prep_data_types_unhappy prep_case_sensitive_unhappy \
-	           udf_tg_show_tables_unhappy udf_tg_show_tables_extra udf_tg_verify_tables_unhappy udf_tg_verify_tables_extra \
 	           udf_transaction_unhappy \
-	           import_foreign_schema_unhappy import_foreign_schema_extra
+			   ddl_unhappy privilege_unhappy \
+	           udf_tg_show_tables_unhappy udf_tg_show_tables_extra udf_tg_verify_tables_unhappy udf_tg_verify_tables_extra \
+	           import_foreign_schema_unhappy import_foreign_schema_extra subselect update delete with
 
 	ifeq ($(MAJORVERSION), 12)
 		# PostgreSQL 12.x
@@ -80,6 +81,9 @@ ifdef REGRESS_EXTRA
 	else ifeq ($(filter $(MAJORVERSION), 16), $(MAJORVERSION))
 		# PostgreSQL 16.x
 		REGRESS += dml_unhappy_pg16 prep_dml_unhappy_pg16
+	else ifeq ($(filter $(MAJORVERSION), 17), $(MAJORVERSION))
+		# PostgreSQL 17.x
+		REGRESS += sql_features_pg17
 	endif
 endif
 

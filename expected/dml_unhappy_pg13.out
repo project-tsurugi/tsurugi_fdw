@@ -10,9 +10,9 @@ SELECT tg_execute_ddl('
     manager_id INT
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 -- Test setup: DDL of the PostgreSQL
@@ -23,62 +23,42 @@ CREATE FOREIGN TABLE fdw_sel_unsupported_test (
   ref_id integer,
   manager_id integer
 ) SERVER tsurugidb;
--- Arithmetic operation
-SELECT id, name, ((value / 10000) * ref_id)::int AS lank
-  FROM fdw_sel_unsupported_test;
-ERROR:  tsurugi_fdw : Contains an unsupported target entry. (113)
--- CASE WHEN
-SELECT
-  id, name,
-  CASE
-    WHEN value >= 100000 THEN 'High'
-    WHEN value >= 75000 THEN 'Medium'
-    ELSE 'Low' END AS lank
-  FROM fdw_sel_unsupported_test;
-ERROR:  tsurugi_fdw : Contains an unsupported target entry. (130)
--- WINDOW
-SELECT id, name, value, RANK() OVER w AS rk
-  FROM fdw_sel_unsupported_test
-  WINDOW w AS (ORDER BY value DESC);
-ERROR:  tsurugi_fdw : Contains an unsupported target entry. (111)
--- FETCH FIRST ... WITH TIES
-SELECT * FROM fdw_sel_unsupported_test ORDER BY value
-  FETCH FIRST 2 ROWS WITH TIES;
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "FETCH", expected one of {<END_OF_FILE>, %, (, *, +, ...}" region:"region(begin=56, end=61)")
-CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test ORDER BY value
-  FETCH FIRST 2 ROWS WITH TIES
--- FETCH NEXT ... WITH TIES
-SELECT * FROM fdw_sel_unsupported_test ORDER BY value
-  FETCH NEXT 2 ROWS WITH TIES;
-ERROR:  Failed to execute remote SQL.
-HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "FETCH", expected one of {<END_OF_FILE>, %, (, *, +, ...}" region:"region(begin=56, end=61)")
-CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test ORDER BY value
-  FETCH NEXT 2 ROWS WITH TIES
 -- OFFSET FETCH FIRST ... WITH TIES
 SELECT * FROM fdw_sel_unsupported_test ORDER BY value
   OFFSET 1 FETCH FIRST 2 ROWS WITH TIES;
-ERROR:  Failed to execute remote SQL.
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "OFFSET", expected one of {<END_OF_FILE>, %, (, *, +, ...}" region:"region(begin=56, end=62)")
-CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test ORDER BY value
-  OFFSET 1 FETCH FIRST 2 ROWS WITH TIES
+Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "OFFSET", expected one of {<END_OF_FILE>, %, *, +, -, ...}" region:"region(begin=100, end=106)")
+CONTEXT:  SQL query: SELECT id, name, value, ref_id, manager_id FROM fdw_sel_unsupported_test ORDER BY value ASC LIMIT 2 OFFSET 1
 -- OFFSET FETCH NEXT ... WITH TIES
 SELECT * FROM fdw_sel_unsupported_test ORDER BY value
   OFFSET 1 FETCH NEXT 2 ROWS WITH TIES;
-ERROR:  Failed to execute remote SQL.
+ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "OFFSET", expected one of {<END_OF_FILE>, %, (, *, +, ...}" region:"region(begin=56, end=62)")
-CONTEXT:  SQL query: SELECT * FROM fdw_sel_unsupported_test ORDER BY value
-  OFFSET 1 FETCH NEXT 2 ROWS WITH TIES
+Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "OFFSET", expected one of {<END_OF_FILE>, %, *, +, -, ...}" region:"region(begin=100, end=106)")
+CONTEXT:  SQL query: SELECT id, name, value, ref_id, manager_id FROM fdw_sel_unsupported_test ORDER BY value ASC LIMIT 2 OFFSET 1
+-- GROUP BY ALL
+SELECT ref_id, COUNT(*), SUM(value)
+  FROM fdw_sel_unsupported_test
+  GROUP BY ALL ref_id
+  ORDER BY ref_id;
+ERROR:  syntax error at or near "ALL"
+LINE 3:   GROUP BY ALL ref_id
+                   ^
+-- GROUP BY DISTINCT
+SELECT ref_id, COUNT(*), SUM(value)
+  FROM fdw_sel_unsupported_test
+  GROUP BY DISTINCT ref_id
+  ORDER BY ref_id;
+ERROR:  syntax error at or near "DISTINCT"
+LINE 3:   GROUP BY DISTINCT ref_id
+                   ^
 -- Test teardown: DDL of the PostgreSQL
 DROP FOREIGN TABLE fdw_sel_unsupported_test;
 -- Test teardown: DDL of the Tsurugi
 SELECT tg_execute_ddl('DROP TABLE fdw_sel_unsupported_test', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 

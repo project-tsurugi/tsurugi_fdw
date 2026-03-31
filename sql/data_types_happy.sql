@@ -933,7 +933,7 @@ SELECT tg_execute_ddl('
   CREATE TABLE fdw_type_postgresql (c DECIMAL(5))
 ', 'tsurugidb');
 --- Test setup: DDL of the PostgreSQL
-CREATE FOREIGN TABLE fdw_type_postgresql (c smallint) SERVER tsurugidb;
+CREATE FOREIGN TABLE fdw_type_postgresql (c int) SERVER tsurugidb;
 
 --- Test
 INSERT INTO fdw_type_postgresql VALUES (1);

@@ -67,9 +67,9 @@ SELECT tg_execute_ddl('
     c2 VARCHAR(30) NOT NULL
   )
 ', 'tsurugidb');
- tg_execute_ddl 
-----------------
- CREATE TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 CREATE FOREIGN TABLE fdw_um_auth_table_1 (
@@ -147,9 +147,9 @@ ERROR:  Invalid username or password for Tsurugi connection. error: AUTHENTICATI
 SET ROLE postgres;
 DROP FOREIGN TABLE fdw_um_auth_table_1;
 SELECT tg_execute_ddl('DROP TABLE fdw_um_auth_table_1', 'tsurugidb');
- tg_execute_ddl 
-----------------
- DROP TABLE
+  tg_execute_ddl   
+-------------------
+ execute succeeded
 (1 row)
 
 DROP USER MAPPING IF EXISTS FOR um_test_a SERVER tsurugidb;
