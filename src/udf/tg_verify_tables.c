@@ -54,8 +54,8 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 	static const char *const kArgPretty		  = "pretty";
 
 	TG_VERIFY_TABLE_PARAM param;
-	ForeignServer		 *server;
-	UserMapping			 *user;
+//	ForeignServer		 *server;
+//	UserMapping			 *user;
 	//	Oid user_oid;
 	char	 *result_json;
 	TG_STATUS tg_status;
@@ -63,6 +63,8 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 
 	char debug_log[1024];
 	//	HeapTuple srv_tuple;
+
+	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
 	// remote_schema argument
 	param.remote_schema =
@@ -136,8 +138,8 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 	ReleaseSysCache(srv_tuple);
 #else
 	param.server_id = get_foreign_server_oid(param.server_name, false);
-	server			= GetForeignServer(param.server_id);
-	user			= GetUserMapping(GetUserId(), param.server_id);
+//	server			= GetForeignServer(param.server_id);
+//	user			= GetUserMapping(GetUserId(), param.server_id);
 #endif
 
 	param.local_schema_oid = InvalidOid;
@@ -172,7 +174,7 @@ tg_verify_tables(PG_FUNCTION_ARGS)
 
 	param.detail = (strcasecmp(param.mode, kArgModeDetail) == 0);
 
-	tg_conn	  = tsurugi_get_connection(server, user);
+	tg_conn	  = tsurugi_get_connection(param.server_id);
 	tg_status = tg_exec_verify_tables(tg_conn, &param, &result_json);
 	if (tg_status != TG_STATUS_OK)
 		elog(ERROR, "%s", tg_global_error_message());

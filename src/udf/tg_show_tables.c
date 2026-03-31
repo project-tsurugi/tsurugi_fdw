@@ -47,16 +47,18 @@ tg_show_tables(PG_FUNCTION_ARGS)
 	static const char *const kArgPretty		  = "pretty";
 
 	TG_SHOW_TABLE_PARAM param;
-	ForeignServer	   *server;
-	UserMapping		   *user;
+//	ForeignServer	   *server;
+//	UserMapping		   *user;
 	Oid					server_oid = InvalidOid;
-	Oid					user_oid   = InvalidOid;
+//	Oid					user_oid   = InvalidOid;
 	char			   *result_json;
 	TG_STATUS			tg_status;
 	TGconn			   *tg_conn;
 
 	char debug_log[1024];
 	//	HeapTuple srv_tuple;
+
+	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
 	// remote_schema argument
 	param.schema_name =
@@ -119,10 +121,10 @@ tg_show_tables(PG_FUNCTION_ARGS)
 	ReleaseSysCache(srv_tuple);
 #else
 	server_oid = get_foreign_server_oid(param.server_name, false);
-	user_oid   = GetUserId();
+//	user_oid   = GetUserId();
 #endif
-	server = GetForeignServer(server_oid);
-	user   = GetUserMapping(user_oid, server_oid);
+//	server = GetForeignServer(server_oid);
+//	user   = GetUserMapping(user_oid, server_oid);
 
 	snprintf(
 			debug_log,
@@ -143,7 +145,7 @@ tg_show_tables(PG_FUNCTION_ARGS)
 
 	param.detail = (strcasecmp(param.mode, kArgModeDetail) == 0);
 
-	tg_conn	  = tsurugi_get_connection(server, user);
+	tg_conn	  = tsurugi_get_connection(server_oid);
 	tg_status = tg_exec_show_tables(tg_conn, &param, &result_json);
 	if (tg_status != TG_STATUS_OK)
 		elog(ERROR, "%s", tg_global_error_message());

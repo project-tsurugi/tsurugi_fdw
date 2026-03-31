@@ -52,12 +52,8 @@ tg_execute_ddl(PG_FUNCTION_ARGS)
 	static const size_t allowed_statement_count = sizeof(allowed_statement) /
 												  sizeof(allowed_statement[0]);
 
-	ForeignServer *server;
-	UserMapping	  *user;
 	Oid			   server_oid = InvalidOid;
-	Oid			   user_oid	  = InvalidOid;
 	char		   debug_log[1024];
-	//	HeapTuple srv_tuple;
 	bool	success;
 	TGconn *tg_conn;
 
@@ -67,6 +63,8 @@ tg_execute_ddl(PG_FUNCTION_ARGS)
 	// server_name argument
 	char *arg_server_name =
 			(!PG_ARGISNULL(1) ? text_to_cstring(PG_GETARG_TEXT_P(1)) : "");
+
+	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
 	/* Validate server_name argument. */
 	if (strlen(arg_ddl) == 0)
@@ -102,21 +100,7 @@ tg_execute_ddl(PG_FUNCTION_ARGS)
 				 errmsg("\"%s\" is not supported", arg_ddl)));
 
 	/* Get the Tsurugi server OID. */
-#if 0
-	srv_tuple = SearchSysCache1(FOREIGNSERVERNAME, CStringGetDatum(arg_server_name));
-	if (!HeapTupleIsValid(srv_tuple)) {
-		ereport(ERROR, (errcode(ERRCODE_FDW_UNABLE_TO_ESTABLISH_CONNECTION),
-						errmsg("server \"%s\" does not exist", arg_server_name)));
-	}
-	server_oid = ((Form_pg_foreign_server)GETSTRUCT(srv_tuple))->oid;
-	user_oid = GetUserId();
-	ReleaseSysCache(srv_tuple);
-#else
 	server_oid = get_foreign_server_oid(arg_server_name, false);
-	user_oid   = GetUserId();
-#endif
-	server = GetForeignServer(server_oid);
-	user   = GetUserMapping(user_oid, server_oid);
 
 	snprintf(
 			debug_log,
@@ -130,7 +114,7 @@ tg_execute_ddl(PG_FUNCTION_ARGS)
 			arg_ddl);
 	elog(DEBUG2, "%s", debug_log);
 
-	tg_conn = tsurugi_get_connection(server, user);
+	tg_conn = tsurugi_get_connection(server_oid);
 	tsurugi_do_sql_command(tg_conn, arg_ddl);
 
 	PG_RETURN_TEXT_P(cstring_to_text("execute succeeded"));

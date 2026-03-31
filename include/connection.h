@@ -18,41 +18,61 @@
 #ifndef CONNECTION_H
 #define CONNECTION_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif	
-
 #include "tsurugi_api.h"
 #include "foreign/foreign.h"
 
-/*
- * Initialize connection cache and register callbacks.
- *
- * Should be called from _PG_init().
- */
-extern void tsurugi_init_connections(void);
+#ifdef __cplusplus
+exern "C" {
+#endif
 
 /*
- * Get a cached connection and ensure remote tx is started.
+ * tsurugi_get_connection
+ *		Get a connection to the specified foreign server.
  *
- * Key: (serverid, userid) from server/user mapping.
- * Remote tx will be committed/rolled back by xact callback.
+ * Returns a cached connection if one exists for the server, otherwise
+ * creates a new connection. If no transaction is active on the connection,
+ * starts a new remote transaction automatically.
  *
- * Automatically starts remote tx if not already started in current xact.
+ * The connection is tied to the current PostgreSQL transaction and will
+ * be automatically committed or rolled back by transaction callbacks.
+ * No explicit release or cleanup is required by the caller.
+ *
+ * Multiple calls within the same transaction return the same TGconn*.
+ *
+ * Parameters:
+ *   serverid - Oid of the ForeignServer to connect to
+ *
+ * Returns:
+ *   TGconn handle (never NULL; errors are raised)
+ *
+ * Errors:
+ *   - ERRCODE_FDW_OPTION_NAME_NOT_FOUND if required options are missing
+ *   - ERRCODE_FDW_UNABLE_TO_ESTABLISH_CONNECTION if connection fails
+ *   - ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION if transaction start fails
+ *
+ * Example:
+ *   BEGIN;
+ *     TGconn *conn = tsurugi_get_connection(serverid);
+ *     TGstmt *stmt = tg_stmt_prepare(conn, sql);
+ *     TGresult *res = tg_stmt_execute_query(stmt);
+ *     // ... use result ...
+ *     tg_result_destroy(res);
+ *     tg_stmt_destroy(stmt);
+ *     // No need to release connection
+ *   COMMIT; // Connection automatically committed and cleaned up
  */
-extern TGconn *tsurugi_get_connection(ForeignServer *server,
-									  UserMapping *user);
+extern TGconn *tsurugi_get_connection(Oid serverid);
 
 /*
- * Invalidate cached connection for (serverid, userid).
+ * Shutdown function (internal use only)
  *
- * Intended for error paths; must not ereport(ERROR) if called from
- * abort callbacks.
+ * Registered as before_shmem_exit callback to clean up all connections
+ * on process exit.
  */
-extern void tsurugi_invalidate_connection(Oid serverid, Oid userid);
+extern void tsurugi_connection_exit(int code, Datum arg);
 
-TGconn *tsurugi_get_connection(ForeignServer *server, UserMapping *user);
-void tsurugi_do_sql_command(TGconn *conn, const char *sql);
+extern void tsurugi_do_sql_command(TGconn *conn, const char *sql);
+extern void tsurugi_do_sql_command2(Oid serverid, const char *sql);
 
 #ifdef __cplusplus
 }

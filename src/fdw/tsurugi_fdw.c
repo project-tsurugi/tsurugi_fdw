@@ -1248,8 +1248,8 @@ tsurugiBeginForeignScan(ForeignScanState *node, int eflags)
 	TgFdwForeignScanState *fsstate;
 	RangeTblEntry		  *rte;
 	ForeignTable		  *table;
-	ForeignServer		  *server;
-	UserMapping			  *user;
+//	ForeignServer		  *server;
+//	UserMapping			  *user;
 	int					   rtindex;
 	EState				  *estate = node->ss.ps.state;
 
@@ -1309,9 +1309,9 @@ tsurugiBeginForeignScan(ForeignScanState *node, int eflags)
 	 * relation. */
 	rte				 = exec_rt_fetch(rtindex, estate);
 	table			 = GetForeignTable(rte->relid);
-	server			 = GetForeignServer(table->serverid);
-	user			 = GetUserMapping(GetUserId(), table->serverid);
-	fsstate->tg_conn = tsurugi_get_connection(server, user);
+//	server			 = GetForeignServer(table->serverid);
+//	user			 = GetUserMapping(GetUserId(), table->serverid);
+	fsstate->tg_conn = tsurugi_get_connection(table->serverid);
 }
 
 /*
@@ -1781,8 +1781,8 @@ tsurugiBeginDirectModify(ForeignScanState *node, int eflags)
 {
 	RangeTblEntry		   *rte;
 	ForeignTable		   *table;
-	ForeignServer		   *server;
-	UserMapping			   *user;
+//	ForeignServer		   *server;
+//	UserMapping			   *user;
 	ForeignScan			   *fsplan = (ForeignScan *) node->ss.ps.plan;
 	int						rtindex;
 	EState				   *estate = node->ss.ps.state;
@@ -1829,10 +1829,10 @@ tsurugiBeginDirectModify(ForeignScanState *node, int eflags)
 	 * relation. */
 	rte				 = exec_rt_fetch(rtindex, estate);
 	table			 = GetForeignTable(rte->relid);
-	server			 = GetForeignServer(table->serverid);
-	dmstate->server	 = server;
-	user			 = GetUserMapping(GetUserId(), server->serverid);
-	dmstate->tg_conn = tsurugi_get_connection(server, user);
+//	server			 = GetForeignServer(table->serverid);
+//	dmstate->server	 = server;
+//	user			 = GetUserMapping(GetUserId(), server->serverid);
+	dmstate->tg_conn = tsurugi_get_connection(table->serverid);
 }
 
 /*
@@ -2068,8 +2068,8 @@ tsurugiBeginForeignModify(
 	ListCell				*lc		   = NULL;
 	RangeTblEntry			*rte;
 	ForeignTable			*table;
-	ForeignServer			*server;
-	UserMapping				*user;
+//	ForeignServer			*server;
+//	UserMapping				*user;
 	Oid						 foreignTableId;
 	Plan					*subplan;
 
@@ -2175,9 +2175,9 @@ tsurugiBeginForeignModify(
 
 	/* Get info about foreign table. */
 	table				 = GetForeignTable(rte->relid);
-	server				 = GetForeignServer(table->serverid);
-	user				 = GetUserMapping(GetUserId(), server->serverid);
-	fmstate->tg_conn	 = tsurugi_get_connection(server, user);
+//	server				 = GetForeignServer(table->serverid);
+//	user				 = GetUserMapping(GetUserId(), server->serverid);
+	fmstate->tg_conn	 = tsurugi_get_connection(table->serverid);
 	fmstate->param_linfo = estate->es_param_list_info;
 
 	fmstate->junk_idx = palloc0(
@@ -2367,8 +2367,8 @@ static List *
 tsurugiImportForeignSchema(ImportForeignSchemaStmt *stmt, Oid serverOid)
 {
 	List		  *commands;
-	ForeignServer *server;
-	UserMapping	  *user;
+//	ForeignServer *server;
+//	UserMapping	  *user;
 	TG_STATUS	   tg_status;
 	TGconn		  *tg_conn;
 
@@ -2392,9 +2392,8 @@ tsurugiImportForeignSchema(ImportForeignSchemaStmt *stmt, Oid serverOid)
 	}
 	commands = NULL;
 
-	server	= GetForeignServer(serverOid);
-	user	= GetUserMapping(GetUserId(), serverOid);
-	tg_conn = tsurugi_get_connection(server, user);
+//	server	= GetForeignServer(serverOid);
+	tg_conn = tsurugi_get_connection(serverOid);
 
 	tg_status =
 			tg_exec_import_foreign_schema(tg_conn, stmt, serverOid, &commands);

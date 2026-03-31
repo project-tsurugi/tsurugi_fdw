@@ -238,10 +238,10 @@ inline TG_STATUS set_exception(
 }
 
 /**
- *  @brief 	Output error log which has a error message and error code.
+ *  @brief 	Output log which has a message and return code.
  *  @param 	(level) log level.
- * 			(message) error message.
- * 			(error) error code of ogawayama.
+ * 			(message) message.
+ * 			(error) return code of ogawayama.
  *  @return	none.
  */
 void log2(const int level, std::string_view message,
@@ -250,7 +250,7 @@ void log2(const int level, std::string_view message,
 
 	try {
 		std::ostringstream oss;
-		oss << "tsurugi_fdw: " << message
+		oss << message
 			<< "(error: " << error_name(error).data() << "{" << (int) error
 			<< "})";
 		elog(level, "%s", oss.str().c_str());
@@ -269,7 +269,7 @@ std::string get_detail_message(
 	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
 	if (error_code != ERROR_CODE::SERVER_ERROR) {
-		log2(LOG, "Error code is not SERVER_ERROR.", error_code);
+		log2(LOG, "tsurugi_fdw: Error code is not SERVER_ERROR.", error_code);
 		return message;
 	}
 
@@ -320,7 +320,7 @@ std::string get_detail_message(
 		message = "Tsurugi Error: " + error.name + " (" + detail_code + ": " +
 				  error.detail + ")";
 	} else {
-		log2(LOG, "Failed to get Tsurugi Server Error.", ret_code);
+		log2(LOG, "tsurugi_fdw: Failed to get Tsurugi Server Error.", ret_code);
 	}
 
 	return message;
@@ -976,9 +976,10 @@ TGconn* tg_conn_open(
 	elog(DEBUG1, "tsurugi_fdw: %s (endpoint: %s, user: %s)", __func__, endpoint,
 			user);
 	if (!endpoint || endpoint[0] == '\0') {
-		set_error("Database name is empty.");
-		return nullptr;
+		endpoint = tg_get_database_name();
 	}
+	if (!user) user = "";
+	if (!password) password = "";
 	TGconn* tg_conn = new (std::nothrow) TGconn();
 	if (!tg_conn) {
 		set_error("out of memory (new TGconn)");
@@ -992,7 +993,7 @@ TGconn* tg_conn_open(
 					"tsurugi_fdw: Attempt to call make_stub(). (endpoint: %s)",
 					endpoint);
 			auto error = make_stub(tg_conn->stub, endpoint);
-			log2(DEBUG1, "make_stub() is done.", error);
+			log2(DEBUG1, "tsurugi_fdw: make_stub() is done.", error);
 			if (error != ERROR_CODE::OK) {
 				auto msg = tg_make_error_message(tg_conn,
 						"Failed to attach the shared memory of Tsurugi "
@@ -1011,7 +1012,7 @@ TGconn* tg_conn_open(
 					MyProcPid);
 			auto error = tg_conn->stub->get_connection(
 					MyProcPid, tg_conn->impl, auth);
-			log2(DEBUG1, "get_connection() is done.", error);
+			log2(DEBUG1, "tsurugi_fdw: get_connection() is done.", error);
 			if (error != ERROR_CODE::OK) {
 				auto msg = tg_make_error_message(tg_conn,
 						"Failed to connect to Tsurugi database.", error,
@@ -1470,7 +1471,7 @@ TG_STATUS tg_stmt_execute_statement(
 		elog(DEBUG1, "tsurugi_fdw: Attempt to call execute_statement()");
 		error = tg_conn->tx->execute_statement(
 				tg_stmt->impl, tg_stmt->paramerters, rows);
-		log2(DEBUG1, "execute_statement() is done.", error);
+		log2(DEBUG1, "tsurugi_fdw: Connection::execute_statement() is done.", error);
 		if (error != ERROR_CODE::OK) {
 			auto msg = tg_make_error_message(tg_conn,
 					"Failed to execute the statement on Tsurugi.", error,
@@ -1582,7 +1583,7 @@ TG_STATUS tg_get_list_tables(TGconn* tg_conn, TableListPtr& tables) noexcept {
 				"tsurugi_fdw: Attempt to call Connection::get_list_tables().");
 		/* Get a list of table names from Tsurugi. */
 		auto error = tg_conn->impl->get_list_tables(tables);
-		log2(DEBUG1, "Connection::get_list_tables() is done.", error);
+		log2(DEBUG1, "tsurugi_fdw: Connection::get_list_tables() is done.", error);
 		if (error != ERROR_CODE::OK) {
 			auto msg = tg_make_error_message(
 					tg_conn, "Failed to execute get_list_table().", error);
