@@ -39,119 +39,6 @@ extern bool is_foreign_pathkey(PlannerInfo *root,
 							   RelOptInfo *baserel,
 							   PathKey *pathkey);
 
-#if 0
-static List *
-get_useful_ecs_for_relation(PlannerInfo *root, RelOptInfo *rel);
-
-/*
- * get_useful_ecs_for_relation
- *		Determine which EquivalenceClasses might be involved in useful
- *		orderings of this relation.
- *
- * This function is in some respects a mirror image of the core function
- * pathkeys_useful_for_merging: for a regular table, we know what indexes
- * we have and want to test whether any of them are useful.  For a foreign
- * table, we don't know what indexes are present on the remote side but
- * want to speculate about which ones we'd like to use if they existed.
- *
- * This function returns a list of potentially-useful equivalence classes,
- * but it does not guarantee that an EquivalenceMember exists which contains
- * Vars only from the given relation.  For example, given ft1 JOIN t1 ON
- * ft1.x + t1.x = 0, this function will say that the equivalence class
- * containing ft1.x + t1.x is potentially useful.  Supposing ft1 is remote and
- * t1 is local (or on a different server), it will turn out that no useful
- * ORDER BY clause can be generated.  It's not our job to figure that out
- * here; we're only interested in identifying relevant ECs.
- */
-static List *
-get_useful_ecs_for_relation(PlannerInfo *root, RelOptInfo *rel)
-{
-	List	   *useful_eclass_list = NIL;
-	ListCell   *lc;
-	Relids		relids;
-
-	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
-
-	/*
-	 * First, consider whether any active EC is potentially useful for a merge
-	 * join against this relation.
-	 */
-	if (rel->has_eclass_joins)
-	{
-		foreach(lc, root->eq_classes)
-		{
-			EquivalenceClass *cur_ec = (EquivalenceClass *) lfirst(lc);
-
-			if (eclass_useful_for_merging(root, cur_ec, rel))
-				useful_eclass_list = lappend(useful_eclass_list, cur_ec);
-		}
-	}
-
-	/*
-	 * Next, consider whether there are any non-EC derivable join clauses that
-	 * are merge-joinable.  If the joininfo list is empty, we can exit
-	 * quickly.
-	 */
-	if (rel->joininfo == NIL)
-		return useful_eclass_list;
-
-	/* If this is a child rel, we must use the topmost parent rel to search. */
-	if (IS_OTHER_REL(rel))
-	{
-		Assert(!bms_is_empty(rel->top_parent_relids));
-		relids = rel->top_parent_relids;
-	}
-	else
-		relids = rel->relids;
-
-	/* Check each join clause in turn. */
-	foreach(lc, rel->joininfo)
-	{
-		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(lc);
-
-		/* Consider only mergejoinable clauses */
-		if (restrictinfo->mergeopfamilies == NIL)
-			continue;
-
-		/* Make sure we've got canonical ECs. */
-		update_mergeclause_eclasses(root, restrictinfo);
-
-		/*
-		 * restrictinfo->mergeopfamilies != NIL is sufficient to guarantee
-		 * that left_ec and right_ec will be initialized, per comments in
-		 * distribute_qual_to_rels.
-		 *
-		 * We want to identify which side of this merge-joinable clause
-		 * contains columns from the relation produced by this RelOptInfo. We
-		 * test for overlap, not containment, because there could be extra
-		 * relations on either side.  For example, suppose we've got something
-		 * like ((A JOIN B ON A.x = B.x) JOIN C ON A.y = C.y) LEFT JOIN D ON
-		 * A.y = D.y.  The input rel might be the joinrel between A and B, and
-		 * we'll consider the join clause A.y = D.y. relids contains a
-		 * relation not involved in the join class (B) and the equivalence
-		 * class for the left-hand side of the clause contains a relation not
-		 * involved in the input rel (C).  Despite the fact that we have only
-		 * overlap and not containment in either direction, A.y is potentially
-		 * useful as a sort column.
-		 *
-		 * Note that it's even possible that relids overlaps neither side of
-		 * the join clause.  For example, consider A LEFT JOIN B ON A.x = B.x
-		 * AND A.x = 1.  The clause A.x = 1 will appear in B's joininfo list,
-		 * but overlaps neither side of B.  In that case, we just skip this
-		 * join clause, since it doesn't suggest a useful sort order for this
-		 * relation.
-		 */
-		if (bms_overlap(relids, restrictinfo->right_ec->ec_relids))
-			useful_eclass_list = list_append_unique_ptr(useful_eclass_list,
-														restrictinfo->right_ec);
-		else if (bms_overlap(relids, restrictinfo->left_ec->ec_relids))
-			useful_eclass_list = list_append_unique_ptr(useful_eclass_list,
-														restrictinfo->left_ec);
-	}
-
-	return useful_eclass_list;
-}
-#endif
 /*
  * get_useful_pathkeys_for_relation
  *		Determine which orderings of a relation might be useful.
@@ -165,9 +52,7 @@ List *
 get_useful_pathkeys_for_relation(PlannerInfo *root, RelOptInfo *rel)
 {
 	List	   *useful_pathkeys_list = NIL;
-//	List	   *useful_eclass_list;
 	TgFdwRelationInfo *fpinfo = (TgFdwRelationInfo *) rel->fdw_private;
-//	EquivalenceClass *query_ec = NULL;
 	ListCell   *lc;
 
 	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
@@ -1308,7 +1193,6 @@ estimate_path_cost_size(PlannerInfo *root,
 						double *p_rows, int *p_width,
 						Cost *p_startup_cost, Cost *p_total_cost)
 {
-	// tentative values.
 	*p_rows = 0;
 	*p_width = 0;
 	*p_startup_cost = 0;
@@ -1406,12 +1290,8 @@ add_paths_with_pathkeys_for_rel(PlannerInfo *root, RelOptInfo *rel,
 								 useful_pathkeys,
 								 -1.0);
 
-#if 0								 
-		if (IS_SIMPLE_REL(rel))
-#else
 		if (rel->reloptkind == RELOPT_BASEREL ||
 			rel->reloptkind == RELOPT_OTHER_MEMBER_REL)
-#endif
 			add_path(rel, (Path *)
 					 create_foreignscan_path(root, rel,
 											 NULL,

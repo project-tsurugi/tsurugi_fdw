@@ -57,10 +57,10 @@ tg_execute_ddl(PG_FUNCTION_ARGS)
 	bool	success;
 	TGconn *tg_conn;
 
-	// ddl_statement argument
+	/* ddl_statement argument */
 	char *arg_ddl =
 			(!PG_ARGISNULL(0) ? text_to_cstring(PG_GETARG_TEXT_P(0)) : "");
-	// server_name argument
+	/* server_name argument */
 	char *arg_server_name =
 			(!PG_ARGISNULL(1) ? text_to_cstring(PG_GETARG_TEXT_P(1)) : "");
 

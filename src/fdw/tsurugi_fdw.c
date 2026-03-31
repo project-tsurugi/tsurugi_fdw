@@ -32,8 +32,8 @@
 #include "nodes/pathnodes.h"
 #include "nodes/pg_list.h"
 #if PG_VERSION_NUM >= 120000
-#include "optimizer/appendinfo.h"  // get_translated_update_targetlist
-#endif							   // PG_VERSION_NUM >= 140000
+#include "optimizer/appendinfo.h"  /* get_translated_update_targetlist */
+#endif							   /* PG_VERSION_NUM >= 140000 */
 #include "optimizer/cost.h"
 #include "optimizer/inherit.h"
 #include "optimizer/optimizer.h"
@@ -44,7 +44,7 @@
 #include "parser/parsetree.h"
 #if PG_VERSION_NUM >= 160000
 #include "utils/acl.h"
-#endif	// PG_VERSION_NUM >= 160000
+#endif	/* PG_VERSION_NUM >= 160000 */
 #include "connection.h"
 #include "tsurugi_api.h"
 #include "utils/guc.h"
@@ -206,7 +206,7 @@ extern "C"
 #else
 static void tsurugiAddForeignUpdateTargets(
 		Query *parsetree, RangeTblEntry *target_rte, Relation target_relation);
-#endif	// PG_VERSION_NUM >= 140000
+#endif	/* PG_VERSION_NUM >= 140000 */
 	static List *tsurugiPlanForeignModify(
 			PlannerInfo *root,
 			ModifyTable *plan,
@@ -278,9 +278,6 @@ static ForeignScan *find_modifytable_subplan(
 		int			 subplan_index);
 #endif /* PG_VERSION_NUM >= 140000 */
 
-#if 0
-static void make_retrieved_attrs(List* telist, List** retrieved_attrs);
-#endif
 static void
 store_pg_data_type(TgFdwForeignScanState *fsstate, List *tlist, List **);
 #ifndef __TSURUGI_PLANNER__
@@ -1248,8 +1245,6 @@ tsurugiBeginForeignScan(ForeignScanState *node, int eflags)
 	TgFdwForeignScanState *fsstate;
 	RangeTblEntry		  *rte;
 	ForeignTable		  *table;
-//	ForeignServer		  *server;
-//	UserMapping			  *user;
 	int					   rtindex;
 	EState				  *estate = node->ss.ps.state;
 
@@ -1309,8 +1304,6 @@ tsurugiBeginForeignScan(ForeignScanState *node, int eflags)
 	 * relation. */
 	rte				 = exec_rt_fetch(rtindex, estate);
 	table			 = GetForeignTable(rte->relid);
-//	server			 = GetForeignServer(table->serverid);
-//	user			 = GetUserMapping(GetUserId(), table->serverid);
 	fsstate->tg_conn = tsurugi_get_connection(table->serverid);
 }
 
@@ -1516,7 +1509,7 @@ tsurugiPlanDirectModify(
 	CmdType operation = plan->operation;
 #if PG_VERSION_NUM < 140000
 	Plan *subplan;
-#endif	// PG_VERSION_NUM < 140000
+#endif	/* PG_VERSION_NUM < 140000 */
 	RelOptInfo		  *foreignrel;
 	RangeTblEntry	  *rte;
 	TgFdwRelationInfo *fpinfo;
@@ -1525,7 +1518,7 @@ tsurugiPlanDirectModify(
 	ForeignScan		  *fscan;
 #if PG_VERSION_NUM >= 140000
 	List *processed_tlist = NIL;
-#endif	// PG_VERSION_NUM >= 140000
+#endif	/* PG_VERSION_NUM >= 140000 */
 	List			  *targetAttrs	   = NIL;
 	List			  *remote_exprs	   = NIL;
 	List			  *params_list	   = NIL;
@@ -1568,7 +1561,7 @@ tsurugiPlanDirectModify(
 	if (!IsA(subplan, ForeignScan))
 		return false;
 	fscan = (ForeignScan *) subplan;
-#endif	// PG_VERSION_NUM >= 140000
+#endif	/* PG_VERSION_NUM >= 140000 */
 
 	/*
 	 * It's unsafe to modify a foreign table directly if there are any quals
@@ -1578,7 +1571,7 @@ tsurugiPlanDirectModify(
 	if (fscan->scan.plan.qual != NIL)
 #else
 	if (subplan->qual != NIL)
-#endif	// PG_VERSION_NUM >= 140000
+#endif	/* PG_VERSION_NUM >= 140000 */
 		return false;
 
 	/* Safe to fetch data about the target foreign rel */
@@ -1651,7 +1644,7 @@ tsurugiPlanDirectModify(
 
 			targetAttrs = lappend_int(targetAttrs, attno);
 		}
-#endif	// PG_VERSION_NUM >= 140000
+#endif	/* PG_VERSION_NUM >= 140000 */
 	}
 
 	/*
@@ -1693,7 +1686,7 @@ tsurugiPlanDirectModify(
 				processed_tlist,
 #else
 				((Plan *) fscan)->targetlist,
-#endif	// PG_VERSION_NUM >= 140000
+#endif	/* PG_VERSION_NUM >= 140000 */
 				targetAttrs,
 				remote_exprs,
 				&params_list,
@@ -1727,7 +1720,7 @@ tsurugiPlanDirectModify(
 	fscan->operation = operation;
 #if PG_VERSION_NUM >= 140000
 	fscan->resultRelation = resultRelation;
-#endif	// PG_VERSION_NUM >= 140000
+#endif	/* PG_VERSION_NUM >= 140000 */
 
 	/*
 	 * Update the fdw_exprs list that will be available to the executor.
@@ -1764,7 +1757,7 @@ tsurugiPlanDirectModify(
 	 */
 	if (fscan->scan.plan.async_capable)
 		fscan->scan.plan.async_capable = false;
-#endif	// PG_VERSION_NUM >= 140000
+#endif	/* PG_VERSION_NUM >= 140000 */
 
 	table_close(rel, NoLock);
 	elog(DEBUG1, "tsurugi_fdw: execute direct modify.");
@@ -1781,8 +1774,6 @@ tsurugiBeginDirectModify(ForeignScanState *node, int eflags)
 {
 	RangeTblEntry		   *rte;
 	ForeignTable		   *table;
-//	ForeignServer		   *server;
-//	UserMapping			   *user;
 	ForeignScan			   *fsplan = (ForeignScan *) node->ss.ps.plan;
 	int						rtindex;
 	EState				   *estate = node->ss.ps.state;
@@ -1829,9 +1820,6 @@ tsurugiBeginDirectModify(ForeignScanState *node, int eflags)
 	 * relation. */
 	rte				 = exec_rt_fetch(rtindex, estate);
 	table			 = GetForeignTable(rte->relid);
-//	server			 = GetForeignServer(table->serverid);
-//	dmstate->server	 = server;
-//	user			 = GetUserMapping(GetUserId(), server->serverid);
 	dmstate->tg_conn = tsurugi_get_connection(table->serverid);
 }
 
@@ -2068,8 +2056,6 @@ tsurugiBeginForeignModify(
 	ListCell				*lc		   = NULL;
 	RangeTblEntry			*rte;
 	ForeignTable			*table;
-//	ForeignServer			*server;
-//	UserMapping				*user;
 	Oid						 foreignTableId;
 	Plan					*subplan;
 
@@ -2175,8 +2161,6 @@ tsurugiBeginForeignModify(
 
 	/* Get info about foreign table. */
 	table				 = GetForeignTable(rte->relid);
-//	server				 = GetForeignServer(table->serverid);
-//	user				 = GetUserMapping(GetUserId(), server->serverid);
 	fmstate->tg_conn	 = tsurugi_get_connection(table->serverid);
 	fmstate->param_linfo = estate->es_param_list_info;
 
@@ -2367,8 +2351,6 @@ static List *
 tsurugiImportForeignSchema(ImportForeignSchemaStmt *stmt, Oid serverOid)
 {
 	List		  *commands;
-//	ForeignServer *server;
-//	UserMapping	  *user;
 	TG_STATUS	   tg_status;
 	TGconn		  *tg_conn;
 
@@ -2392,9 +2374,7 @@ tsurugiImportForeignSchema(ImportForeignSchemaStmt *stmt, Oid serverOid)
 	}
 	commands = NULL;
 
-//	server	= GetForeignServer(serverOid);
 	tg_conn = tsurugi_get_connection(serverOid);
-
 	tg_status =
 			tg_exec_import_foreign_schema(tg_conn, stmt, serverOid, &commands);
 	if (tg_status != TG_STATUS_OK)
@@ -2470,30 +2450,8 @@ find_modifytable_subplan(
 
 	return NULL;
 }
-#endif	// PG_VERSION_NUM >= 140000
-#if 0
-static void make_retrieved_attrs(List *telist, List **retrieved_attrs)
-{
-	ListCell *lc;
-	int i;
+#endif	/* PG_VERSION_NUM >= 140000 */
 
-	elog(DEBUG3, "tsurugi_fdw: %s", __func__);
-
-	*retrieved_attrs = NIL;
-
-	i = 0;
-	foreach (lc, telist)
-	{
-		TargetEntry *entry = (TargetEntry *) lfirst(lc);
-		elog(
-			DEBUG5,
-			"tsurugi_fdw: %s : attr_number: %d, res_name: %s, resno: %d, resorigcol: %d",
-			__func__, i, entry->resname, entry->resno, entry->resorigcol);
-		*retrieved_attrs = lappend_int(*retrieved_attrs, i + 1);
-		i++;
-	}
-}
-#endif
 /*
  * 	@biref	Scanning data type of target list from PG tables.
  * 	@param	[in/out] Store data type information.

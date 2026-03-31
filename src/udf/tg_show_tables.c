@@ -47,32 +47,27 @@ tg_show_tables(PG_FUNCTION_ARGS)
 	static const char *const kArgPretty		  = "pretty";
 
 	TG_SHOW_TABLE_PARAM param;
-//	ForeignServer	   *server;
-//	UserMapping		   *user;
 	Oid					server_oid = InvalidOid;
-//	Oid					user_oid   = InvalidOid;
 	char			   *result_json;
 	TG_STATUS			tg_status;
 	TGconn			   *tg_conn;
-
 	char debug_log[1024];
-	//	HeapTuple srv_tuple;
 
 	elog(DEBUG1, "tsurugi_fdw: %s", __func__);
 
-	// remote_schema argument
+	/* remote_schema argument */
 	param.schema_name =
 			(!PG_ARGISNULL(0) ? text_to_cstring(PG_GETARG_TEXT_P(0)) : "");
-	// server_name argument
+	/* server_name argument */
 	param.server_name =
 			(!PG_ARGISNULL(1) ? text_to_cstring(PG_GETARG_TEXT_P(1)) : "");
-	// mode argument
+	/* mode argument */
 	param.mode =
 			(!PG_ARGISNULL(2) ? text_to_cstring(PG_GETARG_TEXT_P(2)) : "");
-	// pretty argument
+	/* pretty argument */
 	param.pretty = PG_GETARG_BOOL(3);
 
-	// Convert mode argument value to lowercase
+	/* Convert mode argument value to lowercase */
 	for (char *ptr = param.mode; *ptr != '\0'; ptr++)
 		*ptr = tolower((unsigned char) *ptr);
 
@@ -111,20 +106,7 @@ tg_show_tables(PG_FUNCTION_ARGS)
 				 errdetail("expected true or false")));
 
 	/* Get the Tsurugi server OID. */
-#if 0
-	srv_tuple = SearchSysCache1(FOREIGNSERVERNAME, CStringGetDatum(param.server_name));
-	if (!HeapTupleIsValid(srv_tuple))
-		ereport(ERROR, (errcode(ERRCODE_FDW_UNABLE_TO_ESTABLISH_CONNECTION),
-		                errmsg("server \"%s\" does not exist", param.server_name)));
-
-	server_oid = ((Form_pg_foreign_server)GETSTRUCT(srv_tuple))->oid;
-	ReleaseSysCache(srv_tuple);
-#else
 	server_oid = get_foreign_server_oid(param.server_name, false);
-//	user_oid   = GetUserId();
-#endif
-//	server = GetForeignServer(server_oid);
-//	user   = GetUserMapping(user_oid, server_oid);
 
 	snprintf(
 			debug_log,
