@@ -2228,10 +2228,8 @@ SELECT tg_execute_ddl('DROP TABLE tsurugifdw_department', 'tsurugidb');
  execute succeeded
 (1 row)
 
-DROP FOREIGN TABLE tsurugifdw_department;
-ERROR:  cannot drop foreign table tsurugifdw_department because other objects depend on it
-DETAIL:  view vsubdepartment depends on foreign table tsurugifdw_department
-HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+DROP FOREIGN TABLE tsurugifdw_department CASCADE;
+NOTICE:  drop cascades to view vsubdepartment
 SELECT tg_execute_ddl('DROP TABLE tsurugifdw_tree', 'tsurugidb');
   tg_execute_ddl   
 -------------------

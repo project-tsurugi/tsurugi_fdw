@@ -1210,7 +1210,7 @@ SELECT tg_execute_ddl('DROP TABLE tsurugifdw_with_test', 'tsurugidb');
 DROP FOREIGN TABLE tsurugifdw_with_test;
 
 SELECT tg_execute_ddl('DROP TABLE tsurugifdw_department', 'tsurugidb');
-DROP FOREIGN TABLE tsurugifdw_department;
+DROP FOREIGN TABLE tsurugifdw_department CASCADE;
 
 SELECT tg_execute_ddl('DROP TABLE tsurugifdw_tree', 'tsurugidb');
 DROP FOREIGN TABLE tsurugifdw_tree;

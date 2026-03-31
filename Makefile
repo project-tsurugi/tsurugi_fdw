@@ -80,6 +80,9 @@ ifdef REGRESS_EXTRA
 	else ifeq ($(filter $(MAJORVERSION), 16), $(MAJORVERSION))
 		# PostgreSQL 16.x
 		REGRESS += dml_unhappy_pg16 prep_dml_unhappy_pg16
+	else ifeq ($(filter $(MAJORVERSION), 17), $(MAJORVERSION))
+		# PostgreSQL 17.x
+		REGRESS += sql_features_pg17
 	endif
 endif
 
