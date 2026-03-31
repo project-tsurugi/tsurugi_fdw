@@ -5,7 +5,7 @@ CREATE USER MAPPING IF NOT EXISTS FOR postgres SERVER tsurugidb;
                    List of installed extensions
     Name     | Version | Schema |           Description            
 -------------+---------+--------+----------------------------------
- tsurugi_fdw | 1.4.0   | public | foreign-data wrapper for tsurugi
+ tsurugi_fdw | 1.5.0   | public | foreign-data wrapper for tsurugi
 (1 row)
 
 \deu postgres
