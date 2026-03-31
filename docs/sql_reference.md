@@ -4,11 +4,10 @@
 
 Tsurugi FDW がサポートする SQL コマンドについて説明します。SQL の詳細な文法等については PostgreSQL 公式ドキュメント（ [SQL コマンドリファレンス](https://www.postgresql.org/docs/current/sql-commands.html) ）を参照してください。
 
-Tsurugi FDW は、PostgreSQL のプランナが生成した実行計画に基づき、実行可能な処理を Tsurugi 側へプッシュダウンして実行します。プッシュダウンできない処理は PostgreSQL 側で実行します。
+Tsurugi FDW は、PostgreSQL のプランナが生成した実行計画に基づき、Tsurugi が実行可能な処理をプッシュダウンして実行します。プッシュダウンできない処理は PostgreSQL が実行します。
 
-そのため、PostgreSQL がサポートしている機能であっても、常に Tsurugi 側で実行されるとは限りません。また、Tsurugi 側で未サポートの関数・演算子・構文や PostgreSQL 固有の機能を含む場合でも、内容によっては PostgreSQL 側で処理されることで実行できる場合があります。
+そのため、Tsurugi がサポートしていない関数・演算子・構文や PostgreSQL 固有の機能を含む場合でも、PostgreSQL が処理することで実行できる場合があります。
 
-ただし、FDW 経由での実行として未対応の操作や、互換性制約（データ型・関数・演算子等）により変換・評価できない場合は、実行に失敗することがあります。
 
 ### サポートしている主なSQL
 
