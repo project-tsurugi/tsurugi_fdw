@@ -129,16 +129,19 @@ static void make_new_connection(ConnCacheEntry *entry, Oid serverid);
 static void begin_remote_xact(ConnCacheEntry *entry);
 static void disconnect_connection(ConnCacheEntry *entry);
 static ConnCacheEntry *get_connection_entry(Oid serverid);
-static void			   connection_cache_init(void);
-static void			   tsurugi_xact_callback(XactEvent event, void *arg);
-static void			   tsurugi_subxact_callback(
+static void	connection_cache_init(void);
+static char *get_server_option(ForeignServer *server, const char *optname);
+static char *get_user_mapping_option(UserMapping *user, const char *optname);
+
+/* Callback functions */
+static void	tsurugi_fdw_xact_callback(XactEvent event, void *arg);
+static void	tsurugi_fdw_subxact_callback(
 		SubXactEvent	 event,
 		SubTransactionId mySubid,
 		SubTransactionId parentSubid,
 		void			*arg);
-static void	 tsurugi_inval_callback(Datum arg, int cacheid, uint32 hashvalue);
-static char *get_server_option(ForeignServer *server, const char *optname);
-static char *get_user_mapping_option(UserMapping *user, const char *optname);
+static void	tsurugi_fdw_inval_callback(Datum arg, int cacheid, uint32 hashvalue);
+static void tsurugi_fdw_exit_callback(int code, Datum arg);
 
 /*
  * tsurugi_get_connection
@@ -162,11 +165,11 @@ tsurugi_get_connection(Oid serverid)
 }
 
 /*
- * tsurugi_connection_exit
+ * tsurugi_fdw_exit_callback
  *		Cleanup all connections on process exit
  */
 void
-tsurugi_connection_exit(int code, Datum arg)
+tsurugi_fdw_exit_callback(int code, Datum arg)
 {
 	HASH_SEQ_STATUS scan;
 	ConnCacheEntry *entry;
@@ -221,14 +224,14 @@ connection_cache_init(void)
 	/* Register transaction callback */
 	if (!xact_callback_registered)
 	{
-		RegisterXactCallback(tsurugi_xact_callback, NULL);
+		RegisterXactCallback(tsurugi_fdw_xact_callback, NULL);
 		xact_callback_registered = true;
 	}
 
 	/* Register subtransaction callback */
 	if (!subxact_callback_registered)
 	{
-		RegisterSubXactCallback(tsurugi_subxact_callback, NULL);
+		RegisterSubXactCallback(tsurugi_fdw_subxact_callback, NULL);
 		subxact_callback_registered = true;
 	}
 
@@ -236,16 +239,16 @@ connection_cache_init(void)
 	if (!inval_callback_registered)
 	{
 		CacheRegisterSyscacheCallback(
-				FOREIGNSERVEROID, tsurugi_inval_callback, (Datum) 0);
+				FOREIGNSERVEROID, tsurugi_fdw_inval_callback, (Datum) 0);
 		CacheRegisterSyscacheCallback(
-				USERMAPPINGOID, tsurugi_inval_callback, (Datum) 0);
+				USERMAPPINGOID, tsurugi_fdw_inval_callback, (Datum) 0);
 		inval_callback_registered = true;
 	}
 
 	/* Register exit callback */
 	if (!exit_registered)
 	{
-		before_shmem_exit(tsurugi_connection_exit, (Datum) 0);
+		before_shmem_exit(tsurugi_fdw_exit_callback, (Datum) 0);
 		exit_registered = true;
 	}
 }
@@ -257,7 +260,7 @@ connection_cache_init(void)
  * IMPORTANT: Do NOT disconnect connection here even if invalidated.
  * During a transaction (xact_id valid), the connection must remain open
  * to preserve transaction integrity. Disconnection happens only at
- * transaction end (COMMIT/ROLLBACK) in tsurugi_xact_callback().
+ * transaction end (COMMIT/ROLLBACK) in tsurugi_fdw_xact_callback().
  */
 static ConnCacheEntry *
 get_connection_entry(Oid serverid)
@@ -469,14 +472,14 @@ get_user_mapping_option(UserMapping *user, const char *optname)
  * ================================================================ */
 
 /*
- * tsurugi_xact_callback
+ * tsurugi_fdw_xact_callback
  *		Transaction end callback
  *
  * Commit or rollback remote transactions based on local transaction outcome.
  * This is also where invalidated connections are disconnected.
  */
 static void
-tsurugi_xact_callback(XactEvent event, void *arg)
+tsurugi_fdw_xact_callback(XactEvent event, void *arg)
 {
 	HASH_SEQ_STATUS scan;
 	ConnCacheEntry *entry;
@@ -607,7 +610,7 @@ tsurugi_xact_callback(XactEvent event, void *arg)
 }
 
 /*
- * tsurugi_subxact_callback
+ * tsurugi_fdw_subxact_callback
  *		Subtransaction event callback
  *
  * Since Tsurugi does not support savepoints, we track subtransaction
@@ -616,7 +619,7 @@ tsurugi_xact_callback(XactEvent event, void *arg)
  * transaction to be rolled back.
  */
 static void
-tsurugi_subxact_callback(
+tsurugi_fdw_subxact_callback(
 		SubXactEvent	 event,
 		SubTransactionId mySubid,
 		SubTransactionId parentSubid,
@@ -674,7 +677,7 @@ tsurugi_subxact_callback(
 }
 
 /*
- * tsurugi_inval_callback
+ * tsurugi_fdw_inval_callback
  *		Syscache invalidation callback
  *
  * Called when ALTER SERVER or DROP SERVER is executed.
@@ -693,7 +696,7 @@ tsurugi_subxact_callback(
  * - In-progress transactions are not disrupted
  */
 static void
-tsurugi_inval_callback(Datum arg, int cacheid, uint32 hashvalue)
+tsurugi_fdw_inval_callback(Datum arg, int cacheid, uint32 hashvalue)
 {
 	HASH_SEQ_STATUS scan;
 	ConnCacheEntry *entry;

@@ -63,16 +63,7 @@ exern "C" {
  */
 extern TGconn *tsurugi_get_connection(Oid serverid);
 
-/*
- * Shutdown function (internal use only)
- *
- * Registered as before_shmem_exit callback to clean up all connections
- * on process exit.
- */
-extern void tsurugi_connection_exit(int code, Datum arg);
-
 extern void tsurugi_do_sql_command(TGconn *conn, const char *sql);
-extern void tsurugi_do_sql_command2(Oid serverid, const char *sql);
 
 #ifdef __cplusplus
 }
