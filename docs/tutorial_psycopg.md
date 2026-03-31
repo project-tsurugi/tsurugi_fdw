@@ -42,13 +42,13 @@ Psycopgのパッケージは Python Package Index (PyPI) で公開されてい�
 
 #### SQL文の実行（Psycopg）
 
-Corsorクラスのexecuteメソッドを使用してSQL文を実行することができます。  
-CorsorクラスはConnectionクラスのcursorメソッドを使用して作成します。  
+Cursorクラスのexecuteメソッドを使用してSQL文を実行することができます。  
+CursorクラスはConnectionクラスのcursorメソッドを使用して作成します。  
 
 以下の例では、`CREATE FOREIGN TABLE`を実行して外部テーブルを作成しています。  
 
 ~~~py
-    cur = conn.corsor()
+    cur = conn.cursor()
     create_foreign_table_sql = sql.SQL("""
         create foreign table if not exists fdw_sample (
             num int not null,
@@ -67,7 +67,7 @@ CorsorクラスはConnectionクラスのcursorメソッドを使用して作成�
 
 #### データの更新（Psycopg）
 
-Corsorクラスのexecuteメソッドを使用してTsurugiのデータを更新（INSERT/UPDATE/DELETE）することができます。
+Cursorクラスのexecuteメソッドを使用してTsurugiのデータを更新（INSERT/UPDATE/DELETE）することができます。
 
 ~~~py
     # 実行するSQL文
@@ -83,7 +83,7 @@ Corsorクラスのexecuteメソッドを使用してTsurugiのデータを更新
 
 #### データの問い合わせ（Psycopg）
 
-Corsorクラスのexecuteメソッドを使用してTsurugiのデータを問い合わせることができます。  
+Cursorクラスのexecuteメソッドを使用してTsurugiのデータを問い合わせることができます。  
 問い合わせた結果は同クラスのfetchallメソッドを使用して取得することができます。  
 
 ~~~py
@@ -131,7 +131,7 @@ Connectionクラスの commit または rollback メソッドを使用してト�
 ~~~py
     DB_URL = "postgresql://localhost:5432/tsurugi_db"
     conn = psycopg.connect(DB_URL)
-    cur = conn.corsor()
+    cur = conn.cursor()
     cur.execute("INSERT INTO fdw_sample (num) VALUES (11)")
     conn.commit() # INSERTコマンドをコミット
     cur.execute("UPDATE fdw_sample SET num = num + 11")
@@ -156,7 +156,7 @@ Withステートメントのブロックを抜けるまでにエラーがなけ�
 
 ##### トランザクション特性の変更（Psycopg）
 
-Corsorクラスのexecuteメソッドを使用してTsurugi固有のトランザクション特性を変更することができます。  
+Cursorクラスのexecuteメソッドを使用してTsurugi固有のトランザクション特性を変更することができます。  
 トランザクション特性を変更するUDFの詳細は [リファレンス（UDF）](./udf_reference.md) を参照してください。  
 
 ~~~py
