@@ -332,22 +332,26 @@ INSERT INTO fdw_ddl_table VALUES (1);
 ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to attach the shared memory of Tsurugi database. error: SERVER_FAILURE(10)
 No detail message.
-CONTEXT:  SQL query: incorrect_dbname
+CONTEXT:  SQL query: 
+DETAIL:  Connection options used: dbname=incorrect_dbname, user=(null)
 UPDATE fdw_ddl_table SET c = c + 10;
 ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to attach the shared memory of Tsurugi database. error: SERVER_FAILURE(10)
 No detail message.
-CONTEXT:  SQL query: incorrect_dbname
+CONTEXT:  SQL query: 
+DETAIL:  Connection options used: dbname=incorrect_dbname, user=(null)
 DELETE FROM fdw_ddl_table;
 ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to attach the shared memory of Tsurugi database. error: SERVER_FAILURE(10)
 No detail message.
-CONTEXT:  SQL query: incorrect_dbname
+CONTEXT:  SQL query: 
+DETAIL:  Connection options used: dbname=incorrect_dbname, user=(null)
 SELECT * FROM fdw_ddl_table ORDER BY c;
 ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to attach the shared memory of Tsurugi database. error: SERVER_FAILURE(10)
 No detail message.
-CONTEXT:  SQL query: incorrect_dbname
+CONTEXT:  SQL query: 
+DETAIL:  Connection options used: dbname=incorrect_dbname, user=(null)
 ---- incorrect -> correct
 ALTER SERVER tsurugidb OPTIONS (DROP dbname);
 INSERT INTO fdw_ddl_table VALUES (2);
@@ -381,22 +385,26 @@ EXECUTE prep_insert(1);
 ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to attach the shared memory of Tsurugi database. error: SERVER_FAILURE(10)
 No detail message.
-CONTEXT:  SQL query: incorrect_dbname
+CONTEXT:  SQL query: 
+DETAIL:  Connection options used: dbname=incorrect_dbname, user=(null)
 EXECUTE prep_update(10);
 ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to attach the shared memory of Tsurugi database. error: SERVER_FAILURE(10)
 No detail message.
-CONTEXT:  SQL query: incorrect_dbname
+CONTEXT:  SQL query: 
+DETAIL:  Connection options used: dbname=incorrect_dbname, user=(null)
 EXECUTE prep_delete;
 ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to attach the shared memory of Tsurugi database. error: SERVER_FAILURE(10)
 No detail message.
-CONTEXT:  SQL query: incorrect_dbname
+CONTEXT:  SQL query: 
+DETAIL:  Connection options used: dbname=incorrect_dbname, user=(null)
 EXECUTE prep_select;
 ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to attach the shared memory of Tsurugi database. error: SERVER_FAILURE(10)
 No detail message.
-CONTEXT:  SQL query: incorrect_dbname
+CONTEXT:  SQL query: 
+DETAIL:  Connection options used: dbname=incorrect_dbname, user=(null)
 ---- incorrect -> correct (preparation)
 ALTER SERVER tsurugidb OPTIONS (SET dbname 'tsurugi');
 -- EXECUTE prep_insert(2);
@@ -443,7 +451,8 @@ SELECT * FROM fdw_ddl_table ORDER BY c;
 ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to attach the shared memory of Tsurugi database. error: SERVER_FAILURE(10)
 No detail message.
-CONTEXT:  SQL query: incorrect
+CONTEXT:  SQL query: 
+DETAIL:  Connection options used: dbname=incorrect, user=(null)
 END;
 \des+
                                            List of foreign servers
@@ -476,7 +485,8 @@ INSERT INTO fdw_ddl_table VALUES (1), (2);
 ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to attach the shared memory of Tsurugi database. error: SERVER_FAILURE(10)
 No detail message.
-CONTEXT:  SQL query: incorrect
+CONTEXT:  SQL query: 
+DETAIL:  Connection options used: dbname=incorrect, user=(null)
 END;
 BEGIN;
 ALTER SERVER tsurugidb OPTIONS (SET dbname 'tsurugi');
@@ -541,7 +551,8 @@ SELECT * FROM fdw_ddl_table ORDER BY c;
 ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to attach the shared memory of Tsurugi database. error: SERVER_FAILURE(10)
 No detail message.
-CONTEXT:  SQL query: incorrect-4
+CONTEXT:  SQL query: 
+DETAIL:  Connection options used: dbname=incorrect-4, user=(null)
 END;
 ALTER SERVER tsurugidb OPTIONS (DROP dbname);
 \des+
@@ -576,7 +587,8 @@ SELECT * FROM fdw_ddl_table ORDER BY c;
 ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to attach the shared memory of Tsurugi database. error: SERVER_FAILURE(10)
 No detail message.
-CONTEXT:  SQL query: incorrect
+CONTEXT:  SQL query: 
+DETAIL:  Connection options used: dbname=incorrect, user=(null)
 ALTER SERVER tsurugidb OPTIONS (SET dbname 'tsurugi');
 -- UPDATE fdw_ddl_table SET c=c+10;
 ALTER SERVER tsurugidb OPTIONS (DROP dbname);
@@ -592,7 +604,8 @@ DELETE FROM fdw_ddl_table;
 ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to attach the shared memory of Tsurugi database. error: SERVER_FAILURE(10)
 No detail message.
-CONTEXT:  SQL query: incorrect
+CONTEXT:  SQL query: 
+DETAIL:  Connection options used: dbname=incorrect, user=(null)
 ALTER SERVER tsurugidb OPTIONS (SET dbname 'tsurugi');
 -- DELETE FROM fdw_ddl_table;
 -- SELECT * FROM fdw_ddl_table ORDER BY c;
