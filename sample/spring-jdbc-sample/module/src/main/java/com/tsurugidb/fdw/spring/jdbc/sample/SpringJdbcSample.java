@@ -50,7 +50,7 @@ public class SpringJdbcSample {
         System.out.println("The sample application is running. Please wait 20 seconds...");
 
         // データベース接続情報
-        String url = "jdbc:postgresql://localhost:35432/postgres";
+        String url = "jdbc:postgresql://localhost:5432/postgres";
         // DataSourceの作成
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
         dataSource.setDriverClassName("org.postgresql.Driver");

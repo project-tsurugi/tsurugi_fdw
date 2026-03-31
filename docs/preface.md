@@ -30,6 +30,7 @@ Tsurugi FDWは、PostgreSQLからTsurugiを利用するため以下の機能を�
 
 - クライアントインタフェース
   - JDBC（タイプ4 JDBCドライバ）
+  - Psycopg（DB API 2.0互換）
 
 PostgreSQLからTsurugi固有のトランザクション特性を設定するユーザ定義関数（User-Defined Functions、以下UDF）を提供します。
 

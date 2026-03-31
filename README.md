@@ -15,7 +15,7 @@ The current version of tsurugi_fdw pushes down queries directly to Tsurugi, whic
 Since tsurugi_fdw accesses the Tsurugi database via IPC endpoint, the PostgreSQL installing this extension must be located on the same host as Tsurugi.
 
 * C++ Compiler `>= C++17`
-* Source code of PostgreSQL 12/13/14/15/16 `>=12.22`, `>=13.18`, `>=14.18`, `>=15.13`, `>=16.10`
+* Source code of PostgreSQL 14/15/16/17 `>=14.18`, `>=15.13`, `>=16.10`, `>=17.8`
 * Access to installed dependent modules:
   * [ogawayama](https://github.com/project-tsurugi/ogawayama)
 
@@ -43,8 +43,8 @@ Since tsurugi_fdw accesses the Tsurugi database via IPC endpoint, the PostgreSQL
         ```
 
     ```sh
-    curl -sL https://ftp.postgresql.org/pub/source/v15.13/postgresql-15.13.tar.bz2 | tar -xj
-    cd postgresql-15.13
+    curl -sL https://ftp.postgresql.org/pub/source/v17.8/postgresql-17.8.tar.bz2 | tar -xj
+    cd postgresql-17.8
     ./configure --prefix=$HOME/pgsql
     make
     make install
@@ -154,8 +154,8 @@ Since tsurugi_fdw accesses the Tsurugi database via IPC endpoint, the PostgreSQL
         CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
         ```
 
-        Notice:  
-        If you have changed the name of the Tsurugi database from its default (default is '`tsurugi`'), you need to set the new database name to PostgreSQL as well.
+        > **IMPORTANT**
+        > If you have changed the name of the Tsurugi database from its default (default is '`tsurugi`'), you need to set the new database name to PostgreSQL as well.
 
         ```sql
         CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw OPTIONS (dbname 'new-database-name');
@@ -188,7 +188,7 @@ Since tsurugi_fdw accesses the Tsurugi database via IPC endpoint, the PostgreSQL
     ```sql
     CREATE USER MAPPING FOR pguser
             SERVER tsurugidb
-            OPTIONS (user 'tsurugi_user', password 'tsurugi_password');    
+            OPTIONS (user 'tsurugi-user', password 'tsurugi-password');    
     ```
 
     * Check with the meta-command(`\deu+`)
@@ -205,13 +205,35 @@ Since tsurugi_fdw accesses the Tsurugi database via IPC endpoint, the PostgreSQL
 1. Create foreign tables
 
     ```sql
-    CREATE FOREIGN TABLE tg_table (... columns ... ) SERVER tsurugi;
+    CREATE FOREIGN TABLE tg_table (... columns ... ) SERVER tsurugidb;
     ```
 
     You can also import the tables of a specific schema in Tsurugi database.
 
     ```sql
-    IMPORT FOREIGN SCHEMA public FROM SERVER tsurugi INTO public;
+    IMPORT FOREIGN SCHEMA public FROM SERVER tsurugidb INTO public;
+    ```
+
+    > **CAUTION**
+    > If you plan to execute `UPDATE` or `DELETE` via the foreign table, specify the column(s) that uniquely identify a row (typically the PRIMARY KEY) using the `key` option.
+    >
+    > If it’s not specified correctly, wrong results may occur when executing `UPDATE` or `DELETE`.
+    >
+    > Mark the column(s) that uniquely identify a row (for a composite key, mark all key columns) with `OPTIONS (key 'true')` in the foreign table definition.
+
+    ```sql
+    CREATE FOREIGN TABLE tg_table(
+    column1 integer OPTIONS (key 'true'),
+    column2 text
+    )
+    SERVER tsurugidb;
+    ```
+
+    If you want to add `key` later, use `ALTER FOREIGN TABLE` (note that `IMPORT FOREIGN SCHEMA` does not set the `key` option automatically):
+
+    ```sql
+    ALTER FOREIGN TABLE tg_table
+    ALTER COLUMN column1 OPTIONS (ADD key 'true');
     ```
 
 1. Execute DML using foreign tables.
