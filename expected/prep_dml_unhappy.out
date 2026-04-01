@@ -92,7 +92,7 @@ BEGIN;
 EXECUTE fdw_prepare_sel;
 ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "FOR", expected one of {<END_OF_FILE>, ,, ., ;, AS, ...}" region:"region(begin=53, end=56)")
+Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "FOR", expected one of {<END_OF_FILE>, ,, ., ;, RESTART, ...}" region:"region(begin=53, end=56)")
 CONTEXT:  SQL query: SELECT id, name, value FROM fdw_sel_unsupported_test FOR UPDATE
 END;
 DEALLOCATE fdw_prepare_sel;
@@ -103,7 +103,7 @@ BEGIN;
 EXECUTE fdw_prepare_sel;
 ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to execute the query on Tsurugi. error: SERVER_ERROR(13)
-Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "FOR", expected one of {<END_OF_FILE>, ,, ., ;, AS, ...}" region:"region(begin=53, end=56)")
+Tsurugi Error: SYNTAX_EXCEPTION (SQL-03001: compile failed with message:"appeared unexpected token: "FOR", expected one of {<END_OF_FILE>, ,, ., ;, RESTART, ...}" region:"region(begin=53, end=56)")
 CONTEXT:  SQL query: SELECT id, name, value FROM fdw_sel_unsupported_test FOR UPDATE
 END;
 DEALLOCATE fdw_prepare_sel;
