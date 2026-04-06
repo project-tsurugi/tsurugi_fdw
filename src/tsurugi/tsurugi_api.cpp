@@ -973,13 +973,15 @@ const char* tg_get_database_name() noexcept {
  */
 TGconn* tg_conn_open(
 		const char* endpoint, const char* user, const char* password) noexcept {
-	elog(DEBUG1, "tsurugi_fdw: %s (endpoint: %s, user: %s)", __func__, endpoint,
-			user);
 	if (!endpoint || endpoint[0] == '\0') {
 		endpoint = tg_get_database_name();
 	}
 	if (!user) user = "";
 	if (!password) password = "";
+	
+	elog(DEBUG1, "tsurugi_fdw: %s (endpoint: %s, user: %s)", __func__, endpoint,
+			user);
+	
 	TGconn* tg_conn = new (std::nothrow) TGconn();
 	if (!tg_conn) {
 		set_error("out of memory (new TGconn)");
