@@ -67,6 +67,7 @@
 typedef struct ConnCacheKey
 {
 	Oid serverid; /* ForeignServer Oid */
+	Oid userid;
 } ConnCacheKey;
 
 typedef struct ConnCacheEntry
@@ -214,6 +215,7 @@ get_connection_entry(Oid serverid)
 	bool			found;
 
 	key.serverid = serverid;
+	key.userid   = GetUserId();
 
 	entry = (ConnCacheEntry *) hash_search(ConnectionHash, &key, HASH_ENTER, &found);
 

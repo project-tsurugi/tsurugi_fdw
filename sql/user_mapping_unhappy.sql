@@ -2,7 +2,9 @@
 SET ROLE postgres;
 CREATE USER MAPPING FOR CURRENT_USER SERVER tsurugidb OPTIONS (user 'tsurugi', password 'password');
 CREATE ROLE um_test_a LOGIN;
+GRANT CREATE ON SCHEMA public TO um_test_a;
 CREATE ROLE um_test_b LOGIN;
+GRANT CREATE ON SCHEMA public TO um_test_b;
 GRANT USAGE ON FOREIGN SERVER tsurugidb TO um_test_a, um_test_b;
 SET ROLE um_test_a;
 
@@ -116,5 +118,7 @@ SELECT tg_execute_ddl('DROP TABLE fdw_um_auth_table_1', 'tsurugidb');
 DROP USER MAPPING IF EXISTS FOR um_test_a SERVER tsurugidb;
 REVOKE USAGE ON FOREIGN SERVER tsurugidb FROM um_test_a, um_test_b;
 DROP USER MAPPING IF EXISTS FOR um_test_b SERVER tsurugidb;
+REVOKE CREATE ON SCHEMA public FROM um_test_a;
 DROP ROLE IF EXISTS um_test_a;
+REVOKE CREATE ON SCHEMA public FROM um_test_b;
 DROP ROLE IF EXISTS um_test_b;
