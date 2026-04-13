@@ -246,7 +246,7 @@ CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw
   OPTIONS (endpoint 'stream', port '12345');
 ERROR:  missing required option "address"
 CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
-CREATE USER MAPPING FOR postgres SERVER tsurugidb;
+CREATE USER MAPPING FOR postgres SERVER tsurugidb OPTIONS (user 'tsurugi', password 'password');
 ALTER SERVER tsurugidb OPTIONS (endpoint 'stream');
 ERROR:  missing required option "address"
 ALTER SERVER tsurugidb OPTIONS (endpoint 'stream', address '127.0.0.1');
@@ -324,7 +324,7 @@ ERROR:  "port" must be an integer value greater than zero: -1
 --- Test case: dbname option value is incorrect
 ---- Test setup: DDL of the PostgreSQL
 CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
-CREATE USER MAPPING FOR postgres SERVER tsurugidb;
+CREATE USER MAPPING FOR postgres SERVER tsurugidb OPTIONS (user 'tsurugi', password 'password');
 CREATE FOREIGN TABLE fdw_ddl_table (c integer) SERVER tsurugidb;
 ---- correct -> incorrect
 ALTER SERVER tsurugidb OPTIONS (ADD dbname 'incorrect_dbname');
@@ -333,25 +333,25 @@ ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to attach the shared memory of Tsurugi database. error: SERVER_FAILURE(10)
 No detail message.
 CONTEXT:  SQL query: 
-DETAIL:  Connection options used: dbname=incorrect_dbname, user=(null)
+DETAIL:  Connection options used: dbname=incorrect_dbname, user=tsurugi
 UPDATE fdw_ddl_table SET c = c + 10;
 ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to attach the shared memory of Tsurugi database. error: SERVER_FAILURE(10)
 No detail message.
 CONTEXT:  SQL query: 
-DETAIL:  Connection options used: dbname=incorrect_dbname, user=(null)
+DETAIL:  Connection options used: dbname=incorrect_dbname, user=tsurugi
 DELETE FROM fdw_ddl_table;
 ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to attach the shared memory of Tsurugi database. error: SERVER_FAILURE(10)
 No detail message.
 CONTEXT:  SQL query: 
-DETAIL:  Connection options used: dbname=incorrect_dbname, user=(null)
+DETAIL:  Connection options used: dbname=incorrect_dbname, user=tsurugi
 SELECT * FROM fdw_ddl_table ORDER BY c;
 ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to attach the shared memory of Tsurugi database. error: SERVER_FAILURE(10)
 No detail message.
 CONTEXT:  SQL query: 
-DETAIL:  Connection options used: dbname=incorrect_dbname, user=(null)
+DETAIL:  Connection options used: dbname=incorrect_dbname, user=tsurugi
 ---- incorrect -> correct
 ALTER SERVER tsurugidb OPTIONS (DROP dbname);
 INSERT INTO fdw_ddl_table VALUES (2);
@@ -386,25 +386,25 @@ ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to attach the shared memory of Tsurugi database. error: SERVER_FAILURE(10)
 No detail message.
 CONTEXT:  SQL query: 
-DETAIL:  Connection options used: dbname=incorrect_dbname, user=(null)
+DETAIL:  Connection options used: dbname=incorrect_dbname, user=tsurugi
 EXECUTE prep_update(10);
 ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to attach the shared memory of Tsurugi database. error: SERVER_FAILURE(10)
 No detail message.
 CONTEXT:  SQL query: 
-DETAIL:  Connection options used: dbname=incorrect_dbname, user=(null)
+DETAIL:  Connection options used: dbname=incorrect_dbname, user=tsurugi
 EXECUTE prep_delete;
 ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to attach the shared memory of Tsurugi database. error: SERVER_FAILURE(10)
 No detail message.
 CONTEXT:  SQL query: 
-DETAIL:  Connection options used: dbname=incorrect_dbname, user=(null)
+DETAIL:  Connection options used: dbname=incorrect_dbname, user=tsurugi
 EXECUTE prep_select;
 ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to attach the shared memory of Tsurugi database. error: SERVER_FAILURE(10)
 No detail message.
 CONTEXT:  SQL query: 
-DETAIL:  Connection options used: dbname=incorrect_dbname, user=(null)
+DETAIL:  Connection options used: dbname=incorrect_dbname, user=tsurugi
 ---- incorrect -> correct (preparation)
 ALTER SERVER tsurugidb OPTIONS (SET dbname 'tsurugi');
 -- EXECUTE prep_insert(2);
@@ -430,7 +430,7 @@ CREATE DATABASE contrib_regression_ddl;
 \c contrib_regression_ddl
 CREATE EXTENSION tsurugi_fdw;
 CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
-CREATE USER MAPPING FOR postgres SERVER tsurugidb;
+CREATE USER MAPPING FOR postgres SERVER tsurugidb OPTIONS (user 'tsurugi', password 'password');
 CREATE FOREIGN TABLE fdw_ddl_table (c integer) SERVER tsurugidb;
 ---- Test case: Alter server (incorrect server) - Connected outside a transaction
 SELECT * FROM fdw_ddl_table ORDER BY c;
@@ -452,7 +452,7 @@ ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to attach the shared memory of Tsurugi database. error: SERVER_FAILURE(10)
 No detail message.
 CONTEXT:  SQL query: 
-DETAIL:  Connection options used: dbname=incorrect, user=(null)
+DETAIL:  Connection options used: dbname=incorrect, user=tsurugi
 END;
 \des+
                                            List of foreign servers
@@ -486,7 +486,7 @@ ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to attach the shared memory of Tsurugi database. error: SERVER_FAILURE(10)
 No detail message.
 CONTEXT:  SQL query: 
-DETAIL:  Connection options used: dbname=incorrect, user=(null)
+DETAIL:  Connection options used: dbname=incorrect, user=tsurugi
 END;
 BEGIN;
 ALTER SERVER tsurugidb OPTIONS (SET dbname 'tsurugi');
@@ -500,7 +500,7 @@ CREATE DATABASE contrib_regression_ddl;
 \c contrib_regression_ddl
 CREATE EXTENSION tsurugi_fdw;
 CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
-CREATE USER MAPPING FOR postgres SERVER tsurugidb;
+CREATE USER MAPPING FOR postgres SERVER tsurugidb OPTIONS (user 'tsurugi', password 'password');
 CREATE FOREIGN TABLE fdw_ddl_table (c integer) SERVER tsurugidb;
 ---- Test case: ALTER SERVER during operations
 BEGIN;
@@ -552,7 +552,7 @@ ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to attach the shared memory of Tsurugi database. error: SERVER_FAILURE(10)
 No detail message.
 CONTEXT:  SQL query: 
-DETAIL:  Connection options used: dbname=incorrect-4, user=(null)
+DETAIL:  Connection options used: dbname=incorrect-4, user=tsurugi
 END;
 ALTER SERVER tsurugidb OPTIONS (DROP dbname);
 \des+
@@ -578,7 +578,7 @@ CREATE DATABASE contrib_regression_ddl;
 \c contrib_regression_ddl
 CREATE EXTENSION tsurugi_fdw;
 CREATE SERVER tsurugidb FOREIGN DATA WRAPPER tsurugi_fdw;
-CREATE USER MAPPING FOR postgres SERVER tsurugidb;
+CREATE USER MAPPING FOR postgres SERVER tsurugidb OPTIONS (user 'tsurugi', password 'password');
 CREATE FOREIGN TABLE fdw_ddl_table (c integer) SERVER tsurugidb;
 --- Test case: ALTER SERVER during operations
 INSERT INTO fdw_ddl_table VALUES (1), (2);
@@ -588,7 +588,7 @@ ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to attach the shared memory of Tsurugi database. error: SERVER_FAILURE(10)
 No detail message.
 CONTEXT:  SQL query: 
-DETAIL:  Connection options used: dbname=incorrect, user=(null)
+DETAIL:  Connection options used: dbname=incorrect, user=tsurugi
 ALTER SERVER tsurugidb OPTIONS (SET dbname 'tsurugi');
 -- UPDATE fdw_ddl_table SET c=c+10;
 ALTER SERVER tsurugidb OPTIONS (DROP dbname);
@@ -605,7 +605,7 @@ ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to attach the shared memory of Tsurugi database. error: SERVER_FAILURE(10)
 No detail message.
 CONTEXT:  SQL query: 
-DETAIL:  Connection options used: dbname=incorrect, user=(null)
+DETAIL:  Connection options used: dbname=incorrect, user=tsurugi
 ALTER SERVER tsurugidb OPTIONS (SET dbname 'tsurugi');
 -- DELETE FROM fdw_ddl_table;
 -- SELECT * FROM fdw_ddl_table ORDER BY c;

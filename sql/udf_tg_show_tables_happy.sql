@@ -135,7 +135,7 @@ SELECT tg_execute_ddl('
 ', 'tsurugidb');
 --- Test setup: DDL of the PostgreSQL
 CREATE SERVER other_server FOREIGN DATA WRAPPER tsurugi_fdw;
-CREATE USER MAPPING FOR postgres SERVER other_server;
+CREATE USER MAPPING FOR postgres SERVER other_server OPTIONS (user 'tsurugi', password 'password');
 --- Test
 SELECT tg_show_tables('tg_schema', 'other_server', 'detail', true);
 --- Test teardown: DDL of the PostgreSQL
@@ -152,7 +152,7 @@ SELECT tg_execute_ddl('
 ', 'tsurugidb');
 --- Test setup: DDL of the PostgreSQL
 CREATE SERVER "Tsurugidb" FOREIGN DATA WRAPPER tsurugi_fdw;
-CREATE USER MAPPING FOR postgres SERVER "Tsurugidb";
+CREATE USER MAPPING FOR postgres SERVER "Tsurugidb" OPTIONS (user 'tsurugi', password 'password');
 --- Test
 SELECT tg_show_tables('tg_schema', 'tsurugidb', 'detail', true);
 SELECT tg_show_tables('tg_schema', 'Tsurugidb', 'detail', true);
