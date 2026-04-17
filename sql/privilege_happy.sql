@@ -8,7 +8,7 @@ SELECT tg_execute_ddl('
 /* Test setup: DDL of the PostgreSQL */
 CREATE FOREIGN TABLE fdw_privilege_test (col integer) SERVER tsurugidb;
 CREATE ROLE tgfdw_regress_user;
-CREATE USER MAPPING FOR tgfdw_regress_user SERVER tsurugidb;
+CREATE USER MAPPING FOR tgfdw_regress_user SERVER tsurugidb OPTIONS (user 'tsurugi', password 'password');
 
 -- All privileges
 GRANT ALL ON fdw_privilege_test TO tgfdw_regress_user;

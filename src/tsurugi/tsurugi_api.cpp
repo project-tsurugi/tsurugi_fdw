@@ -65,16 +65,15 @@ typedef struct {
 
 struct TGconn {
 	static StubPtr stub;
-	static ConnectionPtr impl;
+	ConnectionPtr impl;
 	TransactionPtr tx;
 	std::string endpoint;
 	Oid server_id;
 	bool subxact_seen = false;
 	ErrorState error;
-	TGconn() : tx(nullptr), server_id(InvalidOid) {}
+	TGconn() : impl(nullptr), tx(nullptr), server_id(InvalidOid) {}
 };
 StubPtr TGconn::stub = nullptr;
-ConnectionPtr TGconn::impl = nullptr;
 
 struct TGstmt {
 	TGconn* conn;

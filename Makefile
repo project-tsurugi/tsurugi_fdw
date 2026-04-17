@@ -87,6 +87,11 @@ ifdef REGRESS_EXTRA
 	endif
 endif
 
+REGRESS_AUTH ?=
+ifeq ($(REGRESS_AUTH),1)
+	REGRESS += user_mapping_happy user_mapping_unhappy
+endif
+
 install_deps:
 	bash ./scripts/install_deps.sh $(libdir)
 
