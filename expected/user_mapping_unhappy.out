@@ -92,7 +92,7 @@ ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to connect to Tsurugi database. error: AUTHENTICATION_ERROR(14)
 No detail message.
 CONTEXT:  SQL query: 
-DETAIL:  Connection options used: dbname=tsurugi1, user=bad_ua
+DETAIL:  Connection options used: dbname=(null), user=bad_ua
 -- Invalid password authentication fails (ERROR)
 DROP USER MAPPING IF EXISTS FOR um_test_a SERVER tsurugidb;
 CREATE USER MAPPING FOR CURRENT_USER SERVER tsurugidb OPTIONS (user 'ua', password 'bad_pa');
@@ -101,7 +101,7 @@ ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to connect to Tsurugi database. error: AUTHENTICATION_ERROR(14)
 No detail message.
 CONTEXT:  SQL query: 
-DETAIL:  Connection options used: dbname=tsurugi1, user=ua
+DETAIL:  Connection options used: dbname=(null), user=ua
 -- Invalid username and password authentication fails (ERROR)
 DROP USER MAPPING IF EXISTS FOR um_test_a SERVER tsurugidb;
 CREATE USER MAPPING FOR CURRENT_USER SERVER tsurugidb OPTIONS (user 'bad_ua', password 'bad_pa');
@@ -110,7 +110,7 @@ ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to connect to Tsurugi database. error: AUTHENTICATION_ERROR(14)
 No detail message.
 CONTEXT:  SQL query: 
-DETAIL:  Connection options used: dbname=tsurugi1, user=bad_ua
+DETAIL:  Connection options used: dbname=(null), user=bad_ua
 -- Missing username authentication fails (ERROR)
 DROP USER MAPPING IF EXISTS FOR um_test_a SERVER tsurugidb;
 CREATE USER MAPPING FOR CURRENT_USER SERVER tsurugidb OPTIONS (password 'pa');
@@ -119,7 +119,7 @@ ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to connect to Tsurugi database. error: AUTHENTICATION_ERROR(14)
 No detail message.
 CONTEXT:  SQL query: 
-DETAIL:  Connection options used: dbname=tsurugi1, user=(null)
+DETAIL:  Connection options used: dbname=(null), user=(null)
 -- Missing password authentication fails (ERROR)
 DROP USER MAPPING IF EXISTS FOR um_test_a SERVER tsurugidb;
 CREATE USER MAPPING FOR CURRENT_USER SERVER tsurugidb OPTIONS (user 'ua');
@@ -128,7 +128,7 @@ ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to connect to Tsurugi database. error: AUTHENTICATION_ERROR(14)
 No detail message.
 CONTEXT:  SQL query: 
-DETAIL:  Connection options used: dbname=tsurugi1, user=ua
+DETAIL:  Connection options used: dbname=(null), user=ua
 -- Missing credentials authentication fails (ERROR)
 DROP USER MAPPING IF EXISTS FOR um_test_a SERVER tsurugidb;
 CREATE USER MAPPING FOR CURRENT_USER SERVER tsurugidb;
@@ -137,7 +137,7 @@ ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to connect to Tsurugi database. error: AUTHENTICATION_ERROR(14)
 No detail message.
 CONTEXT:  SQL query: 
-DETAIL:  Connection options used: dbname=tsurugi1, user=(null)
+DETAIL:  Connection options used: dbname=(null), user=(null)
 -- Same session connection reuse second SELECT runs without reauthentication
 DROP USER MAPPING IF EXISTS FOR um_test_a SERVER tsurugidb;
 CREATE USER MAPPING FOR CURRENT_USER SERVER tsurugidb OPTIONS (user 'ua', password 'pa');
@@ -155,7 +155,7 @@ ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to connect to Tsurugi database. error: AUTHENTICATION_ERROR(14)
 No detail message.
 CONTEXT:  SQL query: 
-DETAIL:  Connection options used: dbname=tsurugi1, user=bad_ua
+DETAIL:  Connection options used: dbname=(null), user=bad_ua
 -- Role switch requires authentication
 SET ROLE um_test_b;
 CREATE USER MAPPING FOR CURRENT_USER SERVER tsurugidb OPTIONS (user 'bad_ub', password 'bad_pb');
@@ -176,7 +176,7 @@ ERROR:  tsurugi_fdw: Failed to execute remote SQL.
 HINT:  Failed to connect to Tsurugi database. error: AUTHENTICATION_ERROR(14)
 No detail message.
 CONTEXT:  SQL query: 
-DETAIL:  Connection options used: dbname=tsurugi1, user=bad_ub
+DETAIL:  Connection options used: dbname=(null), user=bad_ub
 -- Cleanup
 SET ROLE postgres;
 DROP FOREIGN TABLE fdw_um_auth_table_1;
